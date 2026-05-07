@@ -39,7 +39,7 @@ Validate the entire wiki or a single file against SHACL shapes loaded from `shap
 wiki-cli validate
 
 # Validate a single document file
-wiki-cli validate wiki/hansel.md
+wiki-cli validate wiki/gregory.md
 
 # Output per-file summary (conforming, fails, errors)
 wiki-cli validate --summary
@@ -82,7 +82,7 @@ SELECT ?name ?email WHERE {
 
 | Name | Email |
 | --- | --- |
-| Hansel | hansel@example.com |
+| Gregory | gregory@example.com |
 <!-- sparql:end -->
 ```
 
@@ -100,9 +100,36 @@ wiki-cli frontmatter normalize --dry-run
 wiki-cli frontmatter jsonld -o wiki.jsonld
 ```
 
+### 5. Printing and Piping (Unix Filters)
+Following the Unix philosophy of pipes and filters, `wiki-cli` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.
+
+#### On Unix/macOS:
+* **Format and Print a Document:**
+  Use `pr` to add headers, margins, and page numbers before sending to `lp`:
+  ```bash
+  cat wiki/gregory.md | pr -h "Gregory Document" | lp
+  ```
+* **Format and Print Query Results:**
+  Run a query and print its tabular results:
+  ```bash
+  wiki-cli query "SELECT ?s ?p WHERE { ?s ?p ?o }" | pr -h "SPARQL Graph Query" | lp
+  ```
+
+#### On Windows (PowerShell):
+* **Print a Document:**
+  ```powershell
+  Get-Content wiki/gregory.md | Out-Printer
+  ```
+* **Print Query Results:**
+  ```powershell
+  wiki-cli query "SELECT ?s ?p WHERE { ?s ?p ?o }" | Out-Printer
+  ```
+
 ---
 
 ## Domain Glossary & Decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
 *   [CONTEXT.md](CONTEXT.md) — Glossary and Domain Model mapping.
 *   [0001-context-centric-configuration.md](docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.
+*   [0002-userland-printing.md](docs/adr/0002-userland-printing.md) — Architectural Decision Record (ADR) on adopting userland printing filters.
+
