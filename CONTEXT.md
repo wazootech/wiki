@@ -1,4 +1,4 @@
-# LLM Wiki CLI
+# Wiki CLI
 
 A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 
@@ -10,7 +10,9 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Frontmatter**: A YAML or JSON metadata block at the top of a Document, mapping to a JSON-LD compliant representation. _Avoid_: Metadata, header.
 
-**Context**: The central configuration and namespace mapping (similar to JSON-LD `@context`) managing CLI settings, directories, and prefix bindings. _Avoid_: Config, parameters.
+**Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a WikiConfig. _Avoid_: Namespace list.
+
+**WikiConfig**: The central configuration managing CLI settings, directories, check rules, and the Context. _Avoid_: Config, parameters, settings.
 
 **Namespaces**: The mapping of prefix keys to URI values used for RDF conversion and SPARQL queries. _Avoid_: Prefixes, prefixes list.
 
@@ -32,7 +34,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 - A **Wiki** is composed of multiple **Documents**
 - A **Document** contains exactly one **Frontmatter** block
-- The **CLI** manages, validates, and queries the **Wiki** using **Context** and **Namespaces**
+- The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**

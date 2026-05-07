@@ -1,12 +1,12 @@
-# LLM Wiki CLI 🚀
+# Wiki CLI
 
 An elegant, pure, and idiomatic Python command-line interface for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Click CLI**: Subcommands mapped elegantly (`validate`, `query`, `render`, `frontmatter`).
+- **Pure Python CLI**: Subcommands mapped elegantly (`validate`, `query`, `render`, `frontmatter`).
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
-- **Context-Centric**: Simplifies namespace, prefix mappings, and settings in a single coherent `Context` class matching JSON-LD `@context`.
+- **RDF Context Support** Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
 - **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
 - **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
@@ -24,6 +24,20 @@ pip install -e .
 ```
 
 ## Subcommand guide
+
+### `check`
+Perform unified validations of your wiki, including strict SHACL schema validations and soft style/hygiene audits (kebab-case filenames, broken internal wikilinks). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+
+```bash
+# Run unified checks silently (default)
+wiki check
+
+# Run with verbose output to show style/guideline warnings
+wiki check -v
+
+# Run in strict mode (warnings become errors and fail with non-zero exit code)
+wiki check --strict
+```
 
 ### `validate`
 Validate the entire wiki or a single file against SHACL shapes loaded from `shapes/`.
@@ -101,10 +115,10 @@ wiki frontmatter normalize --dry-run
 wiki frontmatter jsonld -o wiki.jsonld
 ```
 
-### Printing and piping (Unix filters)
+### Printing and piping
 Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.
 
-#### On Unix/macOS
+#### Unix/macOS
 * **Format and Print a Document:**
   Use `pr` to add headers, margins, and page numbers before sending to `lp`:
   ```bash
@@ -116,7 +130,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
   wiki query "SELECT ?s ?p WHERE { ?s ?p ?o }" | pr -h "SPARQL Graph Query" | lp
   ```
 
-#### On Windows (PowerShell)
+#### Windows
 * **Print a Document:**
   ```powershell
   Get-Content wiki/gregory.md | Out-Printer
@@ -126,7 +140,26 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
   wiki query "SELECT ?s ?p WHERE { ?s ?p ?o }" | Out-Printer
   ```
 
-## Domain glossary and decisions
+## Workspace configuration (`WikiConfig`)
+
+The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. The configuration file holds CLI parameters and custom checking severities, with an embedded `@context` or `context` block defining prefix mappings:
+
+```yaml
+# wiki.yaml
+wikiDir: wiki
+shapesDir: shapes
+
+check:
+  filenameStyle: warning     # "error" | "warning" | "off"
+  internalLinks: warning     # "error" | "warning" | "off"
+
+context:
+  schema: https://schema.org/
+  wiki: https://book.etok.me/wiki/
+  foaf: http://xmlns.com/foaf/0.1/
+```
+
+## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
 *   [CONTEXT.md](CONTEXT.md) — Glossary and Domain Model mapping.
 *   [0001-context-centric-configuration.md](docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.

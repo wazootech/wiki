@@ -1,4 +1,4 @@
-# Userland printing via pipes and filters
+# Userland printing
 
 ## Context
 

@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import Any, Optional
 import click
 
-from .context import Context
+from .context import WikiConfig as Context
 from .frontmatter import normalize_all, normalize_frontmatter_str, frontmatter_from_path
 from .rdf import load_graph, graph_stats
 from .reasoning import apply_inference
-from .validation import validate_all, validate_file, validate_summary
+from .validation import validate_all, validate_file, validate_summary, run_checks
 
 
 def table_format(result: Any) -> str:
@@ -182,19 +182,60 @@ def render_markdown_files(wiki_dir: Path, graph: Any) -> int:
 
 
 @click.group()
-@click.option("--wiki-dir", default="wiki", help="Directory containing wiki markdown files.")
-@click.option("--shapes-dir", default="shapes", help="Directory containing SHACL shape files.")
-@click.option("--reasoning-dir", default="reasoning", help="Directory containing OWL/RDFS axioms.")
-@click.option("--raw-dir", default="raw", help="Directory containing raw markdown files.")
+@click.option("--wiki-dir", default=None, help="Directory containing wiki markdown files.")
+@click.option("--shapes-dir", default=None, help="Directory containing SHACL shape files.")
+@click.option("--reasoning-dir", default=None, help="Directory containing OWL/RDFS axioms.")
+@click.option("--raw-dir", default=None, help="Directory containing raw markdown files.")
 @click.pass_context
-def main(ctx: click.Context, wiki_dir: str, shapes_dir: str, reasoning_dir: str, raw_dir: str) -> None:
+def main(ctx: click.Context, wiki_dir: Optional[str], shapes_dir: Optional[str], reasoning_dir: Optional[str], raw_dir: Optional[str]) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
-    ctx.obj = Context(
-        wiki_dir=wiki_dir,
-        shapes_dir=shapes_dir,
-        reasoning_dir=reasoning_dir,
-        raw_dir=raw_dir,
-    )
+    config = Context.load()
+    if wiki_dir:
+        config.wiki_dir = Path(wiki_dir)
+    if shapes_dir:
+        config.shapes_dir = Path(shapes_dir)
+    if reasoning_dir:
+        config.reasoning_dir = Path(reasoning_dir)
+    if raw_dir:
+        config.raw_dir = Path(raw_dir)
+    ctx.obj = config
+
+
+@main.command()
+@click.option("-v", "--verbose", is_flag=True, help="Show style/guideline warnings.")
+@click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
+@click.pass_obj
+def check(config: Context, verbose: bool, strict: bool) -> None:
+    """Run unified checks: strict SHACL validation + style audits."""
+    results = run_checks(config)
+
+    conforms = results["conforms"]
+    errors = results["errors"]
+    warnings = results["warnings"]
+
+    if strict and warnings:
+        errors.extend(warnings)
+        warnings = []
+        conforms = False
+
+    if conforms and not errors:
+        if verbose and warnings:
+            click.echo("Warnings:", err=True)
+            for w in warnings:
+                click.echo(f"  - {w}", err=True)
+        sys.exit(0)
+
+    if errors:
+        click.echo("Errors:", err=True)
+        for e in errors:
+            click.echo(f"  - {e}", err=True)
+
+    if verbose and warnings:
+        click.echo("Warnings:", err=True)
+        for w in warnings:
+            click.echo(f"  - {w}", err=True)
+
+    sys.exit(1 if not conforms else 0)
 
 
 @main.command()
