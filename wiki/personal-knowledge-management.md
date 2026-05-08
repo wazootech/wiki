@@ -30,6 +30,11 @@ Traditional notes suffer from "schema drift" where you forget to add fields like
 ### 3. Infinite dynamic synthesis (SPARQL)
 Instead of manually maintaining index lists or tag pages, you write a simple SPARQL query. When you run `wiki render`, the CLI automatically updates your indexes, dashboards, and maps dynamically!
 
+### 4. Declarative vs. procedural knowledge representation
+A modern second brain must distinguish between **declarative knowledge** ("knowing what") and **procedural knowledge** ("knowing how"):
+* **Declarative Knowledge**: Represented statically as semantic facts, class hierarchies, and properties within your markdown frontmatter. These are parsed into the permanent RDF graph.
+* **Procedural Knowledge**: Represented dynamically as executable actions, workflows, query parameters, and validation rules (e.g., active SHACL shape rules and custom SPARQL blocks). The CLI automates this procedural layer through commands like `wiki check` and `wiki render`, transforming static notes into an active, self-correcting system.
+
 ---
 
 ## Active PKM topics in this vault
