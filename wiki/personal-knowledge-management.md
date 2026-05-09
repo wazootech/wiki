@@ -57,6 +57,7 @@ ORDER BY ?name
 | --- | --- |
 | wiki:karpathy-llm-wiki | Andrej Karpathy's LLM Wiki and Farzapedia |
 | wiki:custom-schemas-and-shapes | Defining custom schemas, shapes, and axioms |
+| wiki:farzapedia | Farzapedia and personal AI wikis |
 | wiki:personal-knowledge-management | Personal knowledge management and semantic 2nd brains |
 | wiki:sparql-guide | SPARQL query guide |
 | wiki:wiki-schema | Wiki schema and active types |

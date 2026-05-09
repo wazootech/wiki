@@ -30,6 +30,7 @@ ORDER BY ?type
 | --- | --- |
 | wiki:wiki-cli | https://schema.org/SoftwareApplication |
 | wiki:custom-schemas-and-shapes | https://schema.org/TechArticle |
+| wiki:farzapedia | https://schema.org/TechArticle |
 | wiki:karpathy-llm-wiki | https://schema.org/TechArticle |
 | wiki:personal-knowledge-management | https://schema.org/TechArticle |
 | wiki:sparql-guide | https://schema.org/TechArticle |

@@ -23,7 +23,7 @@ He highlighted that traditional AI chat windows are "stateless" and fleeting, fo
 
 ## 📱 Farza's Follow-up & Farzapedia
 
-Developer **Farza** (founder of buildspace) created **Farzapedia** as the definitive real-world proof of concept for the LLM Wiki pattern:
+Developer **Farza** (founder of buildspace) created [[farzapedia]] as the definitive real-world proof of concept for the LLM Wiki pattern:
 
 * **The Input**: Fed approximately **2,500 unstructured entries** (comprising personal diary entries, Apple Notes, and raw iMessage histories) to an LLM agent.
 * **The Compilation**: The LLM agent parsed, categorized, and synthesized the raw materials, outputting **~400 beautifully structured, clean, and heavily interlinked wiki articles**.
