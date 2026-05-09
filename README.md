@@ -138,6 +138,15 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
   wiki query "SELECT ?s ?p WHERE { ?s ?p ?o }" | Out-Printer
   ```
 
+### Obsidian integration
+
+While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
+
+Recommended workflows:
+* **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL validations and formatting.
+* **Trigger re-rendering**: Map a hotkey or command palette item to `wiki render` to automatically update all dynamic SPARQL blocks in the vault.
+* **Create new documents**: Map a hotkey or command palette item to `wiki create` to automatically generate a new markdown file with pre-populated frontmatter.
+
 ### Declarative modeling & full-text SPARQL
 
 The Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.

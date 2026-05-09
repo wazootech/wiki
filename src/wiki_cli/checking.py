@@ -27,6 +27,43 @@ WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 MARKDOWN_LINK_REGEX = re.compile(r"\[[^\]]+\]\((?!(?:https?://|mailto:|#))([^)]+)\)")
 
 
+def extract_shapes_from_wiki(graph: Graph, context: WikiConfig) -> None:
+    """Scan markdown documents in the wiki directory for inline SHACL shapes (frontmatter or code blocks)."""
+    if not context.wiki_dir.exists():
+        return
+
+    for md_file in sorted(context.wiki_dir.glob("*.md")):
+        try:
+            content = md_file.read_text(encoding="utf-8")
+            
+            # 1. Try parsing frontmatter-defined shapes
+            data = frontmatter_from_path(md_file)
+            if data:
+                rdf_type = data.get("@type") or data.get("type")
+                is_shape = False
+                if isinstance(rdf_type, str):
+                    if any(term in rdf_type for term in ("sh:NodeShape", "sh:PropertyShape", "NodeShape", "PropertyShape")):
+                        is_shape = True
+                elif isinstance(rdf_type, list):
+                    if any(isinstance(t, str) and any(term in t for term in ("sh:NodeShape", "sh:PropertyShape", "NodeShape", "PropertyShape")) for t in rdf_type):
+                        is_shape = True
+                elif any(isinstance(k, str) and (k.startswith("sh:") or k.startswith("shacl:")) for k in data):
+                    is_shape = True
+
+                if is_shape:
+                    graph += frontmatter_to_graph(data, context, file_id=md_file.stem)
+
+            # 2. Parse explicit ```turtle blocks from the file body into the shapes graph
+            turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
+            for block in turtle_blocks:
+                try:
+                    graph.parse(data=block.strip(), format="turtle")
+                except Exception:
+                    pass # Ignore formatting errors
+        except Exception as e:
+            logger.warning("Failed to process wiki file %s for shapes: %s", md_file.name, e)
+
+
 def load_shapes(context: WikiConfig) -> Graph:
     """Load all SHACL shapes (.ttl files) and frontmatter-defined shapes into a Graph."""
     shapes_graph = Graph()
@@ -40,26 +77,7 @@ def load_shapes(context: WikiConfig) -> Graph:
             except Exception as e:
                 logger.warning("Failed to parse shape file %s: %s", shape_file.name, e)
 
-    if context.wiki_dir.exists():
-        for md_file in sorted(context.wiki_dir.glob("*.md")):
-            try:
-                data = frontmatter_from_path(md_file)
-                if data:
-                    rdf_type = data.get("@type") or data.get("type")
-                    is_shape = False
-                    if isinstance(rdf_type, str):
-                        if any(term in rdf_type for term in ("sh:NodeShape", "sh:PropertyShape", "NodeShape", "PropertyShape")):
-                            is_shape = True
-                    elif isinstance(rdf_type, list):
-                        if any(isinstance(t, str) and any(term in t for term in ("sh:NodeShape", "sh:PropertyShape", "NodeShape", "PropertyShape")) for t in rdf_type):
-                            is_shape = True
-                    elif any(isinstance(k, str) and (k.startswith("sh:") or k.startswith("shacl:")) for k in data):
-                        is_shape = True
-
-                    if is_shape:
-                        shapes_graph += frontmatter_to_graph(data, context, file_id=md_file.stem)
-            except Exception as e:
-                logger.warning("Failed to load frontmatter shape from %s: %s", md_file.name, e)
+    extract_shapes_from_wiki(shapes_graph, context)
 
     return shapes_graph
 

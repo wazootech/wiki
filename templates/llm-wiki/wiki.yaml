@@ -1,7 +1,5 @@
 # wiki.yaml
 wikiDir: wiki
-shapesDir: shapes
-reasoningDir: reasoning
 contentPredicate: schema:text
 
 context:

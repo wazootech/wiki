@@ -113,6 +113,11 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
             else:
                 doc_id = f"{context.wiki_base}{kebab_case(name)}.md"
 
+    if doc_id and ":" in doc_id:
+        prefix, name = doc_id.split(":", 1)
+        if prefix in context.namespaces:
+            doc_id = str(context.namespaces[prefix][name])
+
     subject = URIRef(doc_id)
 
     if isinstance(rdf_type, list):
@@ -202,34 +207,52 @@ def load_graph(context: Context, infer: bool = True) -> Graph:
     # Load primary wiki documents
     if context.wiki_dir.exists():
         for md_file in context.wiki_dir.glob("*.md"):
-            data = frontmatter_from_path(md_file)
-            if data:
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                
+                # 1. Extract frontmatter data
+                data = frontmatter_from_path(md_file)
                 body = None
-                if hasattr(context, "content_predicate") and context.content_predicate:
-                    try:
-                        content = md_file.read_text(encoding="utf-8")
+                if data:
+                    if hasattr(context, "content_predicate") and context.content_predicate:
                         parts = content.split("---", 2)
                         if len(parts) > 2:
                             body = parts[2].strip()
+                    graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+
+                # 2. Extract and parse any ```turtle blocks natively into the graph
+                turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
+                for block in turtle_blocks:
+                    try:
+                        graph.parse(data=block.strip(), format="turtle")
                     except Exception:
-                        pass
-                graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+                        pass # Ignore parsing errors in individual code blocks
+            except Exception:
+                pass
 
     # Load raw documents if configured and present
     if context.raw_dir.exists():
         for md_file in context.raw_dir.glob("*.md"):
-            data = frontmatter_from_path(md_file)
-            if data:
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                
+                data = frontmatter_from_path(md_file)
                 body = None
-                if hasattr(context, "content_predicate") and context.content_predicate:
-                    try:
-                        content = md_file.read_text(encoding="utf-8")
+                if data:
+                    if hasattr(context, "content_predicate") and context.content_predicate:
                         parts = content.split("---", 2)
                         if len(parts) > 2:
                             body = parts[2].strip()
+                    graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+
+                turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
+                for block in turtle_blocks:
+                    try:
+                        graph.parse(data=block.strip(), format="turtle")
                     except Exception:
                         pass
-                graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+            except Exception:
+                pass
 
     resolve_blank_nodes(graph, context.wiki_dir, context)
 

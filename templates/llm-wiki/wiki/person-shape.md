@@ -1,3 +1,15 @@
+---
+id: schema:PersonShapeDefinition
+type: TechArticle
+name: Person Shape
+description: SHACL constraint shape defining the mandatory fields for Person records.
+---
+
+# Person validation shape
+
+This document defines the canonical shape for `schema:Person` nodes in this vault.
+
+```turtle
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix schema: <https://schema.org/> .
 @prefix wiki: <https://book.etok.me/wiki/> .
@@ -33,3 +45,4 @@ schema:PersonShape a sh:NodeShape ;
     sh:minCount 1 ;
     sh:datatype xsd:date ;
   ] .
+```

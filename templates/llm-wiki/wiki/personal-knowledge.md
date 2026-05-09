@@ -52,24 +52,26 @@ ORDER BY ?name
 
 | Topic | Name |
 | --- | --- |
-| wiki:css | CSS |
-| wiki:csv | CSV |
-| wiki:negotiation | Content negotiation |
-| wiki:farzapedia | Farzapedia and personal AI wikis |
-| wiki:html | HTML |
-| wiki:json | JSON |
-| wiki:json-ld | JSON-LD |
-| wiki:javascript | JavaScript |
-| wiki:llm-wiki | LLM Wiki |
-| wiki:microdata | Microdata |
-| wiki:notation3 | Notation3 |
-| wiki:owl | OWL |
-| wiki:personal-knowledge | Personal Knowledge |
-| wiki:rdf | RDF |
-| wiki:shacl | SHACL |
-| wiki:sparql | SPARQL |
-| wiki:semantic-web | Semantic Web |
-| wiki:turtle | Turtle |
-| wiki:typescript | TypeScript |
+| https://book.etok.me/wiki/css | CSS |
+| https://book.etok.me/wiki/csv | CSV |
+| https://book.etok.me/wiki/negotiation | Content negotiation |
+| https://book.etok.me/wiki/farzapedia | Farzapedia and personal AI wikis |
+| https://book.etok.me/wiki/html | HTML |
+| https://book.etok.me/wiki/json | JSON |
+| https://book.etok.me/wiki/json-ld | JSON-LD |
+| https://book.etok.me/wiki/javascript | JavaScript |
+| https://book.etok.me/wiki/llm-wiki | LLM Wiki |
+| https://book.etok.me/wiki/microdata | Microdata |
+| https://book.etok.me/wiki/notation3 | Notation3 |
+| https://book.etok.me/wiki/owl | OWL |
+| https://schema.org/PersonShapeDefinition | Person Shape |
+| https://book.etok.me/wiki/personal-knowledge | Personal Knowledge |
+| https://book.etok.me/wiki/ontology | Project Ontology |
+| https://book.etok.me/wiki/rdf | RDF |
+| https://book.etok.me/wiki/shacl | SHACL |
+| https://book.etok.me/wiki/sparql | SPARQL |
+| https://book.etok.me/wiki/semantic-web | Semantic Web |
+| https://book.etok.me/wiki/turtle | Turtle |
+| https://book.etok.me/wiki/typescript | TypeScript |
 <!-- sparql:end -->
 

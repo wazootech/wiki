@@ -1,6 +1,0 @@
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <https://schema.org/> .
-@prefix wiki: <https://book.etok.me/wiki/> .
-
-schema:Project rdfs:subClassOf schema:CreativeWork .
-wiki:lead rdfs:subPropertyOf schema:contributor .

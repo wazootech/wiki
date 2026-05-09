@@ -66,8 +66,8 @@ def table_format(result: Any) -> str:
     return "\n".join(lines)
 
 
-def markdown_format(result: Any) -> str:
-    """Format SPARQL SELECT results as a GitHub Flavored Markdown table."""
+def markdown_format(result: Any, wiki_base: str | None = None) -> str:
+    """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering wiki links when applicable."""
     rows = list(result)
     if not rows:
         return "(no results)"
@@ -102,9 +102,13 @@ def markdown_format(result: Any) -> str:
                     vals.append("")
                 else:
                     s = str(v)
-                    match = re.search(r"https://(?:book\.etok\.me|EthanThatOneKid\.github\.io/book)/wiki/([^/]+)\.md", s)
-                    if match:
-                        s = f"[[{match.group(1)}]]"
+                    if wiki_base and s.startswith(wiki_base):
+                        # Extract the relative slug and clean up .md suffixes
+                        slug = s[len(wiki_base):]
+                        if slug.endswith(".md"):
+                            slug = slug[:-3]
+                        if "/" not in slug: # Simple check to verify it's a direct page
+                            s = f"[[{slug}]]"
                     vals.append(s)
         else:
             vals = []
@@ -114,16 +118,19 @@ def markdown_format(result: Any) -> str:
                     vals.append("")
                 else:
                     s = str(v)
-                    match = re.search(r"https://(?:book\.etok\.me|EthanThatOneKid\.github\.io/book)/wiki/([^/]+)\.md", s)
-                    if match:
-                        s = f"[[{match.group(1)}]]"
+                    if wiki_base and s.startswith(wiki_base):
+                        slug = s[len(wiki_base):]
+                        if slug.endswith(".md"):
+                            slug = slug[:-3]
+                        if "/" not in slug:
+                            s = f"[[{slug}]]"
                     vals.append(s)
         lines.append("| " + " | ".join(vals) + " |")
 
     return "\n".join(lines)
 
 
-def run_query(graph: Any, query: str, output_format: str = "table") -> str:
+def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None) -> str:
     """Run a SPARQL SELECT or CONSTRUCT query against the graph, returning formatted output."""
     q = query.strip().upper()
     is_construct = q.startswith("CONSTRUCT") or q.startswith("DESCRIBE")
@@ -143,7 +150,7 @@ def run_query(graph: Any, query: str, output_format: str = "table") -> str:
     elif output_format == "tsv":
         return result.serialize(format="tsv").decode("utf-8")
     elif output_format in ("markdown", "md"):
-        return markdown_format(result)
+        return markdown_format(result, wiki_base=wiki_base)
     else:
         return table_format(result)
 
@@ -155,10 +162,13 @@ SPARQL_BLOCK_REGEX = re.compile(
 )
 
 
-def render_markdown_files(wiki_dir: Path, graph: Any) -> int:
+def render_markdown_files(context: Context, graph: Any) -> int:
     """Iterate over all markdown files, parse and replace dynamic SPARQL sections inline."""
     count = 0
-    for md_file in wiki_dir.glob("*.md"):
+    if not context.wiki_dir.exists():
+        return 0
+        
+    for md_file in context.wiki_dir.glob("*.md"):
         content = md_file.read_text(encoding="utf-8")
         modified = False
 
@@ -166,7 +176,7 @@ def render_markdown_files(wiki_dir: Path, graph: Any) -> int:
             nonlocal modified
             query = match.group(1).strip()
             try:
-                rendered_markdown = run_query(graph, query, output_format="markdown")
+                rendered_markdown = run_query(graph, query, output_format="markdown", wiki_base=context.wiki_base)
                 modified = True
                 return f"<!-- sparql:start -->\n```sparql\n{query}\n```\n\n{rendered_markdown}\n<!-- sparql:end -->"
             except Exception as e:
@@ -373,7 +383,7 @@ def query(context: Context, query_args: tuple[str, ...], output_format: str, out
         click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
 
     try:
-        result = run_query(graph, sparql_query, output_format=output_format)
+        result = run_query(graph, sparql_query, output_format=output_format, wiki_base=context.wiki_base)
         if output:
             output.write_text(result, encoding="utf-8")
             click.echo(f"Written results to {output}")
@@ -391,7 +401,7 @@ def query(context: Context, query_args: tuple[str, ...], output_format: str, out
 def render(context: Context, no_inference: bool, verbose: bool) -> None:
     """Render inline SPARQL blocks in markdown files."""
     graph = load_graph(context, infer=not no_inference)
-    count = render_markdown_files(context.wiki_dir, graph)
+    count = render_markdown_files(context, graph)
     if verbose:
         click.echo(f"Successfully updated {count} markdown files with rendered SPARQL outputs.")
 

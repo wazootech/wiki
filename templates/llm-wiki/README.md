@@ -5,9 +5,7 @@ This directory provides a ready-to-use foundation for building a private semanti
 ## Structure
 
 * **`wiki.yaml`**: Active configuration defining the root of the vault ecosystem.
-* **`wiki/`**: Primary repository of `.md` Markdown files holding your written knowledge and YAML metadata.
-* **`shapes/`**: Target directory for SHACL (`.ttl`) constraints safeguarding the structural validity of nodes.
-* **`reasoning/`**: Target directory for custom OWL/RDFS axioms used to infer and expand your semantic graph.
+* **`wiki/`**: Primary repository hosting both your human-readable documentation and machine-readable semantic logic (embedded SHACL constraints and RDFS/OWL axioms).
 
 ## Getting started
 

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Standard static namespaces
 SCHEMA = Namespace("https://schema.org/")
-WIKI = Namespace("https://book.etok.me/wiki/")
+WIKI = Namespace("https://wiki.example.org/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
@@ -38,13 +38,13 @@ class Context:
     """Manages JSON-LD prefix and namespace bindings."""
 
     def __init__(self, namespaces: dict[str, Any] | None = None) -> None:
-        self.namespaces = {}
-        source = namespaces if namespaces is not None else DEFAULT_NAMESPACES
-        for prefix, uri in source.items():
-            if isinstance(uri, str):
-                self.namespaces[prefix] = Namespace(uri)
-            else:
-                self.namespaces[prefix] = uri
+        self.namespaces = DEFAULT_NAMESPACES.copy()
+        if namespaces is not None:
+            for prefix, uri in namespaces.items():
+                if isinstance(uri, str):
+                    self.namespaces[prefix] = Namespace(uri)
+                else:
+                    self.namespaces[prefix] = uri
 
     def bind_namespaces(self, graph: Any) -> None:
         """Bind all managed namespaces to an RDFLib Graph instance."""
@@ -61,7 +61,7 @@ class WikiConfig:
         shapes_dir: str | Path = "shapes",
         reasoning_dir: str | Path = "reasoning",
         raw_dir: str | Path = "raw",
-        wiki_base: str = "https://book.etok.me/wiki/",
+        wiki_base: str = "https://wiki.example.org/",
         check: dict[str, str] | None = None,
         context: Context | None = None,
         content_predicate: str | None = None,
@@ -117,7 +117,7 @@ class WikiConfig:
                             shapes_dir=data.get("shapes_dir") or data.get("shapesDir") or "shapes",
                             reasoning_dir=data.get("reasoning_dir") or data.get("reasoningDir") or "reasoning",
                             raw_dir=data.get("raw_dir") or data.get("rawDir") or "raw",
-                            wiki_base=data.get("wiki_base") or data.get("wikiBase") or "https://book.etok.me/wiki/",
+                            wiki_base=data.get("wiki_base") or data.get("wikiBase") or "https://wiki.example.org/",
                             check=data.get("check"),
                             context=context_obj,
                             content_predicate=data.get("content_predicate") or data.get("contentPredicate"),

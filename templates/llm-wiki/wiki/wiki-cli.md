@@ -66,29 +66,7 @@ SELECT ?document ?type WHERE {
 ORDER BY ?type
 ```
 
-| Document | Type |
-| --- | --- |
-| wiki:karpathy | https://schema.org/Person |
-| wiki:wiki-cli | https://schema.org/SoftwareApplication |
-| wiki:css | https://schema.org/TechArticle |
-| wiki:csv | https://schema.org/TechArticle |
-| wiki:farzapedia | https://schema.org/TechArticle |
-| wiki:html | https://schema.org/TechArticle |
-| wiki:javascript | https://schema.org/TechArticle |
-| wiki:json-ld | https://schema.org/TechArticle |
-| wiki:json | https://schema.org/TechArticle |
-| wiki:llm-wiki | https://schema.org/TechArticle |
-| wiki:microdata | https://schema.org/TechArticle |
-| wiki:negotiation | https://schema.org/TechArticle |
-| wiki:notation3 | https://schema.org/TechArticle |
-| wiki:owl | https://schema.org/TechArticle |
-| wiki:personal-knowledge | https://schema.org/TechArticle |
-| wiki:rdf | https://schema.org/TechArticle |
-| wiki:semantic-web | https://schema.org/TechArticle |
-| wiki:shacl | https://schema.org/TechArticle |
-| wiki:sparql | https://schema.org/TechArticle |
-| wiki:turtle | https://schema.org/TechArticle |
-| wiki:typescript | https://schema.org/TechArticle |
+(no results)
 <!-- sparql:end -->
 
 ### `Person` shape
