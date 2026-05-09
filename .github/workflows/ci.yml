@@ -35,3 +35,4 @@ jobs:
 
     - name: Run Wiki Style and SHACL Audits
       run: uv run wiki check --strict -v
+      working-directory: templates/llm-wiki

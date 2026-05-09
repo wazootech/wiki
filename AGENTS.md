@@ -13,7 +13,8 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 - **Enforcer:** `check:links` (Warning by default)
 
 ### Style guidelines
-- **Rule:** Use sentence-case headings (capitalize only the first word and proper nouns). Avoid unnecessarily numbered or ordered headings.
+- **Rule:** Use sentence-case headings (capitalize only the first word and proper nouns). Please avoid numbered headings, keep headings concise and clear.
+- **Rule:** Avoid using horizontal rules (`---`) for thematic breaks within the content bodies.
 - **Enforcer:** `check:headings` (Disabled/Optional by default)
 
 ---

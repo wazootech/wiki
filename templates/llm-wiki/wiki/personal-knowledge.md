@@ -1,21 +1,19 @@
 ---
-id: wiki:personal-knowledge-management
+id: wiki:personal-knowledge
 type: TechArticle
-name: Personal knowledge management and semantic 2nd brains
-about: wiki:wiki-cli
+name: Personal Knowledge
+description: Individual strategy and collection of knowledge.
 ---
 
-# Personal knowledge management and semantic 2nd brains
+# Personal Knowledge
 
-Personal Knowledge Management (PKM) is the discipline of capturing, organizing, and synthesizing ideas to build a "second brain". Traditional PKM tools organize files with folders, tags, or un-typed markdown links. 
+**Personal Knowledge** refers to the individual methods, systems, and digital gardens humans use to store, organize, and build upon their memories and information streams.
 
-By utilizing the [[wiki-cli]], this vault upgrades traditional un-structured note-taking into a **semantic knowledge graph**, directly embracing the modern LLM Wiki pattern popularized by [[karpathy-llm-wiki]].
-
----
+Modern efforts utilize digital systems like obsidian or semantic architectures to form a Second Brain.
 
 ## Why semantics elevate your 2nd brain
 
-### 1. Typed links over simple backlinks
+### Typed links over simple backlinks
 Instead of a simple un-typed link from Gregory's page to Bella's page, semantic PKM defines the exact nature of the relationship:
 ```yaml
 # Inside gregory.md
@@ -24,18 +22,17 @@ spouse:
 ```
 This is parsed as a typed graph triple (`wiki:gregory schema:spouse wiki:bella`), allowing the graph to mathematically reason about family, colleague, or friend connections.
 
-### 2. Built-in structural correctness (SHACL shapes)
-Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The Wiki CLI uses **SHACL shapes** to audit your notes automatically during [[wiki-workflows]]. This ensures your second brain remains consistently structured and complete.
+### Built-in structural correctness (SHACL shapes)
+Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The Wiki CLI uses **SHACL shapes** to audit your notes automatically. This ensures your second brain remains consistently structured and complete.
 
-### 3. Infinite dynamic synthesis (SPARQL)
+### Infinite dynamic synthesis (SPARQL)
 Instead of manually maintaining index lists or tag pages, you write a simple SPARQL query. When you run `wiki render`, the CLI automatically updates your indexes, dashboards, and maps dynamically!
 
-### 4. Declarative vs. procedural knowledge representation
+### Declarative vs. procedural knowledge representation
 A modern second brain must distinguish between **declarative knowledge** ("knowing what") and **procedural knowledge** ("knowing how"):
 * **Declarative Knowledge**: Represented statically as semantic facts, class hierarchies, and properties within your markdown frontmatter. These are parsed into the permanent RDF graph.
 * **Procedural Knowledge**: Represented dynamically as executable actions, workflows, query parameters, and validation rules (e.g., active SHACL shape rules and custom SPARQL blocks). The CLI automates this procedural layer through commands like `wiki check` and `wiki render`, transforming static notes into an active, self-correcting system.
 
----
 
 ## Active PKM topics in this vault
 
@@ -55,11 +52,24 @@ ORDER BY ?name
 
 | Topic | Name |
 | --- | --- |
-| wiki:karpathy-llm-wiki | Andrej Karpathy's LLM Wiki and Farzapedia |
-| wiki:custom-schemas-and-shapes | Defining custom schemas, shapes, and axioms |
+| wiki:css | CSS |
+| wiki:csv | CSV |
+| wiki:negotiation | Content negotiation |
 | wiki:farzapedia | Farzapedia and personal AI wikis |
-| wiki:personal-knowledge-management | Personal knowledge management and semantic 2nd brains |
-| wiki:sparql-guide | SPARQL query guide |
-| wiki:wiki-schema | Wiki schema and active types |
-| wiki:wiki-workflows | Wiki workflows and authoring guide |
+| wiki:html | HTML |
+| wiki:json | JSON |
+| wiki:json-ld | JSON-LD |
+| wiki:javascript | JavaScript |
+| wiki:llm-wiki | LLM Wiki |
+| wiki:microdata | Microdata |
+| wiki:notation3 | Notation3 |
+| wiki:owl | OWL |
+| wiki:personal-knowledge | Personal Knowledge |
+| wiki:rdf | RDF |
+| wiki:shacl | SHACL |
+| wiki:sparql | SPARQL |
+| wiki:semantic-web | Semantic Web |
+| wiki:turtle | Turtle |
+| wiki:typescript | TypeScript |
 <!-- sparql:end -->
+

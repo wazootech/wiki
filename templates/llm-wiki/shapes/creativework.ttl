@@ -1,0 +1,19 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+schema:TechArticleShape a sh:NodeShape ;
+  sh:targetClass schema:TechArticle ;
+  sh:property [
+    sh:path schema:name ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "TechArticle must have exactly one name." ;
+  ] ;
+  sh:property [
+    sh:path schema:description ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:message "TechArticle must have a description summary." ;
+  ] .
