@@ -65,5 +65,5 @@ ORDER BY ?class
 | --- |
 | https://schema.org/SoftwareApplication |
 | https://schema.org/TechArticle |
-| https://schema.org/schema:WebPage |
+| https://schema.org/WebPage |
 <!-- sparql:end -->

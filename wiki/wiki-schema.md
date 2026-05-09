@@ -30,12 +30,11 @@ ORDER BY ?type
 | --- | --- |
 | wiki:wiki-cli | https://schema.org/SoftwareApplication |
 | wiki:custom-schemas-and-shapes | https://schema.org/TechArticle |
+| wiki:karpathy-llm-wiki | https://schema.org/TechArticle |
 | wiki:personal-knowledge-management | https://schema.org/TechArticle |
 | wiki:sparql-guide | https://schema.org/TechArticle |
 | wiki:wiki-schema | https://schema.org/TechArticle |
 | wiki:wiki-workflows | https://schema.org/TechArticle |
-| wiki:bella | https://schema.org/schema:WebPage |
-| wiki:dog | https://schema.org/schema:WebPage |
 <!-- sparql:end -->
 
 ## Shape constraints

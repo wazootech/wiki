@@ -103,6 +103,7 @@ ORDER BY ?name
 
 | Doc | Name |
 | --- | --- |
+| wiki:karpathy-llm-wiki | Andrej Karpathy's LLM Wiki and Farzapedia |
 | wiki:custom-schemas-and-shapes | Defining custom schemas, shapes, and axioms |
 | wiki:personal-knowledge-management | Personal knowledge management and semantic 2nd brains |
 | wiki:sparql-guide | SPARQL query guide |

@@ -9,7 +9,7 @@ about: wiki:wiki-cli
 
 Personal Knowledge Management (PKM) is the discipline of capturing, organizing, and synthesizing ideas to build a "second brain". Traditional PKM tools organize files with folders, tags, or un-typed markdown links. 
 
-By utilizing the [[wiki-cli]], this vault upgrades traditional un-structured note-taking into a **semantic knowledge graph**.
+By utilizing the [[wiki-cli]], this vault upgrades traditional un-structured note-taking into a **semantic knowledge graph**, directly embracing the modern LLM Wiki pattern popularized by [[karpathy-llm-wiki]].
 
 ---
 
@@ -55,6 +55,7 @@ ORDER BY ?name
 
 | Topic | Name |
 | --- | --- |
+| wiki:karpathy-llm-wiki | Andrej Karpathy's LLM Wiki and Farzapedia |
 | wiki:custom-schemas-and-shapes | Defining custom schemas, shapes, and axioms |
 | wiki:personal-knowledge-management | Personal knowledge management and semantic 2nd brains |
 | wiki:sparql-guide | SPARQL query guide |
