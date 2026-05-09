@@ -254,6 +254,15 @@ def load_graph(context: Context, infer: bool = True) -> Graph:
             except Exception:
                 pass
 
+    # Load static RDF imports from consolidated directories
+    for import_dir in getattr(context, "import_dirs", []):
+        if import_dir.exists():
+            for ttl_file in sorted(import_dir.glob("*.ttl")):
+                try:
+                    graph.parse(ttl_file, format="turtle")
+                except Exception:
+                    pass
+
     resolve_blank_nodes(graph, context.wiki_dir, context)
 
     if infer:

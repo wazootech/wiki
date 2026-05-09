@@ -193,21 +193,37 @@ def render_markdown_files(context: Context, graph: Any) -> int:
 
 @click.group()
 @click.option("--wiki-dir", default=None, help="Directory containing wiki markdown files.")
-@click.option("--shapes-dir", default=None, help="Directory containing SHACL shape files.")
-@click.option("--reasoning-dir", default=None, help="Directory containing OWL/RDFS axioms.")
+@click.option("--shapes-dir", default=None, help="Directory containing SHACL shape files (Legacy).")
+@click.option("--reasoning-dir", default=None, help="Directory containing OWL/RDFS axioms (Legacy).")
+@click.option("--import-dir", "cli_import_dirs", multiple=True, help="Additional directory of RDF data/ontologies to load into the central pool.")
 @click.option("--raw-dir", default=None, help="Directory containing raw markdown files.")
 @click.pass_context
-def main(ctx: click.Context, wiki_dir: Optional[str], shapes_dir: Optional[str], reasoning_dir: Optional[str], raw_dir: Optional[str]) -> None:
+def main(ctx: click.Context, wiki_dir: Optional[str], shapes_dir: Optional[str], reasoning_dir: Optional[str], cli_import_dirs: tuple[str, ...], raw_dir: Optional[str]) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     config = Context.load()
     if wiki_dir:
         config.wiki_dir = Path(wiki_dir)
     if shapes_dir:
         config.shapes_dir = Path(shapes_dir)
+        config.import_dirs.append(Path(shapes_dir))
     if reasoning_dir:
         config.reasoning_dir = Path(reasoning_dir)
+        config.import_dirs.append(Path(reasoning_dir))
+    if cli_import_dirs:
+        for d in cli_import_dirs:
+            config.import_dirs.append(Path(d))
     if raw_dir:
         config.raw_dir = Path(raw_dir)
+    
+    # Deduplicate while preserving order
+    seen = set()
+    unique_imports = []
+    for d in config.import_dirs:
+        if d not in seen:
+            seen.add(d)
+            unique_imports.append(d)
+    config.import_dirs = unique_imports
+
     ctx.obj = config
 
 
@@ -247,7 +263,7 @@ name: {title}
 def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, strict: bool) -> None:
     """Run unified checks: strict SHACL validation + style audits."""
     from urllib.parse import unquote
-    from .checking import load_shapes, FILENAME_REGEX, WIKILINK_REGEX, MARKDOWN_LINK_REGEX, run_checks, check_shacl_file
+    from .checking import FILENAME_REGEX, WIKILINK_REGEX, MARKDOWN_LINK_REGEX, run_checks, check_shacl_file
 
     if fix:
         if file:

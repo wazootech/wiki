@@ -58,24 +58,38 @@ class WikiConfig:
     def __init__(
         self,
         wiki_dir: str | Path = "wiki",
-        shapes_dir: str | Path = "shapes",
-        reasoning_dir: str | Path = "reasoning",
+        shapes_dir: str | Path | None = None,
+        reasoning_dir: str | Path | None = None,
         raw_dir: str | Path = "raw",
+        import_dirs: list[str | Path] | None = None,
         wiki_base: str = "https://wiki.example.org/",
         check: dict[str, str] | None = None,
         context: Context | None = None,
         content_predicate: str | None = None,
     ) -> None:
         self.wiki_dir = Path(wiki_dir)
-        self.shapes_dir = Path(shapes_dir)
-        self.reasoning_dir = Path(reasoning_dir)
         self.raw_dir = Path(raw_dir)
+        
+        # Support consolidated import_dirs, falling back to specific folders
+        self.import_dirs: list[Path] = []
+        if import_dirs:
+            self.import_dirs.extend(Path(d) for d in import_dirs)
+        if shapes_dir:
+            self.import_dirs.append(Path(shapes_dir))
+        if reasoning_dir:
+            self.import_dirs.append(Path(reasoning_dir))
+            
+        # Ensure uniqueness and existence check handled elsewhere, 
+        # but keep the variables for backward compat
+        self.shapes_dir = Path(shapes_dir) if shapes_dir else Path("shapes")
+        self.reasoning_dir = Path(reasoning_dir) if reasoning_dir else Path("reasoning")
+        
         self.wiki_base = wiki_base
         self.check = check if check is not None else {
             "filenameStyle": "warning",
             "internalLinks": "warning",
         }
-        self.context = context if context is not None else Context()
+        self.context = context if context is not None else Context({"wiki": wiki_base})
         self.content_predicate = content_predicate
 
     @property
@@ -112,12 +126,25 @@ class WikiConfig:
                                     prefixes[k] = v
                             context_obj = Context(prefixes)
 
+                        # Parse importDirs as a list or single string
+                        import_data = data.get("import_dirs") or data.get("importDirs") or []
+                        if isinstance(import_data, str):
+                            import_data = [import_data]
+                        elif not isinstance(import_data, list):
+                            import_data = []
+
+                        # Derive wiki_base intelligently from explicit property OR context fallback
+                        context_wiki_base = None
+                        if context_obj and "wiki" in context_obj.namespaces:
+                            context_wiki_base = str(context_obj.namespaces["wiki"])
+
                         return cls(
                             wiki_dir=data.get("wiki_dir") or data.get("wikiDir") or "wiki",
-                            shapes_dir=data.get("shapes_dir") or data.get("shapesDir") or "shapes",
-                            reasoning_dir=data.get("reasoning_dir") or data.get("reasoningDir") or "reasoning",
+                            shapes_dir=data.get("shapes_dir") or data.get("shapesDir"),
+                            reasoning_dir=data.get("reasoning_dir") or data.get("reasoningDir"),
+                            import_dirs=import_data,
                             raw_dir=data.get("raw_dir") or data.get("rawDir") or "raw",
-                            wiki_base=data.get("wiki_base") or data.get("wikiBase") or "https://wiki.example.org/",
+                            wiki_base=data.get("wiki_base") or data.get("wikiBase") or context_wiki_base or "https://wiki.example.org/",
                             check=data.get("check"),
                             context=context_obj,
                             content_predicate=data.get("content_predicate") or data.get("contentPredicate"),
