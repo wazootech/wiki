@@ -58,22 +58,21 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertTrue(any("Broken Markdown link [missing.md]" in w for w in warnings))
 
     def test_load_shapes_edge_cases(self) -> None:
-        """Test load_shapes handles missing folders and syntax errors gracefully."""
-        # Non-existent directory
+        """Test load_shapes behaves predictably with different underlying graph states."""
+        from wiki_cli.rdf import load_graph
+        from rdflib import Graph
+
+        # Empty graph
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(shapes_dir=Path(tmpdir) / "non-existent")
-            shapes = load_shapes(config)
+            data_graph = Graph()
+            shapes = load_shapes(data_graph)
             self.assertEqual(len(shapes), 0)
             
-            # Invalid Turtle file
-            shapes_dir = Path(tmpdir) / "shapes"
-            shapes_dir.mkdir()
-            invalid_ttl = shapes_dir / "invalid.ttl"
-            invalid_ttl.write_text("invalid turtle text", encoding="utf-8")
-            
-            config_with_invalid = WikiConfig(shapes_dir=shapes_dir)
-            shapes_invalid = load_shapes(config_with_invalid)
-            self.assertEqual(len(shapes_invalid), 0)
+            # Loading from configuration with missing directories
+            config = WikiConfig(shapes_dir=Path(tmpdir) / "non-existent")
+            data_graph_conf = load_graph(config, infer=False)
+            shapes_conf = load_shapes(data_graph_conf)
+            self.assertEqual(len(shapes_conf), 0)
 
     def test_check_shacl_file_and_all(self) -> None:
         """Test check_shacl_file and check_shacl_all for conformance."""

@@ -53,7 +53,7 @@ class TestRDFFrontmatter(unittest.TestCase):
     def test_resolve_object_datatypes(self) -> None:
         """Test resolve_object maps booleans, numbers, HTTP URIs, None, and strings correctly."""
         graph = Graph()
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
         
         # HTTP URI
         resolve_object("url", "https://google.com", graph, subject, self.context)
@@ -87,7 +87,7 @@ class TestRDFFrontmatter(unittest.TestCase):
             }
         }
         graph = frontmatter_to_graph(data, self.context)
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
 
         # Verify name predicate
         name_pred = self.context.namespaces["schema"]["name"]
@@ -118,7 +118,7 @@ class TestRDFFrontmatter(unittest.TestCase):
             }
         }
         graph = frontmatter_to_graph(data, self.context)
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
         address_pred = self.context.namespaces["schema"]["address"]
         blank = list(graph.objects(subject, address_pred))[0]
         
@@ -137,7 +137,7 @@ class TestRDFFrontmatter(unittest.TestCase):
             }
         }
         graph = frontmatter_to_graph(data, self.context)
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
         spouse_pred = self.context.namespaces["schema"]["spouse"]
         spouse_obj = list(graph.objects(subject, spouse_pred))[0]
         
@@ -155,7 +155,7 @@ class TestRDFFrontmatter(unittest.TestCase):
             ]
         }
         graph = frontmatter_to_graph(data, self.context)
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
         address_pred = self.context.namespaces["schema"]["address"]
         blanks = list(graph.objects(subject, address_pred))
         self.assertEqual(len(blanks), 2)
@@ -175,7 +175,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         body_text = "Gregory is a software engineer."
         
         graph = frontmatter_to_graph(data, self.config, body=body_text)
-        subject = URIRef("wiki:gregory")
+        subject = URIRef(self.context.namespaces["wiki"]["gregory"])
         
         text_pred = self.context.namespaces["schema"]["text"]
         self.assertTrue((subject, text_pred, Literal(body_text)) in graph)
@@ -190,15 +190,16 @@ class TestRDFFrontmatter(unittest.TestCase):
         
         # Missing @id, with file_id
         g_file = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc")
-        self.assertTrue((URIRef("https://book.etok.me/wiki/doc.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file)
+        base = str(self.context.namespaces["wiki"])
+        self.assertTrue((URIRef(f"{base}doc.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file)
         
         # Missing @id, type is Person, givenName & familyName
         g_person = frontmatter_to_graph({"@type": "Person", "givenName": "Alice", "familyName": "Smith"}, self.config)
-        self.assertTrue((URIRef("https://book.etok.me/wiki/alice-smith.md"), RDF.type, self.context.namespaces["schema"]["Person"]) in g_person)
+        self.assertTrue((URIRef(f"{base}alice-smith.md"), RDF.type, self.context.namespaces["schema"]["Person"]) in g_person)
 
         # Missing @id, type is not Person, name is present
         g_page = frontmatter_to_graph({"@type": "WebPage", "name": "Some Page"}, self.config)
-        self.assertTrue((URIRef("https://book.etok.me/wiki/some-page.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_page)
+        self.assertTrue((URIRef(f"{base}some-page.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_page)
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
@@ -241,8 +242,8 @@ spouse:
             # 2. Test load_graph and blank node resolution
             graph = load_graph(config, infer=False)
             
-            # Spouse blank node should resolve to URIRef("wiki:gregory")
-            subject = URIRef("wiki:bella")
+            # Spouse blank node should resolve correctly
+            subject = URIRef(config.namespaces["wiki"]["bella"])
             spouse_pred = config.namespaces["schema"]["spouse"]
             spouse_objs = list(graph.objects(subject, spouse_pred))
             self.assertEqual(len(spouse_objs), 1)
