@@ -13,7 +13,7 @@ An elegant, pure, and idiomatic Python command-line interface for managing a sem
 
 ## Installation
 
-Install the package and its dependencies using `uv` (recommended) or `pip`:
+### From within this repo (editable)
 
 ```bash
 # Using uv (fastest)
@@ -22,6 +22,15 @@ uv pip install -e .
 # Using standard pip
 pip install -e .
 ```
+
+### Global install (use from any directory)
+
+```bash
+# From the repo root
+uv pip install -e /path/to/wiki-cli
+```
+
+Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
 
 ## Subcommand guide
 
@@ -99,17 +108,23 @@ SELECT ?name ?email WHERE {
 ````
 
 ### `export`
-Compile and export parsed **Frontmatter** blocks of documents into a single canonical JSON-LD representation.
+Compile and export parsed **Frontmatter** blocks of documents in a supported RDF format.
 
 ```bash
-# Export parsed frontmatter of the entire wiki as JSON-LD
+# Export parsed frontmatter of the entire wiki as raw JSON-LD
 wiki export
 
-# Export parsed frontmatter of a single document
+# Export a single file
 wiki export wiki/gregory.md
 
-# Write exported JSON-LD to a file
-wiki export -o wiki.jsonld
+# Export as expanded JSON-LD using the config for namespace resolution
+wiki export -c . wiki/rdf.md -f json-ld
+
+# Export in other RDF formats (turtle, xml, n3, nt, trig, nquads)
+wiki export -c . wiki/rdf.md -f turtle
+
+# Write to a file
+wiki export -f json-ld -o wiki-export.json
 ```
 
 
