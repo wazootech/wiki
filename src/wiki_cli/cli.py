@@ -3,190 +3,17 @@
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 import click
 
 from .config import WikiConfig as Context
+from .format import run_query, process_rdf_form
+from .render import render_markdown_files
 from .parser import normalize_all, normalize_frontmatter_str, frontmatter_from_path
-from .graph import load_graph, graph_stats, frontmatter_to_graph
+from .graph import load_graph, graph_stats
 from .audit import check_shacl_file, run_checks
-
-
-def table_format(result: Any) -> str:
-    """Format SPARQL SELECT results as a simple ASCII table."""
-    rows = list(result)
-    if not rows:
-        return "(no results)"
-
-    try:
-        keys = [str(v) for v in result.vars]
-    except Exception:
-        keys = []
-
-    if not keys and rows:
-        first = rows[0]
-        if isinstance(first, tuple):
-            keys = [f"?v{i}" for i in range(len(first))]
-        elif hasattr(first, "keys"):
-            keys = list(first.keys())
-        else:
-            return str(rows)
-
-    if not keys:
-        return "(empty query)"
-
-    col_widths = [len(str(k)) for k in keys]
-    for row in rows:
-        if isinstance(row, tuple):
-            vals = [str(v) for v in row]
-        else:
-            vals = [str(row.get(k, "")) for k in keys]
-        for i, val in enumerate(vals):
-            if i < len(col_widths):
-                col_widths[i] = max(col_widths[i], len(val))
-
-    header = " | ".join(str(k).ljust(col_widths[i]) for i, k in enumerate(keys))
-    sep = "-+-".join("-" * w for w in col_widths)
-    lines = [header, sep]
-    for row in rows:
-        if isinstance(row, tuple):
-            vals = [str(v) for v in row]
-        else:
-            vals = [str(row.get(k, "")) for k in keys]
-        line = " | ".join(
-            vals[i].ljust(col_widths[i]) if i < len(vals) else "" for i in range(len(keys))
-        )
-        lines.append(line)
-
-    return "\n".join(lines)
-
-
-def markdown_format(result: Any, wiki_base: str | None = None) -> str:
-    """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering wiki links when applicable."""
-    rows = list(result)
-    if not rows:
-        return "(no results)"
-
-    try:
-        keys = [str(v) for v in result.vars]
-    except Exception:
-        keys = []
-
-    if not keys and rows:
-        first = rows[0]
-        if isinstance(first, tuple):
-            keys = [f"v{i}" for i in range(len(first))]
-        elif hasattr(first, "keys"):
-            keys = list(first.keys())
-        else:
-            return str(rows)
-
-    if not keys:
-        return "(empty query)"
-
-    headers = [k.capitalize() for k in keys]
-    header_line = "| " + " | ".join(headers) + " |"
-    divider_line = "| " + " | ".join(["---"] * len(keys)) + " |"
-
-    lines = [header_line, divider_line]
-    for row in rows:
-        if isinstance(row, tuple):
-            vals = []
-            for v in row:
-                if v is None:
-                    vals.append("")
-                else:
-                    s = str(v)
-                    if wiki_base and s.startswith(wiki_base):
-                        # Extract the relative slug and clean up .md suffixes
-                        slug = s[len(wiki_base):]
-                        if slug.endswith(".md"):
-                            slug = slug[:-3]
-                        if "/" not in slug: # Simple check to verify it's a direct page
-                            s = f"[[{slug}]]"
-                    vals.append(s)
-        else:
-            vals = []
-            for k in keys:
-                v = row.get(k)
-                if v is None:
-                    vals.append("")
-                else:
-                    s = str(v)
-                    if wiki_base and s.startswith(wiki_base):
-                        slug = s[len(wiki_base):]
-                        if slug.endswith(".md"):
-                            slug = slug[:-3]
-                        if "/" not in slug:
-                            s = f"[[{slug}]]"
-                    vals.append(s)
-        lines.append("| " + " | ".join(vals) + " |")
-
-    return "\n".join(lines)
-
-
-def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None) -> str:
-    """Run a SPARQL SELECT or CONSTRUCT query against the graph, returning formatted output."""
-    q = query.strip().upper()
-    is_construct = q.startswith("CONSTRUCT") or q.startswith("DESCRIBE")
-
-    if is_construct:
-        result = graph.query(query)
-        if output_format in ("turtle", "nt", "n3"):
-            return result.serialize(format=output_format)
-        return result.serialize(format="turtle")
-
-    result = graph.query(query)
-
-    if output_format == "json":
-        return result.serialize(format="json").decode("utf-8")
-    elif output_format == "csv":
-        return result.serialize(format="csv").decode("utf-8")
-    elif output_format == "tsv":
-        return result.serialize(format="tsv").decode("utf-8")
-    elif output_format in ("markdown", "md"):
-        return markdown_format(result, wiki_base=wiki_base)
-    else:
-        return table_format(result)
-
-
-# Matches the starting comment, query inside, and ending comment block with SPARQL inside
-SPARQL_BLOCK_REGEX = re.compile(
-    r"<!--\s*sparql:start\s*-->\s*```sparql\s*(.*?)\s*```\s*(.*?)\s*<!--\s*sparql:end\s*-->",
-    re.DOTALL | re.IGNORECASE
-)
-
-
-def render_markdown_files(context: Context, graph: Any) -> int:
-    """Iterate over all markdown files, parse and replace dynamic SPARQL sections inline."""
-    count = 0
-    if not context.wiki_dir.exists():
-        return 0
-        
-    for md_file in context.wiki_dir.glob("*.md"):
-        content = md_file.read_text(encoding="utf-8")
-        modified = False
-
-        def replacer(match: re.Match) -> str:
-            nonlocal modified
-            query = match.group(1).strip()
-            try:
-                rendered_markdown = run_query(graph, query, output_format="markdown", wiki_base=context.wiki_base)
-                modified = True
-                return f"<!-- sparql:start -->\n```sparql\n{query}\n```\n\n{rendered_markdown}\n<!-- sparql:end -->"
-            except Exception as e:
-                click.echo(f"Error rendering query in {md_file.name}: {e}", err=True)
-                return str(match.group(0))
-
-        new_content = SPARQL_BLOCK_REGEX.sub(replacer, content)
-        if modified and new_content != content:
-            md_file.write_text(new_content, encoding="utf-8")
-            count += 1
-
-    return count
 
 
 @click.group()
@@ -421,31 +248,6 @@ def render(context: Context, no_inference: bool, verbose: bool) -> None:
         click.echo(f"Successfully updated {count} markdown files with rendered SPARQL outputs.")
 
 
-def _process_rdf_form(data: dict[str, Any], file_stem: str, context: Context, form: str) -> Any:
-    """Process JSON-LD dictionary into specified serialization form (raw, compact, expanded)."""
-    if form == "raw":
-        return data
-
-    # Convert dictionary into internal RDF Graph
-    graph = frontmatter_to_graph(data, context, file_id=file_stem)
-
-    if form == "expanded":
-        # Standard raw JSON-LD serialization with no context produces expanded form
-        serialized = graph.serialize(format="json-ld", indent=2)
-        return json.loads(serialized)
-
-    # Construct compaction context mapping from defined namespaces
-    ctx_map = {}
-    for prefix, namespace in context.namespaces.items():
-        if prefix == "schema":
-            ctx_map["@vocab"] = str(namespace)
-        else:
-            ctx_map[prefix] = str(namespace)
-
-    serialized = graph.serialize(format="json-ld", context=ctx_map, indent=2)
-    return json.loads(serialized)
-
-
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="File to write canonical JSON-LD array.")
@@ -459,7 +261,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], form:
             click.echo(f"No valid frontmatter block found in {file.name}", err=True)
             sys.exit(1)
             
-        processed_rdf = _process_rdf_form(data, file.stem, context, form)
+        processed_rdf = process_rdf_form(data, file.stem, context, form)
         
         payload = {
             "name": file.name,
@@ -478,7 +280,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], form:
         for md_file in sorted(context.wiki_dir.glob("*.md")):
             data = frontmatter_from_path(md_file, content_predicate=context.content_predicate)
             if data:
-                processed_rdf = _process_rdf_form(data, md_file.stem, context, form)
+                processed_rdf = process_rdf_form(data, md_file.stem, context, form)
                 converted_list.append({
                     "name": md_file.name,
                     "rdf": processed_rdf
