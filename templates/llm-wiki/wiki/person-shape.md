@@ -12,7 +12,7 @@ This document defines the canonical shape for `schema:Person` nodes in this vaul
 ```turtle
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix schema: <https://schema.org/> .
-@prefix wiki: <https://book.etok.me/wiki/> .
+@prefix wiki: <https://ethanthatonekid.github.io/wiki-cli/templates/llm-wiki/wiki/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 schema:PersonShape a sh:NodeShape ;

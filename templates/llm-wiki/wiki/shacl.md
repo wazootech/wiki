@@ -24,7 +24,7 @@ To create a custom constraint for a class (e.g., a `Project` class):
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix wiki: <https://book.etok.me/wiki/> .
+@prefix wiki: <https://ethanthatonekid.github.io/wiki-cli/templates/llm-wiki/wiki/> .
 
 schema:ProjectShape a sh:NodeShape ;
   sh:targetClass schema:Project ;
