@@ -118,8 +118,32 @@ class TestRDFFrontmatter(unittest.TestCase):
         # Verify properties on the blank node
         street_pred = self.context.namespaces["schema"]["street"]
         city_pred = self.context.namespaces["schema"]["city"]
+
         self.assertTrue((blank, street_pred, Literal("123 Main St")) in graph)
         self.assertTrue((blank, city_pred, Literal("Seattle")) in graph)
+
+    def test_native_microdata_parsing(self) -> None:
+        """Test that the dynamically registered microdata parser extracts triples via format='microdata'."""
+        html_content = """
+        <div itemscope itemtype="https://schema.org/Person">
+            <span itemprop="name">John Microdata</span>
+            <a itemprop="url" href="https://microdata.io">Page</a>
+        </div>
+        """
+        g = Graph()
+        # Invoke native plugin
+        g.parse(data=html_content, format="microdata")
+        
+        # Verify contents were extracted
+        self.assertGreater(len(g), 0)
+        found_name = False
+        for s, p, o in g:
+            if str(p) == "https://schema.org/name" and str(o) == "John Microdata":
+                found_name = True
+            if str(p) == "https://schema.org/url":
+                self.assertEqual(str(o), "https://microdata.io")
+        
+        self.assertTrue(found_name, "Failed to find Microdata name literal in graph.")
 
     def test_nested_typed_dict_creates_typed_blank_node(self) -> None:
         """Test that a nested dictionary with @type creates a typed blank node."""

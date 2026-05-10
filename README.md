@@ -151,7 +151,7 @@ Recommended workflows:
 
 The Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
 
-#### 1. Defining OWL Classes and SHACL Shapes recursively in Frontmatter
+#### Defining OWL classes and SHACL shapes recursively in frontmatter
 Because our frontmatter parser natively supports nested dictionary conversion to RDF blank nodes, you can define complete validation shapes and ontological classes inside any document's frontmatter:
 
 ```yaml
@@ -170,28 +170,24 @@ sh:property:
 Requires that all `wiki:Dog` documents must declare a name.
 ```
 
-#### 2. Native Microdata via Turtle Blocks
-You are not limited to YAML headers! For rich semantic embedding directly inside your content flow (comparable to HTML5 Microdata), you can simply declare raw RDF using standard ` ```turtle ` codeblocks anywhere in the markdown body. The CLI extracts and injects these automatically into the unified pool.
+#### Native microdata via HTML attributes
+You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool.
 
 ````markdown
 # Product X Overview
 Product X is state-of-the-art.
 
-```turtle
-@prefix schema: <https://schema.org/> .
-@prefix wiki: <https://wiki.example.org/> .
-
-wiki:product-x a schema:Product ;
-    schema:name "Quantum Processor X" ;
-    schema:offers [
-        a schema:Offer ;
-        schema:price "999.99" ;
-        schema:priceCurrency "USD"
-    ] .
-```
+<div itemscope itemtype="https://schema.org/Product">
+  Our latest model is the <span itemprop="name">Quantum Processor X</span>.
+  
+  <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+    Price: <span itemprop="price">999.99</span> 
+    Currency: <meta itemprop="priceCurrency" content="USD" />
+  </div>
+</div>
 ````
 
-#### 3. Decentralized OWL Inference
+#### Decentralized OWL inference
 Because the tool integrates a full `owlrl` engine over the entire wiki graph, you can scatter ontological rules across disparate markdown pages and the CLI will automatically compute the logical closure. 
 
 Define a class hierarchy inside a shape file:
@@ -225,7 +221,7 @@ SELECT ?name WHERE {
 }
 ```
 
-#### 4. Opt-in full-text SPARQL over Markdown Content
+#### Opt-in full-text SPARQL over markdown content
 By enabling `contentPredicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (e.g. `schema:text`). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql

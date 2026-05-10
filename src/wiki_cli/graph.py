@@ -5,8 +5,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import Any, Optional
-from rdflib import Graph, Literal, URIRef, RDF
+from bs4 import BeautifulSoup, Tag
+from rdflib import Graph, Literal, URIRef, RDF, BNode
 from rdflib.namespace import XSD
+from rdflib.parser import Parser, StringInputSource
+from rdflib.plugin import register
 
 from .config import Context
 from .parser import frontmatter_from_path
@@ -199,6 +202,96 @@ def resolve_blank_nodes(graph: Graph, wiki_dir: Path, context: Context) -> Graph
     return graph
 
 
+
+class MicrodataParser(Parser):
+    """Custom RDFLib parser wrapper enabling native `format='microdata'` support via BeautifulSoup."""
+    def parse(self, source: Any, graph: Graph, **kwargs: Any) -> None:
+        content = ""
+        if hasattr(source, "read"):
+            content = source.read()
+        elif isinstance(source, StringInputSource):
+            content = source.getByteStream().read().decode("utf-8")
+        else:
+            # Attempt fallback loading
+            try:
+                content = str(source)
+            except Exception:
+                return
+        
+        if isinstance(content, bytes):
+            content = content.decode("utf-8", errors="ignore")
+            
+        try:
+            soup = BeautifulSoup(content, "html.parser")
+        except Exception:
+            return
+
+        def process_scope(elem: Tag, parent_subject: Any = None, incoming_predicate: Any = None) -> None:
+            if elem.has_attr("itemid"):
+                subject = URIRef(elem["itemid"])
+            else:
+                subject = BNode()
+            
+            if elem.has_attr("itemtype"):
+                graph.add((subject, RDF.type, URIRef(elem["itemtype"])))
+                
+            if parent_subject and incoming_predicate:
+                graph.add((parent_subject, incoming_predicate, subject))
+
+            def gather_props(node: Any, direct_props: list[Tag]) -> None:
+                for child in node.children:
+                    if not isinstance(child, Tag):
+                        continue
+                    if child.has_attr("itemprop"):
+                        direct_props.append(child)
+                    if not child.has_attr("itemscope"):
+                        gather_props(child, direct_props)
+
+            properties: list[Tag] = []
+            gather_props(elem, properties)
+
+            for prop_elem in properties:
+                prop_names = str(prop_elem.get("itemprop", "")).split()
+                preds = []
+                for p in prop_names:
+                    preds.append(URIRef(p) if ":" in p else URIRef(f"https://schema.org/{p}"))
+                
+                if prop_elem.has_attr("itemscope"):
+                    for pred in preds:
+                        process_scope(prop_elem, parent_subject=subject, incoming_predicate=pred)
+                else:
+                    tag_name = prop_elem.name.lower()
+                    if tag_name in ("a", "link", "area"):
+                        val = prop_elem.get("href", "")
+                        obj = URIRef(val) if (isinstance(val, str) and (val.startswith("http") or ":" in val)) else Literal(val)
+                    elif tag_name in ("audio", "embed", "iframe", "img", "source", "track", "video"):
+                        val = prop_elem.get("src", "")
+                        obj = URIRef(val) if (isinstance(val, str) and (val.startswith("http") or ":" in val)) else Literal(val)
+                    elif tag_name == "meta":
+                        obj = Literal(prop_elem.get("content", ""))
+                    elif tag_name == "time":
+                        obj = Literal(prop_elem.get("datetime") or prop_elem.get_text().strip())
+                    else:
+                        obj = Literal(prop_elem.get_text().strip())
+                    for pred in preds:
+                        graph.add((subject, pred, obj))
+
+        all_scopes = soup.find_all(attrs={"itemscope": True})
+        for s in all_scopes:
+            parent = s.parent
+            is_nested = False
+            while parent:
+                if isinstance(parent, Tag) and parent.has_attr("itemscope"):
+                    is_nested = True
+                    break
+                parent = parent.parent
+            if not is_nested:
+                process_scope(s)
+
+# Dynamically register our custom parser to unlock native `format="microdata"` support globally
+register("microdata", Parser, "wiki_cli.graph", "MicrodataParser")
+
+
 def load_graph(context: Context, infer: bool = True) -> Graph:
     """Load all markdown files into a unified Graph, resolving blank nodes."""
     graph = Graph()
@@ -219,14 +312,20 @@ def load_graph(context: Context, infer: bool = True) -> Graph:
                         if len(parts) > 2:
                             body = parts[2].strip()
                     graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+                
+                # 2. Extract and parse standard HTML5 Microdata attributes via native plugin loader
+                try:
+                    graph.parse(data=content, format="microdata")
+                except Exception:
+                    pass
 
-                # 2. Extract and parse any ```turtle blocks natively into the graph
+                # 3. Extract and parse any ```turtle blocks natively into the graph
                 turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
                 for block in turtle_blocks:
                     try:
                         graph.parse(data=block.strip(), format="turtle")
                     except Exception:
-                        pass # Ignore parsing errors in individual code blocks
+                        pass
             except Exception:
                 pass
 
@@ -244,6 +343,11 @@ def load_graph(context: Context, infer: bool = True) -> Graph:
                         if len(parts) > 2:
                             body = parts[2].strip()
                     graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+                
+                try:
+                    graph.parse(data=content, format="microdata")
+                except Exception:
+                    pass
 
                 turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
                 for block in turtle_blocks:

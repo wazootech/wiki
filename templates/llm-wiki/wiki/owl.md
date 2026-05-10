@@ -13,33 +13,27 @@ OWL adds more vocabulary for describing properties and classes than basic RDF sc
 
 In this vault, OWL is used by the reasoning engine in the [[wiki-cli]] to perform deductive expansion of your graph (e.g., using OWL-RL rules).
 
-## Defining custom RDFS/OWL axioms (reasoning)
+## Defining custom RDFS/OWL axioms
+Custom reasoning rules and class hierarchies can be declared natively in file Frontmatter or standalone `.ttl` imports. The reasoning engine automatically scans the combined pool.
 
-Custom reasoning rules and class hierarchies are stored in your configured `reasoning/` directory. They expand your graph through OWL-RL deductive reasoning.
+To define a hierarchy such that `TechArticle` is a specialized subset of `schema:CreativeWork`, you can declare it directly in the ontology:
 
-For example, to define that `Project` is a sub-class of `schema:CreativeWork`, and that a custom relationship `wiki:lead` is a sub-property of `schema:contributor`:
-
-1. Create a file named `reasoning/project-axioms.ttl`.
-2. Add RDFS/OWL assertion triples:
-
-```turtle
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <https://schema.org/> .
-@prefix wiki: <https://book.etok.me/wiki/> .
-
-schema:Project rdfs:subClassOf schema:CreativeWork .
-wiki:lead rdfs:subPropertyOf schema:contributor .
+```yaml
+# wiki/tech-article.md
+---
+id: wiki:TechArticle
+type: owl:Class
+rdfs:subClassOf: schema:CreativeWork
+---
 ```
 
 ### Deductive reasoning consequences
 
 Under OWL-RL reasoning rules, when you have a page:
 ```yaml
-type: Project
-name: Semantic Brain
-lead: wiki:gregory
+type: TechArticle
+name: Learning SPARQL
 ```
 
 The reasoning engine automatically infers and adds the following facts to your graph:
 * The page is also a `schema:CreativeWork`.
-* `wiki:gregory` is a `schema:contributor` to the project.
