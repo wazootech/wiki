@@ -11,6 +11,7 @@ dependencies = [
     "pyyaml>=6.0.1",
     "owlrl>=6.0.2",
     "beautifulsoup4>=4.14.3",
+    "markdown-it-py>=3.0.0",
 ]
 
 [project.scripts]

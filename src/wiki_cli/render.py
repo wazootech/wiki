@@ -1,4 +1,4 @@
-"""Dynamic SPARQL block rendering in markdown files."""
+"""Dynamic SPARQL block rendering and wikilink-to-HTML conversion."""
 
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ import re
 from typing import Any
 
 import click
+from markdown_it import MarkdownIt
 
 from .format import run_query
+from mdit_py_plugins.wikilink import wikilink_plugin
 
 # Matches the starting comment, query inside, and ending comment block with SPARQL inside
 SPARQL_BLOCK_REGEX = re.compile(
@@ -43,3 +45,10 @@ def render_markdown_files(context: Any, graph: Any) -> int:
             count += 1
 
     return count
+
+
+def render_markdown(text: str) -> str:
+    """Render wikilinks in *text* to HTML anchor tags, leaving all other markdown intact."""
+    md = MarkdownIt("gfm-like", {"linkify": False})
+    md.use(wikilink_plugin)
+    return md.render(text)
