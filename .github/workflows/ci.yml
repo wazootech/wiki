@@ -33,6 +33,9 @@ jobs:
         PYTHONPATH: src
       run: uv run python -m unittest discover -s tests
 
-    - name: Run Wiki Style and SHACL Audits
+    - name: Run Template Wiki Style and SHACL Audits
       run: uv run wiki check --strict -v
       working-directory: templates/llm-wiki
+
+    - name: Run Docs Wiki Style and SHACL Audits
+      run: uv run wiki -c docs/wiki.json check --strict -v

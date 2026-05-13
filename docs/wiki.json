@@ -1,0 +1,10 @@
+{
+  "inputDirs": [
+    "wiki"
+  ],
+  "contentPredicate": "schema:text",
+  "context": {
+    "schema": "https://schema.org/",
+    "wiki": "https://ethanthatonekid.github.io/wiki-cli/wiki/"
+  }
+}

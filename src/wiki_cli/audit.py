@@ -57,6 +57,22 @@ def load_shapes(data_graph: Graph) -> Graph:
             FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
             ?s ?p ?o .
         }
+        UNION
+        {
+            # Recursively fetch entire RDF list structures referenced by SHACL properties
+            ?x ?shaclProp ?listHead .
+            FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
+            ?listHead (rdf:rest)* ?s .
+            ?s ?p ?o .
+        }
+        UNION
+        {
+            # Recursively fetch the contents/triples of elements inside those RDF lists
+            ?x ?shaclProp ?listHead .
+            FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
+            ?listHead (rdf:rest)*/rdf:first ?s .
+            ?s ?p ?o .
+        }
     }
     """
     shapes_graph = data_graph.query(query).graph

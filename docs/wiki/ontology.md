@@ -12,7 +12,7 @@ This document hosts explicit RDFS and OWL semantic relations that drive automati
 ```turtle
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
-@prefix wiki: <https://ethanthatonekid.github.io/wiki-cli/templates/llm-wiki/wiki/> .
+@prefix wiki: <https://ethanthatonekid.github.io/wiki-cli/wiki/> .
 
 # Classes
 schema:Project rdfs:subClassOf schema:CreativeWork .
