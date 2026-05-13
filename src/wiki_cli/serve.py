@@ -116,9 +116,10 @@ def run_server(
     wiki_dir: Path,
     host: str = "127.0.0.1",
     port: int = 8080,
+    base_url: str = "/wiki",
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    server = create_server(wiki_dir, host=host, port=port)
+    server = create_server(wiki_dir, host=host, port=port, base_url=base_url)
 
     def shutdown(*_: Any) -> None:
         print("\nShutting down server...")

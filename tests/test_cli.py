@@ -659,6 +659,43 @@ Hello from server test.
             except URLError:
                 self.fail("Server did not respond in time")
 
+    def test_server_serve_custom_base_url(self) -> None:
+        """Test wiki serve with custom --base-url."""
+        import socket
+        from wiki_cli.serve import run_server
+
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "bob.md").write_text("""---
+type: Person
+name: Bob
+---
+# Bob
+Custom base URL test.
+""", encoding="utf-8")
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+            sock.close()
+
+            server_thread = threading.Thread(
+                target=run_server,
+                args=(wiki_dir,),
+                kwargs={"host": "127.0.0.1", "port": port, "base_url": ""},
+                daemon=True,
+            )
+            server_thread.start()
+            time.sleep(0.5)
+
+            try:
+                resp = urlopen(f"http://127.0.0.1:{port}/bob", timeout=5)
+                html = resp.read().decode("utf-8")
+                self.assertIn("Custom base URL test", html)
+                self.assertIn("Bob", html)
+            except URLError:
+                self.fail("Server did not respond in time")
+
     def test_global_config_flag(self) -> None:
         """Test -c/--config: loads wiki.yaml from a specified directory."""
         runner = CliRunner()
