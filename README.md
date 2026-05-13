@@ -4,7 +4,7 @@ An elegant, pure, and idiomatic Python command-line interface for managing a sem
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Python CLI**: Subcommands mapped elegantly (`validate`, `query`, `render`, `frontmatter`).
+- **Pure Python CLI**: Seven subcommands — `create`, `check`, `query`, `render`, `build`, `serve`, `export`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support** Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
@@ -43,6 +43,16 @@ wiki create "My New Page"
 
 # Scaffold a new document with verbose output
 wiki create "My New Page" -v
+```
+
+The generated file looks like:
+
+```yaml
+---
+id: wiki:my-new-page
+type: schema:WebPage
+name: My New Page
+---
 ```
 
 ### `check`
@@ -107,8 +117,154 @@ SELECT ?name ?email WHERE {
 <!-- sparql:end -->
 ````
 
+### `build`
+Generate a static HTML site from your wiki markdown files for deployment to GitHub Pages or any static host.
+
+```bash
+# Build site (default: <slug>.html style)
+wiki build
+
+# Build with pretty directory URLs (<slug>/index.html)
+wiki build --url-style dir
+
+# Build to a custom directory with verbose output
+wiki build -o docs -v
+
+# Build for a project site under /my-wiki/
+wiki build --base-url /my-wiki -o _site
+
+# Build with pages at root level (no prefix)
+wiki build --base-url '' --output-dir docs
+```
+
+The `--url-style` flag controls how pages are written to disk and linked:
+
+- `file` (default): `_site/wiki/alice.html` on disk, `.html` in generated links
+- `dir`: `_site/wiki/alice/index.html` on disk, clean `/wiki/alice` in links
+
+The `--base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{slug}`. Set it to an empty string for root-level URLs.
+
+Output structure (default `--base-url /wiki` + `--url-style file`):
+```
+_site/
+└── wiki/
+    ├── index.html                  # Wiki index at /wiki/
+    ├── alice.html                  # Page at /wiki/alice.html
+    ├── bob.html
+    └── bob/
+        └── early-life.html         # H2 section at /wiki/bob/early-life.html
+```
+
+With `--url-style dir`:
+```
+_site/
+└── wiki/
+    ├── index.html                  # Wiki index at /wiki/
+    ├── alice/
+    │   └── index.html              # Page at /wiki/alice
+    ├── bob/
+    │   └── index.html
+    └── bob/
+        └── early-life/
+            └── index.html          # H2 section at /wiki/bob/early-life
+```
+
+With `--base-url /my-wiki` + `--url-style dir`:
+```
+_site/
+└── my-wiki/
+    ├── index.html                  # Wiki index at /my-wiki/
+    ├── alice/
+    │   └── index.html              # Page at /my-wiki/alice
+    └── ...
+```
+
+The `--base-url` flag controls the full URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{slug}`. Set it to an empty string for root-level URLs.
+
+Output structure (default `--base-url /wiki`):
+```
+_site/
+└── wiki/
+    ├── index.html                  # Wiki index at /wiki/
+    ├── alice.html                  # Page at /wiki/alice
+    ├── bob.html
+    └── bob/
+        └── early-life.html         # H2 section at /wiki/bob/early-life
+```
+
+With `--base-url /my-wiki`:
+```
+_site/
+└── my-wiki/
+    ├── index.html                  # Wiki index at /my-wiki/
+    ├── alice.html                  # Page at /my-wiki/alice
+    └── ...
+```
+
+#### GitHub Pages deployment
+
+Create `.github/workflows/deploy-pages.yml` in your wiki repository:
+
+```yaml
+name: Deploy wiki to Pages
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install wiki-cli
+      - run: wiki build -o _site
+      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/deploy-pages@v4
+```
+
+Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
+
+For project sites (e.g. `username.github.io/my-wiki`), update the build step:
+```yaml
+      - run: wiki build --base-url /my-wiki/wiki -o _site
+```
+
+### `serve`
+Start a local HTTP server for browsing the wiki during development. Serves raw markdown files from the wiki directory — no server-side rendering. Use `wiki build` first and serve the output directory with a proper static server for production.
+
+```bash
+# Default: http://127.0.0.1:8080
+wiki serve
+
+# Custom host and port
+wiki serve --host 0.0.0.0 --port 3000
+```
+
 ### `export`
 Compile and export parsed **Frontmatter** blocks of documents in a supported RDF format.
+
+When run without a file argument, exports all documents in the wiki directory.
+
+**Note:** Output is always wrapped in a JSON structure — even for non-JSON formats. Each file becomes an object with `name` (the filename) and `rdf` (the serialized content). For example, `wiki export -f turtle` produces:
+
+```json
+[
+  {
+    "name": "gregory.md",
+    "rdf": "@prefix schema: <https://schema.org/> ..."
+  }
+]
+```
 
 ```bash
 # Export parsed frontmatter of the entire wiki as raw JSON-LD
@@ -127,6 +283,18 @@ wiki export -c . wiki/rdf.md -f turtle
 wiki export -f json-ld -o wiki-export.json
 ```
 
+
+### Global options
+
+These flags can be used on any subcommand:
+
+| Option | Description |
+|---|---|
+| `-c, --config <path>` | Path to `wiki.yaml` config file or directory containing one (default: `.`) |
+| `--wiki-dir <path>` | Override the wiki markdown directory |
+| `--import-dir <path>` | Additional directory of RDF data/ontologies to load (can be repeated) |
+| `--raw-dir <path>` | Directory containing raw markdown files |
+| `--no-inference` | Skip OWL-RL deductive reasoning (available on `query` and `render`) |
 
 ### Printing and piping
 Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.
