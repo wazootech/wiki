@@ -27,6 +27,12 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 pip install wazootech-wiki
 ```
 
+Then verify the CLI is installed:
+
+```bash
+wiki --help
+```
+
 ### From within this repo (editable)
 
 ```bash
