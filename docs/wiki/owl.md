@@ -11,7 +11,7 @@ The **Web Ontology Language (OWL)** is a family of knowledge representation lang
 
 OWL adds more vocabulary for describing properties and classes than basic RDF schema, including relations between classes (e.g. disjointness), cardinality (e.g. "exactly one"), equality, richer typing of properties, characteristics of properties (e.g. symmetry), and enumerated classes.
 
-In this vault, OWL is used by the reasoning engine in the [[wiki-cli]] to perform deductive expansion of your graph (e.g., using OWL-RL rules).
+In this vault, OWL is used by the reasoning engine in the [[llm-wiki-cli]] to perform deductive expansion of your graph (e.g., using OWL-RL rules).
 
 ## Defining custom RDFS/OWL axioms
 Custom reasoning rules and class hierarchies can be declared natively in file Frontmatter or standalone `.ttl` imports. The reasoning engine automatically scans the combined pool.

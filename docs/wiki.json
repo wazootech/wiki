@@ -5,6 +5,6 @@
   "contentPredicate": "schema:text",
   "context": {
     "schema": "https://schema.org/",
-    "wiki": "https://ethanthatonekid.github.io/wiki-cli/wiki/"
+    "wiki": "https://wazootech.github.io/llm-wiki/wiki/"
   }
 }

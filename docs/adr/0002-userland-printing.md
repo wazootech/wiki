@@ -19,7 +19,7 @@ By ensuring that `wiki` conforms strictly to standard output streams (`stdout`) 
 
 ### Positive
 * **Cross-Platform Purity**: The CLI remains written in pure, portable Python and runs seamlessly on Linux, macOS, and Windows.
-* **Codebase Simplification**: Removing the Windows-specific printer code reduces [__main__.py](../../src/wiki_cli/__main__.py) by ~190 lines of highly brittle, difficult-to-test logic.
+* **Codebase Simplification**: Removing the Windows-specific printer code reduces [__main__.py](../../src/llm_wiki/__main__.py) by ~190 lines of highly brittle, difficult-to-test logic.
 * **Philosophical Alignment**: Users gain the full power of dedicated typesetting and filtering programs (like `pr`, `lp`, `pandoc`, or PowerShell's native streams) instead of being locked into a rigid, custom-coded printing subset.
 
 ### Negative

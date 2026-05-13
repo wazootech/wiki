@@ -1,14 +1,14 @@
 ---
-id: wiki:wiki-cli
+id: wiki:llm-wiki-cli
 type: SoftwareApplication
-name: Wiki CLI
+name: LLM Wiki CLI
 softwareVersion: 0.1.0
 description: Command-line interface for querying, validating, and managing the semantic vault
 ---
 
-# Wiki CLI
+# LLM Wiki CLI
 
-The Wiki CLI is the primary companion tool for authoring, validating, and querying this semantic knowledge vault. It parses markdown files, converts YAML/JSON frontmatter into RDF graphs, resolves blank nodes, and performs deductive reasoning under OWL-RL semantics.
+The LLM Wiki CLI is the primary companion tool for authoring, validating, and querying this semantic knowledge vault. It parses markdown files, converts YAML/JSON frontmatter into RDF graphs, resolves blank nodes, and performs deductive reasoning under OWL-RL semantics.
 
 
 ## Wiki workflows and authoring guide
@@ -26,7 +26,7 @@ type: schema:Person
 name: Alice Smith
 givenName: Alice
 familyName: Smith
-context: Software Engineer working on the Wiki CLI
+context: Software Engineer working on the LLM Wiki CLI
 status: permanent
 dateCreated: 2026-05-08
 ```
@@ -79,7 +79,7 @@ ORDER BY ?type
 
 ## Design philosophies
 
-The architecture of the Wiki CLI is governed by core Unix system design philosophies to ensure platform portability, scriptability, and robust performance in CI/CD pipelines.
+The architecture of the LLM Wiki CLI is governed by core Unix system design philosophies to ensure platform portability, scriptability, and robust performance in CI/CD pipelines.
 
 ### Silence is golden
 By default, action-oriented subcommands (like `render` and `check --fix`) exit silently with code `0` upon success. This adheres strictly to the Unix philosophy, preventing unnecessary output log clutter and ensuring that commands can be seamlessly integrated into automated scripting. Users can opt-in to interactive summaries and details at any time by appending the `-v` or `--verbose` flag.

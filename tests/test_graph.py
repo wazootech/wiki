@@ -4,8 +4,8 @@ from tempfile import TemporaryDirectory
 from rdflib import Graph, URIRef, RDF, Literal
 from rdflib.namespace import XSD
 
-from wiki_cli.config import WikiConfig
-from wiki_cli.graph import (
+from llm_wiki.config import WikiConfig
+from llm_wiki.graph import (
     frontmatter_to_graph,
     kebab_case,
     resolve_predicate,
@@ -393,7 +393,7 @@ Raw Body Text.
     def test_load_graph_logs_warnings_on_bad_files(self) -> None:
         """Test that load_graph emits warnings for unparseable content instead of silent pass."""
         import logging
-        from wiki_cli.graph import logger as graph_logger
+        from llm_wiki.graph import logger as graph_logger
 
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

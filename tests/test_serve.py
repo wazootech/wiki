@@ -13,8 +13,8 @@ from typing import Generator
 
 from click.testing import CliRunner
 
-from wiki_cli.cli import main
-from wiki_cli.serve import build_site, create_server
+from llm_wiki.cli import main
+from llm_wiki.serve import build_site, create_server
 
 
 def _free_port() -> int:

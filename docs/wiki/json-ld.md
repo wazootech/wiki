@@ -11,4 +11,4 @@ description: JavaScript Object Notation for Linked Data.
 
 It is a standard derived from [[json]] that provides a way to serialize [[rdf]] in JSON format.
 
-The [[wiki-cli]] can compile vault contents into JSON-LD using the `wiki export` command.
+The [[llm-wiki-cli]] can compile vault contents into JSON-LD using the `wiki export` command.

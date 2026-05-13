@@ -5,4 +5,4 @@ contentPredicate: schema:text
 
 context:
   schema: https://schema.org/
-  wiki: https://ethanthatonekid.github.io/wiki-cli/templates/llm-wiki/wiki/
+  wiki: https://wazootech.github.io/llm-wiki/templates/llm-wiki/wiki/

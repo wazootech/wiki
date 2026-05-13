@@ -20,8 +20,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Wiki CLI
-        run: pip install git+https://github.com/EthanThatOneKid/wiki-cli.git
+      - name: Install llm-wiki
+        run: pip install git+https://github.com/wazootech/llm-wiki.git
 
       - name: Audit wiki style and SHACL constraints
         run: wiki check --strict -v

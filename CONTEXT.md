@@ -1,4 +1,4 @@
-# Wiki CLI
+# LLM Wiki (`llm-wiki`)
 
 A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 

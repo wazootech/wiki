@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki_cli.config import WikiConfig
-from wiki_cli.audit import (
+from llm_wiki.config import WikiConfig
+from llm_wiki.audit import (
     audit_filenames,
     audit_internal_links,
     load_shapes,
@@ -59,7 +59,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
 
     def test_load_shapes_edge_cases(self) -> None:
         """Test load_shapes behaves predictably with different underlying graph states."""
-        from wiki_cli.graph import load_graph
+        from llm_wiki.graph import load_graph
         from rdflib import Graph
 
         # Empty graph
@@ -194,7 +194,7 @@ type: Project
             valid_project = wiki_dir / "valid-project.md"
             valid_project.write_text("""---
 type: Project
-name: Wiki CLI
+name: LLM Wiki CLI
 ---
 """, encoding="utf-8")
 

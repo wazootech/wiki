@@ -1,1 +1,1 @@
-"""Custom markdown-it-py plugins for wiki-cli."""
+"""Custom markdown-it-py plugins for llm-wiki."""

@@ -1,5 +1,5 @@
 [project]
-name = "wiki-cli"
+name = "llm-wiki"
 version = "0.1.0"
 description = "Clean, pure, idiomatic Python CLI for managing a semantic LLM wiki"
 readme = "README.md"
@@ -15,10 +15,10 @@ dependencies = [
 ]
 
 [project.scripts]
-wiki = "wiki_cli.__main__:main"
+wiki = "llm_wiki.__main__:main"
 
 [tool.setuptools]
-packages = ["wiki_cli"]
+packages = ["llm_wiki"]
 package-dir = {"" = "src"}
 
 [tool.uv]

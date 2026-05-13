@@ -34,7 +34,7 @@ Developer **Farza** (founder of buildspace) created [[farzapedia]] as the defini
 
 ## Integrating the LLM Wiki in this vault
 
-This [[wiki-cli]] repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
+This [[llm-wiki-cli]] repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 2. **Procedural Automation**: Using subcommands like `wiki check` to validate shapes, and `wiki render` to execute SPARQL queries dynamically, compiling the graph's intelligence back into static Markdown.

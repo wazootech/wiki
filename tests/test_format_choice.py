@@ -4,7 +4,7 @@ import unittest
 from click.testing import CliRunner
 import click
 
-from wiki_cli.format_choice import FormatChoice
+from llm_wiki.format_choice import FormatChoice
 
 
 QUERY_FORMATS = ["table", "json", "csv", "tsv", "turtle", "n3", "markdown"]

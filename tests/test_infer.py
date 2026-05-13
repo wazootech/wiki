@@ -3,9 +3,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from rdflib import URIRef, RDF, RDFS, Namespace
 
-from wiki_cli.config import WikiConfig
-from wiki_cli.infer import apply_inference
-from wiki_cli.graph import load_graph
+from llm_wiki.config import WikiConfig
+from llm_wiki.infer import apply_inference
+from llm_wiki.graph import load_graph
 
 class TestReasoning(unittest.TestCase):
     def test_full_reasoning_pipeline(self) -> None:

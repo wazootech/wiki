@@ -1,6 +1,6 @@
 # LLM Wiki Starter Template
 
-This directory provides a ready-to-use foundation for building a private semantic knowledge base using the **Wiki CLI**. It scaffolds a fully functioning local vault environment powered by SHACL shapes and OWL-RL inference.
+This directory provides a ready-to-use foundation for building a private semantic knowledge base using the **LLM Wiki CLI** (`llm-wiki` on PyPI, `wiki` command). It scaffolds a fully functioning local vault environment powered by SHACL shapes and OWL-RL inference.
 
 ## Structure
 
@@ -10,7 +10,7 @@ This directory provides a ready-to-use foundation for building a private semanti
 ## Getting started
 
 ### Initialize environment
-Ensure the `wiki-cli` is available in your environment (from the repository root):
+Ensure the `llm-wiki` package is installed (from the parent [llm-wiki](https://github.com/wazootech/llm-wiki) repository root):
 ```bash
 uv sync
 ```

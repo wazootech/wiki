@@ -292,7 +292,7 @@ class MicrodataParser(Parser):
                 process_scope(s)
 
 # Dynamically register our custom parser to unlock native `format="microdata"` support globally
-register("microdata", Parser, "wiki_cli.graph", "MicrodataParser")
+register("microdata", Parser, "llm_wiki.graph", "MicrodataParser")
 
 
 def _process_md_file(graph: Graph, md_file: Path, context: WikiConfig) -> None:

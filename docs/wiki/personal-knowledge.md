@@ -23,7 +23,7 @@ spouse:
 This is parsed as a typed graph triple (`wiki:gregory schema:spouse wiki:bella`), allowing the graph to mathematically reason about family, colleague, or friend connections.
 
 ### Built-in structural correctness (SHACL shapes)
-Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The Wiki CLI uses **SHACL shapes** to audit your notes automatically. This ensures your second brain remains consistently structured and complete.
+Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The LLM Wiki CLI uses **SHACL shapes** to audit your notes automatically. This ensures your second brain remains consistently structured and complete.
 
 ### Infinite dynamic synthesis (SPARQL)
 Instead of manually maintaining index lists or tag pages, you write a simple SPARQL query. When you run `wiki render`, the CLI automatically updates your indexes, dashboards, and maps dynamically!

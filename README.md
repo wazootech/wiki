@@ -1,6 +1,8 @@
-# Wiki CLI
+# LLM Wiki (`llm-wiki`)
 
 An elegant, pure, and idiomatic Python command-line interface for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
+
+Repository: [github.com/wazootech/llm-wiki](https://github.com/wazootech/llm-wiki). PyPI package: `llm-wiki`. CLI command: `wiki`.
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
@@ -27,7 +29,7 @@ pip install -e .
 
 ```bash
 # From the repo root
-uv pip install -e /path/to/wiki-cli
+uv pip install -e /path/to/llm-wiki
 ```
 
 Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
@@ -238,12 +240,12 @@ jobs:
         run: uv run wiki -c docs/wiki.json check --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /wiki-cli
+        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /llm-wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site/wiki-cli"
+          path: "_site/llm-wiki"
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -324,7 +326,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 
 ### Obsidian integration
 
-While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
+While the LLM Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
 
 Recommended workflows:
 * **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL validations and formatting.
@@ -332,7 +334,7 @@ Recommended workflows:
 
 ### Declarative modeling & full-text SPARQL
 
-The Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
+The LLM Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
 
 #### Defining OWL classes and SHACL shapes recursively in frontmatter
 Because our frontmatter parser natively supports nested dictionary conversion to RDF blank nodes, you can define complete validation shapes and ontological classes inside any document's frontmatter:

@@ -3,7 +3,7 @@ id: wiki:farzapedia
 type: TechArticle
 name: Farzapedia and personal AI wikis
 description: An interlinked digital garden serving as an example for the LLM Wiki pattern.
-about: wiki:wiki-cli
+about: wiki:llm-wiki-cli
 ---
 
 # Farzapedia and personal AI wikis
@@ -32,4 +32,4 @@ Farzapedia champions four crucial properties of modern knowledge engineering:
 
 ## Dynamic querying in this vault
 
-The [[wiki-cli]] is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful SPARQL queries and use command-line pipelines to synthesize indexes on the fly—fulfilling the dream of a queryable, self-updating mind map.
+The [[llm-wiki-cli]] is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful SPARQL queries and use command-line pipelines to synthesize indexes on the fly—fulfilling the dream of a queryable, self-updating mind map.
