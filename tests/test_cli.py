@@ -318,7 +318,7 @@ name: Gregory
             self.assertEqual(result_fail.exit_code, 1)
     
     def test_cli_export_formats(self) -> None:
-        """Test that wiki export supports various --rdf-format options."""
+        """Test that wiki export supports various --format options."""
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
@@ -330,25 +330,25 @@ name: Alice
 """, encoding="utf-8")
             
             # json-ld format returns expanded JSON-LD
-            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "json-ld"])
+            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "json-ld"])
             self.assertEqual(result.exit_code, 0)
             data = json.loads(result.output)
             self.assertIsInstance(data["rdf"], list)
             self.assertIn("@id", data["rdf"][0])
             
             # turtle format returns raw serialized turtle (no JSON wrapper)
-            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "turtle"])
+            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "turtle"])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("schema:name", result.output)  # turtle has prefix:name
             self.assertIn("Alice", result.output)
             
             # xml format returns raw serialized RDF/XML
-            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "xml"])
+            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "xml"])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("rdf:Description", result.output)
             
             # nt format returns raw N-Triples
-            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "nt"])
+            result = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "nt"])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("Alice", result.output)
             self.assertIn(".", result.output.strip()[-1])  # N-Triples ends with dot
@@ -377,7 +377,7 @@ name: Alice
             self.assertEqual(data["rdf"]["name"], "Alice")
 
     def test_cli_export_short_format_flag(self) -> None:
-        """Test that wiki export -r short form works for format selection."""
+        """Test that wiki export -f short form works for format selection."""
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
@@ -390,7 +390,7 @@ name: Alice
             result = runner.invoke(main, [
                 "--wiki-dir", str(wiki_dir),
                 "export", str(page),
-                "-r", "turtle"
+                "-f", "turtle"
             ])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("schema:name", result.output)
@@ -408,22 +408,22 @@ name: Alice
 ---""", encoding="utf-8")
 
             # N3
-            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "n3"])
+            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "n3"])
             self.assertEqual(res.exit_code, 0)
             self.assertIn("Alice", res.output)
 
             # Trig
-            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "trig"])
+            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "trig"])
             self.assertEqual(res.exit_code, 0)
             self.assertIn("Alice", res.output)
 
             # MIME alias — "text/n3" resolves to "n3"
-            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "text/n3"])
+            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "text/n3"])
             self.assertEqual(res.exit_code, 0)
             self.assertIn("Alice", res.output)
 
             # Case-insensitive — "TURTLE" accepted
-            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "TURTLE"])
+            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "TURTLE"])
             self.assertEqual(res.exit_code, 0)
             self.assertIn("Alice", res.output)
 
@@ -439,7 +439,7 @@ id: wiki:doc
 name: TestDoc
 ---""", encoding="utf-8")
 
-            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--rdf-format", "nquads"])
+            res = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "export", str(page), "--format", "nquads"])
             self.assertEqual(res.exit_code, 0)
             # Raw N-Quads output: angle-bracketed URIs, not JSON
             self.assertNotIn("{", res.output, msg="Raw nquads output should not be JSON")

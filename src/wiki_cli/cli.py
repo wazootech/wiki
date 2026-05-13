@@ -281,7 +281,7 @@ def build(config: Context, output_dir: Path, base_url: str, url_style: str, verb
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="File to write serialized RDF output.")
-@click.option("-r", "--rdf-format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="RDF serialization format.")
+@click.option("-f", "--format", "rdf_format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="Output format for RDF export.")
 @click.pass_obj
 def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_format: str) -> None:
     """Compile and export wiki documents in a supported RDF format."""
