@@ -8,7 +8,7 @@ from wiki_cli.format_choice import FormatChoice
 
 
 QUERY_FORMATS = ["table", "json", "csv", "tsv", "turtle", "n3", "markdown"]
-EXPORT_FORMATS = ["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig"]
+EXPORT_FORMATS = ["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"]
 
 
 class TestFormatChoice(unittest.TestCase):
@@ -44,6 +44,48 @@ class TestFormatChoice(unittest.TestCase):
     def test_sparql_result_mime_alias(self):
         cmd = self._make_cmd(QUERY_FORMATS)
         result = self.runner.invoke(cmd, ["--fmt", "application/sparql-results+json"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "json")
+
+    def test_file_extension_alias_ttl(self):
+        cmd = self._make_cmd(QUERY_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "ttl"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "turtle")
+
+    def test_file_extension_alias_ntriples(self):
+        cmd = self._make_cmd(EXPORT_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "ntriples"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "nt")
+
+    def test_file_extension_alias_nq(self):
+        cmd = self._make_cmd(EXPORT_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "nq"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "nquads")
+
+    def test_alternative_mime_x_turtle(self):
+        cmd = self._make_cmd(QUERY_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "application/x-turtle"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "turtle")
+
+    def test_jsonld_no_hyphen_alias(self):
+        cmd = self._make_cmd(EXPORT_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "jsonld"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "json-ld")
+
+    def test_markdown_alias_md(self):
+        cmd = self._make_cmd(QUERY_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "md"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output.strip(), "markdown")
+
+    def test_application_json_alias(self):
+        cmd = self._make_cmd(QUERY_FORMATS, case_sensitive=False)
+        result = self.runner.invoke(cmd, ["--fmt", "application/json"])
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.output.strip(), "json")
 

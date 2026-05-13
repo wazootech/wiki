@@ -19,21 +19,32 @@ class FormatChoice(click.Choice):
     On invalid input, ``difflib.get_close_matches`` is used to suggest alternatives.
     """
 
-    #: Mapping from MIME type → canonical short name.  Shared across all instances.
+    #: Mapping from alias → canonical short name.  Shared across all instances.
+    #: Includes MIME types, file extensions, and common alternative names.
     MIME_ALIASES: dict[str, str] = {
         # SPARQL result media types
         "application/sparql-results+json": "json",
+        "application/json": "json",
         "text/csv": "csv",
         "text/tab-separated-values": "tsv",
         "application/sparql-results+xml": "xml",
         # Graph serialisation media types
         "text/turtle": "turtle",
+        "application/x-turtle": "turtle",
         "text/n3": "n3",
         "application/n-triples": "nt",
         "application/ld+json": "json-ld",
         "application/rdf+xml": "xml",
         "application/n-quads": "nquads",
         "application/trig": "trig",
+        # Common file extensions
+        "ttl": "turtle",
+        "tt": "turtle",
+        "ntriples": "nt",
+        "nq": "nquads",
+        "rdf": "xml",
+        "jsonld": "json-ld",
+        "md": "markdown",
     }
 
     def __init__(
