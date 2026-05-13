@@ -14,6 +14,7 @@ from .render import render_markdown_files
 from .parser import normalize_all, normalize_frontmatter_str, frontmatter_from_path
 from .graph import load_graph, graph_stats
 from .audit import check_shacl_file, run_checks
+from .jqfilter import resolve_path
 
 
 @click.group()
@@ -186,9 +187,10 @@ def check(config: Context, file: Optional[Path], normalize: bool, verbose: bool,
 @click.option("-f", "--format", "output_format", type=click.Choice(["table", "json", "csv", "tsv", "turtle", "n3", "markdown"]), default="table", help="Output format for query results.")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
+@click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
-def query(context: Context, query_args: tuple[str, ...], output_format: str, output: Optional[Path], no_inference: bool, verbose: bool) -> None:
+def query(context: Context, query_args: tuple[str, ...], output_format: str, output: Optional[Path], no_inference: bool, jq: Optional[str], verbose: bool) -> None:
     """Run a SPARQL SELECT or CONSTRUCT query."""
     if query_args:
         sparql_query = " ".join(query_args)
@@ -205,10 +207,16 @@ def query(context: Context, query_args: tuple[str, ...], output_format: str, out
         click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
 
     try:
+        if jq is not None:
+            output_format = "json"
         result = run_query(graph, sparql_query, output_format=output_format, wiki_base=context.wiki_base)
         if output:
             output.write_text(result, encoding="utf-8")
             click.echo(f"Written results to {output}")
+        elif jq is not None:
+            matches = resolve_path(json.loads(result), jq)
+            for m in matches:
+                click.echo(m)
         else:
             click.echo(result)
     except (ValueError, SyntaxError, TypeError, RuntimeError) as e:

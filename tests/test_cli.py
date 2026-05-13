@@ -128,6 +128,37 @@ name: Alice
             res_err = runner.invoke(main, ["--wiki-dir", str(wiki_dir), "query", "INVALID QUERY"])
             self.assertEqual(res_err.exit_code, 1)
 
+    def test_cli_query_jq_filter(self) -> None:
+        """Test that wiki query --jq extracts values from JSON output."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "alice.md").write_text("""---
+type: Person
+name: Alice
+---
+""", encoding="utf-8")
+
+            query_str = "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }"
+
+            # --jq auto-switches to JSON and extracts the value
+            result = runner.invoke(main, [
+                "--wiki-dir", str(wiki_dir),
+                "query", "--no-inference", query_str,
+                "--jq", "results.bindings[].name.value"
+            ])
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Alice", result.output)
+
+            # --jq with no matches produces no output
+            result_empty = runner.invoke(main, [
+                "--wiki-dir", str(wiki_dir),
+                "query", "--no-inference", query_str,
+                "--jq", "results.nonexistent"
+            ])
+            self.assertEqual(result_empty.exit_code, 0)
+            self.assertEqual(result_empty.output.strip(), "")
+
     def test_cli_render_inline_sparql(self) -> None:
         """Test that wiki render updates inline SPARQL blocks correctly."""
         runner = CliRunner()

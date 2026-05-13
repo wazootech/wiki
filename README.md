@@ -87,6 +87,9 @@ wiki query "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }" -f turtle
 
 # Run query from stdin and write results to a file
 cat my_query.sparql | wiki query -f markdown -o results.md
+
+# Extract specific fields from JSON output (automatically selects -f json)
+wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[].name.value'
 ```
 
 ### `render`
