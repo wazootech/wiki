@@ -125,28 +125,44 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
     elif output_format == "csv":
         return result.serialize(format="csv").decode("utf-8")
     elif output_format == "tsv":
-        return result.serialize(format="tsv").decode("utf-8")
+        rows = list(result)
+        if not rows:
+            return "(no results)"
+        keys = [str(v) for v in result.vars]
+        lines = ["\t".join(keys)]
+        for row in rows:
+            vals = [str(row.get(k, "")) for k in keys]
+            lines.append("\t".join(vals))
+        return "\n".join(lines)
     elif output_format in ("markdown", "md"):
         return markdown_format(result, wiki_base=wiki_base)
     else:
         return table_format(result)
 
 
-def process_rdf_form(data: dict[str, Any], file_stem: str, context: Any, form: str) -> Any:
-    """Convert frontmatter dict to the requested RDF serialization form.
+def process_rdf_format(data: dict[str, Any], file_stem: str, context: Any, output_format: str) -> Any:
+    """Convert frontmatter dict to the requested RDF serialization format.
 
     Used by the export command to convert frontmatter dicts into various RDF formats.
     """
-    if form == "raw":
+    if output_format == "dict":
         return data
 
     from .graph import frontmatter_to_graph
 
     graph = frontmatter_to_graph(data, context, file_id=file_stem)
 
-    if form in ("json-ld", "jsonld"):
+    if output_format in ("json-ld", "jsonld"):
         serialized = graph.serialize(format="json-ld", indent=2)
         return json.loads(serialized)
 
-    rdf_format = form
+    if output_format == "nquads":
+        from rdflib import Dataset
+        dataset = Dataset()
+        default = dataset.default_graph
+        for s, p, o in graph:
+            default.add((s, p, o))
+        return dataset.serialize(format="nquads")
+
+    rdf_format = output_format
     return graph.serialize(format=rdf_format, indent=2)

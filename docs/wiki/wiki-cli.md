@@ -16,10 +16,7 @@ The Wiki CLI is the primary companion tool for authoring, validating, and queryi
 This section covers common editing, auditing, and publishing procedures for contributing to the semantic knowledge vault.
 
 ### Create a new page
-To scaffold a new page, run the `create` subcommand. It automatically converts the title to a clean kebab-case filename and generates a standardized YAML frontmatter block.
-```bash
-wiki create "My New Article"
-```
+Create a new markdown file in the `wiki/` directory with standard frontmatter. Use lowercase kebab-case for the filename (e.g., `my-new-article.md`).
 
 ### Fill in the semantic metadata
 Always specify what fields are required for your document type. For example, if your page describes a person:
@@ -49,7 +46,7 @@ wiki render -v
 
 ## Wiki schema and active types
 
-Active shapes are loaded from the configured `shapes/` directory and executed against all matching pages during `wiki check`.
+Active shapes are loaded from the `input_dirs` and executed against all matching pages during `wiki check`.
 
 ### Current pages in the vault by type
 
@@ -99,12 +96,6 @@ The CLI features a flat, intuitive set of top-level commands with zero nested co
 
 
 ## Command reference
-
-### `wiki create`
-Instantly scaffolds a new markdown file in the configured `wikiDir`. It automatically standardizes the filename to lowercase kebab-case and pre-populates a valid frontmatter block with schema attributes resolved from the `WikiConfig`.
-```bash
-wiki create "Gregory Smith"
-```
 
 ### `wiki check`
 Unifies all vault health inspections under a single entry point, executing both strict semantic validations and softer stylistic audits.

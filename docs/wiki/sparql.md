@@ -16,7 +16,7 @@ It is utilized within the [[wiki-cli]] `render` pipeline to populate tables base
 The Wiki CLI automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
 
 * **`schema:`** `https://schema.org/` (Standard schema vocabulary)
-* **`wiki:`** `https://ethanthatonekid.github.io/wiki-cli/templates/llm-wiki/wiki/` (Your local vault namespace)
+* **`wiki:`** `https://ethanthatonekid.github.io/wiki-cli/wiki/` (Your local vault namespace)
 * **`rdf:`** `http://www.w3.org/1999/02/22-rdf-syntax-ns#` (Standard RDF attributes)
 
 

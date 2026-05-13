@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 from typing import Any, Optional
 from bs4 import BeautifulSoup, Tag
 from rdflib import Graph, Literal, URIRef, RDF, BNode
 from rdflib.namespace import XSD
-from rdflib.parser import Parser, StringInputSource
+from rdflib.parser import InputSource, Parser, StringInputSource
 from rdflib.plugin import register
 
 from .config import Context, WikiConfig
 from .parser import frontmatter_from_path
+
+logger = logging.getLogger(__name__)
 
 
 def kebab_case(s: str) -> str:
@@ -91,7 +94,7 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         graph.add((subject, pred, Literal(str(value))))
 
 
-def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Optional[str] = None, body: Optional[str] = None) -> Graph:
+def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Optional[str] = None, body: Optional[str] = None, uri_ext: bool = False) -> Graph:
     """Convert parsed frontmatter dictionary to an RDF graph."""
     graph = Graph()
     context.bind_namespaces(graph)
@@ -102,19 +105,10 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
 
     doc_id = data.get("@id") or data.get("id")
     if not doc_id:
-        if file_id:
-            doc_id = f"{context.wiki_base}{file_id}.md"
-        else:
-            name = data.get("name", data.get("givenName", ""))
-            if rdf_type == "Person":
-                given = data.get("givenName", "")
-                family = data.get("familyName", "")
-                if given and family:
-                    doc_id = f"{context.wiki_base}{kebab_case(given)}-{kebab_case(family)}.md"
-                else:
-                    doc_id = f"{context.wiki_base}{kebab_case(name)}.md"
-            else:
-                doc_id = f"{context.wiki_base}{kebab_case(name)}.md"
+        if not file_id:
+            return Graph()
+        suffix = ".md" if uri_ext else ""
+        doc_id = f"{context.wiki_base}{file_id}{suffix}"
 
     if doc_id and ":" in doc_id:
         prefix, name = doc_id.split(":", 1)
@@ -144,43 +138,44 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     return graph
 
 
-def build_name_to_id_map(wiki_dir: Path, context: Context) -> dict[str, str]:
+def build_person_name_map(input_dirs: list[Path], context: Context, uri_ext: bool = False) -> dict[str, str]:
     """Build a mapping from person names to their wiki @id URIs."""
     name_map: dict[str, str] = {}
 
-    for md_file in wiki_dir.glob("*.md"):
-        try:
-            data = frontmatter_from_path(md_file)
-            if not data or data.get("@type") != "Person":
-                continue
-
-            doc_id = data.get("@id", "")
-            if not doc_id:
-                name = data.get("name", data.get("givenName", ""))
-                if data.get("givenName") and data.get("familyName"):
-                    doc_id = f"{context.wiki_base}{kebab_case(data['givenName'])}-{kebab_case(data['familyName'])}.md"
-                else:
-                    doc_id = f"{context.wiki_base}{kebab_case(name)}.md"
-
-            name = data.get("name", "")
-            if name:
-                name_map[name.lower()] = doc_id
-
-            given = data.get("givenName", "")
-            family = data.get("familyName", "")
-            if given and family:
-                full_name = f"{given} {family}"
-                name_map[full_name.lower()] = doc_id
-                name_map[given.lower()] = doc_id
-        except Exception:
+    for input_dir in input_dirs:
+        if not input_dir.exists():
             continue
+        for md_file in input_dir.glob("*.md"):
+            try:
+                data = frontmatter_from_path(md_file)
+                if not data or data.get("@type") != "Person":
+                    continue
+
+                doc_id = data.get("@id", "")
+                if not doc_id:
+                    suffix = ".md" if uri_ext else ""
+                    doc_id = f"{context.wiki_base}{md_file.stem}{suffix}"
+
+                name = data.get("name", "")
+                if name:
+                    name_map[name.lower()] = doc_id
+
+                given = data.get("givenName", "")
+                family = data.get("familyName", "")
+                if given and family:
+                    full_name = f"{given} {family}"
+                    name_map[full_name.lower()] = doc_id
+                    name_map[given.lower()] = doc_id
+            except Exception as e:
+                logger.warning("Failed to build name map for %s: %s", md_file.name, e)
+                continue
 
     return name_map
 
 
-def resolve_blank_nodes(graph: Graph, wiki_dir: Path, context: Context) -> Graph:
+def resolve_blank_nodes(graph: Graph, input_dirs: list[Path], context: Context, uri_ext: bool = False) -> Graph:
     """Resolve blank nodes to @id references where possible."""
-    name_map = build_name_to_id_map(wiki_dir, context)
+    name_map = build_person_name_map(input_dirs, context, uri_ext=uri_ext)
 
     blank_nodes = [s for s in graph.subjects() if str(s).startswith("_:")]
 
@@ -207,10 +202,17 @@ class MicrodataParser(Parser):
     """Custom RDFLib parser wrapper enabling native `format='microdata'` support via BeautifulSoup."""
     def parse(self, source: Any, graph: Graph, **kwargs: Any) -> None:
         content = ""
-        if hasattr(source, "read"):
-            content = source.read()
-        elif isinstance(source, StringInputSource):
-            content = source.getByteStream().read().decode("utf-8")
+        if isinstance(source, StringInputSource):
+            raw = source.getByteStream().read()
+            content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        elif isinstance(source, InputSource):
+            stream = source.getByteStream()
+            if stream is not None:
+                raw = stream.read()
+                content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        elif hasattr(source, "read"):
+            raw = source.read()
+            content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
         else:
             # Attempt fallback loading
             try:
@@ -223,7 +225,8 @@ class MicrodataParser(Parser):
             
         try:
             soup = BeautifulSoup(content, "html.parser")
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to parse HTML: %s", e)
             return
 
         def process_scope(elem: Tag, parent_subject: Any = None, incoming_predicate: Any = None) -> None:
@@ -303,49 +306,57 @@ def _process_md_file(graph: Graph, md_file: Path, context: WikiConfig) -> None:
             parts = content.split("---", 2)
             if len(parts) > 2:
                 body = parts[2].strip()
-        graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body)
+        graph += frontmatter_to_graph(data, context, file_id=md_file.stem, body=body, uri_ext=context.uri_ext)
 
     try:
         graph.parse(data=content, format="microdata")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Failed to parse microdata in %s: %s", md_file.name, e)
 
     turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
     for block in turtle_blocks:
         try:
             graph.parse(data=block.strip(), format="turtle")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to parse turtle block in %s: %s", md_file.name, e)
+
+
+# Map file extensions to rdflib format names
+_EXT_FORMAT_MAP = {
+    ".ttl": "turtle",
+    ".trig": "trig",
+    ".nt": "nt",
+    ".nq": "nquads",
+    ".rdf": "xml",
+    ".xml": "xml",
+    ".jsonld": "json-ld",
+    ".html": "microdata",
+    ".htm": "microdata",
+}
 
 
 def load_graph(context: WikiConfig, infer: bool = True) -> Graph:
-    """Load all markdown files into a unified Graph, resolving blank nodes."""
+    """Load all markdown, RDF, and data files into a unified Graph, resolving blank nodes."""
     graph = Graph()
     context.bind_namespaces(graph)
 
-    if context.wiki_dir.exists():
-        for md_file in context.wiki_dir.glob("*.md"):
+    for input_dir in context.input_dirs:
+        if not input_dir.exists():
+            continue
+        for file_path in sorted(input_dir.iterdir()):
+            if not file_path.is_file():
+                continue
             try:
-                _process_md_file(graph, md_file, context)
-            except Exception:
-                pass
+                if file_path.suffix == ".md":
+                    _process_md_file(graph, file_path, context)
+                else:
+                    fmt = _EXT_FORMAT_MAP.get(file_path.suffix)
+                    if fmt:
+                        graph.parse(file_path, format=fmt)
+            except Exception as e:
+                logger.warning("Failed to process %s: %s", file_path.name, e)
 
-    if context.raw_dir.exists():
-        for md_file in context.raw_dir.glob("*.md"):
-            try:
-                _process_md_file(graph, md_file, context)
-            except Exception:
-                pass
-
-    for import_dir in context.import_dirs:
-        if import_dir.exists():
-            for ttl_file in sorted(import_dir.glob("*.ttl")):
-                try:
-                    graph.parse(ttl_file, format="turtle")
-                except Exception:
-                    pass
-
-    resolve_blank_nodes(graph, context.wiki_dir, context)
+    resolve_blank_nodes(graph, context.input_dirs, context, uri_ext=context.uri_ext)
 
     if infer:
         from .infer import apply_inference

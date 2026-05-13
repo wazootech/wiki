@@ -17,7 +17,7 @@ class TestChecking(unittest.TestCase):
     def test_audit_filenames_validation(self) -> None:
         """Test auditing of filenames for lowercase kebab-case naming standard."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(wiki_dir=tmpdir)
+            config = WikiConfig(input_dirs=[tmpdir])
             
             # Create valid and invalid files
             valid_path = Path(tmpdir) / "valid-kebab-case.md"
@@ -33,7 +33,7 @@ class TestChecking(unittest.TestCase):
     def test_audit_internal_links_validation(self) -> None:
         """Test auditing of internal link structures (WikiLinks and Markdown links)."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(wiki_dir=tmpdir)
+            config = WikiConfig(input_dirs=[tmpdir])
             
             # Create one target file
             target_path = Path(tmpdir) / "target-page.md"
@@ -69,7 +69,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertEqual(len(shapes), 0)
             
             # Loading from configuration with missing directories
-            config = WikiConfig(shapes_dir=Path(tmpdir) / "non-existent")
+            config = WikiConfig(input_dirs=[Path(tmpdir) / "non-existent"])
             data_graph_conf = load_graph(config, infer=False)
             shapes_conf = load_shapes(data_graph_conf)
             self.assertEqual(len(shapes_conf), 0)
@@ -78,11 +78,9 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
         """Test check_shacl_file and check_shacl_all for conformance."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
-            shapes_dir = Path(tmpdir) / "shapes"
             wiki_dir.mkdir()
-            shapes_dir.mkdir()
             
-            # Create a basic shape file
+            # Create a basic shape file alongside the wiki files
             shape_content = """
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix schema: <https://schema.org/> .
@@ -97,8 +95,8 @@ schema:PersonShape
         sh:datatype xsd:string ;
     ] .
 """
-            (shapes_dir / "person.ttl").write_text(shape_content, encoding="utf-8")
-            config = WikiConfig(wiki_dir=wiki_dir, shapes_dir=shapes_dir)
+            (wiki_dir / "person-shape.ttl").write_text(shape_content, encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki_dir])
             
             # 1. No frontmatter -> check_shacl_file returns None
             no_fm_file = wiki_dir / "no-fm.md"
@@ -143,21 +141,21 @@ type: schema:WebPage
 """, encoding="utf-8")
             
             # Scenario A: check.filenameStyle is "warning"
-            config_warning = WikiConfig(wiki_dir=wiki_dir, check={"filenameStyle": "warning"})
+            config_warning = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "warning"})
             res_warning = run_checks(config_warning)
             self.assertTrue(res_warning["conforms"])
             self.assertEqual(len(res_warning["warnings"]), 1)
             self.assertEqual(len(res_warning["errors"]), 0)
             
             # Scenario B: check.filenameStyle is "error"
-            config_error = WikiConfig(wiki_dir=wiki_dir, check={"filenameStyle": "error"})
+            config_error = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "error"})
             res_error = run_checks(config_error)
             self.assertFalse(res_error["conforms"])
             self.assertEqual(len(res_error["warnings"]), 0)
             self.assertEqual(len(res_error["errors"]), 1)
             
             # Scenario C: check.filenameStyle is "off"
-            config_off = WikiConfig(wiki_dir=wiki_dir, check={"filenameStyle": "off"})
+            config_off = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "off"})
             res_off = run_checks(config_off)
             self.assertTrue(res_off["conforms"])
             self.assertEqual(len(res_off["warnings"]), 0)
@@ -167,11 +165,9 @@ type: schema:WebPage
         """Test that SHACL shapes defined in markdown frontmatter are loaded and enforced."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
-            shapes_dir = Path(tmpdir) / "shapes"
             wiki_dir.mkdir()
-            shapes_dir.mkdir()
 
-            config = WikiConfig(wiki_dir=wiki_dir, shapes_dir=shapes_dir)
+            config = WikiConfig(input_dirs=[wiki_dir])
 
             # Create a shape inside markdown frontmatter
             shape_file = wiki_dir / "project-shape.md"

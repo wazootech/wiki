@@ -9,10 +9,8 @@ from wiki_cli.graph import load_graph
 
 class TestReasoning(unittest.TestCase):
     def test_full_reasoning_pipeline(self) -> None:
-        """Test that custom axioms in reasoning_dir flow into the central graph and expand it successfully."""
+        """Test that custom axioms flow into the central graph and expand it successfully."""
         with TemporaryDirectory() as tmpdir:
-            reasoning_dir = Path(tmpdir) / "ontology"
-            reasoning_dir.mkdir()
             wiki_dir = Path(tmpdir) / "wiki"
             wiki_dir.mkdir()
             
@@ -22,7 +20,7 @@ class TestReasoning(unittest.TestCase):
 @prefix schema: <https://schema.org/> .
 schema:Person rdfs:subClassOf schema:Agent .
 """
-            (reasoning_dir / "custom-axiom.ttl").write_text(axiom_content, encoding="utf-8")
+            (wiki_dir / "custom-axiom.ttl").write_text(axiom_content, encoding="utf-8")
             
             # Create a mini wiki page stating Gregory is a Person
             (wiki_dir / "gregory.md").write_text("""---
@@ -32,13 +30,13 @@ name: Gregory
 """, encoding="utf-8")
             
             # 1. Configure and Load
-            config = WikiConfig(wiki_dir=wiki_dir, reasoning_dir=reasoning_dir)
+            config = WikiConfig(input_dirs=[wiki_dir])
             
             # Disable auto inference in loader to confirm pre/post state
             graph = load_graph(config, infer=False)
             
             schema = Namespace("https://schema.org/")
-            gregory = URIRef("https://wiki.example.org/gregory.md")
+            gregory = URIRef("https://wiki.example.org/gregory")
             
             # Confirm pre-state: has axiom, has type, but NO inferred Agent yet
             self.assertTrue((schema.Person, RDFS.subClassOf, schema.Agent) in graph)

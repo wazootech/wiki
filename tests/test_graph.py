@@ -10,7 +10,7 @@ from wiki_cli.graph import (
     kebab_case,
     resolve_predicate,
     resolve_object,
-    build_name_to_id_map,
+    build_person_name_map,
     load_graph,
     graph_stats,
 )
@@ -221,33 +221,31 @@ class TestRDFFrontmatter(unittest.TestCase):
 
     def test_frontmatter_to_graph_empty_and_id_generation(self) -> None:
         """Test empty dictionary handling and fallback id generation logic."""
+        base = str(self.context.namespaces["wiki"])
+        
         # Empty dict or missing type -> Empty graph
         self.assertEqual(len(frontmatter_to_graph({}, self.config)), 0)
         
         # Missing type -> Empty graph
         self.assertEqual(len(frontmatter_to_graph({"name": "Alice"}, self.config)), 0)
         
-        # Missing @id, with file_id
+        # Missing @id, with file_id -> uses file_id without .md
         g_file = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc")
-        base = str(self.context.namespaces["wiki"])
-        self.assertTrue((URIRef(f"{base}doc.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file)
+        self.assertTrue((URIRef(f"{base}doc"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file)
         
-        # Missing @id, type is Person, givenName & familyName
-        g_person = frontmatter_to_graph({"@type": "Person", "givenName": "Alice", "familyName": "Smith"}, self.config)
-        self.assertTrue((URIRef(f"{base}alice-smith.md"), RDF.type, self.context.namespaces["schema"]["Person"]) in g_person)
-
-        # Missing @id, type is not Person, name is present
-        g_page = frontmatter_to_graph({"@type": "WebPage", "name": "Some Page"}, self.config)
-        self.assertTrue((URIRef(f"{base}some-page.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_page)
-
-        # Missing @id, type is Person, single name provided (uses kebab fallback)
-        g_single = frontmatter_to_graph({"@type": "Person", "name": "Cher"}, self.config)
-        self.assertTrue((URIRef(f"{base}cher.md"), RDF.type, self.context.namespaces["schema"]["Person"]) in g_single)
+        # Missing @id, with file_id and uri_ext=True -> uses file_id with .md
+        g_file_ext = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc", uri_ext=True)
+        self.assertTrue((URIRef(f"{base}doc.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file_ext)
+        
+        # Missing @id, no file_id -> Empty graph (no Person special-case fallback anymore)
+        self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "givenName": "Alice", "familyName": "Smith"}, self.config)), 0)
+        self.assertEqual(len(frontmatter_to_graph({"@type": "WebPage", "name": "Some Page"}, self.config)), 0)
+        self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "name": "Cher"}, self.config)), 0)
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
     def test_resolve_blank_nodes_and_load_graph(self) -> None:
-        """Test build_name_to_id_map, resolve_blank_nodes, and load_graph integration."""
+        """Test build_person_name_map, resolve_blank_nodes, and load_graph integration."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             
@@ -275,10 +273,10 @@ spouse:
 """
             person2.write_text(person2_content, encoding="utf-8")
             
-            config = WikiConfig(wiki_dir=wiki_dir)
+            config = WikiConfig(input_dirs=[wiki_dir])
             
-            # 1. Test build_name_to_id_map
-            name_map = build_name_to_id_map(wiki_dir, config.context)
+            # 1. Test build_person_name_map
+            name_map = build_person_name_map(config.input_dirs, config.context)
             self.assertEqual(name_map.get("gregory smith"), "wiki:gregory")
             self.assertEqual(name_map.get("gregory"), "wiki:gregory")
             
@@ -314,10 +312,10 @@ spouse:
         self.assertIn(ctx.namespaces["schema"]["Person"], types)
         self.assertIn(ctx.namespaces["schema"]["Developer"], types)
 
-        # 2. Verify implicit fallback ID generation inside name-to-id mapper
+        # 2. Verify implicit fallback ID generation inside name-to-id mapper (uses file stem)
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            implicit_person = wiki_dir / "implicit.md"
+            implicit_person = wiki_dir / "jimmy-neutron.md"
             implicit_content = """---
 "@type": Person
 givenName: Jimmy
@@ -325,27 +323,25 @@ familyName: Neutron
 ---
 """
             implicit_person.write_text(implicit_content, encoding="utf-8")
-            name_map = build_name_to_id_map(wiki_dir, ctx)
+            name_map = build_person_name_map([wiki_dir], ctx)
             
-            # The fallback format is {wiki_base}{kebab(given)}-{kebab(family)}.md
-            expected_fallback = f"{config.wiki_base}jimmy-neutron.md"
+            # The fallback format uses the file stem: {wiki_base}{stem} (no .md by default)
+            expected_fallback = f"{config.wiki_base}jimmy-neutron"
             self.assertEqual(name_map.get("jimmy neutron"), expected_fallback)
 
             # 3. Verify implicit fallback for Person with only standalone name
-            single_person = wiki_dir / "single.md"
+            single_person = wiki_dir / "zendaya.md"
             single_person.write_text("---\n\"@type\": Person\nname: Zendaya\n---\n", encoding="utf-8")
-            name_map_2 = build_name_to_id_map(wiki_dir, ctx)
-            self.assertEqual(name_map_2.get("zendaya"), f"{config.wiki_base}zendaya.md")
+            name_map_2 = build_person_name_map([wiki_dir], ctx)
+            self.assertEqual(name_map_2.get("zendaya"), f"{config.wiki_base}zendaya")
 
     def test_load_graph_advanced_sources(self) -> None:
-        """Test the unified graph loader handles raw_dir recursion and gracefully ignores broken internal Turtle."""
+        """Test the unified graph loader handles multiple input dirs and gracefully ignores broken internal Turtle."""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
-            raw = root / "raw"
             imports = root / "imports"
             wiki.mkdir()
-            raw.mkdir()
             imports.mkdir()
 
             # Create faulty import file to exercise exception catcher in standalone loader
@@ -365,9 +361,9 @@ This is body text loaded by content_predicate.
 ```
 """, encoding="utf-8")
 
-            # A secondary file situated in the raw_dir with valid body payload to verify both loops
-            raw_md = raw / "raw_discovery.md"
-            raw_md.write_text("""---
+            # A secondary file in the imports dir with valid body payload to verify both loops
+            extra_md = imports / "raw_discovery.md"
+            extra_md.write_text("""---
 "@type": Person
 "@id": "wiki:raw_agent"
 name: Raw Agent
@@ -375,23 +371,99 @@ name: Raw Agent
 Raw Body Text.
 """, encoding="utf-8")
 
-            config = WikiConfig(wiki_dir=wiki, raw_dir=raw, import_dirs=[imports])
+            config = WikiConfig(input_dirs=[wiki, imports])
             config.content_predicate = "schema:text"
             
             # Load graph should not crash due to bad TTLs or broken syntax, and must ingest everything
             g = load_graph(config, infer=False)
             
             self.assertGreater(len(g), 0)
-            # Verify bodies parsed successfully from both standard and raw locations (using contains assertion for multiline bodies)
+            # Verify bodies parsed successfully from all locations
             body_text_full = " ".join(str(o) for o in g.objects(None, config.context.namespaces["schema"]["text"]))
             self.assertIn("This is body text loaded by content_predicate.", body_text_full)
             self.assertIn("Raw Body Text.", body_text_full)
             
-            # Must find entity from standard wiki_dir
+            # Must find entity from wiki dir
             self.assertTrue((None, None, Literal("Safe Page")) in g)
-            # Must find entity from secondary raw_dir
+            # Must find entity from imports dir
             raw_agent_uri = config.context.namespaces["wiki"]["raw_agent"]
             self.assertTrue((raw_agent_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
+
+
+    def test_load_graph_logs_warnings_on_bad_files(self) -> None:
+        """Test that load_graph emits warnings for unparseable content instead of silent pass."""
+        import logging
+        from wiki_cli.graph import logger as graph_logger
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+
+            # Valid wiki file
+            valid_md = wiki / "good.md"
+            valid_md.write_text("""---
+"@type": WebPage
+name: Good Page
+---
+""", encoding="utf-8")
+
+            # Invalid .ttl file — triggers warning
+            bad_ttl = wiki / "broken.ttl"
+            bad_ttl.write_text("UNPARSABLE GARBAGE", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki])
+
+            with self.assertLogs(graph_logger, level="WARNING") as log_cm:
+                g = load_graph(config, infer=False)
+
+            # Should have logged a warning about the broken.ttl file
+            warning_messages = [r.getMessage() for r in log_cm.records]
+            self.assertTrue(
+                any("broken.ttl" in msg for msg in warning_messages),
+                f"No warning about broken.ttl found in: {warning_messages}"
+            )
+
+            # Graph should still be loadable with valid content
+            self.assertGreater(len(g), 0)
+
+
+    def test_html_microdata_loaded_as_data(self) -> None:
+        """Test that .html files are loaded as microdata via _EXT_FORMAT_MAP."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            html_file = wiki_dir / "data.html"
+            html_file.write_text("""<html><body>
+<div itemscope itemtype="https://schema.org/Person">
+    <span itemprop="name">HTML Person</span>
+    <span itemprop="email">html@example.org</span>
+</div>
+</body></html>""", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir])
+            g = load_graph(config, infer=False)
+            self.assertGreater(len(g), 0)
+            found = any(
+                str(o) == "HTML Person"
+                for s, p, o in g
+                if str(p) == "https://schema.org/name"
+            )
+            self.assertTrue(found, "Microdata from .html file not found in graph")
+
+    def test_uri_ext_config_appends_md(self) -> None:
+        """Test that uri_ext=True produces .md in auto-generated page URIs."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "test.md").write_text("""---
+type: WebPage
+name: Test Page
+---
+""", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir], uri_ext=True)
+            g = load_graph(config, infer=False)
+            expected = URIRef("https://wiki.example.org/test.md")
+            self.assertTrue((expected, None, None) in g)
 
 
 if __name__ == "__main__":

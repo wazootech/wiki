@@ -43,8 +43,8 @@ class TestWikiConfig(unittest.TestCase):
     def test_wikiconfig_default_init(self) -> None:
         """Test WikiConfig has proper defaults."""
         config = WikiConfig()
-        self.assertEqual(config.wiki_dir, Path("wiki"))
-        self.assertEqual(config.shapes_dir, Path("shapes"))
+        self.assertEqual(config.input_dirs, [Path("wiki")])
+        self.assertFalse(config.uri_ext)
         self.assertEqual(config.check.get("filenameStyle"), "warning")
         self.assertIsNotNone(config.context)
 
@@ -52,15 +52,14 @@ class TestWikiConfig(unittest.TestCase):
         """Test WikiConfig.load falls back to defaults when no files exist."""
         with TemporaryDirectory() as tmpdir:
             config = WikiConfig.load(Path(tmpdir))
-            self.assertEqual(config.wiki_dir, Path("wiki"))
+            self.assertEqual(config.input_dirs, [Path("wiki")])
 
     def test_wikiconfig_load_yaml(self) -> None:
         """Test WikiConfig.load correctly parses wiki.yaml."""
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             yaml_content = {
-                "wiki_dir": "custom_wiki",
-                "shapes_dir": "custom_shapes",
+                "input_dirs": "custom_wiki",
                 "check": {
                     "filenameStyle": "error"
                 },
@@ -71,8 +70,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(yaml.dump(yaml_content), encoding="utf-8")
             
             config = WikiConfig.load(base_path)
-            self.assertEqual(config.wiki_dir, base_path.absolute() / "custom_wiki")
-            self.assertEqual(config.shapes_dir, base_path.absolute() / "custom_shapes")
+            self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.check.get("filenameStyle"), "error")
             self.assertIn("custom_pref", config.namespaces)
 
@@ -81,8 +79,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             json_content = {
-                "wikiDir": "json_wiki",
-                "shapesDir": "json_shapes",
+                "inputDirs": "json_wiki",
                 "@context": {
                     "json_pref": "http://json-pref.org/"
                 }
@@ -90,8 +87,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.json").write_text(json.dumps(json_content), encoding="utf-8")
             
             config = WikiConfig.load(base_path)
-            self.assertEqual(config.wiki_dir, base_path.absolute() / "json_wiki")
-            self.assertEqual(config.shapes_dir, base_path.absolute() / "json_shapes")
+            self.assertEqual(config.input_dirs, [base_path.absolute() / "json_wiki"])
             self.assertIn("json_pref", config.namespaces)
 
     def test_wikiconfig_load_invalid_syntax_fallback(self) -> None:
@@ -102,7 +98,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text("[invalid_yaml", encoding="utf-8")
             
             config = WikiConfig.load(base_path)
-            self.assertEqual(config.wiki_dir, Path("wiki"))
+            self.assertEqual(config.input_dirs, [Path("wiki")])
 
 
 if __name__ == "__main__":

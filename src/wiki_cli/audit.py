@@ -57,6 +57,22 @@ def load_shapes(data_graph: Graph) -> Graph:
             FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
             ?s ?p ?o .
         }
+        UNION
+        {
+            # Recursively fetch entire RDF list structures referenced by SHACL properties
+            ?x ?shaclProp ?listHead .
+            FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
+            ?listHead (rdf:rest)* ?s .
+            ?s ?p ?o .
+        }
+        UNION
+        {
+            # Recursively fetch the contents/triples of elements inside those RDF lists
+            ?x ?shaclProp ?listHead .
+            FILTER (STRSTARTS(STR(?shaclProp), "http://www.w3.org/ns/shacl#"))
+            ?listHead (rdf:rest)*/rdf:first ?s .
+            ?s ?p ?o .
+        }
     }
     """
     shapes_graph = data_graph.query(query).graph
@@ -106,59 +122,71 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
     return conforms, results_text
 
 
-def audit_filenames(config: WikiConfig) -> list[str]:
+def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
     """Audit filenames in the wiki directory to ensure they are lowercase kebab-case.
+
+    If file_filter is set, only check files whose stem is in the set.
 
     Returns a list of warnings.
     """
     warnings = []
-    if not config.wiki_dir.exists():
-        return warnings
-
-    for md_file in sorted(config.wiki_dir.glob("*.md")):
-        stem = md_file.stem
-        if not FILENAME_REGEX.match(stem):
-            warnings.append(
-                f"Filename '{md_file.name}' is not lowercase kebab-case."
-            )
+    for input_dir in config.input_dirs:
+        if not input_dir.exists():
+            continue
+        for md_file in sorted(input_dir.glob("*.md")):
+            stem = md_file.stem
+            if file_filter is not None and stem not in file_filter:
+                continue
+            if not FILENAME_REGEX.match(stem):
+                warnings.append(
+                    f"Filename '{md_file.name}' is not lowercase kebab-case."
+                )
     return warnings
 
 
-def audit_internal_links(config: WikiConfig) -> list[str]:
+def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
     """Audit internal wikilinks and standard Markdown links in markdown files to ensure they point to existing documents.
+
+    If file_filter is set, only check files whose stem is in the set.
 
     Returns a list of warnings.
     """
     warnings = []
-    if not config.wiki_dir.exists():
-        return warnings
 
-    existing_files = {md_file.stem for md_file in config.wiki_dir.glob("*.md")}
+    existing_files: set[str] = set()
+    for input_dir in config.input_dirs:
+        if input_dir.exists():
+            existing_files.update(md_file.stem for md_file in input_dir.glob("*.md"))
 
-    for md_file in sorted(config.wiki_dir.glob("*.md")):
-        try:
-            content = md_file.read_text(encoding="utf-8")
-            
-            # 1. Audit WikiLinks
-            wikilinks = WIKILINK_REGEX.findall(content)
-            for link in wikilinks:
-                slug = link.strip().lower().replace(" ", "-")
-                if slug not in existing_files:
-                    warnings.append(
-                        f"In {md_file.name}: Broken WikiLink [[{link}]] points to non-existent document."
-                    )
-            
-            # 2. Audit standard Markdown links
-            md_links = MARKDOWN_LINK_REGEX.findall(content)
-            for target in md_links:
-                decoded_target = unquote(target.split("#")[0].split("?")[0])
-                slug = Path(decoded_target).stem.strip().lower().replace(" ", "-")
-                if slug and slug not in existing_files:
-                    warnings.append(
-                        f"In {md_file.name}: Broken Markdown link [{target}] points to non-existent document."
-                    )
-        except Exception as e:
-            warnings.append(f"Failed to read {md_file.name} for link audit: {e}")
+    for input_dir in config.input_dirs:
+        if not input_dir.exists():
+            continue
+        for md_file in sorted(input_dir.glob("*.md")):
+            if file_filter is not None and md_file.stem not in file_filter:
+                continue
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                
+                # 1. Audit WikiLinks
+                wikilinks = WIKILINK_REGEX.findall(content)
+                for link in wikilinks:
+                    slug = link.strip().lower().replace(" ", "-")
+                    if slug not in existing_files:
+                        warnings.append(
+                            f"In {md_file.name}: Broken WikiLink [[{link}]] points to non-existent document."
+                        )
+                
+                # 2. Audit standard Markdown links
+                md_links = MARKDOWN_LINK_REGEX.findall(content)
+                for target in md_links:
+                    decoded_target = unquote(target.split("#")[0].split("?")[0])
+                    slug = Path(decoded_target).stem.strip().lower().replace(" ", "-")
+                    if slug and slug not in existing_files:
+                        warnings.append(
+                            f"In {md_file.name}: Broken Markdown link [{target}] points to non-existent document."
+                        )
+            except Exception as e:
+                warnings.append(f"Failed to read {md_file.name} for link audit: {e}")
 
     return warnings
 

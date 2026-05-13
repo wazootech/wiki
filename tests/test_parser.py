@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from wiki_cli.parser import (
     normalize_frontmatter_str,
     parse_frontmatter,
+    split_frontmatter_body,
     to_camel_case,
     normalize_keys,
     ensure_context,
@@ -184,6 +185,37 @@ Body2"""
             
             # Verify file1 was updated
             self.assertIn("givenName: Alice", file1.read_text(encoding="utf-8"))
+
+
+    def test_split_frontmatter_body(self) -> None:
+        """Test split_frontmatter_body returns (frontmatter, body) correctly."""
+        # Valid frontmatter
+        content = """---
+id: wiki:test
+name: Test
+---
+Body text here"""
+        data, body = split_frontmatter_body(content)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "Test")
+        self.assertEqual(body, "Body text here")
+
+        # No frontmatter
+        no_fm = "Just body text\nwith multiple lines"
+        data, body = split_frontmatter_body(no_fm)
+        self.assertIsNone(data)
+        self.assertEqual(body, no_fm)
+
+    def test_split_frontmatter_body_with_dashes_in_body(self) -> None:
+        """Test split_frontmatter_body handles --- in body text."""
+        content = """---
+id: wiki:test
+name: Test
+---
+Body with --- dashes --- in text"""
+        data, body = split_frontmatter_body(content)
+        self.assertIsNotNone(data)
+        self.assertEqual(body, "Body with --- dashes --- in text")
 
 
 if __name__ == "__main__":
