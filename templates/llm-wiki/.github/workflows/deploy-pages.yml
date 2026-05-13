@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install Wiki CLI
-        run: pip install wiki-cli
+        run: pip install git+https://github.com/EthanThatOneKid/wiki-cli.git
       - name: Audit wiki style and SHACL constraints
         run: wiki check --strict -v
       - name: Verify SPARQL block rendering is up to date
