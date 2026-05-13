@@ -18,7 +18,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e .
-      - run: wiki build --output-dir _site
+      - name: Install Wiki CLI
+        run: pip install -e .
+      - name: Audit wiki style and SHACL constraints
+        run: wiki check --strict -v
+      - name: Verify SPARQL block rendering is up to date
+        run: |
+          wiki render
+          git diff --exit-code || (echo "::error::Inline SPARQL blocks are out of date! Run 'wiki render' locally and commit the changes." && exit 1)
+      - name: Build Static Site
+        run: wiki build --output-dir _site
       - uses: actions/upload-pages-artifact@v3
       - uses: actions/deploy-pages@v4
