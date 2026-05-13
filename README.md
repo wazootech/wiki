@@ -1,21 +1,31 @@
-# LLM Wiki (`llm-wiki`)
+# LLM Wiki (`wazootech-wiki`)
+
+[![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
+[![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An elegant, pure, and idiomatic Python command-line interface for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 
-Repository: [github.com/wazootech/llm-wiki](https://github.com/wazootech/llm-wiki). PyPI package: `llm-wiki`. CLI command: `wiki`.
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). PyPI package: `wazootech-wiki`. CLI command: `wiki`.
 
-Starter template repo: [github.com/wazootech/llm-wiki-template](https://github.com/wazootech/llm-wiki-template) (use GitHub’s “Use this template” button).
+Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (use GitHub’s “Use this template” button).
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
 - **Pure Python CLI**: Comprehensive command suite — `check`, `query`, `render`, `build`, `serve`, `export`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
-- **RDF Context Support** Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
+- **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
 - **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
 - **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
 
 ## Installation
+
+### From PyPI
+
+```bash
+pip install wazootech-wiki
+```
 
 ### From within this repo (editable)
 
@@ -31,10 +41,26 @@ pip install -e .
 
 ```bash
 # From the repo root
-uv pip install -e /path/to/llm-wiki
+uv pip install -e /path/to/wiki
 ```
 
 Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
+
+## Quickstart
+
+```bash
+mkdir my-wiki
+cd my-wiki
+
+# Interactive scaffold: creates wiki.yaml and wiki/ starter files
+wiki init
+
+# Run unified checks (silent on success)
+wiki check
+
+# Start a local server (default: http://127.0.0.1:8080/wiki/)
+wiki serve
+```
 
 ## Subcommand guide
 
@@ -172,28 +198,6 @@ _site/
     └── ...
 ```
 
-The `--base-url` flag controls the full URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{slug}`. Set it to an empty string for root-level URLs.
-
-Output structure (default `--base-url /wiki`):
-```
-_site/
-└── wiki/
-    ├── index.html                  # Wiki index at /wiki/
-    ├── alice.html                  # Page at /wiki/alice
-    ├── bob.html
-    └── bob/
-        └── early-life.html         # H2 section at /wiki/bob/early-life
-```
-
-With `--base-url /my-wiki`:
-```
-_site/
-└── my-wiki/
-    ├── index.html                  # Wiki index at /my-wiki/
-    ├── alice.html                  # Page at /my-wiki/alice
-    └── ...
-```
-
 #### GitHub Pages deployment
 
 Create `.github/workflows/deploy-pages.yml` in your wiki repository:
@@ -242,12 +246,12 @@ jobs:
         run: uv run wiki -c docs/wiki.json check --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /llm-wiki
+        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site/llm-wiki"
+          path: "_site/wiki"
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -453,11 +457,11 @@ context:
 
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
-*   [CONTEXT.md](CONTEXT.md) — Glossary and Domain Model mapping.
-*   [0001-context-centric-configuration.md](docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.
-*   [0002-userland-printing.md](docs/adr/0002-userland-printing.md) — Architectural Decision Record (ADR) on adopting userland printing filters.
-*   [0003-silence-is-golden.md](docs/adr/0003-silence-is-golden.md) — Architectural Decision Record (ADR) on silent default behaviors.
-*   [0004-unified-check-and-wikiconfig.md](docs/adr/0004-unified-check-and-wikiconfig.md) — Architectural Decision Record (ADR) on unified check command and WikiConfig.
-*   [0005-streamlined-cli-architecture.md](docs/adr/0005-streamlined-cli-architecture.md) — Architectural Decision Record (ADR) on streamlined CLI architecture.
+*   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
+*   [0001-context-centric-configuration.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.
+*   [0002-userland-printing.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0002-userland-printing.md) — Architectural Decision Record (ADR) on adopting userland printing filters.
+*   [0003-silence-is-golden.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0003-silence-is-golden.md) — Architectural Decision Record (ADR) on silent default behaviors.
+*   [0004-unified-check-and-wikiconfig.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0004-unified-check-and-wikiconfig.md) — Architectural Decision Record (ADR) on unified check command and WikiConfig.
+*   [0005-streamlined-cli-architecture.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0005-streamlined-cli-architecture.md) — Architectural Decision Record (ADR) on streamlined CLI architecture.
 
 

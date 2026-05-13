@@ -41,12 +41,12 @@ jobs:
         run: uv run wiki -c docs/wiki.json check --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /llm-wiki
+        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site/llm-wiki"
+          path: "_site/wiki"
 
       - name: Deploy to GitHub Pages
         id: deployment

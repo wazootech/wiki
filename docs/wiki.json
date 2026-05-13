@@ -5,6 +5,6 @@
   "contentPredicate": "schema:text",
   "context": {
     "schema": "https://schema.org/",
-    "wiki": "https://wazootech.github.io/llm-wiki/wiki/"
+    "wiki": "https://wazootech.github.io/wiki/wiki/"
   }
 }

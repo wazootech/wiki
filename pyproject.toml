@@ -1,5 +1,5 @@
 [project]
-name = "llm-wiki"
+name = "wazootech-wiki"
 version = "0.1.0"
 description = "Clean, pure, idiomatic Python CLI for managing a semantic LLM wiki"
 readme = "README.md"

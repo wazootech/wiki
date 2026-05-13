@@ -1,6 +1,6 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the `wiki check` subcommand of the LLM Wiki CLI (`llm-wiki` on PyPI).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the `wiki check` subcommand of the LLM Wiki CLI (`wazootech-wiki` on PyPI).
 
 ## Vault rules
 
