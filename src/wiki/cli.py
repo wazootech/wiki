@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -389,6 +390,46 @@ def init(force: bool) -> None:
 
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
     click.echo("Initialized wiki.yaml and wiki/ starter files.")
+
+
+@main.command()
+@click.option("-c", "--check", "check_only", is_flag=True, help="Check for updates without upgrading.")
+@click.option("-y", "--yes", "auto_yes", is_flag=True, help="Skip confirmation prompt and upgrade immediately.")
+@click.option("-v", "--verbose", is_flag=True, help="Show pip install output.")
+def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
+    """Check for updates and upgrade the wiki CLI."""
+    from .upgrade import check_version, perform_upgrade
+
+    current, latest, is_outdated = check_version()
+
+    if current is None:
+        click.echo("Error: cannot determine current version (package not found?).", err=True)
+        sys.exit(1)
+
+    if latest is None:
+        click.echo("Error: cannot reach PyPI to check for updates.", err=True)
+        sys.exit(1)
+
+    if is_outdated:
+        click.echo(f"Update available: {current} -> {latest}")
+    else:
+        click.echo(f"You're up to date ({current}).")
+
+    if check_only:
+        sys.exit(0 if not is_outdated else 1)
+
+    if not is_outdated:
+        return
+
+    if not auto_yes:
+        click.confirm("Upgrade now?", default=True, abort=True)
+
+    try:
+        perform_upgrade(verbose=verbose)
+        click.echo(f"Upgraded to {latest}.")
+    except subprocess.SubprocessError as e:  # type: ignore[name-defined]
+        click.echo(f"Upgrade failed: {e}", err=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
