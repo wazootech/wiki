@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import fnmatch
 import logging
 from pathlib import Path
 from typing import Any
@@ -10,9 +11,13 @@ import yaml
 from rdflib import Namespace, RDF, RDFS, OWL
 from rdflib.namespace import XSD
 
-from .filename_style import DEFAULT_FILENAME_STYLE, normalize_filename_style
-
 logger = logging.getLogger(__name__)
+
+DEFAULT_MARKDOWN_FLAVOR = "obsidian"
+VALID_MARKDOWN_FLAVORS = {"obsidian", "gfm"}
+DEFAULT_BASE_URL = "/wiki"
+DEFAULT_URL_STYLE = "dir"
+VALID_URL_STYLES = {"dir", "file"}
 
 # Standard static namespaces
 SCHEMA = Namespace("https://schema.org/")
@@ -61,25 +66,50 @@ class WikiConfig:
     def __init__(
         self,
         input_dirs: list[str | Path] | None = None,
+        asset_dirs: list[str | Path] | None = None,
         wiki_base: str = "https://wiki.example.org/",
         check: dict[str, str] | None = None,
         context: Context | None = None,
         content_predicate: str | None = None,
         uri_ext: bool = False,
-        filename_style: str = DEFAULT_FILENAME_STYLE,
+        markdown_flavor: str = DEFAULT_MARKDOWN_FLAVOR,
+        filename_pattern: str | None = None,
+        base_url: str = DEFAULT_BASE_URL,
+        url_style: str = DEFAULT_URL_STYLE,
+        exclude: list[str] | None = None,
+        config_root: str | Path | None = None,
     ) -> None:
+        self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
+        self.asset_dirs = [Path(d) for d in (asset_dirs or [])]
 
         self.wiki_base = wiki_base
         self.check = check if check is not None else {
-            "filenameStyle": "warning",
+            "filenamePattern": "warning",
             "internalLinks": "warning",
+            "markdownFlavor": "warning",
         }
         self.context = context if context is not None else Context({"wiki": wiki_base}, wiki_base=wiki_base)
         self.context.wiki_base = wiki_base
         self.content_predicate = content_predicate
         self.uri_ext = uri_ext
-        self.filename_style = normalize_filename_style(filename_style)
+        self.markdown_flavor = normalize_markdown_flavor(markdown_flavor)
+        self.filename_pattern = filename_pattern
+        self.base_url = base_url.rstrip("/") if base_url else ""
+        self.url_style = normalize_url_style(url_style)
+        self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
+
+    def relative_to_root(self, path: Path) -> str:
+        """Return a config-root-relative POSIX path for glob matching."""
+        try:
+            rel = path.resolve().relative_to(self.config_root.resolve())
+        except ValueError:
+            rel = path
+        return rel.as_posix().strip("/")
+
+    def is_excluded(self, path: Path) -> bool:
+        rel = self.relative_to_root(path)
+        return any(fnmatch.fnmatchcase(rel, pattern) for pattern in self.exclude)
 
     @property
     def namespaces(self) -> dict[str, Any]:
@@ -118,15 +148,19 @@ class WikiConfig:
                                     prefixes[k] = v
                             context_obj = Context(prefixes)
 
-                        # Parse inputDirs as a list or single string
-                        input_data = data.get("input_dirs") or data.get("inputDirs") or ["wiki"]
-                        if isinstance(input_data, str):
-                            input_data = [input_data]
-                        elif not isinstance(input_data, list):
-                            input_data = ["wiki"]
-
                         # Derive absolute reference point for system paths relative to config location
                         base_dir = config_path.parent.absolute()
+
+                        # Parse inputDirs as a list or single string
+                        input_data = _as_list(data.get("input_dirs") or data.get("inputDirs") or ["wiki"])
+
+                        asset_data = data.get("asset_dirs") if data.get("asset_dirs") is not None else data.get("assetDirs")
+                        if asset_data is None:
+                            asset_data = ["assets"] if (base_dir / "assets").is_dir() else []
+                        asset_data = _as_list(asset_data)
+
+                        exclude_data = _as_list(data.get("exclude") or [])
+
                         def resolve(p: Any) -> Any:
                             if not p:
                                 return p
@@ -142,18 +176,44 @@ class WikiConfig:
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
-                        filename_style = data.get("filename_style") or data.get("filenameStyle") or DEFAULT_FILENAME_STYLE
-
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
+                            asset_dirs=[resolve(d) for d in asset_data],
                             wiki_base=data.get("wiki_base") or data.get("wikiBase") or context_wiki_base or "https://wiki.example.org/",
                             check=data.get("check"),
                             context=context_obj,
                             content_predicate=data.get("content_predicate") or data.get("contentPredicate"),
                             uri_ext=uri_ext,
-                            filename_style=filename_style,
+                            markdown_flavor=data.get("markdown_flavor") or data.get("markdownFlavor") or DEFAULT_MARKDOWN_FLAVOR,
+                            filename_pattern=data.get("filename_pattern") or data.get("filenamePattern"),
+                            base_url=data.get("base_url") if data.get("base_url") is not None else data.get("baseUrl", DEFAULT_BASE_URL),
+                            url_style=data.get("url_style") or data.get("urlStyle") or DEFAULT_URL_STYLE,
+                            exclude=[str(p) for p in exclude_data],
+                            config_root=base_dir,
                         )
                 except Exception as e:
                     logger.warning("Failed to load config file %s: %s", config_path.name, e)
 
         return cls()
+
+
+def _as_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        return [value]
+    return []
+
+
+def normalize_markdown_flavor(value: str | None) -> str:
+    normalized = str(value or DEFAULT_MARKDOWN_FLAVOR).strip().lower()
+    if normalized not in VALID_MARKDOWN_FLAVORS:
+        raise ValueError(f"Invalid markdownFlavor: {value}")
+    return normalized
+
+
+def normalize_url_style(value: str | None) -> str:
+    normalized = str(value or DEFAULT_URL_STYLE).strip().lower()
+    if normalized not in VALID_URL_STYLES:
+        raise ValueError(f"Invalid urlStyle: {value}")
+    return normalized
