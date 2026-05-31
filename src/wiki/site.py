@@ -12,6 +12,7 @@ from typing import Any
 from markdown_it import MarkdownIt
 from mdit_py_plugins.wikilink import wikilink_plugin
 
+from .filename_style import DEFAULT_FILENAME_STYLE, normalize_path, slugify_kebab_segment
 from .parser import split_frontmatter_body
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
@@ -54,26 +55,24 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 
 def slugify_segment(text: str) -> str:
     """Slugify a single path segment (no slashes)."""
-    text = text.lower().strip()
-    text = re.sub(r"[^a-z0-9\s-]", "", text)
-    text = re.sub(r"[\s-]+", "-", text)
-    return text.strip("-")
+    return slugify_kebab_segment(text)
 
 
 def slugify_path(text: str) -> str:
     """Slugify a potentially nested slug like 'people/Gregory House' -> 'people/gregory-house'."""
-    raw = text.strip().replace("\\", "/").strip("/")
-    if not raw:
-        return ""
-    parts = [p for p in raw.split("/") if p.strip()]
-    return "/".join(slugify_segment(p) for p in parts)
+    return normalize_path(text)
 
 
 def _url(base_url: str, slug: str, style: str) -> str:
     return f"{base_url}/{slug}.html" if style == "file" else f"{base_url}/{slug}"
 
 
-def render_wiki_markdown(text: str, base_url: str = "/wiki", url_style: str = "file") -> str:
+def render_wiki_markdown(
+    text: str,
+    base_url: str = "/wiki",
+    url_style: str = "file",
+    filename_style: str = DEFAULT_FILENAME_STYLE,
+) -> str:
     md = MarkdownIt("gfm-like", {"linkify": False})
     md.use(wikilink_plugin)
 
@@ -81,7 +80,7 @@ def render_wiki_markdown(text: str, base_url: str = "/wiki", url_style: str = "f
         token = tokens[idx]
         href = token.attrs.get("href", "")
         content = token.content
-        slug = slugify_path(href)
+        slug = normalize_path(href, filename_style)
         return f'<a class="wikilink" href="{_url(base_url, slug, url_style)}">{html_module.escape(content)}</a>'
 
     md.add_render_rule("wikilink", _wikilink_renderer)
@@ -150,7 +149,12 @@ def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
     return sections
 
 
-def build_site(input_dirs: list[Path] | Path, base_url: str = "/wiki", url_style: str = "file") -> WikiSite:
+def build_site(
+    input_dirs: list[Path] | Path,
+    base_url: str = "/wiki",
+    url_style: str = "file",
+    filename_style: str = DEFAULT_FILENAME_STYLE,
+) -> WikiSite:
     """Build in-memory representation of the wiki site."""
     dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
     pages: list[VirtualPage] = []
@@ -165,17 +169,17 @@ def build_site(input_dirs: list[Path] | Path, base_url: str = "/wiki", url_style
         for root in dirs:
             try:
                 rel = md.relative_to(root)
-                return slugify_path(rel.with_suffix("").as_posix())
+                return normalize_path(rel.with_suffix("").as_posix(), filename_style)
             except ValueError:
                 continue
-        return slugify_path(md.with_suffix("").as_posix())
+        return normalize_path(md.with_suffix("").as_posix(), filename_style)
 
     backlink_index: dict[str, list[str]] = {}
     for md in md_files:
         content = md.read_text(encoding="utf-8")
         source_slug = file_slug(md)
         for match in WIKILINK_RE.finditer(content):
-            target = slugify_path(match.group(1).strip())
+            target = normalize_path(match.group(1).strip(), filename_style)
             if target not in backlink_index:
                 backlink_index[target] = []
             if source_slug not in backlink_index[target]:
@@ -198,7 +202,12 @@ def build_site(input_dirs: list[Path] | Path, base_url: str = "/wiki", url_style
             if 3 <= lvl <= 6:
                 h1_toc.append(TocItem(title=m.group(2).strip(), slug=slugify_segment(m.group(2).strip()), level=lvl))
 
-        h1_html = render_wiki_markdown(all_section_md, base_url=base_url, url_style=url_style)
+        h1_html = render_wiki_markdown(
+            all_section_md,
+            base_url=base_url,
+            url_style=url_style,
+            filename_style=filename_style,
+        )
         pages.append(VirtualPage(
             file_slug=md_slug,
             section_slug=None,
@@ -214,14 +223,14 @@ def build_site(input_dirs: list[Path] | Path, base_url: str = "/wiki", url_style
         for level, title, section_md in sections:
             if level != 2:
                 continue
-            section_slug = slugify_segment(title)
+            section_slug = slugify_kebab_segment(title)
             toc = []
             for m in HEADING_RE.finditer(section_md):
                 lvl = len(m.group(1))
                 if 3 <= lvl <= 6:
-                    toc.append(TocItem(title=m.group(2).strip(), slug=slugify_segment(m.group(2).strip()), level=lvl))
+                    toc.append(TocItem(title=m.group(2).strip(), slug=slugify_kebab_segment(m.group(2).strip()), level=lvl))
 
-            html_content = render_wiki_markdown(section_md, base_url=base_url, url_style=url_style)
+            html_content = render_wiki_markdown(section_md, base_url=base_url, url_style=url_style, filename_style=filename_style)
             bl = backlink_index.get(section_slug, []) or backlink_index.get(md_slug, [])
             pages.append(VirtualPage(
                 file_slug=md_slug,

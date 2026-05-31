@@ -6,6 +6,7 @@ from wiki.config import WikiConfig
 from wiki.audit import (
     audit_filenames,
     audit_internal_links,
+    autofix_hygiene,
     load_shapes,
     check_shacl_file,
     check_shacl_all,
@@ -160,6 +161,49 @@ type: schema:WebPage
             self.assertTrue(res_off["conforms"])
             self.assertEqual(len(res_off["warnings"]), 0)
             self.assertEqual(len(res_off["errors"]), 0)
+
+    def test_wikipedia_filename_style_reports_invalid_kebab(self) -> None:
+        """Wikipedia filename style accepts title underscores and reports kebab names."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
+            (wiki_dir / "ethan-davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            res = run_checks(config)
+
+            self.assertTrue(res["conforms"])
+            self.assertEqual(len(res["warnings"]), 1)
+            self.assertIn("ethan-davidson.md", res["warnings"][0])
+
+    def test_wikipedia_link_resolution_requires_wikipedia_target(self) -> None:
+        """Wikipedia style does not also accept space-normalized WikiLink targets."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
+            (wiki_dir / "Source.md").write_text(
+                "---\ntype: schema:CreativeWork\n---\n\nSee [[Ethan Davidson]].",
+                encoding="utf-8",
+            )
+
+            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            res = run_checks(config)
+
+            self.assertTrue(any("Broken WikiLink [[Ethan Davidson]]" in w for w in res["warnings"]))
+
+    def test_wikipedia_fix_is_report_only(self) -> None:
+        """check --fix behavior should not rename files in wikipedia mode."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            invalid = wiki_dir / "ethan-davidson.md"
+            invalid.write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            result = autofix_hygiene(config)
+
+            self.assertTrue(invalid.exists())
+            self.assertEqual(result["renamed"], [])
+            self.assertFalse(result["updated_wikilinks"])
 
     def test_frontmatter_defined_shapes(self) -> None:
         """Test that SHACL shapes defined in markdown frontmatter are loaded and enforced."""

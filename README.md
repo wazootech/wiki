@@ -72,7 +72,7 @@ wiki serve
 
 
 ### `check`
-Perform unified validations of your wiki, including strict SHACL schema validations and soft style/hygiene audits (kebab-case filenames, broken internal wikilinks). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Perform unified validations of your wiki, including strict SHACL schema validations and soft style/hygiene audits (configured filename style, broken internal wikilinks). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 # Run unified checks on the entire wiki silently (default)
@@ -90,6 +90,21 @@ wiki check -v
 # Run in strict mode (warnings become errors and fail with non-zero exit code)
 wiki check --strict
 ```
+
+The top-level `filenameStyle` setting controls the naming convention, while `check.filenameStyle` controls whether violations are warnings, errors, or off:
+
+```yaml
+filenameStyle: kebab
+check:
+  filenameStyle: warning
+```
+
+Supported filename styles:
+
+- `kebab` (default): `ethan-davidson.md`
+- `wikipedia`: `Ethan_Davidson.md`
+
+`wiki check --fix` renames files only in `kebab` mode. In `wikipedia` mode it reports violations without renaming files.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph.

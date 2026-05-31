@@ -210,7 +210,7 @@ def build(config: Context, output_dir: Path, base_url: str, url_style: str, rend
         sys.exit(1)
 
     base_url = base_url.rstrip("/")
-    site = build_site(config.input_dirs, base_url=base_url, url_style=url_style)
+    site = build_site(config.input_dirs, base_url=base_url, url_style=url_style, filename_style=config.filename_style)
     output_dir = output_dir.resolve()
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
@@ -318,7 +318,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
 def serve(config: Context, host: str, port: int, base_url: str, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
-    run_server(config.input_dirs, host=host, port=port, base_url=base_url.rstrip("/"), watch=watch)
+    run_server(config.input_dirs, host=host, port=port, base_url=base_url.rstrip("/"), watch=watch, filename_style=config.filename_style)
 
 
 @main.command()
@@ -358,6 +358,7 @@ def init(force: bool) -> None:
     cfg = {
         "inputDirs": ["wiki"],
         "wikiBase": wiki_base,
+        "filenameStyle": "kebab",
         "check": {"filenameStyle": "warning", "internalLinks": "warning"},
         "context": context_map,
     }

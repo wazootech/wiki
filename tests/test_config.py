@@ -45,6 +45,7 @@ class TestWikiConfig(unittest.TestCase):
         config = WikiConfig()
         self.assertEqual(config.input_dirs, [Path("wiki")])
         self.assertFalse(config.uri_ext)
+        self.assertEqual(config.filename_style, "kebab")
         self.assertEqual(config.check.get("filenameStyle"), "warning")
         self.assertIsNotNone(config.context)
 
@@ -63,6 +64,7 @@ class TestWikiConfig(unittest.TestCase):
                 "check": {
                     "filenameStyle": "error"
                 },
+                "filenameStyle": "wikipedia",
                 "context": {
                     "custom_pref": "http://custom-pref.org/"
                 }
@@ -72,6 +74,7 @@ class TestWikiConfig(unittest.TestCase):
             config = WikiConfig.load(base_path)
             self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.check.get("filenameStyle"), "error")
+            self.assertEqual(config.filename_style, "wikipedia")
             self.assertIn("custom_pref", config.namespaces)
 
     def test_wikiconfig_load_json(self) -> None:

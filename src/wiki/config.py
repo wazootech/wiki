@@ -10,6 +10,8 @@ import yaml
 from rdflib import Namespace, RDF, RDFS, OWL
 from rdflib.namespace import XSD
 
+from .filename_style import DEFAULT_FILENAME_STYLE, normalize_filename_style
+
 logger = logging.getLogger(__name__)
 
 # Standard static namespaces
@@ -64,6 +66,7 @@ class WikiConfig:
         context: Context | None = None,
         content_predicate: str | None = None,
         uri_ext: bool = False,
+        filename_style: str = DEFAULT_FILENAME_STYLE,
     ) -> None:
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
 
@@ -76,6 +79,7 @@ class WikiConfig:
         self.context.wiki_base = wiki_base
         self.content_predicate = content_predicate
         self.uri_ext = uri_ext
+        self.filename_style = normalize_filename_style(filename_style)
 
     @property
     def namespaces(self) -> dict[str, Any]:
@@ -138,6 +142,8 @@ class WikiConfig:
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
+                        filename_style = data.get("filename_style") or data.get("filenameStyle") or DEFAULT_FILENAME_STYLE
+
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             wiki_base=data.get("wiki_base") or data.get("wikiBase") or context_wiki_base or "https://wiki.example.org/",
@@ -145,6 +151,7 @@ class WikiConfig:
                             context=context_obj,
                             content_predicate=data.get("content_predicate") or data.get("contentPredicate"),
                             uri_ext=uri_ext,
+                            filename_style=filename_style,
                         )
                 except Exception as e:
                     logger.warning("Failed to load config file %s: %s", config_path.name, e)

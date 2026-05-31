@@ -25,9 +25,9 @@ def _free_port() -> int:
     return port
 
 
-def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
+def _serve_in_thread(wiki_dir: Path, filename_style: str = "kebab") -> Generator[int, None, None]:
     port = _free_port()
-    server = create_server(wiki_dir, host="127.0.0.1", port=port)
+    server = create_server(wiki_dir, host="127.0.0.1", port=port, filename_style=filename_style)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
     for _ in range(100):
@@ -186,6 +186,16 @@ class TestServe(unittest.TestCase):
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/wiki/source")
         self.assertIn("/wiki/target-page", body)
+
+    def test_wikipedia_filename_style_routes_and_wikilinks(self) -> None:
+        self._write("Source.md", "# Source\n\nSee [[Ethan_Davidson]].")
+        self._write("Ethan_Davidson.md", "# Ethan Davidson")
+        for port in _serve_in_thread(self.wiki_dir, filename_style="wikipedia"):
+            status, body = self._get(port, "/wiki/Source")
+            target_status, _ = self._get(port, "/wiki/Ethan_Davidson")
+        self.assertEqual(status, 200)
+        self.assertEqual(target_status, 200)
+        self.assertIn("/wiki/Ethan_Davidson", body)
 
     def test_h1_page_as_full_document(self) -> None:
         self._write("full.md", "# Full Doc\n\nIntro.\n\n## Section A\n\nContent A.\n\n## Section B\n\nContent B.")

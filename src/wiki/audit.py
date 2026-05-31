@@ -11,13 +11,17 @@ from rdflib import Graph
 import pyshacl
 
 from .config import WikiConfig
+from .filename_style import (
+    KEBAB_STYLE,
+    filename_stem_is_valid,
+    normalize_path,
+    slugify_kebab_segment,
+    style_description,
+)
 from .parser import frontmatter_from_path
 from .graph import frontmatter_to_graph, load_graph
 
 logger = logging.getLogger(__name__)
-
-# Filename pattern: lowercase kebab-case
-FILENAME_REGEX = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 # WikiLink pattern: [[slug]] or [[slug|display]]
 WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
@@ -28,18 +32,11 @@ MARKDOWN_LINK_REGEX = re.compile(r"\[[^\]]+\]\((?!(?:https?://|mailto:|#))([^)]+
 
 
 def _slugify_segment(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r"[^a-z0-9\s-]", "", text)
-    text = re.sub(r"[\s-]+", "-", text)
-    return text.strip("-")
+    return slugify_kebab_segment(text)
 
 
 def _slugify_path(text: str) -> str:
-    raw = text.strip().replace("\\", "/").strip("/")
-    if not raw:
-        return ""
-    parts = [p for p in raw.split("/") if p.strip()]
-    return "/".join(_slugify_segment(p) for p in parts)
+    return normalize_path(text)
 
 
 def file_slug_for_path(config: WikiConfig, md_file: Path) -> str:
@@ -47,10 +44,10 @@ def file_slug_for_path(config: WikiConfig, md_file: Path) -> str:
     for root in config.input_dirs:
         try:
             rel = md_file.relative_to(root)
-            return _slugify_path(rel.with_suffix("").as_posix())
+            return normalize_path(rel.with_suffix("").as_posix(), config.filename_style)
         except ValueError:
             continue
-    return _slugify_path(md_file.with_suffix("").as_posix())
+    return normalize_path(md_file.with_suffix("").as_posix(), config.filename_style)
 
 
 def iter_markdown_files(config: WikiConfig) -> list[Path]:
@@ -157,7 +154,7 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
 
 
 def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit filenames in the wiki directory to ensure they are lowercase kebab-case.
+    """Audit filenames in the wiki directory to ensure they match the configured style.
 
     If file_filter is set, only check files whose stem is in the set.
 
@@ -168,9 +165,9 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
         slug = file_slug_for_path(config, md_file)
         if file_filter is not None and slug not in file_filter:
             continue
-        if not FILENAME_REGEX.match(md_file.stem):
+        if not filename_stem_is_valid(md_file.stem, config.filename_style):
             # Include the original filename for clearer user feedback.
-            warnings.append(f"Filename '{md_file.name}' is not lowercase kebab-case.")
+            warnings.append(f"Filename '{md_file.name}' is not {style_description(config.filename_style)}.")
     return warnings
 
 
@@ -197,7 +194,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
             # 1. Audit WikiLinks
             wikilinks = WIKILINK_REGEX.findall(content)
             for link in wikilinks:
-                slug = _slugify_path(link)
+                slug = normalize_path(link, config.filename_style)
                 if slug not in existing_files:
                     warnings.append(
                         f"In {md_slug}.md: Broken WikiLink [[{link}]] points to non-existent document."
@@ -207,7 +204,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
             md_links = MARKDOWN_LINK_REGEX.findall(content)
             for target in md_links:
                 decoded_target = unquote(target.split("#")[0].split("?")[0])
-                slug = _slugify_path(Path(decoded_target).with_suffix("").as_posix())
+                slug = normalize_path(Path(decoded_target).with_suffix("").as_posix(), config.filename_style)
                 if slug and slug not in existing_files:
                     warnings.append(
                         f"In {md_slug}.md: Broken Markdown link [{target}] points to non-existent document."
@@ -221,7 +218,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
 def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
     def repl(match: re.Match) -> str:
         target = match.group(1)
-        normalized = _slugify_path(target)
+        normalized = normalize_path(target, KEBAB_STYLE)
         if normalized not in renames:
             return match.group(0)
 
@@ -238,12 +235,15 @@ def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
 
 def autofix_hygiene(config: WikiConfig) -> dict[str, Any]:
     """Autofix style issues (currently: filename kebab-case + wikilink updates)."""
+    if config.filename_style != KEBAB_STYLE:
+        return {"renamed": [], "updated_wikilinks": False}
+
     renames: dict[str, str] = {}
     renamed_files: list[tuple[str, str]] = []
 
     # Rename files that violate kebab-case (filename only; directories unchanged)
     for md_file in iter_markdown_files(config):
-        if FILENAME_REGEX.match(md_file.stem):
+        if filename_stem_is_valid(md_file.stem, KEBAB_STYLE):
             continue
         old_slug = file_slug_for_path(config, md_file)
         new_stem = _slugify_segment(md_file.stem)
