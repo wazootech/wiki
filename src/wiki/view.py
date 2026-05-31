@@ -5,6 +5,7 @@ from __future__ import annotations
 from io import StringIO
 from pathlib import Path
 
+from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -32,11 +33,11 @@ def render_document_view(file_path: Path, config: object, base_url: str | None =
     panel_text = Text(page.title)
     if template_name:
         panel_text.append(f"\nTemplate: {template_name}", style="dim")
-    console.print(Panel(panel_text, expand=False))
+    console.print(Panel(panel_text, expand=False, box=box.ASCII))
 
     rows = build_infobox_rows(page, site, resolved_base_url, resolved_url_style)
     if rows:
-        table = Table(show_header=True, header_style="bold", box=None, pad_edge=False)
+        table = Table(show_header=True, header_style="bold", box=box.ASCII, pad_edge=False)
         table.add_column("Field", style="cyan", no_wrap=True)
         table.add_column("Value")
         for row in rows:

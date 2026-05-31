@@ -13,6 +13,7 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
 - **Pure Python CLI**: Comprehensive command suite — `check`, `query`, `render`, `build`, `serve`, `export`.
+- **Terminal Document View**: Render a single wiki document as a readable terminal infobox with `wiki view`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
@@ -269,6 +270,24 @@ sh:property:
     sh:datatype: xsd:string
     sh:maxCount: 1
 ```
+
+### `view`
+Render a single wiki document as a terminal-friendly infobox view.
+
+```bash
+# View a markdown page with infobox and body
+wiki view wiki/Gregory_Davidson.md
+
+# View a data-only record
+wiki view wiki/Bella_Davidson.yaml
+```
+
+`wiki view` reuses the same page typing and infobox resolution as `wiki build` and `wiki serve`:
+
+- template names are shown as file-style identifiers like `Person.html`
+- internal wiki references are displayed using the target page title
+- markdown pages include their body below the infobox
+- data-only pages show their title and infobox without a markdown body
 
 #### GitHub Pages deployment
 
