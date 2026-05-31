@@ -187,14 +187,14 @@ def render(context: Context, no_inference: bool, check: bool, verbose: bool) -> 
 @main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
-@click.option("--base-url", default="/wiki", show_default=True,
+@click.option("--base-url", default=None,
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
-@click.option("--url-style", type=click.Choice(["file", "dir"]), default="file", show_default=True,
+@click.option("--url-style", type=click.Choice(["file", "dir"]), default=None,
               help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
 @click.option("--render", is_flag=True, help="Run SPARQL dynamic block rendering on markdown files before building.")
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
-def build(config: Context, output_dir: Path, base_url: str, url_style: str, render: bool, verbose: bool) -> None:
+def build(config: Context, output_dir: Path, base_url: str | None, url_style: str | None, render: bool, verbose: bool) -> None:
     """Build static HTML site from wiki markdown files."""
     from .site import build_site, build_index_html, build_page_html
 
@@ -209,8 +209,9 @@ def build(config: Context, output_dir: Path, base_url: str, url_style: str, rend
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
-    base_url = base_url.rstrip("/")
-    site = build_site(config.input_dirs, base_url=base_url, url_style=url_style, filename_style=config.filename_style)
+    base_url = (config.base_url if base_url is None else base_url).rstrip("/")
+    url_style = config.url_style if url_style is None else url_style
+    site = build_site(config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
@@ -311,14 +312,15 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
 @main.command()
 @click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind the server to.")
 @click.option("--port", default=8080, type=int, show_default=True, help="Port to serve on.")
-@click.option("--base-url", default="/wiki", show_default=True,
+@click.option("--base-url", default=None,
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
 @click.option("--watch", is_flag=True, help="Watch files and auto-reload the browser on rebuild.")
 @click.pass_obj
-def serve(config: Context, host: str, port: int, base_url: str, watch: bool) -> None:
+def serve(config: Context, host: str, port: int, base_url: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
-    run_server(config.input_dirs, host=host, port=port, base_url=base_url.rstrip("/"), watch=watch, filename_style=config.filename_style)
+    resolved_base_url = (config.base_url if base_url is None else base_url).rstrip("/")
+    run_server(config.input_dirs, host=host, port=port, base_url=resolved_base_url, watch=watch)
 
 
 @main.command()
@@ -358,8 +360,10 @@ def init(force: bool) -> None:
     cfg = {
         "inputDirs": ["wiki"],
         "wikiBase": wiki_base,
-        "filenameStyle": "kebab",
-        "check": {"filenameStyle": "warning", "internalLinks": "warning"},
+        "markdownFlavor": "obsidian",
+        "baseUrl": "/wiki",
+        "urlStyle": "dir",
+        "check": {"filenamePattern": "warning", "internalLinks": "warning", "markdownFlavor": "warning"},
         "context": context_map,
     }
 

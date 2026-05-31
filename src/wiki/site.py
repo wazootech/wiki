@@ -12,7 +12,9 @@ from typing import Any
 from markdown_it import MarkdownIt
 from mdit_py_plugins.wikilink import wikilink_plugin
 
+from .config import WikiConfig
 from .filename_style import DEFAULT_FILENAME_STYLE, normalize_path, slugify_kebab_segment
+from .paths import page_url, route_for_markdown_file
 from .parser import split_frontmatter_body
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
@@ -64,7 +66,7 @@ def slugify_path(text: str) -> str:
 
 
 def _url(base_url: str, slug: str, style: str) -> str:
-    return f"{base_url}/{slug}.html" if style == "file" else f"{base_url}/{slug}"
+    return page_url(base_url, slug, style)
 
 
 def render_wiki_markdown(
@@ -150,13 +152,14 @@ def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
 
 
 def build_site(
-    input_dirs: list[Path] | Path,
+    input_dirs: WikiConfig | list[Path] | Path,
     base_url: str = "/wiki",
     url_style: str = "file",
     filename_style: str = DEFAULT_FILENAME_STYLE,
 ) -> WikiSite:
     """Build in-memory representation of the wiki site."""
-    dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
+    config = input_dirs if isinstance(input_dirs, WikiConfig) else None
+    dirs = config.input_dirs if config is not None else ([input_dirs] if isinstance(input_dirs, Path) else input_dirs)
     pages: list[VirtualPage] = []
 
     md_files: list[Path] = []
@@ -166,6 +169,8 @@ def build_site(
     md_files.sort()
 
     def file_slug(md: Path) -> str:
+        if config is not None:
+            return route_for_markdown_file(config, md)
         for root in dirs:
             try:
                 rel = md.relative_to(root)

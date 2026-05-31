@@ -11,12 +11,14 @@ from rdflib import Graph
 import pyshacl
 
 from .config import WikiConfig
-from .filename_style import (
-    KEBAB_STYLE,
-    filename_stem_is_valid,
-    normalize_path,
-    slugify_kebab_segment,
-    style_description,
+from .filename_style import KEBAB_STYLE, normalize_path, slugify_kebab_segment
+from .paths import (
+    build_page_manifest,
+    detect_output_collisions,
+    iter_markdown_files,
+    route_for_markdown_file,
+    validate_filename_pattern,
+    validate_route_safety,
 )
 from .parser import frontmatter_from_path
 from .graph import frontmatter_to_graph, load_graph
@@ -41,21 +43,7 @@ def _slugify_path(text: str) -> str:
 
 def file_slug_for_path(config: WikiConfig, md_file: Path) -> str:
     """Return nested slug for a markdown file relative to an input dir."""
-    for root in config.input_dirs:
-        try:
-            rel = md_file.relative_to(root)
-            return normalize_path(rel.with_suffix("").as_posix(), config.filename_style)
-        except ValueError:
-            continue
-    return normalize_path(md_file.with_suffix("").as_posix(), config.filename_style)
-
-
-def iter_markdown_files(config: WikiConfig) -> list[Path]:
-    md_files: list[Path] = []
-    for input_dir in config.input_dirs:
-        if input_dir.exists():
-            md_files.extend(sorted(input_dir.rglob("*.md")))
-    return md_files
+    return route_for_markdown_file(config, md_file)
 
 
 def load_shapes(data_graph: Graph) -> Graph:
@@ -154,7 +142,7 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
 
 
 def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit filenames in the wiki directory to ensure they match the configured style.
+    """Audit filenames in the wiki directory against the optional filenamePattern.
 
     If file_filter is set, only check files whose stem is in the set.
 
@@ -165,9 +153,9 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
         slug = file_slug_for_path(config, md_file)
         if file_filter is not None and slug not in file_filter:
             continue
-        if not filename_stem_is_valid(md_file.stem, config.filename_style):
-            # Include the original filename for clearer user feedback.
-            warnings.append(f"Filename '{md_file.name}' is not {style_description(config.filename_style)}.")
+        issue = validate_filename_pattern(config, md_file)
+        if issue:
+            warnings.append(issue)
     return warnings
 
 
@@ -194,7 +182,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
             # 1. Audit WikiLinks
             wikilinks = WIKILINK_REGEX.findall(content)
             for link in wikilinks:
-                slug = normalize_path(link, config.filename_style)
+                slug = normalize_path(link)
                 if slug not in existing_files:
                     warnings.append(
                         f"In {md_slug}.md: Broken WikiLink [[{link}]] points to non-existent document."
@@ -204,7 +192,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
             md_links = MARKDOWN_LINK_REGEX.findall(content)
             for target in md_links:
                 decoded_target = unquote(target.split("#")[0].split("?")[0])
-                slug = normalize_path(Path(decoded_target).with_suffix("").as_posix(), config.filename_style)
+                slug = normalize_path(Path(decoded_target).with_suffix("").as_posix())
                 if slug and slug not in existing_files:
                     warnings.append(
                         f"In {md_slug}.md: Broken Markdown link [{target}] points to non-existent document."
@@ -235,35 +223,8 @@ def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
 
 def autofix_hygiene(config: WikiConfig) -> dict[str, Any]:
     """Autofix style issues (currently: filename kebab-case + wikilink updates)."""
-    if config.filename_style != KEBAB_STYLE:
-        return {"renamed": [], "updated_wikilinks": False}
+    return {"renamed": [], "updated_wikilinks": False}
 
-    renames: dict[str, str] = {}
-    renamed_files: list[tuple[str, str]] = []
-
-    # Rename files that violate kebab-case (filename only; directories unchanged)
-    for md_file in iter_markdown_files(config):
-        if filename_stem_is_valid(md_file.stem, KEBAB_STYLE):
-            continue
-        old_slug = file_slug_for_path(config, md_file)
-        new_stem = _slugify_segment(md_file.stem)
-        if not new_stem or new_stem == md_file.stem:
-            continue
-        new_path = md_file.with_name(new_stem + md_file.suffix)
-        md_file.rename(new_path)
-        new_slug = file_slug_for_path(config, new_path)
-        renames[old_slug] = new_slug
-        renamed_files.append((old_slug, new_slug))
-
-    # Update wikilinks to renamed targets across the wiki
-    if renames:
-        for md_file in iter_markdown_files(config):
-            original = md_file.read_text(encoding="utf-8")
-            updated = _apply_wikilink_renames(original, renames)
-            if updated != original:
-                md_file.write_text(updated, encoding="utf-8")
-
-    return {"renamed": renamed_files, "updated_wikilinks": bool(renames)}
 
 
 def run_checks(config: WikiConfig) -> dict[str, Any]:
@@ -297,8 +258,19 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
         else:  # "warning"
             results["warnings"].extend(issues)
 
+    safety_issues = validate_route_safety(config)
+    if safety_issues:
+        results["conforms"] = False
+        results["errors"].extend(safety_issues)
+
+    owned_output_dir = Path("_site") / config.base_url.strip("/") if config.base_url else Path("_site")
+    collision_issues = detect_output_collisions(build_page_manifest(config, owned_output_dir, config.base_url, config.url_style))
+    if collision_issues:
+        results["conforms"] = False
+        results["errors"].extend(collision_issues)
+
     filename_issues = audit_filenames(config)
-    process_issues("filenameStyle", filename_issues)
+    process_issues("filenamePattern", filename_issues)
 
     link_issues = audit_internal_links(config)
     process_issues("internalLinks", link_issues)
