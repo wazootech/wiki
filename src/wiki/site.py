@@ -5,6 +5,7 @@ from __future__ import annotations
 import html as html_module
 import json
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -77,6 +78,7 @@ def render_wiki_markdown(
 ) -> str:
     md = MarkdownIt("gfm-like", {"linkify": False})
     md.use(wikilink_plugin)
+    heading_slugger = GitHubHeadingSlugger()
 
     def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         token = tokens[idx]
@@ -86,6 +88,16 @@ def render_wiki_markdown(
         return f'<a class="wikilink" href="{_url(base_url, slug, url_style)}">{html_module.escape(content)}</a>'
 
     md.add_render_rule("wikilink", _wikilink_renderer)
+
+    def _heading_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        title = ""
+        if idx + 1 < len(tokens) and getattr(tokens[idx + 1], "type", "") == "inline":
+            title = tokens[idx + 1].content
+        token.attrSet("id", heading_slugger.slug(title))
+        return self.renderToken(tokens, idx, options, env)
+
+    md.add_render_rule("heading_open", _heading_open_renderer)
     return md.render(text)
 
 
@@ -99,9 +111,7 @@ class TocItem:
 @dataclass
 class VirtualPage:
     file_slug: str
-    section_slug: str | None
     title: str
-    level: int
     markdown: str
     html: str
     frontmatter: dict[str, Any]
@@ -110,8 +120,6 @@ class VirtualPage:
 
     @property
     def full_slug(self) -> str:
-        if self.section_slug:
-            return f"{self.file_slug}/{self.section_slug}"
         return self.file_slug
 
     @property
@@ -149,6 +157,48 @@ def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
         sections.append((1, "", markdown))
 
     return sections
+
+
+class GitHubHeadingSlugger:
+    def __init__(self) -> None:
+        self.seen: dict[str, int] = {}
+
+    def slug(self, title: str) -> str:
+        normalized = unicodedata.normalize("NFKD", title).strip().lower()
+        normalized = re.sub(r"[^\w\s-]", "", normalized, flags=re.UNICODE)
+        normalized = re.sub(r"[\s-]+", "-", normalized).strip("-")
+        base = normalized or "section"
+        count = self.seen.get(base, 0)
+        self.seen[base] = count + 1
+        return base if count == 0 else f"{base}-{count}"
+
+
+def heading_slug(title: str) -> str:
+    return GitHubHeadingSlugger().slug(title)
+
+
+def extract_title(markdown: str, fallback: str) -> str:
+    for m in HEADING_RE.finditer(markdown):
+        if len(m.group(1)) == 1:
+            return m.group(2).strip()
+    return humanize_route(fallback)
+
+
+def humanize_route(route: str) -> str:
+    stem = route.split("/")[-1] if route else "Index"
+    return stem.replace("_", " ").replace("-", " ").strip() or "Index"
+
+
+def extract_outline(markdown: str) -> list[TocItem]:
+    outline: list[TocItem] = []
+    slugger = GitHubHeadingSlugger()
+    for m in HEADING_RE.finditer(markdown):
+        level = len(m.group(1))
+        title = m.group(2).strip()
+        slug = slugger.slug(title)
+        if 2 <= level <= 6:
+            outline.append(TocItem(title=title, slug=slug, level=level))
+    return outline
 
 
 def build_site(
@@ -195,59 +245,25 @@ def build_site(
         fm_data, body = split_frontmatter_body(raw)
         frontmatter = fm_data if fm_data is not None else {}
 
-        sections = split_by_headings(body)
-
-        all_section_md = "\n".join(section_md for _, _, section_md in sections)
         md_slug = file_slug(md)
-        h1_title = sections[0][1] if sections else md_slug.split("/")[-1].replace("-", " ").title()
-
-        h1_toc = []
-        for m in HEADING_RE.finditer(all_section_md):
-            lvl = len(m.group(1))
-            if 3 <= lvl <= 6:
-                h1_toc.append(TocItem(title=m.group(2).strip(), slug=slugify_segment(m.group(2).strip()), level=lvl))
+        h1_title = extract_title(body, md_slug)
+        h1_toc = extract_outline(body)
 
         h1_html = render_wiki_markdown(
-            all_section_md,
+            body,
             base_url=base_url,
             url_style=url_style,
             filename_style=filename_style,
         )
         pages.append(VirtualPage(
             file_slug=md_slug,
-            section_slug=None,
             title=h1_title,
-            level=1,
-            markdown=all_section_md,
+            markdown=body,
             html=h1_html,
             frontmatter=frontmatter,
             outline=h1_toc,
             backlink_slugs=backlink_index.get(md_slug, []),
         ))
-
-        for level, title, section_md in sections:
-            if level != 2:
-                continue
-            section_slug = slugify_kebab_segment(title)
-            toc = []
-            for m in HEADING_RE.finditer(section_md):
-                lvl = len(m.group(1))
-                if 3 <= lvl <= 6:
-                    toc.append(TocItem(title=m.group(2).strip(), slug=slugify_kebab_segment(m.group(2).strip()), level=lvl))
-
-            html_content = render_wiki_markdown(section_md, base_url=base_url, url_style=url_style, filename_style=filename_style)
-            bl = backlink_index.get(section_slug, []) or backlink_index.get(md_slug, [])
-            pages.append(VirtualPage(
-                file_slug=md_slug,
-                section_slug=section_slug,
-                title=title,
-                level=2,
-                markdown=section_md,
-                html=html_content,
-                frontmatter=frontmatter,
-                outline=toc,
-                backlink_slugs=bl,
-            ))
 
     return WikiSite(pages=pages)
 
@@ -260,12 +276,6 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = "
         if page.file_slug not in seen_files:
             seen_files.add(page.file_slug)
             links_html += f'<li><a href="{_url(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
-            for sub in site.pages:
-                if sub.file_slug == page.file_slug and sub.section_slug:
-                    links_html += (
-                        f'<li class="sub-page"><a href="{_url(base_url, sub.full_slug, url_style)}">'
-                        f"{html_module.escape(sub.title)}</a></li>\n"
-                    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -310,11 +320,9 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
         for bl in page.backlink_slugs:
             target: str | None = None
             for p in site.pages:
-                if p.file_slug == bl and not p.section_slug:
-                    target = p.full_slug
-                    break
                 if p.file_slug == bl:
                     target = p.full_slug
+                    break
             if target is None:
                 target = bl
             items += f'<li><a href="{_url(base_url, target, url_style)}">{html_module.escape(bl.replace("-", " ").title())}</a></li>\n'
@@ -333,8 +341,6 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
 </section>"""
 
     nav_html = f'<a href="{base_url}/">Index</a>'
-    if page.level == 2 and page.section_slug:
-        nav_html += f' | <a href="{_url(base_url, page.file_slug, url_style)}">Parent: {page.file_slug.replace("-", " ").title()}</a>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
