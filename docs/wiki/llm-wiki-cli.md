@@ -63,9 +63,7 @@ SELECT ?document ?type WHERE {
 ORDER BY ?type
 ```
 
-| Document | Type |
-| --- | --- |
-| wiki:microdata-example | https://schema.org/TechArticle |
+(no results)
 <!-- sparql:end -->
 
 ### `Person` shape
