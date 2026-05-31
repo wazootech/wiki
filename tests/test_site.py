@@ -43,6 +43,39 @@ class TestWikiSite(unittest.TestCase):
         self.assertIn('id="title"', html)
         self.assertIn('id="api-readwrite"', html)
 
+    def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
+        html = render_wiki_markdown(
+            "See [[../games/Pokemon_Diamond#Release History|history]].",
+            base_url="/wiki",
+            url_style="dir",
+            markdown_flavor="obsidian",
+            current_route="people/Ethan_Davidson",
+        )
+
+        self.assertIn('href="/wiki/games/Pokemon_Diamond/#release-history"', html)
+        self.assertIn('>history</a>', html)
+
+    def test_gfm_leaves_wikilinks_literal(self) -> None:
+        html = render_wiki_markdown(
+            "See [[Pokemon_Diamond]].",
+            markdown_flavor="gfm",
+            current_route="people/Ethan_Davidson",
+        )
+
+        self.assertIn("[[Pokemon_Diamond]]", html)
+        self.assertNotIn('class="wikilink"', html)
+
+    def test_markdown_links_normalize_to_canonical_page_urls(self) -> None:
+        html = render_wiki_markdown(
+            "See [game](../games/Pokemon_Diamond.md#Release%20History).",
+            base_url="/wiki",
+            url_style="dir",
+            markdown_flavor="gfm",
+            current_route="people/Ethan_Davidson",
+        )
+
+        self.assertIn('href="/wiki/games/Pokemon_Diamond/#release-history"', html)
+
 
 if __name__ == "__main__":
     unittest.main()

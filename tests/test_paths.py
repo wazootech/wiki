@@ -14,6 +14,7 @@ from wiki.paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
+from wiki.audit import audit_internal_links, audit_markdown_flavor
 
 
 class TestWikiPaths(unittest.TestCase):
@@ -113,6 +114,45 @@ class TestWikiPaths(unittest.TestCase):
         issues = detect_output_collisions(entries)
         self.assertGreaterEqual(len(issues), 1)
         self.assertTrue(any("Page.md" in issue and "page.md" in issue for issue in issues))
+
+    def test_internal_links_resolve_current_file_relative_fragments(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            people = wiki / "people"
+            games = wiki / "games"
+            people.mkdir(parents=True)
+            games.mkdir()
+            (people / "Ethan_Davidson.md").write_text("# Ethan\n\nSee [[../games/Pokemon_Diamond#Release History]].", encoding="utf-8")
+            (games / "Pokemon_Diamond.md").write_text("# Pokemon\n\n## Release History", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            self.assertEqual(audit_internal_links(config), [])
+
+    def test_internal_links_report_missing_heading_fragment(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "A.md").write_text("# A\n\nSee [[B#Missing]].", encoding="utf-8")
+            (wiki / "B.md").write_text("# B\n\n## Present", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            issues = audit_internal_links(config)
+            self.assertEqual(len(issues), 1)
+            self.assertIn("missing heading '#missing'", issues[0])
+
+    def test_gfm_reports_wikilink_markdown_flavor_warning(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "A.md").write_text("# A\n\nSee [[B]].", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], markdown_flavor="gfm", config_root=root)
+
+            issues = audit_markdown_flavor(config)
+            self.assertEqual(len(issues), 1)
+            self.assertIn("Wikilink syntax is not enabled", issues[0])
 
 
 if __name__ == "__main__":

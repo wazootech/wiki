@@ -11,7 +11,8 @@ from rdflib import Graph
 import pyshacl
 
 from .config import WikiConfig
-from .filename_style import KEBAB_STYLE, normalize_path, slugify_kebab_segment
+from .headings import GitHubHeadingSlugger
+from .links import is_external_link, markdown_link_is_page, resolve_page_route, split_target, fragment_id
 from .paths import (
     build_page_manifest,
     detect_output_collisions,
@@ -28,17 +29,8 @@ logger = logging.getLogger(__name__)
 # WikiLink pattern: [[slug]] or [[slug|display]]
 WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 
-# Standard Markdown link pattern: [display](target)
-# Excludes external URLs (http/https, mailto) and internal anchor-only links (starting with #)
-MARKDOWN_LINK_REGEX = re.compile(r"\[[^\]]+\]\((?!(?:https?://|mailto:|#))([^)]+)\)")
-
-
-def _slugify_segment(text: str) -> str:
-    return slugify_kebab_segment(text)
-
-
-def _slugify_path(text: str) -> str:
-    return normalize_path(text)
+# Standard Markdown link pattern: [display](target) and ![alt](target).
+MARKDOWN_LINK_REGEX = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
 
 def file_slug_for_path(config: WikiConfig, md_file: Path) -> str:
@@ -169,8 +161,11 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
     warnings = []
 
     existing_files: set[str] = set()
+    heading_ids_by_route: dict[str, set[str]] = {}
     for md_file in iter_markdown_files(config):
-        existing_files.add(file_slug_for_path(config, md_file))
+        route = file_slug_for_path(config, md_file)
+        existing_files.add(route)
+        heading_ids_by_route[route] = _heading_ids(md_file.read_text(encoding="utf-8"))
 
     for md_file in iter_markdown_files(config):
         md_slug = file_slug_for_path(config, md_file)
@@ -179,34 +174,70 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
         try:
             content = md_file.read_text(encoding="utf-8")
             
-            # 1. Audit WikiLinks
-            wikilinks = WIKILINK_REGEX.findall(content)
-            for link in wikilinks:
-                slug = normalize_path(link)
-                if slug not in existing_files:
-                    warnings.append(
-                        f"In {md_slug}.md: Broken WikiLink [[{link}]] points to non-existent document."
-                    )
+            if config.markdown_flavor == "obsidian":
+                wikilinks = WIKILINK_REGEX.findall(content)
+                for link in wikilinks:
+                    _audit_page_target(warnings, existing_files, heading_ids_by_route, md_slug, link, "WikiLink")
             
             # 2. Audit standard Markdown links
             md_links = MARKDOWN_LINK_REGEX.findall(content)
             for target in md_links:
-                decoded_target = unquote(target.split("#")[0].split("?")[0])
-                slug = normalize_path(Path(decoded_target).with_suffix("").as_posix())
-                if slug and slug not in existing_files:
-                    warnings.append(
-                        f"In {md_slug}.md: Broken Markdown link [{target}] points to non-existent document."
-                    )
+                target = unquote(target.split("?")[0])
+                if is_external_link(target):
+                    continue
+                if markdown_link_is_page(target):
+                    _audit_page_target(warnings, existing_files, heading_ids_by_route, md_slug, target, "Markdown link")
         except Exception as e:
             warnings.append(f"Failed to read {md_slug}.md for link audit: {e}")
 
     return warnings
 
 
+def audit_markdown_flavor(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    warnings: list[str] = []
+    if config.markdown_flavor != "gfm":
+        return warnings
+    for md_file in iter_markdown_files(config):
+        md_slug = file_slug_for_path(config, md_file)
+        if file_filter is not None and md_slug not in file_filter:
+            continue
+        content = md_file.read_text(encoding="utf-8")
+        if WIKILINK_REGEX.search(content):
+            warnings.append(f"In {md_slug}.md: Wikilink syntax is not enabled in markdownFlavor: gfm.")
+    return warnings
+
+
+def _heading_ids(markdown: str) -> set[str]:
+    slugger = GitHubHeadingSlugger()
+    ids: set[str] = set()
+    for m in re.finditer(r"^(#{1,6})\s+(.+)$", markdown, flags=re.MULTILINE):
+        ids.add(slugger.slug(m.group(2).strip()))
+    return ids
+
+
+def _audit_page_target(
+    warnings: list[str],
+    existing_files: set[str],
+    heading_ids_by_route: dict[str, set[str]],
+    current_route: str,
+    target: str,
+    label: str,
+) -> None:
+    page_part, fragment = split_target(target)
+    route = current_route if page_part == "" else resolve_page_route(current_route, target)
+    if route is None or route not in existing_files:
+        warnings.append(f"In {current_route}.md: Broken {label} [{target}] points to non-existent document.")
+        return
+    if fragment:
+        target_fragment = fragment_id(fragment)
+        if target_fragment not in heading_ids_by_route.get(route, set()):
+            warnings.append(f"In {current_route}.md: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
+
+
 def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
     def repl(match: re.Match) -> str:
         target = match.group(1)
-        normalized = normalize_path(target, KEBAB_STYLE)
+        normalized = target
         if normalized not in renames:
             return match.group(0)
 
@@ -271,6 +302,9 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
 
     filename_issues = audit_filenames(config)
     process_issues("filenamePattern", filename_issues)
+
+    flavor_issues = audit_markdown_flavor(config)
+    process_issues("markdownFlavor", flavor_issues)
 
     link_issues = audit_internal_links(config)
     process_issues("internalLinks", link_issues)

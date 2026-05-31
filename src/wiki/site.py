@@ -5,7 +5,6 @@ from __future__ import annotations
 import html as html_module
 import json
 import re
-import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -15,6 +14,8 @@ from mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import WikiConfig
 from .filename_style import DEFAULT_FILENAME_STYLE, normalize_path, slugify_kebab_segment
+from .headings import GitHubHeadingSlugger, heading_slug
+from .links import is_external_link, markdown_link_is_page, resolve_page_href
 from .paths import page_url, route_for_markdown_file
 from .parser import split_frontmatter_body
 
@@ -75,17 +76,22 @@ def render_wiki_markdown(
     base_url: str = "/wiki",
     url_style: str = "file",
     filename_style: str = DEFAULT_FILENAME_STYLE,
+    markdown_flavor: str = "obsidian",
+    current_route: str = "",
 ) -> str:
     md = MarkdownIt("gfm-like", {"linkify": False})
-    md.use(wikilink_plugin)
+    if markdown_flavor == "obsidian":
+        md.use(wikilink_plugin)
     heading_slugger = GitHubHeadingSlugger()
 
     def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         token = tokens[idx]
         href = token.attrs.get("href", "")
         content = token.content
-        slug = normalize_path(href, filename_style)
-        return f'<a class="wikilink" href="{_url(base_url, slug, url_style)}">{html_module.escape(content)}</a>'
+        resolved = resolve_page_href(current_route, href, base_url, url_style)
+        if resolved is None:
+            return html_module.escape(f"[[{href}|{content}]]" if content != href else f"[[{href}]]")
+        return f'<a class="wikilink" href="{html_module.escape(resolved)}">{html_module.escape(content)}</a>'
 
     md.add_render_rule("wikilink", _wikilink_renderer)
 
@@ -98,6 +104,17 @@ def render_wiki_markdown(
         return self.renderToken(tokens, idx, options, env)
 
     md.add_render_rule("heading_open", _heading_open_renderer)
+
+    def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        href = token.attrGet("href") or ""
+        if href and not is_external_link(href) and markdown_link_is_page(href):
+            resolved = resolve_page_href(current_route, href, base_url, url_style)
+            if resolved is not None:
+                token.attrSet("href", resolved)
+        return self.renderToken(tokens, idx, options, env)
+
+    md.add_render_rule("link_open", _link_open_renderer)
     return md.render(text)
 
 
@@ -157,24 +174,6 @@ def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
         sections.append((1, "", markdown))
 
     return sections
-
-
-class GitHubHeadingSlugger:
-    def __init__(self) -> None:
-        self.seen: dict[str, int] = {}
-
-    def slug(self, title: str) -> str:
-        normalized = unicodedata.normalize("NFKD", title).strip().lower()
-        normalized = re.sub(r"[^\w\s-]", "", normalized, flags=re.UNICODE)
-        normalized = re.sub(r"[\s-]+", "-", normalized).strip("-")
-        base = normalized or "section"
-        count = self.seen.get(base, 0)
-        self.seen[base] = count + 1
-        return base if count == 0 else f"{base}-{count}"
-
-
-def heading_slug(title: str) -> str:
-    return GitHubHeadingSlugger().slug(title)
 
 
 def extract_title(markdown: str, fallback: str) -> str:
@@ -254,6 +253,8 @@ def build_site(
             base_url=base_url,
             url_style=url_style,
             filename_style=filename_style,
+            markdown_flavor=config.markdown_flavor if config is not None else "obsidian",
+            current_route=md_slug,
         )
         pages.append(VirtualPage(
             file_slug=md_slug,
