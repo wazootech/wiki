@@ -17,12 +17,13 @@ from .links import is_external_link, markdown_link_is_page, resolve_page_route, 
 from .paths import (
     build_page_manifest,
     detect_output_collisions,
+    iter_document_files,
     iter_markdown_files,
-    route_for_markdown_file,
+    route_for_document_file,
     validate_filename_pattern,
     validate_route_safety,
 )
-from .parser import frontmatter_from_path, split_frontmatter_body
+from .parser import document_data_from_path
 from .graph import frontmatter_to_graph, load_graph
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,9 @@ WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 MARKDOWN_LINK_REGEX = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
 
-def file_slug_for_path(config: WikiConfig, md_file: Path) -> str:
-    """Return nested slug for a markdown file relative to an input dir."""
-    return route_for_markdown_file(config, md_file)
+def file_slug_for_path(config: WikiConfig, file_path: Path) -> str:
+    """Return nested slug for a document file relative to an input dir."""
+    return route_for_document_file(config, file_path)
 
 
 def load_shapes(data_graph: Graph) -> Graph:
@@ -95,17 +96,17 @@ def load_shapes(data_graph: Graph) -> Graph:
 
 
 def check_shacl_file(file_path: Path, context: WikiConfig, verbose: bool = False) -> Optional[tuple[bool, str]]:
-    """Validate a single markdown file's frontmatter against loaded shapes.
+    """Validate a single document file's metadata against loaded shapes.
 
-    Returns None if no frontmatter is found, otherwise returns (conforms, results_text).
+    Returns None if no document metadata is found, otherwise returns (conforms, results_text).
     """
-    data = frontmatter_from_path(file_path)
+    data = document_data_from_path(file_path)
     if not data:
         return None
 
     source_graph = load_graph(context, infer=False) # Minimizing overhead for single file check, but loading pool shapes
     shapes_graph = load_shapes(source_graph)
-    data_graph = frontmatter_to_graph(data, context, file_id=file_path.stem)
+    data_graph = frontmatter_to_graph(data, context, file_id=file_slug_for_path(context, file_path))
 
     conforms, _, results_text = pyshacl.validate(
         data_graph,
@@ -142,11 +143,11 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
     Returns a list of warnings.
     """
     warnings = []
-    for md_file in iter_markdown_files(config):
-        slug = file_slug_for_path(config, md_file)
+    for file_path in iter_document_files(config):
+        slug = file_slug_for_path(config, file_path)
         if file_filter is not None and slug not in file_filter:
             continue
-        issue = validate_filename_pattern(config, md_file)
+        issue = validate_filename_pattern(config, file_path)
         if issue:
             warnings.append(issue)
     return warnings
@@ -163,43 +164,47 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
 
     existing_files: set[str] = set()
     heading_ids_by_route: dict[str, set[str]] = {}
-    for md_file in iter_markdown_files(config):
-        route = file_slug_for_path(config, md_file)
+    for file_path in iter_document_files(config):
+        route = file_slug_for_path(config, file_path)
         existing_files.add(route)
-        heading_ids_by_route[route] = _heading_ids(md_file.read_text(encoding="utf-8"))
+        if file_path.suffix.lower() == ".md":
+            heading_ids_by_route[route] = _heading_ids(file_path.read_text(encoding="utf-8"))
+        else:
+            heading_ids_by_route[route] = set()
 
-    for md_file in iter_markdown_files(config):
-        md_slug = file_slug_for_path(config, md_file)
-        if file_filter is not None and md_slug not in file_filter:
+    for file_path in iter_document_files(config):
+        file_slug = file_slug_for_path(config, file_path)
+        if file_filter is not None and file_slug not in file_filter:
             continue
         try:
-            content = md_file.read_text(encoding="utf-8")
-            
-            if config.markdown_flavor == "obsidian":
+            data = document_data_from_path(file_path)
+
+            if file_path.suffix.lower() == ".md" and config.markdown_flavor == "obsidian":
+                content = file_path.read_text(encoding="utf-8")
                 wikilinks = WIKILINK_REGEX.findall(content)
                 for link in wikilinks:
-                    _audit_page_target(warnings, existing_files, heading_ids_by_route, md_slug, link, "WikiLink")
-            
-            # 2. Audit standard Markdown links
-            md_links = MARKDOWN_LINK_REGEX.findall(content)
-            for target in md_links:
-                target = unquote(target.split("?")[0])
-                if is_external_link(target):
-                    continue
-                if markdown_link_is_page(target):
-                    _audit_page_target(warnings, existing_files, heading_ids_by_route, md_slug, target, "Markdown link")
-                else:
-                    issue = asset_reference_issue(config, md_file, target)
-                    if issue:
-                        warnings.append(f"In {md_slug}.md: Broken asset link [{target}] {issue}.")
+                    _audit_page_target(warnings, existing_files, heading_ids_by_route, file_slug, link, "WikiLink")
 
-            fm_data, _ = split_frontmatter_body(content)
-            for target in _frontmatter_asset_targets(fm_data or {}):
-                issue = asset_reference_issue(config, md_file, target)
+            if file_path.suffix.lower() == ".md":
+                content = file_path.read_text(encoding="utf-8")
+                md_links = MARKDOWN_LINK_REGEX.findall(content)
+                for target in md_links:
+                    target = unquote(target.split("?")[0])
+                    if is_external_link(target):
+                        continue
+                    if markdown_link_is_page(target):
+                        _audit_page_target(warnings, existing_files, heading_ids_by_route, file_slug, target, "Markdown link")
+                    else:
+                        issue = asset_reference_issue(config, file_path, target)
+                        if issue:
+                            warnings.append(f"In {file_path.name}: Broken asset link [{target}] {issue}.")
+
+            for target in _frontmatter_asset_targets(data or {}):
+                issue = asset_reference_issue(config, file_path, target)
                 if issue:
-                    warnings.append(f"In {md_slug}.md: Broken frontmatter asset [{target}] {issue}.")
+                    warnings.append(f"In {file_path.name}: Broken frontmatter asset [{target}] {issue}.")
         except Exception as e:
-            warnings.append(f"Failed to read {md_slug}.md for link audit: {e}")
+            warnings.append(f"Failed to read {file_path.name} for link audit: {e}")
 
     warnings.extend(audit_asset_dirs(config))
     return warnings
@@ -238,12 +243,12 @@ def _audit_page_target(
     page_part, fragment = split_target(target)
     route = current_route if page_part == "" else resolve_page_route(current_route, target)
     if route is None or route not in existing_files:
-        warnings.append(f"In {current_route}.md: Broken {label} [{target}] points to non-existent document.")
+        warnings.append(f"In {current_route}: Broken {label} [{target}] points to non-existent document.")
         return
     if fragment:
         target_fragment = fragment_id(fragment)
         if target_fragment not in heading_ids_by_route.get(route, set()):
-            warnings.append(f"In {current_route}.md: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
+            warnings.append(f"In {current_route}: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
 
 
 def _frontmatter_asset_targets(data: dict[str, Any]) -> list[str]:

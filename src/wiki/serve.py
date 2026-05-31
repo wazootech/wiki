@@ -202,7 +202,7 @@ def run_server(
                 for p in root.rglob("*"):
                     if not p.is_file():
                         continue
-                    if p.suffix.lower() not in {".md", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf"}:
+                    if p.suffix.lower() not in {".md", ".yaml", ".yml", ".json", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf"}:
                         continue
                     try:
                         mtimes[str(p)] = p.stat().st_mtime

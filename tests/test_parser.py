@@ -2,8 +2,10 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from wiki.parser import (
+    document_data_from_path,
     parse_frontmatter,
     split_frontmatter_body,
+    split_document_body,
     ensure_context,
 )
 
@@ -106,6 +108,45 @@ Body with --- dashes --- in text"""
         data, body = split_frontmatter_body(content)
         self.assertIsNotNone(data)
         self.assertEqual(body, "Body with --- dashes --- in text")
+
+    def test_document_data_from_yaml_and_json_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            yaml_file = root / "person.yaml"
+            json_file = root / "person.json"
+            yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
+            json_file.write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+
+            yaml_data = document_data_from_path(yaml_file)
+            json_data = document_data_from_path(json_file)
+
+            self.assertEqual(yaml_data["name"], "Gregory")
+            self.assertEqual(json_data["name"], "Alice")
+            self.assertIn("@context", yaml_data)
+            self.assertIn("@context", json_data)
+
+    def test_document_data_rejects_non_mapping_data_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            yaml_file = root / "items.yaml"
+            json_file = root / "items.json"
+            yaml_file.write_text('- one\n- two\n', encoding="utf-8")
+            json_file.write_text('[1, 2, 3]', encoding="utf-8")
+
+            self.assertIsNone(document_data_from_path(yaml_file))
+            self.assertIsNone(document_data_from_path(json_file))
+
+    def test_split_document_body_returns_empty_body_for_data_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            yaml_file = root / "person.yaml"
+            yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
+
+            data, body = split_document_body(yaml_file)
+
+            self.assertIsNotNone(data)
+            self.assertEqual(data["name"], "Gregory")
+            self.assertEqual(body, "")
 
 
 if __name__ == "__main__":

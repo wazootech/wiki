@@ -16,7 +16,7 @@ The LLM Wiki CLI is the primary companion tool for authoring, validating, and qu
 This section covers common editing, auditing, and publishing procedures for contributing to the semantic knowledge vault.
 
 ### Create a new page
-Create a new markdown file in the `wiki/` directory with standard frontmatter. Use lowercase kebab-case for the filename (e.g., `my-new-article.md`).
+Create a new markdown file in the `wiki/` directory with standard frontmatter. By default, use Wikipedia-style filenames with preserved capitalization and underscores (e.g., `My_New_Article.md`).
 
 ### Fill in the semantic metadata
 Always specify what fields are required for your document type. For example, if your page describes a person:

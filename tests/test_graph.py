@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 from rdflib import Graph, URIRef, RDF, Literal
 from rdflib.namespace import XSD
 
-from wiki.config import WikiConfig
+from wiki.config import Context, WikiConfig
 from wiki.graph import (
     frontmatter_to_graph,
     kebab_case,
@@ -144,6 +144,23 @@ class TestRDFFrontmatter(unittest.TestCase):
                 self.assertEqual(str(o), "https://microdata.io")
         
         self.assertTrue(found_name, "Failed to find Microdata name literal in graph.")
+
+    def test_microdata_curies_expand_using_bound_namespaces(self) -> None:
+        html_content = """
+        <div itemscope itemtype="schema:Person" itemid="wiki:john_microdata">
+            <span itemprop="schema:name">John Microdata</span>
+            <span itemprop="unknown:role">Tester</span>
+        </div>
+        """
+        g = Graph()
+        g.bind("schema", "https://schema.org/")
+        g.bind("wiki", "https://wiki.example.org/")
+        g.parse(data=html_content, format="microdata")
+
+        subject = URIRef("https://wiki.example.org/john_microdata")
+        self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
+        self.assertTrue((subject, URIRef("https://schema.org/name"), Literal("John Microdata")) in g)
+        self.assertTrue((subject, URIRef("unknown:role"), Literal("Tester")) in g)
 
     def test_nested_typed_dict_creates_typed_blank_node(self) -> None:
         """Test that a nested dictionary with @type creates a typed blank node."""
@@ -449,6 +466,44 @@ name: Good Page
                 if str(p) == "https://schema.org/name"
             )
             self.assertTrue(found, "Microdata from .html file not found in graph")
+
+    def test_html_microdata_curies_use_configured_context(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            html_file = wiki_dir / "data.html"
+            html_file.write_text("""<html><body>
+<div itemscope itemtype="schema:Person" itemid="wiki:Bella_Davidson">
+    <span itemprop="schema:name">Bella Davidson</span>
+</div>
+</body></html>""", encoding="utf-8")
+
+            config = WikiConfig(
+                input_dirs=[wiki_dir],
+                wiki_base="https://example.test/wiki/",
+                context=Context({"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"}, wiki_base="https://example.test/wiki/"),
+            )
+            g = load_graph(config, infer=False)
+
+            subject = URIRef("https://example.test/wiki/Bella_Davidson")
+            self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
+            self.assertTrue((subject, URIRef("https://schema.org/name"), Literal("Bella Davidson")) in g)
+
+    def test_load_graph_reads_yaml_and_json_documents(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "gregory.yaml").write_text("type: Person\nname: Gregory\n", encoding="utf-8")
+            (wiki_dir / "alice.json").write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir])
+            g = load_graph(config, infer=False)
+
+            self.assertTrue((None, None, Literal("Gregory")) in g)
+            self.assertTrue((None, None, Literal("Alice")) in g)
+
+            gregory_uri = URIRef("https://wiki.example.org/gregory")
+            alice_uri = URIRef("https://wiki.example.org/alice")
+            self.assertTrue((gregory_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
+            self.assertTrue((alice_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
 
     def test_uri_ext_config_appends_md(self) -> None:
         """Test that uri_ext=True produces .md in auto-generated page URIs."""

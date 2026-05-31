@@ -10,6 +10,7 @@ from wiki.paths import (
     page_output_path,
     page_routes,
     page_url,
+    route_for_document_file,
     route_for_markdown_file,
     validate_filename_pattern,
     validate_route_safety,
@@ -105,6 +106,21 @@ class TestWikiPaths(unittest.TestCase):
             issues = detect_output_collisions(entries)
             self.assertGreaterEqual(len(issues), 1)
             self.assertTrue(any("About" in issue for issue in issues))
+
+    def test_markdown_and_yaml_with_same_slug_collide(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir(parents=True)
+            (wiki / "About.md").write_text("# About", encoding="utf-8")
+            (wiki / "About.yaml").write_text("type: Thing\nname: About data\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            entries = build_page_manifest(config, root / "_site" / "wiki", "/wiki", "dir")
+            issues = detect_output_collisions(entries)
+
+            self.assertGreaterEqual(len(issues), 1)
+            self.assertTrue(any("About.md" in issue and "About.yaml" in issue for issue in issues))
 
     def test_case_only_output_paths_collide(self) -> None:
         entries = [

@@ -13,11 +13,12 @@ import click
 from .config import WikiConfig as Context
 from .format import run_query, process_rdf_format
 from .render import render_markdown_files
-from .parser import frontmatter_from_path
+from .parser import document_data_from_path
 from .graph import load_graph, graph_stats
 from .audit import check_shacl_file, run_checks
 from .jqfilter import resolve_path
 from .format_choice import FormatChoice
+from .paths import iter_document_files
 
 
 @click.group()
@@ -92,7 +93,7 @@ def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, stric
         warnings = []
 
         if res is None:
-            errors.append(f"No frontmatter found in {file.name}")
+            errors.append(f"No valid document metadata found in {file.name}")
             conforms = False
         else:
             shacl_conforms, shacl_text = res
@@ -174,14 +175,26 @@ def query(context: Context, query_args: tuple[str, ...], output_format: str, out
 
 
 @main.command()
+@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@click.option("--glob", "glob_filters", multiple=True, help="Render only markdown files matching this glob. Repeatable.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--check", is_flag=True, help="Check if inline SPARQL blocks are up to date without modifying files. Exits with non-zero code if any are stale.")
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
 @click.pass_obj
-def render(context: Context, no_inference: bool, check: bool, verbose: bool) -> None:
+def render(context: Context, file: Optional[Path], glob_filters: tuple[str, ...], no_inference: bool, check: bool, verbose: bool) -> None:
     """Render inline SPARQL blocks in markdown files."""
+    if file is not None and file.suffix.lower() != ".md":
+        click.echo(f"Error: render only supports markdown files, got {file.name}.", err=True)
+        sys.exit(1)
+
     graph = load_graph(context, infer=not no_inference)
-    success_count, error_count, stale_files = render_markdown_files(context, graph, dry_run=check)
+    success_count, error_count, stale_files = render_markdown_files(
+        context,
+        graph,
+        dry_run=check,
+        file_filter=file,
+        glob_filters=glob_filters,
+    )
     
     if check:
         if stale_files:
@@ -212,7 +225,7 @@ def render(context: Context, no_inference: bool, check: bool, verbose: bool) -> 
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
 def build(config: Context, output_dir: Path, base_url: str | None, url_style: str | None, render: bool, no_check: bool, verbose: bool) -> None:
-    """Build static HTML site from wiki markdown files."""
+    """Build static HTML site from wiki documents."""
     from .assets import build_asset_manifest
     from .site import build_site, build_index_html, build_page_html
 
@@ -304,9 +317,9 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
     result_payload: Any = None
 
     if file:
-        data = frontmatter_from_path(file, content_predicate=context.content_predicate)
+        data = document_data_from_path(file, content_predicate=context.content_predicate)
         if data is None:
-            click.echo(f"No valid frontmatter block found in {file.name}", err=True)
+            click.echo(f"No valid document metadata found in {file.name}", err=True)
             sys.exit(1)
 
         processed_rdf = process_rdf_format(data, file.stem, context, rdf_format)
@@ -317,16 +330,14 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
     else:
         converted_list = []
         from .audit import file_slug_for_path
-        for input_dir in context.input_dirs:
-            if input_dir.exists():
-                for md_file in sorted(input_dir.rglob("*.md")):
-                    data = frontmatter_from_path(md_file, content_predicate=context.content_predicate)
-                    if data:
-                        processed_rdf = process_rdf_format(data, file_slug_for_path(context, md_file), context, rdf_format)
-                        converted_list.append({
-                            "name": md_file.name,
-                            "rdf": processed_rdf
-                        })
+        for file_path in iter_document_files(context):
+            data = document_data_from_path(file_path, content_predicate=context.content_predicate)
+            if data:
+                processed_rdf = process_rdf_format(data, file_slug_for_path(context, file_path), context, rdf_format)
+                converted_list.append({
+                    "name": file_path.name,
+                    "rdf": processed_rdf
+                })
         result_payload = converted_list
 
     # Standard serialization formats (non-JSON wrappers) get raw RDF output
@@ -418,18 +429,21 @@ def init(force: bool) -> None:
         "Welcome to your wiki.\n",
         encoding="utf-8",
     )
-    (wiki_dir / "person-shape.md").write_text(
+    (wiki_dir / "Person_Shape.md").write_text(
         "---\n"
         "id: wiki:PersonShape\n"
         "type: sh:NodeShape\n"
         "sh:targetClass: schema:Person\n"
         "sh:property:\n"
-        "  sh:path: schema:name\n"
-        "  sh:datatype: xsd:string\n"
-        "  sh:minCount: 1\n"
+        "  - sh:path: schema:name\n"
+        "    sh:datatype: xsd:string\n"
+        "    sh:minCount: 1\n"
+        "  - sh:path: wiki:template\n"
+        "    sh:datatype: xsd:string\n"
+        "    sh:maxCount: 1\n"
         "---\n\n"
         "# Person shape\n\n"
-        "A minimal starter SHACL shape.\n",
+        "A minimal starter SHACL shape, including optional wiki:template cardinality.\n",
         encoding="utf-8",
     )
 
