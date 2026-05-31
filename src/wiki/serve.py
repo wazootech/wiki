@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import html as html_module
 import json
+import mimetypes
 import re
 import signal
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any, Optional
@@ -29,6 +29,7 @@ from .site import (
 
 class WikiHandler(BaseHTTPRequestHandler):
     site: WikiSite = None  # type: ignore[assignment]
+    config: WikiConfig = None  # type: ignore[assignment]
     base_url: str = "/wiki"
     watch_enabled: bool = False
     build_id: int = 0
@@ -52,10 +53,35 @@ class WikiHandler(BaseHTTPRequestHandler):
             target = self._find_page(slug)
             if target:
                 self._send_html(build_page_html(target, self.site, base_url=base))
+            elif self._serve_asset(parsed[len(base) + 1:]):
+                return
             else:
                 self._send_error(404, f"Page not found: {slug}")
+        elif self._serve_asset(parsed.lstrip("/")):
+            return
         else:
             self._send_error(404, f"Not found: {self.path}")
+
+    def _serve_asset(self, rel_path: str) -> bool:
+        """Try to serve a static asset from configured assetDirs. Returns True if served."""
+        for asset_dir in self.config.asset_dirs:
+            candidate = (asset_dir / rel_path).resolve()
+            try:
+                candidate.relative_to(asset_dir.resolve())
+            except ValueError:
+                continue
+            if candidate.is_file():
+                body = candidate.read_bytes()
+                mime_type, _ = mimetypes.guess_type(candidate.name)
+                if mime_type is None:
+                    mime_type = "application/octet-stream"
+                self.send_response(200)
+                self.send_header("Content-Type", mime_type)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return True
+        return False
 
     def _find_page(self, slug: str) -> VirtualPage | None:
         for page in self.site.pages:
@@ -134,50 +160,49 @@ class WikiHandler(BaseHTTPRequestHandler):
 
 
 def create_server(
-    input_dirs: list[Path] | Path,
+    config: WikiConfig,
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str = "/wiki",
     watch: bool = False,
 ) -> HTTPServer:
     """Build the site and return a configured HTTPServer (not yet started)."""
-    dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-    config = WikiConfig(input_dirs=dirs)
     site = build_site(config, base_url=base_url)
     WikiHandler.site = site
+    WikiHandler.config = config
     WikiHandler.base_url = base_url
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
 
     server = HTTPServer((host, port), WikiHandler)
     print(f"Wiki server ready at http://{host}:{port}/")
-    dirs_str = ", ".join(str(d) for d in dirs)
+    dirs_str = ", ".join(str(d) for d in config.input_dirs)
     print(f"Serving {len(site.pages)} pages from {dirs_str}")
     return server
 
 
 def run_server(
-    input_dirs: list[Path] | Path,
+    config: WikiConfig,
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str = "/wiki",
     watch: bool = False,
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    server = create_server(input_dirs, host=host, port=port, base_url=base_url, watch=watch)
+    server = create_server(config, host=host, port=port, base_url=base_url, watch=watch)
 
     if watch:
-        dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
+        watch_dirs = list(config.input_dirs) + [d for d in config.asset_dirs if d.exists()]
 
         def snapshot() -> dict[str, float]:
             mtimes: dict[str, float] = {}
-            for root in dirs:
+            for root in watch_dirs:
                 if not root.exists():
                     continue
                 for p in root.rglob("*"):
                     if not p.is_file():
                         continue
-                    if p.suffix.lower() not in {".md", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm"}:
+                    if p.suffix.lower() not in {".md", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf"}:
                         continue
                     try:
                         mtimes[str(p)] = p.stat().st_mtime
@@ -195,7 +220,7 @@ def run_server(
                     new = snapshot()
                     if new != mtimes:
                         mtimes = new
-                        WikiHandler.site = build_site(WikiConfig(input_dirs=dirs), base_url=base_url)
+                        WikiHandler.site = build_site(config, base_url=base_url)
                         WikiHandler.build_id += 1
                 except Exception:
                     continue

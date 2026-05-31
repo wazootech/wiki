@@ -14,6 +14,7 @@ from typing import Generator
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.config import WikiConfig
 from wiki.serve import build_site, create_server
 
 
@@ -27,7 +28,8 @@ def _free_port() -> int:
 
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
     port = _free_port()
-    server = create_server(wiki_dir, host="127.0.0.1", port=port)
+    config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+    server = create_server(config, host="127.0.0.1", port=port)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
     for _ in range(100):

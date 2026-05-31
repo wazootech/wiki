@@ -703,6 +703,7 @@ ex:foo ex:bar "from-import-dir" .
     def test_server_serve_real_request(self) -> None:
         """Test wiki serve with real --host/--port via HTTP request."""
         import socket
+        from wiki.config import WikiConfig
         from wiki.serve import run_server
 
         with TemporaryDirectory() as tmpdir:
@@ -721,9 +722,10 @@ Hello from server test.
             port = sock.getsockname()[1]
             sock.close()
 
+            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
-                args=(wiki_dir,),
+                args=(config,),
                 kwargs={"host": "127.0.0.1", "port": port},
                 daemon=True,
             )
@@ -741,6 +743,7 @@ Hello from server test.
     def test_server_serve_custom_base_url(self) -> None:
         """Test wiki serve with custom --base-url."""
         import socket
+        from wiki.config import WikiConfig
         from wiki.serve import run_server
 
         with TemporaryDirectory() as tmpdir:
@@ -758,9 +761,10 @@ Custom base URL test.
             port = sock.getsockname()[1]
             sock.close()
 
+            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
-                args=(wiki_dir,),
+                args=(config,),
                 kwargs={"host": "127.0.0.1", "port": port, "base_url": ""},
                 daemon=True,
             )

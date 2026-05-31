@@ -359,7 +359,8 @@ def serve(config: Context, host: str, port: int, base_url: str | None, watch: bo
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
     resolved_base_url = (config.base_url if base_url is None else base_url).rstrip("/")
-    run_server(config.input_dirs, host=host, port=port, base_url=resolved_base_url, watch=watch)
+    config.base_url = resolved_base_url
+    run_server(config, host=host, port=port, base_url=resolved_base_url, watch=watch)
 
 
 @main.command()
