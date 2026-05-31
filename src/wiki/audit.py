@@ -10,6 +10,7 @@ from urllib.parse import unquote
 from rdflib import Graph
 import pyshacl
 
+from .assets import asset_reference_issue, audit_asset_dirs, build_asset_manifest
 from .config import WikiConfig
 from .headings import GitHubHeadingSlugger
 from .links import is_external_link, markdown_link_is_page, resolve_page_route, split_target, fragment_id
@@ -21,7 +22,7 @@ from .paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from .parser import frontmatter_from_path
+from .parser import frontmatter_from_path, split_frontmatter_body
 from .graph import frontmatter_to_graph, load_graph
 
 logger = logging.getLogger(__name__)
@@ -187,9 +188,20 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
                     continue
                 if markdown_link_is_page(target):
                     _audit_page_target(warnings, existing_files, heading_ids_by_route, md_slug, target, "Markdown link")
+                else:
+                    issue = asset_reference_issue(config, md_file, target)
+                    if issue:
+                        warnings.append(f"In {md_slug}.md: Broken asset link [{target}] {issue}.")
+
+            fm_data, _ = split_frontmatter_body(content)
+            for target in _frontmatter_asset_targets(fm_data or {}):
+                issue = asset_reference_issue(config, md_file, target)
+                if issue:
+                    warnings.append(f"In {md_slug}.md: Broken frontmatter asset [{target}] {issue}.")
         except Exception as e:
             warnings.append(f"Failed to read {md_slug}.md for link audit: {e}")
 
+    warnings.extend(audit_asset_dirs(config))
     return warnings
 
 
@@ -232,6 +244,19 @@ def _audit_page_target(
         target_fragment = fragment_id(fragment)
         if target_fragment not in heading_ids_by_route.get(route, set()):
             warnings.append(f"In {current_route}.md: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
+
+
+def _frontmatter_asset_targets(data: dict[str, Any]) -> list[str]:
+    targets: list[str] = []
+    for key, value in data.items():
+        normalized = str(key).lower()
+        if normalized not in {"image", "thumbnail", "logo"} and not normalized.endswith("image"):
+            continue
+        if isinstance(value, str) and not is_external_link(value):
+            targets.append(value)
+        elif isinstance(value, list):
+            targets.extend(item for item in value if isinstance(item, str) and not is_external_link(item))
+    return targets
 
 
 def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
@@ -295,7 +320,10 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
         results["errors"].extend(safety_issues)
 
     owned_output_dir = Path("_site") / config.base_url.strip("/") if config.base_url else Path("_site")
-    collision_issues = detect_output_collisions(build_page_manifest(config, owned_output_dir, config.base_url, config.url_style))
+    collision_issues = detect_output_collisions(
+        build_page_manifest(config, owned_output_dir, config.base_url, config.url_style)
+        + build_asset_manifest(config, owned_output_dir, config.base_url)
+    )
     if collision_issues:
         results["conforms"] = False
         results["errors"].extend(collision_issues)

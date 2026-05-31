@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -196,6 +197,7 @@ def render(context: Context, no_inference: bool, check: bool, verbose: bool) -> 
 @click.pass_obj
 def build(config: Context, output_dir: Path, base_url: str | None, url_style: str | None, render: bool, verbose: bool) -> None:
     """Build static HTML site from wiki markdown files."""
+    from .assets import build_asset_manifest
     from .site import build_site, build_index_html, build_page_html
 
     if render:
@@ -251,8 +253,17 @@ def build(config: Context, output_dir: Path, base_url: str | None, url_style: st
             rel_path = file_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
 
+    asset_entries = build_asset_manifest(config, page_output_dir, base_url)
+    for entry in asset_entries:
+        entry.output_path.parent.mkdir(parents=True, exist_ok=True)
+        if entry.source is not None:
+            shutil.copy2(entry.source, entry.output_path)
+        if verbose:
+            rel_path = entry.output_path.relative_to(output_dir)
+            click.echo(f"  {rel_path}")
+
     if verbose:
-        click.echo(f"\nBuilt {len(site.pages)} pages to {output_dir}")
+        click.echo(f"\nBuilt {len(site.pages)} pages and {len(asset_entries)} assets to {output_dir}")
 
 
 @main.command()

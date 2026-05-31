@@ -15,6 +15,7 @@ from wiki.paths import (
     validate_route_safety,
 )
 from wiki.audit import audit_internal_links, audit_markdown_flavor
+from wiki.assets import build_asset_manifest, iter_asset_files
 
 
 class TestWikiPaths(unittest.TestCase):
@@ -153,6 +154,61 @@ class TestWikiPaths(unittest.TestCase):
             issues = audit_markdown_flavor(config)
             self.assertEqual(len(issues), 1)
             self.assertIn("Wikilink syntax is not enabled", issues[0])
+
+    def test_asset_manifest_preserves_config_root_relative_path(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            assets = root / "assets" / "Pokemon_Diamond_(copy_1)"
+            assets.mkdir(parents=True)
+            asset = assets / "label.jpg"
+            asset.write_text("image", encoding="utf-8")
+            config = WikiConfig(asset_dirs=[root / "assets"], config_root=root)
+
+            entries = build_asset_manifest(config, root / "_site" / "wiki", "/wiki")
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(entries[0].output_path, root / "_site" / "wiki" / "assets" / "Pokemon_Diamond_(copy_1)" / "label.jpg")
+            self.assertEqual(entries[0].public_url, "/wiki/assets/Pokemon_Diamond_(copy_1)/label.jpg")
+
+    def test_asset_excludes_control_copied_files(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            assets = root / "assets"
+            assets.mkdir()
+            (assets / ".hidden").write_text("copy", encoding="utf-8")
+            (assets / "secret.txt").write_text("skip", encoding="utf-8")
+            config = WikiConfig(asset_dirs=[assets], exclude=["assets/secret.txt"], config_root=root)
+
+            self.assertEqual([path.name for path in iter_asset_files(config)], [".hidden"])
+
+    def test_asset_links_are_checked_under_internal_links(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            assets = root / "assets" / "items"
+            wiki.mkdir()
+            assets.mkdir(parents=True)
+            (assets / "label.jpg").write_text("image", encoding="utf-8")
+            (wiki / "Item.md").write_text(
+                "---\nimage: ../assets/items/label.jpg\n---\n# Item\n\n![label](../assets/items/label.jpg)",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], asset_dirs=[root / "assets"], config_root=root)
+
+            self.assertEqual(audit_internal_links(config), [])
+
+    def test_missing_asset_link_is_reported(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            assets = root / "assets"
+            wiki.mkdir()
+            assets.mkdir()
+            (wiki / "Item.md").write_text("# Item\n\n[manual](../assets/missing.pdf)", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], asset_dirs=[assets], config_root=root)
+
+            issues = audit_internal_links(config)
+            self.assertEqual(len(issues), 1)
+            self.assertIn("missing asset", issues[0])
 
 
 if __name__ == "__main__":
