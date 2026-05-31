@@ -479,7 +479,7 @@ def _build_metadata_json_html(page: VirtualPage) -> str:
 
 
 def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
-    rows = _build_infobox_rows(page, site, base_url, url_style)
+    rows = build_infobox_rows(page, site, base_url, url_style)
     if not rows:
         return ""
     return f"""<section class="infobox page-meta">
@@ -500,6 +500,11 @@ def _build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_st
         if html:
             rows.append(InfoboxRow(label=label, text=text, html=html))
     return rows
+
+
+def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
+    """Return reusable infobox rows for HTML and terminal rendering."""
+    return _build_infobox_rows(page, site, base_url, url_style)
 
 
 def _humanize_field_name(key: str) -> str:

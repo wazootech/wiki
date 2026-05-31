@@ -214,6 +214,26 @@ def render(context: Context, file: Optional[Path], glob_filters: tuple[str, ...]
 
 
 @main.command()
+@click.argument("file", required=True, type=click.Path(exists=True, path_type=Path))
+@click.pass_obj
+def view(config: Context, file: Path) -> None:
+    """Render a single wiki document as a terminal-friendly infobox view."""
+    if file.suffix.lower() not in {".md", ".yaml", ".yml", ".json"}:
+        click.echo(f"Error: view only supports wiki document files, got {file.name}.", err=True)
+        sys.exit(1)
+
+    from .view import render_document_view
+
+    try:
+        output = render_document_view(file, config, base_url=config.base_url, url_style=config.url_style)
+    except ValueError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo(output, nl=False)
+
+
+@main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
 @click.option("--base-url", default=None,
