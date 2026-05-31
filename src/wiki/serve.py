@@ -14,7 +14,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any, Optional
 
-from .filename_style import DEFAULT_FILENAME_STYLE
+from .config import WikiConfig
 from .site import (
     WikiSite,
     VirtualPage,
@@ -139,11 +139,11 @@ def create_server(
     port: int = 8080,
     base_url: str = "/wiki",
     watch: bool = False,
-    filename_style: str = DEFAULT_FILENAME_STYLE,
 ) -> HTTPServer:
     """Build the site and return a configured HTTPServer (not yet started)."""
     dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-    site = build_site(dirs, base_url=base_url, filename_style=filename_style)
+    config = WikiConfig(input_dirs=dirs)
+    site = build_site(config, base_url=base_url)
     WikiHandler.site = site
     WikiHandler.base_url = base_url
     WikiHandler.watch_enabled = watch
@@ -162,10 +162,9 @@ def run_server(
     port: int = 8080,
     base_url: str = "/wiki",
     watch: bool = False,
-    filename_style: str = DEFAULT_FILENAME_STYLE,
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    server = create_server(input_dirs, host=host, port=port, base_url=base_url, watch=watch, filename_style=filename_style)
+    server = create_server(input_dirs, host=host, port=port, base_url=base_url, watch=watch)
 
     if watch:
         dirs = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
@@ -196,7 +195,7 @@ def run_server(
                     new = snapshot()
                     if new != mtimes:
                         mtimes = new
-                        WikiHandler.site = build_site(dirs, base_url=base_url, filename_style=filename_style)
+                        WikiHandler.site = build_site(WikiConfig(input_dirs=dirs), base_url=base_url)
                         WikiHandler.build_id += 1
                 except Exception:
                     continue

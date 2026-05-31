@@ -13,9 +13,8 @@ from markdown_it import MarkdownIt
 from mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import WikiConfig
-from .filename_style import DEFAULT_FILENAME_STYLE, normalize_path, slugify_kebab_segment
 from .headings import GitHubHeadingSlugger, heading_slug
-from .links import is_external_link, markdown_link_is_page, resolve_page_href
+from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import page_url, route_for_markdown_file
 from .parser import split_frontmatter_body
 
@@ -59,12 +58,12 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 
 def slugify_segment(text: str) -> str:
     """Slugify a single path segment (no slashes)."""
-    return slugify_kebab_segment(text)
+    return heading_slug(text)
 
 
 def slugify_path(text: str) -> str:
     """Slugify a potentially nested slug like 'people/Gregory House' -> 'people/gregory-house'."""
-    return normalize_path(text)
+    return "/".join(heading_slug(part) for part in text.split("/"))
 
 
 def _url(base_url: str, slug: str, style: str) -> str:
@@ -75,7 +74,6 @@ def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
     url_style: str = "file",
-    filename_style: str = DEFAULT_FILENAME_STYLE,
     markdown_flavor: str = "obsidian",
     current_route: str = "",
 ) -> str:
@@ -204,11 +202,14 @@ def build_site(
     input_dirs: WikiConfig | list[Path] | Path,
     base_url: str = "/wiki",
     url_style: str = "file",
-    filename_style: str = DEFAULT_FILENAME_STYLE,
 ) -> WikiSite:
     """Build in-memory representation of the wiki site."""
-    config = input_dirs if isinstance(input_dirs, WikiConfig) else None
-    dirs = config.input_dirs if config is not None else ([input_dirs] if isinstance(input_dirs, Path) else input_dirs)
+    if isinstance(input_dirs, WikiConfig):
+        config = input_dirs
+    else:
+        dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
+        config = WikiConfig(input_dirs=dirs_arg)
+    dirs = config.input_dirs
     pages: list[VirtualPage] = []
 
     md_files: list[Path] = []
@@ -218,22 +219,16 @@ def build_site(
     md_files.sort()
 
     def file_slug(md: Path) -> str:
-        if config is not None:
-            return route_for_markdown_file(config, md)
-        for root in dirs:
-            try:
-                rel = md.relative_to(root)
-                return normalize_path(rel.with_suffix("").as_posix(), filename_style)
-            except ValueError:
-                continue
-        return normalize_path(md.with_suffix("").as_posix(), filename_style)
+        return route_for_markdown_file(config, md)
 
     backlink_index: dict[str, list[str]] = {}
     for md in md_files:
         content = md.read_text(encoding="utf-8")
         source_slug = file_slug(md)
         for match in WIKILINK_RE.finditer(content):
-            target = normalize_path(match.group(1).strip(), filename_style)
+            target = resolve_page_route(source_slug, match.group(1).strip())
+            if target is None:
+                continue
             if target not in backlink_index:
                 backlink_index[target] = []
             if source_slug not in backlink_index[target]:
@@ -252,8 +247,7 @@ def build_site(
             body,
             base_url=base_url,
             url_style=url_style,
-            filename_style=filename_style,
-            markdown_flavor=config.markdown_flavor if config is not None else "obsidian",
+            markdown_flavor=config.markdown_flavor,
             current_route=md_slug,
         )
         pages.append(VirtualPage(

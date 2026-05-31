@@ -318,23 +318,24 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
     if safety_issues:
         results["conforms"] = False
         results["errors"].extend(safety_issues)
+    else:
+        owned_output_dir = Path("_site") / config.base_url.strip("/") if config.base_url else Path("_site")
+        collision_issues = detect_output_collisions(
+            build_page_manifest(config, owned_output_dir, config.base_url, config.url_style)
+            + build_asset_manifest(config, owned_output_dir, config.base_url)
+        )
+        if collision_issues:
+            results["conforms"] = False
+            results["errors"].extend(collision_issues)
 
-    owned_output_dir = Path("_site") / config.base_url.strip("/") if config.base_url else Path("_site")
-    collision_issues = detect_output_collisions(
-        build_page_manifest(config, owned_output_dir, config.base_url, config.url_style)
-        + build_asset_manifest(config, owned_output_dir, config.base_url)
-    )
-    if collision_issues:
-        results["conforms"] = False
-        results["errors"].extend(collision_issues)
+    if not safety_issues:
+        filename_issues = audit_filenames(config)
+        process_issues("filenamePattern", filename_issues)
 
-    filename_issues = audit_filenames(config)
-    process_issues("filenamePattern", filename_issues)
+        flavor_issues = audit_markdown_flavor(config)
+        process_issues("markdownFlavor", flavor_issues)
 
-    flavor_issues = audit_markdown_flavor(config)
-    process_issues("markdownFlavor", flavor_issues)
-
-    link_issues = audit_internal_links(config)
-    process_issues("internalLinks", link_issues)
+        link_issues = audit_internal_links(config)
+        process_issues("internalLinks", link_issues)
 
     return results

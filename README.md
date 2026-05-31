@@ -91,20 +91,13 @@ wiki check -v
 wiki check --strict
 ```
 
-The top-level `filenameStyle` setting controls the naming convention, while `check.filenameStyle` controls whether violations are warnings, errors, or off:
+Use `filenamePattern` when a project wants a custom filename hygiene rule. The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
 
 ```yaml
-filenameStyle: kebab
+filenamePattern: "[A-Za-z0-9_()-]+"
 check:
-  filenameStyle: warning
+  filenamePattern: warning
 ```
-
-Supported filename styles:
-
-- `kebab` (default): `ethan-davidson.md`
-- `wikipedia`: `Ethan_Davidson.md`
-
-`wiki check --fix` renames files only in `kebab` mode. In `wikipedia` mode it reports violations without renaming files.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph.
@@ -158,11 +151,11 @@ SELECT ?name ?email WHERE {
 Generate a static HTML site from your wiki markdown files for deployment to GitHub Pages or any static host.
 
 ```bash
-# Build site (default: <slug>.html style)
+# Build site (default: clean directory URLs)
 wiki build
 
-# Build with pretty directory URLs (<slug>/index.html)
-wiki build --url-style dir
+# Build with explicit .html URLs instead
+wiki build --url-style file
 
 # Build to a custom directory with verbose output
 wiki build --output-dir docs -v
@@ -179,34 +172,29 @@ wiki build --render
 
 The `--url-style` flag controls how pages are written to disk and linked:
 
-- `file` (default): `_site/wiki/alice.html` on disk, `.html` in generated links
-- `dir`: `_site/wiki/alice/index.html` on disk, clean `/wiki/alice` in links
+- `dir` (default): `_site/wiki/alice/index.html` on disk, clean `/wiki/alice/` in links
+- `file`: `_site/wiki/alice.html` on disk, `.html` in generated links
 
-The `--base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{slug}`. Set it to an empty string for root-level URLs.
+The `--base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{PageStem}/`. Set it to an empty string for root-level URLs. GitHub Pages paths are case-sensitive.
 
-Output structure (default `--base-url /wiki` + `--url-style file`):
+Output structure (default `--base-url /wiki` + `--url-style dir`):
 ```
 _site/
 └── wiki/
     ├── index.html                  # Wiki index at /wiki/
-    ├── alice.html                  # Page at /wiki/alice.html
-    ├── bob.html
-    └── bob/
-        └── early-life.html         # H2 section at /wiki/bob/early-life.html
+    ├── Alice/
+    │   └── index.html              # Page at /wiki/Alice/
+    └── Pokemon_Diamond_(copy_1)/
+        └── index.html              # Page at /wiki/Pokemon_Diamond_(copy_1)/
 ```
 
-With `--url-style dir`:
+With `--url-style file`:
 ```
 _site/
 └── wiki/
     ├── index.html                  # Wiki index at /wiki/
-    ├── alice/
-    │   └── index.html              # Page at /wiki/alice
-    ├── bob/
-    │   └── index.html
-    └── bob/
-        └── early-life/
-            └── index.html          # H2 section at /wiki/bob/early-life
+    ├── Alice.html                  # Page at /wiki/Alice.html
+    └── Pokemon_Diamond_(copy_1).html
 ```
 
 With `--base-url /my-wiki` + `--url-style dir`:
@@ -215,9 +203,24 @@ _site/
 └── my-wiki/
     ├── index.html                  # Wiki index at /my-wiki/
     ├── alice/
-    │   └── index.html              # Page at /my-wiki/alice
+    │   └── index.html              # Page at /my-wiki/alice/
     └── ...
 ```
+
+Page URLs are derived from the source path under `inputDirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+
+`wiki build` runs `wiki check` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
+
+Static assets can be published from configured asset directories:
+
+```yaml
+assetDirs:
+  - assets
+exclude:
+  - assets/private/**
+```
+
+Asset directories are relative to the config file and copied under the base URL preserving their configured path, e.g. `assets/items/photo.jpg` becomes `/wiki/assets/items/photo.jpg`.
 
 #### GitHub Pages deployment
 
@@ -464,11 +467,20 @@ The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.y
 # wiki.yaml
 inputDirs:
   - wiki
+assetDirs:
+  - assets
+markdownFlavor: obsidian
+baseUrl: /wiki
+urlStyle: dir
+filenamePattern: "[A-Za-z0-9_()-]+"
+exclude:
+  - assets/private/**
 contentPredicate: schema:text # Opt-in full-text markdown body auto-injection
 
 check:
-  filenameStyle: warning     # "error" | "warning" | "off"
+  filenamePattern: warning   # "error" | "warning" | "off"
   internalLinks: warning     # "error" | "warning" | "off"
+  markdownFlavor: warning    # "error" | "warning" | "off"
 
 context:
   schema: https://schema.org/

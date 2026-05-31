@@ -18,7 +18,7 @@ class TestChecking(unittest.TestCase):
     def test_audit_filenames_validation(self) -> None:
         """Test auditing of filenames for lowercase kebab-case naming standard."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(input_dirs=[tmpdir], filename_pattern="[a-z0-9-]+")
             
             # Create valid and invalid files
             valid_path = Path(tmpdir) / "valid-kebab-case.md"
@@ -29,7 +29,7 @@ class TestChecking(unittest.TestCase):
             
             warnings = audit_filenames(config)
             self.assertEqual(len(warnings), 1)
-            self.assertIn("Filename 'Invalid_Name.md' is not lowercase kebab-case.", warnings[0])
+            self.assertIn("Filename 'Invalid_Name.md' does not match filenamePattern.", warnings[0])
 
     def test_audit_internal_links_validation(self) -> None:
         """Test auditing of internal link structures (WikiLinks and Markdown links)."""
@@ -55,7 +55,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             
             # Verify exactly the two broken links are reported
             self.assertEqual(len(warnings), 2)
-            self.assertTrue(any("Broken WikiLink [[non-existent-page]]" in w for w in warnings))
+            self.assertTrue(any("Broken WikiLink [non-existent-page]" in w for w in warnings))
             self.assertTrue(any("Broken Markdown link [missing.md]" in w for w in warnings))
 
     def test_load_shapes_edge_cases(self) -> None:
@@ -141,43 +141,43 @@ type: schema:WebPage
 ---
 """, encoding="utf-8")
             
-            # Scenario A: check.filenameStyle is "warning"
-            config_warning = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "warning"})
+            # Scenario A: check.filenamePattern is "warning"
+            config_warning = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "warning"})
             res_warning = run_checks(config_warning)
             self.assertTrue(res_warning["conforms"])
             self.assertEqual(len(res_warning["warnings"]), 1)
             self.assertEqual(len(res_warning["errors"]), 0)
             
-            # Scenario B: check.filenameStyle is "error"
-            config_error = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "error"})
+            # Scenario B: check.filenamePattern is "error"
+            config_error = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "error"})
             res_error = run_checks(config_error)
             self.assertFalse(res_error["conforms"])
             self.assertEqual(len(res_error["warnings"]), 0)
             self.assertEqual(len(res_error["errors"]), 1)
             
-            # Scenario C: check.filenameStyle is "off"
-            config_off = WikiConfig(input_dirs=[wiki_dir], check={"filenameStyle": "off"})
+            # Scenario C: check.filenamePattern is "off"
+            config_off = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "off"})
             res_off = run_checks(config_off)
             self.assertTrue(res_off["conforms"])
             self.assertEqual(len(res_off["warnings"]), 0)
             self.assertEqual(len(res_off["errors"]), 0)
 
-    def test_wikipedia_filename_style_reports_invalid_kebab(self) -> None:
-        """Wikipedia filename style accepts title underscores and reports kebab names."""
+    def test_filename_pattern_reports_non_matching_stems(self) -> None:
+        """Custom filenamePattern controls filename hygiene without preset styles."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
             (wiki_dir / "ethan-davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[A-Z][A-Za-z0-9_]*")
             res = run_checks(config)
 
             self.assertTrue(res["conforms"])
             self.assertEqual(len(res["warnings"]), 1)
             self.assertIn("ethan-davidson.md", res["warnings"][0])
 
-    def test_wikipedia_link_resolution_requires_wikipedia_target(self) -> None:
-        """Wikipedia style does not also accept space-normalized WikiLink targets."""
+    def test_wikilink_resolution_requires_path_specifier_target(self) -> None:
+        """Wikilinks use path specifiers and do not space-normalize targets."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
@@ -186,19 +186,19 @@ type: schema:WebPage
                 encoding="utf-8",
             )
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            config = WikiConfig(input_dirs=[wiki_dir])
             res = run_checks(config)
 
-            self.assertTrue(any("Broken WikiLink [[Ethan Davidson]]" in w for w in res["warnings"]))
+            self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
 
-    def test_wikipedia_fix_is_report_only(self) -> None:
-        """check --fix behavior should not rename files in wikipedia mode."""
+    def test_fix_is_report_only_without_filename_styles(self) -> None:
+        """check --fix does not rename files now that filename styles are removed."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             invalid = wiki_dir / "ethan-davidson.md"
             invalid.write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_style="wikipedia")
+            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[A-Z][A-Za-z0-9_]*")
             result = autofix_hygiene(config)
 
             self.assertTrue(invalid.exists())

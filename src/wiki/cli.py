@@ -55,6 +55,17 @@ def _exit_check_results(conforms: bool, errors: list[str], warnings: list[str], 
     sys.exit(1 if not conforms else 0)
 
 
+def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool) -> None:
+    if errors:
+        click.echo("Errors:", err=True)
+        for e in errors:
+            click.echo(f"  - {e}", err=True)
+    if verbose and warnings:
+        click.echo("Warnings:", err=True)
+        for w in warnings:
+            click.echo(f"  - {w}", err=True)
+
+
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. filename kebab-case) and update internal wikilinks.")
@@ -91,9 +102,13 @@ def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, stric
 
         # Style audits specifically for this file (delegates to audit.py)
         from .audit import audit_filenames, audit_internal_links, file_slug_for_path
-        file_filter = {file_slug_for_path(config, file)}
-        warnings.extend(audit_filenames(config, file_filter=file_filter))
-        warnings.extend(audit_internal_links(config, file_filter=file_filter))
+        try:
+            file_filter = {file_slug_for_path(config, file)}
+            warnings.extend(audit_filenames(config, file_filter=file_filter))
+            warnings.extend(audit_internal_links(config, file_filter=file_filter))
+        except ValueError as exc:
+            errors.append(str(exc))
+            conforms = False
 
         if strict and warnings:
             errors.extend(warnings)
@@ -193,9 +208,10 @@ def render(context: Context, no_inference: bool, check: bool, verbose: bool) -> 
 @click.option("--url-style", type=click.Choice(["file", "dir"]), default=None,
               help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
 @click.option("--render", is_flag=True, help="Run SPARQL dynamic block rendering on markdown files before building.")
+@click.option("--no-check", is_flag=True, help="Skip configurable wiki checks before building.")
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
-def build(config: Context, output_dir: Path, base_url: str | None, url_style: str | None, render: bool, verbose: bool) -> None:
+def build(config: Context, output_dir: Path, base_url: str | None, url_style: str | None, render: bool, no_check: bool, verbose: bool) -> None:
     """Build static HTML site from wiki markdown files."""
     from .assets import build_asset_manifest
     from .site import build_site, build_index_html, build_page_html
@@ -213,27 +229,39 @@ def build(config: Context, output_dir: Path, base_url: str | None, url_style: st
 
     base_url = (config.base_url if base_url is None else base_url).rstrip("/")
     url_style = config.url_style if url_style is None else url_style
+    config.base_url = base_url
+    config.url_style = url_style
+
+    if not no_check:
+        results = run_checks(config)
+        _print_check_messages(results["errors"], results["warnings"], verbose)
+        if results["errors"] or not results["conforms"]:
+            sys.exit(1)
+
     site = build_site(config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
+    from .assets import build_asset_manifest
+    from .paths import build_page_manifest, detect_output_collisions
+
+    manifest = build_page_manifest(config, page_output_dir, base_url, url_style) + build_asset_manifest(config, page_output_dir, base_url)
+    collision_issues = detect_output_collisions(manifest)
+    if collision_issues:
+        _print_check_messages(collision_issues, [], verbose=True)
+        sys.exit(1)
+
+    if page_output_dir.exists():
+        shutil.rmtree(page_output_dir)
     page_output_dir.mkdir(parents=True, exist_ok=True)
 
-    if url_style == "dir":
-        for old in page_output_dir.rglob("index.html"):
-            old.unlink()
-    else:
-        for old in page_output_dir.glob("**/*.html"):
-            old.unlink()
-    for d in sorted(page_output_dir.glob("**/*"), key=lambda p: len(str(p)), reverse=True):
-        if d.is_dir() and not any(d.iterdir()):
-            d.rmdir()
-
-    index_html = build_index_html(site, base_url=base_url, url_style=url_style)
-    (page_output_dir / "index.html").write_text(index_html, encoding="utf-8")
-    if verbose:
-        rel = page_output_dir.relative_to(output_dir)
-        click.echo(f"  {rel / 'index.html'}")
+    has_root_index = any(page.full_slug == "" for page in site.pages)
+    if not has_root_index:
+        index_html = build_index_html(site, base_url=base_url, url_style=url_style)
+        (page_output_dir / "index.html").write_text(index_html, encoding="utf-8")
+        if verbose:
+            rel = page_output_dir.relative_to(output_dir)
+            click.echo(f"  {rel / 'index.html'}")
 
     for page in site.pages:
         if url_style == "dir":

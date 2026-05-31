@@ -24,8 +24,8 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertEqual(result.output, "")
             
-            # 2. Add an invalid filename and test that strict mode fails
-            invalid_file = Path(tmpdir) / "Invalid_Name.md"
+            # 2. Add a build-unsafe filename and test that strict mode fails
+            invalid_file = Path(tmpdir) / "Invalid Name.md"
             invalid_file.write_text("""---
 id: wiki:invalid
 type: schema:WebPage
@@ -36,7 +36,7 @@ name: Invalid Page
             result_strict = runner.invoke(main, ["--input-dir", tmpdir, "check", "--strict", "-v"])
             self.assertEqual(result_strict.exit_code, 1)
             self.assertIn("Errors:", result_strict.output)
-            self.assertIn("is not lowercase kebab-case", result_strict.output)
+            self.assertIn("spaces are not allowed", result_strict.output)
 
     def test_cli_check_does_not_normalize_frontmatter(self) -> None:
         """Test that check performs no frontmatter key normalization (strict SHACL on exact keys)."""
@@ -110,7 +110,7 @@ name: Valid File
             self.assertEqual(result.exit_code, 0)
             
             # Non-conforming single file check
-            invalid_file = wiki_dir / "Invalid_Name.md"
+            invalid_file = wiki_dir / "Invalid Name.md"
             invalid_file.write_text("""---
 id: wiki:invalid-name
 type: schema:WebPage
@@ -470,7 +470,7 @@ name: TestDoc
             self.assertIn('"TestDoc"', res.output, msg="N-Quads output should contain the literal value")
 
     def test_cli_build(self) -> None:
-        """Test that wiki build generates static HTML site (file style)."""
+        """Test that wiki build generates static HTML site with clean directory URLs by default."""
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
@@ -502,20 +502,20 @@ Bob was born.""", encoding="utf-8")
             self.assertIn("Built", result.output)
 
             self.assertTrue((output_dir / "wiki" / "index.html").exists())
-            self.assertTrue((output_dir / "wiki" / "alice.html").exists())
-            self.assertTrue((output_dir / "wiki" / "bob.html").exists())
-            self.assertTrue((output_dir / "wiki" / "bob" / "early-life.html").exists())
+            self.assertTrue((output_dir / "wiki" / "alice" / "index.html").exists())
+            self.assertTrue((output_dir / "wiki" / "bob" / "index.html").exists())
+            self.assertFalse((output_dir / "wiki" / "bob" / "early-life" / "index.html").exists())
 
             index_content = (output_dir / "wiki" / "index.html").read_text()
             self.assertIn("Alice", index_content)
             self.assertIn("Bob", index_content)
-            self.assertIn("alice.html", index_content)
-            self.assertIn("bob.html", index_content)
-            self.assertIn("bob/early-life.html", index_content)
+            self.assertIn('href="/wiki/alice/"', index_content)
+            self.assertIn('href="/wiki/bob/"', index_content)
+            self.assertNotIn("early-life", index_content)
 
-            alice_content = (output_dir / "wiki" / "alice.html").read_text()
+            alice_content = (output_dir / "wiki" / "alice" / "index.html").read_text()
             self.assertIn("Hello from Alice", alice_content)
-            self.assertIn("bob.html", alice_content)
+            self.assertIn('/wiki/bob/', alice_content)
 
     def test_cli_build_with_render(self) -> None:
         """Test that wiki build --render updates dynamic blocks before generating site."""
@@ -550,7 +550,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             self.assertIn("| Name |", updated_content) # It constructs a markdown table
 
             # Check that the generated HTML contains the rendered content
-            html_content = (output_dir / "wiki" / "person.html").read_text(encoding="utf-8")
+            html_content = (output_dir / "wiki" / "person" / "index.html").read_text(encoding="utf-8")
             self.assertIn("Charlie", html_content)
 
     def test_cli_build_dir_style(self) -> None:
@@ -588,16 +588,16 @@ Bob was born.""", encoding="utf-8")
             self.assertTrue((output_dir / "wiki" / "index.html").exists())
             self.assertTrue((output_dir / "wiki" / "alice" / "index.html").exists())
             self.assertTrue((output_dir / "wiki" / "bob" / "index.html").exists())
-            self.assertTrue((output_dir / "wiki" / "bob" / "early-life" / "index.html").exists())
+            self.assertFalse((output_dir / "wiki" / "bob" / "early-life" / "index.html").exists())
 
             index_content = (output_dir / "wiki" / "index.html").read_text()
-            self.assertIn('href="/wiki/alice"', index_content)
-            self.assertIn('href="/wiki/bob"', index_content)
-            self.assertIn('href="/wiki/bob/early-life"', index_content)
+            self.assertIn('href="/wiki/alice/"', index_content)
+            self.assertIn('href="/wiki/bob/"', index_content)
+            self.assertNotIn('href="/wiki/bob/early-life/"', index_content)
 
             alice_content = (output_dir / "wiki" / "alice" / "index.html").read_text()
             self.assertIn("Hello from Alice", alice_content)
-            self.assertIn('href="/wiki/bob"', alice_content)
+            self.assertIn('href="/wiki/bob/"', alice_content)
 
     def test_cli_build_with_base_url(self) -> None:
         """Test that wiki build --base-url prefixes all paths."""
@@ -625,8 +625,8 @@ Hello from [[alice]].""", encoding="utf-8")
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "build", "--output-dir", str(output_dir), "--base-url", "/my-wiki"])
             self.assertEqual(result.exit_code, 0)
 
-            alice_content = (output_dir / "my-wiki" / "alice.html").read_text()
-            self.assertIn('/my-wiki/bob.html', alice_content)
+            alice_content = (output_dir / "my-wiki" / "alice" / "index.html").read_text()
+            self.assertIn('/my-wiki/bob/', alice_content)
             self.assertIn('/my-wiki/', alice_content)
 
             index_content = (output_dir / "my-wiki" / "index.html").read_text()

@@ -25,9 +25,9 @@ def _free_port() -> int:
     return port
 
 
-def _serve_in_thread(wiki_dir: Path, filename_style: str = "kebab") -> Generator[int, None, None]:
+def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
     port = _free_port()
-    server = create_server(wiki_dir, host="127.0.0.1", port=port, filename_style=filename_style)
+    server = create_server(wiki_dir, host="127.0.0.1", port=port)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
     for _ in range(100):
@@ -94,31 +94,31 @@ class TestServe(unittest.TestCase):
         self.assertIn("/wiki/beta", body)
 
     def test_wikilinks_with_display(self) -> None:
-        self._write("alpha.md", "# Alpha\n\nSee [[Beta Page|Beta]].")
+        self._write("alpha.md", "# Alpha\n\nSee [[beta|Beta]].")
         self._write("beta.md", "# Beta\n\nContent.")
         for port in _serve_in_thread(self.wiki_dir):
             status, body = self._get(port, "/wiki/alpha")
         self.assertEqual(status, 200)
         self.assertIn('class="wikilink"', body)
-        self.assertIn("/wiki/beta-page", body)
+        self.assertIn("/wiki/beta", body)
 
-    def test_h2_virtual_page(self) -> None:
+    def test_h2_headings_are_in_page_anchors_not_virtual_pages(self) -> None:
         self._write("guide.md", "# Guide\n\nIntro.\n\n## Setup\n\nSetup content.\n\n## Usage\n\nUsage content.")
         for port in _serve_in_thread(self.wiki_dir):
             status, body = self._get(port, "/wiki/guide/setup")
-            self.assertEqual(status, 200)
-            self.assertIn("Setup", body)
-            self.assertIn("Setup content.", body)
+            page_status, page_body = self._get(port, "/wiki/guide")
+            self.assertEqual(status, 404)
+            self.assertEqual(page_status, 200)
+            self.assertIn('id="setup"', page_body)
+            self.assertIn('id="usage"', page_body)
 
-            status2, body2 = self._get(port, "/wiki/guide/usage")
-            self.assertEqual(status2, 200)
-            self.assertIn("Usage", body2)
-            self.assertIn("Usage content.", body2)
+            status2, _ = self._get(port, "/wiki/guide/usage")
+            self.assertEqual(status2, 404)
 
     def test_toc_h3_to_h6(self) -> None:
         self._write("doc.md", "# Doc\n\n## Section\n\n### Sub A\n\nContent A\n\n#### SubSub\n\nDeep.\n\n### Sub B\n\nContent B")
         for port in _serve_in_thread(self.wiki_dir):
-            status, body = self._get(port, "/wiki/doc/section")
+            status, body = self._get(port, "/wiki/doc")
         self.assertEqual(status, 200)
         self.assertIn("On this page", body)
         self.assertIn("Sub A", body)
@@ -181,16 +181,16 @@ class TestServe(unittest.TestCase):
         self.assertIn("<style>", body)
 
     def test_wikilinks_resolve_wiki_path(self) -> None:
-        self._write("source.md", "# Source\n\nSee [[target page]].")
+        self._write("source.md", "# Source\n\nSee [[target-page]].")
         self._write("target-page.md", "# Target Page")
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/wiki/source")
         self.assertIn("/wiki/target-page", body)
 
-    def test_wikipedia_filename_style_routes_and_wikilinks(self) -> None:
+    def test_case_preserved_routes_and_wikilinks(self) -> None:
         self._write("Source.md", "# Source\n\nSee [[Ethan_Davidson]].")
         self._write("Ethan_Davidson.md", "# Ethan Davidson")
-        for port in _serve_in_thread(self.wiki_dir, filename_style="wikipedia"):
+        for port in _serve_in_thread(self.wiki_dir):
             status, body = self._get(port, "/wiki/Source")
             target_status, _ = self._get(port, "/wiki/Ethan_Davidson")
         self.assertEqual(status, 200)
@@ -235,7 +235,7 @@ class TestServe(unittest.TestCase):
         result = runner.invoke(main, ["serve", "--help"])
         self.assertIn("[default: 8080]", result.output)
         self.assertIn("[default: 127.0.0.1]", result.output)
-        self.assertIn("[default: /wiki]", result.output)
+        self.assertIn("--base-url", result.output)
 
 
 if __name__ == "__main__":
