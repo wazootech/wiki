@@ -112,41 +112,55 @@ Body with --- dashes --- in text"""
     def test_document_data_from_yaml_and_json_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
+            yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
             json_file = root / "person.json"
+            yml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
             yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
             json_file.write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
 
+            yml_data = document_data_from_path(yml_file)
             yaml_data = document_data_from_path(yaml_file)
             json_data = document_data_from_path(json_file)
 
+            self.assertEqual(yml_data["name"], "Gregory")
             self.assertEqual(yaml_data["name"], "Gregory")
             self.assertEqual(json_data["name"], "Alice")
+            self.assertIn("@context", yml_data)
             self.assertIn("@context", yaml_data)
             self.assertIn("@context", json_data)
 
     def test_document_data_rejects_non_mapping_data_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
+            yml_file = root / "items.yml"
             yaml_file = root / "items.yaml"
             json_file = root / "items.json"
+            yml_file.write_text('- one\n- two\n', encoding="utf-8")
             yaml_file.write_text('- one\n- two\n', encoding="utf-8")
             json_file.write_text('[1, 2, 3]', encoding="utf-8")
 
+            self.assertIsNone(document_data_from_path(yml_file))
             self.assertIsNone(document_data_from_path(yaml_file))
             self.assertIsNone(document_data_from_path(json_file))
 
     def test_split_document_body_returns_empty_body_for_data_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
+            yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
+            yml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
             yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
 
-            data, body = split_document_body(yaml_file)
+            yml_data, yml_body = split_document_body(yml_file)
+            yaml_data, yaml_body = split_document_body(yaml_file)
 
-            self.assertIsNotNone(data)
-            self.assertEqual(data["name"], "Gregory")
-            self.assertEqual(body, "")
+            self.assertIsNotNone(yml_data)
+            self.assertEqual(yml_data["name"], "Gregory")
+            self.assertEqual(yml_body, "")
+            self.assertIsNotNone(yaml_data)
+            self.assertEqual(yaml_data["name"], "Gregory")
+            self.assertEqual(yaml_body, "")
 
 
 if __name__ == "__main__":

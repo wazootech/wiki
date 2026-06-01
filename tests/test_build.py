@@ -91,11 +91,13 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             (root / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
             (wiki / "person.yaml").write_text("type: Person\nname: Gregory House\n", encoding="utf-8")
+            (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
 
             self.assertEqual(result.exit_code, 0, result.output)
             self.assertTrue((output_dir / "wiki" / "person" / "index.html").exists())
+            self.assertTrue((output_dir / "wiki" / "place" / "index.html").exists())
 
     def test_build_renders_infobox_links_for_typed_pages(self) -> None:
         runner = CliRunner()

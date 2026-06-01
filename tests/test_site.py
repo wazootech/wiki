@@ -43,6 +43,7 @@ class TestWikiSite(unittest.TestCase):
             wiki = root / "wiki"
             wiki.mkdir()
             (wiki / "person.yaml").write_text("type: Person\nname: Gregory House\n", encoding="utf-8")
+            (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
             (wiki / "index.md").write_text("# Home", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
@@ -52,6 +53,8 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn("person", page_by_slug)
             self.assertEqual(page_by_slug["person"].title, "Gregory House")
             self.assertIn("Gregory House", page_by_slug["person"].html + str(page_by_slug["person"].frontmatter))
+            self.assertIn("place", page_by_slug)
+            self.assertEqual(page_by_slug["place"].title, "Princeton")
 
     def test_build_page_html_uses_person_template_and_clickable_infobox_links(self) -> None:
         with TemporaryDirectory() as tmpdir:

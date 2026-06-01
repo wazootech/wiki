@@ -417,17 +417,21 @@ name: Good Page
     def test_load_graph_reads_yaml_and_json_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
+            (wiki_dir / "bob.yml").write_text("type: Person\nname: Bob\n", encoding="utf-8")
             (wiki_dir / "gregory.yaml").write_text("type: Person\nname: Gregory\n", encoding="utf-8")
             (wiki_dir / "alice.json").write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
 
             config = WikiConfig(input_dirs=[wiki_dir])
             g = load_graph(config, infer=False)
 
+            self.assertTrue((None, None, Literal("Bob")) in g)
             self.assertTrue((None, None, Literal("Gregory")) in g)
             self.assertTrue((None, None, Literal("Alice")) in g)
 
+            bob_uri = URIRef("https://wiki.example.org/bob")
             gregory_uri = URIRef("https://wiki.example.org/gregory")
             alice_uri = URIRef("https://wiki.example.org/alice")
+            self.assertTrue((bob_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((gregory_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((alice_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
 
