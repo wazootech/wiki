@@ -39,3 +39,6 @@ env/
 
 # Static site build output
 _site/
+
+# Wiki CLI graph and render caches
+.wiki/

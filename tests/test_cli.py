@@ -389,6 +389,64 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             self.assertEqual(result.exit_code, 1)
             self.assertIn("render only supports markdown files", result.output)
 
+    def test_cli_render_incremental_skips_fresh_vault(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            source = """---
+type: Person
+name: Gregory
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+```
+<!-- sparql:end -->
+"""
+            (wiki_dir / "gregory.md").write_text(source, encoding="utf-8")
+            runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--no-inference", "--all"])
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--no-inference", "-v"])
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Updated 0 files", result.output)
+
+    def test_cli_render_incremental_only_changed_file(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            source = """---
+type: Person
+name: {name}
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
+```
+<!-- sparql:end -->
+"""
+            alpha = wiki_dir / "alpha.md"
+            beta = wiki_dir / "beta.md"
+            alpha.write_text(source.format(name="Alpha"), encoding="utf-8")
+            beta.write_text(source.format(name="Beta"), encoding="utf-8")
+            runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--no-inference", "--all"])
+            beta_before = beta.read_text(encoding="utf-8")
+            rendered_alpha = alpha.read_text(encoding="utf-8")
+            self.assertIn("| Name |", rendered_alpha)
+            # Strip generated table but keep the query; mtime change marks alpha stale only.
+            stripped = """---
+type: Person
+name: Alpha
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+```
+<!-- sparql:end -->
+"""
+            alpha.write_text(stripped, encoding="utf-8")
+            runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--no-inference"])
+            self.assertEqual(beta.read_text(encoding="utf-8"), beta_before)
+            self.assertIn("| Name |", alpha.read_text(encoding="utf-8"))
+
     def test_cli_view_markdown_document(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:

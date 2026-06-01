@@ -104,7 +104,7 @@ def check_shacl_file(file_path: Path, context: WikiConfig, verbose: bool = False
     if not data:
         return None
 
-    source_graph = load_graph(context, infer=False) # Minimizing overhead for single file check, but loading pool shapes
+    source_graph = load_graph(context, infer=False)
     shapes_graph = load_shapes(source_graph)
     data_graph = frontmatter_to_graph(data, context, file_id=file_slug_for_path(context, file_path))
 

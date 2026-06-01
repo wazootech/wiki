@@ -335,18 +335,22 @@ _EXT_FORMAT_MAP = {
 }
 
 
-def load_graph(context: WikiConfig, infer: bool = True) -> Graph:
-    """Load all markdown, RDF, and data files into a unified Graph, resolving blank nodes."""
+def _build_graph_from_vault(context: WikiConfig) -> Graph:
+    """Load asserted triples from all vault sources without OWL-RL inference."""
     graph = Graph()
     context.bind_namespaces(graph)
 
     document_files = set(iter_document_files(context))
+
+    from .graph_cache import _is_cache_path
 
     for input_dir in context.input_dirs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):
             if not file_path.is_file() or context.is_excluded(file_path):
+                continue
+            if _is_cache_path(context, file_path):
                 continue
             try:
                 if file_path in document_files:
@@ -358,9 +362,31 @@ def load_graph(context: WikiConfig, infer: bool = True) -> Graph:
             except Exception as e:
                 logger.warning("Failed to process %s: %s", file_path.name, e)
 
+    return graph
+
+
+def load_graph(
+    context: WikiConfig,
+    infer: bool = True,
+    *,
+    use_cache: bool = True,
+    rebuild_cache: bool = False,
+) -> Graph:
+    """Load all markdown, RDF, and data files into a unified Graph, resolving blank nodes."""
+    from .graph_cache import load_cached_graph, save_cached_graph
+
+    if use_cache and not rebuild_cache:
+        cached = load_cached_graph(context, infer)
+        if cached is not None:
+            return cached
+
+    graph = _build_graph_from_vault(context)
     if infer:
         from .infer import apply_inference
         apply_inference(graph, context)
+
+    if use_cache:
+        save_cached_graph(context, graph, infer)
 
     return graph
 
