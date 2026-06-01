@@ -102,6 +102,42 @@ name: Bella Davidson
             self.assertIn('href="https://example.com/gregory-davidson"', html)
             self.assertIn("Infobox", html)
 
+    def test_infobox_uses_wikipedia_style_article_grid(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Example.md").write_text(
+                """---
+type: schema:TechArticle
+name: Example page
+description: A sample article
+---
+# Example page
+
+Body text beside the infobox.
+""",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config, base_url="/wiki", url_style="dir")
+            page = next(page for page in site.pages if page.full_slug == "Example")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+
+            self.assertIn('class="wiki-article has-infobox"', html)
+            self.assertIn('<aside class="infobox">', html)
+            self.assertNotIn("infobox page-meta", html)
+            self.assertIn('<div class="wiki-article-title">', html)
+            self.assertIn('<div class="wiki-article-body">', html)
+            self.assertIn("float:right", html)
+            article_html = html[html.index("<article") : html.index("</article>") + len("</article>")]
+            title_pos = article_html.index("wiki-article-title")
+            body_pos = article_html.index("wiki-article-body")
+            infobox_pos = article_html.index('<aside class="infobox">')
+            content_pos = article_html.index("wiki-article-content")
+            self.assertLess(title_pos, body_pos)
+            self.assertLess(infobox_pos, content_pos)
+
     def test_template_frontmatter_override_is_applied(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

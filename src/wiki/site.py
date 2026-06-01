@@ -20,6 +20,7 @@ from .paths import iter_document_files, page_url, route_for_document_file
 from .parser import split_document_body
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
+LEADING_H1_RE = re.compile(r"^\s*(<h1\b[^>]*>.*?</h1>)", re.IGNORECASE | re.DOTALL)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 
 INLINE_CSS = """
@@ -53,7 +54,12 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .page-meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-top:32px}
 .page-meta h2{font-size:1.1em;border:none;margin-top:0}
 .page-shell{max-width:100%}
-.infobox{float:right;max-width:300px;margin:0 0 16px 24px;background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06);clear:none}
+.wiki-article{max-width:100%}
+.wiki-article-title{margin-bottom:.25em}
+.wiki-article-body{display:flow-root}
+.wiki-article.has-infobox .infobox{float:right;clear:right;width:280px;max-width:min(280px,42%);margin:0 0 1em 1.5em;background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+.wiki-article-content{min-width:0}
+.infobox{background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
 .infobox h2{font-size:1rem;border:none;margin:0 0 14px}
 .infobox dl{display:grid;grid-template-columns:minmax(96px,140px) 1fr;gap:10px 14px}
 .infobox dt{font-weight:600;color:#475569}
@@ -67,7 +73,7 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .template-label{display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .index-header{margin-bottom:24px}
 .site-title{font-size:1.5em;font-weight:700;color:#1a1a2e;text-decoration:none}
-@media (max-width: 768px){.infobox{float:none;max-width:100%;margin:0 0 16px 0}}
+@media (max-width: 768px){.wiki-article.has-infobox .infobox{float:none;clear:none;width:100%;max-width:100%;margin:0 0 16px 0}}
 """.strip()
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
@@ -481,12 +487,12 @@ def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_st
     rows = build_infobox_rows(page, site, base_url, url_style)
     if not rows:
         return ""
-    return f"""<section class="infobox page-meta">
+    return f"""<aside class="infobox">
 <h2>Infobox</h2>
 <dl>
 {''.join(f'<dt>{html_module.escape(row.label)}</dt><dd>{row.html}</dd>' for row in rows)}
 </dl>
-</section>"""
+</aside>"""
 
 
 def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
@@ -625,6 +631,16 @@ def _template_label(page: VirtualPage) -> str:
     return f'<div class="template-label">{html_module.escape(label)}</div>'
 
 
+def _split_leading_h1(content_html: str, fallback_title: str) -> tuple[str, str]:
+    """Split rendered HTML into a full-width title and remaining body."""
+    match = LEADING_H1_RE.match(content_html)
+    if match:
+        return match.group(1), content_html[match.end() :].lstrip()
+    if fallback_title:
+        return f"<h1>{html_module.escape(fallback_title)}</h1>", content_html.strip()
+    return "", content_html.strip()
+
+
 def _render_page_shell(
     page: VirtualPage,
     content_html: str,
@@ -635,11 +651,22 @@ def _render_page_shell(
     template_label: str,
 ) -> str:
     template_class = html_module.escape(_template_stem(page.template_name))
+    title_html, body_html = _split_leading_h1(content_html, page.title)
+    title_block = f'<div class="wiki-article-title">{title_html}</div>' if title_html else ""
+    if infobox_html:
+        body_block = f"""<div class="wiki-article-body">
+{infobox_html}
+<div class="wiki-article-content">{body_html}</div>
+</div>"""
+        article_class = "wiki-article has-infobox"
+    else:
+        body_block = f'<div class="wiki-article-content">{body_html}</div>' if body_html else ""
+        article_class = "wiki-article"
+    article_body = f"{title_block}\n{body_block}".strip()
     return f"""<div class="page-shell template-{template_class}">
 {template_label}
-<article>
-{infobox_html}
-{content_html}
+<article class="{article_class}">
+{article_body}
 </article>
 {toc_html}
 {bl_html}
