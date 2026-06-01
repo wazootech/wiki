@@ -446,6 +446,17 @@ name: Test Page
             expected = URIRef("https://wiki.example.org/test.md")
             self.assertTrue((expected, None, None) in g)
 
+    def test_uri_ext_uses_source_file_extension(self) -> None:
+        """Test that uri_ext=True uses the actual file extension for data documents."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "person.yaml").write_text("type: Person\nname: Test\n", encoding="utf-8")
+
+            config = WikiConfig(input_dirs=[wiki_dir], uri_ext=True)
+            g = load_graph(config, infer=False)
+            expected = URIRef("https://wiki.example.org/person.yaml")
+            self.assertTrue((expected, None, None) in g)
+
 
 if __name__ == "__main__":
     unittest.main()

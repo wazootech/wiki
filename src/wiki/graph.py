@@ -111,7 +111,7 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         graph.add((subject, pred, Literal(str(value))))
 
 
-def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Optional[str] = None, body: Optional[str] = None, uri_ext: bool = False) -> Graph:
+def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Optional[str] = None, body: Optional[str] = None, uri_ext: bool = False, file_ext: str = ".md") -> Graph:
     """Convert parsed frontmatter dictionary to an RDF graph."""
     graph = Graph()
     context.bind_namespaces(graph)
@@ -124,7 +124,7 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     if not doc_id:
         if not file_id:
             return Graph()
-        suffix = ".md" if uri_ext else ""
+        suffix = file_ext if uri_ext else ""
         doc_id = f"{context.wiki_base}{file_id}{suffix}"
 
     if doc_id and ":" in doc_id:
@@ -299,7 +299,7 @@ def _process_document_file(graph: Graph, file_path: Path, context: WikiConfig) -
             if len(parts) > 2:
                 body = parts[2].strip()
         file_id = route_for_document_file(context, file_path)
-        graph += frontmatter_to_graph(data, context, file_id=file_id, body=body, uri_ext=context.uri_ext)
+        graph += frontmatter_to_graph(data, context, file_id=file_id, body=body, uri_ext=context.uri_ext, file_ext=file_path.suffix.lower())
 
     if file_path.suffix.lower() != ".md":
         return
