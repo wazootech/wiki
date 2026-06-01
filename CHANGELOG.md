@@ -14,4 +14,4 @@
 - Regenerate stale SPARQL blocks in docs
 
 ### Removed
-- Loose blank node resolution (`build_person_name_map`, `resolve_blank_nodes`)
+- Loose blank node resolution keyed on name/givenName+familyName (`build_person_name_map`, `resolve_blank_nodes`)
