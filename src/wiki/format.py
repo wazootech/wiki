@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 
-def _wiki_link(s: str, wiki_base: str) -> str:
+def _wiki_link(s: str, wiki_base: str, known_slugs: set[str] | None = None) -> str:
     """Convert a wiki URI to a [[slug]] wikilink if applicable."""
     if not (wiki_base and s.startswith(wiki_base)):
         return s
@@ -14,6 +14,8 @@ def _wiki_link(s: str, wiki_base: str) -> str:
     if slug.endswith(".md"):
         slug = slug[:-3]
     if "/" not in slug:
+        if known_slugs is not None and slug not in known_slugs:
+            return s
         return f"[[{slug}]]"
     return s
 
@@ -67,7 +69,7 @@ def table_format(result: Any) -> str:
     return "\n".join(lines)
 
 
-def markdown_format(result: Any, wiki_base: str | None = None) -> str:
+def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
     """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering wiki links when applicable."""
     rows = list(result)
     if not rows:
@@ -97,17 +99,17 @@ def markdown_format(result: Any, wiki_base: str | None = None) -> str:
     lines = [header_line, divider_line]
     for row in rows:
         if isinstance(row, tuple):
-            vals = [_wiki_link(str(v), wiki_base) if v is not None else ""
+            vals = [_wiki_link(str(v), wiki_base, known_slugs) if v is not None else ""
                     for v in row]
         else:
-            vals = [_wiki_link(str(row.get(k)), wiki_base) if row.get(k) is not None else ""
+            vals = [_wiki_link(str(row.get(k)), wiki_base, known_slugs) if row.get(k) is not None else ""
                     for k in keys]
         lines.append("| " + " | ".join(vals) + " |")
 
     return "\n".join(lines)
 
 
-def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None) -> str:
+def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
     """Run a SPARQL SELECT or CONSTRUCT query against the graph, returning formatted output."""
     q = query.strip().upper()
     is_construct = q.startswith("CONSTRUCT") or q.startswith("DESCRIBE")
@@ -135,7 +137,7 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
             lines.append("\t".join(vals))
         return "\n".join(lines)
     elif output_format in ("markdown", "md"):
-        return markdown_format(result, wiki_base=wiki_base)
+        return markdown_format(result, wiki_base=wiki_base, known_slugs=known_slugs)
     else:
         return table_format(result)
 

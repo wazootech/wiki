@@ -12,7 +12,7 @@ from markdown_it import MarkdownIt
 
 from .format import run_query
 from mdit_py_plugins.wikilink import wikilink_plugin
-from .paths import iter_markdown_files, route_for_markdown_file
+from .paths import iter_markdown_files, page_routes, route_for_markdown_file
 
 # Matches the starting comment, query inside, and ending comment block with SPARQL inside
 SPARQL_BLOCK_REGEX = re.compile(
@@ -37,6 +37,8 @@ def render_markdown_files(
     stale_files = []
     markdown_files = _select_markdown_files(context, file_filter=file_filter, glob_filters=glob_filters)
 
+    known_slugs = {pr.route for pr in page_routes(context)}
+
     for md_file in markdown_files:
         content = md_file.read_text(encoding="utf-8")
         modified = False
@@ -46,7 +48,7 @@ def render_markdown_files(
             nonlocal modified, file_errors
             query = match.group(1).strip()
             try:
-                rendered_markdown = run_query(graph, query, output_format="markdown", wiki_base=context.wiki_base)
+                rendered_markdown = run_query(graph, query, output_format="markdown", wiki_base=context.wiki_base, known_slugs=known_slugs)
                 modified = True
                 return f"<!-- sparql:start -->\n```sparql\n{query}\n```\n\n{rendered_markdown}\n<!-- sparql:end -->"
             except Exception as e:

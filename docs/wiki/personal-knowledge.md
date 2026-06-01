@@ -63,7 +63,7 @@ ORDER BY ?name
 | [[javascript]] | JavaScript |
 | [[llm-wiki]] | LLM Wiki |
 | [[microdata]] | Microdata |
-| [[microdata-example]] | Microdata in LLM Wiki |
+| https://wazootech.github.io/wiki/wiki/microdata-example | Microdata in LLM Wiki |
 | [[notation3]] | Notation3 |
 | [[owl]] | OWL |
 | https://schema.org/PersonShapeDefinition | Person Shape |
