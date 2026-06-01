@@ -163,16 +163,18 @@ def create_server(
     config: WikiConfig,
     host: str = "127.0.0.1",
     port: int = 8080,
-    base_url: str = "/wiki",
-    url_style: str = "dir",
+    base_url: str | None = None,
+    url_style: str | None = None,
     watch: bool = False,
 ) -> HTTPServer:
     """Build the site and return a configured HTTPServer (not yet started)."""
-    site = build_site(config, base_url=base_url, url_style=url_style)
+    resolved_base_url = config.base_url if base_url is None else base_url
+    resolved_url_style = config.url_style if url_style is None else url_style
+    site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     WikiHandler.site = site
     WikiHandler.config = config
-    WikiHandler.base_url = base_url
-    WikiHandler.url_style = url_style
+    WikiHandler.base_url = resolved_base_url
+    WikiHandler.url_style = resolved_url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
 
@@ -189,12 +191,21 @@ def run_server(
     config: WikiConfig,
     host: str = "127.0.0.1",
     port: int = 8080,
-    base_url: str = "/wiki",
-    url_style: str = "dir",
+    base_url: str | None = None,
+    url_style: str | None = None,
     watch: bool = False,
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    server = create_server(config, host=host, port=port, base_url=base_url, url_style=url_style, watch=watch)
+    resolved_base_url = config.base_url if base_url is None else base_url
+    resolved_url_style = config.url_style if url_style is None else url_style
+    server = create_server(
+        config,
+        host=host,
+        port=port,
+        base_url=resolved_base_url,
+        url_style=resolved_url_style,
+        watch=watch,
+    )
 
     if watch:
         watch_dirs = list(config.input_dirs) + [d for d in config.asset_dirs if d.exists()]
@@ -225,7 +236,11 @@ def run_server(
                     new = snapshot()
                     if new != mtimes:
                         mtimes = new
-                        WikiHandler.site = build_site(config, base_url=base_url, url_style=url_style)
+                        WikiHandler.site = build_site(
+                            config,
+                            base_url=resolved_base_url,
+                            url_style=resolved_url_style,
+                        )
                         WikiHandler.build_id += 1
                 except Exception:
                     continue

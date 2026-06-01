@@ -12,14 +12,17 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from .config import WikiConfig
 from .paths import route_for_document_file
 from .site import build_infobox_rows, build_site
 
 
 def render_document_view(file_path: Path, config: object, base_url: str | None = None, url_style: str | None = None) -> str:
     """Render a single wiki document as terminal-friendly rich text."""
-    resolved_base_url = "/wiki" if base_url is None else base_url
-    resolved_url_style = "dir" if url_style is None else url_style
+    if not isinstance(config, WikiConfig):
+        raise TypeError("render_document_view requires a WikiConfig instance")
+    resolved_base_url = config.base_url if base_url is None else base_url
+    resolved_url_style = config.url_style if url_style is None else url_style
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     route = route_for_document_file(config, file_path)
     page = site.pages_by_route.get(route)
