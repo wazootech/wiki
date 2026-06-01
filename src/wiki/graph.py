@@ -13,9 +13,11 @@ from rdflib.parser import InputSource, Parser, StringInputSource
 from rdflib.plugin import register
 
 from .config import Context, WikiConfig
-from .parser import frontmatter_from_path
+from .parser import document_data_from_path
+from .paths import iter_document_files, route_for_document_file
 
 logger = logging.getLogger(__name__)
+DEFAULT_MICRODATA_VOCAB = "https://schema.org/"
 
 
 def kebab_case(s: str) -> str:
@@ -31,14 +33,14 @@ def _slugify_path(p: Path) -> str:
     return p.with_suffix("").as_posix().strip("/").lower()
 
 
-def _file_slug(md_file: Path, input_dirs: list[Path]) -> str:
+def _file_slug(file_path: Path, input_dirs: list[Path]) -> str:
     for root in input_dirs:
         try:
-            rel = md_file.relative_to(root)
+            rel = file_path.relative_to(root)
             return _slugify_path(rel)
         except ValueError:
             continue
-    return _slugify_path(md_file)
+    return _slugify_path(file_path)
 
 
 def resolve_predicate(key: str, context: Context) -> URIRef:
@@ -153,63 +155,7 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     return graph
 
 
-def build_person_name_map(input_dirs: list[Path], context: Context, uri_ext: bool = False) -> dict[str, str]:
-    """Build a mapping from person names to their wiki @id URIs."""
-    name_map: dict[str, str] = {}
 
-    for input_dir in input_dirs:
-        if not input_dir.exists():
-            continue
-        for md_file in input_dir.rglob("*.md"):
-            try:
-                data = frontmatter_from_path(md_file)
-                if not data or data.get("@type") != "Person":
-                    continue
-
-                doc_id = data.get("@id", "")
-                if not doc_id:
-                    suffix = ".md" if uri_ext else ""
-                    doc_id = f"{context.wiki_base}{_file_slug(md_file, input_dirs)}{suffix}"
-
-                name = data.get("name", "")
-                if name:
-                    name_map[name.lower()] = doc_id
-
-                given = data.get("givenName", "")
-                family = data.get("familyName", "")
-                if given and family:
-                    full_name = f"{given} {family}"
-                    name_map[full_name.lower()] = doc_id
-                    name_map[given.lower()] = doc_id
-            except Exception as e:
-                logger.warning("Failed to build name map for %s: %s", md_file.name, e)
-                continue
-
-    return name_map
-
-
-def resolve_blank_nodes(graph: Graph, input_dirs: list[Path], context: Context, uri_ext: bool = False) -> Graph:
-    """Resolve blank nodes to @id references where possible."""
-    name_map = build_person_name_map(input_dirs, context, uri_ext=uri_ext)
-
-    blank_nodes = [s for s in graph.subjects() if str(s).startswith("_:")]
-
-    for blank in blank_nodes:
-        name = graph.value(blank, context.namespaces["schema"].name)
-        if not name or str(name).lower() not in name_map:
-            continue
-
-        target_id = name_map[str(name).lower()]
-
-        for pred, obj in list(graph.predicate_objects(blank)):
-            graph.remove((blank, pred, obj))
-            graph.add((URIRef(target_id), pred, obj))
-
-        for subj, pred in list(graph.subject_predicates(blank)):
-            graph.remove((subj, pred, blank))
-            graph.add((subj, pred, URIRef(target_id)))
-
-    return graph
 
 
 
@@ -244,14 +190,16 @@ class MicrodataParser(Parser):
             logger.warning("Failed to parse HTML: %s", e)
             return
 
+        namespace_map = {prefix: str(namespace) for prefix, namespace in graph.namespaces()}
+
         def process_scope(elem: Tag, parent_subject: Any = None, incoming_predicate: Any = None) -> None:
             if elem.has_attr("itemid"):
-                subject = URIRef(elem["itemid"])
+                subject = URIRef(_expand_microdata_identifier(str(elem["itemid"]), namespace_map))
             else:
                 subject = BNode()
             
             if elem.has_attr("itemtype"):
-                graph.add((subject, RDF.type, URIRef(elem["itemtype"])))
+                graph.add((subject, RDF.type, URIRef(_expand_microdata_identifier(str(elem["itemtype"]), namespace_map))))
                 
             if parent_subject and incoming_predicate:
                 graph.add((parent_subject, incoming_predicate, subject))
@@ -272,7 +220,7 @@ class MicrodataParser(Parser):
                 prop_names = str(prop_elem.get("itemprop", "")).split()
                 preds = []
                 for p in prop_names:
-                    preds.append(URIRef(p) if ":" in p else URIRef(f"https://schema.org/{p}"))
+                    preds.append(URIRef(_expand_microdata_predicate(p, namespace_map)))
                 
                 if prop_elem.has_attr("itemscope"):
                     for pred in preds:
@@ -306,35 +254,72 @@ class MicrodataParser(Parser):
             if not is_nested:
                 process_scope(s)
 
+
+def _expand_microdata_identifier(value: str, namespace_map: dict[str | None, str]) -> str:
+    value = value.strip()
+    if not value:
+        return value
+    if _is_absolute_iri(value):
+        return value
+    return _expand_bound_curie(value, namespace_map) or value
+
+
+def _expand_microdata_predicate(value: str, namespace_map: dict[str | None, str]) -> str:
+    value = value.strip()
+    if not value:
+        return value
+    if _is_absolute_iri(value):
+        return value
+    if ":" in value:
+        return _expand_bound_curie(value, namespace_map) or value
+    return f"{namespace_map.get('schema', DEFAULT_MICRODATA_VOCAB)}{value}"
+
+
+def _expand_bound_curie(value: str, namespace_map: dict[str | None, str]) -> str | None:
+    prefix, local = value.split(":", 1)
+    namespace = namespace_map.get(prefix)
+    if namespace is None:
+        return None
+    return f"{namespace}{local}"
+
+
+def _is_absolute_iri(value: str) -> bool:
+    lowered = value.lower()
+    return lowered.startswith(("http://", "https://", "urn:"))
+
 # Dynamically register our custom parser to unlock native `format="microdata"` support globally
 register("microdata", Parser, "wiki.graph", "MicrodataParser")
 
 
-def _process_md_file(graph: Graph, md_file: Path, context: WikiConfig) -> None:
-    """Parse a single markdown file into the graph: frontmatter, microdata, and turtle blocks."""
-    content = md_file.read_text(encoding="utf-8")
-
-    data = frontmatter_from_path(md_file)
+def _process_document_file(graph: Graph, file_path: Path, context: WikiConfig) -> None:
+    """Parse a supported wiki document into the graph."""
+    data = document_data_from_path(file_path)
     if data:
         body = None
-        if context.content_predicate:
+        if file_path.suffix.lower() == ".md" and context.content_predicate:
+            content = file_path.read_text(encoding="utf-8")
             parts = content.split("---", 2)
             if len(parts) > 2:
                 body = parts[2].strip()
-        file_id = _file_slug(md_file, context.input_dirs)
+        file_id = route_for_document_file(context, file_path)
         graph += frontmatter_to_graph(data, context, file_id=file_id, body=body, uri_ext=context.uri_ext)
+
+    if file_path.suffix.lower() != ".md":
+        return
+
+    content = file_path.read_text(encoding="utf-8")
 
     try:
         graph.parse(data=content, format="microdata")
     except Exception as e:
-        logger.warning("Failed to parse microdata in %s: %s", md_file.name, e)
+        logger.warning("Failed to parse microdata in %s: %s", file_path.name, e)
 
     turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
     for block in turtle_blocks:
         try:
             graph.parse(data=block.strip(), format="turtle")
         except Exception as e:
-            logger.warning("Failed to parse turtle block in %s: %s", md_file.name, e)
+            logger.warning("Failed to parse turtle block in %s: %s", file_path.name, e)
 
 
 # Map file extensions to rdflib format names
@@ -356,23 +341,23 @@ def load_graph(context: WikiConfig, infer: bool = True) -> Graph:
     graph = Graph()
     context.bind_namespaces(graph)
 
+    document_files = set(iter_document_files(context))
+
     for input_dir in context.input_dirs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):
-            if not file_path.is_file():
+            if not file_path.is_file() or context.is_excluded(file_path):
                 continue
             try:
-                if file_path.suffix == ".md":
-                    _process_md_file(graph, file_path, context)
+                if file_path in document_files:
+                    _process_document_file(graph, file_path, context)
                 else:
-                    fmt = _EXT_FORMAT_MAP.get(file_path.suffix)
+                    fmt = _EXT_FORMAT_MAP.get(file_path.suffix.lower())
                     if fmt:
                         graph.parse(file_path, format=fmt)
             except Exception as e:
                 logger.warning("Failed to process %s: %s", file_path.name, e)
-
-    resolve_blank_nodes(graph, context.input_dirs, context, uri_ext=context.uri_ext)
 
     if infer:
         from .infer import apply_inference

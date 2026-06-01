@@ -49,3 +49,35 @@ schema:ProjectShape a sh:NodeShape ;
 
 When you run `wiki check`, any page with `type: Project` is automatically validated against these constraints!
 
+## Constraining page templates
+
+Page rendering can be driven from frontmatter using `wiki:template`. Because that property is part of the graph, you can validate its usage with SHACL like any other predicate.
+
+Example: allow at most one template value on a `schema:Person` page.
+
+```yaml
+id: wiki:PersonShape
+type: sh:NodeShape
+sh:targetClass: schema:Person
+sh:property:
+  - sh:path: schema:name
+    sh:datatype: xsd:string
+    sh:minCount: 1
+  - sh:path: wiki:template
+    sh:datatype: xsd:string
+    sh:maxCount: 1
+    sh:message: Person pages can declare at most one wiki:template.
+```
+
+This works well with typed HTML rendering:
+
+```yaml
+id: wiki:Gregory_House
+type: schema:Person
+name: Gregory House
+wiki:template: person
+spouse: wiki:Bella_Davidson
+```
+
+The builder uses `wiki:template` to select the page layout, while `wiki check` can enforce its cardinality.
+

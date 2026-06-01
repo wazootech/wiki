@@ -58,6 +58,30 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertTrue(any("Broken WikiLink [non-existent-page]" in w for w in warnings))
             self.assertTrue(any("Broken Markdown link [missing.md]" in w for w in warnings))
 
+    def test_markdown_can_link_to_yaml_document(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+
+            target_path = Path(tmpdir) / "target-page.yaml"
+            target_path.write_text("type: Thing\nname: Target\n", encoding="utf-8")
+
+            source_path = Path(tmpdir) / "source-page.md"
+            source_path.write_text("See [[target-page]] and [Target](target-page.yaml).", encoding="utf-8")
+
+            warnings = audit_internal_links(config)
+            self.assertEqual(warnings, [])
+
+    def test_audit_filenames_includes_yaml_documents(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir], filename_pattern="[a-z0-9-]+")
+
+            invalid_path = Path(tmpdir) / "Invalid_Name.yaml"
+            invalid_path.write_text("type: Thing\n", encoding="utf-8")
+
+            warnings = audit_filenames(config)
+            self.assertEqual(len(warnings), 1)
+            self.assertIn("Invalid_Name.yaml", warnings[0])
+
     def test_load_shapes_edge_cases(self) -> None:
         """Test load_shapes behaves predictably with different underlying graph states."""
         from wiki.graph import load_graph

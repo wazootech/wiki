@@ -1,4 +1,4 @@
-"""YAML and JSON frontmatter parsing, normalization, and JSON-LD conversion logic."""
+"""YAML and JSON frontmatter parsing, normalization, and document loading logic."""
 
 from __future__ import annotations
 
@@ -6,6 +6,10 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 import yaml
+
+
+DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json"}
+DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json"}
 
 
 def parse_frontmatter(content: str) -> Optional[dict[str, Any]]:
@@ -52,6 +56,28 @@ def ensure_context(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def document_data_from_path(path: Path, content_predicate: Optional[str] = None) -> Optional[dict[str, Any]]:
+    """Read a supported wiki document file and return its parsed data dict with context."""
+    try:
+        suffix = path.suffix.lower()
+        if suffix == ".md":
+            return frontmatter_from_path(path, content_predicate=content_predicate)
+
+        content = path.read_text(encoding="utf-8")
+        if suffix == ".json":
+            data = json.loads(content)
+        elif suffix in DATA_DOCUMENT_EXTENSIONS:
+            data = yaml.safe_load(content)
+        else:
+            return None
+
+        if not isinstance(data, dict):
+            return None
+        return ensure_context(data)
+    except Exception:
+        return None
+
+
 def frontmatter_from_path(path: Path, content_predicate: Optional[str] = None) -> Optional[dict[str, Any]]:
     """Read a markdown file and return its parsed frontmatter dict with context.
     
@@ -89,3 +115,16 @@ def split_frontmatter_body(content: str) -> tuple[Optional[dict[str, Any]], str]
     parts = content.split("---", 2)
     body = parts[2].strip() if len(parts) > 2 else ""
     return data, body
+
+
+def split_document_body(path: Path) -> tuple[Optional[dict[str, Any]], str]:
+    """Split a supported wiki document into (data, body_text)."""
+    suffix = path.suffix.lower()
+    if suffix == ".md":
+        try:
+            return split_frontmatter_body(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None, ""
+
+    data = document_data_from_path(path)
+    return data, ""

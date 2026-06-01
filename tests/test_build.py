@@ -82,6 +82,64 @@ class TestWikiBuild(unittest.TestCase):
             self.assertIn("Custom Home", index_content)
             self.assertNotIn("All Pages", index_content)
 
+    def test_build_writes_pages_for_yaml_documents(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
+            (wiki / "person.yaml").write_text("type: Person\nname: Gregory House\n", encoding="utf-8")
+
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertTrue((output_dir / "wiki" / "person" / "index.html").exists())
+
+    def test_build_renders_infobox_links_for_typed_pages(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
+            (wiki / "Gregory_Davidson.yaml").write_text(
+                """id: wiki:Gregory_Davidson
+type: schema:Person
+name: Gregory Davidson
+knows: wiki:Ethan_Davidson
+owns: wiki:Bella_Davidson
+url: https://example.com/gregory-davidson
+""",
+                encoding="utf-8",
+            )
+            (wiki / "Ethan_Davidson.yaml").write_text(
+                """id: wiki:Ethan_Davidson
+type: schema:Person
+name: Ethan Davidson
+""",
+                encoding="utf-8",
+            )
+            (wiki / "Bella_Davidson.yaml").write_text(
+                """id: wiki:Bella_Davidson
+type: schema:Thing
+name: Bella Davidson
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            html = (output_dir / "wiki" / "Gregory_Davidson" / "index.html").read_text(encoding="utf-8")
+            self.assertIn('class="page-shell template-person"', html)
+            self.assertIn('>Ethan Davidson</a>', html)
+            self.assertIn('>Bella Davidson</a>', html)
+            self.assertIn('href="/wiki/Bella_Davidson/"', html)
+            self.assertIn('href="https://example.com/gregory-davidson"', html)
+
 
 if __name__ == "__main__":
     unittest.main()

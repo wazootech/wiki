@@ -13,11 +13,13 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
 - **Pure Python CLI**: Comprehensive command suite — `check`, `query`, `render`, `build`, `serve`, `export`.
+- **Terminal Document View**: Render a single wiki document as a readable terminal infobox with `wiki view`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
 - **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
 - **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
+- **Typed HTML Rendering**: Build typed pages with template selection via `template` or `wiki:template`, plus generated infoboxes with clickable wiki and external links.
 
 ## Installation
 
@@ -79,7 +81,7 @@ Perform unified validations of your wiki, including strict SHACL schema validati
 wiki check
 
 # Check a single file specifically
-wiki check wiki/gregory.md
+wiki check wiki/Gregory_House.md
 
 # Autofix hygiene issues (rename non-kebab-case files + update wikilinks)
 wiki check --fix
@@ -128,6 +130,12 @@ wiki render -v
 
 # Check if any files are stale without modifying them (non-zero exit on stale)
 wiki render --check
+
+# Render a single file during an edit loop
+wiki render wiki/people/Gregory_House.md
+
+# Render only matching markdown files
+wiki render --glob "wiki/people/*.md"
 ```
 
 An embedded SPARQL block is defined in your markdown files like this:
@@ -207,7 +215,7 @@ _site/
     └── ...
 ```
 
-Page URLs are derived from the source path under `inputDirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `inputDirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_House.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
 `wiki build` runs `wiki check` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
@@ -221,6 +229,65 @@ exclude:
 ```
 
 Asset directories are relative to the config file and copied under the base URL preserving their configured path, e.g. `assets/items/photo.jpg` becomes `/wiki/assets/items/photo.jpg`.
+
+#### Page templates and infoboxes
+
+The HTML builder now supports lightweight typed page templates. Template selection order is:
+
+1. `wiki:template` frontmatter property
+2. `template` frontmatter property
+3. first page `type` / `@type`
+4. built-in `default`
+
+Built-in typed layouts currently include `person` and `thing`, both of which render a sidebar infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
+
+```yaml
+id: wiki:Gregory_House
+type: schema:Person
+name: Gregory House
+wiki:template: person
+spouse: wiki:Bella_Davidson
+url: https://example.com/gregory
+```
+
+In the built site:
+
+- `wiki:Bella_Davidson` links to the `Bella_Davidson` page when that page exists
+- `https://example.com/gregory` renders as an external link
+- `wiki:template` controls the page layout and is hidden from the infobox itself
+
+Use SHACL to constrain template usage when needed, for example requiring at most one `wiki:template` value:
+
+```yaml
+id: wiki:PersonShape
+type: sh:NodeShape
+sh:targetClass: schema:Person
+sh:property:
+  - sh:path: schema:name
+    sh:datatype: xsd:string
+    sh:minCount: 1
+  - sh:path: wiki:template
+    sh:datatype: xsd:string
+    sh:maxCount: 1
+```
+
+### `view`
+Render a single wiki document as a terminal-friendly infobox view.
+
+```bash
+# View a markdown page with infobox and body
+wiki view wiki/Gregory_Davidson.md
+
+# View a data-only record
+wiki view wiki/Bella_Davidson.yaml
+```
+
+`wiki view` reuses the same page typing and infobox resolution as `wiki build` and `wiki serve`:
+
+- template names are shown as file-style identifiers like `Person.html`
+- internal wiki references are displayed using the target page title
+- markdown pages include their body below the infobox
+- data-only pages show their title and infobox without a markdown body
 
 #### GitHub Pages deployment
 
@@ -317,7 +384,7 @@ When run without a file argument, exports all documents in the wiki directory.
 wiki export
 
 # Export a single file
-wiki export wiki/gregory.md
+wiki export wiki/Gregory_House.md
 
 # Export as expanded JSON-LD
 wiki export wiki/rdf.md -f json-ld
@@ -346,7 +413,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 * **Format and Print a Document:**
   Use `pr` to add headers, margins, and page numbers before sending to `lp`:
   ```bash
-  cat wiki/gregory.md | pr -h "Gregory Document" | lp
+  cat wiki/Gregory_House.md | pr -h "Gregory Document" | lp
   ```
 * **Format and Print Query Results:**
   Run a query and print its tabular results:
@@ -357,7 +424,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 #### Windows
 * **Print a Document:**
   ```powershell
-  Get-Content wiki/gregory.md | Out-Printer
+  Get-Content wiki/Gregory_House.md | Out-Printer
   ```
 * **Print Query Results:**
   ```powershell
@@ -429,11 +496,11 @@ An Engineer is a specialized subset of Person.
 
 Declare an instance somewhere else:
 ```yaml
-# wiki/gregory.md
+# wiki/Gregory_House.md
 ---
-id: wiki:gregory
+id: wiki:Gregory_House
 type: wiki:Engineer
-name: Gregory
+name: Gregory House
 ---
 ```
 

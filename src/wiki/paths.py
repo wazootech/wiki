@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from .config import WikiConfig
+from .parser import DOCUMENT_EXTENSIONS
 
 
 UNSAFE_ROUTE_CHARS = set("?#%")
@@ -27,27 +28,37 @@ class OutputEntry:
     kind: str
 
 
-def iter_markdown_files(config: WikiConfig) -> list[Path]:
-    md_files: list[Path] = []
+def iter_document_files(config: WikiConfig) -> list[Path]:
+    doc_files: list[Path] = []
     for input_dir in config.input_dirs:
         if input_dir.exists():
-            for md_file in sorted(input_dir.rglob("*.md")):
-                if not config.is_excluded(md_file):
-                    md_files.append(md_file)
-    return md_files
+            for file_path in sorted(input_dir.rglob("*")):
+                if not file_path.is_file() or file_path.suffix.lower() not in DOCUMENT_EXTENSIONS:
+                    continue
+                if not config.is_excluded(file_path):
+                    doc_files.append(file_path)
+    return doc_files
 
 
-def route_for_markdown_file(config: WikiConfig, md_file: Path) -> str:
-    rel = _relative_to_input_dir(config, md_file).with_suffix("").as_posix()
+def iter_markdown_files(config: WikiConfig) -> list[Path]:
+    return [file_path for file_path in iter_document_files(config) if file_path.suffix.lower() == ".md"]
+
+
+def route_for_document_file(config: WikiConfig, file_path: Path) -> str:
+    rel = _relative_to_input_dir(config, file_path).with_suffix("").as_posix()
     parts = [part for part in rel.split("/") if part]
     if parts and parts[-1] == "index":
         parts = parts[:-1]
-    _validate_route_parts(parts, md_file)
+    _validate_route_parts(parts, file_path)
     return "/".join(parts)
 
 
+def route_for_markdown_file(config: WikiConfig, md_file: Path) -> str:
+    return route_for_document_file(config, md_file)
+
+
 def page_routes(config: WikiConfig) -> list[PageRoute]:
-    return [PageRoute(source=md_file, route=route_for_markdown_file(config, md_file)) for md_file in iter_markdown_files(config)]
+    return [PageRoute(source=file_path, route=route_for_document_file(config, file_path)) for file_path in iter_document_files(config)]
 
 
 def page_url(base_url: str, route: str, url_style: str) -> str:
@@ -119,9 +130,9 @@ def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
 
 def validate_route_safety(config: WikiConfig) -> list[str]:
     issues: list[str] = []
-    for md_file in iter_markdown_files(config):
+    for file_path in iter_document_files(config):
         try:
-            route_for_markdown_file(config, md_file)
+            route_for_document_file(config, file_path)
         except ValueError as exc:
             issues.append(str(exc))
     return issues

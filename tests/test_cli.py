@@ -307,6 +307,152 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             self.assertEqual(result_clean.exit_code, 0)
             self.assertIn("All dynamic SPARQL blocks are fully up to date", result_clean.output)
 
+    def test_cli_init_scaffolds_person_shape_with_template_constraint(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    ["init", "--force"],
+                    input="https://wiki.example.org/\ny\ny\n",
+                    catch_exceptions=False,
+                )
+
+                self.assertEqual(result.exit_code, 0)
+                shape_content = Path("wiki") / "Person_Shape.md"
+                content = shape_content.read_text(encoding="utf-8")
+                self.assertIn("sh:path: wiki:template", content)
+                self.assertIn("sh:maxCount: 1", content)
+
+    def test_cli_render_single_file_scope(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            alpha = wiki_dir / "alpha.md"
+            beta = wiki_dir / "beta.md"
+            source = """---
+type: Person
+name: {name}
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
+```
+<!-- sparql:end -->
+"""
+            alpha.write_text(source.format(name="Alpha"), encoding="utf-8")
+            beta.write_text(source.format(name="Beta"), encoding="utf-8")
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", str(alpha), "--no-inference"])
+            self.assertEqual(result.exit_code, 0)
+
+            self.assertIn("Alpha", alpha.read_text(encoding="utf-8"))
+            self.assertNotIn("| Name |", beta.read_text(encoding="utf-8"))
+
+    def test_cli_render_glob_scope(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            people_dir = wiki_dir / "people"
+            projects_dir = wiki_dir / "projects"
+            people_dir.mkdir(parents=True)
+            projects_dir.mkdir()
+            source = """---
+type: Person
+name: {name}
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
+```
+<!-- sparql:end -->
+"""
+            person = people_dir / "alpha.md"
+            project = projects_dir / "beta.md"
+            person.write_text(source.format(name="Alpha"), encoding="utf-8")
+            project.write_text(source.format(name="Beta"), encoding="utf-8")
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--glob", "people/*.md", "--no-inference"])
+            self.assertEqual(result.exit_code, 0)
+
+            self.assertIn("| Name |", person.read_text(encoding="utf-8"))
+            self.assertNotIn("| Name |", project.read_text(encoding="utf-8"))
+
+    def test_cli_render_rejects_non_markdown_file(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            record = wiki_dir / "person.yaml"
+            record.write_text("type: Person\nname: Gregory\n", encoding="utf-8")
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", str(record), "--no-inference"])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("render only supports markdown files", result.output)
+
+    def test_cli_view_markdown_document(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.yaml").write_text(
+                """id: wiki:Ethan_Davidson
+type: schema:Person
+name: Ethan Davidson
+""",
+                encoding="utf-8",
+            )
+            page = wiki_dir / "Gregory_Davidson.md"
+            page.write_text(
+                """---
+id: wiki:Gregory_Davidson
+type: schema:Person
+name: Gregory Davidson
+knows: wiki:Ethan_Davidson
+---
+# Gregory Davidson
+
+Gregory knows Ethan.
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Gregory Davidson", result.output)
+            self.assertIn("Template: Person.html", result.output)
+            self.assertIn("Knows", result.output)
+            self.assertIn("Ethan Davidson", result.output)
+            self.assertIn("Gregory knows Ethan.", result.output)
+
+    def test_cli_view_data_document(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.yaml").write_text(
+                """id: wiki:Ethan_Davidson
+type: schema:Person
+name: Ethan Davidson
+""",
+                encoding="utf-8",
+            )
+            page = wiki_dir / "Bella_Davidson.yaml"
+            page.write_text(
+                """id: wiki:Bella_Davidson
+type: wiki:Pet
+name: Bella Davidson
+owner: wiki:Ethan_Davidson
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Bella Davidson", result.output)
+            self.assertIn("Template: Pet.html", result.output)
+            self.assertIn("Owner", result.output)
+            self.assertIn("Ethan Davidson", result.output)
+
     def test_cli_export(self) -> None:
         """Test that wiki export supports bulk and single file exports."""
         runner = CliRunner()
@@ -339,6 +485,28 @@ name: Gregory
             no_fm_file.write_text("Hello", encoding="utf-8")
             result_fail = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(no_fm_file)])
             self.assertEqual(result_fail.exit_code, 1)
+
+    def test_cli_export_supports_yaml_and_json_documents(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            yaml_file = wiki_dir / "gregory.yaml"
+            json_file = wiki_dir / "alice.json"
+            yaml_file.write_text("type: Person\nname: Gregory\n", encoding="utf-8")
+            json_file.write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+
+            result_bulk = runner.invoke(main, ["--input-dir", str(wiki_dir), "export"])
+            self.assertEqual(result_bulk.exit_code, 0)
+            data_bulk = json.loads(result_bulk.output)
+            self.assertEqual(len(data_bulk), 2)
+
+            result_yaml = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(yaml_file)])
+            self.assertEqual(result_yaml.exit_code, 0)
+            self.assertEqual(json.loads(result_yaml.output)["rdf"]["name"], "Gregory")
+
+            result_json = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(json_file)])
+            self.assertEqual(result_json.exit_code, 0)
+            self.assertEqual(json.loads(result_json.output)["rdf"]["name"], "Alice")
     
     def test_cli_export_formats(self) -> None:
         """Test that wiki export supports various --format options."""

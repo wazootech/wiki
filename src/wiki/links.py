@@ -11,6 +11,7 @@ from .paths import page_url
 
 
 EXTERNAL_SCHEMES = {"http", "https", "mailto", "tel"}
+PAGE_LINK_EXTENSIONS = {"", ".md", ".yaml", ".yml", ".json"}
 
 
 def is_external_link(target: str) -> bool:
@@ -34,8 +35,9 @@ def resolve_page_route(current_route: str, target: str) -> str | None:
     page_part = unquote(page_part).replace("\\", "/").strip()
     if page_part.startswith("/"):
         return None
-    if page_part.endswith(".md"):
-        page_part = page_part[:-3]
+    suffix = PurePosixPath(page_part).suffix.lower()
+    if suffix in {".md", ".yaml", ".yml", ".json"}:
+        page_part = page_part[: -len(suffix)]
     current_dir = posixpath.dirname(current_route)
     raw = page_part or "."
     combined = posixpath.normpath(posixpath.join(current_dir, raw))
@@ -66,4 +68,4 @@ def markdown_link_is_page(target: str) -> bool:
     if not page_part:
         return True
     suffix = PurePosixPath(page_part).suffix.lower()
-    return suffix in {"", ".md"}
+    return suffix in PAGE_LINK_EXTENSIONS
