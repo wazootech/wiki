@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- On-disk RDF graph cache (`.wiki/cache/`) keyed on vault fingerprint; `--no-cache` and `--rebuild-cache` flags on `query`, `render`, and `build --render`
+- Incremental `wiki render` (stale files only by default); `wiki render --all` for a full pass
+
 ## 0.1.5 — 2026-05-31
 
 ### Added

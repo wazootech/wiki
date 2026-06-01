@@ -119,24 +119,40 @@ wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[
 ```
 
 ### `render`
-Identify all embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
+Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
+
+By default, `wiki render` is **incremental**: it reloads the RDF graph from a local cache when the vault is unchanged, and only re-executes blocks in markdown files that are new or modified since the last successful render. Any change anywhere in the vault (or in `wiki.yaml`) marks all SPARQL pages stale so query results stay consistent.
 
 ```bash
-# Render silently (default)
+# Incremental render (default): stale files only
 wiki render
+
+# Full pass over every file with SPARQL blocks
+wiki render --all
 
 # Render with verbose summary output
 wiki render -v
 
-# Check if any files are stale without modifying them (non-zero exit on stale)
+# Check if any stale blocks need updating (non-zero exit on stale)
 wiki render --check
 
-# Render a single file during an edit loop
+# Render a single file during an edit loop (always processes that file)
 wiki render wiki/people/Gregory_House.md
 
 # Render only matching markdown files
 wiki render --glob "wiki/people/*.md"
+
+# Skip OWL-RL during editing when queries use asserted triples only
+wiki render --no-inference
+
+# Force a fresh graph build (ignore cache)
+wiki render --rebuild-cache
+
+# Disable graph cache read/write
+wiki render --no-cache
 ```
+
+**Graph cache:** Serialized graphs are stored under `.wiki/cache/` at the wiki config root (next to `wiki.yaml`). The cache key includes file mtimes and config fields that affect triple generation. Use `--rebuild-cache` after ontology changes if results look wrong.
 
 An embedded SPARQL block is defined in your markdown files like this:
 ````html
