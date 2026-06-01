@@ -13,7 +13,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .paths import route_for_document_file
-from .site import WikiSite, build_infobox_rows, build_site
+from .site import build_infobox_rows, build_site
 
 
 def render_document_view(file_path: Path, config: object, base_url: str | None = None, url_style: str | None = None) -> str:

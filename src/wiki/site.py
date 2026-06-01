@@ -490,7 +490,8 @@ def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_st
 </section>"""
 
 
-def _build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
+def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
+    """Return reusable infobox rows for HTML and terminal rendering."""
     rows: list[InfoboxRow] = []
     for key, value in page.frontmatter.items():
         if key in METADATA_HIDDEN_FIELDS:
@@ -500,11 +501,6 @@ def _build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_st
         if html:
             rows.append(InfoboxRow(label=label, text=text, html=html))
     return rows
-
-
-def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
-    """Return reusable infobox rows for HTML and terminal rendering."""
-    return _build_infobox_rows(page, site, base_url, url_style)
 
 
 def _humanize_field_name(key: str) -> str:
