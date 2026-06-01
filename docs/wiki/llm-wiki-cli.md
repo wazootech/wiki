@@ -8,7 +8,7 @@ description: Command-line interface for querying, validating, and managing the s
 
 # LLM Wiki CLI
 
-The LLM Wiki CLI is the primary companion tool for authoring, validating, and querying this semantic knowledge vault. It parses markdown files, converts YAML/JSON frontmatter into RDF graphs, resolves blank nodes, and performs deductive reasoning under OWL-RL semantics.
+The LLM Wiki CLI is the primary companion tool for authoring, validating, and querying this semantic knowledge vault. It parses markdown files, converts YAML/JSON frontmatter into RDF graphs, and performs deductive reasoning under OWL-RL semantics.
 
 
 ## Wiki workflows and authoring guide
