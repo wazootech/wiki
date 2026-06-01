@@ -13,7 +13,7 @@ from urllib.parse import quote
 from markdown_it import MarkdownIt
 from mdit_py_plugins.wikilink import wikilink_plugin
 
-from .config import WikiConfig
+from .config import DEFAULT_URL_STYLE, WikiConfig
 from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
@@ -90,7 +90,7 @@ def _url(base_url: str, slug: str, style: str) -> str:
 def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
-    url_style: str = "file",
+    url_style: str = DEFAULT_URL_STYLE,
     markdown_flavor: str = "obsidian",
     current_route: str = "",
 ) -> str:
@@ -229,8 +229,8 @@ def extract_outline(markdown: str) -> list[TocItem]:
 
 def build_site(
     input_dirs: WikiConfig | list[Path] | Path,
-    base_url: str = "/wiki",
-    url_style: str = "file",
+    base_url: str | None = None,
+    url_style: str | None = None,
 ) -> WikiSite:
     """Build in-memory representation of the wiki site."""
     if isinstance(input_dirs, WikiConfig):
@@ -238,6 +238,8 @@ def build_site(
     else:
         dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
         config = WikiConfig(input_dirs=dirs_arg)
+    resolved_base_url = config.base_url if base_url is None else base_url
+    resolved_url_style = config.url_style if url_style is None else url_style
     pages: list[VirtualPage] = []
 
     doc_files = sorted(iter_document_files(config))
@@ -273,8 +275,8 @@ def build_site(
 
         h1_html = render_wiki_markdown(
             body,
-            base_url=base_url,
-            url_style=url_style,
+            base_url=resolved_base_url,
+            url_style=resolved_url_style,
             markdown_flavor=config.markdown_flavor,
             current_route=doc_slug,
         )
@@ -300,7 +302,7 @@ def build_site(
     return WikiSite(pages=pages, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
 
 
-def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = "file") -> str:
+def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
     """Compile root Index page HTML."""
     links_html = ""
     seen_files: set[str] = set()
@@ -332,7 +334,7 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = "
 </html>"""
 
 
-def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = "file") -> str:
+def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
     """Compile individual page HTML."""
     toc_html = _build_toc_html(page)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)

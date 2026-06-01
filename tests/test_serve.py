@@ -75,8 +75,30 @@ class TestServe(unittest.TestCase):
         self.assertIn("All Pages", body)
         self.assertIn("Hello World", body)
         self.assertIn("Foo Bar", body)
-        self.assertIn("/wiki/hello-world", body)
-        self.assertIn("/wiki/foo-bar", body)
+        self.assertIn("/wiki/hello-world/", body)
+        self.assertIn("/wiki/foo-bar/", body)
+
+    def test_index_links_use_config_file_url_style(self) -> None:
+        self._write("hello-world.md", "# Hello World\n\nSome content.")
+        config = WikiConfig(input_dirs=[self.wiki_dir], url_style="file", config_root=self.wiki_dir)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        status, body = self._get(port, "/")
+        server.shutdown()
+        self.assertEqual(status, 200)
+        self.assertIn("/wiki/hello-world.html", body)
+        self.assertNotIn("/wiki/hello-world/", body)
 
     def test_render_page(self) -> None:
         self._write("hello.md", "# Hello\n\nParagraph text.")

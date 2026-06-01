@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
-from wiki.site import build_page_html, build_site, render_wiki_markdown
+from wiki.site import build_index_html, build_page_html, build_site, render_wiki_markdown
 
 
 class TestWikiSite(unittest.TestCase):
@@ -200,6 +200,27 @@ name: Project Atlas
         )
 
         self.assertIn('href="/wiki/games/Pokemon_Diamond/#release-history"', html)
+
+    def test_build_index_html_respects_url_style(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "alice.md").write_text("# Alice\n", encoding="utf-8")
+            (wiki / "bob.md").write_text("# Bob\n", encoding="utf-8")
+
+            dir_config = WikiConfig(input_dirs=[wiki], config_root=root, url_style="dir")
+            dir_site = build_site(dir_config)
+            dir_index = build_index_html(dir_site, base_url="/wiki", url_style=dir_config.url_style)
+            self.assertIn('href="/wiki/alice/"', dir_index)
+            self.assertIn('href="/wiki/bob/"', dir_index)
+            self.assertNotIn(".html", dir_index)
+
+            file_config = WikiConfig(input_dirs=[wiki], config_root=root, url_style="file")
+            file_site = build_site(file_config)
+            file_index = build_index_html(file_site, base_url="/wiki", url_style=file_config.url_style)
+            self.assertIn('href="/wiki/alice.html"', file_index)
+            self.assertIn('href="/wiki/bob.html"', file_index)
 
 
 if __name__ == "__main__":
