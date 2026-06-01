@@ -144,6 +144,13 @@ class TocItem:
 
 
 @dataclass
+class InfoboxRow:
+    label: str
+    text: str
+    html: str
+
+
+@dataclass
 class VirtualPage:
     file_slug: str
     title: str
@@ -472,23 +479,28 @@ def _build_metadata_json_html(page: VirtualPage) -> str:
 
 
 def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
-    rows = []
-    for key, value in page.frontmatter.items():
-        if key in METADATA_HIDDEN_FIELDS:
-            continue
-        rendered = _render_metadata_value(value, page, site, base_url, url_style)
-        if rendered:
-            rows.append(f"<dt>{html_module.escape(_humanize_field_name(key))}</dt><dd>{rendered}</dd>")
+    rows = build_infobox_rows(page, site, base_url, url_style)
     if not rows:
         return ""
     return f"""<section class="infobox page-meta">
 <h2>Infobox</h2>
 <dl>
-{''.join(rows)}
+{''.join(f'<dt>{html_module.escape(row.label)}</dt><dd>{row.html}</dd>' for row in rows)}
 </dl>
 </section>"""
 
 
+def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> list[InfoboxRow]:
+    """Return reusable infobox rows for HTML and terminal rendering."""
+    rows: list[InfoboxRow] = []
+    for key, value in page.frontmatter.items():
+        if key in METADATA_HIDDEN_FIELDS:
+            continue
+        label = _humanize_field_name(key)
+        text, html = _render_metadata_value_parts(value, page, site, base_url, url_style)
+        if html:
+            rows.append(InfoboxRow(label=label, text=text, html=html))
+    return rows
 def _humanize_field_name(key: str) -> str:
     clean = key.split(":", 1)[-1] if ":" in key else key
     clean = clean.lstrip("@")
@@ -503,39 +515,67 @@ def _render_metadata_value(value: Any, page: VirtualPage, site: WikiSite, base_u
         if not items:
             return ""
         return '<ul class="infobox-list">' + ''.join(f'<li><span class="infobox-chip">{item}</span></li>' for item in items) + '</ul>'
+
+
+def _render_metadata_value_parts(
+    value: Any,
+    page: VirtualPage,
+    site: WikiSite,
+    base_url: str,
+    url_style: str,
+) -> tuple[str, str]:
+    if value is None:
+        return "", ""
+    if isinstance(value, list):
+        rendered_items = [
+            item for item in (_render_metadata_value_parts(v, page, site, base_url, url_style) for v in value)
+            if item[1]
+        ]
+        items = [html for _, html in rendered_items]
+        if not items:
+            return "", ""
+        text = ", ".join(text for text, _ in rendered_items if text)
+        html = '<ul class="infobox-list">' + ''.join(f'<li><span class="infobox-chip">{item}</span></li>' for item in items) + '</ul>'
+        return text, html
     if isinstance(value, dict):
         target_id = value.get("@id") or value.get("id")
         label = value.get("name") or target_id
         if isinstance(target_id, str) and label:
             return _render_link_like(str(label), str(target_id), page, site, base_url, url_style)
         rows = []
+        text_parts = []
         for nested_key, nested_value in value.items():
             if str(nested_key).startswith("@"):
                 continue
-            rendered = _render_metadata_value(nested_value, page, site, base_url, url_style)
-            if rendered:
+            nested_text, nested_html = _render_metadata_value_parts(nested_value, page, site, base_url, url_style)
+            if nested_html:
+                nested_label = _humanize_field_name(str(nested_key))
                 rows.append(
-                    f'<div class="infobox-dict-row"><span class="infobox-key">{html_module.escape(_humanize_field_name(str(nested_key)))}</span><span>{rendered}</span></div>'
+                    f'<div class="infobox-dict-row"><span class="infobox-key">{html_module.escape(nested_label)}</span><span>{nested_html}</span></div>'
                 )
+                if nested_text:
+                    text_parts.append(f"{nested_label}: {nested_text}")
         if not rows:
-            return ""
-        return '<div class="infobox-dict">' + ''.join(rows) + '</div>'
+            return "", ""
+        return "; ".join(text_parts), '<div class="infobox-dict">' + ''.join(rows) + '</div>'
     if isinstance(value, bool):
-        return "True" if value else "False"
+        text = "True" if value else "False"
+        return text, text
     if isinstance(value, (int, float)):
-        return html_module.escape(str(value))
+        text = str(value)
+        return text, html_module.escape(text)
     return _render_link_like(str(value), str(value), page, site, base_url, url_style)
 
 
-def _render_link_like(label: str, target: str, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
+def _render_link_like(label: str, target: str, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> tuple[str, str]:
     href, external, target_page = _metadata_value_href(target, page, site, base_url, url_style)
     display_label = _display_label_for_target(label, target, target_page)
     escaped_label = html_module.escape(display_label)
     if href is None:
-        return escaped_label
+        return display_label, escaped_label
     if external:
-        return f'<a href="{html_module.escape(href)}">{escaped_label}</a>'
-    return f'<a class="wikilink" href="{html_module.escape(href)}">{escaped_label}</a>'
+        return display_label, f'<a href="{html_module.escape(href)}">{escaped_label}</a>'
+    return display_label, f'<a class="wikilink" href="{html_module.escape(href)}">{escaped_label}</a>'
 
 
 def _metadata_value_href(target: str, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> tuple[str | None, bool, VirtualPage | None]:

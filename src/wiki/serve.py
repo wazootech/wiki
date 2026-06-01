@@ -31,6 +31,7 @@ class WikiHandler(BaseHTTPRequestHandler):
     site: WikiSite = None  # type: ignore[assignment]
     config: WikiConfig = None  # type: ignore[assignment]
     base_url: str = "/wiki"
+    url_style: str = "dir"
     watch_enabled: bool = False
     build_id: int = 0
 
@@ -45,14 +46,14 @@ class WikiHandler(BaseHTTPRequestHandler):
         parsed = parsed.rstrip("/")
 
         if parsed == "" or parsed == "/index":
-            self._send_html(build_index_html(self.site, base_url=base))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style))
         elif parsed == base:
-            self._send_html(build_index_html(self.site, base_url=base))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style))
         elif parsed.startswith(base + "/"):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
             if target:
-                self._send_html(build_page_html(target, self.site, base_url=base))
+                self._send_html(build_page_html(target, self.site, base_url=base, url_style=self.url_style))
             elif self._serve_asset(parsed[len(base) + 1:]):
                 return
             else:
@@ -164,13 +165,15 @@ def create_server(
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str = "/wiki",
+    url_style: str = "dir",
     watch: bool = False,
 ) -> HTTPServer:
     """Build the site and return a configured HTTPServer (not yet started)."""
-    site = build_site(config, base_url=base_url)
+    site = build_site(config, base_url=base_url, url_style=url_style)
     WikiHandler.site = site
     WikiHandler.config = config
     WikiHandler.base_url = base_url
+    WikiHandler.url_style = url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
 
@@ -186,10 +189,11 @@ def run_server(
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str = "/wiki",
+    url_style: str = "dir",
     watch: bool = False,
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    server = create_server(config, host=host, port=port, base_url=base_url, watch=watch)
+    server = create_server(config, host=host, port=port, base_url=base_url, url_style=url_style, watch=watch)
 
     if watch:
         watch_dirs = list(config.input_dirs) + [d for d in config.asset_dirs if d.exists()]
@@ -220,7 +224,7 @@ def run_server(
                     new = snapshot()
                     if new != mtimes:
                         mtimes = new
-                        WikiHandler.site = build_site(config, base_url=base_url)
+                        WikiHandler.site = build_site(config, base_url=base_url, url_style=url_style)
                         WikiHandler.build_id += 1
                 except Exception:
                     continue

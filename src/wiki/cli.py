@@ -214,6 +214,26 @@ def render(context: Context, file: Optional[Path], glob_filters: tuple[str, ...]
 
 
 @main.command()
+@click.argument("file", required=True, type=click.Path(exists=True, path_type=Path))
+@click.pass_obj
+def view(config: Context, file: Path) -> None:
+    """Render a single wiki document as a terminal-friendly infobox view."""
+    if file.suffix.lower() not in {".md", ".yaml", ".yml", ".json"}:
+        click.echo(f"Error: view only supports wiki document files, got {file.name}.", err=True)
+        sys.exit(1)
+
+    from .view import render_document_view
+
+    try:
+        output = render_document_view(file, config, base_url=config.base_url, url_style=config.url_style)
+    except ValueError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo(output, nl=False)
+
+
+@main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
 @click.option("--base-url", default=None,
@@ -364,14 +384,16 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
 @click.option("--port", default=8080, type=int, show_default=True, help="Port to serve on.")
 @click.option("--base-url", default=None,
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
+@click.option("--style", default="dir", show_default=True,
+              type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir).")
 @click.option("--watch", is_flag=True, help="Watch files and auto-reload the browser on rebuild.")
 @click.pass_obj
-def serve(config: Context, host: str, port: int, base_url: str | None, watch: bool) -> None:
+def serve(config: Context, host: str, port: int, base_url: str | None, style: str, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
     resolved_base_url = (config.base_url if base_url is None else base_url).rstrip("/")
     config.base_url = resolved_base_url
-    run_server(config, host=host, port=port, base_url=resolved_base_url, watch=watch)
+    run_server(config, host=host, port=port, base_url=resolved_base_url, url_style=style, watch=watch)
 
 
 @main.command()

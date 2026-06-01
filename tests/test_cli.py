@@ -389,6 +389,69 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             self.assertEqual(result.exit_code, 1)
             self.assertIn("render only supports markdown files", result.output)
 
+    def test_cli_view_markdown_document(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.yaml").write_text(
+                """id: wiki:Ethan_Davidson
+type: schema:Person
+name: Ethan Davidson
+""",
+                encoding="utf-8",
+            )
+            page = wiki_dir / "Gregory_Davidson.md"
+            page.write_text(
+                """---
+id: wiki:Gregory_Davidson
+type: schema:Person
+name: Gregory Davidson
+knows: wiki:Ethan_Davidson
+---
+# Gregory Davidson
+
+Gregory knows Ethan.
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Gregory Davidson", result.output)
+            self.assertIn("Template: Person.html", result.output)
+            self.assertIn("Knows", result.output)
+            self.assertIn("Ethan Davidson", result.output)
+            self.assertIn("Gregory knows Ethan.", result.output)
+
+    def test_cli_view_data_document(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Ethan_Davidson.yaml").write_text(
+                """id: wiki:Ethan_Davidson
+type: schema:Person
+name: Ethan Davidson
+""",
+                encoding="utf-8",
+            )
+            page = wiki_dir / "Bella_Davidson.yaml"
+            page.write_text(
+                """id: wiki:Bella_Davidson
+type: wiki:Pet
+name: Bella Davidson
+owner: wiki:Ethan_Davidson
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
+
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Bella Davidson", result.output)
+            self.assertIn("Template: Pet.html", result.output)
+            self.assertIn("Owner", result.output)
+            self.assertIn("Ethan Davidson", result.output)
     def test_cli_export(self) -> None:
         """Test that wiki export supports bulk and single file exports."""
         runner = CliRunner()

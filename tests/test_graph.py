@@ -10,7 +10,6 @@ from wiki.graph import (
     kebab_case,
     resolve_predicate,
     resolve_object,
-    build_person_name_map,
     load_graph,
     graph_stats,
 )
@@ -261,62 +260,12 @@ class TestRDFFrontmatter(unittest.TestCase):
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
-    def test_resolve_blank_nodes_and_load_graph(self) -> None:
-        """Test build_person_name_map, resolve_blank_nodes, and load_graph integration."""
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            
-            # Create a person file that has an explicit @id (using valid YAML syntax with quoted @ keys)
-            person1 = wiki_dir / "gregory.md"
-            person1_content = """---
-"@type": Person
-"@id": "wiki:gregory"
-name: Gregory Smith
-givenName: Gregory
-familyName: Smith
----
-"""
-            person1.write_text(person1_content, encoding="utf-8")
-            
-            # Create another person file with a blank node relation to Gregory
-            person2 = wiki_dir / "bella.md"
-            person2_content = """---
-"@type": Person
-"@id": "wiki:bella"
-name: Bella
-spouse:
-  name: Gregory Smith
----
-"""
-            person2.write_text(person2_content, encoding="utf-8")
-            
-            config = WikiConfig(input_dirs=[wiki_dir])
-            
-            # 1. Test build_person_name_map
-            name_map = build_person_name_map(config.input_dirs, config.context)
-            self.assertEqual(name_map.get("gregory smith"), "wiki:gregory")
-            self.assertEqual(name_map.get("gregory"), "wiki:gregory")
-            
-            # 2. Test load_graph and blank node resolution
-            graph = load_graph(config, infer=False)
-            
-            # Spouse blank node should resolve correctly
-            subject = URIRef(config.namespaces["wiki"]["bella"])
-            spouse_pred = config.namespaces["schema"]["spouse"]
-            spouse_objs = list(graph.objects(subject, spouse_pred))
-            self.assertEqual(len(spouse_objs), 1)
-            self.assertEqual(spouse_objs[0], URIRef("wiki:gregory"))
-            
-            # Test graph stats
-            stats = graph_stats(graph)
-            self.assertGreater(stats["triples"], 0)
-
     def test_multi_type_and_implicit_id_mapping(self) -> None:
         """Test multi-type arrays in frontmatter and implicit ID mapping fallback in loading sequence."""
         config = WikiConfig()
         ctx = config.context
         
-        # 1. Verify multi-type parsing logic executes and adds multiple types
+        # Verify multi-type parsing logic executes and adds multiple types
         data = {
             "@type": ["Person", "Developer"],
             "@id": "wiki:multi",
@@ -328,29 +277,6 @@ spouse:
         self.assertEqual(len(types), 2)
         self.assertIn(ctx.namespaces["schema"]["Person"], types)
         self.assertIn(ctx.namespaces["schema"]["Developer"], types)
-
-        # 2. Verify implicit fallback ID generation inside name-to-id mapper (uses file stem)
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            implicit_person = wiki_dir / "jimmy-neutron.md"
-            implicit_content = """---
-"@type": Person
-givenName: Jimmy
-familyName: Neutron
----
-"""
-            implicit_person.write_text(implicit_content, encoding="utf-8")
-            name_map = build_person_name_map([wiki_dir], ctx)
-            
-            # The fallback format uses the file stem: {wiki_base}{stem} (no .md by default)
-            expected_fallback = f"{config.wiki_base}jimmy-neutron"
-            self.assertEqual(name_map.get("jimmy neutron"), expected_fallback)
-
-            # 3. Verify implicit fallback for Person with only standalone name
-            single_person = wiki_dir / "zendaya.md"
-            single_person.write_text("---\n\"@type\": Person\nname: Zendaya\n---\n", encoding="utf-8")
-            name_map_2 = build_person_name_map([wiki_dir], ctx)
-            self.assertEqual(name_map_2.get("zendaya"), f"{config.wiki_base}zendaya")
 
     def test_load_graph_advanced_sources(self) -> None:
         """Test the unified graph loader handles multiple input dirs and gracefully ignores broken internal Turtle."""

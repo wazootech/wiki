@@ -155,64 +155,6 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     return graph
 
 
-def build_person_name_map(input_dirs: list[Path], context: Context, uri_ext: bool = False) -> dict[str, str]:
-    """Build a mapping from person names to their wiki @id URIs."""
-    name_map: dict[str, str] = {}
-
-    config = WikiConfig(input_dirs=input_dirs, wiki_base=context.wiki_base, context=context, uri_ext=uri_ext)
-
-    for file_path in iter_document_files(config):
-        try:
-            data = document_data_from_path(file_path)
-            if not data or data.get("@type") != "Person":
-                continue
-
-            doc_id = data.get("@id", "")
-            if not doc_id:
-                suffix = ".md" if uri_ext else ""
-                doc_id = f"{context.wiki_base}{route_for_document_file(config, file_path)}{suffix}"
-
-            name = data.get("name", "")
-            if name:
-                name_map[name.lower()] = doc_id
-
-            given = data.get("givenName", "")
-            family = data.get("familyName", "")
-            if given and family:
-                full_name = f"{given} {family}"
-                name_map[full_name.lower()] = doc_id
-                name_map[given.lower()] = doc_id
-        except Exception as e:
-            logger.warning("Failed to build name map for %s: %s", file_path.name, e)
-            continue
-
-    return name_map
-
-
-def resolve_blank_nodes(graph: Graph, input_dirs: list[Path], context: Context, uri_ext: bool = False) -> Graph:
-    """Resolve blank nodes to @id references where possible."""
-    name_map = build_person_name_map(input_dirs, context, uri_ext=uri_ext)
-
-    blank_nodes = [s for s in graph.subjects() if str(s).startswith("_:")]
-
-    for blank in blank_nodes:
-        name = graph.value(blank, context.namespaces["schema"].name)
-        if not name or str(name).lower() not in name_map:
-            continue
-
-        target_id = name_map[str(name).lower()]
-
-        for pred, obj in list(graph.predicate_objects(blank)):
-            graph.remove((blank, pred, obj))
-            graph.add((URIRef(target_id), pred, obj))
-
-        for subj, pred in list(graph.subject_predicates(blank)):
-            graph.remove((subj, pred, blank))
-            graph.add((subj, pred, URIRef(target_id)))
-
-    return graph
-
-
 
 class MicrodataParser(Parser):
     """Custom RDFLib parser wrapper enabling native `format='microdata'` support via BeautifulSoup."""
@@ -413,8 +355,6 @@ def load_graph(context: WikiConfig, infer: bool = True) -> Graph:
                         graph.parse(file_path, format=fmt)
             except Exception as e:
                 logger.warning("Failed to process %s: %s", file_path.name, e)
-
-    resolve_blank_nodes(graph, context.input_dirs, context, uri_ext=context.uri_ext)
 
     if infer:
         from .infer import apply_inference
