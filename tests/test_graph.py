@@ -161,6 +161,24 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertTrue((subject, URIRef("https://schema.org/name"), Literal("John Microdata")) in g)
         self.assertTrue((subject, URIRef("unknown:role"), Literal("Tester")) in g)
 
+    def test_microdata_href_expands_curies(self) -> None:
+        html_content = """
+        <div itemscope itemtype="https://schema.org/Person" itemid="https://wiki.example.org/alice">
+            <link itemprop="url" href="wiki:Ethan_Davidson">
+            <a itemprop="sameAs" href="wiki:Bob_Smith">Bob</a>
+        </div>
+        """
+        g = Graph()
+        g.bind("schema", "https://schema.org/")
+        g.bind("wiki", "https://wiki.example.org/")
+        g.parse(data=html_content, format="microdata")
+
+        subject = URIRef("https://wiki.example.org/alice")
+        ethan = URIRef("https://wiki.example.org/Ethan_Davidson")
+        bob = URIRef("https://wiki.example.org/Bob_Smith")
+        self.assertTrue((subject, URIRef("https://schema.org/url"), ethan) in g)
+        self.assertTrue((subject, URIRef("https://schema.org/sameAs"), bob) in g)
+
     def test_nested_typed_dict_creates_typed_blank_node(self) -> None:
         """Test that a nested dictionary with @type creates a typed blank node."""
         data = {

@@ -226,10 +226,12 @@ class MicrodataParser(Parser):
                     tag_name = prop_elem.name.lower()
                     if tag_name in ("a", "link", "area"):
                         val = prop_elem.get("href", "")
-                        obj = URIRef(val) if (isinstance(val, str) and (val.startswith("http") or ":" in val)) else Literal(val)
+                        expanded = _expand_microdata_identifier(val, namespace_map)
+                        obj = URIRef(expanded) if expanded else Literal(val)
                     elif tag_name in ("audio", "embed", "iframe", "img", "source", "track", "video"):
                         val = prop_elem.get("src", "")
-                        obj = URIRef(val) if (isinstance(val, str) and (val.startswith("http") or ":" in val)) else Literal(val)
+                        expanded = _expand_microdata_identifier(val, namespace_map)
+                        obj = URIRef(expanded) if expanded else Literal(val)
                     elif tag_name == "meta":
                         obj = Literal(prop_elem.get("content", ""))
                     elif tag_name == "time":
