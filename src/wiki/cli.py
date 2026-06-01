@@ -384,14 +384,16 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
 @click.option("--port", default=8080, type=int, show_default=True, help="Port to serve on.")
 @click.option("--base-url", default=None,
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
+@click.option("--style", default="dir", show_default=True,
+              type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir).")
 @click.option("--watch", is_flag=True, help="Watch files and auto-reload the browser on rebuild.")
 @click.pass_obj
-def serve(config: Context, host: str, port: int, base_url: str | None, watch: bool) -> None:
+def serve(config: Context, host: str, port: int, base_url: str | None, style: str, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
     resolved_base_url = (config.base_url if base_url is None else base_url).rstrip("/")
     config.base_url = resolved_base_url
-    run_server(config, host=host, port=port, base_url=resolved_base_url, watch=watch)
+    run_server(config, host=host, port=port, base_url=resolved_base_url, url_style=style, watch=watch)
 
 
 @main.command()
