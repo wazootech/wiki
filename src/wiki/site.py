@@ -52,10 +52,9 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .outline-list .l6{padding-left:48px}
 .page-meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-top:32px}
 .page-meta h2{font-size:1.1em;border:none;margin-top:0}
-.page-shell{display:block}
-.page-shell.template-person,.page-shell.template-thing,.page-shell.template-pet{display:grid;gap:24px;align-items:start}
+.page-shell{max-width:100%}
+.page-sidebar{float:right;max-width:300px;margin:0 0 16px 24px}
 .page-main article{min-width:0}
-.page-sidebar{min-width:0}
 .infobox{background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
 .infobox h2{font-size:1rem;border:none;margin:0 0 14px}
 .infobox dl{display:grid;grid-template-columns:minmax(96px,140px) 1fr;gap:10px 14px}
@@ -70,7 +69,7 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .template-label{display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .index-header{margin-bottom:24px}
 .site-title{font-size:1.5em;font-weight:700;color:#1a1a2e;text-decoration:none}
-@media (min-width: 900px){.page-shell.template-person,.page-shell.template-thing,.page-shell.template-pet{grid-template-columns:minmax(0,1fr) 300px}}
+@media (max-width: 768px){.page-sidebar{float:none;max-width:100%;margin:24px 0 0 0}}
 """.strip()
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
@@ -637,8 +636,7 @@ def _render_page_shell(
 ) -> str:
     sidebar = infobox_html + toc_html + bl_html + fm_html
     template_class = html_module.escape(_template_stem(page.template_name))
-    if _template_stem(page.template_name) in {"person", "thing", "pet"}:
-        return f"""<div class="page-shell template-{template_class}">
+    return f"""<div class="page-shell template-{template_class}">
 <section class="page-main">
 {template_label}
 <article>
@@ -648,12 +646,4 @@ def _render_page_shell(
 <aside class="page-sidebar">
 {sidebar}
 </aside>
-</div>"""
-
-    return f"""<div class="page-shell template-{template_class}">
-{template_label}
-<article>
-{content_html}
-</article>
-{sidebar}
 </div>"""
