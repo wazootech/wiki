@@ -128,15 +128,15 @@ Body text beside the infobox.
             self.assertIn('<aside class="infobox">', html)
             self.assertNotIn("infobox page-meta", html)
             self.assertIn('<div class="wiki-article-title">', html)
-            self.assertIn('<div class="wiki-article-body">', html)
-            self.assertIn("float:right", html)
+            self.assertIn('class="wiki-article-body has-infobox"', html)
+            self.assertIn("grid-template-columns", html)
             article_html = html[html.index("<article") : html.index("</article>") + len("</article>")]
             title_pos = article_html.index("wiki-article-title")
             body_pos = article_html.index("wiki-article-body")
-            infobox_pos = article_html.index('<aside class="infobox">')
             content_pos = article_html.index("wiki-article-content")
+            infobox_pos = article_html.index('<aside class="infobox">')
             self.assertLess(title_pos, body_pos)
-            self.assertLess(infobox_pos, content_pos)
+            self.assertLess(content_pos, infobox_pos)
 
     def test_template_frontmatter_override_is_applied(self) -> None:
         with TemporaryDirectory() as tmpdir:

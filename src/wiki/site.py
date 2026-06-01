@@ -56,8 +56,9 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .page-shell{max-width:100%}
 .wiki-article{max-width:100%}
 .wiki-article-title{margin-bottom:.25em}
-.wiki-article-body{display:flow-root}
-.wiki-article.has-infobox .infobox{float:right;clear:right;width:280px;max-width:min(280px,42%);margin:0 0 1em 1.5em;background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+.wiki-article-body.has-infobox{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:1.5em;align-items:start}
+.wiki-article-body.has-infobox .wiki-article-content{grid-column:1;grid-row:1;min-width:0}
+.wiki-article-body.has-infobox .infobox{grid-column:2;grid-row:1;align-self:start;width:100%}
 .wiki-article-content{min-width:0}
 .infobox{background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
 .infobox h2{font-size:1rem;border:none;margin:0 0 14px}
@@ -73,7 +74,7 @@ header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
 .template-label{display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .index-header{margin-bottom:24px}
 .site-title{font-size:1.5em;font-weight:700;color:#1a1a2e;text-decoration:none}
-@media (max-width: 768px){.wiki-article.has-infobox .infobox{float:none;clear:none;width:100%;max-width:100%;margin:0 0 16px 0}}
+@media (max-width: 768px){.wiki-article-body.has-infobox{grid-template-columns:1fr;row-gap:16px}.wiki-article-body.has-infobox .wiki-article-content,.wiki-article-body.has-infobox .infobox{grid-column:1}.wiki-article-body.has-infobox .infobox{grid-row:1}.wiki-article-body.has-infobox .wiki-article-content{grid-row:2}}
 """.strip()
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
@@ -654,9 +655,9 @@ def _render_page_shell(
     title_html, body_html = _split_leading_h1(content_html, page.title)
     title_block = f'<div class="wiki-article-title">{title_html}</div>' if title_html else ""
     if infobox_html:
-        body_block = f"""<div class="wiki-article-body">
-{infobox_html}
+        body_block = f"""<div class="wiki-article-body has-infobox">
 <div class="wiki-article-content">{body_html}</div>
+{infobox_html}
 </div>"""
         article_class = "wiki-article has-infobox"
     else:
