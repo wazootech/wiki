@@ -362,6 +362,9 @@ wiki serve --host 0.0.0.0 --port 3000
 
 # Watch wiki files and auto-reload the browser on rebuild
 wiki serve --watch
+
+# Run directly from source (no reinstall needed)
+python -m wiki serve --watch
 ```
 
 ### `init`
