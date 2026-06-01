@@ -6,7 +6,6 @@ import html as html_module
 import json
 import mimetypes
 import re
-import signal
 import sys
 import threading
 import time
@@ -181,6 +180,8 @@ def create_server(
     print(f"Wiki server ready at http://{host}:{port}/")
     dirs_str = ", ".join(str(d) for d in config.input_dirs)
     print(f"Serving {len(site.pages)} pages from {dirs_str}")
+    if not site.pages:
+        print("Warning: no pages found. Ensure your wiki directory has .md, .yaml, .yml, or .json files.")
     return server
 
 
@@ -231,15 +232,9 @@ def run_server(
 
         threading.Thread(target=watch_loop, daemon=True).start()
 
-    def shutdown(*_: Any) -> None:
+    print("Press Ctrl+C to stop.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
         print("\nShutting down server...")
         server.shutdown()
-
-    try:
-        signal.signal(signal.SIGINT, shutdown)
-        signal.signal(signal.SIGTERM, shutdown)
-    except ValueError:
-        pass  # not in main thread – no interactive signal handling
-
-    print("Press Ctrl+C to stop.")
-    server.serve_forever()
