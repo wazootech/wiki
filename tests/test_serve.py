@@ -278,7 +278,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
 
         site = refresh_vault(config, changed_paths={page})
 
-        self.assertIn("| Name |", page.read_text(encoding="utf-8"))
+        self.assertRegex(page.read_text(encoding="utf-8"), r"\| Name\s+\|")
         self.assertGreater(len(site.pages), 0)
 
 
