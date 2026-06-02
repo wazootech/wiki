@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- In-process RDF graph cache (runtime only, no disk I/O); `--reload` on `query`, `render`, and `build --render`
+- In-process RDF graph cache so multiple SPARQL operations in one run share a single graph build; `--reload` on `query`, `render`, and `build --render`
 - `wiki serve --watch` rebuilds the in-memory graph and SPARQL blocks when vault files change
 
 ### Changed

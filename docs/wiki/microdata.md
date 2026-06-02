@@ -11,14 +11,16 @@ description: HTML5 specification for nesting semantics within content on web pag
 
 It provides a simpler approach to semantic tagging than RDFa, using standard [[html]] attributes like `itemscope`, `itemtype`, and `itemprop`.
 
+Prefixed CURIEs (`schema:Thing`, `wiki:Page_Name`) in `itemtype`, `itemid`, `itemprop`, `href`, and `src` expand through the same `context` bindings in `wiki.yaml` as frontmatter. Bare `itemprop` names without a colon default to the `schema:` vocabulary when that prefix is bound.
+
 ## Examples
 
 The LLM Wiki CLI extracts this format directly from wiki documents into the unified RDF pool:
 
-<div itemscope itemtype="https://schema.org/TechArticle" itemid="wiki:microdata-example">
-  <span itemprop="name">Microdata in LLM Wiki</span>
-  <meta itemprop="description" content="A practical introduction to structuring linked metadata directly in markup." />
-  <div itemprop="about" itemscope itemtype="https://schema.org/SoftwareApplication">
+<div itemscope itemtype="schema:TechArticle" itemid="wiki:microdata-example">
+  <span itemprop="schema:name">Microdata in LLM Wiki</span>
+  <meta itemprop="schema:description" content="A practical introduction to structuring linked metadata directly in markup." />
+  <div itemprop="schema:about" itemscope itemtype="schema:SoftwareApplication">
     <span itemprop="name">LLM Wiki CLI</span> 
     (<span itemprop="description">A semantic command-line companion for markdown vaults</span>)
     supports extraction via BeautifulSoup.

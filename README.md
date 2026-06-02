@@ -102,7 +102,7 @@ check:
 ```
 
 ### `query`
-Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph.
+Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`).
 
 ```bash
 # Execute direct query string and output as ASCII table
@@ -116,12 +116,15 @@ cat my_query.sparql | wiki query -f markdown -o results.md
 
 # Extract specific fields from JSON output (automatically selects -f json)
 wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[].name.value'
+
+# Rebuild the in-memory graph before querying (same process only)
+wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --reload
 ```
 
 ### `render`
 Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
 
-Each `wiki render` invocation scans the vault, builds the RDF graph in memory, and re-evaluates SPARQL blocks in scope (all markdown files with blocks, or a single file / glob when scoped).
+Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL block in scope against that same graph (all markdown files with blocks, or a single file / glob when scoped).
 
 ```bash
 # Render all SPARQL blocks in the vault
@@ -146,7 +149,7 @@ wiki render --glob "wiki/people/*.md"
 wiki render --no-inference
 ```
 
-**Graph cache:** The RDF graph is built at runtime and cached in memory for the lifetime of the process. There is no on-disk cache, so each new shell invocation rebuilds the graph from vault sources. For a fast edit loop without paying that cost on every change, use `wiki serve --watch`, which rebuilds the graph and SPARQL output when vault files change.
+**Graph cache:** The vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. There is no on-disk cache: a new shell starts cold. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when vault files change.
 
 An embedded SPARQL block is defined in your markdown files like this:
 ````html
@@ -186,6 +189,9 @@ wiki build --base-url '' --output-dir docs
 
 # Automatically update all dynamic SPARQL blocks in source files before building
 wiki build --render
+
+# Rebuild the in-memory graph before rendering SPARQL blocks (same process only)
+wiki build --render --reload
 ```
 
 The `--url-style` flag controls how pages are written to disk and linked:
@@ -475,18 +481,18 @@ Requires that all `wiki:Dog` documents must declare a name.
 ```
 
 #### Native microdata via HTML attributes
-You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool.
+You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool. Prefixed CURIEs in `itemtype`, `itemid`, `itemprop`, `href`, and `src` expand through the same `context` bindings as frontmatter (for example `schema:Product`, `wiki:Gregory_House`).
 
 ````markdown
 # Product X Overview
 Product X is state-of-the-art.
 
-<div itemscope itemtype="https://schema.org/Product">
-  Our latest model is the <span itemprop="name">Quantum Processor X</span>.
+<div itemscope itemtype="schema:Product" itemid="wiki:Product_X">
+  Our latest model is the <span itemprop="schema:name">Quantum Processor X</span>.
   
-  <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-    Price: <span itemprop="price">999.99</span> 
-    Currency: <meta itemprop="priceCurrency" content="USD" />
+  <div itemprop="schema:offers" itemscope itemtype="schema:Offer">
+    Price: <span itemprop="schema:price">999.99</span> 
+    Currency: <meta itemprop="schema:priceCurrency" content="USD" />
   </div>
 </div>
 ````

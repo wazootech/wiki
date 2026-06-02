@@ -368,7 +368,11 @@ def load_graph(
     use_cache: bool = True,
     reload: bool = False,
 ) -> Graph:
-    """Load all markdown, RDF, and data files into a unified Graph, resolving blank nodes."""
+    """Load vault sources into a Graph, reusing the in-process cache when possible.
+
+    Multiple calls in the same process (many SPARQL blocks, query + render, SHACL
+    checks, serve requests) share one graph build unless ``reload`` is set.
+    """
     from .graph_cache import clear_process_graph, get_process_graph, set_process_graph
 
     if reload:

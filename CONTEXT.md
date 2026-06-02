@@ -28,6 +28,8 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Rendering**: The process of executing embedded SPARQL Queries within Documents and injecting the formatted results back into the files. _Avoid_: Exporting, updating.
 
+**Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one vault build. _Avoid_: Disk cache, pickle store.
+
 **Checking**: The process of running unified validations on the Wiki, combining strict SHACL Validation and style/hygiene audits with optional automatic fixing. _Avoid_: Linting, testing.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
@@ -44,6 +46,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 - **Checking** runs unified health checks (including **Validation**) on **Documents** and optionally automatically repairs **Frontmatter** formatting
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
+- **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph
 - **Exporting** packages the **Frontmatter** of the **Wiki** into a unified JSON-LD graph
 
 

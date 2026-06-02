@@ -2,7 +2,7 @@
 id: wiki:llm-wiki-cli
 type: SoftwareApplication
 name: LLM Wiki CLI
-softwareVersion: 0.1.0
+softwareVersion: 0.1.5
 description: Command-line interface for querying, validating, and managing the semantic vault
 ---
 
@@ -42,6 +42,9 @@ If your page contains inline SPARQL query comments (`<!-- sparql:start -->`), ru
 ```bash
 wiki render -v
 ```
+
+### Graph cache and local preview
+The vault RDF graph (including OWL-RL when inference is on) is built **once per process** and reused for every SPARQL query and render in that run, so multiple blocks and subcommands do not reload the graph each time. There is no on-disk cache; a new shell starts cold. Use `--reload` on `query`, `render`, or `build --render` to force a rebuild in the same process. For editing, `wiki serve --watch` keeps one process alive and rebuilds the graph, SPARQL blocks, and site when vault files change.
 
 
 ## Wiki schema and active types
@@ -109,19 +112,31 @@ wiki check --fix
 ```
 
 ### `wiki query`
-Executes raw SPARQL SELECT or CONSTRUCT queries against your vault's unified graph.
+Executes raw SPARQL SELECT or CONSTRUCT queries against your vault's unified graph. Reuses the in-process graph cache within the same CLI run.
 ```bash
 wiki query "SELECT ?name WHERE { ?s schema:name ?name }"
+
+# Force a fresh graph build (same process only)
+wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --reload
 ```
 
 ### `wiki render`
-Finds any dynamic SPARQL query comments (`<!-- sparql:start -->`) inside your markdown files and updates their tables inline.
+Finds any dynamic SPARQL query comments (`<!-- sparql:start -->`) inside your markdown files and updates their tables inline. Builds the graph once per run, then evaluates every block against that graph.
 ```bash
 # Render all tables silently (silence is golden)
 wiki render
 
 # Render with detailed verbose output
 wiki render -v
+
+# Rebuild the in-memory graph before rendering (same process only)
+wiki render --reload
+```
+
+### `wiki serve`
+Serves the wiki as HTML for local development. With `--watch`, vault changes trigger a graph rebuild, SPARQL re-render, and browser reload.
+```bash
+wiki serve --watch
 ```
 
 ### `wiki export`

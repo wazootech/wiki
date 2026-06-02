@@ -1,4 +1,9 @@
-"""Vault fingerprinting and in-process RDF graph cache (runtime only, no disk I/O)."""
+"""Vault fingerprinting and in-process RDF graph cache.
+
+Build the vault graph once per process and reuse it for every SPARQL query and
+render in that process, so OWL-RL expansion and vault parsing are not repeated
+for each block or CLI subcommand. Runtime only (no disk I/O).
+"""
 
 from __future__ import annotations
 
