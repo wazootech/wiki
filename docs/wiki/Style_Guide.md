@@ -72,16 +72,16 @@ Wrap queries so [Wiki_Subcommand_render](Wiki_Subcommand_render.md) can refresh 
 ````markdown
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s schema:name ?name }
+SELECT ?name WHERE { ?s schema:name ?name } ORDER BY ?name
 ```
 
 | Name |
 | --- |
 | Agent memory filesystems |
 | Andrej Karpathy |
-| Content negotiation |
 | CSS |
 | CSV |
+| Content negotiation |
 | Declarative knowledge |
 | Deploying to GitHub Pages |
 | Design philosophies |
@@ -90,28 +90,28 @@ SELECT ?name WHERE { ?s schema:name ?name }
 | Getting started |
 | Graph cache |
 | HTML |
-| JavaScript |
 | JSON |
 | JSON-LD |
-| Letta MemFS |
+| JavaScript |
 | LLM Wiki |
+| LLM Wiki CLI |
+| Letta MemFS |
 | Microdata |
 | Microdata in LLM Wiki |
-| LLM Wiki CLI |
 | Notation3 |
-| Obsidian integration |
 | OWL |
+| Obsidian integration |
 | Person Shape |
 | Personal Knowledge |
 | Procedural knowledge |
 | Project ontology |
 | RDF |
 | Retrieval-augmented generation |
+| SHACL |
+| SPARQL |
 | Second brain |
 | Semantic Web |
-| SHACL |
 | SoftwareApplication Shape |
-| SPARQL |
 | Style guide |
 | Supermemory SMFS |
 | TechArticle Shape |
@@ -119,6 +119,7 @@ SELECT ?name WHERE { ?s schema:name ?name }
 | TypeScript |
 | Wiki CLI |
 | Wiki configuration |
+| WikiThon |
 | wiki build |
 | wiki check |
 | wiki export |
@@ -129,7 +130,6 @@ SELECT ?name WHERE { ?s schema:name ?name }
 | wiki serve |
 | wiki upgrade |
 | wiki view |
-| WikiThon |
 <!-- sparql:end -->
 ````
 
