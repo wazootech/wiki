@@ -1,4 +1,4 @@
-"""Tests for vault fingerprinting and on-disk graph cache."""
+"""Tests for vault fingerprinting and in-process graph cache."""
 
 from __future__ import annotations
 
@@ -9,19 +9,23 @@ from tempfile import TemporaryDirectory
 from wiki.config import WikiConfig
 from wiki.graph import load_graph, graph_stats
 from wiki.graph_cache import (
-    get_cache_dir,
-    invalidate_cache,
-    load_cached_graph,
-    save_cached_graph,
+    clear_all_process_graphs,
+    get_process_graph,
     vault_fingerprint,
 )
 
 
 class TestGraphCache(unittest.TestCase):
+    def setUp(self) -> None:
+        clear_all_process_graphs()
+
+    def tearDown(self) -> None:
+        clear_all_process_graphs()
+
     def _config(self, wiki_dir: Path) -> WikiConfig:
         return WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
 
-    def test_cache_miss_then_hit(self) -> None:
+    def test_second_load_reuses_cached_graph(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
@@ -29,47 +33,39 @@ class TestGraphCache(unittest.TestCase):
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)
-            invalidate_cache(config)
 
-            g1 = load_graph(config, infer=False, use_cache=True)
+            g1 = load_graph(config, infer=False)
             self.assertGreater(graph_stats(g1)["triples"], 0)
+            g2 = load_graph(config, infer=False)
+            self.assertIs(g1, g2)
 
-            cached = load_cached_graph(config, infer=False)
-            self.assertIsNotNone(cached)
-            self.assertEqual(graph_stats(g1)["triples"], graph_stats(cached)["triples"])
-
-            g2 = load_graph(config, infer=False, use_cache=True)
-            self.assertEqual(graph_stats(g1)["triples"], graph_stats(g2)["triples"])
-
-    def test_file_change_invalidates_cache(self) -> None:
+    def test_reload_rebuilds_graph(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             page = wiki_dir / "page.md"
             page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
             config = self._config(wiki_dir)
-            invalidate_cache(config)
+
+            g1 = load_graph(config, infer=False)
+            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
+            g2 = load_graph(config, infer=False, reload=True)
+            self.assertIsNot(g1, g2)
+
+    def test_fingerprint_change_invalidates_cache_lookup(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            page = wiki_dir / "page.md"
+            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
+            config = self._config(wiki_dir)
 
             fp1 = vault_fingerprint(config)
-            load_graph(config, infer=False, use_cache=True)
-            self.assertIsNotNone(load_cached_graph(config, infer=False))
+            load_graph(config, infer=False)
+            self.assertIsNotNone(get_process_graph(config, infer=False))
 
             page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
             fp2 = vault_fingerprint(config)
             self.assertNotEqual(fp1, fp2)
-            self.assertIsNone(load_cached_graph(config, infer=False))
-
-    def test_no_cache_skips_persisted_graph(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
-                encoding="utf-8",
-            )
-            config = self._config(wiki_dir)
-            invalidate_cache(config)
-
-            load_graph(config, infer=False, use_cache=False)
-            self.assertFalse(get_cache_dir(config).exists())
+            self.assertIsNone(get_process_graph(config, infer=False))
 
     def test_infer_and_asserted_caches_are_separate(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -79,34 +75,15 @@ class TestGraphCache(unittest.TestCase):
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)
-            invalidate_cache(config)
 
-            asserted = load_graph(config, infer=False, use_cache=True)
-            inferred = load_graph(config, infer=True, use_cache=True)
+            asserted = load_graph(config, infer=False)
+            inferred = load_graph(config, infer=True)
+            self.assertIsNot(asserted, inferred)
             self.assertGreaterEqual(graph_stats(inferred)["triples"], graph_stats(asserted)["triples"])
-            self.assertIsNotNone(load_cached_graph(config, infer=False))
-            self.assertIsNotNone(load_cached_graph(config, infer=True))
+            self.assertIsNotNone(get_process_graph(config, infer=False))
+            self.assertIsNotNone(get_process_graph(config, infer=True))
 
-    def test_rebuild_cache_overwrites(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            page = wiki_dir / "page.md"
-            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
-            config = self._config(wiki_dir)
-            invalidate_cache(config)
-
-            load_graph(config, infer=False, use_cache=True)
-            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
-
-            stale_cached = load_cached_graph(config, infer=False)
-            self.assertIsNone(stale_cached)
-
-            rebuilt = load_graph(config, infer=False, use_cache=True, rebuild_cache=True)
-            self.assertIsNotNone(load_cached_graph(config, infer=False))
-            subjects = {str(s) for s in rebuilt.subjects()}
-            self.assertTrue(any("Grace" in s for s in subjects) or len(rebuilt) > 0)
-
-    def test_config_change_invalidates_fingerprint(self) -> None:
+    def test_config_change_changes_fingerprint(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
@@ -115,15 +92,8 @@ class TestGraphCache(unittest.TestCase):
             )
             config_a = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://a.example/")
             config_b = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://b.example/")
-            invalidate_cache(config_a)
 
-            fp_a = vault_fingerprint(config_a)
-            fp_b = vault_fingerprint(config_b)
-            self.assertNotEqual(fp_a, fp_b)
-
-            g = load_graph(config_a, infer=False, use_cache=True)
-            save_cached_graph(config_a, g, infer=False)
-            self.assertIsNone(load_cached_graph(config_b, infer=False))
+            self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
 
 
 if __name__ == "__main__":

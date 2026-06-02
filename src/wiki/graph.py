@@ -342,15 +342,11 @@ def _build_graph_from_vault(context: WikiConfig) -> Graph:
 
     document_files = set(iter_document_files(context))
 
-    from .graph_cache import _is_cache_path
-
     for input_dir in context.input_dirs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):
             if not file_path.is_file() or context.is_excluded(file_path):
-                continue
-            if _is_cache_path(context, file_path):
                 continue
             try:
                 if file_path in document_files:
@@ -370,13 +366,15 @@ def load_graph(
     infer: bool = True,
     *,
     use_cache: bool = True,
-    rebuild_cache: bool = False,
+    reload: bool = False,
 ) -> Graph:
     """Load all markdown, RDF, and data files into a unified Graph, resolving blank nodes."""
-    from .graph_cache import load_cached_graph, save_cached_graph
+    from .graph_cache import clear_process_graph, get_process_graph, set_process_graph
 
-    if use_cache and not rebuild_cache:
-        cached = load_cached_graph(context, infer)
+    if reload:
+        clear_process_graph(context, infer)
+    elif use_cache:
+        cached = get_process_graph(context, infer)
         if cached is not None:
             return cached
 
@@ -386,7 +384,7 @@ def load_graph(
         apply_inference(graph, context)
 
     if use_cache:
-        save_cached_graph(context, graph, infer)
+        set_process_graph(context, infer, graph)
 
     return graph
 

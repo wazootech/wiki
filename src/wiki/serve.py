@@ -159,6 +159,36 @@ class WikiHandler(BaseHTTPRequestHandler):
         sys.stderr.write(f"[{self.log_date_time_string()}] {fmt % args}\n")
 
 
+def refresh_vault(
+    config: WikiConfig,
+    *,
+    changed_paths: set[Path] | None = None,
+    base_url: str | None = None,
+    url_style: str | None = None,
+) -> WikiSite:
+    """Rebuild in-memory graph, refresh SPARQL blocks, and rebuild the site."""
+    from .graph import load_graph
+    from .render import has_sparql_blocks, render_markdown_files
+
+    resolved_base_url = config.base_url if base_url is None else base_url
+    resolved_url_style = config.url_style if url_style is None else url_style
+
+    graph = load_graph(config, infer=True, reload=True)
+
+    if changed_paths is None:
+        render_markdown_files(config, graph)
+    else:
+        non_md_changed = any(path.suffix.lower() != ".md" for path in changed_paths)
+        if non_md_changed:
+            render_markdown_files(config, graph)
+        else:
+            for path in sorted(changed_paths):
+                if path.suffix.lower() == ".md" and path.is_file() and has_sparql_blocks(path):
+                    render_markdown_files(config, graph, file_filter=path)
+
+    return build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
+
+
 def create_server(
     config: WikiConfig,
     host: str = "127.0.0.1",
@@ -235,9 +265,15 @@ def run_server(
                 try:
                     new = snapshot()
                     if new != mtimes:
+                        changed = {
+                            Path(k)
+                            for k in set(mtimes) | set(new)
+                            if mtimes.get(k) != new.get(k)
+                        }
                         mtimes = new
-                        WikiHandler.site = build_site(
+                        WikiHandler.site = refresh_vault(
                             config,
+                            changed_paths=changed,
                             base_url=resolved_base_url,
                             url_style=resolved_url_style,
                         )

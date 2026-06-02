@@ -137,8 +137,7 @@ def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, stric
 @click.option("-f", "--format", "output_format", type=FormatChoice(["table", "json", "csv", "tsv", "turtle", "n3", "markdown"], case_sensitive=False), default="table", show_default=True, help="Output format for query results.")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--no-cache", is_flag=True, help="Do not read or write the on-disk graph cache.")
-@click.option("--rebuild-cache", is_flag=True, help="Force rebuild and overwrite the graph cache.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
@@ -148,8 +147,7 @@ def query(
     output_format: str,
     output: Optional[Path],
     no_inference: bool,
-    no_cache: bool,
-    rebuild_cache: bool,
+    reload: bool,
     jq: Optional[str],
     verbose: bool,
 ) -> None:
@@ -165,8 +163,7 @@ def query(
     graph = load_graph(
         context,
         infer=not no_inference,
-        use_cache=not no_cache,
-        rebuild_cache=rebuild_cache,
+        reload=reload,
     )
 
     if verbose:
@@ -195,9 +192,7 @@ def query(
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("--glob", "glob_filters", multiple=True, help="Render only markdown files matching this glob. Repeatable.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--no-cache", is_flag=True, help="Do not read or write the on-disk graph cache.")
-@click.option("--rebuild-cache", is_flag=True, help="Force rebuild and overwrite the graph cache.")
-@click.option("--all", "render_all", is_flag=True, help="Render SPARQL blocks in every matching file, not only stale ones.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
 @click.option("--check", is_flag=True, help="Check if inline SPARQL blocks are up to date without modifying files. Exits with non-zero code if any are stale.")
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
 @click.pass_obj
@@ -206,9 +201,7 @@ def render(
     file: Optional[Path],
     glob_filters: tuple[str, ...],
     no_inference: bool,
-    no_cache: bool,
-    rebuild_cache: bool,
-    render_all: bool,
+    reload: bool,
     check: bool,
     verbose: bool,
 ) -> None:
@@ -220,8 +213,7 @@ def render(
     graph = load_graph(
         context,
         infer=not no_inference,
-        use_cache=not no_cache,
-        rebuild_cache=rebuild_cache,
+        reload=reload,
     )
     success_count, error_count, stale_files = render_markdown_files(
         context,
@@ -229,7 +221,6 @@ def render(
         dry_run=check,
         file_filter=file,
         glob_filters=glob_filters,
-        render_all=render_all,
     )
     
     if check:
@@ -277,8 +268,7 @@ def view(config: Context, file: Path) -> None:
 @click.option("--url-style", type=click.Choice(["file", "dir"]), default=None,
               help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
 @click.option("--render", is_flag=True, help="Run SPARQL dynamic block rendering on markdown files before building.")
-@click.option("--no-cache", is_flag=True, help="Do not read or write the on-disk graph cache.")
-@click.option("--rebuild-cache", is_flag=True, help="Force rebuild and overwrite the graph cache.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph before rendering SPARQL blocks.")
 @click.option("--no-check", is_flag=True, help="Skip configurable wiki checks before building.")
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
@@ -288,8 +278,7 @@ def build(
     base_url: str | None,
     url_style: str | None,
     render: bool,
-    no_cache: bool,
-    rebuild_cache: bool,
+    reload: bool,
     no_check: bool,
     verbose: bool,
 ) -> None:
@@ -301,10 +290,9 @@ def build(
         graph = load_graph(
             config,
             infer=True,
-            use_cache=not no_cache,
-            rebuild_cache=rebuild_cache,
+            reload=reload,
         )
-        success, errors, stale = render_markdown_files(config, graph, render_all=True)
+        success, errors, stale = render_markdown_files(config, graph)
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
@@ -439,7 +427,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
 @click.option("--style", "url_style", default=None,
               type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir). Defaults to urlStyle in config.")
-@click.option("--watch", is_flag=True, help="Watch files and auto-reload the browser on rebuild.")
+@click.option("--watch", is_flag=True, help="Watch vault files; rebuild graph, SPARQL blocks, and site on change.")
 @click.pass_obj
 def serve(config: Context, host: str, port: int, base_url: str | None, url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""

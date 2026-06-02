@@ -121,14 +121,14 @@ wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[
 ### `render`
 Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
 
-By default, `wiki render` is **incremental**: it reloads the RDF graph from a local cache when the vault is unchanged, and only re-executes blocks in markdown files that are new or modified since the last successful render. Any change anywhere in the vault (or in `wiki.yaml`) marks all SPARQL pages stale so query results stay consistent.
+Each `wiki render` invocation scans the vault, builds the RDF graph in memory, and re-evaluates SPARQL blocks in scope (all markdown files with blocks, or a single file / glob when scoped).
 
 ```bash
-# Incremental render (default): stale files only
+# Render all SPARQL blocks in the vault
 wiki render
 
-# Full pass over every file with SPARQL blocks
-wiki render --all
+# Rebuild the in-memory graph before rendering (same process only)
+wiki render --reload
 
 # Render with verbose summary output
 wiki render -v
@@ -136,7 +136,7 @@ wiki render -v
 # Check if any stale blocks need updating (non-zero exit on stale)
 wiki render --check
 
-# Render a single file during an edit loop (always processes that file)
+# Render a single file during an edit loop
 wiki render wiki/people/Gregory_House.md
 
 # Render only matching markdown files
@@ -144,15 +144,9 @@ wiki render --glob "wiki/people/*.md"
 
 # Skip OWL-RL during editing when queries use asserted triples only
 wiki render --no-inference
-
-# Force a fresh graph build (ignore cache)
-wiki render --rebuild-cache
-
-# Disable graph cache read/write
-wiki render --no-cache
 ```
 
-**Graph cache:** Serialized graphs are stored under `.wiki/cache/` at the wiki config root (next to `wiki.yaml`). The cache key includes file mtimes and config fields that affect triple generation. Use `--rebuild-cache` after ontology changes if results look wrong.
+**Graph cache:** The RDF graph is built at runtime and cached in memory for the lifetime of the process. There is no on-disk cache, so each new shell invocation rebuilds the graph from vault sources. For a fast edit loop without paying that cost on every change, use `wiki serve --watch`, which rebuilds the graph and SPARQL output when vault files change.
 
 An embedded SPARQL block is defined in your markdown files like this:
 ````html
@@ -376,7 +370,7 @@ wiki serve
 # Custom host and port
 wiki serve --host 0.0.0.0 --port 3000
 
-# Watch wiki files and auto-reload the browser on rebuild
+# Watch vault files; rebuild graph, SPARQL blocks, and site on change
 wiki serve --watch
 
 # Run directly from source (no reinstall needed)

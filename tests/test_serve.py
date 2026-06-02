@@ -15,7 +15,7 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.serve import build_site, create_server
+from wiki.serve import build_site, create_server, refresh_vault
 
 
 def _free_port() -> int:
@@ -260,6 +260,26 @@ class TestServe(unittest.TestCase):
         self.assertIn("[default: 8080]", result.output)
         self.assertIn("[default: 127.0.0.1]", result.output)
         self.assertIn("--base-url", result.output)
+
+    def test_refresh_vault_renders_sparql_and_builds_site(self) -> None:
+        source = """---
+type: Person
+name: Gregory
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+```
+<!-- sparql:end -->
+"""
+        page = self.wiki_dir / "gregory.md"
+        page.write_text(source, encoding="utf-8")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir)
+
+        site = refresh_vault(config, changed_paths={page})
+
+        self.assertIn("| Name |", page.read_text(encoding="utf-8"))
+        self.assertGreater(len(site.pages), 0)
 
 
 if __name__ == "__main__":

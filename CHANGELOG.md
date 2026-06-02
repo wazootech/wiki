@@ -3,8 +3,14 @@
 ## Unreleased
 
 ### Added
-- On-disk RDF graph cache (`.wiki/cache/`) keyed on vault fingerprint; `--no-cache` and `--rebuild-cache` flags on `query`, `render`, and `build --render`
-- Incremental `wiki render` (stale files only by default); `wiki render --all` for a full pass
+- In-process RDF graph cache (runtime only, no disk I/O); `--reload` on `query`, `render`, and `build --render`
+- `wiki serve --watch` rebuilds the in-memory graph and SPARQL blocks when vault files change
+
+### Changed
+- Replaced on-disk graph cache (`.wiki/cache/`) and incremental render-state with runtime-only caching
+
+### Removed
+- `--all`, `--rebuild-cache`, and `--no-cache` flags
 
 ## 0.1.5 — 2026-05-31
 
