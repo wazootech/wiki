@@ -283,7 +283,7 @@ def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
 
 
 def autofix_hygiene(config: WikiConfig) -> dict[str, Any]:
-    """Autofix style issues (currently: filename kebab-case + wikilink updates)."""
+    """Autofix style issues (currently: filename normalization + wikilink updates)."""
     return {"renamed": [], "updated_wikilinks": False}
 
 

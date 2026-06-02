@@ -8,7 +8,7 @@ about: wiki:llm-wiki-cli
 
 # Farzapedia and personal AI wikis
 
-**Farzapedia** is a pioneering, private personal knowledge wiki developed by **Farza** (founder of buildspace). It serves as the definitive real-world implementation of the **LLM Wiki** design pattern popularized by [[llm-wiki]].
+**Farzapedia** is a pioneering, private personal knowledge wiki developed by **Farza** (founder of buildspace). It serves as the definitive real-world implementation of the **LLM Wiki** design pattern popularized by [[LLM_Wiki]].
 
 
 ## The architecture of Farzapedia
@@ -32,4 +32,4 @@ Farzapedia champions four crucial properties of modern knowledge engineering:
 
 ## Dynamic querying in this vault
 
-The [[llm-wiki-cli]] is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful SPARQL queries and use command-line pipelines to synthesize indexes on the fly—fulfilling the dream of a queryable, self-updating mind map.
+The [[LLM_Wiki_CLI]] is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful SPARQL queries and use command-line pipelines to synthesize indexes on the fly—fulfilling the dream of a queryable, self-updating mind map.

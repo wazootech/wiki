@@ -13,6 +13,6 @@ description: JavaScript Object Notation, a standard data interchange format.
 
 * **Human Readable**: Easy for humans to read and write.
 * **Machine Readable**: Easy for machines to parse and generate.
-* **Derived from JavaScript**: Based on a subset of the [[javascript]] programming language, but completely language-independent.
+* **Derived from JavaScript**: Based on a subset of the [[JavaScript]] programming language, but completely language-independent.
 
-In the semantic stack, it is utilized as the basis for [[json-ld]], allowing traditional JSON schemas to become part of a globally linked graph.
+In the semantic stack, it is utilized as the basis for [[JSON_LD]], allowing traditional JSON schemas to become part of a globally linked graph.

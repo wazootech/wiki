@@ -1,0 +1,104 @@
+---
+id: wiki:WikiConfiguration
+type: TechArticle
+name: Wiki configuration
+description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
+---
+
+# Wiki configuration
+
+The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
+
+## Example
+
+```yaml
+inputDirs:
+  - wiki
+assetDirs:
+  - assets
+wikiBase: https://example.org/wiki/
+markdownFlavor: obsidian
+baseUrl: /wiki
+urlStyle: dir
+filenamePattern: "[A-Za-z0-9_()-]+"
+exclude:
+  - assets/private/**
+contentPredicate: schema:text
+
+check:
+  filenamePattern: warning
+  internalLinks: warning
+  markdownFlavor: warning
+
+context:
+  schema: https://schema.org/
+  wiki: https://example.org/wiki/
+  foaf: http://xmlns.com/foaf/0.1/
+```
+
+JSON configs may use `"context"` or `"@context"` for prefix maps (JSON-LD compatible).
+
+## Paths and vault layout
+
+| Key | Aliases | Default | Purpose |
+| --- | --- | --- | --- |
+| `inputDirs` | `input_dirs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
+| `assetDirs` | `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
+| `exclude` | — | `[]` | Glob patterns (POSIX paths relative to config root) skipped when indexing |
+
+Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `baseUrl` and `urlStyle: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
+
+## Wiki and RDF
+
+| Key | Aliases | Default | Purpose |
+| --- | --- | --- | --- |
+| `wikiBase` | `wiki_base` | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs |
+| `context` / `@context` | — | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata |
+| `contentPredicate` | `content_predicate` | — | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
+| `uriExt` | `uri_ext` | `false` | Include file extension in generated URIs when true |
+
+## Site output
+
+| Key | Aliases | Default | Purpose |
+| --- | --- | --- | --- |
+| `baseUrl` | `base_url` | `/wiki` | URL prefix for built/served pages (`""` for site root) |
+| `urlStyle` | `url_style` | `dir` | `dir` → `slug/index.html`; `file` → `slug.html` |
+| `markdownFlavor` | `markdown_flavor` | `obsidian` | `obsidian` (wikilinks) or `gfm` |
+
+CLI flags on `wiki build` and `wiki serve` can override `baseUrl` and `urlStyle` for a single run.
+
+## Filename conventions
+
+The CLI does not hard-code kebab-case. Projects choose a convention with **`filenamePattern`**, matched against each document’s filename stem (without `.md`).
+
+**Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_House.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
+
+```yaml
+filenamePattern: "[A-Za-z0-9_()-]+"
+```
+
+**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+`) and enforce it via `check.filenamePattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
+
+Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
+
+## Hygiene checks
+
+Under `check`, each rule is `error`, `warning`, or `off`:
+
+| Rule key | What it audits |
+| --- | --- |
+| `filenamePattern` | Custom regex on filename stems (see top-level `filenamePattern`) |
+| `internalLinks` | Wikilinks and internal markdown links |
+| `markdownFlavor` | Wikilink syntax when flavor is `gfm` |
+
+Build-safety rules (unsafe URL characters, spaces in routes) always apply regardless of `check` settings.
+
+## This repository
+
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `contentPredicate: schema:text` so page bodies participate in SPARQL when needed.
+
+## Related
+
+- [[Global_Options]] — `-c` and `--input-dir`
+- [[CLI_check]] — running audits
+- [[Authoring_Guide]] — shapes and frontmatter

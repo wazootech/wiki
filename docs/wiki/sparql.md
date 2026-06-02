@@ -7,9 +7,9 @@ description: Standard query language and protocol for RDF.
 
 # SPARQL
 
-**SPARQL** (Recursive acronym for SPARQL Protocol and RDF Query Language) is an [[rdf]] query language—that is, a semantic query language for databases—able to retrieve and manipulate data stored in RDF format.
+**SPARQL** (Recursive acronym for SPARQL Protocol and RDF Query Language) is an [[RDF]] query language—that is, a semantic query language for databases—able to retrieve and manipulate data stored in RDF format.
 
-It is utilized within the [[llm-wiki-cli]] `render` pipeline to populate tables based on inline graph queries.
+It is utilized within the [[LLM_Wiki_CLI]] `render` pipeline to populate tables based on inline graph queries.
 
 ## Common prefixes
 
@@ -63,6 +63,7 @@ ORDER BY ?class
 
 | Class |
 | --- |
+| https://schema.org/CreativeWork |
 | https://schema.org/Person |
 | https://schema.org/SoftwareApplication |
 | https://schema.org/TechArticle |

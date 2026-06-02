@@ -9,6 +9,6 @@ description: JavaScript Object Notation for Linked Data.
 
 **JSON-LD** (JSON for Linked Data) is a lightweight Linked Data format. It is easy for humans to read and write, and easy for machines to parse and generate. It provides a way to create network of standards-based, machine-readable data across the Web.
 
-It is a standard derived from [[json]] that provides a way to serialize [[rdf]] in JSON format.
+It is a standard derived from [[JSON]] that provides a way to serialize [[RDF]] in JSON format.
 
-The [[llm-wiki-cli]] can compile vault contents into JSON-LD using the `wiki export` command.
+The [[LLM_Wiki_CLI]] can compile vault contents into JSON-LD using the `wiki export` command.

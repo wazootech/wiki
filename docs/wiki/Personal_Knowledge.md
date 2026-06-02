@@ -52,28 +52,45 @@ ORDER BY ?name
 
 | Topic | Name |
 | --- | --- |
-| [[css]] | CSS |
-| [[csv]] | CSV |
-| [[negotiation]] | Content negotiation |
-| [[farzapedia]] | Farzapedia and personal AI wikis |
-| [[html]] | HTML |
-| [[hello-world]] | Hello World |
-| [[json]] | JSON |
-| [[json-ld]] | JSON-LD |
-| [[javascript]] | JavaScript |
-| [[llm-wiki]] | LLM Wiki |
-| [[microdata]] | Microdata |
+| https://wazootech.github.io/wiki/wiki/AuthoringGuide | Authoring guide |
+| https://wazootech.github.io/wiki/wiki/css | CSS |
+| https://wazootech.github.io/wiki/wiki/csv | CSV |
+| https://wazootech.github.io/wiki/wiki/negotiation | Content negotiation |
+| https://wazootech.github.io/wiki/wiki/DeployingToGitHubPages | Deploying to GitHub Pages |
+| https://wazootech.github.io/wiki/wiki/DesignPhilosophies | Design philosophies |
+| https://wazootech.github.io/wiki/wiki/farzapedia | Farzapedia and personal AI wikis |
+| https://wazootech.github.io/wiki/wiki/GettingStarted | Getting started |
+| https://wazootech.github.io/wiki/wiki/GlobalOptions | Global options |
+| https://wazootech.github.io/wiki/wiki/GraphCache | Graph cache |
+| https://wazootech.github.io/wiki/wiki/html | HTML |
+| https://wazootech.github.io/wiki/wiki/hello-world | Hello World |
+| https://wazootech.github.io/wiki/wiki/json | JSON |
+| https://wazootech.github.io/wiki/wiki/json-ld | JSON-LD |
+| https://wazootech.github.io/wiki/wiki/javascript | JavaScript |
+| https://wazootech.github.io/wiki/wiki/llm-wiki | LLM Wiki |
+| https://wazootech.github.io/wiki/wiki/microdata | Microdata |
 | https://wazootech.github.io/wiki/wiki/microdata-example | Microdata in LLM Wiki |
-| [[notation3]] | Notation3 |
-| [[owl]] | OWL |
+| https://wazootech.github.io/wiki/wiki/notation3 | Notation3 |
+| https://wazootech.github.io/wiki/wiki/owl | OWL |
+| https://wazootech.github.io/wiki/wiki/ObsidianIntegration | Obsidian integration |
 | https://schema.org/PersonShapeDefinition | Person Shape |
-| [[personal-knowledge]] | Personal Knowledge |
-| [[ontology]] | Project Ontology |
-| [[rdf]] | RDF |
-| [[shacl]] | SHACL |
-| [[sparql]] | SPARQL |
-| [[semantic-web]] | Semantic Web |
-| [[turtle]] | Turtle |
-| [[typescript]] | TypeScript |
+| https://wazootech.github.io/wiki/wiki/personal-knowledge | Personal Knowledge |
+| https://wazootech.github.io/wiki/wiki/ontology | Project Ontology |
+| https://wazootech.github.io/wiki/wiki/rdf | RDF |
+| https://wazootech.github.io/wiki/wiki/shacl | SHACL |
+| https://wazootech.github.io/wiki/wiki/sparql | SPARQL |
+| https://wazootech.github.io/wiki/wiki/semantic-web | Semantic Web |
+| https://wazootech.github.io/wiki/wiki/turtle | Turtle |
+| https://wazootech.github.io/wiki/wiki/typescript | TypeScript |
+| https://wazootech.github.io/wiki/wiki/WikiConfiguration | Wiki configuration |
+| [[CLI_build]] | wiki build |
+| [[CLI_check]] | wiki check |
+| [[CLI_export]] | wiki export |
+| [[CLI_init]] | wiki init |
+| [[CLI_query]] | wiki query |
+| [[CLI_render]] | wiki render |
+| [[CLI_serve]] | wiki serve |
+| [[CLI_upgrade]] | wiki upgrade |
+| [[CLI_view]] | wiki view |
 <!-- sparql:end -->
 

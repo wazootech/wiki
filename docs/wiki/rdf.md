@@ -7,7 +7,7 @@ description: Resource Description Framework, a standard for data interchange on 
 
 # RDF
 
-The **Resource Description Framework (RDF)** is a standard model for data interchange on the Web. It is the foundational data structure of the [[semantic-web]].
+The **Resource Description Framework (RDF)** is a standard model for data interchange on the Web. It is the foundational data structure of the [[Semantic_Web]].
 
 RDF facilitates data merging even if the underlying schemas differ, and it specifically supports the evolution of schemas over time without requiring all the data consumers to be changed.
 
@@ -15,6 +15,6 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 ## Related standards
 
-- [[turtle]]: A compact, human-friendly serialization syntax for RDF.
-- [[json-ld]]: A lightweight Linked Data format that uses JSON.
-- [[shacl]]: A language for validating RDF graphs.
+- [[Turtle]]: A compact, human-friendly serialization syntax for RDF.
+- [[JSON_LD]]: A lightweight Linked Data format that uses JSON.
+- [[SHACL]]: A language for validating RDF graphs.

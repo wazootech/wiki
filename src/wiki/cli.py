@@ -69,7 +69,7 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. filename kebab-case) and update internal wikilinks.")
+@click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. rename files to match filenamePattern) and update internal wikilinks.")
 @click.option("-v", "--verbose", is_flag=True, help="Show style/guideline warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj

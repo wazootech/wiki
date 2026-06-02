@@ -34,7 +34,7 @@ jobs:
       run: uv run python -m unittest discover -s tests
 
     - name: Run Docs Wiki Style and SHACL Audits
-      run: uv run wiki -c docs/wiki.json check --strict -v
+      run: uv run wiki -c docs/wiki.yaml check --strict -v
 
     - name: Verify Docs Wiki SPARQL Blocks are Up to Date
-      run: uv run wiki -c docs/wiki.json render --check
+      run: uv run wiki -c docs/wiki.yaml render --check

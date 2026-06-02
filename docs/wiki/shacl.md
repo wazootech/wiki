@@ -7,9 +7,9 @@ description: Shapes Constraint Language for validating RDF graphs.
 
 # SHACL
 
-The **Shapes Constraint Language (SHACL)** is a W3C recommendation for validating [[rdf]] graphs against a set of conditions. These conditions are provided as shapes and other constructs expressed in the form of an RDF graph itself.
+The **Shapes Constraint Language (SHACL)** is a W3C recommendation for validating [[RDF]] graphs against a set of conditions. These conditions are provided as shapes and other constructs expressed in the form of an RDF graph itself.
 
-In this vault, SHACL is used to enforce structure via the [[llm-wiki-cli]] validation engine.
+In this vault, SHACL is used to enforce structure via the [[LLM_Wiki_CLI]] validation engine.
 
 ## Defining custom SHACL shapes (validation)
 

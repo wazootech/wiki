@@ -7,7 +7,7 @@ description: A persistent knowledge codebase for AI-assisted knowledge managemen
 
 # LLM Wiki
 
-An **LLM Wiki** is a modern design pattern for [[personal-knowledge]] (PKM). It treats a user's personal knowledge repository as a clean, interlinked, machine-readable "codebase" that growing AI agents can operate on over time.
+An **LLM Wiki** is a modern design pattern for [[Personal_Knowledge]] (PKM). It treats a user's personal knowledge repository as a clean, interlinked, machine-readable "codebase" that growing AI agents can operate on over time.
 
 This replaces fleeting AI chats and unstructured RAG databases with a persistent, compounding core of intelligence.
 
@@ -25,7 +25,7 @@ He highlighted that traditional AI chat windows are "stateless" and fleeting, fo
 
 ## Farza's follow-up & Farzapedia
 
-Developer **Farza** (founder of buildspace) created [[farzapedia]] as the definitive real-world proof of concept for the LLM Wiki pattern:
+Developer **Farza** (founder of buildspace) created [[Farzapedia]] as the definitive real-world proof of concept for the LLM Wiki pattern:
 
 * **The Input**: Fed approximately **2,500 unstructured entries** (comprising personal diary entries, Apple Notes, and raw iMessage histories) to an LLM agent.
 * **The Compilation**: The LLM agent parsed, categorized, and synthesized the raw materials, outputting **~400 beautifully structured, clean, and heavily interlinked wiki articles**.
@@ -34,7 +34,7 @@ Developer **Farza** (founder of buildspace) created [[farzapedia]] as the defini
 
 ## Integrating the LLM Wiki in this vault
 
-This [[llm-wiki-cli]] repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
+This [[LLM_Wiki_CLI]] repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 2. **Procedural Automation**: Using subcommands like `wiki check` to validate shapes, and `wiki render` to execute SPARQL queries dynamically, compiling the graph's intelligence back into static Markdown.
