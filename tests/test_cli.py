@@ -347,7 +347,7 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             self.assertEqual(result.exit_code, 0)
 
             self.assertIn("Alpha", alpha.read_text(encoding="utf-8"))
-            self.assertNotIn("| Name |", beta.read_text(encoding="utf-8"))
+            self.assertNotRegex(beta.read_text(encoding="utf-8"), r"\| Name\s+\|")
 
     def test_cli_render_glob_scope(self) -> None:
         runner = CliRunner()
@@ -375,8 +375,8 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--glob", "people/*.md", "--no-inference"])
             self.assertEqual(result.exit_code, 0)
 
-            self.assertIn("| Name |", person.read_text(encoding="utf-8"))
-            self.assertNotIn("| Name |", project.read_text(encoding="utf-8"))
+            self.assertRegex(person.read_text(encoding="utf-8"), r"\| Name\s+\|")
+            self.assertNotRegex(project.read_text(encoding="utf-8"), r"\| Name\s+\|")
 
     def test_cli_render_rejects_non_markdown_file(self) -> None:
         runner = CliRunner()
@@ -734,7 +734,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             # Check that the source file itself was updated inline
             updated_content = file_path.read_text(encoding="utf-8")
             self.assertIn("Charlie", updated_content)
-            self.assertIn("| Name |", updated_content) # It constructs a markdown table
+            self.assertRegex(updated_content, r"\| Name\s+\|")  # It constructs a markdown table
 
             # Check that the generated HTML contains the rendered content
             html_content = (output_dir / "wiki" / "person" / "index.html").read_text(encoding="utf-8")

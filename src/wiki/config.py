@@ -13,8 +13,6 @@ from rdflib.namespace import XSD
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MARKDOWN_FLAVOR = "obsidian"
-VALID_MARKDOWN_FLAVORS = {"obsidian", "gfm"}
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
 VALID_URL_STYLES = {"dir", "file"}
@@ -72,7 +70,6 @@ class WikiConfig:
         context: Context | None = None,
         content_predicate: str | None = None,
         uri_ext: bool = False,
-        markdown_flavor: str = DEFAULT_MARKDOWN_FLAVOR,
         filename_pattern: str | None = None,
         base_url: str = DEFAULT_BASE_URL,
         url_style: str = DEFAULT_URL_STYLE,
@@ -87,13 +84,11 @@ class WikiConfig:
         self.check = check if check is not None else {
             "filenamePattern": "warning",
             "internalLinks": "warning",
-            "markdownFlavor": "warning",
         }
         self.context = context if context is not None else Context({"wiki": wiki_base}, wiki_base=wiki_base)
         self.context.wiki_base = wiki_base
         self.content_predicate = content_predicate
         self.uri_ext = uri_ext
-        self.markdown_flavor = normalize_markdown_flavor(markdown_flavor)
         self.filename_pattern = filename_pattern
         self.base_url = base_url.rstrip("/") if base_url else ""
         self.url_style = normalize_url_style(url_style)
@@ -184,7 +179,6 @@ class WikiConfig:
                             context=context_obj,
                             content_predicate=data.get("content_predicate") or data.get("contentPredicate"),
                             uri_ext=uri_ext,
-                            markdown_flavor=data.get("markdown_flavor") or data.get("markdownFlavor") or DEFAULT_MARKDOWN_FLAVOR,
                             filename_pattern=data.get("filename_pattern") or data.get("filenamePattern"),
                             base_url=data.get("base_url") if data.get("base_url") is not None else data.get("baseUrl", DEFAULT_BASE_URL),
                             url_style=data.get("url_style") or data.get("urlStyle") or DEFAULT_URL_STYLE,
@@ -205,11 +199,7 @@ def _as_list(value: Any) -> list[Any]:
     return []
 
 
-def normalize_markdown_flavor(value: str | None) -> str:
-    normalized = str(value or DEFAULT_MARKDOWN_FLAVOR).strip().lower()
-    if normalized not in VALID_MARKDOWN_FLAVORS:
-        raise ValueError(f"Invalid markdownFlavor: {value}")
-    return normalized
+
 
 
 def normalize_url_style(value: str | None) -> str:

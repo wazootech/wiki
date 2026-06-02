@@ -179,7 +179,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
         try:
             data = document_data_from_path(file_path)
 
-            if file_path.suffix.lower() == ".md" and config.markdown_flavor == "obsidian":
+            if file_path.suffix.lower() == ".md":
                 content = file_path.read_text(encoding="utf-8")
                 wikilinks = WIKILINK_REGEX.findall(content)
                 for link in wikilinks:
@@ -210,18 +210,7 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
     return warnings
 
 
-def audit_markdown_flavor(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    warnings: list[str] = []
-    if config.markdown_flavor != "gfm":
-        return warnings
-    for md_file in iter_markdown_files(config):
-        md_slug = file_slug_for_path(config, md_file)
-        if file_filter is not None and md_slug not in file_filter:
-            continue
-        content = md_file.read_text(encoding="utf-8")
-        if WIKILINK_REGEX.search(content):
-            warnings.append(f"In {md_slug}.md: Wikilink syntax is not enabled in markdownFlavor: gfm.")
-    return warnings
+
 
 
 def _heading_ids(markdown: str) -> set[str]:
@@ -283,7 +272,7 @@ def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
 
 
 def autofix_hygiene(config: WikiConfig) -> dict[str, Any]:
-    """Autofix style issues (currently: filename kebab-case + wikilink updates)."""
+    """Autofix style issues (currently: filename normalization + wikilink updates)."""
     return {"renamed": [], "updated_wikilinks": False}
 
 
@@ -337,8 +326,7 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
         filename_issues = audit_filenames(config)
         process_issues("filenamePattern", filename_issues)
 
-        flavor_issues = audit_markdown_flavor(config)
-        process_issues("markdownFlavor", flavor_issues)
+
 
         link_issues = audit_internal_links(config)
         process_issues("internalLinks", link_issues)

@@ -1,0 +1,17 @@
+inputDirs:
+  - wiki
+wikiBase: https://wazootech.github.io/wiki/wiki/
+baseUrl: /wiki
+urlStyle: dir
+contentPredicate: schema:text
+filenamePattern: "[A-Za-z0-9_()-]+"
+check:
+  filenamePattern: warning
+  internalLinks: warning
+context:
+  schema: https://schema.org/
+  wiki: https://wazootech.github.io/wiki/wiki/
+  foaf: http://xmlns.com/foaf/0.1/
+  dcterms: http://purl.org/dc/terms/
+  sh: http://www.w3.org/ns/shacl#
+  xsd: http://www.w3.org/2001/XMLSchema#

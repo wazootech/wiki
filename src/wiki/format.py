@@ -7,7 +7,7 @@ from typing import Any
 
 
 def _wiki_link(s: str, wiki_base: str, known_slugs: set[str] | None = None) -> str:
-    """Convert a wiki URI to a [[slug]] wikilink if applicable."""
+    """Convert a wiki URI to a standard markdown link if applicable."""
     if not (wiki_base and s.startswith(wiki_base)):
         return s
     slug = s[len(wiki_base):]
@@ -16,7 +16,7 @@ def _wiki_link(s: str, wiki_base: str, known_slugs: set[str] | None = None) -> s
     if "/" not in slug:
         if known_slugs is not None and slug not in known_slugs:
             return s
-        return f"[[{slug}]]"
+        return f"[{slug}]({slug}.md)"
     return s
 
 
@@ -70,7 +70,7 @@ def table_format(result: Any) -> str:
 
 
 def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
-    """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering wiki links when applicable."""
+    """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering standard markdown links when applicable."""
     rows = list(result)
     if not rows:
         return "(no results)"

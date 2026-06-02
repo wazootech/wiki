@@ -8,10 +8,11 @@ import re
 from typing import Any
 
 import click
+import mdformat
 from markdown_it import MarkdownIt
 
 from .format import run_query
-from mdit_py_plugins.wikilink import wikilink_plugin
+from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 from .paths import iter_markdown_files, page_routes, route_for_markdown_file
 
 # Matches the starting comment, query inside, and ending comment block with SPARQL inside
@@ -80,7 +81,10 @@ def render_markdown_files(
                 file_errors += 1
                 return str(match.group(0))
         new_content = SPARQL_BLOCK_REGEX.sub(replacer, content)
-        if modified and new_content != content:
+        if modified:
+            new_content = mdformat.text(new_content, extensions=["wikilink", "frontmatter", "gfm"])
+            if new_content == content:
+                continue
             try:
                 rel = str(md_file.relative_to(Path.cwd()))
             except ValueError:

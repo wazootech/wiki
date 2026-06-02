@@ -15,7 +15,7 @@ from wiki.paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from wiki.audit import audit_internal_links, audit_markdown_flavor
+from wiki.audit import audit_internal_links
 from wiki.assets import build_asset_manifest, iter_asset_files
 
 
@@ -159,17 +159,7 @@ class TestWikiPaths(unittest.TestCase):
             self.assertEqual(len(issues), 1)
             self.assertIn("missing heading '#missing'", issues[0])
 
-    def test_gfm_reports_wikilink_markdown_flavor_warning(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "A.md").write_text("# A\n\nSee [[B]].", encoding="utf-8")
-            config = WikiConfig(input_dirs=[wiki], markdown_flavor="gfm", config_root=root)
 
-            issues = audit_markdown_flavor(config)
-            self.assertEqual(len(issues), 1)
-            self.assertIn("Wikilink syntax is not enabled", issues[0])
 
     def test_asset_manifest_preserves_config_root_relative_path(self) -> None:
         with TemporaryDirectory() as tmpdir:

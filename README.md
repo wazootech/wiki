@@ -83,7 +83,7 @@ wiki check
 # Check a single file specifically
 wiki check wiki/Gregory_House.md
 
-# Autofix hygiene issues (rename non-kebab-case files + update wikilinks)
+# Autofix hygiene issues (rename files to match filenamePattern + update wikilinks)
 wiki check --fix
 
 # Run with verbose output to show style/guideline warnings
@@ -93,7 +93,7 @@ wiki check -v
 wiki check --strict
 ```
 
-Use `filenamePattern` when a project wants a custom filename hygiene rule. The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
+Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `LLM_Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
 
 ```yaml
 filenamePattern: "[A-Za-z0-9_()-]+"
@@ -349,10 +349,10 @@ jobs:
         run: uv sync
       
       - name: Run Docs Wiki Style and SHACL Audits
-        run: uv run wiki -c docs/wiki.json check --strict -v
+        run: uv run wiki -c docs/wiki.yaml check --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.json build --output-dir _site --base-url /wiki
+        run: uv run wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -554,7 +554,6 @@ inputDirs:
   - wiki
 assetDirs:
   - assets
-markdownFlavor: obsidian
 baseUrl: /wiki
 urlStyle: dir
 filenamePattern: "[A-Za-z0-9_()-]+"
@@ -565,7 +564,6 @@ contentPredicate: schema:text # Opt-in full-text markdown body auto-injection
 check:
   filenamePattern: warning   # "error" | "warning" | "off"
   internalLinks: warning     # "error" | "warning" | "off"
-  markdownFlavor: warning    # "error" | "warning" | "off"
 
 context:
   schema: https://schema.org/
@@ -576,10 +574,5 @@ context:
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
 *   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
-*   [0001-context-centric-configuration.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.
-*   [0002-userland-printing.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0002-userland-printing.md) — Architectural Decision Record (ADR) on adopting userland printing filters.
-*   [0003-silence-is-golden.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0003-silence-is-golden.md) — Architectural Decision Record (ADR) on silent default behaviors.
-*   [0004-unified-check-and-wikiconfig.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0004-unified-check-and-wikiconfig.md) — Architectural Decision Record (ADR) on unified check command and WikiConfig.
-*   [0005-streamlined-cli-architecture.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0005-streamlined-cli-architecture.md) — Architectural Decision Record (ADR) on streamlined CLI architecture.
 
 

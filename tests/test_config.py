@@ -46,7 +46,6 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.input_dirs, [Path("wiki")])
         self.assertEqual(config.asset_dirs, [])
         self.assertFalse(config.uri_ext)
-        self.assertEqual(config.markdown_flavor, "obsidian")
         self.assertEqual(config.base_url, "/wiki")
         self.assertEqual(config.url_style, "dir")
         self.assertIsNone(config.filename_pattern)
@@ -71,7 +70,6 @@ class TestWikiConfig(unittest.TestCase):
                     "filenamePattern": "error"
                 },
                 "filenamePattern": "[A-Za-z0-9_()-]+",
-                "markdownFlavor": "gfm",
                 "baseUrl": "/docs",
                 "urlStyle": "file",
                 "context": {
@@ -86,7 +84,6 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.exclude, ["wiki/drafts/**", "assets/private/**"])
             self.assertEqual(config.check.get("filenamePattern"), "error")
             self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+")
-            self.assertEqual(config.markdown_flavor, "gfm")
             self.assertEqual(config.base_url, "/docs")
             self.assertEqual(config.url_style, "file")
             self.assertIn("custom_pref", config.namespaces)

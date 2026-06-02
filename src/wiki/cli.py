@@ -69,7 +69,7 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. filename kebab-case) and update internal wikilinks.")
+@click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. rename files to match filenamePattern) and update internal wikilinks.")
 @click.option("-v", "--verbose", is_flag=True, help="Show style/guideline warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
@@ -474,14 +474,13 @@ def init(force: bool) -> None:
         context_map["dcterms"] = "http://purl.org/dc/terms/"
 
     cfg = {
-        "inputDirs": ["wiki"],
-        "wikiBase": wiki_base,
-        "markdownFlavor": "obsidian",
-        "baseUrl": "/wiki",
-        "urlStyle": "dir",
-        "check": {"filenamePattern": "warning", "internalLinks": "warning", "markdownFlavor": "warning"},
-        "context": context_map,
-    }
+         "inputDirs": ["wiki"],
+         "wikiBase": wiki_base,
+         "baseUrl": "/wiki",
+         "urlStyle": "dir",
+         "check": {"filenamePattern": "warning", "internalLinks": "warning"},
+         "context": context_map,
+     }
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
     (wiki_dir / "index.md").write_text(
@@ -514,6 +513,59 @@ def init(force: bool) -> None:
 
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
     click.echo("Initialized wiki.yaml and wiki/ starter files.")
+
+
+@main.command()
+@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@click.option("--check", is_flag=True, help="Check formatting without writing files back. Exits with code 1 if any files would change.")
+@click.option("-v", "--verbose", is_flag=True, help="Print names of formatted files.")
+@click.pass_obj
+def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> None:
+    """Format markdown vault pages using mdformat."""
+    import mdformat
+    from .paths import iter_markdown_files
+
+    if file:
+        if file.suffix.lower() != ".md":
+            click.echo(f"Error: fmt only supports markdown files, got {file.name}.", err=True)
+            sys.exit(1)
+        files = [file]
+    else:
+        files = iter_markdown_files(config)
+
+    stale_files = []
+    success_count = 0
+
+    for f in files:
+        try:
+            original = f.read_text(encoding="utf-8")
+            formatted = mdformat.text(original, extensions=["wikilink", "frontmatter", "gfm"])
+            if original != formatted:
+                stale_files.append(f)
+                if not check:
+                    f.write_text(formatted, encoding="utf-8")
+                    if verbose:
+                        click.echo(f"Formatted {f.name}")
+                    success_count += 1
+            else:
+                if verbose:
+                    click.echo(f"Already formatted {f.name}")
+        except Exception as e:
+            click.echo(f"Error formatting {f.name}: {e}", err=True)
+            sys.exit(1)
+
+    if check:
+        if stale_files:
+            click.echo("Error: The following files are not correctly formatted:", err=True)
+            for f in stale_files:
+                click.echo(f"  - {f.name}", err=True)
+            sys.exit(1)
+        if verbose:
+            click.echo("All files are correctly formatted.")
+        return
+
+    if verbose and not check:
+        click.echo(f"Format complete. Reformatted {success_count} files.")
 
 
 @main.command()

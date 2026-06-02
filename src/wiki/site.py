@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import quote
 
 from markdown_it import MarkdownIt
-from mdit_py_plugins.wikilink import wikilink_plugin
+from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
 from .headings import GitHubHeadingSlugger, heading_slug
@@ -91,12 +91,10 @@ def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
-    markdown_flavor: str = "obsidian",
     current_route: str = "",
 ) -> str:
     md = MarkdownIt("gfm-like", {"linkify": False})
-    if markdown_flavor == "obsidian":
-        md.use(wikilink_plugin)
+    md.use(wikilink_plugin)
     heading_slugger = GitHubHeadingSlugger()
 
     def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
@@ -277,7 +275,6 @@ def build_site(
             body,
             base_url=resolved_base_url,
             url_style=resolved_url_style,
-            markdown_flavor=config.markdown_flavor,
             current_route=doc_slug,
         )
         pages.append(VirtualPage(

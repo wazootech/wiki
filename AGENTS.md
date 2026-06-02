@@ -5,7 +5,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 ## Vault rules
 
 ### Clean filenames
-- **Rule:** Default user-facing examples should prefer Wikipedia-style filenames for ordinary pages (e.g., `Opal_Security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
+- **Rule:** Default user-facing examples should prefer **Wikipedia-style** filenames for ordinary pages (e.g., `Opal_Security.md`, `Gregory_House.md`) — preserved capitalization and underscores. Do not default to lowercase kebab-case (`opal-security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
 - **Enforcer:** `check:filenames` (Warning by default)
 
 ### Internal links
