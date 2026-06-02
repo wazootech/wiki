@@ -1,5 +1,4 @@
 ---
-id: schema:SoftwareApplicationShape
 type: sh:NodeShape
 name: SoftwareApplication Shape
 description: Validation rules for software inventory items.

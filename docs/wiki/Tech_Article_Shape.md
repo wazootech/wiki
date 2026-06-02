@@ -1,5 +1,4 @@
 ---
-id: schema:TechArticleShape
 type: sh:NodeShape
 name: TechArticle Shape
 description: Basic validation rules for TechArticle documents.

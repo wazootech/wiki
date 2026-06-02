@@ -36,5 +36,8 @@ jobs:
     - name: Run Docs Wiki Style and SHACL Audits
       run: uv run wiki -c docs/wiki.yaml check --strict -v
 
+    - name: Verify Docs Wiki Formatting
+      run: uv run wiki -c docs/wiki.yaml fmt --check -v
+
     - name: Verify Docs Wiki SPARQL Blocks are Up to Date
       run: uv run wiki -c docs/wiki.yaml render --check

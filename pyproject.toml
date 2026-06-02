@@ -13,13 +13,19 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "markdown-it-py>=3.0.0",
     "rich>=13.7.0",
+    "mdformat>=0.7.19",
+    "mdformat-frontmatter>=2.0.1",
+    "mdformat-gfm>=0.3.5",
 ]
 
 [project.scripts]
 wiki = "wiki.__main__:main"
 
+[project.entry-points."mdformat.parser_extension"]
+wikilink = "wiki.mdformat_wikilink"
+
 [tool.setuptools]
-packages = ["wiki", "mdit_py_plugins"]
+packages = ["wiki"]
 package-dir = {"" = "src"}
 
 [tool.uv]

@@ -1,5 +1,4 @@
 ---
-id: wiki:GettingStarted
 type: TechArticle
 name: Getting started
 description: Install the wiki CLI and scaffold a new vault.
@@ -28,7 +27,7 @@ From an empty directory:
 wiki init
 ```
 
-`wiki init` interactively writes `wiki.yaml` and a starter `wiki/` folder (`index.md`, `Person_Shape.md`). See [[CLI_init]] for prompts and `--force` behavior.
+`wiki init` interactively writes `wiki.yaml` and a starter `wiki/` folder (`index.md`, `Person_Shape.md`). See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
 
 ## Daily workflow
 
@@ -58,10 +57,10 @@ wiki -c docs/wiki.yaml render
 wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki
 ```
 
-See [[Deploying_to_GitHub_Pages]] for the GitHub Actions workflow.
+See [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md) for the GitHub Actions workflow.
 
 ## Next steps
 
-- [[Wiki_Configuration]] — tune `inputDirs`, `context`, and check severities
-- [[Authoring_Guide]] — document types, shapes, and wikilinks
-- [[CLI_check]] — validation and `--fix`
+- [Wiki_Configuration](Wiki_Configuration.md) — tune `inputDirs`, `context`, and check severities
+- [Style_Guide](Style_Guide.md) — document types, shapes, and wikilinks
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — validation and `--fix`

@@ -1,5 +1,4 @@
 ---
-id: wiki:DesignPhilosophies
 type: TechArticle
 name: Design philosophies
 description: Unix-style CLI design for the LLM Wiki tool.
@@ -9,24 +8,40 @@ description: Unix-style CLI design for the LLM Wiki tool.
 
 ## Silence is golden
 
-[[CLI_check]], [[CLI_render]], and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` so warnings fail loudly.
+[Wiki_Subcommand_check](Wiki_Subcommand_check.md), [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` so warnings fail loudly.
 
 ## Pipes and filters
 
-The CLI does not print to paper or own format-specific drivers. It writes **table**, **json**, **csv**, **turtle**, and other formats to stdout so you can compose Unix tools:
+The CLI does not print to paper or own format-specific drivers. Instead, it writes raw formats (**table**, **json**, **csv**, **turtle**, etc.) to standard output, making it highly composable with standard system tools.
+
+### Unix/macOS (using `pr` and `lp`/`lpr`)
+
+To format page margins and headers before sending directly to a connected printer:
 
 ```bash
-wiki query "SELECT ?name WHERE { ?s schema:name ?name }" | pr -h "Names" | lp
+# Print a document
+cat wiki/Getting_Started.md | pr -h "Getting Started" | lp
+
+# Print SPARQL query results
+wiki query "SELECT ?name WHERE { ?s schema:name ?name }" | pr -h "Wiki Names" | lp
+```
+
+### Windows (using PowerShell `Out-Printer`)
+
+To stream content directly to your default Windows printer:
+
+```powershell
+# Print a document
+Get-Content wiki/Getting_Started.md | Out-Printer
+
+# Print SPARQL query results
+wiki query "SELECT ?name WHERE { ?s schema:name ?name }" | Out-Printer
 ```
 
 ## Flat command surface
 
-Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options [[Global_Options]] apply everywhere.
+Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options [Wiki_CLI](Wiki_CLI.md#global-options) apply everywhere.
 
 ## Userland over platform lock-in
 
 Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation.
-
-## Related ADRs
-
-Repository architecture notes live in `docs/adr/` (context-centric config, unified check, silence is golden, streamlined CLI).

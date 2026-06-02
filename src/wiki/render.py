@@ -11,7 +11,7 @@ import click
 from markdown_it import MarkdownIt
 
 from .format import run_query
-from mdit_py_plugins.wikilink import wikilink_plugin
+from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 from .paths import iter_markdown_files, page_routes, route_for_markdown_file
 
 # Matches the starting comment, query inside, and ending comment block with SPARQL inside

@@ -554,7 +554,6 @@ inputDirs:
   - wiki
 assetDirs:
   - assets
-markdownFlavor: obsidian
 baseUrl: /wiki
 urlStyle: dir
 filenamePattern: "[A-Za-z0-9_()-]+"
@@ -565,7 +564,6 @@ contentPredicate: schema:text # Opt-in full-text markdown body auto-injection
 check:
   filenamePattern: warning   # "error" | "warning" | "off"
   internalLinks: warning     # "error" | "warning" | "off"
-  markdownFlavor: warning    # "error" | "warning" | "off"
 
 context:
   schema: https://schema.org/
@@ -576,10 +574,5 @@ context:
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
 *   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
-*   [0001-context-centric-configuration.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0001-context-centric-configuration.md) — Architectural Decision Record (ADR) on context naming.
-*   [0002-userland-printing.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0002-userland-printing.md) — Architectural Decision Record (ADR) on adopting userland printing filters.
-*   [0003-silence-is-golden.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0003-silence-is-golden.md) — Architectural Decision Record (ADR) on silent default behaviors.
-*   [0004-unified-check-and-wikiconfig.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0004-unified-check-and-wikiconfig.md) — Architectural Decision Record (ADR) on unified check command and WikiConfig.
-*   [0005-streamlined-cli-architecture.md](https://github.com/wazootech/wiki/blob/main/docs/adr/0005-streamlined-cli-architecture.md) — Architectural Decision Record (ADR) on streamlined CLI architecture.
 
 

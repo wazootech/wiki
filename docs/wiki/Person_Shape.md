@@ -1,5 +1,4 @@
 ---
-id: schema:PersonShapeDefinition
 type: TechArticle
 name: Person Shape
 description: SHACL constraint shape defining the mandatory fields for Person records.

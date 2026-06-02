@@ -1,5 +1,4 @@
 ---
-id: wiki:WikiConfiguration
 type: TechArticle
 name: Wiki configuration
 description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
@@ -40,30 +39,29 @@ JSON configs may use `"context"` or `"@context"` for prefix maps (JSON-LD compat
 
 ## Paths and vault layout
 
-| Key | Aliases | Default | Purpose |
-| --- | --- | --- | --- |
-| `inputDirs` | `input_dirs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
-| `assetDirs` | `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
-| `exclude` | — | `[]` | Glob patterns (POSIX paths relative to config root) skipped when indexing |
+| Key         | Aliases      | Default                            | Purpose                                                                   |
+| ----------- | ------------ | ---------------------------------- | ------------------------------------------------------------------------- |
+| `inputDirs` | `input_dirs` | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)       |
+| `assetDirs` | `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build`                                       |
+| `exclude`   | —            | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing |
 
 Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `baseUrl` and `urlStyle: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
 ## Wiki and RDF
 
-| Key | Aliases | Default | Purpose |
-| --- | --- | --- | --- |
-| `wikiBase` | `wiki_base` | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs |
-| `context` / `@context` | — | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata |
-| `contentPredicate` | `content_predicate` | — | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `uriExt` | `uri_ext` | `false` | Include file extension in generated URIs when true |
+| Key                    | Aliases             | Default                                            | Purpose                                                                                                                   |
+| ---------------------- | ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `wikiBase`             | `wiki_base`         | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
+| `context` / `@context` | —                   | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and microdata                                                        |
+| `contentPredicate`     | `content_predicate` | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
+| `uriExt`               | `uri_ext`           | `false`                                            | Include file extension in generated URIs when true                                                                        |
 
 ## Site output
 
-| Key | Aliases | Default | Purpose |
-| --- | --- | --- | --- |
-| `baseUrl` | `base_url` | `/wiki` | URL prefix for built/served pages (`""` for site root) |
-| `urlStyle` | `url_style` | `dir` | `dir` → `slug/index.html`; `file` → `slug.html` |
-| `markdownFlavor` | `markdown_flavor` | `obsidian` | `obsidian` (wikilinks) or `gfm` |
+| Key        | Aliases     | Default | Purpose                                                |
+| ---------- | ----------- | ------- | ------------------------------------------------------ |
+| `baseUrl`  | `base_url`  | `/wiki` | URL prefix for built/served pages (`""` for site root) |
+| `urlStyle` | `url_style` | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
 
 CLI flags on `wiki build` and `wiki serve` can override `baseUrl` and `urlStyle` for a single run.
 
@@ -85,11 +83,10 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key | What it audits |
-| --- | --- |
+| Rule key          | What it audits                                                   |
+| ----------------- | ---------------------------------------------------------------- |
 | `filenamePattern` | Custom regex on filename stems (see top-level `filenamePattern`) |
-| `internalLinks` | Wikilinks and internal markdown links |
-| `markdownFlavor` | Wikilink syntax when flavor is `gfm` |
+| `internalLinks`   | Wikilinks and internal markdown links                            |
 
 Build-safety rules (unsafe URL characters, spaces in routes) always apply regardless of `check` settings.
 
@@ -99,6 +96,6 @@ Build-safety rules (unsafe URL characters, spaces in routes) always apply regard
 
 ## Related
 
-- [[Global_Options]] — `-c` and `--input-dir`
-- [[CLI_check]] — running audits
-- [[Authoring_Guide]] — shapes and frontmatter
+- [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--input-dir` global options
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — running audits
+- [Style_Guide](Style_Guide.md) — shapes and frontmatter

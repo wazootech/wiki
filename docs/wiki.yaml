@@ -1,7 +1,6 @@
 inputDirs:
   - wiki
 wikiBase: https://wazootech.github.io/wiki/wiki/
-markdownFlavor: obsidian
 baseUrl: /wiki
 urlStyle: dir
 contentPredicate: schema:text
@@ -9,7 +8,6 @@ filenamePattern: "[A-Za-z0-9_()-]+"
 check:
   filenamePattern: warning
   internalLinks: warning
-  markdownFlavor: warning
 context:
   schema: https://schema.org/
   wiki: https://wazootech.github.io/wiki/wiki/
