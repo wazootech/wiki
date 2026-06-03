@@ -233,7 +233,7 @@ a:hover {
   justify-content: space-between;
   align-items: flex-end;
   margin-left: 11em;
-  padding: 0 40px;
+  padding: 0 40px 0 0;
   background: #f6f6f6;
   border-bottom: 1px solid #a2a9b1;
 }
@@ -269,6 +269,7 @@ a:hover {
   color: #202122;
   position: relative;
   z-index: 2;
+  top: 1px;
 }
 
 .vector-tabs a:hover {
