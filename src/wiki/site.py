@@ -117,34 +117,6 @@ a:hover {
   color: #0645ad;
 }
 
-/* Top bar / Header */
-.mw-header {
-  height: 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-left: 11em;
-  padding: 0 40px;
-  background: #f6f6f6;
-  border-bottom: 1px solid #eaecf0;
-}
-
-.personal-list {
-  list-style: none;
-  display: flex;
-  gap: 16px;
-  font-size: 0.8em;
-  color: #72777d;
-}
-
-.personal-list a {
-  color: #54595d;
-}
-
-.personal-list a:hover {
-  color: #0645ad;
-}
-
 /* Search Box */
 #p-search {
   position: relative;
@@ -232,10 +204,22 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 16px;
   margin-left: 11em;
-  padding: 0 40px 0 0;
+  padding: 8px 40px 0 0;
   background: #f6f6f6;
   border-bottom: 1px solid #a2a9b1;
+}
+
+.vector-navigation-left,
+.vector-navigation-right {
+  display: flex;
+  align-items: flex-end;
+}
+
+.vector-navigation-search {
+  margin-left: auto;
+  padding-bottom: 6px;
 }
 
 .vector-tabs {
@@ -336,13 +320,11 @@ li {
   margin-bottom: 6px;
 }
 
-.personal-list,
 .vector-tabs {
   margin: 0;
   padding-left: 0;
 }
 
-.personal-list li,
 .vector-tabs li {
   margin-bottom: 0;
 }
@@ -673,13 +655,24 @@ textarea.wiki-textarea:focus {
     width: 100%;
     border-bottom: 1px solid #eaecf0;
   }
-  .mw-header {
-    margin-left: 0;
-    padding: 0 16px;
-  }
   .vector-navigation-wrapper {
     margin-left: 0;
-    padding: 0 16px;
+    padding: 8px 16px 0;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .vector-navigation-left,
+  .vector-navigation-right {
+    order: 2;
+  }
+  .vector-navigation-search {
+    order: 1;
+    width: 100%;
+    margin-left: 0;
+    padding-bottom: 8px;
+  }
+  .search-container {
+    width: 100%;
   }
   #content {
     margin-left: 0;
@@ -1016,31 +1009,21 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = D
   </div>
 </aside>
 
-<!-- Top Header with Personal Tools and Search -->
-<header class="mw-header">
-  <ul class="personal-list">
-    <li>Not logged in</li>
-    <li>Talk</li>
-    <li>Contributions</li>
-    <li>Create account</li>
-    <li>Log in</li>
-  </ul>
-  
-  <div id="p-search" role="search">
-    <div class="search-container">
-      <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-      <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
-    </div>
-    <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-  </div>
-</header>
-
 <!-- Vector tabs wrapper -->
 <div class="vector-navigation-wrapper">
   <div class="vector-navigation-left">
     <ul class="vector-tabs">
       <li class="selected"><a href="{base_url}/">Special Page</a></li>
     </ul>
+  </div>
+  <div class="vector-navigation-search">
+    <div id="p-search" role="search">
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
+      </div>
+      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+    </div>
   </div>
 </div>
 
@@ -1337,25 +1320,6 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   </div>
 </aside>
 
-<!-- Top Header with Personal Tools and Search -->
-<header class="mw-header">
-  <ul class="personal-list">
-    <li>Not logged in</li>
-    <li><a href="javascript:void(0)" onclick="switchTab('talk')">Talk</a></li>
-    <li>Contributions</li>
-    <li>Create account</li>
-    <li>Log in</li>
-  </ul>
-  
-  <div id="p-search" role="search">
-    <div class="search-container">
-      <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-      <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
-    </div>
-    <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-  </div>
-</header>
-
 <!-- Vector tabs wrapper -->
 <div class="vector-navigation-wrapper">
   <div class="vector-navigation-left">
@@ -1369,6 +1333,15 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
       <li id="ca-source"><a href="javascript:void(0)" onclick="switchTab('source')">View source</a></li>
       {metadata_tab_html}
     </ul>
+  </div>
+  <div class="vector-navigation-search">
+    <div id="p-search" role="search">
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
+      </div>
+      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+    </div>
   </div>
 </div>
 
