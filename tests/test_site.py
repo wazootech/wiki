@@ -24,6 +24,10 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+            self.assertIn('id="p-contents"', html)
+            self.assertIn('href="#early-life"', html)
+            self.assertIn('href="#firstHeading"', html)
 
     def test_title_falls_back_to_humanized_route(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -67,6 +71,7 @@ type: schema:Person
 name: Gregory Davidson
 knows: wiki:Ethan_Davidson
 owns: wiki:Bella_Davidson
+softwareVersion: 1.2
 url: https://example.com/gregory-davidson
 """,
                 encoding="utf-8",
@@ -100,6 +105,8 @@ name: Bella Davidson
             self.assertIn('href="/wiki/Ethan_Davidson/"', html)
             self.assertIn('href="/wiki/Bella_Davidson/"', html)
             self.assertIn('href="https://example.com/gregory-davidson"', html)
+            self.assertIn('<dt>softwareVersion</dt>', html)
+            self.assertNotIn('<dt>Softwareversion</dt>', html)
             self.assertIn("Infobox", html)
 
     def test_template_frontmatter_override_is_applied(self) -> None:
@@ -167,6 +174,28 @@ name: Project Atlas
 
         self.assertIn('id="title"', html)
         self.assertIn('id="api-readwrite"', html)
+
+    def test_render_highlights_fenced_code_with_known_language(self) -> None:
+        html = render_wiki_markdown('```python\nprint("<hello>")\n```\n')
+
+        self.assertIn('class="highlight"', html)
+        self.assertIn('class="language-python"', html)
+        self.assertIn("<span", html)
+        self.assertIn("&lt;hello&gt;", html)
+
+    def test_render_unknown_language_falls_back_to_plain_code(self) -> None:
+        html = render_wiki_markdown("```not-a-real-language\n<tag>\n```\n")
+
+        self.assertIn('class="language-not-a-real-language"', html)
+        self.assertIn("&lt;tag&gt;", html)
+        self.assertNotIn("<span", html)
+
+    def test_render_unlabeled_fence_remains_plain_code(self) -> None:
+        html = render_wiki_markdown("```\n<tag>\n```\n")
+
+        self.assertIn("<pre><code>", html)
+        self.assertIn("&lt;tag&gt;", html)
+        self.assertNotIn('class="highlight"', html)
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(

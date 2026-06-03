@@ -11,6 +11,10 @@ from typing import Any
 from urllib.parse import quote
 
 from markdown_it import MarkdownIt
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
@@ -22,53 +26,687 @@ from .parser import split_document_body
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 
+PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
+PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
+
 INLINE_CSS = """
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;max-width:960px;margin:0 auto;padding:20px;color:#1a1a2e;background:#fafafa}
-a{color:#2563eb;text-decoration:none}
-a:hover{text-decoration:underline}
-a.wikilink{color:#2563eb}
-h1,h2,h3,h4,h5,h6{margin-top:1.5em;margin-bottom:.5em;font-weight:600;line-height:1.3}
-h1{font-size:2em;border-bottom:2px solid #e5e7eb;padding-bottom:.3em}
-h2{font-size:1.5em;border-bottom:1px solid #e5e7eb;padding-bottom:.2em}
-h3{font-size:1.25em}
-p{margin-bottom:1em}
-ul,ol{margin-bottom:1em;padding-left:2em}
-pre{background:#1e1e2e;color:#cdd6f4;padding:16px;border-radius:8px;overflow-x:auto;margin-bottom:1em;font-size:.9em}
-code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.9em}
-pre code{background:0 0;padding:0}
-blockquote{border-left:4px solid #2563eb;padding-left:16px;color:#64748b;margin-bottom:1em}
-table{border-collapse:collapse;width:100%;margin-bottom:1em}
-th,td{border:1px solid #e5e7eb;padding:8px 12px;text-align:left}
-th{background:#f8fafc;font-weight:600}
-img{max-width:100%;height:auto}
-header{border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px}
-.pages-list,.backlinks-list,.outline-list{list-style:none;padding-left:0}
-.pages-list li,.backlinks-list li,.outline-list li{padding:4px 0}
-.pages-list .sub-page{padding-left:24px;font-size:.9em;color:#64748b}
-.outline-list .l3{padding-left:0}
-.outline-list .l4{padding-left:16px}
-.outline-list .l5{padding-left:32px}
-.outline-list .l6{padding-left:48px}
-.page-meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-top:32px}
-.page-meta h2{font-size:1.1em;border:none;margin-top:0}
-.page-shell{max-width:100%}
-.infobox{float:right;max-width:300px;margin:0 0 16px 24px;background:#fff;border:1px solid #dbe4f0;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06);clear:none}
-.infobox h2{font-size:1rem;border:none;margin:0 0 14px}
-.infobox dl{display:grid;grid-template-columns:minmax(96px,140px) 1fr;gap:10px 14px}
-.infobox dt{font-weight:600;color:#475569}
-.infobox dd{margin:0;min-width:0}
-.infobox-list{list-style:none;padding-left:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
-.infobox-list li{margin:0}
-.infobox-chip{display:inline-flex;align-items:center;border:1px solid #dbe4f0;border-radius:999px;padding:2px 10px;background:#f8fafc}
-.infobox-dict{display:grid;gap:6px}
-.infobox-dict-row{display:grid;grid-template-columns:minmax(72px,120px) 1fr;gap:8px}
-.infobox-key{font-weight:600;color:#475569}
-.template-label{display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.index-header{margin-bottom:24px}
-.site-title{font-size:1.5em;font-weight:700;color:#1a1a2e;text-decoration:none}
-@media (max-width: 768px){.infobox{float:none;max-width:100%;margin:0 0 16px 0}}
-""".strip()
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #202122;
+  background: #f6f6f6;
+  min-height: 100vh;
+}
+
+a {
+  color: #0645ad;
+  text-decoration: none;
+  transition: color 0.1s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #0b0080;
+}
+
+/* Sidebar Styling */
+#mw-navigation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 11em;
+  padding: 24px 16px;
+  font-size: 0.85em;
+  background: #f6f6f6;
+}
+
+#p-logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+#p-logo a {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+#p-logo a:hover {
+  transform: scale(1.05);
+}
+
+.logo-text {
+  display: block;
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #202122;
+  margin-top: 8px;
+  letter-spacing: -0.5px;
+}
+
+.portal {
+  margin-bottom: 20px;
+}
+
+.portal h3 {
+  font-size: 0.75em;
+  color: #72777d;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #c8ccd1;
+  padding-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.portal ul {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.portal li {
+  margin-bottom: 6px;
+}
+
+.portal a {
+  color: #54595d;
+}
+
+.portal a:hover {
+  color: #0645ad;
+}
+
+.portal-contents ul {
+  padding-left: 0;
+}
+
+.portal-contents li {
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.portal-contents .l3 { padding-left: 10px; }
+.portal-contents .l4 { padding-left: 20px; }
+.portal-contents .l5 { padding-left: 30px; }
+.portal-contents .l6 { padding-left: 40px; }
+
+/* Search Box */
+#p-search {
+  position: relative;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid #a2a9b1;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  width: 280px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-container:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.85em;
+  font-family: inherit;
+}
+
+.search-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #72777d;
+  font-size: 0.9em;
+  padding-left: 6px;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #c8ccd1;
+  z-index: 1000;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 6px;
+}
+
+.suggestion-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.85em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f6f6f6;
+  transition: background 0.15s;
+}
+
+.suggestion-item:hover, .suggestion-item.selected {
+  background: #f0f3f9;
+}
+
+.suggestion-title {
+  font-weight: 600;
+  color: #202122;
+}
+
+.suggestion-type {
+  font-size: 0.75em;
+  color: #72777d;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Vector navigation tabs wrapper */
+.vector-navigation-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-left: 11em;
+  padding: 8px 40px 0 0;
+  background: #f6f6f6;
+  border-bottom: 1px solid #a2a9b1;
+}
+
+.vector-navigation-left,
+.vector-navigation-right {
+  display: flex;
+  align-items: flex-end;
+}
+
+.vector-navigation-search {
+  margin-left: auto;
+  padding-bottom: 6px;
+}
+
+.vector-tabs {
+  display: flex;
+  list-style: none;
+}
+
+.vector-tabs li {
+  margin-right: 2px;
+}
+
+.vector-tabs a {
+  display: block;
+  padding: 8px 16px;
+  background: #eaecf0;
+  border: 1px solid #a2a9b1;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  color: #54595d;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: -1px;
+}
+
+.vector-tabs li.selected a {
+  background: #ffffff;
+  border-color: #a2a9b1 #a2a9b1 #ffffff #a2a9b1;
+  color: #202122;
+  position: relative;
+  z-index: 2;
+  top: 1px;
+}
+
+.vector-tabs a:hover {
+  background: #f8f9fa;
+  color: #202122;
+}
+
+/* Main Content styling */
+#content {
+  margin-left: 11em;
+  background: #ffffff;
+  border-left: 1px solid #a2a9b1;
+  padding: 30px 40px 48px;
+  min-height: calc(100vh - 48px);
+}
+
+.firstHeading {
+  font-family: 'Playfair Display', 'Linux Libertine', Georgia, serif;
+  font-size: 2.2em;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+#siteSub {
+  font-size: 0.8em;
+  color: #72777d;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+/* Article content layout styling */
+h2 {
+  font-family: 'Playfair Display', 'Linux Libertine', Georgia, serif;
+  font-size: 1.5em;
+  font-weight: 600;
+  border-bottom: 1px solid #a2a9b1;
+  padding-bottom: 4px;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+h3 {
+  font-size: 1.2em;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+p {
+  margin-bottom: 16px;
+  color: #202122;
+  font-size: 0.95em;
+}
+
+ul, ol {
+  margin-bottom: 16px;
+  padding-left: 24px;
+  font-size: 0.95em;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+.vector-tabs {
+  margin: 0;
+  padding-left: 0;
+}
+
+.vector-tabs li {
+  margin-bottom: 0;
+}
+
+pre {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  font-size: 0.85em;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.15);
+}
+
+code {
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #0f172a;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+  color: #475569;
+  font-style: italic;
+  margin: 16px 0 20px;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 24px;
+  font-size: 0.9em;
+}
+
+th, td {
+  border: 1px solid #dbe4f0;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Table of Contents (TOC) */
+.toc {
+  border: 1px solid #a2a9b1;
+  background-color: #f8f9fa;
+  padding: 12px 18px;
+  font-size: 0.9em;
+  display: table;
+  margin-bottom: 24px;
+  border-radius: 4px;
+  min-width: 240px;
+}
+
+.toctitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toctitle h2 {
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: bold;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toctogglelink {
+  font-size: 0.8em;
+  font-weight: normal;
+  color: #0645ad;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.toc-list li {
+  margin-bottom: 4px;
+}
+
+.toc-list .l3 { padding-left: 16px; }
+.toc-list .l4 { padding-left: 32px; }
+.toc-list .l5 { padding-left: 48px; }
+.toc-list .l6 { padding-left: 64px; }
+
+/* Infobox Styling (preserving class names for compatibility) */
+.infobox {
+  float: right;
+  width: 300px;
+  margin: 0 0 20px 24px;
+  background: #f8f9fa;
+  border: 1px solid #a2a9b1;
+  border-radius: 4px;
+  padding: 4px;
+  clear: none;
+  font-size: 0.85em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.infobox h2 {
+  font-family: inherit;
+  font-size: 1.15em;
+  border: none;
+  margin: 0 0 10px;
+  text-align: center;
+  background: #eaecf0;
+  padding: 8px;
+  color: #202122;
+  font-weight: bold;
+  border-radius: 2px;
+}
+
+.infobox dl {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+}
+
+.infobox dt {
+  font-weight: 600;
+  color: #54595d;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 4px;
+}
+
+.infobox dd {
+  margin: 0;
+  min-width: 0;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 4px;
+  color: #202122;
+}
+
+.infobox-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.infobox-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #dbe4f0;
+  border-radius: 4px;
+  padding: 2px 8px;
+  background: #ffffff;
+  font-size: 0.9em;
+}
+
+/* Category Links box */
+.catlinks {
+  border: 1px solid #a2a9b1;
+  background-color: #f8f9fa;
+  padding: 10px 16px;
+  margin-top: 40px;
+  clear: both;
+  font-size: 0.85em;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catlinks-label {
+  font-weight: bold;
+  color: #72777d;
+}
+
+.catlinks-list {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.catlinks-item::after {
+  content: " |";
+  color: #a2a9b1;
+  margin-left: 8px;
+}
+
+.catlinks-item:last-child::after {
+  content: "";
+}
+
+/* Views panes */
+.wiki-view-pane {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notes Textarea and Buttons */
+textarea.wiki-textarea {
+  width: 100%;
+  height: 350px;
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95em;
+  border: 1px solid #a2a9b1;
+  border-radius: 6px;
+  outline: none;
+  resize: vertical;
+  margin-top: 12px;
+  transition: border-color 0.2s;
+}
+
+textarea.wiki-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.wiki-btn-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.wiki-btn {
+  background-color: #f8f9fa;
+  color: #202122;
+  border: 1px solid #a2a9b1;
+  padding: 8px 16px;
+  font-size: 0.85em;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wiki-btn:hover {
+  background-color: #eaecf0;
+}
+
+.wiki-btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.wiki-btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.char-counter {
+  font-size: 0.8em;
+  color: #72777d;
+}
+
+/* Page footer */
+.wiki-footer {
+  margin-top: 48px;
+  border-top: 1px solid #eaecf0;
+  padding-top: 16px;
+  font-size: 0.75em;
+  color: #72777d;
+  line-height: 1.6;
+}
+
+/* Backlinks / outline sections in Read view */
+.page-meta {
+  background: #f8f9fa;
+  border: 1px solid #eaecf0;
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 32px;
+}
+
+.page-meta h2 {
+  font-family: inherit;
+  font-size: 1.1em;
+  border: none;
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #54595d;
+}
+
+/* Template Label badge */
+.template-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #mw-navigation {
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid #eaecf0;
+  }
+  .vector-navigation-wrapper {
+    margin-left: 0;
+    padding: 8px 16px 0;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .vector-navigation-left,
+  .vector-navigation-right {
+    order: 2;
+  }
+  .vector-navigation-search {
+    order: 1;
+    width: 100%;
+    margin-left: 0;
+    padding-bottom: 8px;
+  }
+  .search-container {
+    width: 100%;
+  }
+  #content {
+    margin-left: 0;
+    padding: 24px 16px;
+    border-left: none;
+  }
+  .infobox {
+    float: none;
+    width: 100%;
+    margin: 20px 0;
+  }
+}
+""".strip().strip() + "\n\n" + PYGMENTS_CSS
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
 
@@ -87,6 +725,29 @@ def _url(base_url: str, slug: str, style: str) -> str:
     return page_url(base_url, slug, style)
 
 
+def _get_page_categories(page: VirtualPage) -> list[str]:
+    cats = []
+    if page.template_name and page.template_name != "default.html":
+        cats.append(page.template_name.replace(".html", ""))
+    
+    raw_types = page.frontmatter.get("@type") or page.frontmatter.get("type")
+    if raw_types:
+        values = raw_types if isinstance(raw_types, list) else [raw_types]
+        for val in values:
+            if isinstance(val, str):
+                val_clean = val.split(":", 1)[-1] if ":" in val else val
+                cats.append(val_clean)
+                
+    seen = set()
+    unique_cats = []
+    for c in cats:
+        c_clean = c.strip()
+        if c_clean and c_clean.lower() not in seen:
+            seen.add(c_clean.lower())
+            unique_cats.append(c_clean)
+    return unique_cats
+
+
 def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
@@ -96,6 +757,25 @@ def render_wiki_markdown(
     md = MarkdownIt("gfm-like", {"linkify": False})
     md.use(wikilink_plugin)
     heading_slugger = GitHubHeadingSlugger()
+
+    def _fence_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        info = (token.info or "").strip().split(maxsplit=1)
+        language = info[0] if info else ""
+        escaped_language = html_module.escape(language)
+        escaped_code = html_module.escape(token.content)
+        if not language:
+            return f'<pre><code>{escaped_code}</code></pre>\n'
+
+        try:
+            lexer = get_lexer_by_name(language)
+        except ClassNotFound:
+            return f'<pre><code class="language-{escaped_language}">{escaped_code}</code></pre>\n'
+
+        highlighted = highlight(token.content, lexer, PYGMENTS_FORMATTER)
+        return f'<pre class="highlight"><code class="language-{escaped_language}">{highlighted}</code></pre>\n'
+
+    md.add_render_rule("fence", _fence_renderer)
 
     def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         token = tokens[idx]
@@ -306,9 +986,42 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = D
     for page in site.pages:
         if page.file_slug not in seen_files:
             seen_files.add(page.file_slug)
-            links_html += f'<li><a href="{_url(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
+            cats = _get_page_categories(page)
+            cats_attr = ",".join(cats)
+            links_html += f'<li data-categories="{html_module.escape(cats_attr)}"><a href="{_url(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
 
-    return f"""<!DOCTYPE html>
+    # All Pages JSON for search and random redirect
+    import json
+    pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
+    pages_json = json.dumps(pages_data, default=str)
+
+    # Wikipedia SVG Logo
+    logo_svg = """<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
+  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
+  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
+  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
+</svg>"""
+
+    template = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -317,50 +1030,712 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = D
 <style>{INLINE_CSS}</style>
 </head>
 <body>
-<header>
-<a href="{base_url}/" class="site-title">Wiki</a>
-<nav><a href="{base_url}/">Index</a></nav>
-</header>
-<main>
-<h1>All Pages</h1>
-<ul class="pages-list">
-{links_html}
-</ul>
+
+<!-- Left Navigation Sidebar -->
+<aside id="mw-navigation">
+  <div id="p-logo" role="banner">
+    <a href="{base_url}/" title="Visit the main page">
+      {logo_svg}
+      <span class="logo-text">LLM WIKI</span>
+    </a>
+  </div>
+  <div class="portal" role="navigation" id="p-navigation">
+    <h3>Navigation</h3>
+    <ul>
+      <li><a href="{base_url}/">Main page</a></li>
+      <li><a href="{base_url}/">Contents</a></li>
+      <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
+    </ul>
+  </div>
+</aside>
+
+<!-- Vector tabs wrapper -->
+<div class="vector-navigation-wrapper">
+  <div class="vector-navigation-left">
+    <ul class="vector-tabs">
+      <li class="selected"><a href="{base_url}/">Special Page</a></li>
+    </ul>
+  </div>
+  <div class="vector-navigation-search">
+    <div id="p-search" role="search">
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
+      </div>
+      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Panel -->
+<main id="content" class="mw-body" role="main">
+  <h1 class="firstHeading" id="firstHeading">All Pages</h1>
+  <div id="siteSub">Index of all documents in the semantic wiki</div>
+  
+  <ul class="pages-list">
+    {links_html}
+  </ul>
+  
+  <!-- Standard Wikipedia-like Footer -->
+  <footer class="wiki-footer">
+    <p>This page is powered by the LLM Wiki CLI.</p>
+  </footer>
 </main>
+
+<script>
+// Embedded client logic
+const ALL_PAGES = {pages_json};
+const WIKI_BASE_URL = "{base_url}";
+const WIKI_URL_STYLE = "{url_style}";
+const CURRENT_SLUG = "";
+
+function goToRandomArticle() {
+  if (ALL_PAGES.length === 0) return;
+  const randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
+  let url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.' + 'html' : 'index.' + 'html');
+  }
+  window.location.href = url;
+}
+
+function triggerSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) return;
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  );
+  if (matches.length > 0) {
+    navigateSearch(matches[0].slug);
+  }
+}
+
+let selectedSuggestionIndex = -1;
+
+function onSearchInput(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox) return;
+  
+  if (!query) {
+    suggestionsBox.style.display = 'none';
+    suggestionsBox.innerHTML = '';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+  
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  ).slice(0, 8);
+  
+  if (matches.length === 0) {
+    suggestionsBox.style.display = 'block';
+    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+  
+  suggestionsBox.innerHTML = matches.map((p, idx) => {
+    return `<div class="suggestion-item" data-slug="${p.slug}" data-idx="${idx}" onclick="navigateSearch('${p.slug}')">
+      <span class="suggestion-title">${escapeHtml(p.title)}</span>
+      <span class="suggestion-type">${escapeHtml(p.slug)}</span>
+    </div>`;
+  }).join('');
+  suggestionsBox.style.display = 'block';
+  selectedSuggestionIndex = -1;
+}
+
+function handleSearchKey(e) {
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
+  
+  const items = suggestionsBox.querySelectorAll('.suggestion-item');
+  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
+      const slug = items[selectedSuggestionIndex].getAttribute('data-slug');
+      navigateSearch(slug);
+    } else if (items.length > 0) {
+      const slug = items[0].getAttribute('data-slug');
+      navigateSearch(slug);
+    }
+  } else if (e.key === 'Escape') {
+    suggestionsBox.style.display = 'none';
+  }
+}
+
+function highlightSuggestion(items) {
+  items.forEach((item, idx) => {
+    if (idx === selectedSuggestionIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+function navigateSearch(slug) {
+  let url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '.' + 'html' : 'index.' + 'html');
+  }
+  window.location.href = url;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+document.addEventListener('click', (e) => {
+  const searchBox = document.getElementById('searchInput');
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.style.display = 'none';
+  }
+});
+
+function applyCategoryFilterFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('category');
+  if (!cat) return;
+  
+  const mainHeading = document.querySelector('main h1');
+  if (mainHeading) {
+    mainHeading.innerHTML = `Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">${escapeHtml(cat)}</span>`;
+    
+    const clearLink = document.createElement('a');
+    clearLink.href = WIKI_BASE_URL + '/';
+    clearLink.innerText = ' [show all pages]';
+    clearLink.style.fontSize = '0.5em';
+    clearLink.style.marginLeft = '12px';
+    clearLink.style.fontWeight = 'normal';
+    mainHeading.appendChild(clearLink);
+  }
+  
+  document.querySelectorAll('.pages-list li').forEach(li => {
+    const catsAttr = li.getAttribute('data-categories') || '';
+    const cats = catsAttr.split(',').map(c => c.trim().toLowerCase());
+    if (cats.includes(cat.toLowerCase())) {
+      li.style.display = '';
+    } else {
+      li.style.display = 'none';
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyCategoryFilterFromUrl();
+});
+</script>
 </body>
 </html>"""
+
+    return (template
+            .replace("{INLINE_CSS}", INLINE_CSS)
+            .replace("{base_url}", base_url)
+            .replace("{logo_svg}", logo_svg)
+            .replace("{links_html}", links_html)
+            .replace("{pages_json}", pages_json)
+            .replace("{url_style}", url_style))
 
 
 def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
     """Compile individual page HTML."""
     toc_html = _build_toc_html(page)
+    sidebar_contents_html = _build_sidebar_contents_html(page)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)
     infobox_html = _build_infobox_html(page, site, base_url, url_style)
-    fm_html = _build_metadata_json_html(page)
-    content_html = page.html
+    
+    # Categories
+    cats = _get_page_categories(page)
+    cats_html = ""
+    if cats:
+        cat_items = "".join(f'<li class="catlinks-item"><a href="{base_url}/?category={quote(cat)}">{html_module.escape(cat)}</a></li>' for cat in cats)
+        cats_html = f"""<div class="catlinks" id="catlinks">
+<div class="catlinks-label">Categories:</div>
+<ul class="catlinks-list">
+{cat_items}
+</ul>
+</div>"""
+
+    # Template Label
     template_label = _template_label(page)
-    shell_html = _render_page_shell(page, content_html, infobox_html, toc_html, bl_html, fm_html, template_label)
+    template_class = html_module.escape(_template_stem(page.template_name))
 
-    nav_html = f'<a href="{base_url}/">Index</a>'
+    # All Pages JSON for search and random redirect
+    import json
+    pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
+    pages_json = json.dumps(pages_data, default=str)
 
-    return f"""<!DOCTYPE html>
+    # Wikipedia SVG Logo
+    logo_svg = """<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
+  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
+  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
+  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
+</svg>"""
+
+    metadata_formatted = json.dumps(page.frontmatter, indent=2, default=str)
+    if page.has_frontmatter:
+        metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
+        metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON)</a></li>'
+        metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
+    <div id="view-metadata-content" class="wiki-view-pane" style="display: none;">
+      <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
+      <div id="siteSub">JSON representation compiled from frontmatter</div>
+      
+      <pre><code>{html_module.escape(metadata_formatted)}</code></pre>
+    </div>"""
+    else:
+        metadata_tool_html = ""
+        metadata_tab_html = ""
+        metadata_pane_html = ""
+
+    template = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{html_module.escape(page.title)} — Wiki</title>
+<title>{page_title} - Wiki</title>
 <style>{INLINE_CSS}</style>
 </head>
 <body>
-<header>
-<a href="{base_url}/" class="site-title">Wiki</a>
-<nav>{nav_html}</nav>
-</header>
-<main>
-{shell_html}
+
+<!-- Left Navigation Sidebar -->
+<aside id="mw-navigation">
+  <div id="p-logo" role="banner">
+    <a href="{base_url}/" title="Visit the main page">
+      {logo_svg}
+      <span class="logo-text">LLM WIKI</span>
+    </a>
+  </div>
+  <div class="portal" role="navigation" id="p-navigation">
+    <h3>Navigation</h3>
+    <ul>
+      <li><a href="{base_url}/">Main page</a></li>
+      <li><a href="{base_url}/">Contents</a></li>
+      <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
+    </ul>
+  </div>
+  <div class="portal" role="navigation" id="p-tools">
+    <h3>Tools</h3>
+    <ul>
+      {metadata_tool_html}
+      <li><a href="javascript:void(0)" onclick="switchTab('source')">View page source</a></li>
+    </ul>
+  </div>
+  {sidebar_contents_html}
+</aside>
+
+<!-- Vector tabs wrapper -->
+<div class="vector-navigation-wrapper">
+  <div class="vector-navigation-left">
+    <ul class="vector-tabs">
+      <li id="ca-read" class="selected"><a href="javascript:void(0)" onclick="switchTab('read')">Article</a></li>
+      <li id="ca-talk"><a href="javascript:void(0)" onclick="switchTab('talk')">Talk / Notes</a></li>
+    </ul>
+  </div>
+  <div class="vector-navigation-right">
+    <ul class="vector-tabs">
+      <li id="ca-source"><a href="javascript:void(0)" onclick="switchTab('source')">View source</a></li>
+      {metadata_tab_html}
+    </ul>
+  </div>
+  <div class="vector-navigation-search">
+    <div id="p-search" role="search">
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
+      </div>
+      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Panel -->
+<main id="content" class="mw-body" role="main">
+  <div class="page-shell template-{template_class}">
+    {template_label}
+    
+    <!-- READ VIEW (Rendered Article) -->
+    <div id="view-read-content" class="wiki-view-pane">
+      <h1 class="firstHeading" id="firstHeading">{page_title}</h1>
+      <div id="siteSub">From LLM Wiki, the semantic knowledge base</div>
+      
+      <article>
+        {infobox_html}
+        {page_html_content}
+      </article>
+      
+      {toc_html}
+      {bl_html}
+      {cats_html}
+    </div>
+    
+    <!-- TALK VIEW (Local persistent notes) -->
+    <div id="view-talk-content" class="wiki-view-pane" style="display: none;">
+      <h1 class="firstHeading">Talk / Local Notes: {page_title}</h1>
+      <div id="siteSub">Your personal scratchpad for this page (saved locally in browser)</div>
+      
+      <textarea id="talkNotesArea" class="wiki-textarea" placeholder="Write your notes or discussion comments here..." oninput="saveTalkNotes()"></textarea>
+      <div class="wiki-btn-bar">
+        <button type="button" class="wiki-btn" onclick="clearTalkNotes()">Clear Notes</button>
+        <span class="char-counter" id="charCountDisplay">0 characters</span>
+      </div>
+    </div>
+    
+    <!-- VIEW SOURCE VIEW (Raw markdown source) -->
+    <div id="view-source-content" class="wiki-view-pane" style="display: none;">
+      <h1 class="firstHeading">View Source: {page_title}</h1>
+      <div id="siteSub">Raw Markdown source code of the document</div>
+      
+      <textarea id="markdownSourceArea" class="wiki-textarea" readonly style="background: #fafafa; font-family: monospace;">{page_markdown_content}</textarea>
+      <div class="wiki-btn-bar">
+        <button type="button" id="copySourceBtn" class="wiki-btn wiki-btn-primary" onclick="copySourceCode()">Copy Markdown</button>
+      </div>
+    </div>
+    
+    {metadata_pane_html}
+    
+    <!-- Standard Wikipedia-like Footer -->
+    <footer class="wiki-footer">
+      <p>This page is powered by the LLM Wiki CLI. Dynamic semantic reasoning enabled by owlrl, RDF graph by rdflib.</p>
+      <p>Content is available under Creative Commons Attribution-ShareAlike License unless otherwise noted.</p>
+    </footer>
+  </div>
 </main>
+
+<script>
+// Embedded client logic
+const ALL_PAGES = {pages_json};
+const WIKI_BASE_URL = "{base_url}";
+const WIKI_URL_STYLE = "{url_style}";
+const CURRENT_SLUG = {current_slug_json};
+
+function switchTab(viewName) {
+  // Update tab styles
+  document.querySelectorAll('.vector-tabs li').forEach(li => {
+    li.classList.remove('selected');
+  });
+  
+  // Highlight active tab
+  let tabId = 'ca-read';
+  if (viewName === 'talk') tabId = 'ca-talk';
+  else if (viewName === 'source') tabId = 'ca-source';
+  else if (viewName === 'metadata') tabId = 'ca-metadata';
+  
+  const tabEl = document.getElementById(tabId);
+  if (tabEl) tabEl.classList.add('selected');
+
+  // Hide all view panes
+  document.querySelectorAll('.wiki-view-pane').forEach(pane => {
+    pane.style.display = 'none';
+  });
+  
+  // Show target view pane
+  const paneEl = document.getElementById('view-' + viewName + '-content');
+  if (paneEl) paneEl.style.display = 'block';
+  
+  // Custom view initializations
+  if (viewName === 'talk') {
+    loadTalkNotes();
+  }
+}
+
+function loadTalkNotes() {
+  const area = document.getElementById('talkNotesArea');
+  if (!area) return;
+  const saved = localStorage.getItem('wiki_notes_' + CURRENT_SLUG);
+  area.value = saved || '';
+  updateCharCount();
+}
+
+function saveTalkNotes() {
+  const area = document.getElementById('talkNotesArea');
+  if (!area) return;
+  localStorage.setItem('wiki_notes_' + CURRENT_SLUG, area.value);
+  updateCharCount();
+}
+
+function clearTalkNotes() {
+  if (confirm('Are you sure you want to clear your local notes for this article?')) {
+    const area = document.getElementById('talkNotesArea');
+    if (area) {
+      area.value = '';
+      localStorage.removeItem('wiki_notes_' + CURRENT_SLUG);
+      updateCharCount();
+    }
+  }
+}
+
+// Close suggestions on outside click
+document.addEventListener('click', (e) => {
+  const searchBox = document.getElementById('searchInput');
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.style.display = 'none';
+  }
+});
+
+function updateCharCount() {
+  const area = document.getElementById('talkNotesArea');
+  const countEl = document.getElementById('charCountDisplay');
+  if (!area || !countEl) return;
+  const count = area.value.length;
+  countEl.innerText = count + ' character' + (count === 1 ? '' : 's');
+}
+
+function copySourceCode() {
+  const area = document.getElementById('markdownSourceArea');
+  if (!area) return;
+  area.select();
+  area.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(area.value).then(() => {
+    const btn = document.getElementById('copySourceBtn');
+    const originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    btn.style.background = '#28a745';
+    btn.style.color = '#fff';
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+
+function toggleToc() {
+  const list = document.getElementById('toc-list');
+  const toggleBtn = document.getElementById('toggleTocBtn');
+  if (!list || !toggleBtn) return;
+  
+  if (list.style.display === 'none') {
+    list.style.display = 'block';
+    toggleBtn.innerText = '[hide]';
+    localStorage.setItem('wiki_toc_visible', 'true');
+  } else {
+    list.style.display = 'none';
+    toggleBtn.innerText = '[show]';
+    localStorage.setItem('wiki_toc_visible', 'false');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedState = localStorage.getItem('wiki_toc_visible');
+  const list = document.getElementById('toc-list');
+  const toggleBtn = document.getElementById('toggleTocBtn');
+  if (savedState === 'false' && list && toggleBtn) {
+    list.style.display = 'none';
+    toggleBtn.innerText = '[show]';
+  }
+  
+  if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
+    applyCategoryFilterFromUrl();
+  }
+});
+
+function goToRandomArticle() {
+  if (ALL_PAGES.length === 0) return;
+  const randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
+  let url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.' + 'html' : 'index.' + 'html');
+  }
+  window.location.href = url;
+}
+
+function triggerSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) return;
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  );
+  if (matches.length > 0) {
+    navigateSearch(matches[0].slug);
+  }
+}
+
+let selectedSuggestionIndex = -1;
+
+function onSearchInput(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox) return;
+  
+  if (!query) {
+    suggestionsBox.style.display = 'none';
+    suggestionsBox.innerHTML = '';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+  
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  ).slice(0, 8);
+  
+  if (matches.length === 0) {
+    suggestionsBox.style.display = 'block';
+    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+  
+  suggestionsBox.innerHTML = matches.map((p, idx) => {
+    return `<div class="suggestion-item" data-slug="${p.slug}" data-idx="${idx}" onclick="navigateSearch('${p.slug}')">
+      <span class="suggestion-title">${escapeHtml(p.title)}</span>
+      <span class="suggestion-type">${escapeHtml(p.slug)}</span>
+    </div>`;
+  }).join('');
+  suggestionsBox.style.display = 'block';
+  selectedSuggestionIndex = -1;
+}
+
+function handleSearchKey(e) {
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
+  
+  const items = suggestionsBox.querySelectorAll('.suggestion-item');
+  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
+      const slug = items[selectedSuggestionIndex].getAttribute('data-slug');
+      navigateSearch(slug);
+    } else if (items.length > 0) {
+      const slug = items[0].getAttribute('data-slug');
+      navigateSearch(slug);
+    }
+  } else if (e.key === 'Escape') {
+    suggestionsBox.style.display = 'none';
+  }
+}
+
+function highlightSuggestion(items) {
+  items.forEach((item, idx) => {
+    if (idx === selectedSuggestionIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+function navigateSearch(slug) {
+  let url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '.' + 'html' : 'index.' + 'html');
+  }
+  window.location.href = url;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function applyCategoryFilterFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('category');
+  if (!cat) return;
+  
+  const mainHeading = document.querySelector('main h1');
+  if (mainHeading) {
+    mainHeading.innerHTML = `Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">${escapeHtml(cat)}</span>`;
+    
+    const clearLink = document.createElement('a');
+    clearLink.href = WIKI_BASE_URL + '/';
+    clearLink.innerText = ' [show all pages]';
+    clearLink.style.fontSize = '0.5em';
+    clearLink.style.marginLeft = '12px';
+    clearLink.style.fontWeight = 'normal';
+    mainHeading.appendChild(clearLink);
+  }
+  
+  document.querySelectorAll('.pages-list li').forEach(li => {
+    const catsAttr = li.getAttribute('data-categories') || '';
+    const cats = catsAttr.split(',').map(c => c.trim().toLowerCase());
+    if (cats.includes(cat.toLowerCase())) {
+      li.style.display = '';
+    } else {
+      li.style.display = 'none';
+    }
+  });
+}
+</script>
 </body>
 </html>"""
+
+    return (template
+            .replace("{INLINE_CSS}", INLINE_CSS)
+            .replace("{base_url}", base_url)
+            .replace("{logo_svg}", logo_svg)
+            .replace("{page_title}", html_module.escape(page.title))
+            .replace("{template_class}", template_class)
+            .replace("{template_label}", template_label)
+            .replace("{infobox_html}", infobox_html)
+            .replace("{page_html_content}", page.html)
+            .replace("{toc_html}", toc_html)
+            .replace("{bl_html}", bl_html)
+            .replace("{cats_html}", cats_html)
+            .replace("{page_markdown_content}", html_module.escape(page.markdown))
+            .replace("{metadata_json_content}", html_module.escape(metadata_formatted))
+            .replace("{pages_json}", pages_json)
+            .replace("{url_style}", url_style)
+            .replace("{current_slug_json}", json.dumps(page.full_slug))
+            .replace("{metadata_tool_html}", metadata_tool_html)
+            .replace("{metadata_tab_html}", metadata_tab_html)
+            .replace("{sidebar_contents_html}", sidebar_contents_html)
+            .replace("{metadata_pane_html}", metadata_pane_html))
 
 
 def _page_type_names(frontmatter: dict[str, Any]) -> list[str]:
@@ -439,13 +1814,30 @@ def _build_toc_html(page: VirtualPage) -> str:
         return ""
     items = ""
     for item in page.outline:
-        items += f'<li class="l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
-    return f"""<section class="page-meta">
-<h2>On this page</h2>
-<ul class="outline-list">
+        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
+    return f"""<div class="toc" id="toc">
+<div class="toctitle">
+<h2>Contents<span style="display:none">On this page</span></h2>
+<span class="toctogglelink" id="toggleTocBtn" onclick="toggleToc()">[hide]</span>
+</div>
+<ul class="toc-list" id="toc-list">
 {items}
 </ul>
-</section>"""
+</div>"""
+
+
+def _build_sidebar_contents_html(page: VirtualPage) -> str:
+    if not page.outline:
+        return ""
+    items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
+    for item in page.outline:
+        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
+    return f"""<div class="portal portal-contents" role="navigation" id="p-contents" aria-label="Page contents">
+    <h3>Contents</h3>
+    <ul>
+{items}
+    </ul>
+  </div>"""
 
 
 def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
@@ -492,17 +1884,11 @@ def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_sty
     for key, value in page.frontmatter.items():
         if key in METADATA_HIDDEN_FIELDS:
             continue
-        label = _humanize_field_name(key)
+        label = str(key)
         text, html = _render_metadata_value_parts(value, page, site, base_url, url_style)
         if html:
             rows.append(InfoboxRow(label=label, text=text, html=html))
     return rows
-def _humanize_field_name(key: str) -> str:
-    clean = key.split(":", 1)[-1] if ":" in key else key
-    clean = clean.lstrip("@")
-    return clean.replace("_", " ").strip().title()
-
-
 def _render_metadata_value(value: Any, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
     if value is None:
         return ""
@@ -545,7 +1931,7 @@ def _render_metadata_value_parts(
                 continue
             nested_text, nested_html = _render_metadata_value_parts(nested_value, page, site, base_url, url_style)
             if nested_html:
-                nested_label = _humanize_field_name(str(nested_key))
+                nested_label = str(nested_key)
                 rows.append(
                     f'<div class="infobox-dict-row"><span class="infobox-key">{html_module.escape(nested_label)}</span><span>{nested_html}</span></div>'
                 )
