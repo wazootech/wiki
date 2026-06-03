@@ -83,15 +83,6 @@ family_name: Anderson
             self.assertNotIn("givenName:", content)
             self.assertNotIn("familyName:", content)
 
-            # With --fix: should still NOT rewrite frontmatter keys (only filename/wikilink hygiene).
-            result_fix = runner.invoke(main, ["--input-dir", str(wiki_dir), "check", str(file_path), "--fix", "-v"])
-            self.assertEqual(result_fix.exit_code, 1)
-            fixed_content = file_path.read_text(encoding="utf-8")
-            self.assertIn("given_name: Alice", fixed_content)
-            self.assertIn("family_name: Anderson", fixed_content)
-            self.assertNotIn("givenName:", fixed_content)
-            self.assertNotIn("familyName:", fixed_content)
-
     def test_cli_check_single_file(self) -> None:
         """Test wiki check with a single file specified."""
         runner = CliRunner()

@@ -69,23 +69,11 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--fix", "fix", is_flag=True, help="Autofix hygiene issues (e.g. rename files to match filenamePattern) and update internal wikilinks.")
 @click.option("-v", "--verbose", is_flag=True, help="Show style/guideline warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, strict: bool) -> None:
+def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
     """Run unified checks: strict SHACL validation + style audits."""
-    if fix:
-        # Autofix hygiene before validation so checks run on the final state.
-        from .audit import autofix_hygiene
-        res = autofix_hygiene(config)
-        if verbose and (res.get("renamed") or res.get("updated_wikilinks")):
-            renamed = res.get("renamed") or []
-            if renamed:
-                click.echo(f"Auto-fixed {len(renamed)} filenames.")
-            if res.get("updated_wikilinks"):
-                click.echo("Updated wikilinks to match renamed files.")
-
     if file:
         res = check_shacl_file(file, config, verbose=verbose)
         conforms = True
@@ -102,11 +90,19 @@ def check(config: Context, file: Optional[Path], fix: bool, verbose: bool, stric
                 errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
 
         # Style audits specifically for this file (delegates to audit.py)
-        from .audit import audit_filenames, audit_internal_links, file_slug_for_path
+        from .audit import (
+            audit_broken_links,
+            audit_filenames,
+            audit_headings,
+            audit_markdown_flavor,
+            file_slug_for_path,
+        )
         try:
             file_filter = {file_slug_for_path(config, file)}
             warnings.extend(audit_filenames(config, file_filter=file_filter))
-            warnings.extend(audit_internal_links(config, file_filter=file_filter))
+            warnings.extend(audit_broken_links(config, file_filter=file_filter))
+            warnings.extend(audit_headings(config, file_filter=file_filter))
+            warnings.extend(audit_markdown_flavor(config, file_filter=file_filter))
         except ValueError as exc:
             errors.append(str(exc))
             conforms = False
@@ -478,7 +474,7 @@ def init(force: bool) -> None:
          "wikiBase": wiki_base,
          "baseUrl": "/wiki",
          "urlStyle": "dir",
-         "check": {"filenamePattern": "warning", "internalLinks": "warning"},
+         "check": {"filenamePattern": "warning", "brokenLinks": "warning"},
          "context": context_map,
      }
 

@@ -34,6 +34,14 @@ WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 # Standard Markdown link pattern: [display](target) and ![alt](target).
 MARKDOWN_LINK_REGEX = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
+# Microdata attributes that may hold wiki: CURIE entity references.
+MICRODATA_WIKI_CURIE_ATTR = re.compile(
+    r'(?:itemid|href|src)\s*=\s*["\'](wiki:[^"\']+)["\']',
+    re.IGNORECASE,
+)
+
+WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
+
 
 def file_slug_for_path(config: WikiConfig, file_path: Path) -> str:
     """Return nested slug for a document file relative to an input dir."""
@@ -153,14 +161,14 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
     return warnings
 
 
-def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit internal wikilinks and standard Markdown links in markdown files to ensure they point to existing documents.
+def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Audit wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
 
-    If file_filter is set, only check files whose stem is in the set.
+    If file_filter is set, only check files whose route is in the set.
 
     Returns a list of warnings.
     """
-    warnings = []
+    warnings: list[str] = []
 
     existing_files: set[str] = set()
     heading_ids_by_route: dict[str, set[str]] = {}
@@ -181,13 +189,12 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
 
             if file_path.suffix.lower() == ".md":
                 content = file_path.read_text(encoding="utf-8")
-                wikilinks = WIKILINK_REGEX.findall(content)
+                link_scan = _strip_inline_code(_markdown_body(content))
+                wikilinks = WIKILINK_REGEX.findall(link_scan)
                 for link in wikilinks:
                     _audit_page_target(warnings, existing_files, heading_ids_by_route, file_slug, link, "WikiLink")
 
-            if file_path.suffix.lower() == ".md":
-                content = file_path.read_text(encoding="utf-8")
-                md_links = MARKDOWN_LINK_REGEX.findall(content)
+                md_links = MARKDOWN_LINK_REGEX.findall(link_scan)
                 for target in md_links:
                     target = unquote(target.split("?")[0])
                     if is_external_link(target):
@@ -199,6 +206,12 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
                         if issue:
                             warnings.append(f"In {file_path.name}: Broken asset link [{target}] {issue}.")
 
+                for curie in MICRODATA_WIKI_CURIE_ATTR.findall(link_scan):
+                    _audit_wiki_curie(warnings, existing_files, file_slug, curie, "Microdata reference")
+
+            for curie in _wiki_curies_in_metadata(data or {}):
+                _audit_wiki_curie(warnings, existing_files, file_slug, curie, "Metadata reference")
+
             for target in _frontmatter_asset_targets(data or {}):
                 issue = asset_reference_issue(config, file_path, target)
                 if issue:
@@ -207,6 +220,84 @@ def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None
             warnings.append(f"Failed to read {file_path.name} for link audit: {e}")
 
     warnings.extend(audit_asset_dirs(config))
+    return warnings
+
+
+def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Deprecated alias for audit_broken_links."""
+    return audit_broken_links(config, file_filter=file_filter)
+
+
+HEADING_LINE_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
+NUMBERED_HEADING_RE = re.compile(r"^\d+[\.)]\s+")
+THEMATIC_BREAK_RE = re.compile(r"^(\-{3,}|\*{3,}|_{3,})\s*$", re.MULTILINE)
+
+
+def _markdown_body(content: str) -> str:
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) > 2:
+            return parts[2]
+    return content
+
+
+def _strip_inline_code(markdown: str) -> str:
+    """Remove inline code spans so literal `[[...]]` in prose is not treated as wikilinks."""
+    return re.sub(r"`[^`\n]*`", "", markdown)
+
+
+def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Audit markdown heading style (sentence case, no numbering, no body thematic breaks)."""
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = file_slug_for_path(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        content = file_path.read_text(encoding="utf-8")
+        body = _markdown_body(content)
+        for line_no, line in enumerate(body.splitlines(), start=1):
+            if THEMATIC_BREAK_RE.match(line.strip()):
+                warnings.append(
+                    f"In {file_path.name}:{line_no}: Thematic break '{line.strip()}' in body; "
+                    "use headings instead of horizontal rules."
+                )
+        for match in HEADING_LINE_RE.finditer(body):
+            level, text = match.group(1), match.group(2).strip()
+            if NUMBERED_HEADING_RE.match(text):
+                warnings.append(
+                    f"In {file_path.name}: Numbered heading {level} {text!r}; use unnumbered headings."
+                )
+                continue
+            words = [w for w in re.split(r"\s+", text) if w]
+            if len(words) >= 2:
+                title_case_words = [
+                    w
+                    for w in words[1:]
+                    if len(w) > 2 and w[0].isupper() and any(ch.islower() for ch in w)
+                ]
+                if len(title_case_words) >= 2:
+                    warnings.append(
+                        f"In {file_path.name}: Heading {level} {text!r} looks like title case; "
+                        "use sentence case (capitalize only the first word and proper nouns)."
+                    )
+    return warnings
+
+
+def audit_markdown_flavor(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Warn when vault markup conflicts with configured markdownFlavor (e.g. wikilinks in gfm mode)."""
+    if config.markdown_flavor != "gfm":
+        return []
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = file_slug_for_path(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        content = _strip_inline_code(_markdown_body(file_path.read_text(encoding="utf-8")))
+        if WIKILINK_REGEX.search(content):
+            warnings.append(
+                f"In {file_path.name}: WikiLink [[...]] found but markdownFlavor is gfm; "
+                "use Markdown links or set markdownFlavor: obsidian."
+            )
     return warnings
 
 
@@ -240,6 +331,59 @@ def _audit_page_target(
             warnings.append(f"In {current_route}: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
 
 
+def _wiki_route_from_curie(curie: str) -> str | None:
+    if not WIKI_CURIE_RE.match(curie):
+        return None
+    local = curie.split(":", 1)[1]
+    local = local.split("#", 1)[0]
+    if local.endswith(".md"):
+        local = local[:-3]
+    return local
+
+
+def _audit_wiki_curie(
+    warnings: list[str],
+    existing_files: set[str],
+    current_route: str,
+    curie: str,
+    label: str,
+) -> None:
+    route = _wiki_route_from_curie(curie)
+    if route is None:
+        return
+    if route not in existing_files:
+        warnings.append(
+            f"In {current_route}: Broken {label} [{curie}] points to non-existent wiki document."
+        )
+
+
+_METADATA_SKIP_KEYS = frozenset({"@context", "@id", "id", "@type", "type"})
+
+
+def _wiki_curies_in_metadata(data: dict[str, Any]) -> list[str]:
+    """Collect wiki: CURIEs used as references to other vault documents (not subject id/type)."""
+    curies: list[str] = []
+
+    def walk(value: Any) -> None:
+        if isinstance(value, str):
+            if WIKI_CURIE_RE.match(value):
+                curies.append(value)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                if key in _METADATA_SKIP_KEYS:
+                    continue
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    for key, value in data.items():
+        if key in _METADATA_SKIP_KEYS:
+            continue
+        walk(value)
+    return curies
+
+
 def _frontmatter_asset_targets(data: dict[str, Any]) -> list[str]:
     targets: list[str] = []
     for key, value in data.items():
@@ -251,30 +395,6 @@ def _frontmatter_asset_targets(data: dict[str, Any]) -> list[str]:
         elif isinstance(value, list):
             targets.extend(item for item in value if isinstance(item, str) and not is_external_link(item))
     return targets
-
-
-def _apply_wikilink_renames(content: str, renames: dict[str, str]) -> str:
-    def repl(match: re.Match) -> str:
-        target = match.group(1)
-        normalized = target
-        if normalized not in renames:
-            return match.group(0)
-
-        replacement = renames[normalized]
-        full = match.group(0)
-        if "|" in full:
-            display = full.split("|", 1)[1]
-            display = display[:-2] if display.endswith("]]") else display
-            return f"[[{replacement}|{display}]]"
-        return f"[[{replacement}]]"
-
-    return WIKILINK_REGEX.sub(repl, content)
-
-
-def autofix_hygiene(config: WikiConfig) -> dict[str, Any]:
-    """Autofix style issues (currently: filename normalization + wikilink updates)."""
-    return {"renamed": [], "updated_wikilinks": False}
-
 
 
 def run_checks(config: WikiConfig) -> dict[str, Any]:
@@ -328,7 +448,13 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
 
 
 
-        link_issues = audit_internal_links(config)
-        process_issues("internalLinks", link_issues)
+        link_issues = audit_broken_links(config)
+        process_issues("brokenLinks", link_issues)
+
+        heading_issues = audit_headings(config)
+        process_issues("headings", heading_issues)
+
+        flavor_issues = audit_markdown_flavor(config)
+        process_issues("markdownFlavor", flavor_issues)
 
     return results

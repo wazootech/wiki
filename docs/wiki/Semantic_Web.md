@@ -13,6 +13,9 @@ To enable this, the Semantic Web stack relies on a group of technologies, includ
 - [RDF](RDF.md)
 - [Turtle](Turtle.md)
 - [JSON_LD](JSON_LD.md)
+- [Notation3](Notation3.md)
+- [SPARQL](SPARQL.md)
+- [OWL](OWL.md)
 - [SHACL](SHACL.md)
 
 By adding semantic metadata to content, search engines and agents can perform reasoning and fetch precise data across disparate databases.

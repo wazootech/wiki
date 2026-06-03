@@ -63,4 +63,4 @@ See [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 - [Wiki_Configuration](Wiki_Configuration.md) — tune `inputDirs`, `context`, and check severities
 - [Style_Guide](Style_Guide.md) — document types, shapes, and wikilinks
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — validation and `--fix`
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — validation and CI checks

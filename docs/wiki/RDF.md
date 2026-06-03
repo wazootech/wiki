@@ -16,4 +16,7 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 - [Turtle](Turtle.md): A compact, human-friendly serialization syntax for RDF.
 - [JSON_LD](JSON_LD.md): A lightweight Linked Data format that uses JSON.
+- [Notation3](Notation3.md): A readable superset of Turtle, with rules and quoted graphs.
+- [SPARQL](SPARQL.md): The query language for RDF graphs.
+- [OWL](OWL.md): Ontology vocabulary and reasoning on top of RDF.
 - [SHACL](SHACL.md): A language for validating RDF graphs.

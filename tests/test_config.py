@@ -50,6 +50,10 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.url_style, "dir")
         self.assertIsNone(config.filename_pattern)
         self.assertEqual(config.check.get("filenamePattern"), "warning")
+        self.assertEqual(config.check.get("brokenLinks"), "warning")
+        self.assertEqual(config.check.get("headings"), "off")
+        self.assertEqual(config.check.get("markdownFlavor"), "off")
+        self.assertEqual(config.markdown_flavor, "gfm")
         self.assertIsNotNone(config.context)
 
     def test_wikiconfig_load_no_files(self) -> None:

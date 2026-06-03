@@ -22,7 +22,7 @@ Point the plugin’s working directory at the folder containing `wiki.yaml`.
 
 ## Wikilinks
 
-Obsidian wikilinks match the CLI resolver when filenames follow vault route rules. After [Wiki_Subcommand_check](Wiki_Subcommand_check.md) renames files with `--fix`, wikilinks in the vault are updated to match.
+Set `markdownFlavor: obsidian` in `wiki.yaml` so `[[wikilinks]]` are expected. Obsidian wikilinks match the CLI resolver when filenames follow vault route rules; `check.brokenLinks` still validates that each link resolves.
 
 ## Related
 

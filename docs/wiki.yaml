@@ -7,7 +7,7 @@ contentPredicate: schema:text
 filenamePattern: "[A-Za-z0-9_()-]+"
 check:
   filenamePattern: warning
-  internalLinks: warning
+  brokenLinks: warning
 context:
   schema: https://schema.org/
   wiki: https://wazootech.github.io/wiki/wiki/

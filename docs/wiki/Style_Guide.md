@@ -20,7 +20,7 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 
 Configure `filenamePattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+` (Wikipedia-style).
 
-**Enforcer:** `check:filenames` (warning by default).
+**Enforcer:** `check.filenamePattern` (warning by default).
 
 ## Prose and headings
 
@@ -28,7 +28,7 @@ Configure `filenamePattern` in [Wiki_Configuration](Wiki_Configuration.md) to ma
 - Avoid numbered headings; keep headings concise.
 - Do not use horizontal rules (`---`) for thematic breaks inside page bodies (reserve `---` for YAML frontmatter delimiters only).
 
-**Enforcer:** `check:headings` (disabled by default; enable in `wiki.yaml` or use `wiki check --strict` when promoted).
+**Enforcer:** `check.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki check --strict` in CI only after enabling the rules you want enforced as errors.
 
 ## Frontmatter
 
@@ -63,7 +63,9 @@ Prefer canonical relative Markdown links in source; they read cleanly in prose a
 
 All internal links must resolve to existing documents in the wiki.
 
-**Enforcer:** `check:links` (warning by default).
+**Enforcer:** `check.brokenLinks` (warning by default).
+
+When `markdownFlavor` is `gfm` (default), prefer Markdown links over `[[wikilinks]]`. Set `markdownFlavor: obsidian` for Obsidian-style wikilinks. **Enforcer:** `check.markdownFlavor` (off by default).
 
 ## Inline SPARQL blocks
 
@@ -72,64 +74,18 @@ Wrap queries so [Wiki_Subcommand_render](Wiki_Subcommand_render.md) can refresh 
 ````markdown
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s schema:name ?name } ORDER BY ?name
+SELECT ?name WHERE {
+  ?person rdf:type schema:Person .
+  ?person schema:name ?name .
+}
+ORDER BY ?name
+LIMIT 5
 ```
 
 | Name |
 | --- |
-| Agent memory filesystems |
 | Andrej Karpathy |
-| CSS |
-| CSV |
-| Content negotiation |
-| Declarative knowledge |
-| Deploying to GitHub Pages |
-| Design philosophies |
 | Farza Majeed |
-| Farzapedia and personal AI wikis |
-| Getting started |
-| Graph cache |
-| HTML |
-| JSON |
-| JSON-LD |
-| JavaScript |
-| LLM Wiki |
-| LLM Wiki CLI |
-| Letta MemFS |
-| Microdata |
-| Microdata in LLM Wiki |
-| Notation3 |
-| OWL |
-| Obsidian integration |
-| Person Shape |
-| Personal Knowledge |
-| Procedural knowledge |
-| Project ontology |
-| RDF |
-| Retrieval-augmented generation |
-| SHACL |
-| SPARQL |
-| Second brain |
-| Semantic Web |
-| SoftwareApplication Shape |
-| Style guide |
-| Supermemory SMFS |
-| TechArticle Shape |
-| Turtle |
-| TypeScript |
-| Wiki CLI |
-| Wiki configuration |
-| WikiThon |
-| wiki build |
-| wiki check |
-| wiki export |
-| wiki fmt |
-| wiki init |
-| wiki query |
-| wiki render |
-| wiki serve |
-| wiki upgrade |
-| wiki view |
 <!-- sparql:end -->
 ````
 

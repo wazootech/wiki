@@ -37,7 +37,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("inputDirs: wiki\ncheck:\n  internalLinks: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("inputDirs: wiki\ncheck:\n  brokenLinks: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
@@ -55,7 +55,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("inputDirs: wiki\ncheck:\n  internalLinks: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("inputDirs: wiki\ncheck:\n  brokenLinks: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])

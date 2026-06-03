@@ -4,9 +4,11 @@ from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
 from wiki.audit import (
+    audit_broken_links,
     audit_filenames,
+    audit_headings,
     audit_internal_links,
-    autofix_hygiene,
+    audit_markdown_flavor,
     load_shapes,
     check_shacl_file,
     check_shacl_all,
@@ -31,7 +33,7 @@ class TestChecking(unittest.TestCase):
             self.assertEqual(len(warnings), 1)
             self.assertIn("Filename 'Invalid_Name.md' does not match filenamePattern.", warnings[0])
 
-    def test_audit_internal_links_validation(self) -> None:
+    def test_audit_broken_links_validation(self) -> None:
         """Test auditing of internal link structures (WikiLinks and Markdown links)."""
         with TemporaryDirectory() as tmpdir:
             config = WikiConfig(input_dirs=[tmpdir])
@@ -51,12 +53,42 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             source_path = Path(tmpdir) / "source-page.md"
             source_path.write_text(source_content, encoding="utf-8")
             
-            warnings = audit_internal_links(config)
+            warnings = audit_broken_links(config)
             
             # Verify exactly the two broken links are reported
             self.assertEqual(len(warnings), 2)
             self.assertTrue(any("Broken WikiLink [non-existent-page]" in w for w in warnings))
             self.assertTrue(any("Broken Markdown link [missing.md]" in w for w in warnings))
+
+    def test_audit_broken_wiki_curie_in_frontmatter(self) -> None:
+        """Frontmatter wiki: CURIEs must resolve to an existing document route."""
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Wiki_CLI.md").write_text("---\ntype: SoftwareApplication\n---\n", encoding="utf-8")
+            Path(tmpdir, "Farzapedia.md").write_text(
+                "---\ntype: TechArticle\nabout: wiki:llm-wiki-cli\n---\n",
+                encoding="utf-8",
+            )
+
+            warnings = audit_broken_links(config)
+            self.assertEqual(len(warnings), 1)
+            self.assertIn("wiki:llm-wiki-cli", warnings[0])
+            self.assertIn("Metadata reference", warnings[0])
+
+    def test_internal_links_config_alias(self) -> None:
+        """Deprecated check.internalLinks maps to brokenLinks severity."""
+        config = WikiConfig(input_dirs=["wiki"], check={"internalLinks": "off"})
+        self.assertEqual(config.check.get("brokenLinks"), "off")
+
+    def test_wiki_curie_with_fragment_resolves_to_page_route(self) -> None:
+        """wiki:Page#fragment refers to the same vault route as wiki:Page."""
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Microdata.md").write_text(
+                '---\ntype: TechArticle\n---\n<div itemid="wiki:Microdata#example"></div>\n',
+                encoding="utf-8",
+            )
+            self.assertEqual(audit_broken_links(config), [])
 
     def test_markdown_can_link_to_yaml_document(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -220,19 +252,52 @@ type: schema:WebPage
 
             self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
 
-    def test_fix_is_report_only_without_filename_styles(self) -> None:
-        """check --fix does not rename files now that filename styles are removed."""
+    def test_audit_headings_numbered_and_thematic_break(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            invalid = wiki_dir / "ethan-davidson.md"
-            invalid.write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[tmpdir])
+            page = Path(tmpdir) / "Bad.md"
+            page.write_text(
+                "---\ntype: TechArticle\n---\n## 1. First step\n\n---\n\nBody.\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertTrue(any("Numbered heading" in w for w in warnings))
+            self.assertTrue(any("Thematic break" in w for w in warnings))
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[A-Z][A-Za-z0-9_]*")
-            result = autofix_hygiene(config)
+    def test_audit_headings_title_case(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\n## Related Standards Guide\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertTrue(any("title case" in w for w in warnings))
 
-            self.assertTrue(invalid.exists())
-            self.assertEqual(result["renamed"], [])
-            self.assertFalse(result["updated_wikilinks"])
+    def test_audit_markdown_flavor_gfm_rejects_wikilinks(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir], markdown_flavor="gfm")
+            Path(tmpdir, "A.md").write_text("---\ntype: TechArticle\n---\nSee [[B]].\n", encoding="utf-8")
+            self.assertEqual(len(audit_markdown_flavor(config)), 1)
+
+    def test_audit_markdown_flavor_obsidian_allows_wikilinks(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir], markdown_flavor="obsidian")
+            Path(tmpdir, "A.md").write_text("---\ntype: TechArticle\n---\nSee [[B]].\n", encoding="utf-8")
+            self.assertEqual(audit_markdown_flavor(config), [])
+
+    def test_run_checks_headings_severity(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            wiki_dir.mkdir()
+            (wiki_dir / "x.md").write_text(
+                "---\ntype: TechArticle\n---\n## 1. Bad\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki_dir], check={"headings": "error"})
+            res = run_checks(config)
+            self.assertFalse(res["conforms"])
+            self.assertTrue(any("Numbered heading" in e for e in res["errors"]))
 
     def test_frontmatter_defined_shapes(self) -> None:
         """Test that SHACL shapes defined in markdown frontmatter are loaded and enforced."""

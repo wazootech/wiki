@@ -26,8 +26,9 @@ contentPredicate: schema:text
 
 check:
   filenamePattern: warning
-  internalLinks: warning
-  markdownFlavor: warning
+  brokenLinks: warning
+  headings: off
+  markdownFlavor: off
 
 context:
   schema: https://schema.org/
@@ -79,16 +80,26 @@ filenamePattern: "[A-Za-z0-9_()-]+"
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
+## Markdown flavor
+
+| Key              | Aliases          | Default | Purpose                                                                 |
+| ---------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
+| `markdownFlavor` | `markdown_flavor` | `gfm`   | `gfm` expects Markdown page links; `obsidian` allows `[[wikilinks]]`. When `check.markdownFlavor` is enabled, `gfm` warns on wikilinks in `.md` bodies. |
+
 ## Hygiene checks
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key          | What it audits                                                   |
-| ----------------- | ---------------------------------------------------------------- |
-| `filenamePattern` | Custom regex on filename stems (see top-level `filenamePattern`) |
-| `internalLinks`   | Wikilinks and internal markdown links                            |
+| Rule key           | Default   | What it audits                                                                 |
+| ------------------ | --------- | ------------------------------------------------------------------------------ |
+| `filenamePattern`  | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)               |
+| `brokenLinks`      | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body              |
+| `markdownFlavor`   | `off`     | Wikilinks present while `markdownFlavor` is `gfm`                              |
 
-Build-safety rules (unsafe URL characters, spaces in routes) always apply regardless of `check` settings.
+Deprecated: `check.internalLinks` is merged into `brokenLinks`.
+
+Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
 ## This repository
 

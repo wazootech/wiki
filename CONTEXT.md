@@ -6,7 +6,9 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Document**: An individual Markdown page in the wiki containing a metadata block. _Avoid_: Page, post, wiki page.
+**Vault**: The markdown corpus the CLI loads from `inputDirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+
+**Document**: An individual Markdown page in the vault containing a metadata block. _Avoid_: Page, post, wiki page.
 
 **Frontmatter**: A YAML or JSON metadata block at the top of a Document, mapping to a JSON-LD compliant representation. _Avoid_: Metadata, header.
 
@@ -28,9 +30,9 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Rendering**: The process of executing embedded SPARQL Queries within Documents and injecting the formatted results back into the files. _Avoid_: Exporting, updating.
 
-**Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one vault build. _Avoid_: Disk cache, pickle store.
+**Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: The process of running unified validations on the Wiki, combining strict SHACL Validation and style/hygiene audits with optional automatic fixing. _Avoid_: Linting, testing.
+**Checking**: The process of running unified validations on the **Vault**, combining strict SHACL validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, optional `headings` and `markdownFlavor`). _Avoid_: Linting, testing.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 
@@ -38,12 +40,13 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 ## Relationships
 
-- A **Wiki** is composed of multiple **Documents**
+- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `inputDirs`
+- A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
-- **Checking** runs unified health checks (including **Validation**) on **Documents** and optionally automatically repairs **Frontmatter** formatting
+- **Checking** runs unified health checks (including **Validation**) on the **Vault** via `wiki check`; stale SPARQL blocks use `wiki render --check`
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
 - **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph

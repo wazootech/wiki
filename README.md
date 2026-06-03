@@ -74,17 +74,14 @@ wiki serve
 
 
 ### `check`
-Perform unified validations of your wiki, including strict SHACL schema validations and soft style/hygiene audits (configured filename style, broken internal wikilinks). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, optional `headings` and `markdownFlavor`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
-# Run unified checks on the entire wiki silently (default)
+# Run unified checks on the entire vault silently (default)
 wiki check
 
 # Check a single file specifically
 wiki check wiki/Gregory_House.md
-
-# Autofix hygiene issues (rename files to match filenamePattern + update wikilinks)
-wiki check --fix
 
 # Run with verbose output to show style/guideline warnings
 wiki check -v
@@ -97,8 +94,12 @@ Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wik
 
 ```yaml
 filenamePattern: "[A-Za-z0-9_()-]+"
+markdownFlavor: gfm
 check:
   filenamePattern: warning
+  brokenLinks: warning
+  headings: off
+  markdownFlavor: off
 ```
 
 ### `query`
@@ -563,7 +564,9 @@ contentPredicate: schema:text # Opt-in full-text markdown body auto-injection
 
 check:
   filenamePattern: warning   # "error" | "warning" | "off"
-  internalLinks: warning     # "error" | "warning" | "off"
+  brokenLinks: warning       # "error" | "warning" | "off"
+  headings: off              # sentence case, numbered headings, body ---
+  markdownFlavor: off        # wikilinks when markdownFlavor is gfm
 
 context:
   schema: https://schema.org/

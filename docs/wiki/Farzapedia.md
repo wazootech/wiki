@@ -2,7 +2,7 @@
 type: TechArticle
 name: Farzapedia and personal AI wikis
 description: An interlinked digital garden serving as an example for the LLM Wiki pattern.
-about: wiki:llm-wiki-cli
+about: wiki:Wiki_CLI
 ---
 
 # Farzapedia and personal AI wikis

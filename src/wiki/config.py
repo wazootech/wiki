@@ -25,6 +25,29 @@ DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
+DEFAULT_CHECK_RULES = {
+    "filenamePattern": "warning",
+    "brokenLinks": "warning",
+    "headings": "off",
+    "markdownFlavor": "off",
+}
+
+VALID_MARKDOWN_FLAVORS = {"gfm", "obsidian"}
+
+
+def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
+    """Merge user check severities with defaults; map deprecated internalLinks to brokenLinks."""
+    merged = {**DEFAULT_CHECK_RULES}
+    if check:
+        merged.update(check)
+    if check and "internalLinks" in check and "brokenLinks" not in check:
+        merged["brokenLinks"] = check["internalLinks"]
+        logger.warning(
+            "wiki.yaml check.internalLinks is deprecated; use check.brokenLinks instead."
+        )
+    return merged
+
+
 DEFAULT_NAMESPACES = {
     "schema": SCHEMA,
     "wiki": WIKI,
@@ -75,16 +98,14 @@ class WikiConfig:
         url_style: str = DEFAULT_URL_STYLE,
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
+        markdown_flavor: str = "gfm",
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
         self.asset_dirs = [Path(d) for d in (asset_dirs or [])]
 
         self.wiki_base = wiki_base
-        self.check = check if check is not None else {
-            "filenamePattern": "warning",
-            "internalLinks": "warning",
-        }
+        self.check = normalize_check_rules(check)
         self.context = context if context is not None else Context({"wiki": wiki_base}, wiki_base=wiki_base)
         self.context.wiki_base = wiki_base
         self.content_predicate = content_predicate
@@ -93,6 +114,7 @@ class WikiConfig:
         self.base_url = base_url.rstrip("/") if base_url else ""
         self.url_style = normalize_url_style(url_style)
         self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
+        self.markdown_flavor = normalize_markdown_flavor(markdown_flavor)
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -184,6 +206,9 @@ class WikiConfig:
                             url_style=data.get("url_style") or data.get("urlStyle") or DEFAULT_URL_STYLE,
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
+                            markdown_flavor=data.get("markdown_flavor")
+                            or data.get("markdownFlavor")
+                            or "gfm",
                         )
                 except Exception as e:
                     logger.warning("Failed to load config file %s: %s", config_path.name, e)
@@ -206,4 +231,11 @@ def normalize_url_style(value: str | None) -> str:
     normalized = str(value or DEFAULT_URL_STYLE).strip().lower()
     if normalized not in VALID_URL_STYLES:
         raise ValueError(f"Invalid urlStyle: {value}")
+    return normalized
+
+
+def normalize_markdown_flavor(value: str | None) -> str:
+    normalized = str(value or "gfm").strip().lower()
+    if normalized not in VALID_MARKDOWN_FLAVORS:
+        raise ValueError(f"Invalid markdownFlavor: {value} (use gfm or obsidian)")
     return normalized
