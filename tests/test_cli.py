@@ -298,22 +298,39 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             self.assertEqual(result_clean.exit_code, 0)
             self.assertIn("All dynamic SPARQL blocks are fully up to date", result_clean.output)
 
-    def test_cli_init_scaffolds_person_shape_with_template_constraint(self) -> None:
+    def test_cli_init_scaffolds_workspace_files(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
                 result = runner.invoke(
                     main,
                     ["init", "--force"],
-                    input="https://wiki.example.org/\ny\ny\n",
+                    input="https://wiki.example.org/\n",
                     catch_exceptions=False,
                 )
 
                 self.assertEqual(result.exit_code, 0)
+                
+                # Check wiki.yaml exists
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("wikiBase: https://wiki.example.org/", config_content)
+                self.assertIn("sh: http://www.w3.org/ns/shacl#", config_content)
+
+                # Check README.md exists and contains commands
+                readme_content = Path("README.md").read_text(encoding="utf-8")
+                self.assertIn("A semantic markdown knowledge base powered by the Wiki CLI.", readme_content)
+                self.assertIn("wiki check", readme_content)
+
+                # Check wiki/Person_Shape.md exists and contains schema:givenName/familyName
                 shape_content = Path("wiki") / "Person_Shape.md"
                 content = shape_content.read_text(encoding="utf-8")
-                self.assertIn("sh:path: wiki:template", content)
-                self.assertIn("sh:maxCount: 1", content)
+                self.assertIn("sh:path: schema:givenName", content)
+                self.assertIn("sh:path: schema:familyName", content)
+
+                # Check wiki/Ethan_Davidson.md exists
+                person_content = (Path("wiki") / "Ethan_Davidson.md").read_text(encoding="utf-8")
+                self.assertIn("givenName: Ethan", person_content)
+                self.assertIn("familyName: Davidson", person_content)
 
     def test_cli_render_single_file_scope(self) -> None:
         runner = CliRunner()

@@ -74,7 +74,7 @@ wiki serve
 
 
 ### `check`
-Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, optional `headings` and `markdownFlavor`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, and optional `headings`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 # Run unified checks on the entire vault silently (default)
@@ -94,12 +94,10 @@ Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wik
 
 ```yaml
 filenamePattern: "[A-Za-z0-9_()-]+"
-markdownFlavor: gfm
 check:
   filenamePattern: warning
   brokenLinks: warning
   headings: off
-  markdownFlavor: off
 ```
 
 ### `query`
@@ -566,7 +564,6 @@ check:
   filenamePattern: warning   # "error" | "warning" | "off"
   brokenLinks: warning       # "error" | "warning" | "off"
   headings: off              # sentence case, numbered headings, body ---
-  markdownFlavor: off        # wikilinks when markdownFlavor is gfm
 
 context:
   schema: https://schema.org/

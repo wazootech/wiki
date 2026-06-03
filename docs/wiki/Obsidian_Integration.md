@@ -22,7 +22,7 @@ Point the plugin’s working directory at the folder containing `wiki.yaml`.
 
 ## Wikilinks
 
-Set `markdownFlavor: obsidian` in `wiki.yaml` so `[[wikilinks]]` are expected. Obsidian wikilinks match the CLI resolver when filenames follow vault route rules; `check.brokenLinks` still validates that each link resolves.
+Obsidian wikilinks are natively supported by the Wiki CLI. They match the CLI resolver when filenames follow vault route rules; `check.brokenLinks` still validates that each link resolves.
 
 ## Related
 
