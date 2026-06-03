@@ -37,11 +37,11 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key           | What it audits                                                                 |
-| ------------------ | ------------------------------------------------------------------------------ |
-| `filenamePattern`  | Filename stem vs top-level `filenamePattern` regex                             |
-| `brokenLinks`      | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`         | Sentence-case headings, numbered headings, thematic `---` in body              |
+| Rule key          | What it audits                                                                |
+| ----------------- | ----------------------------------------------------------------------------- |
+| `filenamePattern` | Filename stem vs top-level `filenamePattern` regex                            |
+| `brokenLinks`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `headings`        | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `filenamePattern` and `brokenLinks` are `warning`; `headings` is `off`.
 
@@ -51,9 +51,9 @@ Each rule is `error`, `warning`, or `off`. Defaults: `filenamePattern` and `brok
 
 ### Related CI commands
 
-| Command               | Purpose                          |
-| --------------------- | -------------------------------- |
-| `wiki fmt --check`    | mdformat consistency             |
+| Command               | Purpose                           |
+| --------------------- | --------------------------------- |
+| `wiki fmt --check`    | mdformat consistency              |
 | `wiki render --check` | Stale inline SPARQL result blocks |
 
 `wiki build` runs `wiki check` before writing output unless `--no-check`.

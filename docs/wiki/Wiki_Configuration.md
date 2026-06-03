@@ -82,11 +82,11 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                 |
-| ------------------ | --------- | ------------------------------------------------------------------------------ |
-| `filenamePattern`  | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)               |
-| `brokenLinks`      | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body              |
+| Rule key          | Default   | What it audits                                                                |
+| ----------------- | --------- | ----------------------------------------------------------------------------- |
+| `filenamePattern` | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)              |
+| `brokenLinks`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `headings`        | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Deprecated: `check.internalLinks` is merged into `brokenLinks`.
 
