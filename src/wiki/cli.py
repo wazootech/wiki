@@ -443,11 +443,15 @@ def init(force: bool) -> None:
 
     cwd = Path.cwd()
     config_path = cwd / "wiki.yaml"
+    readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
     if not force:
         if config_path.exists():
             click.echo("Error: wiki.yaml already exists. Use --force to overwrite.", err=True)
+            sys.exit(1)
+        if readme_path.exists():
+            click.echo("Error: README.md already exists. Use --force to overwrite.", err=True)
             sys.exit(1)
         if wiki_dir.exists() and any(wiki_dir.iterdir()):
             click.echo("Error: wiki/ is not empty. Use --force to overwrite.", err=True)
@@ -456,37 +460,48 @@ def init(force: bool) -> None:
     wiki_base = click.prompt("Custom base URI prefix", default="https://wiki.example.org/")
     wiki_base = str(wiki_base).rstrip("/") + "/"
 
-    add_foaf = click.confirm("Include foaf prefix?", default=True)
-    add_dc = click.confirm("Include dc/dcterms prefixes?", default=True)
-
     context_map: dict[str, str] = {
         "schema": "https://schema.org/",
         "wiki": wiki_base,
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "dc": "http://purl.org/dc/elements/1.1/",
+        "dcterms": "http://purl.org/dc/terms/",
+        "sh": "http://www.w3.org/ns/shacl#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
     }
-    if add_foaf:
-        context_map["foaf"] = "http://xmlns.com/foaf/0.1/"
-    if add_dc:
-        context_map["dc"] = "http://purl.org/dc/elements/1.1/"
-        context_map["dcterms"] = "http://purl.org/dc/terms/"
 
     cfg = {
-         "inputDirs": ["wiki"],
-         "wikiBase": wiki_base,
-         "baseUrl": "/wiki",
-         "urlStyle": "dir",
-         "check": {"filenamePattern": "warning", "brokenLinks": "warning"},
-         "context": context_map,
-     }
+        "inputDirs": ["wiki"],
+        "wikiBase": wiki_base,
+        "baseUrl": "/wiki",
+        "urlStyle": "dir",
+        "filenamePattern": "[A-Za-z0-9_()-]+",
+        "check": {"filenamePattern": "warning", "brokenLinks": "warning"},
+        "context": context_map,
+    }
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
-    (wiki_dir / "index.md").write_text(
-        "---\n"
-        "id: wiki:index\n"
-        "type: schema:CreativeWork\n"
-        "name: Wiki index\n"
-        "---\n\n"
-        "# Wiki index\n\n"
-        "Welcome to your wiki.\n",
+    readme_path.write_text(
+        "# My Wiki\n\n"
+        "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
+        "## Workspace Layout\n\n"
+        "- `wiki.yaml` — Workspace configuration and namespace prefixes.\n"
+        "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
+        "  - `Person_Shape.md` — Validation shape for Person documents.\n"
+        "  - `Ethan_Davidson.md` — An example Person document.\n\n"
+        "## Commands\n\n"
+        "- **Check** (runs SHACL validation and hygiene checks):\n"
+        "  ```bash\n"
+        "  wiki check\n"
+        "  ```\n"
+        "- **Preview** (starts a local dev server with auto-reload):\n"
+        "  ```bash\n"
+        "  wiki serve --watch\n"
+        "  ```\n"
+        "- **Build** (compiles to static HTML site):\n"
+        "  ```bash\n"
+        "  wiki build\n"
+        "  ```\n",
         encoding="utf-8",
     )
     (wiki_dir / "Person_Shape.md").write_text(
@@ -495,20 +510,30 @@ def init(force: bool) -> None:
         "type: sh:NodeShape\n"
         "sh:targetClass: schema:Person\n"
         "sh:property:\n"
-        "  - sh:path: schema:name\n"
+        "  - sh:path: schema:givenName\n"
         "    sh:datatype: xsd:string\n"
         "    sh:minCount: 1\n"
-        "  - sh:path: wiki:template\n"
+        "  - sh:path: schema:familyName\n"
         "    sh:datatype: xsd:string\n"
-        "    sh:maxCount: 1\n"
+        "    sh:minCount: 1\n"
         "---\n\n"
         "# Person shape\n\n"
-        "A minimal starter SHACL shape, including optional wiki:template cardinality.\n",
+        "Defines validation rules for Person profiles in this wiki.\n",
+        encoding="utf-8",
+    )
+    (wiki_dir / "Ethan_Davidson.md").write_text(
+        "---\n"
+        "type: schema:Person\n"
+        "givenName: Ethan\n"
+        "familyName: Davidson\n"
+        "---\n\n"
+        "# Ethan Davidson\n\n"
+        "Welcome to my personal wiki page! This page serves as a starting point and conforming example of a Person profile.\n",
         encoding="utf-8",
     )
 
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
-    click.echo("Initialized wiki.yaml and wiki/ starter files.")
+    click.echo("Initialized wiki.yaml, README.md, and wiki/ starter files.")
 
 
 @main.command()

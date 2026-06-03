@@ -25,7 +25,7 @@ This is parsed as a typed graph triple (`wiki:gregory wiki:owns wiki:bella`), al
 
 ### Built-in structural correctness (SHACL shapes)
 
-Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The LLM Wiki CLI uses **SHACL shapes** to audit your notes automatically. This ensures your second brain remains consistently structured and complete.
+Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The Wiki CLI uses **SHACL shapes** to audit your notes automatically. This ensures your second brain remains consistently structured and complete.
 
 ### Infinite dynamic synthesis (SPARQL)
 

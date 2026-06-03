@@ -16,7 +16,6 @@ inputDirs:
 assetDirs:
   - assets
 wikiBase: https://example.org/wiki/
-markdownFlavor: obsidian
 baseUrl: /wiki
 urlStyle: dir
 filenamePattern: "[A-Za-z0-9_()-]+"
@@ -28,7 +27,6 @@ check:
   filenamePattern: warning
   brokenLinks: warning
   headings: off
-  markdownFlavor: off
 
 context:
   schema: https://schema.org/
@@ -80,22 +78,15 @@ filenamePattern: "[A-Za-z0-9_()-]+"
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
-## Markdown flavor
-
-| Key              | Aliases          | Default | Purpose                                                                 |
-| ---------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
-| `markdownFlavor` | `markdown_flavor` | `gfm`   | `gfm` expects Markdown page links; `obsidian` allows `[[wikilinks]]`. When `check.markdownFlavor` is enabled, `gfm` warns on wikilinks in `.md` bodies. |
-
 ## Hygiene checks
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                 |
-| ------------------ | --------- | ------------------------------------------------------------------------------ |
-| `filenamePattern`  | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)               |
-| `brokenLinks`      | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body              |
-| `markdownFlavor`   | `off`     | Wikilinks present while `markdownFlavor` is `gfm`                              |
+| Rule key          | Default   | What it audits                                                                |
+| ----------------- | --------- | ----------------------------------------------------------------------------- |
+| `filenamePattern` | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)              |
+| `brokenLinks`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `headings`        | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Deprecated: `check.internalLinks` is merged into `brokenLinks`.
 

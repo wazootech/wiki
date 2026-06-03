@@ -8,7 +8,7 @@ description: Pattern where an LLM retrieves external chunks at query time instea
 
 **Retrieval-augmented generation (RAG)** is a pattern where a language model answers questions by retrieving relevant passages from an external corpus—often via vector embeddings—at query time, then conditioning its reply on those chunks.
 
-RAG is flexible for ad hoc document sets but can feel opaque: similarity search does not guarantee explicit structure, stable cross-links, or inspectable memory. The [LLM Wiki](LLM_Wiki.md) pattern popularized by [Andrej Karpathy](Andrej_Karpathy.md) argues for **compiling** sources into a persistent, interlinked markdown wiki that agents maintain and traverse—exemplified by [Farzapedia](Farzapedia.md).
+RAG is flexible for ad hoc document sets but can feel opaque: similarity search does not guarantee explicit structure, stable cross-links, or inspectable memory. The [LLM Wiki](LLM_Wiki.md) pattern popularized by Andrej Karpathy argues for **compiling** sources into a persistent, interlinked markdown wiki that agents maintain and traverse—exemplified by [Farzapedia](Farzapedia.md).
 
 Both approaches support [Personal_Knowledge](Personal_Knowledge.md) workflows; many practitioners combine compiled wikis with targeted retrieval when corpora grow very large.
 

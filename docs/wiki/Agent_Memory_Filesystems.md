@@ -39,6 +39,6 @@ These are not always mutually exclusive. A team might maintain a published **[Wi
 
 ## Related pages
 
-- [LLM_Wiki](LLM_Wiki.md) — pattern origins ([Andrej_Karpathy](Andrej_Karpathy.md), [Farza_Majeed](Farza_Majeed.md))
+- [LLM_Wiki](LLM_Wiki.md) — pattern origins (Andrej Karpathy, Farza Majeed)
 - [Second_Brain](Second_Brain.md) — PKM goals
 - [Style_Guide](Style_Guide.md) — conventions for this vault

@@ -14,13 +14,13 @@ Prefixed CURIEs (`schema:Thing`, `wiki:Page_Name`) in `itemtype`, `itemid`, `ite
 
 ## Examples
 
-The LLM Wiki CLI extracts this format directly from wiki documents into the unified RDF pool:
+The Wiki CLI extracts this format directly from wiki documents into the unified RDF pool:
 
 <div itemscope itemtype="schema:TechArticle" itemid="wiki:Microdata#example">
   <span itemprop="schema:name">Microdata in LLM Wiki</span>
   <meta itemprop="schema:description" content="A practical introduction to structuring linked metadata directly in markup." />
   <div itemprop="schema:about" itemscope itemtype="schema:SoftwareApplication">
-    <span itemprop="name">LLM Wiki CLI</span> 
+    <span itemprop="name">Wiki CLI</span> 
     (<span itemprop="description">A semantic command-line companion for markdown vaults</span>)
     supports extraction via BeautifulSoup.
   </div>
