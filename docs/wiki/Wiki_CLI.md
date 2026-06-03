@@ -115,7 +115,7 @@ The CLI follows a flat, scriptable surface and [Design_Philosophies](Design_Phil
 
 ## Pattern context
 
-This repository implements the [LLM_Wiki](LLM_Wiki.md) pattern for [Personal_Knowledge](Personal_Knowledge.md) vaults. Examples in the wild include [Farzapedia](Farzapedia.md) and coverage from [Andrej_Karpathy](Andrej_Karpathy.md).
+This repository implements the [LLM_Wiki](LLM_Wiki.md) pattern for [Personal_Knowledge](Personal_Knowledge.md) vaults. Examples in the wild include [Farzapedia](Farzapedia.md) and coverage from Andrej Karpathy.
 
 Similar **agent memory filesystem** approaches include [Supermemory_SMFS](Supermemory_SMFS.md), [Letta_MemFS](Letta_MemFS.md), and [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
 

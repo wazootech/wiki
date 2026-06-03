@@ -8,7 +8,7 @@ description: A 48-hour online hackathon to build personal Wikipedia-style knowle
 
 **WikiThon** was a 48-hour online hackathon hosted by [AI Valley](https://www.aivalley.io/), with Harnoor Singh and Kartik Chauhan as organizers, centered on the spring 2026 wave of personal, agent-readable wikis. The event's tagline was *Build your own Wikipedia with HydraDB*.
 
-It rode the same cultural moment as the [LLM Wiki](LLM_Wiki.md) pattern ([Andrej Karpathy](Andrej_Karpathy.md)'s April 2026 threads, [Farzapedia](Farzapedia.md) by [Farza Majeed](Farza_Majeed.md), and markdown-first [Second_Brain](Second_Brain.md) tooling): treat interlinked articles as a **compiled knowledge base** for agents, not a one-off chat transcript.
+It rode the same cultural moment as the [LLM Wiki](LLM_Wiki.md) pattern (Andrej Karpathy's April 2026 threads, [Farzapedia](Farzapedia.md) by Farza Majeed, and markdown-first [Second_Brain](Second_Brain.md) tooling): treat interlinked articles as a **compiled knowledge base** for agents, not a one-off chat transcript.
 
 ## Schedule and links
 

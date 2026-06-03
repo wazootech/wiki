@@ -1,6 +1,6 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the `wiki check` subcommand of the LLM Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the `wiki check` subcommand of the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
 
 ## Vault rules
 

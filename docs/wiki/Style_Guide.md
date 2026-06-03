@@ -51,8 +51,6 @@ Data-only records may use `.yaml`, `.yml`, or `.json` without a markdown body.
 
 Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software_Shape](Software_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki_Subcommand_check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
 
-Shapes can also be documented as Turtle in the page body (see [Person_Shape](Person_Shape.md)), but executable validation uses frontmatter shapes.
-
 ## Internal links
 
 Link to other vault pages with standard Markdown links. Use the page stem (filename without `.md`, case preserved), for example `Page_Name.md` or `Display text` pointing at `Page_Name.md`.
@@ -67,27 +65,28 @@ All internal links must resolve to existing documents in the wiki.
 
 When `markdownFlavor` is `gfm` (default), prefer Markdown links over `[[wikilinks]]`. Set `markdownFlavor: obsidian` for Obsidian-style wikilinks. **Enforcer:** `check.markdownFlavor` (off by default).
 
-## Inline SPARQL blocks
+## Active database summary
 
-Wrap queries so [Wiki_Subcommand_render](Wiki_Subcommand_render.md) can refresh result tables (see [SPARQL](SPARQL.md) for query syntax):
+The table below queries the active graph to list all distinct classes currently instantiated in your vault:
 
-````markdown
 <!-- sparql:start -->
+
 ```sparql
-SELECT ?name WHERE {
-  ?person rdf:type schema:Person .
-  ?person schema:name ?name .
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?class WHERE {
+  ?s rdf:type ?class .
+  FILTER(STRSTARTS(STR(?class), "https://schema.org/"))
 }
-ORDER BY ?name
-LIMIT 5
+ORDER BY ?class
 ```
 
-| Name |
-| --- |
-| Andrej Karpathy |
-| Farza Majeed |
+| Class                                  |
+| -------------------------------------- |
+| https://schema.org/SoftwareApplication |
+| https://schema.org/TechArticle         |
+
 <!-- sparql:end -->
-````
 
 Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki_Subcommand_render](Wiki_Subcommand_render.md) and [Graph_Cache](Graph_Cache.md).
 

@@ -90,7 +90,7 @@ wiki check -v
 wiki check --strict
 ```
 
-Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `LLM_Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
+Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
 
 ```yaml
 filenamePattern: "[A-Za-z0-9_()-]+"
@@ -452,7 +452,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 
 ### Obsidian integration
 
-While the LLM Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
+While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
 
 Recommended workflows:
 * **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL validations and formatting.
@@ -460,7 +460,7 @@ Recommended workflows:
 
 ### Declarative modeling & full-text SPARQL
 
-The LLM Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
+The Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
 
 #### Defining OWL classes and SHACL shapes recursively in frontmatter
 Because our frontmatter parser natively supports nested dictionary conversion to RDF blank nodes, you can define complete validation shapes and ontological classes inside any document's frontmatter:
