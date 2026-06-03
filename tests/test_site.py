@@ -67,6 +67,7 @@ type: schema:Person
 name: Gregory Davidson
 knows: wiki:Ethan_Davidson
 owns: wiki:Bella_Davidson
+softwareVersion: 1.2
 url: https://example.com/gregory-davidson
 """,
                 encoding="utf-8",
@@ -100,6 +101,8 @@ name: Bella Davidson
             self.assertIn('href="/wiki/Ethan_Davidson/"', html)
             self.assertIn('href="/wiki/Bella_Davidson/"', html)
             self.assertIn('href="https://example.com/gregory-davidson"', html)
+            self.assertIn('<dt>softwareVersion</dt>', html)
+            self.assertNotIn('<dt>Softwareversion</dt>', html)
             self.assertIn("Infobox", html)
 
     def test_template_frontmatter_override_is_applied(self) -> None:

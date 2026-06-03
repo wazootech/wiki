@@ -336,6 +336,17 @@ li {
   margin-bottom: 6px;
 }
 
+.personal-list,
+.vector-tabs {
+  margin: 0;
+  padding-left: 0;
+}
+
+.personal-list li,
+.vector-tabs li {
+  margin-bottom: 0;
+}
+
 pre {
   background: #1e1e2e;
   color: #cdd6f4;
@@ -643,13 +654,14 @@ textarea.wiki-textarea:focus {
 /* Template Label badge */
 .template-label {
   display: inline-block;
-  margin-bottom: 16px;
-  padding: 4px 12px;
+  margin-bottom: 6px;
+  padding: 2px 6px;
   border-radius: 4px;
   background: #e0f2fe;
   color: #0369a1;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
+  line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1842,17 +1854,11 @@ def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_sty
     for key, value in page.frontmatter.items():
         if key in METADATA_HIDDEN_FIELDS:
             continue
-        label = _humanize_field_name(key)
+        label = str(key)
         text, html = _render_metadata_value_parts(value, page, site, base_url, url_style)
         if html:
             rows.append(InfoboxRow(label=label, text=text, html=html))
     return rows
-def _humanize_field_name(key: str) -> str:
-    clean = key.split(":", 1)[-1] if ":" in key else key
-    clean = clean.lstrip("@")
-    return clean.replace("_", " ").strip().title()
-
-
 def _render_metadata_value(value: Any, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
     if value is None:
         return ""
@@ -1895,7 +1901,7 @@ def _render_metadata_value_parts(
                 continue
             nested_text, nested_html = _render_metadata_value_parts(nested_value, page, site, base_url, url_style)
             if nested_html:
-                nested_label = _humanize_field_name(str(nested_key))
+                nested_label = str(nested_key)
                 rows.append(
                     f'<div class="infobox-dict-row"><span class="infobox-key">{html_module.escape(nested_label)}</span><span>{nested_html}</span></div>'
                 )
