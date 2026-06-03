@@ -44,7 +44,7 @@ def render_document_view(file_path: Path, config: object, base_url: str | None =
         table.add_column("Field", style="cyan", no_wrap=True)
         table.add_column("Value")
         for row in rows:
-            table.add_row(row.label, row.text)
+            table.add_row(_field_label(row.label), row.text)
         console.print(table)
 
     if page.markdown.strip():
@@ -52,3 +52,7 @@ def render_document_view(file_path: Path, config: object, base_url: str | None =
         console.print(Markdown(page.markdown))
 
     return buffer.getvalue()
+
+
+def _field_label(label: str) -> str:
+    return label.replace("_", " ").replace("-", " ").strip().capitalize()

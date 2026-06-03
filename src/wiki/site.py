@@ -11,6 +11,10 @@ from typing import Any
 from urllib.parse import quote
 
 from markdown_it import MarkdownIt
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
@@ -21,6 +25,9 @@ from .parser import split_document_body
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
+
+PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
+PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
 
 INLINE_CSS = """
 /* Google Fonts */
@@ -699,7 +706,7 @@ textarea.wiki-textarea:focus {
     margin: 20px 0;
   }
 }
-""".strip().strip()
+""".strip().strip() + "\n\n" + PYGMENTS_CSS
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
 
@@ -750,6 +757,25 @@ def render_wiki_markdown(
     md = MarkdownIt("gfm-like", {"linkify": False})
     md.use(wikilink_plugin)
     heading_slugger = GitHubHeadingSlugger()
+
+    def _fence_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        info = (token.info or "").strip().split(maxsplit=1)
+        language = info[0] if info else ""
+        escaped_language = html_module.escape(language)
+        escaped_code = html_module.escape(token.content)
+        if not language:
+            return f'<pre><code>{escaped_code}</code></pre>\n'
+
+        try:
+            lexer = get_lexer_by_name(language)
+        except ClassNotFound:
+            return f'<pre><code class="language-{escaped_language}">{escaped_code}</code></pre>\n'
+
+        highlighted = highlight(token.content, lexer, PYGMENTS_FORMATTER)
+        return f'<pre class="highlight"><code class="language-{escaped_language}">{highlighted}</code></pre>\n'
+
+    md.add_render_rule("fence", _fence_renderer)
 
     def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         token = tokens[idx]
