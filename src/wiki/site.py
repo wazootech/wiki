@@ -117,6 +117,20 @@ a:hover {
   color: #0645ad;
 }
 
+.portal-contents ul {
+  padding-left: 0;
+}
+
+.portal-contents li {
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.portal-contents .l3 { padding-left: 10px; }
+.portal-contents .l4 { padding-left: 20px; }
+.portal-contents .l5 { padding-left: 30px; }
+.portal-contents .l6 { padding-left: 40px; }
+
 /* Search Box */
 #p-search {
   position: relative;
@@ -1219,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
     """Compile individual page HTML."""
     toc_html = _build_toc_html(page)
+    sidebar_contents_html = _build_sidebar_contents_html(page)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)
     infobox_html = _build_infobox_html(page, site, base_url, url_style)
     
@@ -1318,6 +1333,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
       <li><a href="javascript:void(0)" onclick="switchTab('source')">View page source</a></li>
     </ul>
   </div>
+  {sidebar_contents_html}
 </aside>
 
 <!-- Vector tabs wrapper -->
@@ -1692,6 +1708,7 @@ function applyCategoryFilterFromUrl() {
             .replace("{current_slug_json}", json.dumps(page.full_slug))
             .replace("{metadata_tool_html}", metadata_tool_html)
             .replace("{metadata_tab_html}", metadata_tab_html)
+            .replace("{sidebar_contents_html}", sidebar_contents_html)
             .replace("{metadata_pane_html}", metadata_pane_html))
 
 
@@ -1781,6 +1798,20 @@ def _build_toc_html(page: VirtualPage) -> str:
 {items}
 </ul>
 </div>"""
+
+
+def _build_sidebar_contents_html(page: VirtualPage) -> str:
+    if not page.outline:
+        return ""
+    items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
+    for item in page.outline:
+        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
+    return f"""<div class="portal portal-contents" role="navigation" id="p-contents" aria-label="Page contents">
+    <h3>Contents</h3>
+    <ul>
+{items}
+    </ul>
+  </div>"""
 
 
 def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:

@@ -24,6 +24,10 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+            self.assertIn('id="p-contents"', html)
+            self.assertIn('href="#early-life"', html)
+            self.assertIn('href="#firstHeading"', html)
 
     def test_title_falls_back_to_humanized_route(self) -> None:
         with TemporaryDirectory() as tmpdir:
