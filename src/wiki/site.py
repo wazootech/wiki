@@ -146,6 +146,10 @@ a:hover {
 }
 
 /* Search Box */
+#p-search {
+  position: relative;
+}
+
 .search-container {
   position: relative;
   display: flex;
@@ -1012,7 +1016,7 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = D
   <div id="p-search" role="search">
     <div class="search-container">
       <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-      <button class="search-button" type="button" aria-label="Search">&#x1F50D;</button>
+      <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
     </div>
     <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
   </div>
@@ -1059,6 +1063,18 @@ function goToRandomArticle() {
     url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.' + 'html' : 'index.' + 'html');
   }
   window.location.href = url;
+}
+
+function triggerSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) return;
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  );
+  if (matches.length > 0) {
+    navigateSearch(matches[0].slug);
+  }
 }
 
 let selectedSuggestionIndex = -1;
@@ -1257,6 +1273,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
+    metadata_formatted = json.dumps(page.frontmatter, indent=2, default=str)
     if page.has_frontmatter:
         metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
         metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON)</a></li>'
@@ -1265,7 +1282,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
       <div id="siteSub">JSON representation compiled from frontmatter</div>
       
-      <pre><code>{{metadata_json_content}}</code></pre>
+      <pre><code>{html_module.escape(metadata_formatted)}</code></pre>
     </div>"""
     else:
         metadata_tool_html = ""
@@ -1320,7 +1337,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   <div id="p-search" role="search">
     <div class="search-container">
       <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-      <button class="search-button" type="button" aria-label="Search">&#x1F50D;</button>
+      <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
     </div>
     <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
   </div>
@@ -1536,6 +1553,18 @@ function goToRandomArticle() {
   window.location.href = url;
 }
 
+function triggerSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) return;
+  const matches = ALL_PAGES.filter(p => 
+    p.title.toLowerCase().includes(query) || 
+    p.slug.toLowerCase().includes(query)
+  );
+  if (matches.length > 0) {
+    navigateSearch(matches[0].slug);
+  }
+}
+
 let selectedSuggestionIndex = -1;
 
 function onSearchInput(e) {
@@ -1658,7 +1687,6 @@ function applyCategoryFilterFromUrl() {
 </body>
 </html>"""
 
-    metadata_formatted = json.dumps(page.frontmatter, indent=2, default=str)
     return (template
             .replace("{INLINE_CSS}", INLINE_CSS)
             .replace("{base_url}", base_url)
