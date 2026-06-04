@@ -43,7 +43,6 @@ See [Getting_Started](Getting_Started.md) for a full walkthrough.
 - [Wiki_Configuration](Wiki_Configuration.md) — `wiki.yaml` options
 - [Style_Guide](Style_Guide.md) — frontmatter, shapes, internal links, SPARQL blocks
 - [Graph_Cache](Graph_Cache.md) — in-process RDF graph reuse
-- [Wiki_CLI_Roadmap](Wiki_CLI_Roadmap.md) — prioritized next work and architecture triage
 - [Design_Philosophies](Design_Philosophies.md) — silence is golden, pipes, flat commands
 
 ## Global Options
