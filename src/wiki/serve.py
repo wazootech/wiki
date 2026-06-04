@@ -17,7 +17,6 @@ from .config import WikiConfig
 from .site import (
     WikiSite,
     VirtualPage,
-    INLINE_CSS,
     build_site,
     build_index_html,
     build_page_html
@@ -33,6 +32,7 @@ class WikiHandler(BaseHTTPRequestHandler):
     url_style: str = "dir"
     watch_enabled: bool = False
     build_id: int = 0
+    html_template: str | None = None
 
     def do_GET(self) -> None:
         base = self.base_url
@@ -45,14 +45,14 @@ class WikiHandler(BaseHTTPRequestHandler):
         parsed = parsed.rstrip("/")
 
         if parsed == "" or parsed == "/index":
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
         elif parsed == base:
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
         elif parsed.startswith(base + "/"):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
             if target:
-                self._send_html(build_page_html(target, self.site, base_url=base, url_style=self.url_style))
+                self._send_html(build_page_html(target, self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
             elif self._serve_asset(parsed[len(base) + 1:]):
                 return
             else:
@@ -139,14 +139,10 @@ class WikiHandler(BaseHTTPRequestHandler):
 <head>
 <meta charset="UTF-8">
 <title>{code}</title>
-<style>{INLINE_CSS}</style>
 </head>
 <body>
-<header><a href="{self.base_url}/" class="site-title">Wiki</a></header>
-<main>
 <h1>{code}</h1>
 <p>{html_module.escape(message)}</p>
-</main>
 </body>
 </html>""".encode("utf-8")
         self.send_response(code)
@@ -207,6 +203,12 @@ def create_server(
     WikiHandler.url_style = resolved_url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
+
+    # Load custom HTML template if configured; silently fall back to default if file missing
+    if config.html_template is not None and config.html_template.is_file():
+        WikiHandler.html_template = config.html_template.read_text(encoding="utf-8")
+    else:
+        WikiHandler.html_template = None
 
     server = HTTPServer((host, port), WikiHandler)
     print(f"Wiki server ready at http://{host}:{port}/")

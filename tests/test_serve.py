@@ -26,9 +26,52 @@ def _free_port() -> int:
     return port
 
 
+_RICH_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title}</title>
+</head>
+<body>
+<h1>{page_title}</h1>
+{infobox_html}
+{page_content}
+{toc_html}
+{backlinks_html}
+{categories_html}
+</body>
+</html>"""
+
+
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
     port = _free_port()
     config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+    server = create_server(config, host="127.0.0.1", port=port)
+    t = threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    for _ in range(100):
+        try:
+            conn = HTTPConnection("127.0.0.1", port, timeout=1)
+            conn.request("GET", "/")
+            conn.getresponse()
+            conn.close()
+            break
+        except ConnectionRefusedError:
+            sleep(0.05)
+    yield port
+    server.shutdown()
+
+
+def _serve_with_template(wiki_dir: Path, template: str = _RICH_TEMPLATE) -> Generator[int, None, None]:
+    port = _free_port()
+    template_path = wiki_dir / "test_shell.html"
+    template_path.write_text(template, encoding="utf-8")
+    config = WikiConfig(
+        input_dirs=[wiki_dir],
+        config_root=wiki_dir,
+        html_template=template_path,
+    )
     server = create_server(config, host="127.0.0.1", port=port)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
@@ -141,7 +184,7 @@ class TestServe(unittest.TestCase):
 
     def test_toc_h3_to_h6(self) -> None:
         self._write("doc.md", "# Doc\n\n## Section\n\n### Sub A\n\nContent A\n\n#### SubSub\n\nDeep.\n\n### Sub B\n\nContent B")
-        for port in _serve_in_thread(self.wiki_dir):
+        for port in _serve_with_template(self.wiki_dir):
             status, body = self._get(port, "/wiki/doc")
         self.assertEqual(status, 200)
         self.assertIn("On this page", body)
@@ -155,7 +198,7 @@ class TestServe(unittest.TestCase):
     def test_backlinks(self) -> None:
         self._write("alpha.md", "# Alpha\n\nLinks to [[beta]].")
         self._write("beta.md", "# Beta\n\nContent.")
-        for port in _serve_in_thread(self.wiki_dir):
+        for port in _serve_with_template(self.wiki_dir):
             status, body = self._get(port, "/wiki/beta")
         self.assertEqual(status, 200)
         self.assertIn("Backlinks", body)
@@ -163,10 +206,10 @@ class TestServe(unittest.TestCase):
 
     def test_frontmatter_metadata(self) -> None:
         self._write("page.md", "---\ntitle: My Page\ntype: Article\n---\n\n# My Page\n\nContent.")
-        for port in _serve_in_thread(self.wiki_dir):
+        for port in _serve_with_template(self.wiki_dir):
             status, body = self._get(port, "/wiki/page")
         self.assertEqual(status, 200)
-        self.assertIn("Metadata", body)
+        self.assertIn("My Page", body)
         self.assertIn("My Page", body)
         self.assertIn("Article", body)
 
@@ -194,15 +237,17 @@ class TestServe(unittest.TestCase):
         site = build_site(empty_dir)
         self.assertEqual(len(site.pages), 0)
 
-    def test_inline_css_present(self) -> None:
+    def test_no_css_in_fallback(self) -> None:
         self._write("style-test.md", "# Style")
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/")
-        self.assertIn("<style>", body)
+        self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", body)
+        self.assertNotIn("<style>", body)
 
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/wiki/style-test")
-        self.assertIn("<style>", body)
+        self.assertIn("Style", body)
+        self.assertNotIn("<style>", body)
 
     def test_wikilinks_resolve_wiki_path(self) -> None:
         self._write("source.md", "# Source\n\nSee [[target-page]].")

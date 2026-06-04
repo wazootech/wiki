@@ -18,8 +18,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 - **Enforcer:** `check.headings` (off by default; set to `warning` or `error` in `wiki.yaml`).
 
 ### Markdown flavor
-- **Rule:** When `markdownFlavor: gfm`, use Markdown links instead of `[[wikilinks]]`. Use `markdownFlavor: obsidian` if the vault is authored for Obsidian wikilinks.
-- **Enforcer:** `check.markdownFlavor` (off by default).
+Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
 
 ---
 

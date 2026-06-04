@@ -36,9 +36,11 @@ Always includes `schema` and `wiki` prefixes.
 - `inputDirs: [wiki]`
 - `baseUrl: /wiki`, `urlStyle: dir`
 - `check` rules at `warning` for filename and links
+- `html_template: index.html` — uses a seeded Wikipedia-style shell by default
 
-## Generated pages
+## Generated files
 
+- `index.html` — packaged HTML shell with search, tabs, backlinks, and TOC. Edit to customize the look and feel.
 - `wiki/index.md` — vault home (`wiki:index`)
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person` with optional `wiki:template`
 

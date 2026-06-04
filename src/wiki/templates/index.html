@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title} - Wiki</title>
+<style>{inline_css}</style>
+</head>
+<body class="{body_class}" data-page-kind="{page_kind}">
+
+<!-- Left Navigation Sidebar -->
+<aside id="mw-navigation">
+  <div id="p-logo" role="banner">
+    <a href="{base_url}/" title="Visit the main page">
+      {logo_svg}
+      <span class="logo-text">LLM WIKI</span>
+    </a>
+  </div>
+  <div class="portal" role="navigation" id="p-navigation">
+    <h3>Navigation</h3>
+    <ul>
+      <li><a href="{base_url}/">Main page</a></li>
+      <li><a href="{base_url}/">Contents</a></li>
+      <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
+    </ul>
+  </div>
+  <div class="portal" role="navigation" id="p-tools">
+    <h3>Tools</h3>
+    <ul>
+      {metadata_tool_html}
+      <li><a href="javascript:void(0)" onclick="switchTab('source')">View page source</a></li>
+    </ul>
+  </div>
+  {sidebar_contents_html}
+</aside>
+
+<!-- Vector tabs wrapper -->
+<div class="vector-navigation-wrapper">
+  <div class="vector-navigation-left">
+    <ul class="vector-tabs">
+      <li id="ca-read" class="selected"><a href="javascript:void(0)" onclick="switchTab('read')">Article</a></li>
+      <li id="ca-talk"><a href="javascript:void(0)" onclick="switchTab('talk')">Talk / Notes</a></li>
+    </ul>
+  </div>
+  <div class="vector-navigation-right">
+    <ul class="vector-tabs">
+      <li id="ca-source"><a href="javascript:void(0)" onclick="switchTab('source')">View source</a></li>
+      {metadata_tab_html}
+    </ul>
+  </div>
+  <div class="vector-navigation-search">
+    <div id="p-search" role="search">
+      <div class="search-container">
+        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
+      </div>
+      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Panel -->
+<main id="content" class="mw-body" role="main">
+  <div class="page-shell template-{template_class}">
+    {template_label}
+
+    <!-- READ VIEW (Rendered Article) -->
+    <div id="view-read-content" class="wiki-view-pane">
+      <h1 class="firstHeading" id="firstHeading">{page_title}</h1>
+      <div id="siteSub">From LLM Wiki, the semantic knowledge base</div>
+
+      <article>
+        {infobox_html}
+        {page_content}
+      </article>
+
+      {toc_html}
+      {backlinks_html}
+      {categories_html}
+    </div>
+
+    <!-- TALK VIEW (Local persistent notes) -->
+    <div id="view-talk-content" class="wiki-view-pane" style="display: none;">
+      <h1 class="firstHeading">Talk / Local Notes: {page_title}</h1>
+      <div id="siteSub">Your personal scratchpad for this page (saved locally in browser)</div>
+
+      <textarea id="talkNotesArea" class="wiki-textarea" placeholder="Write your notes or discussion comments here..." oninput="saveTalkNotes()"></textarea>
+      <div class="wiki-btn-bar">
+        <button type="button" class="wiki-btn" onclick="clearTalkNotes()">Clear Notes</button>
+        <span class="char-counter" id="charCountDisplay">0 characters</span>
+      </div>
+    </div>
+
+    <!-- VIEW SOURCE VIEW (Raw markdown source) -->
+    <div id="view-source-content" class="wiki-view-pane" style="display: none;">
+      <h1 class="firstHeading">View Source: {page_title}</h1>
+      <div id="siteSub">Raw Markdown source code of the document</div>
+
+      <textarea id="markdownSourceArea" class="wiki-textarea" readonly style="background: #fafafa; font-family: monospace;">{source_markdown}</textarea>
+      <div class="wiki-btn-bar">
+        <button type="button" id="copySourceBtn" class="wiki-btn wiki-btn-primary" onclick="copySourceCode()">Copy Markdown</button>
+      </div>
+    </div>
+
+    {metadata_pane_html}
+
+    <!-- Standard Wikipedia-like Footer -->
+    <footer class="wiki-footer">
+      <p>Powered by the <a href="https://github.com/wazootech/wiki">Wiki CLI</a>.</p>
+    </footer>
+  </div>
+</main>
+
+<script>
+var ALL_PAGES = {all_pages_json};
+var WIKI_BASE_URL = "{base_url}";
+var WIKI_URL_STYLE = "{url_style}";
+var CURRENT_SLUG = {current_slug_json};
+
+function switchTab(viewName) {
+  document.querySelectorAll('.vector-tabs li').forEach(function(li) {
+    li.classList.remove('selected');
+  });
+
+  var tabId = 'ca-read';
+  if (viewName === 'talk') tabId = 'ca-talk';
+  else if (viewName === 'source') tabId = 'ca-source';
+  else if (viewName === 'metadata') tabId = 'ca-metadata';
+
+  var tabEl = document.getElementById(tabId);
+  if (tabEl) tabEl.classList.add('selected');
+
+  document.querySelectorAll('.wiki-view-pane').forEach(function(pane) {
+    pane.style.display = 'none';
+  });
+
+  var paneEl = document.getElementById('view-' + viewName + '-content');
+  if (paneEl) paneEl.style.display = 'block';
+
+  if (viewName === 'talk') {
+    loadTalkNotes();
+  }
+}
+
+function loadTalkNotes() {
+  var area = document.getElementById('talkNotesArea');
+  if (!area) return;
+  var saved = localStorage.getItem('wiki_notes_' + CURRENT_SLUG);
+  area.value = saved || '';
+  updateCharCount();
+}
+
+function saveTalkNotes() {
+  var area = document.getElementById('talkNotesArea');
+  if (!area) return;
+  localStorage.setItem('wiki_notes_' + CURRENT_SLUG, area.value);
+  updateCharCount();
+}
+
+function clearTalkNotes() {
+  if (confirm('Are you sure you want to clear your local notes for this article?')) {
+    var area = document.getElementById('talkNotesArea');
+    if (area) {
+      area.value = '';
+      localStorage.removeItem('wiki_notes_' + CURRENT_SLUG);
+      updateCharCount();
+    }
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var searchBox = document.getElementById('searchInput');
+  var suggestionsBox = document.getElementById('search-suggestions');
+  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.style.display = 'none';
+  }
+});
+
+function updateCharCount() {
+  var area = document.getElementById('talkNotesArea');
+  var countEl = document.getElementById('charCountDisplay');
+  if (!area || !countEl) return;
+  var count = area.value.length;
+  countEl.innerText = count + ' character' + (count === 1 ? '' : 's');
+}
+
+function copySourceCode() {
+  var area = document.getElementById('markdownSourceArea');
+  if (!area) return;
+  area.select();
+  area.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(area.value).then(function() {
+    var btn = document.getElementById('copySourceBtn');
+    var originalText = btn.innerText;
+    btn.innerText = 'Copied!';
+    btn.style.background = '#28a745';
+    btn.style.color = '#fff';
+    setTimeout(function() {
+      btn.innerText = originalText;
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+
+function toggleToc() {
+  var list = document.getElementById('toc-list');
+  var toggleBtn = document.getElementById('toggleTocBtn');
+  if (!list || !toggleBtn) return;
+
+  if (list.style.display === 'none') {
+    list.style.display = 'block';
+    toggleBtn.innerText = '[hide]';
+    localStorage.setItem('wiki_toc_visible', 'true');
+  } else {
+    list.style.display = 'none';
+    toggleBtn.innerText = '[show]';
+    localStorage.setItem('wiki_toc_visible', 'false');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var savedState = localStorage.getItem('wiki_toc_visible');
+  var list = document.getElementById('toc-list');
+  var toggleBtn = document.getElementById('toggleTocBtn');
+  if (savedState === 'false' && list && toggleBtn) {
+    list.style.display = 'none';
+    toggleBtn.innerText = '[show]';
+  }
+
+  if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
+    applyCategoryFilterFromUrl();
+  }
+});
+
+function goToRandomArticle() {
+  if (ALL_PAGES.length === 0) return;
+  var randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
+  var url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.html' : 'index.html');
+  }
+  window.location.href = url;
+}
+
+function triggerSearch() {
+  var query = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!query) return;
+  var matches = ALL_PAGES.filter(function(p) {
+    return p.title.toLowerCase().includes(query) || p.slug.toLowerCase().includes(query);
+  });
+  if (matches.length > 0) {
+    navigateSearch(matches[0].slug);
+  }
+}
+
+var selectedSuggestionIndex = -1;
+
+function onSearchInput(e) {
+  var query = e.target.value.toLowerCase().trim();
+  var suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox) return;
+
+  if (!query) {
+    suggestionsBox.style.display = 'none';
+    suggestionsBox.innerHTML = '';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+
+  var matches = ALL_PAGES.filter(function(p) {
+    return p.title.toLowerCase().includes(query) || p.slug.toLowerCase().includes(query);
+  }).slice(0, 8);
+
+  if (matches.length === 0) {
+    suggestionsBox.style.display = 'block';
+    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
+    selectedSuggestionIndex = -1;
+    return;
+  }
+
+  suggestionsBox.innerHTML = matches.map(function(p, idx) {
+    return '<div class="suggestion-item" data-slug="' + p.slug + '" data-idx="' + idx + '" onclick="navigateSearch(\'' + p.slug + '\')">' +
+      '<span class="suggestion-title">' + escapeHtml(p.title) + '</span>' +
+      '<span class="suggestion-type">' + escapeHtml(p.slug) + '</span>' +
+    '</div>';
+  }).join('');
+  suggestionsBox.style.display = 'block';
+  selectedSuggestionIndex = -1;
+}
+
+function handleSearchKey(e) {
+  var suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
+
+  var items = suggestionsBox.querySelectorAll('.suggestion-item');
+  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
+    highlightSuggestion(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
+      var slug = items[selectedSuggestionIndex].getAttribute('data-slug');
+      navigateSearch(slug);
+    } else if (items.length > 0) {
+      var slug = items[0].getAttribute('data-slug');
+      navigateSearch(slug);
+    }
+  } else if (e.key === 'Escape') {
+    suggestionsBox.style.display = 'none';
+  }
+}
+
+function highlightSuggestion(items) {
+  items.forEach(function(item, idx) {
+    if (idx === selectedSuggestionIndex) {
+      item.classList.add('selected');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+}
+
+function navigateSearch(slug) {
+  var url = '';
+  if (WIKI_URL_STYLE === 'dir') {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
+  } else {
+    url = WIKI_BASE_URL + '/' + (slug ? slug + '.html' : 'index.html');
+  }
+  window.location.href = url;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function applyCategoryFilterFromUrl() {
+  var params = new URLSearchParams(window.location.search);
+  var cat = params.get('category');
+  if (!cat) return;
+
+  var mainHeading = document.querySelector('main h1');
+  if (mainHeading) {
+    mainHeading.innerHTML = 'Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">' + escapeHtml(cat) + '</span>';
+
+    var clearLink = document.createElement('a');
+    clearLink.href = WIKI_BASE_URL + '/';
+    clearLink.innerText = ' [show all pages]';
+    clearLink.style.fontSize = '0.5em';
+    clearLink.style.marginLeft = '12px';
+    clearLink.style.fontWeight = 'normal';
+    mainHeading.appendChild(clearLink);
+  }
+
+  document.querySelectorAll('.pages-list li').forEach(function(li) {
+    var catsAttr = li.getAttribute('data-categories') || '';
+    var cats = catsAttr.split(',').map(function(c) { return c.trim().toLowerCase(); });
+    if (cats.includes(cat.toLowerCase())) {
+      li.style.display = '';
+    } else {
+      li.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>

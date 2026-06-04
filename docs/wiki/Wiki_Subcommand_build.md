@@ -41,6 +41,13 @@ _site/wiki/Alice/index.html  →  /wiki/Alice/
 
 Assets from `assetDirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
 
+## Custom HTML shell
+
+If your [Wiki_Configuration](Wiki_Configuration.md) sets `html_template`, every page is rendered through that file.
+The builder passes page content and metadata as `{placeholder}` tokens. See [HTML_Template](HTML_Template.md).
+
+If the configured template file is missing, the fallback shell is used silently.
+
 ## Checks and collisions
 
 By default, checks must pass before the output directory is wiped and rebuilt. Output path collisions abort the build with errors.
@@ -49,3 +56,4 @@ By default, checks must pass before the output directory is wiped and rebuilt. O
 
 - [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md)
 - [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
+- [HTML_Template](HTML_Template.md)
