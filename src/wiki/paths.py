@@ -53,10 +53,6 @@ def route_for_document_file(config: WikiConfig, file_path: Path) -> str:
     return "/".join(parts)
 
 
-def route_for_markdown_file(config: WikiConfig, md_file: Path) -> str:
-    return route_for_document_file(config, md_file)
-
-
 def page_routes(config: WikiConfig) -> list[PageRoute]:
     return [PageRoute(source=file_path, route=route_for_document_file(config, file_path)) for file_path in iter_document_files(config)]
 

@@ -13,7 +13,7 @@ from markdown_it import MarkdownIt
 
 from .format import run_query
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
-from .paths import iter_markdown_files, page_routes, route_for_markdown_file
+from .paths import iter_markdown_files, page_routes, route_for_document_file
 
 # Matches the starting comment, query inside, and ending comment block with SPARQL inside
 SPARQL_BLOCK_REGEX = re.compile(
@@ -116,7 +116,7 @@ def _select_markdown_files(context: Any, file_filter: Path | None, glob_filters:
 
 
 def _matches_any_glob(context: Any, md_file: Path, glob_filters: tuple[str, ...]) -> bool:
-    route = route_for_markdown_file(context, md_file)
+    route = route_for_document_file(context, md_file)
     candidates = {
         md_file.name,
         md_file.as_posix(),

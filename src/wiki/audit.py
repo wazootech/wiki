@@ -43,11 +43,6 @@ MICRODATA_WIKI_CURIE_ATTR = re.compile(
 WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
 
 
-def file_slug_for_path(config: WikiConfig, file_path: Path) -> str:
-    """Return nested slug for a document file relative to an input dir."""
-    return route_for_document_file(config, file_path)
-
-
 def load_shapes(data_graph: Graph) -> Graph:
     """Extract all SHACL relevant triples from a central graph via SPARQL CONSTRUCT."""
     query = """
@@ -114,7 +109,7 @@ def check_shacl_file(file_path: Path, context: WikiConfig, verbose: bool = False
 
     source_graph = load_graph(context, infer=False)
     shapes_graph = load_shapes(source_graph)
-    data_graph = frontmatter_to_graph(data, context, file_id=file_slug_for_path(context, file_path))
+    data_graph = frontmatter_to_graph(data, context, file_id=route_for_document_file(context, file_path))
 
     conforms, _, results_text = pyshacl.validate(
         data_graph,
@@ -152,7 +147,7 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
     """
     warnings = []
     for file_path in iter_document_files(config):
-        slug = file_slug_for_path(config, file_path)
+        slug = route_for_document_file(config, file_path)
         if file_filter is not None and slug not in file_filter:
             continue
         issue = validate_filename_pattern(config, file_path)
@@ -173,7 +168,7 @@ def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) 
     existing_files: set[str] = set()
     heading_ids_by_route: dict[str, set[str]] = {}
     for file_path in iter_document_files(config):
-        route = file_slug_for_path(config, file_path)
+        route = route_for_document_file(config, file_path)
         existing_files.add(route)
         if file_path.suffix.lower() == ".md":
             heading_ids_by_route[route] = _heading_ids(file_path.read_text(encoding="utf-8"))
@@ -181,7 +176,7 @@ def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) 
             heading_ids_by_route[route] = set()
 
     for file_path in iter_document_files(config):
-        file_slug = file_slug_for_path(config, file_path)
+        file_slug = route_for_document_file(config, file_path)
         if file_filter is not None and file_slug not in file_filter:
             continue
         try:
@@ -223,11 +218,6 @@ def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) 
     return warnings
 
 
-def audit_internal_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Deprecated alias for audit_broken_links."""
-    return audit_broken_links(config, file_filter=file_filter)
-
-
 HEADING_LINE_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 NUMBERED_HEADING_RE = re.compile(r"^\d+[\.)]\s+")
 THEMATIC_BREAK_RE = re.compile(r"^(\-{3,}|\*{3,}|_{3,})\s*$", re.MULTILINE)
@@ -250,7 +240,7 @@ def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> l
     """Audit markdown heading style (sentence case, no numbering, no body thematic breaks)."""
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
-        route = file_slug_for_path(config, file_path)
+        route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
         content = file_path.read_text(encoding="utf-8")

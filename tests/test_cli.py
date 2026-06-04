@@ -434,6 +434,30 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             self.assertEqual(result.exit_code, 0)
             self.assertIn("Updated 0 files", result.output)
 
+    def test_cli_render_cache_creates_disk_cache_artifact(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                wiki_dir = Path("wiki")
+                wiki_dir.mkdir()
+                source = """---
+type: Person
+name: Gregory
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+```
+<!-- sparql:end -->
+"""
+                (wiki_dir / "gregory.md").write_text(source, encoding="utf-8")
+
+                result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--no-inference", "--cache"])
+                self.assertEqual(result.exit_code, 0)
+                cache_root = Path(".wiki") / "cache"
+                self.assertTrue(cache_root.exists())
+                self.assertGreater(len(list(cache_root.glob("graph-asserted-*.nt"))), 0)
+
     def test_cli_view_markdown_document(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:

@@ -33,15 +33,10 @@ DEFAULT_CHECK_RULES = {
 
 
 def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
-    """Merge user check severities with defaults; map deprecated internalLinks to brokenLinks."""
+    """Merge user check severities with defaults."""
     merged = {**DEFAULT_CHECK_RULES}
     if check:
         merged.update(check)
-    if check and "internalLinks" in check and "brokenLinks" not in check:
-        merged["brokenLinks"] = check["internalLinks"]
-        logger.warning(
-            "wiki.yaml check.internalLinks is deprecated; use check.brokenLinks instead."
-        )
     return merged
 
 

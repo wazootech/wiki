@@ -94,8 +94,6 @@ Under `check`, each rule is `error`, `warning`, or `off`:
 | `brokenLinks`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
 | `headings`        | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
-Deprecated: `check.internalLinks` is merged into `brokenLinks`.
-
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
 ## This repository

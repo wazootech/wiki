@@ -367,20 +367,35 @@ def load_graph(
     *,
     use_cache: bool = True,
     reload: bool = False,
+    disk_cache: bool = False,
 ) -> Graph:
     """Load vault sources into a Graph, reusing the in-process cache when possible.
 
     Multiple calls in the same process (many SPARQL blocks, query + render, SHACL
     checks, serve requests) share one graph build unless ``reload`` is set.
     """
-    from .graph_cache import clear_process_graph, get_process_graph, set_process_graph
+    from .graph_cache import (
+        clear_disk_graph,
+        clear_process_graph,
+        get_disk_graph,
+        get_process_graph,
+        set_disk_graph,
+        set_process_graph,
+    )
 
     if reload:
         clear_process_graph(context, infer)
+        if disk_cache:
+            clear_disk_graph(context, infer)
     elif use_cache:
         cached = get_process_graph(context, infer)
         if cached is not None:
             return cached
+        if disk_cache:
+            cached_disk = get_disk_graph(context, infer)
+            if cached_disk is not None:
+                set_process_graph(context, infer, cached_disk)
+                return cached_disk
 
     graph = _build_graph_from_vault(context)
     if infer:
@@ -389,6 +404,8 @@ def load_graph(
 
     if use_cache:
         set_process_graph(context, infer, graph)
+    if disk_cache:
+        set_disk_graph(context, infer, graph)
 
     return graph
 

@@ -94,10 +94,11 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
             audit_broken_links,
             audit_filenames,
             audit_headings,
-            file_slug_for_path,
         )
+        from .paths import route_for_document_file
+
         try:
-            file_filter = {file_slug_for_path(config, file)}
+            file_filter = {route_for_document_file(config, file)}
             warnings.extend(audit_filenames(config, file_filter=file_filter))
             warnings.extend(audit_broken_links(config, file_filter=file_filter))
             warnings.extend(audit_headings(config, file_filter=file_filter))
@@ -132,6 +133,7 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
+@click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
@@ -142,6 +144,7 @@ def query(
     output: Optional[Path],
     no_inference: bool,
     reload: bool,
+    disk_cache: bool,
     jq: Optional[str],
     verbose: bool,
 ) -> None:
@@ -158,6 +161,7 @@ def query(
         context,
         infer=not no_inference,
         reload=reload,
+        disk_cache=disk_cache,
     )
 
     if verbose:
@@ -187,6 +191,7 @@ def query(
 @click.option("--glob", "glob_filters", multiple=True, help="Render only markdown files matching this glob. Repeatable.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
+@click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--check", is_flag=True, help="Check if inline SPARQL blocks are up to date without modifying files. Exits with non-zero code if any are stale.")
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
 @click.pass_obj
@@ -196,6 +201,7 @@ def render(
     glob_filters: tuple[str, ...],
     no_inference: bool,
     reload: bool,
+    disk_cache: bool,
     check: bool,
     verbose: bool,
 ) -> None:
@@ -208,6 +214,7 @@ def render(
         context,
         infer=not no_inference,
         reload=reload,
+        disk_cache=disk_cache,
     )
     success_count, error_count, stale_files = render_markdown_files(
         context,
@@ -216,6 +223,13 @@ def render(
         file_filter=file,
         glob_filters=glob_filters,
     )
+    if disk_cache and not check and success_count > 0:
+        load_graph(
+            context,
+            infer=not no_inference,
+            reload=True,
+            disk_cache=True,
+        )
     
     if check:
         if stale_files:
@@ -263,6 +277,7 @@ def view(config: Context, file: Path) -> None:
               help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
 @click.option("--render", is_flag=True, help="Run SPARQL dynamic block rendering on markdown files before building.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph before rendering SPARQL blocks.")
+@click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--no-check", is_flag=True, help="Skip configurable wiki checks before building.")
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
@@ -273,6 +288,7 @@ def build(
     url_style: str | None,
     render: bool,
     reload: bool,
+    disk_cache: bool,
     no_check: bool,
     verbose: bool,
 ) -> None:
@@ -285,8 +301,16 @@ def build(
             config,
             infer=True,
             reload=reload,
+            disk_cache=disk_cache,
         )
         success, errors, stale = render_markdown_files(config, graph)
+        if disk_cache and success > 0:
+            load_graph(
+                config,
+                infer=True,
+                reload=True,
+                disk_cache=True,
+            )
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
@@ -389,11 +413,14 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
         }
     else:
         converted_list = []
-        from .audit import file_slug_for_path
+        from .paths import route_for_document_file
+
         for file_path in iter_document_files(context):
             data = document_data_from_path(file_path, content_predicate=context.content_predicate)
             if data:
-                processed_rdf = process_rdf_format(data, file_slug_for_path(context, file_path), context, rdf_format)
+                processed_rdf = process_rdf_format(
+                    data, route_for_document_file(context, file_path), context, rdf_format
+                )
                 converted_list.append({
                     "name": file_path.name,
                     "rdf": processed_rdf

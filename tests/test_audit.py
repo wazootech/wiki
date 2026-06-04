@@ -7,7 +7,6 @@ from wiki.audit import (
     audit_broken_links,
     audit_filenames,
     audit_headings,
-    audit_internal_links,
     load_shapes,
     check_shacl_file,
     check_shacl_all,
@@ -74,11 +73,6 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertIn("wiki:wiki-cli", warnings[0])
             self.assertIn("Metadata reference", warnings[0])
 
-    def test_internal_links_config_alias(self) -> None:
-        """Deprecated check.internalLinks maps to brokenLinks severity."""
-        config = WikiConfig(input_dirs=["wiki"], check={"internalLinks": "off"})
-        self.assertEqual(config.check.get("brokenLinks"), "off")
-
     def test_wiki_curie_with_fragment_resolves_to_page_route(self) -> None:
         """wiki:Page#fragment refers to the same vault route as wiki:Page."""
         with TemporaryDirectory() as tmpdir:
@@ -101,7 +95,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             source_path = Path(tmpdir) / "source-page.md"
             source_path.write_text("See [[yml-target]], [[yaml-target]].", encoding="utf-8")
 
-            warnings = audit_internal_links(config)
+            warnings = audit_broken_links(config)
             self.assertEqual(warnings, [])
 
     def test_audit_filenames_includes_yaml_documents(self) -> None:

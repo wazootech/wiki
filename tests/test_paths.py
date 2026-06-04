@@ -11,11 +11,10 @@ from wiki.paths import (
     page_routes,
     page_url,
     route_for_document_file,
-    route_for_markdown_file,
     validate_filename_pattern,
     validate_route_safety,
 )
-from wiki.audit import audit_internal_links
+from wiki.audit import audit_broken_links
 from wiki.assets import build_asset_manifest, iter_asset_files
 
 
@@ -30,7 +29,7 @@ class TestWikiPaths(unittest.TestCase):
             page.write_text("# Pokemon", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            self.assertEqual(route_for_markdown_file(config, page), "games/Pokemon_Diamond_(copy_1)")
+            self.assertEqual(route_for_document_file(config, page), "games/Pokemon_Diamond_(copy_1)")
 
     def test_index_md_maps_to_containing_folder(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -44,8 +43,8 @@ class TestWikiPaths(unittest.TestCase):
             folder_index.write_text("# Games", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            self.assertEqual(route_for_markdown_file(config, root_index), "")
-            self.assertEqual(route_for_markdown_file(config, folder_index), "games")
+            self.assertEqual(route_for_document_file(config, root_index), "")
+            self.assertEqual(route_for_document_file(config, folder_index), "games")
 
     def test_dir_url_style_uses_trailing_slash(self) -> None:
         self.assertEqual(page_url("/wiki", "Ethan_Davidson", "dir"), "/wiki/Ethan_Davidson/")
@@ -144,7 +143,7 @@ class TestWikiPaths(unittest.TestCase):
             (games / "Pokemon_Diamond.md").write_text("# Pokemon\n\n## Release History", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            self.assertEqual(audit_internal_links(config), [])
+            self.assertEqual(audit_broken_links(config), [])
 
     def test_internal_links_report_missing_heading_fragment(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -155,7 +154,7 @@ class TestWikiPaths(unittest.TestCase):
             (wiki / "B.md").write_text("# B\n\n## Present", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            issues = audit_internal_links(config)
+            issues = audit_broken_links(config)
             self.assertEqual(len(issues), 1)
             self.assertIn("missing heading '#missing'", issues[0])
 
@@ -200,7 +199,7 @@ class TestWikiPaths(unittest.TestCase):
             )
             config = WikiConfig(input_dirs=[wiki], asset_dirs=[root / "assets"], config_root=root)
 
-            self.assertEqual(audit_internal_links(config), [])
+            self.assertEqual(audit_broken_links(config), [])
 
     def test_missing_asset_link_is_reported(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -212,7 +211,7 @@ class TestWikiPaths(unittest.TestCase):
             (wiki / "Item.md").write_text("# Item\n\n[manual](../assets/missing.pdf)", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], asset_dirs=[assets], config_root=root)
 
-            issues = audit_internal_links(config)
+            issues = audit_broken_links(config)
             self.assertEqual(len(issues), 1)
             self.assertIn("missing asset", issues[0])
 

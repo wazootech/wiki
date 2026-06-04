@@ -5,11 +5,15 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from wiki.config import WikiConfig
+from wiki import graph as graph_module
 from wiki.graph import load_graph, graph_stats
 from wiki.graph_cache import (
+    cache_dir,
     clear_all_process_graphs,
+    disk_cache_path,
     get_process_graph,
     vault_fingerprint,
 )
@@ -94,6 +98,60 @@ class TestGraphCache(unittest.TestCase):
             config_b = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://b.example/")
 
             self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
+
+    def test_disk_cache_reuses_graph_across_cleared_process_cache(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "page.md").write_text(
+                "---\ntype: Person\nname: Ada\n---\n",
+                encoding="utf-8",
+            )
+            config = self._config(wiki_dir)
+
+            g1 = load_graph(config, infer=False, disk_cache=True)
+            self.assertGreater(graph_stats(g1)["triples"], 0)
+            self.assertTrue(disk_cache_path(config, infer=False).exists())
+
+            clear_all_process_graphs()
+            with patch("wiki.graph._build_graph_from_vault", side_effect=AssertionError("should not rebuild vault graph")):
+                g2 = load_graph(config, infer=False, disk_cache=True)
+            self.assertEqual(graph_stats(g1), graph_stats(g2))
+
+    def test_disk_cache_invalidation_rebuilds_after_vault_change(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            page = wiki_dir / "page.md"
+            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
+            config = self._config(wiki_dir)
+
+            load_graph(config, infer=False, disk_cache=True)
+            old_cache = disk_cache_path(config, infer=False)
+            self.assertTrue(old_cache.exists())
+
+            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
+            clear_all_process_graphs()
+            with patch("wiki.graph._build_graph_from_vault", wraps=graph_module._build_graph_from_vault) as wrapped_build:
+                g2 = load_graph(config, infer=False, disk_cache=True)
+                self.assertTrue(wrapped_build.called)
+            self.assertGreater(graph_stats(g2)["triples"], 0)
+            self.assertFalse(old_cache.exists())
+
+    def test_reload_clears_current_disk_cache_entry(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "page.md").write_text(
+                "---\ntype: Person\nname: Ada\n---\n",
+                encoding="utf-8",
+            )
+            config = self._config(wiki_dir)
+
+            load_graph(config, infer=False, disk_cache=True)
+            cache_path = disk_cache_path(config, infer=False)
+            self.assertTrue(cache_path.exists())
+
+            load_graph(config, infer=False, disk_cache=True, reload=True)
+            self.assertTrue(cache_path.exists())
+            self.assertTrue(cache_dir(config).exists())
 
 
 if __name__ == "__main__":

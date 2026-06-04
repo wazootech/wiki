@@ -101,7 +101,7 @@ check:
 ```
 
 ### `query`
-Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`).
+Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
 
 ```bash
 # Execute direct query string and output as ASCII table
@@ -118,6 +118,9 @@ wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[
 
 # Rebuild the in-memory graph before querying (same process only)
 wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --reload
+
+# Persist a warm graph for reuse across new CLI processes
+wiki query --cache "SELECT ?name WHERE { ?s schema:name ?name }"
 ```
 
 ### `render`
@@ -135,6 +138,9 @@ wiki render --reload
 # Render with verbose summary output
 wiki render -v
 
+# Persist a warm graph for reuse across repeated one-shot renders
+wiki render --cache
+
 # Check if any stale blocks need updating (non-zero exit on stale)
 wiki render --check
 
@@ -148,7 +154,9 @@ wiki render --glob "wiki/people/*.md"
 wiki render --no-inference
 ```
 
-**Graph cache:** The vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. There is no on-disk cache: a new shell starts cold. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when vault files change.
+**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when vault files change.
+
+Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged vaults, but it adds `.wiki/cache/` artifacts and still invalidates on vault or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
 An embedded SPARQL block is defined in your markdown files like this:
 ````html
@@ -191,6 +199,9 @@ wiki build --render
 
 # Rebuild the in-memory graph before rendering SPARQL blocks (same process only)
 wiki build --render --reload
+
+# Persist a warm graph for reuse across repeated build --render runs
+wiki build --render --cache
 ```
 
 The `--url-style` flag controls how pages are written to disk and linked:
