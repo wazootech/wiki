@@ -57,11 +57,11 @@ Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` 
 
 ## Site output
 
-| Key              | Aliases         | Default          | Purpose                                                    |
-| ---------------- | --------------- | ---------------- | ---------------------------------------------------------- |
-| `baseUrl`        | `base_url`      | `/wiki`          | URL prefix for built/served pages (`""` for site root)     |
-| `urlStyle`       | `url_style`     | `dir`            | `dir` → `slug/index.html`; `file` → `slug.html`            |
-| `html_template`  | —               | —                | Path (relative to config) to a custom HTML shell file      |
+| Key             | Aliases     | Default | Purpose                                                |
+| --------------- | ----------- | ------- | ------------------------------------------------------ |
+| `baseUrl`       | `base_url`  | `/wiki` | URL prefix for built/served pages (`""` for site root) |
+| `urlStyle`      | `url_style` | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
+| `html_template` | —           | —       | Path (relative to config) to a custom HTML shell file  |
 
 When `html_template` is set, the CLI renders every page through that file using `{placeholder}` tokens.
 See [HTML_Template](HTML_Template.md) for the full list of placeholders and hooks.
