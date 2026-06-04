@@ -63,7 +63,7 @@ All internal links must resolve to existing documents in the wiki.
 
 **Enforcer:** `check.brokenLinks` (warning by default).
 
-When `markdownFlavor` is `gfm` (default), prefer Markdown links over `[[wikilinks]]`. Set `markdownFlavor: obsidian` for Obsidian-style wikilinks. **Enforcer:** `check.markdownFlavor` (off by default).
+Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
 
 ## Active database summary
 

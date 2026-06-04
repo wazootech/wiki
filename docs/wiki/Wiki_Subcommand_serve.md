@@ -30,7 +30,13 @@ python -m wiki serve --watch
 
 Default URL with config `baseUrl: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
+## Custom HTML shell
+
+The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md) applies to the dev server.
+See [HTML_Template](HTML_Template.md) for the placeholder reference.
+
 ## Related
 
 - [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
 - [Graph_Cache](Graph_Cache.md)
+- [HTML_Template](HTML_Template.md)

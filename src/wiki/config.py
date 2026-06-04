@@ -29,10 +29,7 @@ DEFAULT_CHECK_RULES = {
     "filenamePattern": "warning",
     "brokenLinks": "warning",
     "headings": "off",
-    "markdownFlavor": "off",
 }
-
-VALID_MARKDOWN_FLAVORS = {"gfm", "obsidian"}
 
 
 def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
@@ -98,7 +95,7 @@ class WikiConfig:
         url_style: str = DEFAULT_URL_STYLE,
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
-        markdown_flavor: str = "gfm",
+        html_template: Path | None = None,
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -114,7 +111,7 @@ class WikiConfig:
         self.base_url = base_url.rstrip("/") if base_url else ""
         self.url_style = normalize_url_style(url_style)
         self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
-        self.markdown_flavor = normalize_markdown_flavor(markdown_flavor)
+        self.html_template = html_template
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -193,6 +190,13 @@ class WikiConfig:
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
+                        # Parse html_template as optional path to document shell
+                        html_template_raw = data.get("html_template")
+                        html_template_path: Path | None = None
+                        if isinstance(html_template_raw, str) and html_template_raw.strip():
+                            p = Path(html_template_raw.strip())
+                            html_template_path = (p if p.is_absolute() else base_dir / p).resolve()
+
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             asset_dirs=[resolve(d) for d in asset_data],
@@ -206,9 +210,7 @@ class WikiConfig:
                             url_style=data.get("url_style") or data.get("urlStyle") or DEFAULT_URL_STYLE,
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
-                            markdown_flavor=data.get("markdown_flavor")
-                            or data.get("markdownFlavor")
-                            or "gfm",
+                            html_template=html_template_path,
                         )
                 except Exception as e:
                     logger.warning("Failed to load config file %s: %s", config_path.name, e)
@@ -233,9 +235,3 @@ def normalize_url_style(value: str | None) -> str:
         raise ValueError(f"Invalid urlStyle: {value}")
     return normalized
 
-
-def normalize_markdown_flavor(value: str | None) -> str:
-    normalized = str(value or "gfm").strip().lower()
-    if normalized not in VALID_MARKDOWN_FLAVORS:
-        raise ValueError(f"Invalid markdownFlavor: {value} (use gfm or obsidian)")
-    return normalized

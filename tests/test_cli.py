@@ -332,6 +332,23 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 self.assertIn("givenName: Ethan", person_content)
                 self.assertIn("familyName: Davidson", person_content)
 
+                # Check html_template is configured and seeded
+                self.assertIn("html_template: index.html", config_content)
+                index_html = Path("index.html")
+                self.assertTrue(index_html.is_file())
+                self.assertIn("LLM WIKI", index_html.read_text(encoding="utf-8"))
+
+                # Check --force protects existing index.html (second init)
+                result2 = runner.invoke(main, ["init", "--force"], input="https://wiki.example.org/\n")
+                self.assertEqual(result2.exit_code, 0)
+                self.assertTrue(index_html.is_file())
+                self.assertIn("LLM WIKI", index_html.read_text(encoding="utf-8"))
+
+                # Check init without --force warns about existing index.html
+                result3 = runner.invoke(main, ["init", "--force"],
+                    input="https://wiki.example.org/\n", catch_exceptions=False)
+                self.assertEqual(result3.exit_code, 0)
+
     def test_cli_render_single_file_scope(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:

@@ -94,7 +94,6 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
             audit_broken_links,
             audit_filenames,
             audit_headings,
-            audit_markdown_flavor,
             file_slug_for_path,
         )
         try:
@@ -102,7 +101,6 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
             warnings.extend(audit_filenames(config, file_filter=file_filter))
             warnings.extend(audit_broken_links(config, file_filter=file_filter))
             warnings.extend(audit_headings(config, file_filter=file_filter))
-            warnings.extend(audit_markdown_flavor(config, file_filter=file_filter))
         except ValueError as exc:
             errors.append(str(exc))
             conforms = False
@@ -311,6 +309,11 @@ def build(
     site = build_site(config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
+    # Load custom HTML template if configured; silently fall back to default if file missing
+    html_template_str: str | None = None
+    if config.html_template is not None and config.html_template.is_file():
+        html_template_str = config.html_template.read_text(encoding="utf-8")
+
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
     from .paths import build_page_manifest, detect_output_collisions
@@ -327,7 +330,7 @@ def build(
 
     has_root_index = any(page.full_slug == "" for page in site.pages)
     if not has_root_index:
-        index_html = build_index_html(site, base_url=base_url, url_style=url_style)
+        index_html = build_index_html(site, base_url=base_url, url_style=url_style, html_template=html_template_str)
         (page_output_dir / "index.html").write_text(index_html, encoding="utf-8")
         if verbose:
             rel = page_output_dir.relative_to(output_dir)
@@ -346,7 +349,7 @@ def build(
                 section_dir = page_output_dir.joinpath(*parts[:-1])
                 section_dir.mkdir(parents=True, exist_ok=True)
                 file_path = section_dir / f"{parts[-1]}.html"
-        file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style), encoding="utf-8")
+        file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style, html_template=html_template_str), encoding="utf-8")
         if verbose:
             rel_path = file_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
@@ -478,6 +481,7 @@ def init(force: bool) -> None:
         "filenamePattern": "[A-Za-z0-9_()-]+",
         "check": {"filenamePattern": "warning", "brokenLinks": "warning"},
         "context": context_map,
+        "html_template": "index.html",
     }
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
@@ -533,7 +537,20 @@ def init(force: bool) -> None:
     )
 
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
-    click.echo("Initialized wiki.yaml, README.md, and wiki/ starter files.")
+
+    # Seed index.html HTML template from packaged resource
+    index_html_path = cwd / "index.html"
+    if not force and index_html_path.exists():
+        click.echo("Warning: index.html already exists (not overwritten). Use --force to replace.", err=True)
+    else:
+        try:
+            from importlib.resources import files as pkg_files
+            seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+            index_html_path.write_text(seed_template, encoding="utf-8")
+        except Exception as exc:
+            click.echo(f"Warning: could not seed index.html template: {exc}", err=True)
+
+    click.echo("Initialized wiki.yaml, README.md, wiki/ starter files, and index.html template.")
 
 
 @main.command()

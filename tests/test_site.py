@@ -3,7 +3,30 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
-from wiki.site import build_index_html, build_page_html, build_site, render_wiki_markdown
+from wiki.site import (
+    DEFAULT_HTML_TEMPLATE,
+    build_index_html,
+    build_page_html,
+    build_site,
+    render_wiki_markdown,
+)
+
+_FULL_TEST_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title}</title>
+</head>
+<body>
+<h1 id="firstHeading">{page_title}</h1>
+{infobox_html}
+{page_content}
+{toc_html}
+{backlinks_html}
+{categories_html}
+</body>
+</html>"""
 
 
 class TestWikiSite(unittest.TestCase):
@@ -24,8 +47,8 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
-            self.assertIn('id="p-contents"', html)
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
+            self.assertIn('class="toc"', html)
             self.assertIn('href="#early-life"', html)
             self.assertIn('href="#firstHeading"', html)
 
@@ -94,10 +117,10 @@ name: Bella Davidson
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "Gregory_Davidson")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
 
             self.assertEqual(page.template_name, "Person.html")
-            self.assertIn('class="page-shell template-person"', html)
+            self.assertIn('class="infobox page-meta"', html)
             self.assertIn('>Ethan Davidson</a>', html)
             self.assertIn('>Bella Davidson</a>', html)
             self.assertNotIn('>wiki:Ethan_Davidson</a>', html)
@@ -137,10 +160,10 @@ name: Project Atlas Record
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
 
             self.assertEqual(page.template_name, "Thing.html")
-            self.assertIn('class="page-shell template-thing"', html)
+            self.assertIn('class="infobox page-meta"', html)
             self.assertIn('href="/wiki/Project_Atlas/"', html)
 
     def test_wiki_template_frontmatter_override_takes_precedence(self) -> None:
@@ -163,10 +186,10 @@ name: Project Atlas
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
 
             self.assertEqual(page.template_name, "Person.html")
-            self.assertIn('class="page-shell template-person"', html)
+            self.assertIn('class="infobox page-meta"', html)
             self.assertNotIn("Wiki:Template", html)
 
     def test_render_adds_github_heading_ids_to_all_heading_levels(self) -> None:
@@ -219,6 +242,52 @@ name: Project Atlas
         )
 
         self.assertIn('href="/wiki/games/Pokemon_Diamond/#release-history"', html)
+
+    def test_fallback_index_uses_minimal_template(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Alice.md").write_text("# Alice\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            html = build_index_html(site)
+            self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", html)
+            self.assertIn("<ul>", html)
+            self.assertIn("Alice", html)
+            self.assertNotIn("<style>", html)
+            self.assertNotIn("infobox page-meta", html)
+
+    def test_fallback_article_uses_minimal_template(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("---\ntype: Article\n---\n\n# My Article\n\nContent.", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html = build_page_html(page, site)
+            self.assertIn("<h1 id=\"firstHeading\">My Article</h1>", html)
+            self.assertIn("Content.", html)
+            self.assertNotIn("<style>", html)
+            self.assertNotIn("infobox page-meta", html)
+            self.assertNotIn("Backlinks", html)
+            self.assertNotIn("On this page", html)
+
+    def test_fallback_has_page_kind(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            index_html = build_index_html(site)
+            self.assertIn("All Pages", index_html)
+            page = site.pages[0]
+            article_html = build_page_html(page, site)
+            self.assertIn("Page", article_html)
 
     def test_build_index_html_respects_url_style(self) -> None:
         with TemporaryDirectory() as tmpdir:

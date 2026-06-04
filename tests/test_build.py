@@ -106,7 +106,21 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
+            test_template = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title}</title>
+</head>
+<body>
+<h1>{page_title}</h1>
+{infobox_html}
+{page_content}
+</body>
+</html>"""
+            (root / "wiki.yaml").write_text("inputDirs: wiki\nhtml_template: test_shell.html\n", encoding="utf-8")
+            (root / "test_shell.html").write_text(test_template, encoding="utf-8")
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
 type: schema:Person
@@ -136,11 +150,41 @@ name: Bella Davidson
 
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Gregory_Davidson" / "index.html").read_text(encoding="utf-8")
-            self.assertIn('class="page-shell template-person"', html)
+            self.assertIn('class="infobox page-meta"', html)
             self.assertIn('>Ethan Davidson</a>', html)
             self.assertIn('>Bella Davidson</a>', html)
             self.assertIn('href="/wiki/Bella_Davidson/"', html)
             self.assertIn('href="https://example.com/gregory-davidson"', html)
+
+    def test_missing_configured_template_falls_back_silently(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text("inputDirs: wiki\nhtml_template: nonexistent.html\n", encoding="utf-8")
+            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
+            self.assertEqual(result.exit_code, 0, result.output)
+            html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("<h1 id=\"firstHeading\">Page</h1>", html)
+            self.assertIn("Content.", html)
+            self.assertNotIn("<style>", html)
+
+    def test_seed_template_parity(self) -> None:
+        from pathlib import Path
+        import sys
+        repo_root = Path(__file__).resolve().parent.parent
+        docs_html = repo_root / "docs" / "index.html"
+        pkg_html = repo_root / "src" / "wiki" / "templates" / "index.html"
+        self.assertTrue(docs_html.is_file(), f"docs/index.html not found at {docs_html}")
+        self.assertTrue(pkg_html.is_file(), f"templates/index.html not found at {pkg_html}")
+        self.assertEqual(
+            docs_html.read_text(encoding="utf-8"),
+            pkg_html.read_text(encoding="utf-8"),
+            "docs/index.html and src/wiki/templates/index.html must be identical",
+        )
 
 
 if __name__ == "__main__":

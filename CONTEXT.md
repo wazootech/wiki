@@ -32,7 +32,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: The process of running unified validations on the **Vault**, combining strict SHACL validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, optional `headings` and `markdownFlavor`). _Avoid_: Linting, testing.
+**Checking**: The process of running unified validations on the **Vault**, combining strict SHACL validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, optional `headings`). _Avoid_: Linting, testing.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 

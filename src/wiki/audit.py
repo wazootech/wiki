@@ -283,23 +283,6 @@ def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> l
     return warnings
 
 
-def audit_markdown_flavor(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Warn when vault markup conflicts with configured markdownFlavor (e.g. wikilinks in gfm mode)."""
-    if config.markdown_flavor != "gfm":
-        return []
-    warnings: list[str] = []
-    for file_path in iter_markdown_files(config):
-        route = file_slug_for_path(config, file_path)
-        if file_filter is not None and route not in file_filter:
-            continue
-        content = _strip_inline_code(_markdown_body(file_path.read_text(encoding="utf-8")))
-        if WIKILINK_REGEX.search(content):
-            warnings.append(
-                f"In {file_path.name}: WikiLink [[...]] found but markdownFlavor is gfm; "
-                "use Markdown links or set markdownFlavor: obsidian."
-            )
-    return warnings
-
 
 
 
@@ -453,8 +436,5 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
 
         heading_issues = audit_headings(config)
         process_issues("headings", heading_issues)
-
-        flavor_issues = audit_markdown_flavor(config)
-        process_issues("markdownFlavor", flavor_issues)
 
     return results

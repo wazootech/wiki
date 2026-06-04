@@ -8,7 +8,6 @@ from wiki.audit import (
     audit_filenames,
     audit_headings,
     audit_internal_links,
-    audit_markdown_flavor,
     load_shapes,
     check_shacl_file,
     check_shacl_all,
@@ -273,18 +272,6 @@ type: schema:WebPage
             )
             warnings = audit_headings(config)
             self.assertTrue(any("title case" in w for w in warnings))
-
-    def test_audit_markdown_flavor_gfm_rejects_wikilinks(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], markdown_flavor="gfm")
-            Path(tmpdir, "A.md").write_text("---\ntype: TechArticle\n---\nSee [[B]].\n", encoding="utf-8")
-            self.assertEqual(len(audit_markdown_flavor(config)), 1)
-
-    def test_audit_markdown_flavor_obsidian_allows_wikilinks(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], markdown_flavor="obsidian")
-            Path(tmpdir, "A.md").write_text("---\ntype: TechArticle\n---\nSee [[B]].\n", encoding="utf-8")
-            self.assertEqual(audit_markdown_flavor(config), [])
 
     def test_run_checks_headings_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:

@@ -708,6 +708,19 @@ textarea.wiki-textarea:focus {
 }
 """.strip().strip() + "\n\n" + PYGMENTS_CSS
 
+DEFAULT_HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title}</title>
+</head>
+<body>
+<h1 id="firstHeading">{page_title}</h1>
+{page_content}
+</body>
+</html>"""
+
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
 
 
@@ -979,7 +992,20 @@ def build_site(
     return WikiSite(pages=pages, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
 
 
-def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
+def _render_html(shell: str, context: dict[str, str]) -> str:
+    """Replace {placeholder} tokens in shell with values from context."""
+    result = shell
+    for key, value in context.items():
+        result = result.replace("{" + key + "}", value)
+    return result
+
+
+def build_index_html(
+    site: WikiSite,
+    base_url: str = "/wiki",
+    url_style: str = DEFAULT_URL_STYLE,
+    html_template: str | None = None,
+) -> str:
     """Compile root Index page HTML."""
     links_html = ""
     seen_files: set[str] = set()
@@ -1021,242 +1047,37 @@ def build_index_html(site: WikiSite, base_url: str = "/wiki", url_style: str = D
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    template = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Wiki Index</title>
-<style>{INLINE_CSS}</style>
-</head>
-<body>
+    page_content = f"<ul>\n{links_html}</ul>"
 
-<!-- Left Navigation Sidebar -->
-<aside id="mw-navigation">
-  <div id="p-logo" role="banner">
-    <a href="{base_url}/" title="Visit the main page">
-      {logo_svg}
-      <span class="logo-text">LLM WIKI</span>
-    </a>
-  </div>
-  <div class="portal" role="navigation" id="p-navigation">
-    <h3>Navigation</h3>
-    <ul>
-      <li><a href="{base_url}/">Main page</a></li>
-      <li><a href="{base_url}/">Contents</a></li>
-      <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
-    </ul>
-  </div>
-</aside>
-
-<!-- Vector tabs wrapper -->
-<div class="vector-navigation-wrapper">
-  <div class="vector-navigation-left">
-    <ul class="vector-tabs">
-      <li class="selected"><a href="{base_url}/">Special Page</a></li>
-    </ul>
-  </div>
-  <div class="vector-navigation-search">
-    <div id="p-search" role="search">
-      <div class="search-container">
-        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
-      </div>
-      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Main Content Panel -->
-<main id="content" class="mw-body" role="main">
-  <h1 class="firstHeading" id="firstHeading">All Pages</h1>
-  <div id="siteSub">Index of all documents in the semantic wiki</div>
-  
-  <ul class="pages-list">
-    {links_html}
-  </ul>
-  
-  <!-- Standard Wikipedia-like Footer -->
-  <footer class="wiki-footer">
-    <p>This page is powered by the LLM Wiki CLI.</p>
-  </footer>
-</main>
-
-<script>
-// Embedded client logic
-const ALL_PAGES = {pages_json};
-const WIKI_BASE_URL = "{base_url}";
-const WIKI_URL_STYLE = "{url_style}";
-const CURRENT_SLUG = "";
-
-function goToRandomArticle() {
-  if (ALL_PAGES.length === 0) return;
-  const randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
-  let url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.' + 'html' : 'index.' + 'html');
-  }
-  window.location.href = url;
-}
-
-function triggerSearch() {
-  const query = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (!query) return;
-  const matches = ALL_PAGES.filter(p => 
-    p.title.toLowerCase().includes(query) || 
-    p.slug.toLowerCase().includes(query)
-  );
-  if (matches.length > 0) {
-    navigateSearch(matches[0].slug);
-  }
-}
-
-let selectedSuggestionIndex = -1;
-
-function onSearchInput(e) {
-  const query = e.target.value.toLowerCase().trim();
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (!suggestionsBox) return;
-  
-  if (!query) {
-    suggestionsBox.style.display = 'none';
-    suggestionsBox.innerHTML = '';
-    selectedSuggestionIndex = -1;
-    return;
-  }
-  
-  const matches = ALL_PAGES.filter(p => 
-    p.title.toLowerCase().includes(query) || 
-    p.slug.toLowerCase().includes(query)
-  ).slice(0, 8);
-  
-  if (matches.length === 0) {
-    suggestionsBox.style.display = 'block';
-    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
-    selectedSuggestionIndex = -1;
-    return;
-  }
-  
-  suggestionsBox.innerHTML = matches.map((p, idx) => {
-    return `<div class="suggestion-item" data-slug="${p.slug}" data-idx="${idx}" onclick="navigateSearch('${p.slug}')">
-      <span class="suggestion-title">${escapeHtml(p.title)}</span>
-      <span class="suggestion-type">${escapeHtml(p.slug)}</span>
-    </div>`;
-  }).join('');
-  suggestionsBox.style.display = 'block';
-  selectedSuggestionIndex = -1;
-}
-
-function handleSearchKey(e) {
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
-  
-  const items = suggestionsBox.querySelectorAll('.suggestion-item');
-  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
-  
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
-    highlightSuggestion(items);
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
-    highlightSuggestion(items);
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
-      const slug = items[selectedSuggestionIndex].getAttribute('data-slug');
-      navigateSearch(slug);
-    } else if (items.length > 0) {
-      const slug = items[0].getAttribute('data-slug');
-      navigateSearch(slug);
+    context = {
+        "inline_css": INLINE_CSS,
+        "base_url": base_url,
+        "logo_svg": logo_svg,
+        "page_title": "All Pages",
+        "body_class": "wiki-index",
+        "page_kind": "index",
+        "url_style": url_style,
+        "all_pages_json": pages_json,
+        "current_slug_json": json.dumps(""),
+        "page_content": page_content,
+        "template_label": "",
+        "template_class": "index",
+        "infobox_html": "",
+        "toc_html": "",
+        "backlinks_html": "",
+        "categories_html": "",
+        "sidebar_contents_html": "",
+        "source_markdown": "",
+        "metadata_tool_html": "",
+        "metadata_tab_html": "",
+        "metadata_pane_html": "",
     }
-  } else if (e.key === 'Escape') {
-    suggestionsBox.style.display = 'none';
-  }
-}
 
-function highlightSuggestion(items) {
-  items.forEach((item, idx) => {
-    if (idx === selectedSuggestionIndex) {
-      item.classList.add('selected');
-      item.scrollIntoView({ block: 'nearest' });
-    } else {
-      item.classList.remove('selected');
-    }
-  });
-}
-
-function navigateSearch(slug) {
-  let url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '.' + 'html' : 'index.' + 'html');
-  }
-  window.location.href = url;
-}
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-document.addEventListener('click', (e) => {
-  const searchBox = document.getElementById('searchInput');
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
-    suggestionsBox.style.display = 'none';
-  }
-});
-
-function applyCategoryFilterFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const cat = params.get('category');
-  if (!cat) return;
-  
-  const mainHeading = document.querySelector('main h1');
-  if (mainHeading) {
-    mainHeading.innerHTML = `Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">${escapeHtml(cat)}</span>`;
-    
-    const clearLink = document.createElement('a');
-    clearLink.href = WIKI_BASE_URL + '/';
-    clearLink.innerText = ' [show all pages]';
-    clearLink.style.fontSize = '0.5em';
-    clearLink.style.marginLeft = '12px';
-    clearLink.style.fontWeight = 'normal';
-    mainHeading.appendChild(clearLink);
-  }
-  
-  document.querySelectorAll('.pages-list li').forEach(li => {
-    const catsAttr = li.getAttribute('data-categories') || '';
-    const cats = catsAttr.split(',').map(c => c.trim().toLowerCase());
-    if (cats.includes(cat.toLowerCase())) {
-      li.style.display = '';
-    } else {
-      li.style.display = 'none';
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  applyCategoryFilterFromUrl();
-});
-</script>
-</body>
-</html>"""
-
-    return (template
-            .replace("{INLINE_CSS}", INLINE_CSS)
-            .replace("{base_url}", base_url)
-            .replace("{logo_svg}", logo_svg)
-            .replace("{links_html}", links_html)
-            .replace("{pages_json}", pages_json)
-            .replace("{url_style}", url_style))
+    shell = DEFAULT_HTML_TEMPLATE if html_template is None else html_template
+    return _render_html(shell, context)
 
 
-def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE) -> str:
+def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE, html_template: str | None = None) -> str:
     """Compile individual page HTML."""
     toc_html = _build_toc_html(page)
     sidebar_contents_html = _build_sidebar_contents_html(page)
@@ -1326,416 +1147,32 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
         metadata_tab_html = ""
         metadata_pane_html = ""
 
-    template = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title} - Wiki</title>
-<style>{INLINE_CSS}</style>
-</head>
-<body>
-
-<!-- Left Navigation Sidebar -->
-<aside id="mw-navigation">
-  <div id="p-logo" role="banner">
-    <a href="{base_url}/" title="Visit the main page">
-      {logo_svg}
-      <span class="logo-text">LLM WIKI</span>
-    </a>
-  </div>
-  <div class="portal" role="navigation" id="p-navigation">
-    <h3>Navigation</h3>
-    <ul>
-      <li><a href="{base_url}/">Main page</a></li>
-      <li><a href="{base_url}/">Contents</a></li>
-      <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
-    </ul>
-  </div>
-  <div class="portal" role="navigation" id="p-tools">
-    <h3>Tools</h3>
-    <ul>
-      {metadata_tool_html}
-      <li><a href="javascript:void(0)" onclick="switchTab('source')">View page source</a></li>
-    </ul>
-  </div>
-  {sidebar_contents_html}
-</aside>
-
-<!-- Vector tabs wrapper -->
-<div class="vector-navigation-wrapper">
-  <div class="vector-navigation-left">
-    <ul class="vector-tabs">
-      <li id="ca-read" class="selected"><a href="javascript:void(0)" onclick="switchTab('read')">Article</a></li>
-      <li id="ca-talk"><a href="javascript:void(0)" onclick="switchTab('talk')">Talk / Notes</a></li>
-    </ul>
-  </div>
-  <div class="vector-navigation-right">
-    <ul class="vector-tabs">
-      <li id="ca-source"><a href="javascript:void(0)" onclick="switchTab('source')">View source</a></li>
-      {metadata_tab_html}
-    </ul>
-  </div>
-  <div class="vector-navigation-search">
-    <div id="p-search" role="search">
-      <div class="search-container">
-        <input type="search" id="searchInput" placeholder="Search LLM Wiki" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
-        <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
-      </div>
-      <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Main Content Panel -->
-<main id="content" class="mw-body" role="main">
-  <div class="page-shell template-{template_class}">
-    {template_label}
-    
-    <!-- READ VIEW (Rendered Article) -->
-    <div id="view-read-content" class="wiki-view-pane">
-      <h1 class="firstHeading" id="firstHeading">{page_title}</h1>
-      <div id="siteSub">From LLM Wiki, the semantic knowledge base</div>
-      
-      <article>
-        {infobox_html}
-        {page_html_content}
-      </article>
-      
-      {toc_html}
-      {bl_html}
-      {cats_html}
-    </div>
-    
-    <!-- TALK VIEW (Local persistent notes) -->
-    <div id="view-talk-content" class="wiki-view-pane" style="display: none;">
-      <h1 class="firstHeading">Talk / Local Notes: {page_title}</h1>
-      <div id="siteSub">Your personal scratchpad for this page (saved locally in browser)</div>
-      
-      <textarea id="talkNotesArea" class="wiki-textarea" placeholder="Write your notes or discussion comments here..." oninput="saveTalkNotes()"></textarea>
-      <div class="wiki-btn-bar">
-        <button type="button" class="wiki-btn" onclick="clearTalkNotes()">Clear Notes</button>
-        <span class="char-counter" id="charCountDisplay">0 characters</span>
-      </div>
-    </div>
-    
-    <!-- VIEW SOURCE VIEW (Raw markdown source) -->
-    <div id="view-source-content" class="wiki-view-pane" style="display: none;">
-      <h1 class="firstHeading">View Source: {page_title}</h1>
-      <div id="siteSub">Raw Markdown source code of the document</div>
-      
-      <textarea id="markdownSourceArea" class="wiki-textarea" readonly style="background: #fafafa; font-family: monospace;">{page_markdown_content}</textarea>
-      <div class="wiki-btn-bar">
-        <button type="button" id="copySourceBtn" class="wiki-btn wiki-btn-primary" onclick="copySourceCode()">Copy Markdown</button>
-      </div>
-    </div>
-    
-    {metadata_pane_html}
-    
-    <!-- Standard Wikipedia-like Footer -->
-    <footer class="wiki-footer">
-      <p>This page is powered by the LLM Wiki CLI. Dynamic semantic reasoning enabled by owlrl, RDF graph by rdflib.</p>
-      <p>Content is available under Creative Commons Attribution-ShareAlike License unless otherwise noted.</p>
-    </footer>
-  </div>
-</main>
-
-<script>
-// Embedded client logic
-const ALL_PAGES = {pages_json};
-const WIKI_BASE_URL = "{base_url}";
-const WIKI_URL_STYLE = "{url_style}";
-const CURRENT_SLUG = {current_slug_json};
-
-function switchTab(viewName) {
-  // Update tab styles
-  document.querySelectorAll('.vector-tabs li').forEach(li => {
-    li.classList.remove('selected');
-  });
-  
-  // Highlight active tab
-  let tabId = 'ca-read';
-  if (viewName === 'talk') tabId = 'ca-talk';
-  else if (viewName === 'source') tabId = 'ca-source';
-  else if (viewName === 'metadata') tabId = 'ca-metadata';
-  
-  const tabEl = document.getElementById(tabId);
-  if (tabEl) tabEl.classList.add('selected');
-
-  // Hide all view panes
-  document.querySelectorAll('.wiki-view-pane').forEach(pane => {
-    pane.style.display = 'none';
-  });
-  
-  // Show target view pane
-  const paneEl = document.getElementById('view-' + viewName + '-content');
-  if (paneEl) paneEl.style.display = 'block';
-  
-  // Custom view initializations
-  if (viewName === 'talk') {
-    loadTalkNotes();
-  }
-}
-
-function loadTalkNotes() {
-  const area = document.getElementById('talkNotesArea');
-  if (!area) return;
-  const saved = localStorage.getItem('wiki_notes_' + CURRENT_SLUG);
-  area.value = saved || '';
-  updateCharCount();
-}
-
-function saveTalkNotes() {
-  const area = document.getElementById('talkNotesArea');
-  if (!area) return;
-  localStorage.setItem('wiki_notes_' + CURRENT_SLUG, area.value);
-  updateCharCount();
-}
-
-function clearTalkNotes() {
-  if (confirm('Are you sure you want to clear your local notes for this article?')) {
-    const area = document.getElementById('talkNotesArea');
-    if (area) {
-      area.value = '';
-      localStorage.removeItem('wiki_notes_' + CURRENT_SLUG);
-      updateCharCount();
+    context = {
+        "inline_css": INLINE_CSS,
+        "base_url": base_url,
+        "logo_svg": logo_svg,
+        "page_title": html_module.escape(page.title),
+        "body_class": f"wiki-page template-{template_class}",
+        "page_kind": "article",
+        "url_style": url_style,
+        "all_pages_json": pages_json,
+        "current_slug_json": json.dumps(page.full_slug),
+        "page_content": page.html,
+        "template_label": template_label,
+        "template_class": template_class,
+        "infobox_html": infobox_html,
+        "toc_html": toc_html,
+        "backlinks_html": bl_html,
+        "categories_html": cats_html,
+        "sidebar_contents_html": sidebar_contents_html,
+        "source_markdown": html_module.escape(page.markdown),
+        "metadata_tool_html": metadata_tool_html,
+        "metadata_tab_html": metadata_tab_html,
+        "metadata_pane_html": metadata_pane_html,
     }
-  }
-}
 
-// Close suggestions on outside click
-document.addEventListener('click', (e) => {
-  const searchBox = document.getElementById('searchInput');
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
-    suggestionsBox.style.display = 'none';
-  }
-});
-
-function updateCharCount() {
-  const area = document.getElementById('talkNotesArea');
-  const countEl = document.getElementById('charCountDisplay');
-  if (!area || !countEl) return;
-  const count = area.value.length;
-  countEl.innerText = count + ' character' + (count === 1 ? '' : 's');
-}
-
-function copySourceCode() {
-  const area = document.getElementById('markdownSourceArea');
-  if (!area) return;
-  area.select();
-  area.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(area.value).then(() => {
-    const btn = document.getElementById('copySourceBtn');
-    const originalText = btn.innerText;
-    btn.innerText = 'Copied!';
-    btn.style.background = '#28a745';
-    btn.style.color = '#fff';
-    setTimeout(() => {
-      btn.innerText = originalText;
-      btn.style.background = '';
-      btn.style.color = '';
-    }, 2000);
-  });
-}
-
-function toggleToc() {
-  const list = document.getElementById('toc-list');
-  const toggleBtn = document.getElementById('toggleTocBtn');
-  if (!list || !toggleBtn) return;
-  
-  if (list.style.display === 'none') {
-    list.style.display = 'block';
-    toggleBtn.innerText = '[hide]';
-    localStorage.setItem('wiki_toc_visible', 'true');
-  } else {
-    list.style.display = 'none';
-    toggleBtn.innerText = '[show]';
-    localStorage.setItem('wiki_toc_visible', 'false');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const savedState = localStorage.getItem('wiki_toc_visible');
-  const list = document.getElementById('toc-list');
-  const toggleBtn = document.getElementById('toggleTocBtn');
-  if (savedState === 'false' && list && toggleBtn) {
-    list.style.display = 'none';
-    toggleBtn.innerText = '[show]';
-  }
-  
-  if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
-    applyCategoryFilterFromUrl();
-  }
-});
-
-function goToRandomArticle() {
-  if (ALL_PAGES.length === 0) return;
-  const randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
-  let url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.' + 'html' : 'index.' + 'html');
-  }
-  window.location.href = url;
-}
-
-function triggerSearch() {
-  const query = document.getElementById('searchInput').value.toLowerCase().trim();
-  if (!query) return;
-  const matches = ALL_PAGES.filter(p => 
-    p.title.toLowerCase().includes(query) || 
-    p.slug.toLowerCase().includes(query)
-  );
-  if (matches.length > 0) {
-    navigateSearch(matches[0].slug);
-  }
-}
-
-let selectedSuggestionIndex = -1;
-
-function onSearchInput(e) {
-  const query = e.target.value.toLowerCase().trim();
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (!suggestionsBox) return;
-  
-  if (!query) {
-    suggestionsBox.style.display = 'none';
-    suggestionsBox.innerHTML = '';
-    selectedSuggestionIndex = -1;
-    return;
-  }
-  
-  const matches = ALL_PAGES.filter(p => 
-    p.title.toLowerCase().includes(query) || 
-    p.slug.toLowerCase().includes(query)
-  ).slice(0, 8);
-  
-  if (matches.length === 0) {
-    suggestionsBox.style.display = 'block';
-    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
-    selectedSuggestionIndex = -1;
-    return;
-  }
-  
-  suggestionsBox.innerHTML = matches.map((p, idx) => {
-    return `<div class="suggestion-item" data-slug="${p.slug}" data-idx="${idx}" onclick="navigateSearch('${p.slug}')">
-      <span class="suggestion-title">${escapeHtml(p.title)}</span>
-      <span class="suggestion-type">${escapeHtml(p.slug)}</span>
-    </div>`;
-  }).join('');
-  suggestionsBox.style.display = 'block';
-  selectedSuggestionIndex = -1;
-}
-
-function handleSearchKey(e) {
-  const suggestionsBox = document.getElementById('search-suggestions');
-  if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
-  
-  const items = suggestionsBox.querySelectorAll('.suggestion-item');
-  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
-  
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
-    highlightSuggestion(items);
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
-    highlightSuggestion(items);
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
-      const slug = items[selectedSuggestionIndex].getAttribute('data-slug');
-      navigateSearch(slug);
-    } else if (items.length > 0) {
-      const slug = items[0].getAttribute('data-slug');
-      navigateSearch(slug);
-    }
-  } else if (e.key === 'Escape') {
-    suggestionsBox.style.display = 'none';
-  }
-}
-
-function highlightSuggestion(items) {
-  items.forEach((item, idx) => {
-    if (idx === selectedSuggestionIndex) {
-      item.classList.add('selected');
-      item.scrollIntoView({ block: 'nearest' });
-    } else {
-      item.classList.remove('selected');
-    }
-  });
-}
-
-function navigateSearch(slug) {
-  let url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '.' + 'html' : 'index.' + 'html');
-  }
-  window.location.href = url;
-}
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function applyCategoryFilterFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const cat = params.get('category');
-  if (!cat) return;
-  
-  const mainHeading = document.querySelector('main h1');
-  if (mainHeading) {
-    mainHeading.innerHTML = `Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">${escapeHtml(cat)}</span>`;
-    
-    const clearLink = document.createElement('a');
-    clearLink.href = WIKI_BASE_URL + '/';
-    clearLink.innerText = ' [show all pages]';
-    clearLink.style.fontSize = '0.5em';
-    clearLink.style.marginLeft = '12px';
-    clearLink.style.fontWeight = 'normal';
-    mainHeading.appendChild(clearLink);
-  }
-  
-  document.querySelectorAll('.pages-list li').forEach(li => {
-    const catsAttr = li.getAttribute('data-categories') || '';
-    const cats = catsAttr.split(',').map(c => c.trim().toLowerCase());
-    if (cats.includes(cat.toLowerCase())) {
-      li.style.display = '';
-    } else {
-      li.style.display = 'none';
-    }
-  });
-}
-</script>
-</body>
-</html>"""
-
-    return (template
-            .replace("{INLINE_CSS}", INLINE_CSS)
-            .replace("{base_url}", base_url)
-            .replace("{logo_svg}", logo_svg)
-            .replace("{page_title}", html_module.escape(page.title))
-            .replace("{template_class}", template_class)
-            .replace("{template_label}", template_label)
-            .replace("{infobox_html}", infobox_html)
-            .replace("{page_html_content}", page.html)
-            .replace("{toc_html}", toc_html)
-            .replace("{bl_html}", bl_html)
-            .replace("{cats_html}", cats_html)
-            .replace("{page_markdown_content}", html_module.escape(page.markdown))
-            .replace("{metadata_json_content}", html_module.escape(metadata_formatted))
-            .replace("{pages_json}", pages_json)
-            .replace("{url_style}", url_style)
-            .replace("{current_slug_json}", json.dumps(page.full_slug))
-            .replace("{metadata_tool_html}", metadata_tool_html)
-            .replace("{metadata_tab_html}", metadata_tab_html)
-            .replace("{sidebar_contents_html}", sidebar_contents_html)
-            .replace("{metadata_pane_html}", metadata_pane_html))
+    shell = DEFAULT_HTML_TEMPLATE if html_template is None else html_template
+    return _render_html(shell, context)
 
 
 def _page_type_names(frontmatter: dict[str, Any]) -> list[str]:
@@ -1812,7 +1249,7 @@ def _expand_known_curie(value: str, config: WikiConfig) -> str:
 def _build_toc_html(page: VirtualPage) -> str:
     if not page.outline:
         return ""
-    items = ""
+    items = f'<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
     for item in page.outline:
         items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
     return f"""<div class="toc" id="toc">
@@ -2008,23 +1445,4 @@ def _template_label(page: VirtualPage) -> str:
     return f'<div class="template-label">{html_module.escape(label)}</div>'
 
 
-def _render_page_shell(
-    page: VirtualPage,
-    content_html: str,
-    infobox_html: str,
-    toc_html: str,
-    bl_html: str,
-    fm_html: str,
-    template_label: str,
-) -> str:
-    template_class = html_module.escape(_template_stem(page.template_name))
-    return f"""<div class="page-shell template-{template_class}">
-{template_label}
-<article>
-{infobox_html}
-{content_html}
-</article>
-{toc_html}
-{bl_html}
-{fm_html}
-</div>"""
+
