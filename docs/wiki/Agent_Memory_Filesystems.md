@@ -12,7 +12,9 @@ A growing class of tools gives LLM agents **persistent memory through a filesyst
 
 Traditional chat UIs are largely stateless. These systems let an agent (and often a human) **read and write durable artifacts** as files, compounding knowledge across sessions. They pair well with coding agents ([Obsidian_Integration](Obsidian_Integration.md) as viewer, terminal tools as compiler) but differ in where truth lives and how recall works.
 
-## At a glance
+## Comparison with Wiki CLI, Letta MemFS, and Supermemory SMFS
+
+### Feature matrix
 
 |                          | [Wiki CLI](Wiki_CLI.md)                         | [Supermemory_SMFS](Supermemory_SMFS.md)      | [Letta_MemFS](Letta_MemFS.md)               |
 | ------------------------ | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
@@ -25,7 +27,7 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 | **Publishing**           | Static site, RDF export                         | N/A (runtime memory)                         | N/A (agent memory)                          |
 | **Typical user**         | Wiki authors, PKM + semantics                   | Multi-modal, multi-source agents             | Letta Code coding agents                    |
 
-## When to use which
+### When to use which
 
 **[Wiki CLI](Wiki_CLI.md)** — You want a **local-first, explicit, interlinked vault** that doubles as documentation: [Declarative_Knowledge](Declarative_Knowledge.md) in frontmatter, [Procedural_Knowledge](Procedural_Knowledge.md) in `wiki check` / `wiki render`, optional [Retrieval_Augmented_Generation](Retrieval_Augmented_Generation.md)-style synthesis via SPARQL instead of opaque embeddings. Fits [Farzapedia](Farzapedia.md)-style gardens with machine-checkable structure.
 

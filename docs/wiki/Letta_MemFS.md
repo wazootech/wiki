@@ -6,7 +6,7 @@ description: Git-backed markdown memory for Letta Code agents with a special sys
 
 # Letta MemFS
 
-**MemFS** (memory filesystem), also called a **context repository** in Letta marketing, is [Letta Code](https://docs.letta.com/letta-code/)’s git-backed memory system. An agent’s long-term state lives as a tree of markdown files in a local Git repository—human-readable, diffable, and versioned—instead of opaque memory blocks or a proprietary vector store alone. It addresses the same agent-memory problem as the [LLM_Wiki](LLM_Wiki.md) pattern and [Supermemory_SMFS](Supermemory_SMFS.md), but optimizes for **deterministic, personalized coding agents** with clear always-on vs on-demand context.
+**MemFS** (memory filesystem), also called a **context repository** in Letta marketing, is [Letta Code](https://docs.letta.com/letta-code/)’s git-backed memory system. An agent’s long-term state lives as a tree of markdown files in a local Git repository—human-readable, diffable, and versioned—instead of opaque memory blocks or a proprietary vector store alone. It is one variant of the broader [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md) pattern and addresses the same agent-memory problem as the [LLM_Wiki](LLM_Wiki.md) pattern and [Supermemory_SMFS](Supermemory_SMFS.md), but optimizes for **deterministic, personalized coding agents** with clear always-on vs on-demand context.
 
 Official reference: [MemFS | Letta Docs](https://docs.letta.com/letta-code/memfs). Overview: [Letta Code memory](https://docs.letta.com/letta-code/memory/). Announcement: [Context repositories blog](https://www.letta.com/blog/context-repositories).
 
@@ -41,17 +41,9 @@ description: Coding preferences learned during /init
 
 ## Comparison with [Wiki CLI](Wiki_CLI.md) and [Supermemory_SMFS](Supermemory_SMFS.md)
 
-| Dimension             | [Wiki CLI](Wiki_CLI.md)                                                  | [Letta_MemFS](Letta_MemFS.md)            | [Supermemory_SMFS](Supermemory_SMFS.md) |
-| --------------------- | ------------------------------------------------------------------------ | ---------------------------------------- | --------------------------------------- |
-| **Scope**             | Project / team wikis, published docs                                     | Per-agent memory for Letta Code          | Per-container cloud memory              |
-| **Graph semantics**   | [RDF](RDF.md), [SHACL](SHACL.md), [SPARQL](SPARQL.md)                    | Markdown + descriptions; no SHACL in-box | Supermemory graph + embeddings          |
-| **Always-on context** | None built-in (agent reads vault as needed)                              | `system/` folder                         | `profile.md` digest at mount root       |
-| **Git**               | You may version the vault; CLI does not own Git                          | Git is the memory transport              | Not Git-based                           |
-| **Publishing**        | `wiki build`, static HTML, [Content_Negotiation](Content_Negotiation.md) | Letta agent runtime                      | Mount + sync only                       |
+Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the Wiki CLI when you want a **shared, schema-checked wiki** with [Second_Brain](Second_Brain.md)-style linking and semantic web tooling independent of a single agent runtime.
 
-Choose MemFS when you run **Letta Code** and want Git-auditable, coding-agent memory with a crisp hot/cold split. Choose the Wiki CLI when you want a **shared, schema-checked wiki** with [Second_Brain](Second_Brain.md)-style linking and semantic web tooling independent of a single agent runtime.
-
-See [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md) for a consolidated view.
+For the full cross-tool comparison, see [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
 
 ## Sources
 
