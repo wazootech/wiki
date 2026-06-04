@@ -65,13 +65,13 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             config = WikiConfig(input_dirs=[tmpdir])
             Path(tmpdir, "Wiki_CLI.md").write_text("---\ntype: SoftwareApplication\n---\n", encoding="utf-8")
             Path(tmpdir, "Farzapedia.md").write_text(
-                "---\ntype: TechArticle\nabout: wiki:llm-wiki-cli\n---\n",
+                "---\ntype: TechArticle\nabout: wiki:wiki-cli\n---\n",
                 encoding="utf-8",
             )
 
             warnings = audit_broken_links(config)
             self.assertEqual(len(warnings), 1)
-            self.assertIn("wiki:llm-wiki-cli", warnings[0])
+            self.assertIn("wiki:wiki-cli", warnings[0])
             self.assertIn("Metadata reference", warnings[0])
 
     def test_internal_links_config_alias(self) -> None:
@@ -319,7 +319,7 @@ type: Project
             valid_project = wiki_dir / "valid-project.md"
             valid_project.write_text("""---
 type: Project
-name: LLM Wiki CLI
+name: Wiki CLI
 ---
 """, encoding="utf-8")
 
