@@ -54,6 +54,28 @@ uv pip install -e /path/to/wiki
 
 Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
 
+## Local development
+
+Use this repo's docs wiki as the main contributor sandbox.
+
+```bash
+# Install the project in editable mode
+uv pip install -e .
+
+# Run the docs wiki checks from the repo root
+wiki -c docs/wiki.yaml check
+
+# Start the docs wiki local preview with auto-reload
+python -m wiki -c docs/wiki.yaml serve --watch
+```
+
+Suggested contributor loop:
+
+- Edit files under `docs/wiki/`.
+- Use `python -m wiki -c docs/wiki.yaml serve --watch` for the main live-preview workflow.
+- Run `wiki -c docs/wiki.yaml check --strict -v` before landing documentation changes.
+- Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
+
 ## Quickstart
 
 ```bash
