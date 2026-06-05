@@ -4,6 +4,7 @@ import time
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 from urllib.request import urlopen
 from urllib.error import URLError
 
@@ -348,6 +349,30 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 result3 = runner.invoke(main, ["init", "--force"],
                     input="https://wiki.example.org/\n", catch_exceptions=False)
                 self.assertEqual(result3.exit_code, 0)
+
+                self.assertFalse((Path(".git")).exists())
+
+    def test_cli_init_git_opt_in_runs_git_init(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                with patch("shutil.which", return_value="git"), patch("subprocess.run") as run_mock:
+                    result = runner.invoke(
+                        main,
+                        ["init", "--force", "--git"],
+                        input="https://wiki.example.org/\n",
+                        catch_exceptions=False,
+                    )
+
+                self.assertEqual(result.exit_code, 0)
+                run_mock.assert_called_once_with(
+                    ["git", "init"],
+                    cwd=Path.cwd(),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertIn("Ran git init", result.output)
 
     def test_cli_render_single_file_scope(self) -> None:
         runner = CliRunner()

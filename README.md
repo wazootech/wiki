@@ -63,6 +63,9 @@ cd my-wiki
 # Interactive scaffold: creates wiki.yaml and wiki/ starter files
 wiki init
 
+# Also initialize a Git repository explicitly
+wiki init --git
+
 # Run unified checks (silent on success)
 wiki check
 
@@ -398,6 +401,9 @@ Interactively scaffold a new wiki workspace (`wiki.yaml` + starter `wiki/` conte
 
 ```bash
 wiki init
+
+# Also initialize a Git repository explicitly
+wiki init --git
 ```
 
 ### `export`

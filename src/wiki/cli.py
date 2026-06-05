@@ -467,8 +467,11 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 
 @main.command()
 @click.option("--force", is_flag=True, help="Overwrite existing scaffold files if present.")
-def init(force: bool) -> None:
+@click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
+def init(force: bool, init_git: bool) -> None:
     """Interactively scaffold a new wiki workspace in the current directory."""
+    import shutil
+    import subprocess
     import yaml
 
     cwd = Path.cwd()
@@ -577,7 +580,21 @@ def init(force: bool) -> None:
         except Exception as exc:
             click.echo(f"Warning: could not seed index.html template: {exc}", err=True)
 
-    click.echo("Initialized wiki.yaml, README.md, wiki/ starter files, and index.html template.")
+    if init_git:
+        if shutil.which("git") is None:
+            click.echo("Error: git was requested with --git, but no git executable was found on PATH.", err=True)
+            sys.exit(1)
+        try:
+            subprocess.run(["git", "init"], cwd=cwd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr.strip() if exc.stderr else "unknown git init error"
+            click.echo(f"Error: git init failed: {stderr}", err=True)
+            sys.exit(1)
+
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and index.html template."
+    if init_git:
+        message += " Ran git init."
+    click.echo(message)
 
 
 @main.command()
