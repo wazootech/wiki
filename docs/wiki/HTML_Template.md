@@ -9,6 +9,14 @@ description: Placeholders, CSS classes, IDs, and JS hooks for custom HTML shells
 When `html_template` is set in [Wiki_Configuration](Wiki_Configuration.md), the CLI uses your HTML file
 as the document shell instead of the built-in minimal fallback.
 
+## Template strategy
+
+The current first-class template contract in this repository is the optional `index.html` / `html_template` shell.
+
+- The Wiki CLI owns the semantic markdown-to-HTML pipeline and placeholder contract.
+- This repository treats custom HTML shells as the primary built-in extension point for presentation.
+- Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate template repositories unless they need core CLI changes.
+
 ## Minimal fallback
 
 Without a custom template, every page is rendered as:
