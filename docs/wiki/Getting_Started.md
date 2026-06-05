@@ -25,9 +25,12 @@ From an empty directory:
 
 ```bash
 wiki init
+
+# Also initialize a Git repository explicitly
+wiki init --git
 ```
 
-`wiki init` interactively writes `wiki.yaml` and a starter `wiki/` folder (`index.md`, `Person_Shape.md`). See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
+`wiki init` interactively writes `wiki.yaml`, `README.md`, `index.html`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
 
 ## Daily workflow
 
@@ -38,8 +41,14 @@ wiki check
 # Refresh embedded SPARQL tables
 wiki render
 
+# Reuse a warm graph across repeated one-shot shells
+wiki render --cache
+
 # Preview at http://127.0.0.1:8080/wiki/ (default)
 wiki serve
+
+# Preferred long-lived preview loop while editing
+wiki serve --watch
 
 # Or build static HTML for deployment
 wiki build --output-dir _site
@@ -53,7 +62,8 @@ The published site under `docs/wiki/` is built with:
 
 ```bash
 wiki -c docs/wiki.yaml check --strict -v
-wiki -c docs/wiki.yaml render
+python -m wiki -c docs/wiki.yaml serve --watch
+wiki -c docs/wiki.yaml render --cache
 wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki
 ```
 

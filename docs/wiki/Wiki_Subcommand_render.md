@@ -20,6 +20,7 @@ wiki render -v
 wiki render --check
 wiki render --no-inference
 wiki render --reload
+wiki render --cache
 ```
 
 ## Options
@@ -31,6 +32,7 @@ wiki render --reload
 | `--check`         | Dry-run; exit 1 if any block is stale |
 | `--no-inference`  | Skip OWL-RL                           |
 | `--reload`        | Rebuild graph before rendering        |
+| `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes |
 | `-v`, `--verbose` | Print update counts                   |
 
 ## Block format

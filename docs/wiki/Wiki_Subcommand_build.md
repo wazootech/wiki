@@ -16,6 +16,7 @@ wiki build --output-dir _site --base-url /wiki -v
 wiki build --url-style file
 wiki build --base-url ''
 wiki build --render --reload
+wiki build --render --cache
 wiki build --no-check
 ```
 
@@ -28,6 +29,7 @@ wiki build --no-check
 | `--url-style`     | from config | `dir` or `file`                                                         |
 | `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
 | `--reload`        | off         | Rebuild graph when using `--render`                                     |
+| `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
 | `--no-check`      | off         | Skip pre-build [Wiki_Subcommand_check](Wiki_Subcommand_check.md)        |
 | `-v`, `--verbose` | off         | List output paths                                                       |
 
