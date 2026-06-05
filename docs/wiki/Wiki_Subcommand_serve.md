@@ -32,7 +32,15 @@ Default URL with config `baseUrl: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
 ## SPARQL endpoint
 
-When `serveApi.enabled` is on (default), `wiki serve` also exposes a read-only SPARQL endpoint at `serveApi.path` (default `/api/sparql`).
+When `serveApi.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `serveApi.path` (default `/api/sparql`).
+
+Example config:
+
+```yaml
+serveApi:
+  enabled: true
+  path: /api/sparql
+```
 
 Supported request forms:
 
@@ -54,6 +62,8 @@ Wiki-specific extensions:
 - `reload=true|false`
 
 The endpoint reuses the same query engine as [Wiki_Subcommand_query](Wiki_Subcommand_query.md). SPARQL Update operations are rejected.
+
+For safety, the endpoint is **disabled by default**. Its path is also validated at startup and rejected if it would shadow page routes or the `__watch` endpoint.
 
 ## Custom HTML shell
 

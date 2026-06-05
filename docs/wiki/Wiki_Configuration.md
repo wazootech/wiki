@@ -67,7 +67,7 @@ Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` 
 
 | Key                | Default       | Purpose                                               |
 | ------------------ | ------------- | ----------------------------------------------------- |
-| `serveApi.enabled` | `true`        | Enable or disable the SPARQL endpoint on `wiki serve` |
+| `serveApi.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
 | `serveApi.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
 
 Example:
@@ -79,6 +79,10 @@ serveApi:
 ```
 
 The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`.
+
+It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
+
+`serveApi.path` must not collide with the effective `baseUrl` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
 ## HTML template
 
