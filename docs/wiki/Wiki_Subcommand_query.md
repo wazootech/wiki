@@ -20,16 +20,16 @@ wiki query "..." --cache
 
 ## Options
 
-| Flag              | Description                                                         |
-| ----------------- | ------------------------------------------------------------------- |
-| `QUERY`           | SPARQL string, or omit to read stdin                                |
-| `-f`, `--format`  | `table` (default), `json`, `csv`, `tsv`, `turtle`, `n3`, `markdown` |
-| `-o`, `--output`  | Write results to a file                                             |
-| `--no-inference`  | Skip OWL-RL                                                         |
-| `--reload`        | Rebuild in-memory graph in this process                             |
+| Flag              | Description                                                              |
+| ----------------- | ------------------------------------------------------------------------ |
+| `QUERY`           | SPARQL string, or omit to read stdin                                     |
+| `-f`, `--format`  | `table` (default), `json`, `csv`, `tsv`, `turtle`, `n3`, `markdown`      |
+| `-o`, `--output`  | Write results to a file                                                  |
+| `--no-inference`  | Skip OWL-RL                                                              |
+| `--reload`        | Rebuild in-memory graph in this process                                  |
 | `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes |
-| `--jq`            | Filter JSON output (implies `-f json`)                              |
-| `-v`, `--verbose` | Print triple/subject counts first                                   |
+| `--jq`            | Filter JSON output (implies `-f json`)                                   |
+| `-v`, `--verbose` | Print triple/subject counts first                                        |
 
 ## Graph reuse
 

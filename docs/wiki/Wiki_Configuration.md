@@ -65,10 +65,10 @@ Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` 
 
 ## Serve API
 
-| Key               | Default        | Purpose                                              |
-| ----------------- | -------------- | ---------------------------------------------------- |
-| `serveApi.enabled`| `true`         | Enable or disable the SPARQL endpoint on `wiki serve` |
-| `serveApi.path`   | `/api/sparql`  | Reserved route for the SPARQL endpoint               |
+| Key                | Default       | Purpose                                               |
+| ------------------ | ------------- | ----------------------------------------------------- |
+| `serveApi.enabled` | `true`        | Enable or disable the SPARQL endpoint on `wiki serve` |
+| `serveApi.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
 
 Example:
 
@@ -121,10 +121,10 @@ Replace `{key}` tokens in your HTML shell:
 | ------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
 | `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                            |
 | `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown. |
-| `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                  |
+| `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                      |
 | `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page template-{slug}` for articles.    |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
-| `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                   |
+| `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
 | `{inline_css}`            | raw CSS      | Wiki CLI's bundled Wikipedia-style CSS.                                                                    |
 | `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo.                                                                                |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
@@ -136,9 +136,9 @@ Replace `{key}` tokens in your HTML shell:
 | `{backlinks_html}`        | raw HTML     | Backlinks section (empty if none).                                                                         |
 | `{categories_html}`       | raw HTML     | Category links `<div>` (empty if none).                                                                    |
 | `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                 |
-| `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                           |
-| `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                           |
-| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata (JSON)" `<li>` (empty if no frontmatter).                                              |
+| `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                             |
+| `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                             |
+| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata (JSON)" `<li>` (empty if no frontmatter).                                                |
 | `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                              |
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
