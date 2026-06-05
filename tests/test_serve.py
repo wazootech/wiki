@@ -10,12 +10,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import sleep
 from typing import Generator
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.serve import build_site, create_server, refresh_vault
+from wiki.serve import build_site, create_server, refresh_vault, run_server, _watch_for_changes, WikiHandler
 
 
 def _free_port() -> int:
@@ -325,6 +326,267 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
 
         self.assertRegex(page.read_text(encoding="utf-8"), r"\| Name\s+\|")
         self.assertGreater(len(site.pages), 0)
+
+    def test_sparql_endpoint_get_select_json(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("GET", "/api/sparql?query=SELECT%20%3Fname%20WHERE%20%7B%20%3Fs%20%3Chttps%3A//schema.org/name%3E%20%3Fname%20%7D", headers={"Accept": "application/sparql-results+json"})
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("Content-Type"), "application/sparql-results+json; charset=utf-8")
+        self.assertIn("Alice", body)
+
+    def test_sparql_endpoint_post_construct_turtle(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "POST",
+            "/api/sparql",
+            body="CONSTRUCT { ?s <https://schema.org/name> ?name } WHERE { ?s <https://schema.org/name> ?name }",
+            headers={
+                "Content-Type": "application/sparql-query",
+                "Accept": "text/turtle",
+            },
+        )
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("Content-Type"), "text/turtle; charset=utf-8")
+        self.assertIn("schema:name", body)
+        self.assertIn("Alice", body)
+
+    def test_sparql_endpoint_can_be_disabled(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        port = _free_port()
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=False)
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("GET", "/api/sparql?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D")
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 404)
+        self.assertIn("SPARQL endpoint is disabled", body)
+
+    def test_sparql_endpoint_custom_path(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        port = _free_port()
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/sparql")
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("GET", "/sparql?query=SELECT%20%3Fname%20WHERE%20%7B%20%3Fs%20%3Chttps%3A//schema.org/name%3E%20%3Fname%20%7D", headers={"Accept": "application/sparql-results+json"})
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertIn("Alice", body)
+
+    def test_sparql_endpoint_rejects_update_queries(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "POST",
+            "/api/sparql",
+            body="INSERT DATA { <https://example.org/a> <https://schema.org/name> \"Alice\" }",
+            headers={
+                "Content-Type": "application/sparql-query",
+                "Accept": "application/sparql-results+json",
+            },
+        )
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 405)
+        self.assertIn("SPARQL Update is not supported", body)
+
+    def test_sparql_endpoint_allows_literals_with_update_keywords(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Delete\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "GET",
+            "/api/sparql?query=SELECT%20%3Fname%20WHERE%20%7B%20%3Fs%20%3Chttps%3A//schema.org/name%3E%20%3Fname%20.%20FILTER(%3Fname%20%3D%20%22Delete%22)%20%7D",
+            headers={"Accept": "application/sparql-results+json"},
+        )
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertIn("Delete", body)
+
+    def test_sparql_endpoint_invalid_root_path_rejected(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/")
+        with self.assertRaisesRegex(ValueError, "shadow the entire server"):
+            create_server(config, host="127.0.0.1", port=_free_port())
+
+    def test_sparql_endpoint_invalid_base_url_path_rejected(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki")
+        with self.assertRaisesRegex(ValueError, "collides with page routes"):
+            create_server(config, host="127.0.0.1", port=_free_port())
+
+    def test_sparql_endpoint_invalid_page_subpath_rejected(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki/foo")
+        with self.assertRaisesRegex(ValueError, "collides with page routes"):
+            create_server(config, host="127.0.0.1", port=_free_port())
+
+    def test_sparql_endpoint_invalid_watch_path_rejected(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki/__watch")
+        with self.assertRaisesRegex(ValueError, "collides with the watch endpoint"):
+            create_server(config, host="127.0.0.1", port=_free_port())
+
+    def test_watch_loop_repeated_refreshes_increment_build_id(self) -> None:
+        page = self._write("alpha.md", "# Alpha\n")
+        watch_dirs = [self.wiki_dir]
+        initial = {str(page): 1.0}
+        second = {str(page): 2.0}
+        third = {str(page): 3.0}
+        snapshots = iter([second, third, third])
+        stop_event = threading.Event()
+        WikiHandler.build_id = 0
+        WikiHandler.site = None
+
+        def fake_snapshot(_: list[Path]) -> dict[str, float]:
+            state = next(snapshots)
+            if state == third:
+                stop_event.set()
+            return state
+
+        refreshed_sites = [object(), object()]
+        with patch("wiki.serve.refresh_vault", side_effect=refreshed_sites) as refresh_mock, patch("wiki.serve.time.sleep", return_value=None):
+            _watch_for_changes(
+                WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir),
+                watch_dirs=watch_dirs,
+                base_url="/wiki",
+                url_style="dir",
+                mtimes=initial,
+                stop_event=stop_event,
+                poll_interval=0,
+                snapshot_func=fake_snapshot,
+            )
+
+        self.assertEqual(refresh_mock.call_count, 2)
+        self.assertEqual(WikiHandler.build_id, 2)
+        self.assertIs(WikiHandler.site, refreshed_sites[-1])
+
+    def test_run_server_shutdowns_on_keyboard_interrupt(self) -> None:
+        class FakeServer:
+            def __init__(self) -> None:
+                self.shutdown_called = False
+                self.server_close_called = False
+
+            def serve_forever(self) -> None:
+                raise KeyboardInterrupt
+
+            def shutdown(self) -> None:
+                self.shutdown_called = True
+
+            def server_close(self) -> None:
+                self.server_close_called = True
+
+        fake_server = FakeServer()
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir)
+
+        with patch("wiki.serve.create_server", return_value=fake_server):
+            run_server(config)
+
+        self.assertTrue(fake_server.shutdown_called)
+        self.assertTrue(fake_server.server_close_called)
 
 
 if __name__ == "__main__":

@@ -30,13 +30,47 @@ python -m wiki serve --watch
 
 Default URL with config `baseUrl: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
+## SPARQL endpoint
+
+When `serveApi.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `serveApi.path` (default `/api/sparql`).
+
+Example config:
+
+```yaml
+serveApi:
+  enabled: true
+  path: /api/sparql
+```
+
+Supported request forms:
+
+```bash
+# GET with query string
+curl "http://127.0.0.1:8080/api/sparql?query=SELECT%20*%20WHERE%20%7B%20?s%20?p%20?o%20%7D" \
+  -H "Accept: application/sparql-results+json"
+
+# POST raw SPARQL query
+curl "http://127.0.0.1:8080/api/sparql" \
+  -H "Content-Type: application/sparql-query" \
+  -H "Accept: text/turtle" \
+  --data "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+```
+
+Wiki-specific extensions:
+
+- `inference=true|false`
+- `reload=true|false`
+
+The endpoint reuses the same query engine as [Wiki_Subcommand_query](Wiki_Subcommand_query.md). SPARQL Update operations are rejected.
+
+For safety, the endpoint is **disabled by default**. Its path is also validated at startup and rejected if it would shadow page routes or the `__watch` endpoint.
+
 ## Custom HTML shell
 
-The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md) applies to the dev server.
-See [HTML_Template](HTML_Template.md) for the placeholder reference.
+The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md#html-template) applies to the dev server.
 
 ## Related
 
 - [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
 - [Graph_Cache](Graph_Cache.md)
-- [HTML_Template](HTML_Template.md)
+- [Wiki_Configuration](Wiki_Configuration.md#html-template)

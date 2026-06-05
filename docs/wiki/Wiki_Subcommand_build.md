@@ -16,6 +16,7 @@ wiki build --output-dir _site --base-url /wiki -v
 wiki build --url-style file
 wiki build --base-url ''
 wiki build --render --reload
+wiki build --render --cache
 wiki build --no-check
 ```
 
@@ -28,6 +29,7 @@ wiki build --no-check
 | `--url-style`     | from config | `dir` or `file`                                                         |
 | `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
 | `--reload`        | off         | Rebuild graph when using `--render`                                     |
+| `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
 | `--no-check`      | off         | Skip pre-build [Wiki_Subcommand_check](Wiki_Subcommand_check.md)        |
 | `-v`, `--verbose` | off         | List output paths                                                       |
 
@@ -43,8 +45,8 @@ Assets from `assetDirs` copy under the same prefix. See [Wiki_Configuration](Wik
 
 ## Custom HTML shell
 
-If your [Wiki_Configuration](Wiki_Configuration.md) sets `html_template`, every page is rendered through that file.
-The builder passes page content and metadata as `{placeholder}` tokens. See [HTML_Template](HTML_Template.md).
+If your [Wiki_Configuration](Wiki_Configuration.md#html-template) sets `html_template`, every page is rendered through that file.
+The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
 
@@ -56,4 +58,4 @@ By default, checks must pass before the output directory is wiped and rebuilt. O
 
 - [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md)
 - [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [HTML_Template](HTML_Template.md)
+- [Wiki_Configuration](Wiki_Configuration.md#html-template)

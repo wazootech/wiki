@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 
@@ -111,8 +112,8 @@ def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[
 
 def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
     """Run a SPARQL SELECT or CONSTRUCT query against the graph, returning formatted output."""
-    q = query.strip().upper()
-    is_construct = q.startswith("CONSTRUCT") or q.startswith("DESCRIBE")
+    query_form = detect_query_form(query)
+    is_construct = query_form in {"CONSTRUCT", "DESCRIBE"}
 
     if is_construct:
         result = graph.query(query)
@@ -140,6 +141,33 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
         return markdown_format(result, wiki_base=wiki_base, known_slugs=known_slugs)
     else:
         return table_format(result)
+
+
+_SPARQL_FORM_RE = re.compile(r"\b(SELECT|ASK|CONSTRUCT|DESCRIBE)\b", re.IGNORECASE)
+_SPARQL_UPDATE_RE = re.compile(r"^(INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b", re.IGNORECASE)
+
+
+def _strip_sparql_prelude(query: str) -> str:
+    """Remove comments and PREFIX/BASE declarations before query-form detection."""
+    text = re.sub(r"^[ \t]*(?:#.*)?$", "", query, flags=re.MULTILINE)
+    text = re.sub(r"\bPREFIX\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bBASE\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    return text.lstrip()
+
+
+def detect_query_form(query: str) -> str:
+    """Return the SPARQL query form keyword from *query*."""
+    text = _strip_sparql_prelude(query)
+    match = _SPARQL_FORM_RE.search(text)
+    if not match:
+        raise ValueError("Could not determine SPARQL query form.")
+    return match.group(1).upper()
+
+
+def is_sparql_update(query: str) -> bool:
+    """Return True when *query* looks like a SPARQL Update operation."""
+    text = _strip_sparql_prelude(query)
+    return _SPARQL_UPDATE_RE.search(text) is not None
 
 
 def process_rdf_format(data: dict[str, Any], file_stem: str, context: Any, output_format: str) -> Any:

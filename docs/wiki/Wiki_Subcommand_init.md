@@ -6,7 +6,7 @@ description: Scaffold wiki.yaml and starter wiki pages interactively.
 
 # `wiki init`
 
-Create a new workspace in the **current directory**: `wiki.yaml` plus starter files under `wiki/`.
+Create a new workspace in the **current directory**: `wiki.yaml`, `README.md`, `index.html`, and starter files under `wiki/`.
 
 Does not use loaded WikiConfig; safe to run before a config exists.
 
@@ -15,6 +15,7 @@ Does not use loaded WikiConfig; safe to run before a config exists.
 ```bash
 wiki init
 wiki init --force
+wiki init --git
 ```
 
 ## Options
@@ -22,14 +23,13 @@ wiki init --force
 | Flag      | Description                                         |
 | --------- | --------------------------------------------------- |
 | `--force` | Overwrite existing `wiki.yaml` or non-empty `wiki/` |
+| `--git`   | Run `git init` after scaffolding                    |
 
 ## Prompts
 
 1. **Custom base URI prefix** (default `https://wiki.example.org/`) → `wikiBase` and `wiki:` in `context`
-1. **Include foaf prefix?** (default yes)
-1. **Include dc/dcterms prefixes?** (default yes)
 
-Always includes `schema` and `wiki` prefixes.
+Always includes `schema`, `wiki`, `foaf`, `dc`, `dcterms`, `sh`, and `xsd` prefixes.
 
 ## Generated config
 
@@ -41,8 +41,11 @@ Always includes `schema` and `wiki` prefixes.
 ## Generated files
 
 - `index.html` — packaged HTML shell with search, tabs, backlinks, and TOC. Edit to customize the look and feel.
-- `wiki/index.md` — vault home (`wiki:index`)
+- `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person` with optional `wiki:template`
+- `wiki/Ethan_Davidson.md` — starter `schema:Person` example document
+
+By default `wiki init` does **not** create a Git repository. Use `--git` if you want to run `git init` immediately.
 
 ## Related
 

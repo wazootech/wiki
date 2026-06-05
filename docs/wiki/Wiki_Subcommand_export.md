@@ -33,5 +33,7 @@ Raw RDF formats (`turtle`, etc.) on a **single** file write plain serialization 
 
 ## Related
 
+- [RDF_XML](RDF_XML.md)
+- [XML](XML.md)
 - [JSON_LD](JSON_LD.md)
 - [Style_Guide](Style_Guide.md)
