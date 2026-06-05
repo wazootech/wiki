@@ -219,6 +219,63 @@ def create_server(
     return server
 
 
+def _snapshot_watch_dirs(watch_dirs: list[Path]) -> dict[str, float]:
+    """Capture mtimes for watchable files under the provided roots."""
+    mtimes: dict[str, float] = {}
+    for root in watch_dirs:
+        if not root.exists():
+            continue
+        for p in root.rglob("*"):
+            if not p.is_file():
+                continue
+            if p.suffix.lower() not in {".md", ".yaml", ".yml", ".json", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf"}:
+                continue
+            try:
+                mtimes[str(p)] = p.stat().st_mtime
+            except OSError:
+                continue
+    return mtimes
+
+
+def _watch_for_changes(
+    config: WikiConfig,
+    *,
+    watch_dirs: list[Path],
+    base_url: str,
+    url_style: str,
+    mtimes: dict[str, float],
+    stop_event: threading.Event,
+    poll_interval: float = 0.5,
+    snapshot_func: Any | None = None,
+) -> None:
+    """Poll watched directories and refresh the in-memory site on changes."""
+    snapshot = _snapshot_watch_dirs if snapshot_func is None else snapshot_func
+    current_mtimes = mtimes
+
+    while not stop_event.is_set():
+        time.sleep(poll_interval)
+        try:
+            new = snapshot(watch_dirs)
+            if new != current_mtimes:
+                changed = {
+                    Path(k)
+                    for k in set(current_mtimes) | set(new)
+                    if current_mtimes.get(k) != new.get(k)
+                }
+                current_mtimes = new
+                WikiHandler.site = refresh_vault(
+                    config,
+                    changed_paths=changed,
+                    base_url=base_url,
+                    url_style=url_style,
+                )
+                WikiHandler.build_id += 1
+        except Exception:
+            if stop_event.is_set():
+                return
+            continue
+
+
 def run_server(
     config: WikiConfig,
     host: str = "127.0.0.1",
@@ -241,49 +298,22 @@ def run_server(
 
     if watch:
         watch_dirs = list(config.input_dirs) + [d for d in config.asset_dirs if d.exists()]
-
-        def snapshot() -> dict[str, float]:
-            mtimes: dict[str, float] = {}
-            for root in watch_dirs:
-                if not root.exists():
-                    continue
-                for p in root.rglob("*"):
-                    if not p.is_file():
-                        continue
-                    if p.suffix.lower() not in {".md", ".yaml", ".yml", ".json", ".ttl", ".trig", ".nt", ".nq", ".rdf", ".xml", ".jsonld", ".html", ".htm", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js", ".woff2", ".woff", ".ttf"}:
-                        continue
-                    try:
-                        mtimes[str(p)] = p.stat().st_mtime
-                    except OSError:
-                        continue
-            return mtimes
-
-        mtimes = snapshot()
-
-        def watch_loop() -> None:
-            nonlocal mtimes
-            while True:
-                time.sleep(0.5)
-                try:
-                    new = snapshot()
-                    if new != mtimes:
-                        changed = {
-                            Path(k)
-                            for k in set(mtimes) | set(new)
-                            if mtimes.get(k) != new.get(k)
-                        }
-                        mtimes = new
-                        WikiHandler.site = refresh_vault(
-                            config,
-                            changed_paths=changed,
-                            base_url=resolved_base_url,
-                            url_style=resolved_url_style,
-                        )
-                        WikiHandler.build_id += 1
-                except Exception:
-                    continue
-
-        threading.Thread(target=watch_loop, daemon=True).start()
+        stop_event = threading.Event()
+        mtimes = _snapshot_watch_dirs(watch_dirs)
+        threading.Thread(
+            target=_watch_for_changes,
+            kwargs={
+                "config": config,
+                "watch_dirs": watch_dirs,
+                "base_url": resolved_base_url,
+                "url_style": resolved_url_style,
+                "mtimes": mtimes,
+                "stop_event": stop_event,
+            },
+            daemon=True,
+        ).start()
+    else:
+        stop_event = None
 
     print("Press Ctrl+C to stop.")
     try:
@@ -291,3 +321,7 @@ def run_server(
     except KeyboardInterrupt:
         print("\nShutting down server...")
         server.shutdown()
+    finally:
+        if stop_event is not None:
+            stop_event.set()
+        server.server_close()

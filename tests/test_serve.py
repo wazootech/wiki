@@ -10,12 +10,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import sleep
 from typing import Generator
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.serve import build_site, create_server, refresh_vault
+from wiki.serve import build_site, create_server, refresh_vault, run_server, _watch_for_changes, WikiHandler
 
 
 def _free_port() -> int:
@@ -325,6 +326,64 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
 
         self.assertRegex(page.read_text(encoding="utf-8"), r"\| Name\s+\|")
         self.assertGreater(len(site.pages), 0)
+
+    def test_watch_loop_repeated_refreshes_increment_build_id(self) -> None:
+        page = self._write("alpha.md", "# Alpha\n")
+        watch_dirs = [self.wiki_dir]
+        initial = {str(page): 1.0}
+        second = {str(page): 2.0}
+        third = {str(page): 3.0}
+        snapshots = iter([second, third, third])
+        stop_event = threading.Event()
+        WikiHandler.build_id = 0
+        WikiHandler.site = None
+
+        def fake_snapshot(_: list[Path]) -> dict[str, float]:
+            state = next(snapshots)
+            if state == third:
+                stop_event.set()
+            return state
+
+        refreshed_sites = [object(), object()]
+        with patch("wiki.serve.refresh_vault", side_effect=refreshed_sites) as refresh_mock, patch("wiki.serve.time.sleep", return_value=None):
+            _watch_for_changes(
+                WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir),
+                watch_dirs=watch_dirs,
+                base_url="/wiki",
+                url_style="dir",
+                mtimes=initial,
+                stop_event=stop_event,
+                poll_interval=0,
+                snapshot_func=fake_snapshot,
+            )
+
+        self.assertEqual(refresh_mock.call_count, 2)
+        self.assertEqual(WikiHandler.build_id, 2)
+        self.assertIs(WikiHandler.site, refreshed_sites[-1])
+
+    def test_run_server_shutdowns_on_keyboard_interrupt(self) -> None:
+        class FakeServer:
+            def __init__(self) -> None:
+                self.shutdown_called = False
+                self.server_close_called = False
+
+            def serve_forever(self) -> None:
+                raise KeyboardInterrupt
+
+            def shutdown(self) -> None:
+                self.shutdown_called = True
+
+            def server_close(self) -> None:
+                self.server_close_called = True
+
+        fake_server = FakeServer()
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir)
+
+        with patch("wiki.serve.create_server", return_value=fake_server):
+            run_server(config)
+
+        self.assertTrue(fake_server.shutdown_called)
+        self.assertTrue(fake_server.server_close_called)
 
 
 if __name__ == "__main__":
