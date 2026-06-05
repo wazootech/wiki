@@ -14,6 +14,7 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 ## Related standards
 
+- [RDF_XML](RDF_XML.md): The XML-based W3C serialization for RDF.
 - [Turtle](Turtle.md): A compact, human-friendly serialization syntax for RDF.
 - [JSON_LD](JSON_LD.md): A lightweight Linked Data format that uses JSON.
 - [Notation3](Notation3.md): A readable superset of Turtle, with rules and quoted graphs.
