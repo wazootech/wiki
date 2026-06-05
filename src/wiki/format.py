@@ -144,14 +144,20 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
 
 
 _SPARQL_FORM_RE = re.compile(r"\b(SELECT|ASK|CONSTRUCT|DESCRIBE)\b", re.IGNORECASE)
-_SPARQL_UPDATE_RE = re.compile(r"\b(INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b", re.IGNORECASE)
+_SPARQL_UPDATE_RE = re.compile(r"^(INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b", re.IGNORECASE)
+
+
+def _strip_sparql_prelude(query: str) -> str:
+    """Remove comments and PREFIX/BASE declarations before query-form detection."""
+    text = re.sub(r"^[ \t]*(?:#.*)?$", "", query, flags=re.MULTILINE)
+    text = re.sub(r"\bPREFIX\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bBASE\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    return text.lstrip()
 
 
 def detect_query_form(query: str) -> str:
     """Return the SPARQL query form keyword from *query*."""
-    text = re.sub(r"^[ \t]*(?:#.*)?$", "", query, flags=re.MULTILINE)
-    text = re.sub(r"\bPREFIX\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\bBASE\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    text = _strip_sparql_prelude(query)
     match = _SPARQL_FORM_RE.search(text)
     if not match:
         raise ValueError("Could not determine SPARQL query form.")
@@ -160,9 +166,7 @@ def detect_query_form(query: str) -> str:
 
 def is_sparql_update(query: str) -> bool:
     """Return True when *query* looks like a SPARQL Update operation."""
-    text = re.sub(r"^[ \t]*(?:#.*)?$", "", query, flags=re.MULTILINE)
-    text = re.sub(r"\bPREFIX\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"\bBASE\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    text = _strip_sparql_prelude(query)
     return _SPARQL_UPDATE_RE.search(text) is not None
 
 

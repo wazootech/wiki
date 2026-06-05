@@ -431,6 +431,21 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
         self.assertEqual(resp.status, 405)
         self.assertIn("SPARQL Update is not supported", body)
 
+    def test_sparql_endpoint_allows_literals_with_update_keywords(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Delete\n---\n")
+        for port in _serve_in_thread(self.wiki_dir):
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request(
+                "GET",
+                "/api/sparql?query=SELECT%20%3Fname%20WHERE%20%7B%20%3Fs%20%3Chttps%3A//schema.org/name%3E%20%3Fname%20.%20FILTER(%3Fname%20%3D%20%22Delete%22)%20%7D",
+                headers={"Accept": "application/sparql-results+json"},
+            )
+            resp = conn.getresponse()
+            body = resp.read().decode("utf-8")
+            conn.close()
+        self.assertEqual(resp.status, 200)
+        self.assertIn("Delete", body)
+
     def test_watch_loop_repeated_refreshes_increment_build_id(self) -> None:
         page = self._write("alpha.md", "# Alpha\n")
         watch_dirs = [self.wiki_dir]
