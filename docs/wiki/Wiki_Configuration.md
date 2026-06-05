@@ -63,6 +63,23 @@ Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` 
 | `urlStyle`      | `url_style` | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
 | `html_template` | —           | —       | Path (relative to config) to a custom HTML shell file  |
 
+## Serve API
+
+| Key               | Default        | Purpose                                              |
+| ----------------- | -------------- | ---------------------------------------------------- |
+| `serveApi.enabled`| `true`         | Enable or disable the SPARQL endpoint on `wiki serve` |
+| `serveApi.path`   | `/api/sparql`  | Reserved route for the SPARQL endpoint               |
+
+Example:
+
+```yaml
+serveApi:
+  enabled: true
+  path: /api/sparql
+```
+
+The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`.
+
 When `html_template` is set, the CLI renders every page through that file using `{placeholder}` tokens.
 See [HTML_Template](HTML_Template.md) for the full list of placeholders and hooks.
 

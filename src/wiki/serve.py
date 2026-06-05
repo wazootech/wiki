@@ -15,8 +15,8 @@ from urllib.parse import parse_qs, urlsplit
 from typing import Any, Optional
 
 from .config import WikiConfig
-from .format import detect_query_form, run_query
-from .graph import load_graph, graph_stats
+from .format import detect_query_form, is_sparql_update, run_query
+from .graph import load_graph
 from .site import (
     WikiSite,
     VirtualPage,
@@ -354,6 +354,9 @@ def _parse_sparql_http_request(method: str, raw_query_string: str, headers: Any,
 
     if not query_text or not query_text.strip():
         raise _BadSparqlRequest(400, "Missing SPARQL query.")
+
+    if is_sparql_update(query_text):
+        raise _BadSparqlRequest(405, "SPARQL Update is not supported by this endpoint.")
 
     query_form = detect_query_form(query_text)
     if query_form in {"CONSTRUCT", "DESCRIBE"}:

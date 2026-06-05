@@ -412,6 +412,25 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
         self.assertEqual(resp.status, 200)
         self.assertIn("Alice", body)
 
+    def test_sparql_endpoint_rejects_update_queries(self) -> None:
+        self._write("person.md", "---\ntype: Person\nname: Alice\n---\n")
+        for port in _serve_in_thread(self.wiki_dir):
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request(
+                "POST",
+                "/api/sparql",
+                body="INSERT DATA { <https://example.org/a> <https://schema.org/name> \"Alice\" }",
+                headers={
+                    "Content-Type": "application/sparql-query",
+                    "Accept": "application/sparql-results+json",
+                },
+            )
+            resp = conn.getresponse()
+            body = resp.read().decode("utf-8")
+            conn.close()
+        self.assertEqual(resp.status, 405)
+        self.assertIn("SPARQL Update is not supported", body)
+
     def test_watch_loop_repeated_refreshes_increment_build_id(self) -> None:
         page = self._write("alpha.md", "# Alpha\n")
         watch_dirs = [self.wiki_dir]

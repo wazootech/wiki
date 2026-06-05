@@ -144,6 +144,7 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
 
 
 _SPARQL_FORM_RE = re.compile(r"\b(SELECT|ASK|CONSTRUCT|DESCRIBE)\b", re.IGNORECASE)
+_SPARQL_UPDATE_RE = re.compile(r"\b(INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b", re.IGNORECASE)
 
 
 def detect_query_form(query: str) -> str:
@@ -155,6 +156,14 @@ def detect_query_form(query: str) -> str:
     if not match:
         raise ValueError("Could not determine SPARQL query form.")
     return match.group(1).upper()
+
+
+def is_sparql_update(query: str) -> bool:
+    """Return True when *query* looks like a SPARQL Update operation."""
+    text = re.sub(r"^[ \t]*(?:#.*)?$", "", query, flags=re.MULTILINE)
+    text = re.sub(r"\bPREFIX\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bBASE\b\s+[^\n\r]+", "", text, flags=re.IGNORECASE)
+    return _SPARQL_UPDATE_RE.search(text) is not None
 
 
 def process_rdf_format(data: dict[str, Any], file_stem: str, context: Any, output_format: str) -> Any:
