@@ -53,6 +53,8 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.check.get("brokenLinks"), "warning")
         self.assertEqual(config.check.get("headings"), "off")
         self.assertIsNotNone(config.context)
+        self.assertTrue(config.serve_api_enabled)
+        self.assertEqual(config.serve_api_path, "/api/sparql")
 
     def test_wikiconfig_load_no_files(self) -> None:
         """Test WikiConfig.load falls back to defaults when no files exist."""
@@ -74,6 +76,7 @@ class TestWikiConfig(unittest.TestCase):
                 "filenamePattern": "[A-Za-z0-9_()-]+",
                 "baseUrl": "/docs",
                 "urlStyle": "file",
+                "serveApi": {"enabled": False, "path": "/sparql"},
                 "context": {
                     "custom_pref": "http://custom-pref.org/"
                 }
@@ -88,6 +91,8 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+")
             self.assertEqual(config.base_url, "/docs")
             self.assertEqual(config.url_style, "file")
+            self.assertFalse(config.serve_api_enabled)
+            self.assertEqual(config.serve_api_path, "/sparql")
             self.assertIn("custom_pref", config.namespaces)
 
     def test_wikiconfig_load_json(self) -> None:

@@ -11,9 +11,12 @@ import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 from typing import Any, Optional
 
 from .config import WikiConfig
+from .format import detect_query_form, run_query
+from .graph import load_graph, graph_stats
 from .site import (
     WikiSite,
     VirtualPage,
@@ -33,10 +36,16 @@ class WikiHandler(BaseHTTPRequestHandler):
     watch_enabled: bool = False
     build_id: int = 0
     html_template: str | None = None
+    serve_api_enabled: bool = True
+    serve_api_path: str = "/api/sparql"
 
     def do_GET(self) -> None:
         base = self.base_url
-        parsed = re.sub(r"\?.*$", "", self.path)
+        parsed_url = urlsplit(self.path)
+        parsed = parsed_url.path
+        if parsed.rstrip("/") == self.serve_api_path.rstrip("/"):
+            self._handle_sparql_request("GET", parsed_url.query)
+            return
         if parsed.rstrip("/") == f"{base}/__watch":
             self._send_json({"build": self.build_id})
             return
@@ -61,6 +70,13 @@ class WikiHandler(BaseHTTPRequestHandler):
             return
         else:
             self._send_error(404, f"Not found: {self.path}")
+
+    def do_POST(self) -> None:
+        parsed_url = urlsplit(self.path)
+        if parsed_url.path.rstrip("/") == self.serve_api_path.rstrip("/"):
+            self._handle_sparql_request("POST", parsed_url.query)
+            return
+        self._send_error(404, f"Not found: {self.path}")
 
     def _serve_asset(self, rel_path: str) -> bool:
         """Try to serve a static asset from configured assetDirs. Returns True if served."""
@@ -133,6 +149,13 @@ class WikiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_bytes(self, code: int, body: bytes, content_type: str) -> None:
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _send_error(self, code: int, message: str) -> None:
         body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -153,6 +176,33 @@ class WikiHandler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt: str, *args: Any) -> None:
         sys.stderr.write(f"[{self.log_date_time_string()}] {fmt % args}\n")
+
+    def _handle_sparql_request(self, method: str, raw_query_string: str) -> None:
+        if not self.serve_api_enabled:
+            self._send_error(404, "SPARQL endpoint is disabled.")
+            return
+
+        try:
+            sparql_query, output_format, infer, reload_graph = _parse_sparql_http_request(
+                method=method,
+                raw_query_string=raw_query_string,
+                headers=self.headers,
+                rfile=self.rfile,
+            )
+            query_form = detect_query_form(sparql_query)
+            if query_form not in {"SELECT", "ASK", "CONSTRUCT", "DESCRIBE"}:
+                self._send_error(405, f"Unsupported SPARQL query form: {query_form}")
+                return
+            graph = load_graph(self.config, infer=infer, reload=reload_graph)
+            result = run_query(graph, sparql_query, output_format=output_format, wiki_base=self.config.wiki_base)
+            body = result.encode("utf-8") if isinstance(result, str) else result
+            self._send_bytes(200, body, _response_content_type(query_form, output_format))
+        except _BadSparqlRequest as exc:
+            self._send_error(exc.status_code, exc.message)
+        except ValueError as exc:
+            self._send_error(400, str(exc))
+        except Exception as exc:
+            self._send_error(422, f"Query Execution Error: {exc}")
 
 
 def refresh_vault(
@@ -203,6 +253,8 @@ def create_server(
     WikiHandler.url_style = resolved_url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
+    WikiHandler.serve_api_enabled = config.serve_api_enabled
+    WikiHandler.serve_api_path = config.serve_api_path
 
     # Load custom HTML template if configured; silently fall back to default if file missing
     if config.html_template is not None and config.html_template.is_file():
@@ -217,6 +269,117 @@ def create_server(
     if not site.pages:
         print("Warning: no pages found. Ensure your wiki directory has .md, .yaml, .yml, or .json files.")
     return server
+
+
+class _BadSparqlRequest(Exception):
+    def __init__(self, status_code: int, message: str) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.message = message
+
+
+def _parse_bool_flag(values: dict[str, list[str]], key: str, default: bool) -> bool:
+    raw = values.get(key, [str(default).lower()])[-1].strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _best_accept_media(accept_header: str, supported: list[str]) -> str | None:
+    if not accept_header.strip():
+        return supported[0]
+    entries: list[tuple[float, str]] = []
+    for part in accept_header.split(","):
+        item = part.strip()
+        if not item:
+            continue
+        media = item
+        q = 1.0
+        if ";" in item:
+            media, *params = [p.strip() for p in item.split(";")]
+            for param in params:
+                if param.startswith("q="):
+                    try:
+                        q = float(param[2:])
+                    except ValueError:
+                        q = 0.0
+        entries.append((q, media.lower()))
+    entries.sort(key=lambda item: item[0], reverse=True)
+    supported_lower = {media.lower(): media for media in supported}
+    for _, media in entries:
+        if media in supported_lower:
+            return supported_lower[media]
+        if media == "*/*":
+            return supported[0]
+    return None
+
+
+def _response_content_type(query_form: str, output_format: str) -> str:
+    if query_form in {"CONSTRUCT", "DESCRIBE"}:
+        return {
+            "turtle": "text/turtle; charset=utf-8",
+            "n3": "text/n3; charset=utf-8",
+            "nt": "application/n-triples; charset=utf-8",
+        }.get(output_format, "text/turtle; charset=utf-8")
+    return {
+        "json": "application/sparql-results+json; charset=utf-8",
+        "csv": "text/csv; charset=utf-8",
+        "tsv": "text/tab-separated-values; charset=utf-8",
+    }.get(output_format, "application/sparql-results+json; charset=utf-8")
+
+
+def _parse_sparql_http_request(method: str, raw_query_string: str, headers: Any, rfile: Any) -> tuple[str, str, bool, bool]:
+    params = parse_qs(raw_query_string, keep_blank_values=True)
+    infer = _parse_bool_flag(params, "inference", True)
+    reload_graph = _parse_bool_flag(params, "reload", False)
+    query_text: str | None = None
+
+    if method == "GET":
+        query_text = params.get("query", [""])[-1]
+    elif method == "POST":
+        content_length = int(headers.get("Content-Length", "0") or "0")
+        raw_body = rfile.read(content_length).decode("utf-8") if content_length else ""
+        content_type = headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+        if content_type == "application/sparql-query":
+            query_text = raw_body
+        elif content_type == "application/x-www-form-urlencoded":
+            body_params = parse_qs(raw_body, keep_blank_values=True)
+            query_text = body_params.get("query", [""])[-1]
+            if "inference" in body_params:
+                infer = _parse_bool_flag(body_params, "inference", infer)
+            if "reload" in body_params:
+                reload_graph = _parse_bool_flag(body_params, "reload", reload_graph)
+        else:
+            raise _BadSparqlRequest(400, f"Unsupported Content-Type: {content_type or 'missing'}")
+    else:
+        raise _BadSparqlRequest(405, f"Unsupported method: {method}")
+
+    if not query_text or not query_text.strip():
+        raise _BadSparqlRequest(400, "Missing SPARQL query.")
+
+    query_form = detect_query_form(query_text)
+    if query_form in {"CONSTRUCT", "DESCRIBE"}:
+        supported = ["text/turtle", "application/n-triples", "text/n3"]
+        default_format = "turtle"
+        format_map = {
+            "text/turtle": "turtle",
+            "application/n-triples": "nt",
+            "text/n3": "n3",
+        }
+    else:
+        supported = ["application/sparql-results+json", "text/csv", "text/tab-separated-values"]
+        default_format = "json"
+        format_map = {
+            "application/sparql-results+json": "json",
+            "text/csv": "csv",
+            "text/tab-separated-values": "tsv",
+        }
+
+    accept = headers.get("Accept", "")
+    media = _best_accept_media(accept, supported)
+    if media is None:
+        raise _BadSparqlRequest(406, f"Unsupported Accept header: {accept}")
+    output_format = format_map.get(media, default_format)
+
+    return query_text, output_format, infer, reload_graph
 
 
 def _snapshot_watch_dirs(watch_dirs: list[Path]) -> dict[str, float]:

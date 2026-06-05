@@ -91,6 +91,8 @@ class WikiConfig:
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
         html_template: Path | None = None,
+        serve_api_enabled: bool = True,
+        serve_api_path: str = "/api/sparql",
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -107,6 +109,8 @@ class WikiConfig:
         self.url_style = normalize_url_style(url_style)
         self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
         self.html_template = html_template
+        self.serve_api_enabled = bool(serve_api_enabled)
+        self.serve_api_path = normalize_api_path(serve_api_path)
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -192,6 +196,12 @@ class WikiConfig:
                             p = Path(html_template_raw.strip())
                             html_template_path = (p if p.is_absolute() else base_dir / p).resolve()
 
+                        serve_api_data = data.get("serveApi") if isinstance(data.get("serveApi"), dict) else {}
+                        serve_api_enabled = serve_api_data.get("enabled", True)
+                        if not isinstance(serve_api_enabled, bool):
+                            serve_api_enabled = True
+                        serve_api_path = serve_api_data.get("path", "/api/sparql")
+
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             asset_dirs=[resolve(d) for d in asset_data],
@@ -206,6 +216,8 @@ class WikiConfig:
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
                             html_template=html_template_path,
+                            serve_api_enabled=serve_api_enabled,
+                            serve_api_path=serve_api_path,
                         )
                 except Exception as e:
                     logger.warning("Failed to load config file %s: %s", config_path.name, e)
@@ -229,4 +241,12 @@ def normalize_url_style(value: str | None) -> str:
     if normalized not in VALID_URL_STYLES:
         raise ValueError(f"Invalid urlStyle: {value}")
     return normalized
+
+
+def normalize_api_path(value: str | None) -> str:
+    raw = str(value or "/api/sparql").strip()
+    if not raw.startswith("/"):
+        raise ValueError(f"Invalid serveApi.path: {value}")
+    normalized = raw.rstrip("/")
+    return normalized or "/"
 
