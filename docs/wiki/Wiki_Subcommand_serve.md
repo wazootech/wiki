@@ -57,11 +57,10 @@ The endpoint reuses the same query engine as [Wiki_Subcommand_query](Wiki_Subcom
 
 ## Custom HTML shell
 
-The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md) applies to the dev server.
-See [HTML_Template](HTML_Template.md) for the placeholder reference.
+The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md#html-template) applies to the dev server.
 
 ## Related
 
 - [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
 - [Graph_Cache](Graph_Cache.md)
-- [HTML_Template](HTML_Template.md)
+- [Wiki_Configuration](Wiki_Configuration.md#html-template)

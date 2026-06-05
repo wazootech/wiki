@@ -45,8 +45,8 @@ Assets from `assetDirs` copy under the same prefix. See [Wiki_Configuration](Wik
 
 ## Custom HTML shell
 
-If your [Wiki_Configuration](Wiki_Configuration.md) sets `html_template`, every page is rendered through that file.
-The builder passes page content and metadata as `{placeholder}` tokens. See [HTML_Template](HTML_Template.md).
+If your [Wiki_Configuration](Wiki_Configuration.md#html-template) sets `html_template`, every page is rendered through that file.
+The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
 
@@ -58,4 +58,4 @@ By default, checks must pass before the output directory is wiped and rebuilt. O
 
 - [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md)
 - [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [HTML_Template](HTML_Template.md)
+- [Wiki_Configuration](Wiki_Configuration.md#html-template)
