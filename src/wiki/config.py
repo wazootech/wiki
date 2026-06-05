@@ -91,7 +91,7 @@ class WikiConfig:
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
         html_template: Path | None = None,
-        serve_api_enabled: bool = True,
+        serve_api_enabled: bool = False,
         serve_api_path: str = "/api/sparql",
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
@@ -197,7 +197,7 @@ class WikiConfig:
                             html_template_path = (p if p.is_absolute() else base_dir / p).resolve()
 
                         serve_api_data = data.get("serveApi") if isinstance(data.get("serveApi"), dict) else {}
-                        serve_api_enabled = serve_api_data.get("enabled", True)
+                        serve_api_enabled = serve_api_data.get("enabled", False)
                         if not isinstance(serve_api_enabled, bool):
                             serve_api_enabled = True
                         serve_api_path = serve_api_data.get("path", "/api/sparql")

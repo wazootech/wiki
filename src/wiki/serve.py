@@ -246,6 +246,7 @@ def create_server(
     """Build the site and return a configured HTTPServer (not yet started)."""
     resolved_base_url = config.base_url if base_url is None else base_url
     resolved_url_style = config.url_style if url_style is None else url_style
+    _validate_serve_api_path(config, resolved_base_url)
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     WikiHandler.site = site
     WikiHandler.config = config
@@ -276,6 +277,25 @@ class _BadSparqlRequest(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.message = message
+
+
+def _validate_serve_api_path(config: WikiConfig, base_url: str) -> None:
+    """Validate that the configured SPARQL route does not shadow page routes."""
+    if not config.serve_api_enabled:
+        return
+
+    api_path = config.serve_api_path.rstrip("/") or "/"
+    resolved_base = base_url.rstrip("/") if base_url else ""
+    watch_path = f"{resolved_base}/__watch" if resolved_base else "/__watch"
+
+    if api_path == "/":
+        raise ValueError("Invalid serveApi.path: '/' would shadow the entire server.")
+    if api_path == watch_path:
+        raise ValueError(f"Invalid serveApi.path: '{config.serve_api_path}' collides with the watch endpoint.")
+    if resolved_base and (api_path == resolved_base or api_path.startswith(f"{resolved_base}/")):
+        raise ValueError(
+            f"Invalid serveApi.path: '{config.serve_api_path}' collides with page routes under baseUrl '{resolved_base}'."
+        )
 
 
 def _parse_bool_flag(values: dict[str, list[str]], key: str, default: bool) -> bool:

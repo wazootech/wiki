@@ -53,7 +53,7 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.check.get("brokenLinks"), "warning")
         self.assertEqual(config.check.get("headings"), "off")
         self.assertIsNotNone(config.context)
-        self.assertTrue(config.serve_api_enabled)
+        self.assertFalse(config.serve_api_enabled)
         self.assertEqual(config.serve_api_path, "/api/sparql")
 
     def test_wikiconfig_load_no_files(self) -> None:
