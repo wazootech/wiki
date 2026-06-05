@@ -35,6 +35,16 @@ Then verify the CLI is installed:
 wiki --help
 ```
 
+On Windows, if `wiki --help` is missing newer subcommands that do work with `python -m wiki`, check which launcher PATH is using:
+
+```powershell
+Get-Command wiki
+where.exe wiki
+python -m wiki --help
+```
+
+Multiple `wiki.exe` shims can coexist across Python installs. If PATH is preferring a stale launcher, run `python -m wiki upgrade -y` with the intended Python environment and remove or refresh the older `wiki.exe`.
+
 ### From within this repo (editable)
 
 ```bash

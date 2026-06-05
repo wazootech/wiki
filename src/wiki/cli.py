@@ -656,9 +656,10 @@ def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> No
 @click.option("-v", "--verbose", is_flag=True, help="Show pip install output.")
 def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
     """Check for updates and upgrade the wiki CLI."""
-    from .upgrade import check_version, perform_upgrade
+    from .upgrade import check_version, get_windows_path_mismatch_warning, perform_upgrade
 
     current, latest, is_outdated = check_version()
+    path_warning = get_windows_path_mismatch_warning()
 
     if current is None:
         click.echo("Error: cannot determine current version (package not found?).", err=True)
@@ -672,6 +673,9 @@ def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
         click.echo(f"Update available: {current} -> {latest}")
     else:
         click.echo(f"You're up to date ({current}).")
+
+    if path_warning:
+        click.echo(path_warning, err=True)
 
     if check_only:
         sys.exit(0 if not is_outdated else 1)

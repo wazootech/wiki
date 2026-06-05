@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import sysconfig
+from pathlib import Path
 from importlib.metadata import version
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -48,6 +52,36 @@ def check_version() -> tuple[str | None, str | None, bool]:
         is_outdated = False
 
     return current, latest, is_outdated
+
+
+def get_windows_path_mismatch_warning() -> str | None:
+    """Return a warning when PATH resolves `wiki` outside this interpreter's scripts dir."""
+    if os.name != "nt":
+        return None
+
+    resolved = shutil.which("wiki")
+    scripts_dir = sysconfig.get_path("scripts")
+    if not resolved or not scripts_dir:
+        return None
+
+    try:
+        resolved_path = Path(resolved).resolve()
+        scripts_path = Path(scripts_dir).resolve()
+    except OSError:
+        return None
+
+    if resolved_path.parent == scripts_path:
+        return None
+
+    return (
+        "Warning: PATH resolves `wiki` to a different scripts directory than the current Python "
+        f"environment.\n"
+        f"  PATH wiki: {resolved_path}\n"
+        f"  Current Python scripts: {scripts_path}\n"
+        "If `wiki upgrade` or newer subcommands are missing, PATH may be preferring a stale launcher.\n"
+        "Check with `Get-Command wiki` or `where.exe wiki`, then run `python -m wiki upgrade -y` "
+        "or remove the stale `wiki.exe`."
+    )
 
 
 def _parse_version(v: str) -> tuple[int, ...]:

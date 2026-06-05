@@ -25,6 +25,25 @@ wiki upgrade -y -v       # show pip output
 | `-y`, `--yes`     | Skip confirmation                  |
 | `-v`, `--verbose` | Show pip install logs              |
 
+## Windows PATH troubleshooting
+
+If `python -m wiki upgrade` works but `wiki upgrade` says `No such command 'upgrade'`, PATH is probably resolving `wiki` to an older `wiki.exe` from a different Python install.
+
+Check which launcher is active:
+
+```powershell
+Get-Command wiki
+where.exe wiki
+python -m wiki --help
+```
+
+If the PATH launcher is stale, upgrade through the intended interpreter and remove or refresh the older shim:
+
+```powershell
+python -m wiki upgrade -y
+python -m pip install --upgrade wazootech-wiki
+```
+
 ## Related
 
 - [Getting_Started](Getting_Started.md)

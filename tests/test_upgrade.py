@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from wiki.cli import main
-from wiki.upgrade import _parse_version, check_version, get_current_version, get_latest_version
+from wiki.upgrade import _parse_version, check_version, get_current_version, get_latest_version, get_windows_path_mismatch_warning
 
 
 PYPI_RESPONSE_LATEST = {
@@ -74,6 +74,31 @@ class TestUpgradeLogic(unittest.TestCase):
         self.assertEqual(current, "0.1.4")
         self.assertEqual(latest, "0.1.4")
         self.assertFalse(outdated)
+
+    @patch("wiki.upgrade.os.name", "nt")
+    @patch("wiki.upgrade.sysconfig.get_path", return_value=r"C:\\Python\\Scripts")
+    @patch("wiki.upgrade.shutil.which", return_value=r"C:\\Python\\Scripts\\wiki.exe")
+    def test_windows_path_mismatch_warning_not_emitted_for_current_scripts_dir(
+        self,
+        mock_which: MagicMock,
+        mock_scripts: MagicMock,
+    ) -> None:
+        self.assertIsNone(get_windows_path_mismatch_warning())
+
+    @patch("wiki.upgrade.os.name", "nt")
+    @patch("wiki.upgrade.sysconfig.get_path", return_value=r"C:\\Users\\ethan\\AppData\\Local\\Programs\\Python\\Python312\\Scripts")
+    @patch("wiki.upgrade.shutil.which", return_value=r"C:\\Users\\ethan\\.local\\bin\\wiki.exe")
+    def test_windows_path_mismatch_warning_emitted_for_stale_shim(
+        self,
+        mock_which: MagicMock,
+        mock_scripts: MagicMock,
+    ) -> None:
+        warning = get_windows_path_mismatch_warning()
+        assert warning is not None
+        self.assertIn("PATH resolves `wiki`", warning)
+        self.assertIn(r"C:\Users\ethan\.local\bin\wiki.exe", warning)
+        self.assertIn("Get-Command wiki", warning)
+        self.assertIn("python -m wiki upgrade -y", warning)
 
 
 class TestUpgradeCLI(unittest.TestCase):
@@ -166,6 +191,17 @@ class TestUpgradeCLI(unittest.TestCase):
         self.assertIn("pip install --upgrade", result.output)
         self.assertIn("Upgraded to 1.0.0.", result.output)
         mock_pip.assert_called_once()
+
+    @patch("wiki.upgrade.version", return_value="0.1.4")
+    @patch("wiki.upgrade.get_windows_path_mismatch_warning", return_value="Warning: stale wiki.exe")
+    def test_upgrade_check_prints_path_mismatch_warning(self, mock_warning: MagicMock, mock_version: MagicMock) -> None:
+        runner = CliRunner()
+        mock_urlopen = self._mock_pypi("0.1.4")
+        with patch("wiki.upgrade.urlopen", mock_urlopen):
+            result = runner.invoke(main, ["upgrade", "--check"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("You're up to date (0.1.4).", result.output)
+        self.assertIn("Warning: stale wiki.exe", result.output)
 
 
 if __name__ == "__main__":
