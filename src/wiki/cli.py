@@ -470,9 +470,9 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 def init(force: bool, init_git: bool) -> None:
     """Interactively scaffold a new wiki workspace in the current directory."""
+    from importlib.resources import files as pkg_files
     import shutil
     import subprocess
-    import yaml
 
     cwd = Path.cwd()
     config_path = cwd / "wiki.yaml"
@@ -492,27 +492,8 @@ def init(force: bool, init_git: bool) -> None:
 
     wiki_base = click.prompt("Custom base URI prefix", default="https://wiki.example.org/")
     wiki_base = str(wiki_base).rstrip("/") + "/"
-
-    context_map: dict[str, str] = {
-        "schema": "https://schema.org/",
-        "wiki": wiki_base,
-        "foaf": "http://xmlns.com/foaf/0.1/",
-        "dc": "http://purl.org/dc/elements/1.1/",
-        "dcterms": "http://purl.org/dc/terms/",
-        "sh": "http://www.w3.org/ns/shacl#",
-        "xsd": "http://www.w3.org/2001/XMLSchema#",
-    }
-
-    cfg = {
-        "inputDirs": ["wiki"],
-        "wikiBase": wiki_base,
-        "baseUrl": "/wiki",
-        "urlStyle": "dir",
-        "filenamePattern": "[A-Za-z0-9_()-]+",
-        "check": {"filenamePattern": "warning", "brokenLinks": "warning"},
-        "context": context_map,
-        "html_template": "index.html",
-    }
+    config_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
+    config_content = config_template.replace("__WIKI_BASE__", wiki_base)
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
     readme_path.write_text(
@@ -566,7 +547,7 @@ def init(force: bool, init_git: bool) -> None:
         encoding="utf-8",
     )
 
-    config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    config_path.write_text(config_content, encoding="utf-8")
 
     # Seed index.html HTML template from packaged resource
     index_html_path = cwd / "index.html"
@@ -574,7 +555,6 @@ def init(force: bool, init_git: bool) -> None:
         click.echo("Warning: index.html already exists (not overwritten). Use --force to replace.", err=True)
     else:
         try:
-            from importlib.resources import files as pkg_files
             seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
             index_html_path.write_text(seed_template, encoding="utf-8")
         except Exception as exc:

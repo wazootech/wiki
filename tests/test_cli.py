@@ -2,6 +2,7 @@ import json
 import threading
 import time
 import unittest
+from importlib.resources import files as pkg_files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -339,6 +340,9 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 self.assertTrue(index_html.is_file())
                 self.assertIn("LLM WIKI", index_html.read_text(encoding="utf-8"))
 
+                expected_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
+                self.assertEqual(config_content, expected_template.replace("__WIKI_BASE__", "https://wiki.example.org/"))
+
                 # Check --force protects existing index.html (second init)
                 result2 = runner.invoke(main, ["init", "--force"], input="https://wiki.example.org/\n")
                 self.assertEqual(result2.exit_code, 0)
@@ -351,6 +355,11 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 self.assertEqual(result3.exit_code, 0)
 
                 self.assertFalse((Path(".git")).exists())
+
+    def test_docs_index_html_matches_packaged_template(self) -> None:
+        docs_template = Path("docs/index.html").read_text(encoding="utf-8")
+        packaged_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+        self.assertEqual(docs_template, packaged_template)
 
     def test_cli_init_git_opt_in_runs_git_init(self) -> None:
         runner = CliRunner()

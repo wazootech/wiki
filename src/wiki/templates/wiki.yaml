@@ -1,0 +1,18 @@
+inputDirs:
+  - wiki
+wikiBase: __WIKI_BASE__
+baseUrl: /wiki
+urlStyle: dir
+filenamePattern: "[A-Za-z0-9_()-]+"
+check:
+  filenamePattern: warning
+  brokenLinks: warning
+context:
+  schema: https://schema.org/
+  wiki: __WIKI_BASE__
+  foaf: http://xmlns.com/foaf/0.1/
+  dc: http://purl.org/dc/elements/1.1/
+  dcterms: http://purl.org/dc/terms/
+  sh: http://www.w3.org/ns/shacl#
+  xsd: http://www.w3.org/2001/XMLSchema#
+html_template: index.html
