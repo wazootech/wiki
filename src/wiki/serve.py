@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlsplit
 from typing import Any, Optional
 
 from .config import WikiConfig
-from .format import detect_query_form, is_sparql_update, run_query
+from .format import detect_query_form, is_sparql_update, normalize_metadata_mode, run_query
 from .graph import load_graph
 from .site import (
     WikiSite,
@@ -43,6 +43,7 @@ class WikiHandler(BaseHTTPRequestHandler):
         base = self.base_url
         parsed_url = urlsplit(self.path)
         parsed = parsed_url.path
+        query_params = parse_qs(parsed_url.query, keep_blank_values=True)
         if parsed.rstrip("/") == self.serve_api_path.rstrip("/"):
             self._handle_sparql_request("GET", parsed_url.query)
             return
@@ -61,7 +62,17 @@ class WikiHandler(BaseHTTPRequestHandler):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
             if target:
-                self._send_html(build_page_html(target, self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
+                metadata_mode = normalize_metadata_mode(query_params.get("metadata_mode", ["expanded"])[-1])
+                self._send_html(
+                    build_page_html(
+                        target,
+                        self.site,
+                        base_url=base,
+                        url_style=self.url_style,
+                        html_template=self.html_template,
+                        metadata_mode=metadata_mode,
+                    )
+                )
             elif self._serve_asset(parsed[len(base) + 1:]):
                 return
             else:

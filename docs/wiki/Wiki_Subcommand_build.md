@@ -7,6 +7,7 @@ description: Generate a static HTML site from the vault.
 # `wiki build`
 
 Compile markdown and data files into static HTML with wikilinks, backlinks, table of contents, and typed templates/infoboxes.
+The generated pages now embed both expanded and compacted metadata views so the toggle works without JavaScript.
 
 ## Usage
 
@@ -42,6 +43,10 @@ _site/wiki/Alice/index.html  →  /wiki/Alice/
 ```
 
 Assets from `asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
+
+## Metadata view
+
+Each built page includes both expanded and compacted metadata blocks. The page defaults to expanded, and the switch stays usable without JavaScript.
 
 ## Custom HTML shell
 

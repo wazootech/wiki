@@ -398,8 +398,9 @@ def build(
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="File to write serialized RDF output.")
 @click.option("-f", "--format", "rdf_format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="Output format for RDF export.")
+@click.option("--mode", type=click.Choice(["expanded", "compacted"], case_sensitive=False), default="expanded", show_default=True, help="Serialization mode for formats that support compaction.")
 @click.pass_obj
-def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_format: str) -> None:
+def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_format: str, mode: str) -> None:
     """Compile and export wiki documents in a supported RDF format."""
     result_payload: Any = None
 
@@ -409,7 +410,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
             click.echo(f"No valid document metadata found in {file.name}", err=True)
             sys.exit(1)
 
-        processed_rdf = process_rdf_format(data, file.stem, context, rdf_format)
+        processed_rdf = process_rdf_format(data, file.stem, context, rdf_format, mode=mode)
         result_payload = {
             "name": file.name,
             "rdf": processed_rdf,
@@ -422,7 +423,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
             data = document_data_from_path(file_path, content_predicate=context.content_predicate)
             if data:
                 processed_rdf = process_rdf_format(
-                    data, route_for_document_file(context, file_path), context, rdf_format
+                    data, route_for_document_file(context, file_path), context, rdf_format, mode=mode
                 )
                 converted_list.append({
                     "name": file_path.name,

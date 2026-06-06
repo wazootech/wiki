@@ -15,6 +15,7 @@ wiki export
 wiki export wiki/Page.md
 wiki export wiki/Page.md -f turtle
 wiki export -f json-ld -o vault.json
+wiki export wiki/Page.md --mode compacted -f json-ld
 ```
 
 ## Options
@@ -23,6 +24,7 @@ wiki export -f json-ld -o vault.json
 | ---------------- | -------------- | ---------------------------------------------------------------- |
 | `FILE`           | all vault docs | Single file or entire vault                                      |
 | `-f`, `--format` | `dict`         | `dict`, `json-ld`, `turtle`, `xml`, `n3`, `nt`, `trig`, `nquads` |
+| `--mode`         | `expanded`     | `expanded` or `compacted` serialization mode                     |
 | `-o`, `--output` | stdout         | Output file                                                      |
 
 ## Output shape
@@ -30,6 +32,8 @@ wiki export -f json-ld -o vault.json
 For `dict` and `json-ld`, each entry is `{"name": "<filename>", "rdf": ...}`.
 
 Raw RDF formats (`turtle`, etc.) on a **single** file write plain serialization without a JSON wrapper. Bulk export with raw formats still wraps entries in JSON for structure.
+
+`--mode compacted` is most visible for JSON-LD, where it emits `@context` and compacted terms when the vault context provides them.
 
 ## Related
 

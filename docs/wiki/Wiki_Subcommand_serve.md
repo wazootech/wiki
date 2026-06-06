@@ -6,7 +6,7 @@ description: Local HTTP server for live HTML preview.
 
 # `wiki serve`
 
-Start a development server that renders vault pages on demand (same engine as [Wiki_Subcommand_build](Wiki_Subcommand_build.md), without writing files).
+Start a development server that renders vault pages on demand.
 
 ## Usage
 
@@ -68,6 +68,10 @@ For safety, the endpoint is **disabled by default**. Its path is also validated 
 ## Custom HTML shell
 
 The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md#html-template) applies to the dev server.
+
+## Metadata view
+
+The live page metadata panel supports `expanded` and `compacted` modes without JavaScript. The request can set the initial selection with `?metadata_mode=expanded|compacted`.
 
 ## Related
 

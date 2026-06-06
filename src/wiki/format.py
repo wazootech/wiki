@@ -6,6 +6,8 @@ import json
 import re
 from typing import Any
 
+from rdflib import Graph
+
 
 def _wiki_link(s: str, wiki_base: str, known_slugs: set[str] | None = None) -> str:
     """Convert a wiki URI to a standard markdown link if applicable."""
@@ -170,7 +172,49 @@ def is_sparql_update(query: str) -> bool:
     return _SPARQL_UPDATE_RE.search(text) is not None
 
 
-def process_rdf_format(data: dict[str, Any], file_stem: str, context: Any, output_format: str) -> Any:
+def normalize_metadata_mode(mode: str | None) -> str:
+    """Normalize the metadata/RDF display mode to a known value."""
+    return "compacted" if str(mode).strip().lower() == "compacted" else "expanded"
+
+
+def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded", context: Any = None) -> Any:
+    """Serialize an RDF graph in the requested format and display mode."""
+    normalized_mode = normalize_metadata_mode(mode)
+
+    if output_format in ("json-ld", "jsonld"):
+        kwargs: dict[str, Any] = {"indent": 2}
+        if normalized_mode == "compacted":
+            context_data = None
+            if context is not None:
+                if hasattr(context, "namespaces"):
+                    context_data = {prefix: str(namespace) for prefix, namespace in context.namespaces.items()}
+                elif isinstance(context, dict):
+                    context_data = context
+            if context_data:
+                kwargs["context"] = context_data
+                kwargs["auto_compact"] = True
+        serialized = graph.serialize(format="json-ld", **kwargs)
+        return json.loads(serialized)
+
+    if output_format == "nquads":
+        from rdflib import Dataset
+
+        dataset = Dataset()
+        default = dataset.default_graph
+        for s, p, o in graph:
+            default.add((s, p, o))
+        return dataset.serialize(format="nquads")
+
+    return graph.serialize(format=output_format, indent=2)
+
+
+def process_rdf_format(
+    data: dict[str, Any],
+    file_stem: str,
+    context: Any,
+    output_format: str,
+    mode: str = "expanded",
+) -> Any:
     """Convert frontmatter dict to the requested RDF serialization format.
 
     Used by the export command to convert frontmatter dicts into various RDF formats.
@@ -181,18 +225,4 @@ def process_rdf_format(data: dict[str, Any], file_stem: str, context: Any, outpu
     from .graph import frontmatter_to_graph
 
     graph = frontmatter_to_graph(data, context, file_id=file_stem)
-
-    if output_format in ("json-ld", "jsonld"):
-        serialized = graph.serialize(format="json-ld", indent=2)
-        return json.loads(serialized)
-
-    if output_format == "nquads":
-        from rdflib import Dataset
-        dataset = Dataset()
-        default = dataset.default_graph
-        for s, p, o in graph:
-            default.add((s, p, o))
-        return dataset.serialize(format="nquads")
-
-    rdf_format = output_format
-    return graph.serialize(format=rdf_format, indent=2)
+    return serialize_rdf_graph(graph, output_format, mode=mode, context=context)
