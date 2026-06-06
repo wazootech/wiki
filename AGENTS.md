@@ -38,3 +38,10 @@ wiki check --strict
 ```
 
 CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate from `wiki check`.
+
+It is highly recommended to run the full CI-equivalent local checks before committing, even though they are not a required pre-commit step:
+```bash
+wiki check --strict -v
+wiki fmt --check -v
+wiki render --check
+```

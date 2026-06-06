@@ -37,11 +37,11 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key          | What it audits                                                                |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `filename_pattern` | Filename stem vs top-level `filename_pattern` regex                            |
+| Rule key           | What it audits                                                                |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `filename_pattern` | Filename stem vs top-level `filename_pattern` regex                           |
 | `broken_links`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`        | Sentence-case headings, numbered headings, thematic `---` in body             |
+| `headings`         | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `filename_pattern` and `broken_links` are `warning`; `headings` is `off`.
 

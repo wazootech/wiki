@@ -20,13 +20,13 @@ python -m wiki serve --watch
 
 ## Options
 
-| Flag         | Default         | Description                                                 |
-| ------------ | --------------- | ----------------------------------------------------------- |
-| `--host`     | `127.0.0.1`     | Bind address                                                |
-| `--port`     | `8080`          | Port                                                        |
-| `--base-url` | from config     | Page URL prefix                                             |
+| Flag         | Default          | Description                                                 |
+| ------------ | ---------------- | ----------------------------------------------------------- |
+| `--host`     | `127.0.0.1`      | Bind address                                                |
+| `--port`     | `8080`           | Port                                                        |
+| `--base-url` | from config      | Page URL prefix                                             |
 | `--style`    | from `url_style` | `dir` or `file`                                             |
-| `--watch`    | off             | Rebuild graph, SPARQL blocks, and reload browser on changes |
+| `--watch`    | off              | Rebuild graph, SPARQL blocks, and reload browser on changes |
 
 Default URL with config `base_url: /wiki`: `http://127.0.0.1:8080/wiki/`.
 

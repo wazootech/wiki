@@ -210,11 +210,11 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key          | Default   | What it audits                                                                |
-| ----------------- | --------- | ----------------------------------------------------------------------------- |
-| `filename_pattern` | `warning` | Custom regex on filename stems (see top-level `filename_pattern`)              |
+| Rule key           | Default   | What it audits                                                                |
+| ------------------ | --------- | ----------------------------------------------------------------------------- |
+| `filename_pattern` | `warning` | Custom regex on filename stems (see top-level `filename_pattern`)             |
 | `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`        | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
+| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
