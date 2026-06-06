@@ -1,6 +1,6 @@
 input_dirs:
   - wiki
-wiki_base: https://wazootech.github.io/wiki/wiki/
+wiki_base: https://wazootech.github.io/wiki/
 base_url: /wiki
 url_style: dir
 content_predicate: schema:text
@@ -10,7 +10,7 @@ check:
   broken_links: warning
 context:
   schema: https://schema.org/
-  wiki: https://wazootech.github.io/wiki/wiki/
+  wiki: https://wazootech.github.io/wiki/
   foaf: http://xmlns.com/foaf/0.1/
   dcterms: http://purl.org/dc/terms/
   sh: http://www.w3.org/ns/shacl#
