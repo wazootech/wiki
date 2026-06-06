@@ -247,8 +247,11 @@ specialty: Diagnostics
             self.assertIn('class="language-json"', html)
             self.assertIn('class="highlight"', html)
             self.assertIn("<span", html)
+            self.assertIn('&quot;@id&quot;', html)
             self.assertIn('&quot;@type&quot;', html)
             self.assertNotIn('&quot;type&quot;', html)
+            self.assertLess(html.index('&quot;@id&quot;'), html.index('&quot;@type&quot;'))
+            self.assertLess(html.index('&quot;@type&quot;'), html.index('&quot;name&quot;'))
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(

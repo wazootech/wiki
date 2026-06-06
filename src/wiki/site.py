@@ -1131,7 +1131,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    metadata_formatted = json.dumps(_metadata_view_frontmatter(page.frontmatter), indent=2, default=str)
+    metadata_formatted = json.dumps(_metadata_view_frontmatter(page), indent=2, default=str)
     if page.has_frontmatter:
         metadata_highlighted = _highlight_json(metadata_formatted)
         metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
@@ -1298,7 +1298,7 @@ def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_
 def _build_metadata_json_html(page: VirtualPage) -> str:
     if not page.frontmatter:
         return ""
-    highlighted_json = _highlight_json(json.dumps(_metadata_view_frontmatter(page.frontmatter), indent=2, default=str))
+    highlighted_json = _highlight_json(json.dumps(_metadata_view_frontmatter(page), indent=2, default=str))
     return f"""<section class="page-meta">
 <h2>Metadata</h2>
 <pre class="highlight"><code class="language-json">{highlighted_json}</code></pre>
@@ -1313,12 +1313,28 @@ def _highlight_json(value: str) -> str:
     return highlight(value, lexer, PYGMENTS_FORMATTER)
 
 
-def _metadata_view_frontmatter(frontmatter: dict[str, Any]) -> dict[str, Any]:
-    if "type" not in frontmatter or "@type" in frontmatter:
-        return frontmatter
-    normalized = dict(frontmatter)
-    normalized["@type"] = normalized.pop("type")
-    return normalized
+def _metadata_view_frontmatter(page: VirtualPage) -> dict[str, Any]:
+    frontmatter = page.frontmatter
+    normalized: dict[str, Any] = {}
+
+    metadata_id = frontmatter.get("@id") or frontmatter.get("id") or (page.wiki_ids[0] if page.wiki_ids else None)
+    if metadata_id is not None:
+        normalized["@id"] = metadata_id
+
+    if "@type" in frontmatter:
+        normalized["@type"] = frontmatter["@type"]
+    elif "type" in frontmatter:
+        normalized["@type"] = frontmatter["type"]
+
+    for key, value in frontmatter.items():
+        if key in {"@id", "id", "@type", "type"}:
+            continue
+        normalized[key] = value
+
+    if normalized:
+        return normalized
+
+    return frontmatter
 
 
 def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
