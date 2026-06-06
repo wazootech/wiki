@@ -197,15 +197,17 @@ def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded"
         return json.loads(serialized)
 
     if output_format == "nquads":
-        from rdflib import Dataset
-
-        dataset = Dataset()
-        default = dataset.default_graph
-        for s, p, o in graph:
-            default.add((s, p, o))
-        return dataset.serialize(format="nquads")
+        return _serialize_nquads_graph(graph)
 
     return graph.serialize(format=output_format, indent=2)
+
+
+def _serialize_nquads_graph(graph: Graph) -> str:
+    """Serialize a single RDF graph as N-Quads without deprecated rdflib APIs."""
+    lines = []
+    for subject, predicate, obj in graph:
+        lines.append(f"{subject.n3()} {predicate.n3()} {obj.n3()} .")
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 def process_rdf_format(
