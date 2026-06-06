@@ -1,9 +1,9 @@
-inputDirs:
+input_dirs:
   - wiki
-wikiBase: __WIKI_BASE__
-baseUrl: /wiki
-urlStyle: dir
-filenamePattern: "[A-Za-z0-9_()-]+"
+wiki_base: __WIKI_BASE__
+base_url: /wiki
+url_style: dir
+filename_pattern: "[A-Za-z0-9_()-]+"
 check:
   filenamePattern: warning
   brokenLinks: warning

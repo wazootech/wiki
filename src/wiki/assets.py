@@ -81,7 +81,7 @@ def resolve_asset_path(config: WikiConfig, current_file: Path, target: str) -> P
 def asset_reference_issue(config: WikiConfig, current_file: Path, target: str) -> str | None:
     asset_path = resolve_asset_path(config, current_file, target)
     if asset_path is None:
-        return f"points outside configured assetDirs: {target}"
+        return f"points outside configured asset_dirs: {target}"
     if config.is_excluded(asset_path):
         return f"points to excluded asset: {target}"
     if asset_path.is_symlink():

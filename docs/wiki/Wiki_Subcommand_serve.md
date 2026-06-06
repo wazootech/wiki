@@ -25,19 +25,19 @@ python -m wiki serve --watch
 | `--host`     | `127.0.0.1`     | Bind address                                                |
 | `--port`     | `8080`          | Port                                                        |
 | `--base-url` | from config     | Page URL prefix                                             |
-| `--style`    | from `urlStyle` | `dir` or `file`                                             |
+| `--style`    | from `url_style` | `dir` or `file`                                             |
 | `--watch`    | off             | Rebuild graph, SPARQL blocks, and reload browser on changes |
 
-Default URL with config `baseUrl: /wiki`: `http://127.0.0.1:8080/wiki/`.
+Default URL with config `base_url: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
 ## SPARQL endpoint
 
-When `serveApi.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `serveApi.path` (default `/api/sparql`).
+When `serve_api.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `serve_api.path` (default `/api/sparql`).
 
 Example config:
 
 ```yaml
-serveApi:
+serve_api:
   enabled: true
   path: /api/sparql
 ```

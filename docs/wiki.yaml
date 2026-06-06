@@ -1,10 +1,10 @@
-inputDirs:
+input_dirs:
   - wiki
-wikiBase: https://wazootech.github.io/wiki/wiki/
-baseUrl: /wiki
-urlStyle: dir
-contentPredicate: schema:text
-filenamePattern: "[A-Za-z0-9_()-]+"
+wiki_base: https://wazootech.github.io/wiki/wiki/
+base_url: /wiki
+url_style: dir
+content_predicate: schema:text
+filename_pattern: "[A-Za-z0-9_()-]+"
 check:
   filenamePattern: warning
   brokenLinks: warning

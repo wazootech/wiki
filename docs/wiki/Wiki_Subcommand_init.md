@@ -27,14 +27,14 @@ wiki init --git
 
 ## Prompts
 
-1. **Custom base URI prefix** (default `https://wiki.example.org/`) → `wikiBase` and `wiki:` in `context`
+1. **Custom base URI prefix** (default `https://wiki.example.org/`) → `wiki_base` and `wiki:` in `context`
 
 Always includes `schema`, `wiki`, `foaf`, `dc`, `dcterms`, `sh`, and `xsd` prefixes.
 
 ## Generated config
 
-- `inputDirs: [wiki]`
-- `baseUrl: /wiki`, `urlStyle: dir`
+- `input_dirs: [wiki]`
+- `base_url: /wiki`, `url_style: dir`
 - `check` rules at `warning` for filename and links
 - `html_template: index.html` — uses a seeded Wikipedia-style shell by default
 

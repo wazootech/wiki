@@ -35,7 +35,7 @@ SELECT ?person ?name WHERE {
 
 ### Filtered query
 
-Uses standard string or URI filters to constrain your results. To list all articles in the wikiBase namespace:
+Uses standard string or URI filters to constrain your results. To list all articles in the wiki_base namespace:
 
 ```sparql
 PREFIX schema: <https://schema.org/>

@@ -35,13 +35,13 @@ wiki build --no-check
 
 ## Output layout
 
-With `baseUrl: /wiki` and `urlStyle: dir`:
+With `base_url: /wiki` and `url_style: dir`:
 
 ```
 _site/wiki/Alice/index.html  →  /wiki/Alice/
 ```
 
-Assets from `assetDirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
+Assets from `asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
 
 ## Custom HTML shell
 

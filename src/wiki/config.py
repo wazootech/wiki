@@ -164,10 +164,10 @@ class WikiConfig:
                         # Derive absolute reference point for system paths relative to config location
                         base_dir = config_path.parent.absolute()
 
-                        # Parse inputDirs as a list or single string
-                        input_data = _as_list(data.get("input_dirs") or data.get("inputDirs") or ["wiki"])
+                        # Parse input_dirs as a list or single string
+                        input_data = _as_list(data.get("input_dirs") or ["wiki"])
 
-                        asset_data = data.get("asset_dirs") if data.get("asset_dirs") is not None else data.get("assetDirs")
+                        asset_data = data.get("asset_dirs")
                         if asset_data is None:
                             asset_data = ["assets"] if (base_dir / "assets").is_dir() else []
                         asset_data = _as_list(asset_data)
@@ -185,7 +185,7 @@ class WikiConfig:
                         if context_obj and "wiki" in context_obj.namespaces:
                             context_wiki_base = str(context_obj.namespaces["wiki"])
 
-                        uri_ext = data.get("uri_ext") if data.get("uri_ext") is not None else data.get("uriExt", False)
+                        uri_ext = data.get("uri_ext", False)
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
@@ -196,7 +196,7 @@ class WikiConfig:
                             p = Path(html_template_raw.strip())
                             html_template_path = (p if p.is_absolute() else base_dir / p).resolve()
 
-                        serve_api_data = data.get("serveApi") if isinstance(data.get("serveApi"), dict) else {}
+                        serve_api_data = data.get("serve_api") if isinstance(data.get("serve_api"), dict) else {}
                         serve_api_enabled = serve_api_data.get("enabled", False)
                         if not isinstance(serve_api_enabled, bool):
                             serve_api_enabled = True
@@ -205,14 +205,14 @@ class WikiConfig:
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             asset_dirs=[resolve(d) for d in asset_data],
-                            wiki_base=data.get("wiki_base") or data.get("wikiBase") or context_wiki_base or "https://wiki.example.org/",
+                            wiki_base=data.get("wiki_base") or context_wiki_base or "https://wiki.example.org/",
                             check=data.get("check"),
                             context=context_obj,
-                            content_predicate=data.get("content_predicate") or data.get("contentPredicate"),
+                            content_predicate=data.get("content_predicate"),
                             uri_ext=uri_ext,
-                            filename_pattern=data.get("filename_pattern") or data.get("filenamePattern"),
-                            base_url=data.get("base_url") if data.get("base_url") is not None else data.get("baseUrl", DEFAULT_BASE_URL),
-                            url_style=data.get("url_style") or data.get("urlStyle") or DEFAULT_URL_STYLE,
+                            filename_pattern=data.get("filename_pattern"),
+                            base_url=data.get("base_url", DEFAULT_BASE_URL),
+                            url_style=data.get("url_style") or DEFAULT_URL_STYLE,
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
                             html_template=html_template_path,
@@ -239,14 +239,14 @@ def _as_list(value: Any) -> list[Any]:
 def normalize_url_style(value: str | None) -> str:
     normalized = str(value or DEFAULT_URL_STYLE).strip().lower()
     if normalized not in VALID_URL_STYLES:
-        raise ValueError(f"Invalid urlStyle: {value}")
+        raise ValueError(f"Invalid url_style: {value}")
     return normalized
 
 
 def normalize_api_path(value: str | None) -> str:
     raw = str(value or "/api/sparql").strip()
     if not raw.startswith("/"):
-        raise ValueError(f"Invalid serveApi.path: {value}")
+        raise ValueError(f"Invalid serve_api.path: {value}")
     normalized = raw.rstrip("/")
     return normalized or "/"
 

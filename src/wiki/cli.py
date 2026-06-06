@@ -452,7 +452,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
 @click.option("--base-url", default=None,
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
 @click.option("--style", "url_style", default=None,
-              type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir). Defaults to urlStyle in config.")
+              type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir). Defaults to url_style in config.")
 @click.option("--watch", is_flag=True, help="Watch vault files; rebuild graph, SPARQL blocks, and site on change.")
 @click.pass_obj
 def serve(config: Context, host: str, port: int, base_url: str | None, url_style: str | None, watch: bool) -> None:

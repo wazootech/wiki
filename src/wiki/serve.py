@@ -79,7 +79,7 @@ class WikiHandler(BaseHTTPRequestHandler):
         self._send_error(404, f"Not found: {self.path}")
 
     def _serve_asset(self, rel_path: str) -> bool:
-        """Try to serve a static asset from configured assetDirs. Returns True if served."""
+        """Try to serve a static asset from configured asset_dirs. Returns True if served."""
         for asset_dir in self.config.asset_dirs:
             candidate = (asset_dir / rel_path).resolve()
             try:
@@ -289,12 +289,12 @@ def _validate_serve_api_path(config: WikiConfig, base_url: str) -> None:
     watch_path = f"{resolved_base}/__watch" if resolved_base else "/__watch"
 
     if api_path == "/":
-        raise ValueError("Invalid serveApi.path: '/' would shadow the entire server.")
+        raise ValueError("Invalid serve_api.path: '/' would shadow the entire server.")
     if api_path == watch_path:
-        raise ValueError(f"Invalid serveApi.path: '{config.serve_api_path}' collides with the watch endpoint.")
+        raise ValueError(f"Invalid serve_api.path: '{config.serve_api_path}' collides with the watch endpoint.")
     if resolved_base and (api_path == resolved_base or api_path.startswith(f"{resolved_base}/")):
         raise ValueError(
-            f"Invalid serveApi.path: '{config.serve_api_path}' collides with page routes under baseUrl '{resolved_base}'."
+            f"Invalid serve_api.path: '{config.serve_api_path}' collides with page routes under base_url '{resolved_base}'."
         )
 
 

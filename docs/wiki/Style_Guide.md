@@ -12,7 +12,7 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 
 ## File layout
 
-- Put pages under directories listed in `inputDirs` (usually `wiki/`).
+- Put pages under directories listed in `input_dirs` (usually `wiki/`).
 - **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_House.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `filenamePattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
@@ -32,7 +32,7 @@ Configure `filenamePattern` in [Wiki_Configuration](Wiki_Configuration.md) to ma
 
 ## Frontmatter
 
-Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem relative to `wikiBase`) — no explicit `id:` is needed.
+Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem relative to `wiki_base`) — no explicit `id:` is needed.
 
 Example person page:
 

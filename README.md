@@ -128,7 +128,7 @@ wiki check --strict
 Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
 
 ```yaml
-filenamePattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+"
 check:
   filenamePattern: warning
   brokenLinks: warning
@@ -276,14 +276,14 @@ _site/
     └── ...
 ```
 
-Page URLs are derived from the source path under `inputDirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_House.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_House.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
 `wiki build` runs `wiki check` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
 Static assets can be published from configured asset directories:
 
 ```yaml
-assetDirs:
+asset_dirs:
   - assets
 exclude:
   - assets/private/**
@@ -580,7 +580,7 @@ SELECT ?name WHERE {
 ```
 
 #### Opt-in full-text SPARQL over markdown content
-By enabling `contentPredicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (e.g. `schema:text`). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
+By enabling `content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (e.g. `schema:text`). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
@@ -598,16 +598,16 @@ The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.y
 
 ```yaml
 # wiki.yaml
-inputDirs:
+input_dirs:
   - wiki
-assetDirs:
+asset_dirs:
   - assets
-baseUrl: /wiki
-urlStyle: dir
-filenamePattern: "[A-Za-z0-9_()-]+"
+base_url: /wiki
+url_style: dir
+filename_pattern: "[A-Za-z0-9_()-]+"
 exclude:
   - assets/private/**
-contentPredicate: schema:text # Opt-in full-text markdown body auto-injection
+content_predicate: schema:text # Opt-in full-text markdown body auto-injection
 
 check:
   filenamePattern: warning   # "error" | "warning" | "off"

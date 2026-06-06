@@ -6,7 +6,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Vault**: The markdown corpus the CLI loads from `inputDirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Vault**: The markdown corpus the CLI loads from `input_dirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
 
 **Document**: An individual Markdown page in the vault containing a metadata block. _Avoid_: Page, post, wiki page.
 
@@ -40,7 +40,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 ## Relationships
 
-- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `inputDirs`
+- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `input_dirs`
 - A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**

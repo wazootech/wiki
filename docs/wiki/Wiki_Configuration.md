@@ -11,17 +11,17 @@ The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the
 ## Example
 
 ```yaml
-inputDirs:
+input_dirs:
   - wiki
-assetDirs:
+asset_dirs:
   - assets
-wikiBase: https://example.org/wiki/
-baseUrl: /wiki
-urlStyle: dir
-filenamePattern: "[A-Za-z0-9_()-]+"
+wiki_base: https://example.org/wiki/
+base_url: /wiki
+url_style: dir
+filename_pattern: "[A-Za-z0-9_()-]+"
 exclude:
   - assets/private/**
-contentPredicate: schema:text
+content_predicate: schema:text
 
 check:
   filenamePattern: warning
@@ -38,42 +38,42 @@ JSON configs may use `"context"` or `"@context"` for prefix maps (JSON-LD compat
 
 ## Paths and vault layout
 
-| Key         | Aliases      | Default                            | Purpose                                                                   |
-| ----------- | ------------ | ---------------------------------- | ------------------------------------------------------------------------- |
-| `inputDirs` | `input_dirs` | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)       |
-| `assetDirs` | `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build`                                       |
-| `exclude`   | —            | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing |
+| Key          | Default                            | Purpose                                                                   |
+| ------------ | ---------------------------------- | ------------------------------------------------------------------------- |
+| `input_dirs` | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)       |
+| `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build`                                       |
+| `exclude`    | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing |
 
-Page URLs come from paths under `inputDirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `baseUrl` and `urlStyle: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
+Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `base_url` and `url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
 ## Wiki and RDF
 
-| Key                    | Aliases             | Default                                            | Purpose                                                                                                                   |
-| ---------------------- | ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `wikiBase`             | `wiki_base`         | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
-| `context` / `@context` | —                   | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and microdata                                                        |
-| `contentPredicate`     | `content_predicate` | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `uriExt`               | `uri_ext`           | `false`                                            | Include file extension in generated URIs when true                                                                        |
+| Key                    | Default                                            | Purpose                                                                                                                   |
+| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
+| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and microdata                                                        |
+| `content_predicate`    | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
+| `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                        |
 
 ## Site output
 
-| Key             | Aliases     | Default | Purpose                                                |
-| --------------- | ----------- | ------- | ------------------------------------------------------ |
-| `baseUrl`       | `base_url`  | `/wiki` | URL prefix for built/served pages (`""` for site root) |
-| `urlStyle`      | `url_style` | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
-| `html_template` | —           | —       | Path (relative to config) to a custom HTML shell file  |
+| Key             | Default | Purpose                                                |
+| --------------- | ------- | ------------------------------------------------------ |
+| `base_url`      | `/wiki` | URL prefix for built/served pages (`""` for site root) |
+| `url_style`     | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
+| `html_template` | —       | Path (relative to config) to a custom HTML shell file  |
 
 ## Serve API
 
-| Key                | Default       | Purpose                                               |
-| ------------------ | ------------- | ----------------------------------------------------- |
-| `serveApi.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
-| `serveApi.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
+| Key                 | Default       | Purpose                                               |
+| ------------------- | ------------- | ----------------------------------------------------- |
+| `serve_api.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
+| `serve_api.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
 
 Example:
 
 ```yaml
-serveApi:
+serve_api:
   enabled: true
   path: /api/sparql
 ```
@@ -82,7 +82,7 @@ The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and 
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
-`serveApi.path` must not collide with the effective `baseUrl` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
+`serve_api.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
 ## HTML template
 
@@ -188,7 +188,7 @@ The bundled seed template (`index.html` created by `wiki init`) provides:
 
 If the configured template file does not exist, the built-in minimal shell is used silently — no error.
 
-CLI flags on `wiki build` and `wiki serve` can override `baseUrl` and `urlStyle` for a single run.
+CLI flags on `wiki build` and `wiki serve` can override `base_url` and `url_style` for a single run.
 
 ## Filename conventions
 
@@ -218,7 +218,7 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `contentPredicate: schema:text` so page bodies participate in SPARQL when needed.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:text` so page bodies participate in SPARQL when needed.
 
 ## Related
 

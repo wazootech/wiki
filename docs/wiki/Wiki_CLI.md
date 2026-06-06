@@ -61,7 +61,7 @@ wiki -c docs/wiki.yaml check
 
 ### `--input-dir PATH` (repeatable)
 
-Override or extend `inputDirs` from config for a single invocation. Useful for one-off queries against a subdirectory.
+Override or extend `input_dirs` from config for a single invocation. Useful for one-off queries against a subdirectory.
 
 Example:
 

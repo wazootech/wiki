@@ -315,7 +315,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 
                 # Check wiki.yaml exists
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("wikiBase: https://wiki.example.org/", config_content)
+                self.assertIn("wiki_base: https://wiki.example.org/", config_content)
                 self.assertIn("sh: http://www.w3.org/ns/shacl#", config_content)
 
                 # Check README.md exists and contains commands
@@ -918,7 +918,7 @@ Hello from [[alice]].""", encoding="utf-8")
             wiki_dir.mkdir()
             raw_dir = config_dir / "raw"
             raw_dir.mkdir()
-            (config_dir / "wiki.yaml").write_text("""inputDirs:
+            (config_dir / "wiki.yaml").write_text("""input_dirs:
   - wiki
   - raw
 """, encoding="utf-8")
@@ -1062,7 +1062,7 @@ type: schema:WebPage
 id: wiki:doc
 name: ConfigTest
 ---""", encoding="utf-8")
-            (config_dir / "wiki.yaml").write_text("inputDirs: ../wiki", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("input_dirs: ../wiki", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),

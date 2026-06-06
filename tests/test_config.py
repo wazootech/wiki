@@ -68,15 +68,15 @@ class TestWikiConfig(unittest.TestCase):
             base_path = Path(tmpdir)
             yaml_content = {
                 "input_dirs": "custom_wiki",
-                "assetDirs": ["assets", "media/photos"],
+                "asset_dirs": ["assets", "media/photos"],
                 "exclude": ["wiki/drafts/**", "assets/private/**"],
                 "check": {
                     "filenamePattern": "error"
                 },
-                "filenamePattern": "[A-Za-z0-9_()-]+",
-                "baseUrl": "/docs",
-                "urlStyle": "file",
-                "serveApi": {"enabled": False, "path": "/sparql"},
+                "filename_pattern": "[A-Za-z0-9_()-]+",
+                "base_url": "/docs",
+                "url_style": "file",
+                "serve_api": {"enabled": False, "path": "/sparql"},
                 "context": {
                     "custom_pref": "http://custom-pref.org/"
                 }
@@ -100,7 +100,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             json_content = {
-                "inputDirs": "json_wiki",
+                "input_dirs": "json_wiki",
                 "@context": {
                     "json_pref": "http://json-pref.org/"
                 }
@@ -111,11 +111,40 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.input_dirs, [base_path.absolute() / "json_wiki"])
             self.assertIn("json_pref", config.namespaces)
 
+    def test_wikiconfig_load_camel_case_top_level_keys_are_ignored(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            yaml_content = {
+                "inputDirs": "camel_wiki",
+                "assetDirs": ["assets"],
+                "wikiBase": "https://example.org/wiki/",
+                "baseUrl": "/docs",
+                "urlStyle": "file",
+                "contentPredicate": "schema:text",
+                "uriExt": True,
+                "filenamePattern": "[a-z]+",
+                "serveApi": {"enabled": True, "path": "/sparql"},
+            }
+            (base_path / "assets").mkdir()
+            (base_path / "wiki.yaml").write_text(yaml.dump(yaml_content), encoding="utf-8")
+
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.input_dirs, [base_path.absolute() / "wiki"])
+            self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets"])
+            self.assertEqual(config.wiki_base, "https://wiki.example.org/")
+            self.assertEqual(config.base_url, "/wiki")
+            self.assertEqual(config.url_style, "dir")
+            self.assertIsNone(config.content_predicate)
+            self.assertFalse(config.uri_ext)
+            self.assertIsNone(config.filename_pattern)
+            self.assertFalse(config.serve_api_enabled)
+            self.assertEqual(config.serve_api_path, "/api/sparql")
+
     def test_wikiconfig_default_asset_dir_when_present(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "assets").mkdir()
-            (base_path / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
+            (base_path / "wiki.yaml").write_text("input_dirs: wiki\n", encoding="utf-8")
 
             config = WikiConfig.load(base_path)
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets"])
