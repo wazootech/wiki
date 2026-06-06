@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import ntpath
 import os
 import shutil
 import subprocess
 import sys
 import sysconfig
-from pathlib import Path
+from pathlib import PureWindowsPath
 from importlib.metadata import version
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -64,13 +65,12 @@ def get_windows_path_mismatch_warning() -> str | None:
     if not resolved or not scripts_dir:
         return None
 
-    try:
-        resolved_path = Path(resolved).resolve()
-        scripts_path = Path(scripts_dir).resolve()
-    except OSError:
-        return None
+    resolved_path = PureWindowsPath(ntpath.normpath(resolved))
+    scripts_path = PureWindowsPath(ntpath.normpath(scripts_dir))
+    normalized_resolved_parent = PureWindowsPath(ntpath.normcase(str(resolved_path.parent)))
+    normalized_scripts_path = PureWindowsPath(ntpath.normcase(str(scripts_path)))
 
-    if resolved_path.parent == scripts_path:
+    if normalized_resolved_parent == normalized_scripts_path:
         return None
 
     return (
