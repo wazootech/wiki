@@ -659,6 +659,13 @@ textarea.wiki-textarea:focus {
   position: relative;
 }
 
+.metadata-mode-heading {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #54595d;
+}
+
 .metadata-mode-input {
   position: absolute;
   opacity: 0;
@@ -1369,6 +1376,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_mode:
     return f"""<section class="page-meta metadata-panel">
 <h2>Metadata</h2>
 <div class="metadata-mode-switch" role="group" aria-label="Metadata display mode">
+  <div class="metadata-mode-heading">View as format</div>
   <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-expanded" value="expanded"{expanded_checked}>
   <label class="metadata-mode-label" for="{mode_id}-expanded">Expanded</label>
   <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-compacted" value="compacted"{compacted_checked}>

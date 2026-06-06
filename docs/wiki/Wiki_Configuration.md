@@ -149,6 +149,8 @@ Replace `{key}` tokens in your HTML shell:
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
 
+The metadata pane is rendered from the same JSON-LD serialization path used by `wiki export`. In `wiki serve`, the initial view can be selected with `?metadata_mode=expanded|compacted`. In `wiki build`, both modes are embedded in the page HTML so the toggle works without JavaScript.
+
 ### Built-in CSS classes and IDs
 
 The wiki builder generates these selectors in the rendered page content:
