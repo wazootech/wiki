@@ -81,7 +81,7 @@ PREFIX schema: <https://schema.org/>
 
 SELECT ?command ?description WHERE {
   ?command rdf:type schema:TechArticle .
-  FILTER(STRSTARTS(STR(?command), "https://wazootech.github.io/wiki/wiki/Wiki_Subcommand_"))
+  FILTER(STRSTARTS(STR(?command), "https://wazootech.github.io/wiki/Wiki_Subcommand_"))
   OPTIONAL { ?command schema:description ?description }
 }
 ORDER BY ?command
