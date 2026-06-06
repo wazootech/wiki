@@ -1,7 +1,7 @@
 ---
 type: schema:SoftwareApplication
 name: Wiki CLI
-softwareVersion: 0.1.5
+softwareVersion: 0.1.7
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 ---
 

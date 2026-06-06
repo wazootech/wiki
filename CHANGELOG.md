@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.1.7 — 2026-06-05
+
+### Added
+- `wiki fmt` subcommand for formatting wiki content
+- Optional disk-backed graph cache support
+- Configurable HTML template scaffolding for generated sites
+- Heading and broken-link audits in `wiki check`
+- Expanded docs and generated site content for CLI subcommands and wiki concepts
+
+### Changed
+- Simplified `wiki init` scaffolding and prompts
+- Refined site generation and HTML template extraction
+
+### Fixed
+- Markdown link and microdata CURIE scanning in link audits
+- Flaky SPARQL query ordering in docs checks
+
 ## 0.1.5 — 2026-06-01
 
 ### Added
