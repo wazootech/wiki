@@ -1,7 +1,7 @@
 ---
 type: TechArticle
 name: Design philosophies
-description: Unix-style CLI design for the LLM Wiki tool.
+description: Unix-style CLI design for the Wiki CLI tool.
 ---
 
 # Design philosophies

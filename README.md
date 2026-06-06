@@ -1,4 +1,4 @@
-# LLM Wiki (`wazootech-wiki`)
+# Wiki CLI (`wazootech-wiki`)
 
 [![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
