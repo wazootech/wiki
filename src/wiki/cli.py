@@ -27,7 +27,10 @@ from .paths import iter_document_files
 @click.pass_context
 def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
-    config = Context.load(Path(config_path))
+    try:
+        config = Context.load(Path(config_path))
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
     if cli_input_dirs:
         config.input_dirs = [Path(d) for d in cli_input_dirs]
 

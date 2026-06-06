@@ -29,7 +29,7 @@ class TestChecking(unittest.TestCase):
             
             warnings = audit_filenames(config)
             self.assertEqual(len(warnings), 1)
-            self.assertIn("Filename 'Invalid_Name.md' does not match filenamePattern.", warnings[0])
+            self.assertIn("Filename 'Invalid_Name.md' does not match filename_pattern.", warnings[0])
 
     def test_audit_broken_links_validation(self) -> None:
         """Test auditing of internal link structures (WikiLinks and Markdown links)."""
@@ -195,22 +195,22 @@ type: schema:WebPage
 ---
 """, encoding="utf-8")
             
-            # Scenario A: check.filenamePattern is "warning"
-            config_warning = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "warning"})
+            # Scenario A: check.filename_pattern is "warning"
+            config_warning = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "warning"})
             res_warning = run_checks(config_warning)
             self.assertTrue(res_warning["conforms"])
             self.assertEqual(len(res_warning["warnings"]), 1)
             self.assertEqual(len(res_warning["errors"]), 0)
             
-            # Scenario B: check.filenamePattern is "error"
-            config_error = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "error"})
+            # Scenario B: check.filename_pattern is "error"
+            config_error = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "error"})
             res_error = run_checks(config_error)
             self.assertFalse(res_error["conforms"])
             self.assertEqual(len(res_error["warnings"]), 0)
             self.assertEqual(len(res_error["errors"]), 1)
             
-            # Scenario C: check.filenamePattern is "off"
-            config_off = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filenamePattern": "off"})
+            # Scenario C: check.filename_pattern is "off"
+            config_off = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "off"})
             res_off = run_checks(config_off)
             self.assertTrue(res_off["conforms"])
             self.assertEqual(len(res_off["warnings"]), 0)

@@ -109,7 +109,7 @@ wiki serve
 
 
 ### `check`
-Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filenamePattern`, `brokenLinks`, and optional `headings`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filename_pattern`, `broken_links`, and optional `headings`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 # Run unified checks on the entire vault silently (default)
@@ -125,13 +125,13 @@ wiki check -v
 wiki check --strict
 ```
 
-Use `filenamePattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
+Use `filename_pattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
 
 ```yaml
 filename_pattern: "[A-Za-z0-9_()-]+"
 check:
-  filenamePattern: warning
-  brokenLinks: warning
+  filename_pattern: warning
+  broken_links: warning
   headings: off
 ```
 
@@ -610,8 +610,8 @@ exclude:
 content_predicate: schema:text # Opt-in full-text markdown body auto-injection
 
 check:
-  filenamePattern: warning   # "error" | "warning" | "off"
-  brokenLinks: warning       # "error" | "warning" | "off"
+  filename_pattern: warning  # "error" | "warning" | "off"
+  broken_links: warning      # "error" | "warning" | "off"
   headings: off              # sentence case, numbered headings, body ---
 
 context:

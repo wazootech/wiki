@@ -49,8 +49,8 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.base_url, "/wiki")
         self.assertEqual(config.url_style, "dir")
         self.assertIsNone(config.filename_pattern)
-        self.assertEqual(config.check.get("filenamePattern"), "warning")
-        self.assertEqual(config.check.get("brokenLinks"), "warning")
+        self.assertEqual(config.check.get("filename_pattern"), "warning")
+        self.assertEqual(config.check.get("broken_links"), "warning")
         self.assertEqual(config.check.get("headings"), "off")
         self.assertIsNotNone(config.context)
         self.assertFalse(config.serve_api_enabled)
@@ -71,7 +71,7 @@ class TestWikiConfig(unittest.TestCase):
                 "asset_dirs": ["assets", "media/photos"],
                 "exclude": ["wiki/drafts/**", "assets/private/**"],
                 "check": {
-                    "filenamePattern": "error"
+                    "filename_pattern": "error"
                 },
                 "filename_pattern": "[A-Za-z0-9_()-]+",
                 "base_url": "/docs",
@@ -87,7 +87,7 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
             self.assertEqual(config.exclude, ["wiki/drafts/**", "assets/private/**"])
-            self.assertEqual(config.check.get("filenamePattern"), "error")
+            self.assertEqual(config.check.get("filename_pattern"), "error")
             self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+")
             self.assertEqual(config.base_url, "/docs")
             self.assertEqual(config.url_style, "file")
@@ -111,7 +111,7 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.input_dirs, [base_path.absolute() / "json_wiki"])
             self.assertIn("json_pref", config.namespaces)
 
-    def test_wikiconfig_load_camel_case_top_level_keys_are_ignored(self) -> None:
+    def test_wikiconfig_load_camel_case_top_level_keys_raise_error(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             yaml_content = {
@@ -128,17 +128,30 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "assets").mkdir()
             (base_path / "wiki.yaml").write_text(yaml.dump(yaml_content), encoding="utf-8")
 
-            config = WikiConfig.load(base_path)
-            self.assertEqual(config.input_dirs, [base_path.absolute() / "wiki"])
-            self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets"])
-            self.assertEqual(config.wiki_base, "https://wiki.example.org/")
-            self.assertEqual(config.base_url, "/wiki")
-            self.assertEqual(config.url_style, "dir")
-            self.assertIsNone(config.content_predicate)
-            self.assertFalse(config.uri_ext)
-            self.assertIsNone(config.filename_pattern)
-            self.assertFalse(config.serve_api_enabled)
-            self.assertEqual(config.serve_api_path, "/api/sparql")
+            with self.assertRaisesRegex(ValueError, "unknown top-level keys"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_load_unknown_check_keys_raise_error(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "check": {"brokenLinks": "error"}}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unknown check keys"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_load_unknown_serve_api_keys_raise_error(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "serve_api": {"enable": True}}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unknown serve_api keys"):
+                WikiConfig.load(base_path)
 
     def test_wikiconfig_default_asset_dir_when_present(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -158,15 +171,14 @@ class TestWikiConfig(unittest.TestCase):
             self.assertTrue(config.is_excluded(base_path / "assets" / ".env.local"))
             self.assertFalse(config.is_excluded(base_path / "wiki" / "published.md"))
 
-    def test_wikiconfig_load_invalid_syntax_fallback(self) -> None:
-        """Test WikiConfig.load falls back to defaults when config has invalid syntax."""
+    def test_wikiconfig_load_invalid_syntax_raises_error(self) -> None:
+        """Test WikiConfig.load raises on config syntax errors."""
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
-            # Write invalid yaml
             (base_path / "wiki.yaml").write_text("[invalid_yaml", encoding="utf-8")
-            
-            config = WikiConfig.load(base_path)
-            self.assertEqual(config.input_dirs, [Path("wiki")])
+
+            with self.assertRaisesRegex(ValueError, "Failed to load config file wiki.yaml"):
+                WikiConfig.load(base_path)
 
 
 if __name__ == "__main__":

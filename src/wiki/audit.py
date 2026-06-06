@@ -139,7 +139,7 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
 
 
 def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit filenames in the wiki directory against the optional filenamePattern.
+    """Audit filenames in the wiki directory against the optional filename_pattern.
 
     If file_filter is set, only check files whose stem is in the set.
 
@@ -417,12 +417,12 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
 
     if not safety_issues:
         filename_issues = audit_filenames(config)
-        process_issues("filenamePattern", filename_issues)
+        process_issues("filename_pattern", filename_issues)
 
 
 
         link_issues = audit_broken_links(config)
-        process_issues("brokenLinks", link_issues)
+        process_issues("broken_links", link_issues)
 
         heading_issues = audit_headings(config)
         process_issues("headings", heading_issues)

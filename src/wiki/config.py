@@ -26,10 +26,30 @@ DCTERMS = Namespace("http://purl.org/dc/terms/")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
 DEFAULT_CHECK_RULES = {
-    "filenamePattern": "warning",
-    "brokenLinks": "warning",
+    "filename_pattern": "warning",
+    "broken_links": "warning",
     "headings": "off",
 }
+
+ALLOWED_CONFIG_KEYS = {
+    "input_dirs",
+    "asset_dirs",
+    "wiki_base",
+    "check",
+    "context",
+    "@context",
+    "content_predicate",
+    "uri_ext",
+    "filename_pattern",
+    "base_url",
+    "url_style",
+    "exclude",
+    "html_template",
+    "serve_api",
+}
+
+ALLOWED_CHECK_KEYS = {"filename_pattern", "broken_links", "headings"}
+ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 
 
 def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
@@ -38,6 +58,32 @@ def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
     if check:
         merged.update(check)
     return merged
+
+
+def _unknown_keys(data: dict[str, Any], allowed: set[str]) -> list[str]:
+    return sorted(k for k in data if k not in allowed)
+
+
+def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
+    unknown_top_level = _unknown_keys(data, ALLOWED_CONFIG_KEYS)
+    if unknown_top_level:
+        raise ValueError(f"Invalid config file {config_name}: unknown top-level keys: {', '.join(unknown_top_level)}")
+
+    check_data = data.get("check")
+    if check_data is not None:
+        if not isinstance(check_data, dict):
+            raise ValueError(f"Invalid config file {config_name}: check must be a mapping")
+        unknown_check = _unknown_keys(check_data, ALLOWED_CHECK_KEYS)
+        if unknown_check:
+            raise ValueError(f"Invalid config file {config_name}: unknown check keys: {', '.join(unknown_check)}")
+
+    serve_api_data = data.get("serve_api")
+    if serve_api_data is not None:
+        if not isinstance(serve_api_data, dict):
+            raise ValueError(f"Invalid config file {config_name}: serve_api must be a mapping")
+        unknown_serve_api = _unknown_keys(serve_api_data, ALLOWED_SERVE_API_KEYS)
+        if unknown_serve_api:
+            raise ValueError(f"Invalid config file {config_name}: unknown serve_api keys: {', '.join(unknown_serve_api)}")
 
 
 DEFAULT_NAMESPACES = {
@@ -151,6 +197,8 @@ class WikiConfig:
                         data = yaml.safe_load(content)
 
                     if isinstance(data, dict):
+                        _validate_config_keys(data, config_path.name)
+
                         # Extract context mapping (support both "@context" and "context")
                         context_data = data.get("@context") or data.get("context")
                         context_obj = None
@@ -219,8 +267,9 @@ class WikiConfig:
                             serve_api_enabled=serve_api_enabled,
                             serve_api_path=serve_api_path,
                         )
+                    raise ValueError(f"Invalid config file {config_path.name}: top-level content must be a mapping")
                 except Exception as e:
-                    logger.warning("Failed to load config file %s: %s", config_path.name, e)
+                    raise ValueError(f"Failed to load config file {config_path.name}: {e}") from e
 
         return cls()
 

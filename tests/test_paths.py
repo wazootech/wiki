@@ -77,7 +77,7 @@ class TestWikiPaths(unittest.TestCase):
             page.write_text("# Bad", encoding="utf-8")
             config = WikiConfig(filename_pattern="[A-Za-z0-9_()-]+")
 
-            self.assertEqual(validate_filename_pattern(config, page), "Filename 'Bad Name.md' does not match filenamePattern.")
+            self.assertEqual(validate_filename_pattern(config, page), "Filename 'Bad Name.md' does not match filename_pattern.")
 
     def test_excluded_markdown_files_do_not_create_routes(self) -> None:
         with TemporaryDirectory() as tmpdir:

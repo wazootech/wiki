@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.1.8 — 2026-06-05
+
+### Changed
+- Require `snake_case` config keys only for top-level `wiki.yaml` settings
+- Require `snake_case` nested `check` rule keys: `filename_pattern`, `broken_links`, and `headings`
+- Fail fast on invalid config files, unknown keys, removed aliases, and malformed nested config blocks
+
+### Fixed
+- Surface config-load errors consistently through the CLI instead of silently falling back to defaults
+
 ## 0.1.7 — 2026-06-05
 
 ### Added

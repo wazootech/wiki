@@ -5,8 +5,8 @@ base_url: /wiki
 url_style: dir
 filename_pattern: "[A-Za-z0-9_()-]+"
 check:
-  filenamePattern: warning
-  brokenLinks: warning
+  filename_pattern: warning
+  broken_links: warning
 context:
   schema: https://schema.org/
   wiki: __WIKI_BASE__

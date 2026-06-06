@@ -118,9 +118,9 @@ def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
     try:
         pattern = re.compile(config.filename_pattern)
     except re.error as exc:
-        return f"Invalid filenamePattern: {exc}"
+        return f"Invalid filename_pattern: {exc}"
     if pattern.fullmatch(md_file.stem) is None:
-        return f"Filename '{md_file.name}' does not match filenamePattern."
+        return f"Filename '{md_file.name}' does not match filename_pattern."
     return None
 
 

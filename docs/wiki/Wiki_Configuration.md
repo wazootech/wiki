@@ -8,6 +8,8 @@ description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 
 The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
+Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check` or `serve_api`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+
 ## Example
 
 ```yaml
@@ -24,8 +26,8 @@ exclude:
 content_predicate: schema:text
 
 check:
-  filenamePattern: warning
-  brokenLinks: warning
+  filename_pattern: warning
+  broken_links: warning
   headings: off
 
 context:
@@ -192,15 +194,15 @@ CLI flags on `wiki build` and `wiki serve` can override `base_url` and `url_styl
 
 ## Filename conventions
 
-The CLI does not hard-code kebab-case. Projects choose a convention with **`filenamePattern`**, matched against each document’s filename stem (without `.md`).
+The CLI does not hard-code kebab-case. Projects choose a convention with **`filename_pattern`**, matched against each document’s filename stem (without `.md`).
 
 **Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_House.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
 
 ```yaml
-filenamePattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+"
 ```
 
-**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+`) and enforce it via `check.filenamePattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
+**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+`) and enforce it via `check.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
@@ -210,8 +212,8 @@ Under `check`, each rule is `error`, `warning`, or `off`:
 
 | Rule key          | Default   | What it audits                                                                |
 | ----------------- | --------- | ----------------------------------------------------------------------------- |
-| `filenamePattern` | `warning` | Custom regex on filename stems (see top-level `filenamePattern`)              |
-| `brokenLinks`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `filename_pattern` | `warning` | Custom regex on filename stems (see top-level `filename_pattern`)              |
+| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
 | `headings`        | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.

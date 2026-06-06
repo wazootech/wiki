@@ -1073,6 +1073,18 @@ name: ConfigTest
             self.assertEqual(result.exit_code, 0)
             self.assertIn("ConfigTest", result.output)
 
+    def test_cli_errors_on_invalid_config_keys(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "wiki.yaml").write_text("inputDirs: wiki\n", encoding="utf-8")
+
+            result = runner.invoke(main, ["-c", str(root), "check"])
+
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("Failed to load config file wiki.yaml", result.output)
+            self.assertIn("unknown top-level keys", result.output)
+
 
 if __name__ == "__main__":
     unittest.main()
