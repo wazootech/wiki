@@ -1131,8 +1131,9 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    metadata_formatted = json.dumps(page.frontmatter, indent=2, default=str)
+    metadata_formatted = json.dumps(_metadata_view_frontmatter(page.frontmatter), indent=2, default=str)
     if page.has_frontmatter:
+        metadata_highlighted = _highlight_json(metadata_formatted)
         metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
         metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON)</a></li>'
         metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
@@ -1140,7 +1141,7 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
       <div id="siteSub">JSON representation compiled from frontmatter</div>
       
-      <pre><code>{html_module.escape(metadata_formatted)}</code></pre>
+      <pre class="highlight"><code class="language-json">{metadata_highlighted}</code></pre>
     </div>"""
     else:
         metadata_tool_html = ""
@@ -1297,10 +1298,27 @@ def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_
 def _build_metadata_json_html(page: VirtualPage) -> str:
     if not page.frontmatter:
         return ""
+    highlighted_json = _highlight_json(json.dumps(_metadata_view_frontmatter(page.frontmatter), indent=2, default=str))
     return f"""<section class="page-meta">
 <h2>Metadata</h2>
-<pre><code>{html_module.escape(json.dumps(page.frontmatter, indent=2, default=str))}</code></pre>
+<pre class="highlight"><code class="language-json">{highlighted_json}</code></pre>
 </section>"""
+
+
+def _highlight_json(value: str) -> str:
+    try:
+        lexer = get_lexer_by_name("json")
+    except ClassNotFound:
+        return html_module.escape(value)
+    return highlight(value, lexer, PYGMENTS_FORMATTER)
+
+
+def _metadata_view_frontmatter(frontmatter: dict[str, Any]) -> dict[str, Any]:
+    if "type" not in frontmatter or "@type" in frontmatter:
+        return frontmatter
+    normalized = dict(frontmatter)
+    normalized["@type"] = normalized.pop("type")
+    return normalized
 
 
 def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:

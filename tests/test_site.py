@@ -1,4 +1,5 @@
 import unittest
+from importlib.resources import files as pkg_files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -219,6 +220,35 @@ name: Project Atlas
         self.assertIn("<pre><code>", html)
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn('class="highlight"', html)
+
+    def test_build_page_html_highlights_metadata_json(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "person.md").write_text(
+                """---
+type: schema:Person
+name: Gregory Davidson
+specialty: Diagnostics
+---
+# Gregory Davidson
+""",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            site = build_site(config, base_url="/wiki", url_style="dir")
+            page = next(page for page in site.pages if page.full_slug == "person")
+            html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=html_template)
+
+            self.assertIn("Metadata (JSON)", html)
+            self.assertIn('class="language-json"', html)
+            self.assertIn('class="highlight"', html)
+            self.assertIn("<span", html)
+            self.assertIn('&quot;@type&quot;', html)
+            self.assertNotIn('&quot;type&quot;', html)
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(
