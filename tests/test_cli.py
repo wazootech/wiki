@@ -338,7 +338,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 self.assertIn("html_template: index.html", config_content)
                 index_html = Path("index.html")
                 self.assertTrue(index_html.is_file())
-                self.assertIn("LLM WIKI", index_html.read_text(encoding="utf-8"))
+                self.assertIn("Wiki CLI", index_html.read_text(encoding="utf-8"))
 
                 expected_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
                 self.assertEqual(config_content, expected_template.replace("__WIKI_BASE__", "https://wiki.example.org/"))
@@ -347,7 +347,7 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 result2 = runner.invoke(main, ["init", "--force"], input="https://wiki.example.org/\n")
                 self.assertEqual(result2.exit_code, 0)
                 self.assertTrue(index_html.is_file())
-                self.assertIn("LLM WIKI", index_html.read_text(encoding="utf-8"))
+                self.assertIn("Wiki CLI", index_html.read_text(encoding="utf-8"))
 
                 # Check init without --force warns about existing index.html
                 result3 = runner.invoke(main, ["init", "--force"],
