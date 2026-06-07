@@ -108,7 +108,7 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 `serve_api.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
-## [[HTML_Template|HTML template]]
+## HTML template
 
 When `html_template` is set, the CLI renders every page through that file using `{placeholder}` tokens.
 
