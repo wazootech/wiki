@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.init_scaffold import InitOptions, render_default_layout
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -224,13 +225,19 @@ about: wiki:Alice_Theory
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
         docs_html = repo_root / "docs" / "layouts" / "default.html"
-        pkg_html = repo_root / "src" / "wiki" / "templates" / "layouts" / "default.html"
+        expected = render_default_layout(
+            InitOptions(
+                wiki_base="https://wazootech.github.io/wiki/",
+                base_url="/wiki",
+                url_style="dir",
+                site_title="Wiki CLI",
+            )
+        )
         self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html not found at {docs_html}")
-        self.assertTrue(pkg_html.is_file(), f"templates/layouts/default.html not found at {pkg_html}")
         self.assertEqual(
             docs_html.read_text(encoding="utf-8"),
-            pkg_html.read_text(encoding="utf-8"),
-            "docs/layouts/default.html and src/wiki/templates/layouts/default.html must be identical",
+            expected,
+            "docs/layouts/default.html must match render_default_layout for this repo's wiki.yaml",
         )
 
 

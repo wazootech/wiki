@@ -16,7 +16,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 - **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.
 - **Rule:** Use title-case H1 headings (page title; align with `headline` frontmatter). Use sentence-case H2+ headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
 - **Rule:** Avoid using horizontal rules (`---`) for thematic breaks within page bodies.
-- **Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`) — ATX-only, sentence-case for H2+ only; H1 title case is conventional. Run `wiki fmt` to fix heading syntax.
+- **Enforcer:** `wiki fmt` converts Setext underlines to ATX `#` headings. `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`) flags sentence-case H2+ and numbered headings — not ATX syntax.
 
 ### Markdown flavor
 Use Markdown links for all internal and external URLs.
@@ -28,11 +28,14 @@ Use Markdown links for all internal and external URLs.
 ### Running validations
 Before submitting commits, verify your changes against the active schema and guidelines:
 ```bash
-# Integrity: SHACL + broken links
+# Integrity: SHACL, route safety, layout frontmatter
 wiki check
 
-# Conventions: filename pattern, headings, link style
+# Conventions: broken links, filename pattern, headings, link style
 wiki lint
+
+# Formatting (mdformat; .mdformat.toml)
+wiki fmt --check
 
 # Verbose output
 wiki check -v

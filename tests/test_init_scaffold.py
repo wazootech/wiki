@@ -18,6 +18,8 @@ from wiki.init_scaffold import (
     normalize_base_url,
     normalize_wiki_base,
     parse_github_repo,
+    render_default_layout,
+    render_mdformat_toml,
     render_wiki_yaml,
     resolve_init_options,
 )
@@ -96,6 +98,10 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("base_url: /wiki", rendered)
         self.assertIn("content_predicate: schema:articleBody", rendered)
         self.assertIn("link_style: markdown", rendered)
+        self.assertIn("headings: off", rendered)
+        self.assertIn("thematic_breaks: off", rendered)
+        self.assertIn("forbidden_layout_keys: error", rendered)
+        self.assertIn(".mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
 
@@ -103,8 +109,13 @@ class TestRenderWikiYaml(TestCase):
         rendered = render_wiki_yaml(
             InitOptions(wiki_base="https://wiki.example.org/"),
         )
-        self.assertNotIn("content_predicate:", rendered)
-        self.assertNotIn("link_style:", rendered)
+        self.assertIn("# content_predicate: schema:articleBody", rendered)
+        self.assertNotIn("\ncontent_predicate:", rendered)
+
+    def test_render_mdformat_toml(self) -> None:
+        rendered = render_mdformat_toml()
+        self.assertIn('extensions = ["gfm", "frontmatter", "wikilink"]', rendered)
+        self.assertIn('wrap = "no"', rendered)
 
     def test_rendered_yaml_parses_and_loads(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -118,6 +129,14 @@ class TestRenderWikiYaml(TestCase):
             self.assertEqual(parsed["context"]["wiki"], "https://wiki.example.org/")
             config = WikiConfig.load(config_path)
             self.assertEqual(config.wiki_base, "https://wiki.example.org/")
+
+    def test_render_default_layout(self) -> None:
+        rendered = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
+        self.assertIn("{page_title}", rendered)
+        self.assertIn("Wiki CLI", rendered)
+        self.assertNotIn("{# wiki init scaffold", rendered)
+        self.assertIn('<title>{page_title} - Wiki CLI</title>', rendered)
+        self.assertIn('placeholder="Search Wiki CLI"', rendered)
 
 
 class TestResolveInitOptions(TestCase):

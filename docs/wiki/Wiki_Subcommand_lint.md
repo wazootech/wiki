@@ -35,7 +35,7 @@ wiki lint --strict
 | ------------------ | ---------------------------------------------------------------------------------------------------- |
 | `broken_links`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                        |
 | `filename_pattern` | Full filename vs top-level `filename_pattern` regex (`.md` files only)                               |
-| `headings`         | ATX `#` headings only (no Setext), sentence-case H2+ (H1 title case conventional), numbered headings |
+| `headings`         | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
 | `thematic_breaks`  | Horizontal rules (`---`, `***`, `___`) in body prose                                                 |
 | `link_style`       | Wikilinks in body prose when top-level `link_style` is `markdown`                                    |
 

@@ -1,0 +1,5 @@
+# Mechanical markdown formatting for `wiki fmt` (not configured in wiki.yaml).
+# See Wiki_Subcommand_fmt.md and Style_Guide.md.
+wrap = "no"
+end_of_line = "lf"
+extensions = ["gfm", "frontmatter", "wikilink"]

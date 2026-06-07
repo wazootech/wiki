@@ -34,11 +34,11 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter. **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 
-**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (ATX-only, sentence-case H2+), and `link_style`. _Avoid_: Checking (use `wiki check` for integrity).
+**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (mdformat). _Avoid_: Checking (use `wiki check` for integrity).
 
 **Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
 
-**Link hygiene**: Suggest missing wikilinks or repair unambiguous broken internal links via `wiki link` (`--apply`, `--fix-broken`). Detection of broken links stays in **Checking**; mutation is explicit and never part of `wiki build` preflight. _Avoid_: Treating enrichment as lint or folding repair into `wiki check`.
+**Link hygiene**: Suggest missing wikilinks or repair unambiguous broken internal links via `wiki link` (`--apply`, `--fix-broken`). Broken-link detection lives in **Linting** (`lint.broken_links`); mutation is explicit and never part of `wiki build` preflight. _Avoid_: Treating enrichment as lint or folding repair into `wiki check`.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 

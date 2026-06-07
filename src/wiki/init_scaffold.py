@@ -98,6 +98,7 @@ class InitOptions:
     wazoo: str = DEFAULT_WAZOO
     content_predicate: str | None = None
     link_style: str | None = None
+    site_title: str = "Wiki CLI"
 
 
 def resolve_init_options(
@@ -147,6 +148,8 @@ def resolve_init_options(
 
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
+_MDFORMAT_TEMPLATE_NAME = "mdformat.toml"
+_DEFAULT_LAYOUT_TEMPLATE = "layouts/default.html.j2"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -171,4 +174,15 @@ def _strip_scaffold_comment(text: str) -> str:
 def render_wiki_yaml(opts: InitOptions) -> str:
     """Render the packaged wiki.yaml.j2 scaffold into wiki.yaml content."""
     rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**asdict(opts))
+    return _strip_scaffold_comment(rendered)
+
+
+def render_mdformat_toml() -> str:
+    """Return the packaged .mdformat.toml scaffold for `wiki fmt`."""
+    return _init_template_env().get_template(_MDFORMAT_TEMPLATE_NAME).render()
+
+
+def render_default_layout(opts: InitOptions) -> str:
+    """Render the packaged default.html.j2 page layout scaffold."""
+    rendered = _init_template_env().get_template(_DEFAULT_LAYOUT_TEMPLATE).render(**asdict(opts))
     return _strip_scaffold_comment(rendered)

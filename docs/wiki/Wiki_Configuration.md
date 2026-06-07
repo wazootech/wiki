@@ -17,8 +17,12 @@ Three audit lanes map to three commands:
 | Lane       | Command      | YAML block | Purpose                                                             |
 | ---------- | ------------ | ---------- | ------------------------------------------------------------------- |
 | Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                   |
-| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `link_style` (plus top-level regex) |
+| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
 | Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                    |
+
+### Rule placement
+
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs in **`.mdformat.toml`** and **`wiki fmt`** — not in `wiki.yaml`. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style_Guide](Style_Guide.md) for the full matrix.
 
 - Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
@@ -281,7 +285,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and `lint.headings: warning` for ATX headings and sentence-case H2+.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and stricter `lint.headings` / `lint.thematic_breaks` warnings than the `wiki init` defaults.
 
 ## Related
 

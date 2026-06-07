@@ -590,14 +590,19 @@ def init(
     link_style: str | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
-    from importlib.resources import files as pkg_files
     import shutil
     import subprocess
 
-    from .init_scaffold import resolve_init_options, render_wiki_yaml
+    from .init_scaffold import (
+        render_default_layout,
+        render_mdformat_toml,
+        render_wiki_yaml,
+        resolve_init_options,
+    )
 
     cwd = Path.cwd()
     config_path = cwd / "wiki.yaml"
+    mdformat_path = cwd / ".mdformat.toml"
     readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
@@ -643,15 +648,16 @@ def init(
         "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
         "## Workspace Layout\n\n"
         "- `wiki.yaml` — Workspace configuration and namespace prefixes.\n"
+        "- `.mdformat.toml` — Mechanical markdown formatting for `wiki fmt`.\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
         "  - `Person_Shape.md` — Validation shape for Person documents.\n"
         "  - `Ethan_Davidson.md` — An example Person document.\n\n"
         "## Commands\n\n"
-        "- **Check** (integrity: SHACL, route safety, broken links):\n"
+        "- **Check** (integrity: SHACL, route safety, layout frontmatter):\n"
         "  ```bash\n"
         "  wiki check\n"
         "  ```\n"
-        "- **Lint** (conventions: filename pattern, heading style):\n"
+        "- **Lint** (conventions: broken links, filename pattern, heading style):\n"
         "  ```bash\n"
         "  wiki lint\n"
         "  ```\n"
@@ -682,11 +688,7 @@ def init(
         "Defines validation rules for Person profiles in this wiki.\n",
         encoding="utf-8",
     )
-    seed_template = ""
-    try:
-        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
-    except Exception as exc:
-        click.echo(f"Warning: could not load packaged wiki page layout: {exc}", err=True)
+    seed_template = render_default_layout(init_options)
 
     (wiki_dir / "Ethan_Davidson.md").write_text(
         "---\n"
@@ -701,12 +703,14 @@ def init(
 
     config_path.write_text(config_content, encoding="utf-8")
 
+    if force or not mdformat_path.exists():
+        mdformat_path.write_text(render_mdformat_toml(), encoding="utf-8")
+
     layouts_dir = cwd / "layouts"
     default_layout_path = layouts_dir / "default.html"
-    if seed_template:
-        layouts_dir.mkdir(parents=True, exist_ok=True)
-        if force or not default_layout_path.exists():
-            default_layout_path.write_text(seed_template, encoding="utf-8")
+    layouts_dir.mkdir(parents=True, exist_ok=True)
+    if force or not default_layout_path.exists():
+        default_layout_path.write_text(seed_template, encoding="utf-8")
 
     if init_git:
         if shutil.which("git") is None:
@@ -719,7 +723,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html."
+    message = "Initialized wiki.yaml, .mdformat.toml, README.md, wiki/ starter files, and layouts/default.html."
     if init_git:
         message += " Ran git init."
     click.echo(message)

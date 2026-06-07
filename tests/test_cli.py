@@ -3,7 +3,6 @@ import threading
 import time
 import unittest
 import yaml
-from importlib.resources import files as pkg_files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -14,7 +13,7 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.init_scaffold import InitOptions, render_wiki_yaml
+from wiki.init_scaffold import InitOptions, render_default_layout, render_wiki_yaml
 
 
 class TestCLI(unittest.TestCase):
@@ -406,7 +405,14 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("page_layout: layouts/default.html", config_content)
                 default_layout = Path("layouts") / "default.html"
                 self.assertTrue(default_layout.is_file())
-                self.assertIn("Wiki CLI", default_layout.read_text(encoding="utf-8"))
+                expected_layout = render_default_layout(
+                    InitOptions(wiki_base="https://wiki.example.org/"),
+                )
+                self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
+                self.assertIn("Wiki CLI", expected_layout)
+
+                mdformat_content = Path(".mdformat.toml").read_text(encoding="utf-8")
+                self.assertIn('extensions = ["gfm", "frontmatter", "wikilink"]', mdformat_content)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(wiki_base="https://wiki.example.org/"),
@@ -489,8 +495,15 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_docs_default_layout_matches_packaged_template(self) -> None:
         docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
-        packaged_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
-        self.assertEqual(docs_template, packaged_template)
+        expected = render_default_layout(
+            InitOptions(
+                wiki_base="https://wazootech.github.io/wiki/",
+                base_url="/wiki",
+                url_style="dir",
+                site_title="Wiki CLI",
+            )
+        )
+        self.assertEqual(docs_template, expected)
 
     def test_config_rejects_legacy_html_template_key(self) -> None:
         with TemporaryDirectory() as tmpdir:

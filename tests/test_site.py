@@ -1,9 +1,9 @@
 import unittest
-from importlib.resources import files as pkg_files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
+from wiki.init_scaffold import InitOptions, render_default_layout
 from wiki.site import (
     DEFAULT_MINIMAL_PAGE_LAYOUT,
     build_index_html,
@@ -234,7 +234,7 @@ name: Project Atlas
             config = WikiConfig(input_dirs=[wiki], config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            page_layout_shell = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+            page_layout_shell = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
             html = build_page_html(page, site, page_layout=page_layout_shell)
 
             self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
@@ -284,7 +284,7 @@ name: Project Atlas
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
     def test_seed_template_includes_code_copy_initialization(self) -> None:
-        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+        seed_template = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
         self.assertIn("initCodeCopyButtons", seed_template)
         self.assertIn("pre[data-copy]", seed_template)
         self.assertIn("copyPreContent", seed_template)
@@ -309,7 +309,7 @@ specialty: Diagnostics
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
-            page_layout_shell = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+            page_layout_shell = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=page_layout_shell)
 
             self.assertIn("Metadata</a>", html)
@@ -455,7 +455,7 @@ specialty: Diagnostics
             self.assertNotIn("On this page", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
-        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+        seed_template = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
