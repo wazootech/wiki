@@ -12,7 +12,7 @@ It is utilized within the [Wiki_CLI](Wiki_CLI.md) `render` pipeline to populate 
 
 ## Common prefixes
 
-The [[Wiki_CLI|Wiki CLI]] automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
+The [Wiki CLI](Wiki_CLI.md) automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
 
 - **`schema:`** `https://schema.org/` (Standard schema vocabulary)
 - **`wiki:`** `https://wazootech.github.io/wiki/wiki/` (Your local vault namespace)

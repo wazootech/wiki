@@ -6,8 +6,7 @@ description: Generate a static HTML site from the vault.
 
 # `wiki build`
 
-Compile markdown and data files into static HTML with wikilinks, backlinks, table of contents, and typed templates/infoboxes.
-Pages with frontmatter embed all metadata format views so the chip picker works without JavaScript.
+Compile markdown and data files into static HTML with wikilinks, backlinks, table of contents, and typed templates/infoboxes. Pages with frontmatter embed all metadata format views so the chip picker works without JavaScript.
 
 ## Usage
 
@@ -50,8 +49,7 @@ Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, Tr
 
 ## Wiki page layout
 
-If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `page_layout`, every page is rendered through that file unless `wazoo:layout` overrides it.
-The builder passes page content and metadata as `{placeholder}` tokens.
+If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `page_layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
 

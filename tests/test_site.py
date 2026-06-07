@@ -23,9 +23,11 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <title>{page_title}</title>
 </head>
 <body>
-<h1 id="firstHeading">{page_title}</h1>
+{type_label}
+<article id="article-top">
 {infobox_html}
 {page_content}
+</article>
 {toc_html}
 {backlinks_html}
 {categories_html}
@@ -54,7 +56,7 @@ class TestWikiSite(unittest.TestCase):
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
             self.assertIn('class="toc"', html)
             self.assertIn('href="#early-life"', html)
-            self.assertIn('href="#firstHeading"', html)
+            self.assertIn('href="#article-top"', html)
 
     def test_title_falls_back_to_humanized_route(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -205,7 +207,8 @@ name: Project Atlas
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
             self.assertNotIn('id="custom-shell"', html)
-            self.assertIn("<h1 id=\"firstHeading\">", html)
+            self.assertIn('id="article-top"', html)
+            self.assertIn('class="layout-label">CreativeWork</div>', html)
 
     def test_render_outline_title_renders_inline_code(self) -> None:
         html = render_outline_title("`Accept`")
@@ -383,6 +386,13 @@ specialty: Diagnostics
             markdown,
         )
 
+    def test_strip_leading_title_heading_matches_inline_code_h1(self) -> None:
+        markdown = "# `wiki lint`\n\nRun convention audits."
+        self.assertEqual(
+            strip_leading_title_heading(markdown, "wiki lint"),
+            "Run convention audits.",
+        )
+
     def test_build_site_strips_duplicate_title_from_rendered_html(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -399,6 +409,32 @@ specialty: Diagnostics
             self.assertIn("Lead paragraph.", page.html)
             self.assertNotIn("<h1", page.html)
             self.assertIn("# Content negotiation", page.markdown)
+
+    def test_infobox_links_about_wiki_curie(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text(
+                "input_dirs: wiki\nwiki_base: https://wiki.example.org/\n"
+                "context:\n  wiki: https://wiki.example.org/\n",
+                encoding="utf-8",
+            )
+            (wiki / "Farzapedia.md").write_text(
+                "---\ntype: TechArticle\nheadline: Farzapedia\nabout: wiki:Wiki_CLI\n---\n\nBody.\n",
+                encoding="utf-8",
+            )
+            (wiki / "Wiki_CLI.md").write_text(
+                "---\ntype: TechArticle\nname: Wiki CLI\n---\n\n# Wiki CLI\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(root / "wiki.yaml")
+            site = build_site(config, base_url="/wiki", url_style="dir")
+            page = next(p for p in site.pages if p.full_slug == "Farzapedia")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            self.assertIn('href="/wiki/Wiki_CLI/"', html)
+            self.assertIn(">Wiki CLI</a>", html)
+            self.assertNotIn(">wiki:Wiki_CLI</a>", html)
 
     def test_fallback_article_uses_minimal_template(self) -> None:
         with TemporaryDirectory() as tmpdir:

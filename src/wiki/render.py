@@ -54,6 +54,32 @@ def _replace_sparql_table(match: re.Match[str], rendered_markdown: str) -> str:
     )
 
 
+def _is_table_divider_row(cells: list[str]) -> bool:
+    return bool(cells) and all(re.fullmatch(r"-+", cell) for cell in cells)
+
+
+def _normalize_markdown_table(text: str) -> str:
+    """Normalize GFM table padding so compact and mdformat-padded tables compare equal."""
+    lines = [line.strip() for line in text.strip().splitlines() if line.strip()]
+    normalized: list[str] = []
+    for index, line in enumerate(lines):
+        if not line.startswith("|"):
+            normalized.append(line)
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if index == 0:
+            cells = [cell.casefold() for cell in cells]
+        elif _is_table_divider_row(cells):
+            cells = ["---"] * len(cells)
+        normalized.append("| " + " | ".join(cells) + " |")
+    return "\n".join(normalized)
+
+
+def _sparql_table_matches(existing: str, rendered: str) -> bool:
+    """Return True when the on-disk table already matches the rendered output."""
+    return _normalize_markdown_table(existing) == _normalize_markdown_table(rendered)
+
+
 def render_markdown_files(
     context: Any,
     graph: Any,
@@ -92,6 +118,9 @@ def render_markdown_files(
                     wiki_base=context.wiki_base,
                     known_slugs=known_slugs,
                 )
+                existing_table = match.group("table")
+                if _sparql_table_matches(existing_table, rendered_markdown):
+                    return match.group(0)
                 modified = True
                 return _replace_sparql_table(match, rendered_markdown)
             except Exception as e:

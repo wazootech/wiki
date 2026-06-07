@@ -38,7 +38,7 @@ wiki init --git
 # Validate integrity (SHACL + broken links; silent on success)
 wiki check
 
-# Validate conventions (filename pattern, headings)
+# Validate conventions (filename pattern, headings, link style)
 wiki lint
 
 # Refresh embedded SPARQL tables

@@ -91,19 +91,19 @@ SELECT ?command ?description WHERE {
 ORDER BY ?command
 ```
 
-| Command                                               | Description                                                             |
-| ----------------------------------------------------- | ----------------------------------------------------------------------- |
-| [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     | Generate a static HTML site from the vault.                             |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and broken links.    |
-| [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                          |
-| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation.  |
-| [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       | Scaffold wiki.yaml and starter wiki pages interactively.                |
-| [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links. |
-| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for filename patterns and heading style.              |
-| [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                 |
-| [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                   |
-| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview.                                |
-| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki.                      |
+| Command                                               | Description                                                                      |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     | Generate a static HTML site from the vault.                                      |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and broken links.             |
+| [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                                   |
+| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation.           |
+| [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       | Scaffold wiki.yaml and starter wiki pages interactively.                         |
+| [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links.          |
+| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for filename patterns, heading style, and internal link style. |
+| [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                          |
+| [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                            |
+| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview.                                         |
+| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki.                               |
 
 <!-- sparql:end -->
 

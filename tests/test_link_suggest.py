@@ -79,7 +79,7 @@ class TestLinkSuggest(unittest.TestCase):
             self.assertEqual(opportunities[0].target_route, "Wiki_CLI")
             self.assertEqual(opportunities[0].matched_text, "Wiki CLI")
 
-    def test_apply_inserts_wikilinks_without_breaking_audit(self) -> None:
+    def test_apply_inserts_markdown_links_by_default(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -96,7 +96,7 @@ class TestLinkSuggest(unittest.TestCase):
             changed = apply_link_opportunities(config, opportunities, dry_run=False)
 
             self.assertEqual(changed, [guide])
-            self.assertIn("[[Wiki_CLI|Wiki CLI]]", guide.read_text(encoding="utf-8"))
+            self.assertIn("[Wiki CLI](Wiki_CLI.md)", guide.read_text(encoding="utf-8"))
             self.assertEqual(find_link_opportunities(config), [])
             self.assertEqual(audit_broken_links(config), [])
 
@@ -117,7 +117,25 @@ class TestLinkSuggest(unittest.TestCase):
 
             content = page.read_text(encoding="utf-8")
             self.assertTrue(content.startswith("---\ntype: TechArticle\n---\n\n"))
-            self.assertIn("[[Wiki_CLI|Wiki CLI]]", content)
+            self.assertIn("[Wiki CLI](Wiki_CLI.md)", content)
+
+    def test_apply_uses_wikilinks_when_link_style_configured(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            guide = wiki / "Getting_Started.md"
+            guide.write_text(
+                "# Getting started\n\nRead the Wiki CLI guide before you begin.\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root, link_style="wikilink")
+
+            opportunities = find_link_opportunities(config)
+            apply_link_opportunities(config, opportunities, dry_run=False)
+
+            self.assertIn("[[Wiki_CLI|Wiki CLI]]", guide.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

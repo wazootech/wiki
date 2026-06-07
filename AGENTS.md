@@ -9,16 +9,17 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 - **Enforcer:** `lint.filename_pattern` in `wiki.yaml` (warning by default). Route safety (spaces, unsafe URL characters) always fails as an error in `wiki check`.
 
 ### Internal links
-- **Rule:** Prefer standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links and Obsidian-style `[[slug]]` wikilinks also resolve when valid. Ensure internal links point at existing documents.
-- **Enforcer:** `check.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. Repair with `wiki link --fix-broken`; suggest missing wikilinks with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
+- **Rule:** Use standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this vault. Ensure internal links point at existing documents.
+- **Enforcer:** `check.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link_style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
-- **Rule:** Use sentence-case headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
+- **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.
+- **Rule:** Use title-case H1 headings (page title; align with `headline` frontmatter). Use sentence-case H2+ headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
 - **Rule:** Avoid using horizontal rules (`---`) for thematic breaks within page bodies.
-- **Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`).
+- **Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`) — ATX-only, sentence-case for H2+ only; H1 title case is conventional. Run `wiki fmt` to fix heading syntax.
 
 ### Markdown flavor
-Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
+Use Markdown links for all internal and external URLs.
 
 ---
 
@@ -30,7 +31,7 @@ Before submitting commits, verify your changes against the active schema and gui
 # Integrity: SHACL + broken links
 wiki check
 
-# Conventions: filename pattern + headings
+# Conventions: filename pattern, headings, link style
 wiki lint
 
 # Verbose output

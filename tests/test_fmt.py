@@ -6,6 +6,9 @@ import mdformat
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.config import WikiConfig
+from wiki.fmt_util import format_markdown
+from wiki.site import build_page_html, build_site
 
 
 class TestWikiFmt(unittest.TestCase):
@@ -75,6 +78,41 @@ class TestWikiFmt(unittest.TestCase):
             result_clean = runner.invoke(main, ["--input-dir", str(wiki_dir), "fmt", "--check", "-v"])
             self.assertEqual(result_clean.exit_code, 0)
             self.assertIn("All files are correctly formatted.", result_clean.output)
+
+    def test_fmt_preserves_sparql_render_blocks(self) -> None:
+        compact_table = "| class |\n| --- |\n| owl:Class |\n"
+        original = (
+            "<!-- sparql:start -->\n"
+            "```sparql\nSELECT ?class WHERE { ?class a owl:Class }\n```\n"
+            f"{compact_table}"
+            "<!-- sparql:end -->\n"
+        )
+        with TemporaryDirectory() as tmpdir:
+            file_path = Path(tmpdir) / "Query.md"
+            file_path.write_text(original, encoding="utf-8")
+            formatted = format_markdown(original, file_path)
+            self.assertIn("| class |", formatted)
+            self.assertNotIn("| Class |", formatted)
+            self.assertIn("```sparql", formatted)
+
+    def test_read_view_type_label_badge(self) -> None:
+        seed_template = """<html><body>{type_label}<article id="article-top">{page_content}</article></body></html>"""
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "---\ntype: TechArticle\nname: Catalog page\n---\n\n# Shelf layout\n\nBody.",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html = build_page_html(page, site, page_layout=seed_template)
+            self.assertIn('class="layout-label">TechArticle</div>', html)
+            self.assertNotIn('class="firstHeading"', html)
+            self.assertIn('id="shelf-layout">Shelf layout</h1>', page.html)
+            self.assertIn("Body.", html)
 
 
 if __name__ == "__main__":

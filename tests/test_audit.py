@@ -7,6 +7,8 @@ from wiki.audit import (
     audit_broken_links,
     audit_filenames,
     audit_headings,
+    audit_thematic_breaks,
+    audit_link_style,
     audit_layout_frontmatter,
     load_shapes,
     check_shacl_file,
@@ -260,9 +262,11 @@ type: schema:WebPage
                 "---\ntype: TechArticle\n---\n## 1. First step\n\n---\n\nBody.\n",
                 encoding="utf-8",
             )
-            warnings = audit_headings(config)
-            self.assertTrue(any("Numbered heading" in w for w in warnings))
-            self.assertTrue(any("Thematic break" in w for w in warnings))
+            heading_warnings = audit_headings(config)
+            thematic_warnings = audit_thematic_breaks(config)
+            self.assertTrue(any("Numbered heading" in w for w in heading_warnings))
+            self.assertFalse(any("Thematic break" in w for w in heading_warnings))
+            self.assertTrue(any("Thematic break" in w for w in thematic_warnings))
 
     def test_audit_headings_title_case(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -273,6 +277,143 @@ type: schema:WebPage
             )
             warnings = audit_headings(config)
             self.assertTrue(any("title case" in w for w in warnings))
+
+    def test_audit_headings_h1_title_case_not_flagged(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\n# Agent Memory Filesystems\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("title case" in w for w in warnings))
+
+    def test_audit_headings_h2_title_case_flagged(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\n## Agent Memory Filesystems\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertTrue(any("title case" in w for w in warnings))
+
+    def test_audit_headings_setext_not_warned(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\nMy Title\n=======\n\nBody.\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("Setext heading" in w for w in warnings))
+
+    def test_audit_headings_setext_h2_not_warned(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\nSection title\n---------\n\nBody.\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("Setext heading" in w for w in warnings))
+
+    def test_audit_headings_atx_does_not_warn_setext(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Page.md").write_text(
+                "---\ntype: TechArticle\n---\n# My Title\n\n## Section title\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("Setext heading" in w for w in warnings))
+
+    def test_audit_headings_skips_setext_inside_fenced_code(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Example.md").write_text(
+                "---\ntype: TechArticle\n---\n```markdown\nTitle\n===\n```\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("Setext heading" in w for w in warnings))
+
+    def test_audit_headings_skips_thematic_break_inside_fenced_code(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Example.md").write_text(
+                "---\ntype: TechArticle\n---\n```yaml\n---\nname: Example\n---\n```\n",
+                encoding="utf-8",
+            )
+            warnings = audit_thematic_breaks(config)
+            self.assertFalse(any("Thematic break" in w for w in warnings))
+
+    def test_audit_headings_allows_proper_noun_headings(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Deploy.md").write_text(
+                "---\ntype: TechArticle\n---\n# Deploying to GitHub Pages\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("title case" in w for w in warnings))
+
+    def test_audit_headings_ignores_capitalized_link_text_in_headings(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config = WikiConfig(input_dirs=[tmpdir])
+            Path(tmpdir, "Compare.md").write_text(
+                "---\ntype: TechArticle\n---\n"
+                "## Comparison with [Wiki CLI](Wiki_CLI.md) and [Letta MemFS](Letta_MemFS.md)\n",
+                encoding="utf-8",
+            )
+            warnings = audit_headings(config)
+            self.assertFalse(any("title case" in w for w in warnings))
+
+    def test_audit_link_style_flags_wikilinks_when_markdown(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki = Path(tmpdir) / "wiki"
+            wiki.mkdir()
+            (wiki / "Target.md").write_text("# Target\n", encoding="utf-8")
+            (wiki / "Guide.md").write_text(
+                "# Guide\n\nSee [[Target]] for details.\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir))
+            warnings = audit_link_style(config)
+            self.assertEqual(len(warnings), 1)
+            self.assertIn("Wikilink '[[Target]]'", warnings[0])
+
+    def test_audit_link_style_skips_inline_code_and_wikilink_config(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki = Path(tmpdir) / "wiki"
+            wiki.mkdir()
+            (wiki / "Guide.md").write_text(
+                "# Guide\n\nLiteral `[[Target]]` and fenced:\n\n```\n[[Target]]\n```\n",
+                encoding="utf-8",
+            )
+            markdown_config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir))
+            self.assertEqual(audit_link_style(markdown_config), [])
+
+            wikilink_config = WikiConfig(
+                input_dirs=[wiki],
+                config_root=Path(tmpdir),
+                link_style="wikilink",
+            )
+            (wiki / "Guide.md").write_text(
+                "# Guide\n\nSee [[Target]] for details.\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(audit_link_style(wikilink_config), [])
+
+    def test_run_lint_link_style_severity(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki = Path(tmpdir) / "wiki"
+            wiki.mkdir()
+            (wiki / "Guide.md").write_text("# Guide\n\nSee [[Target]].\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir), lint={"link_style": "error"})
+            res = run_lint(config)
+            self.assertFalse(res["conforms"])
+            self.assertTrue(any("Wikilink" in e for e in res["errors"]))
 
     def test_run_lint_headings_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:

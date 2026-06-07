@@ -53,12 +53,12 @@ Filename pattern and heading style are **not** part of `wiki check` — use [Wik
 
 ### Related CI commands
 
-| Command               | Purpose                                  |
-| --------------------- | ---------------------------------------- |
-| `wiki lint --strict`  | Filename pattern and headings            |
-| `wiki fmt --check`    | mdformat consistency                     |
-| `wiki render --check` | Stale inline SPARQL result blocks        |
-| `wiki link --check`   | Remaining missing-wikilink opportunities |
+| Command               | Purpose                                    |
+| --------------------- | ------------------------------------------ |
+| `wiki lint --strict`  | Filename pattern, headings, and link style |
+| `wiki fmt --check`    | mdformat consistency                       |
+| `wiki render --check` | Stale inline SPARQL result blocks          |
+| `wiki link --check`   | Remaining missing-wikilink opportunities   |
 
 `wiki build` runs `wiki check` and `wiki lint` before writing output unless `--no-check`.
 

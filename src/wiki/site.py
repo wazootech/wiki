@@ -1183,6 +1183,12 @@ def _normalize_title(text: str) -> str:
     return " ".join(text.strip().casefold().split())
 
 
+def _heading_text_for_title_match(text: str) -> str:
+    """Normalize heading text for duplicate-title detection (unwrap inline code)."""
+    plain = re.sub(r"`([^`\n]+)`", r"\1", text.strip())
+    return _normalize_title(plain)
+
+
 def strip_leading_title_heading(markdown: str, title: str) -> str:
     """Remove a leading # heading when it duplicates the page title."""
     if not _normalize_title(title):
@@ -1197,7 +1203,7 @@ def strip_leading_title_heading(markdown: str, title: str) -> str:
     if match is None or len(match.group(1)) != 1:
         return markdown
     heading = match.group(2).strip()
-    if _normalize_title(heading) != _normalize_title(title):
+    if _heading_text_for_title_match(heading) != _normalize_title(title):
         return markdown
     index += 1
     while index < len(lines) and not lines[index].strip():
@@ -1422,6 +1428,7 @@ def build_page_html(
 </div>"""
 
     layout_label = _layout_label(page)
+    type_label = _type_label(page)
     layout_class = html_module.escape(page.layout_stem)
 
     # All Pages JSON for search and random redirect
@@ -1483,6 +1490,7 @@ def build_page_html(
         "current_slug_json": json.dumps(page.full_slug),
         "page_content": page.html,
         "layout_label": layout_label,
+        "type_label": type_label,
         "layout_class": layout_class,
         "infobox_html": infobox_html,
         "toc_html": toc_html,
@@ -1539,7 +1547,7 @@ def _expand_known_curie(value: str, config: WikiConfig) -> str:
 def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
-    items = f'<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
+    items = '<li class="toclevel-0 l2"><a href="#article-top">(Top)</a></li>\n'
     for item in page.outline:
         title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
         items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'
@@ -1557,7 +1565,7 @@ def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
 def _build_sidebar_contents_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
-    items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
+    items = '<li class="toclevel-0 l2"><a href="#article-top">(Top)</a></li>\n'
     for item in page.outline:
         title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
         items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'
@@ -1752,6 +1760,24 @@ def _render_link_like(label: str, target: str, page: VirtualPage, site: WikiSite
     return display_label, f'<a class="wikilink" href="{html_module.escape(href)}">{escaped_label}</a>'
 
 
+def _metadata_link_candidates(target: str, site: WikiSite) -> list[str]:
+    """Build lookup keys for infobox values that may name another page."""
+    candidate = target.strip()
+    if not candidate:
+        return []
+    keys = [candidate]
+    config = site.config
+    if config is not None:
+        expanded = _expand_known_curie(candidate, config)
+        if expanded not in keys:
+            keys.append(expanded)
+    if ":" in candidate and not is_external_link(candidate):
+        prefix, local = candidate.split(":", 1)
+        if prefix == "wiki" and local and local not in keys:
+            keys.append(local)
+    return keys
+
+
 def _metadata_value_href(target: str, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> tuple[str | None, bool, VirtualPage | None]:
     candidate = target.strip()
     if not candidate:
@@ -1759,26 +1785,29 @@ def _metadata_value_href(target: str, page: VirtualPage, site: WikiSite, base_ur
     if is_external_link(candidate):
         return candidate, True, None
 
-    direct_route = site.routes_by_wiki_id.get(candidate)
-    if direct_route is not None:
-        target_page = site.pages_by_route.get(direct_route)
-        return _url(base_url, direct_route, url_style), False, target_page
+    for key in _metadata_link_candidates(candidate, site):
+        direct_route = site.routes_by_wiki_id.get(key)
+        if direct_route is not None:
+            target_page = site.pages_by_route.get(direct_route)
+            return _url(base_url, direct_route, url_style), False, target_page
 
     if candidate.startswith(page_url(base_url, "", url_style).rstrip("/")):
         return candidate, False, None
 
-    if candidate.startswith(page.full_slug):
-        target_page = site.pages_by_route.get(candidate)
-        return _url(base_url, candidate, url_style), False, target_page
+    for key in _metadata_link_candidates(candidate, site):
+        if key.startswith(page.full_slug):
+            target_page = site.pages_by_route.get(key)
+            if target_page is not None:
+                return _url(base_url, key, url_style), False, target_page
 
-    route = resolve_page_route(page.full_slug, candidate)
-    if route is not None and route in site.pages_by_route:
-        target_page = site.pages_by_route.get(route)
-        return _url(base_url, route, url_style), False, target_page
+        route = resolve_page_route(page.full_slug, key)
+        if route is not None and route in site.pages_by_route:
+            target_page = site.pages_by_route.get(route)
+            return _url(base_url, route, url_style), False, target_page
 
-    if candidate in site.pages_by_route:
-        target_page = site.pages_by_route.get(candidate)
-        return _url(base_url, candidate, url_style), False, target_page
+        if key in site.pages_by_route:
+            target_page = site.pages_by_route.get(key)
+            return _url(base_url, key, url_style), False, target_page
 
     return None, False, None
 
@@ -1798,6 +1827,18 @@ def _layout_label(page: VirtualPage) -> str:
         return ""
     label = humanize_route(page.layout_stem)
     return f'<div class="layout-label">{html_module.escape(label)}</div>'
+
+
+def _type_label(page: VirtualPage) -> str:
+    raw_types = page.frontmatter.get("@type") or page.frontmatter.get("type")
+    if not raw_types:
+        return ""
+    values = raw_types if isinstance(raw_types, list) else [raw_types]
+    for val in values:
+        if isinstance(val, str) and val.strip():
+            val_clean = val.split(":", 1)[-1] if ":" in val else val
+            return f'<div class="layout-label">{html_module.escape(val_clean.strip())}</div>'
+    return ""
 
 
 

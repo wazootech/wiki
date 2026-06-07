@@ -19,7 +19,7 @@ N-Quads is the line-oriented counterpart to [TriG](TriG.md). Where TriG groups t
 
 The first line is a triple in the default graph (no graph term). The second assigns the same triple to the named graph `https://example.org/graphs/provenance`.
 
-## In [[Wiki_CLI|Wiki CLI]]
+## In [Wiki CLI](Wiki_CLI.md)
 
 Use `wiki export -f nquads` when you want RDF serialized as N-Quads. Built pages also expose this view in the Metadata panel under the **NQ** chip.
 

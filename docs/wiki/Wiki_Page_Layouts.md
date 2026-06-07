@@ -9,7 +9,7 @@ description: Wiki page layout files for build and serve output.
 Wiki CLI builds each article into HTML using a **page layout** file with `{placeholder}` tokens. Two levels apply:
 
 1. **Site default** — `page_layout` in [Wiki_Configuration](Wiki_Configuration.md) (usually `layouts/default.html`)
-2. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file
+1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file
 
 ## `page_layout`
 

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Added
+
+- Top-level `link_style` (`markdown` default, or `wikilink`) controls `wiki link --apply` output format
+- `lint.link_style` convention audit flags wikilinks in body prose when `link_style` is `markdown`
+
+### Changed
+
+- `lint.headings` applies sentence-case checks to H2+ only; H1 title case is conventional
+- `lint.headings` flags Setext underlined headings; vaults should use ATX `#` headings only
+- Heading auditor skips thematic `---` inside fenced code and ignores capitalized link text in headings
+
 ### Changed (breaking)
 
 - Split audit lanes: **`wiki check`** = integrity only (`check.broken_links` + always-on SHACL/routes/collisions); **`wiki lint`** = conventions (`lint.filename_pattern`, `lint.headings`)

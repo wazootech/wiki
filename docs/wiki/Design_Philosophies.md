@@ -17,7 +17,7 @@ Four audit/format lanes (aligned with common CLI tooling):
 | Lane         | Command      | Config / tool                                                                  |
 | ------------ | ------------ | ------------------------------------------------------------------------------ |
 | Integrity    | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) — **report only** |
-| Convention   | `wiki lint`  | `lint.filename_pattern`, `lint.headings`                                       |
+| Convention   | `wiki lint`  | `lint.filename_pattern`, `lint.headings`, `lint.link_style`                    |
 | Formatting   | `wiki fmt`   | mdformat                                                                       |
 | Link hygiene | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags   |
 

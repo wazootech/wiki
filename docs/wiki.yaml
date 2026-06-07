@@ -5,11 +5,14 @@ base_url: /wiki
 url_style: dir
 content_predicate: schema:articleBody
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+link_style: markdown
 check:
   broken_links: warning
 lint:
   filename_pattern: warning
-  headings: "off"
+  headings: warning
+  thematic_breaks: warning
+  link_style: warning
 context:
   schema: https://schema.org/
   wiki: https://wazootech.github.io/wiki/

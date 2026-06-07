@@ -41,7 +41,7 @@ description: Coding preferences learned during /init
 
 ## Comparison with [Wiki CLI](Wiki_CLI.md) and [Supermemory_SMFS](Supermemory_SMFS.md)
 
-Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [[Wiki_CLI|Wiki CLI]] when you want a **shared, schema-checked wiki** with [Second_Brain](Second_Brain.md)-style linking and [[Semantic_Web|semantic web]] tooling independent of a single agent runtime.
+Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [Wiki CLI](Wiki_CLI.md) when you want a **shared, schema-checked wiki** with [Second_Brain](Second_Brain.md)-style linking and [semantic web](Semantic_Web.md) tooling independent of a single agent runtime.
 
 For the full cross-tool comparison, see [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
 

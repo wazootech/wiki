@@ -14,11 +14,11 @@ Config files are validated strictly. Unknown keys, removed aliases, wrong nested
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                               |
-| ---------- | ------------ | ---------- | ----------------------------------------------------- |
+| Lane       | Command      | YAML block | Purpose                                                             |
+| ---------- | ------------ | ---------- | ------------------------------------------------------------------- |
 | Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links`, layout frontmatter |
-| Convention | `wiki lint`  | `lint:`    | `filename_pattern`, `headings` (plus top-level regex) |
-| Formatting | `wiki fmt`   | —          | mdformat (not configured in yaml)                     |
+| Convention | `wiki lint`  | `lint:`    | `filename_pattern`, `headings`, `link_style` (plus top-level regex) |
+| Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                    |
 
 - Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` or `lint.broken_links` fails at load with a hint.
@@ -52,6 +52,9 @@ lint:
 link_renames:
   Old_Page_Name: New_Page_Name
 
+# Optional: format for wiki link --apply (markdown | wikilink; default markdown)
+link_style: markdown
+
 context:
   schema: https://schema.org/
   wiki: https://example.org/wiki/
@@ -72,20 +75,20 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 
 ## Wiki and RDF
 
-| Key                    | Default                                            | Purpose                                                                                                                   |
-| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
-| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and \[\[Microdata                                                    |
+| Key                    | Default                                            | Purpose                                                                                                                          |
+| ---------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                              |
+| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and \[\[Microdata                                                           |
 | `content_predicate`    | —                                                  | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                        |
+| `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                               |
 
 ## Site output
 
-| Key             | Default | Purpose                                                |
-| --------------- | ------- | ------------------------------------------------------ |
-| `base_url`      | `/wiki` | URL prefix for built/served pages (`""` for site root) |
-| `url_style`     | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
-| `page_layout` | —    | Path (relative to config) to the site default page layout HTML file |
+| Key           | Default | Purpose                                                             |
+| ------------- | ------- | ------------------------------------------------------------------- |
+| `base_url`    | `/wiki` | URL prefix for built/served pages (`""` for site root)              |
+| `url_style`   | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`                     |
+| `page_layout` | —       | Path (relative to config) to the site default page layout HTML file |
 
 ## Serve API
 
@@ -116,7 +119,7 @@ When `page_layout` is set, the CLI renders every page through that HTML file usi
 
 The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html` referenced from `page_layout`).
 
-- The [[Wiki_CLI|Wiki CLI]] owns the semantic markdown-to-HTML pipeline and placeholder contract.
+- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and placeholder contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
 - Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
 
@@ -150,7 +153,7 @@ Replace `{key}` tokens in your wiki page layout:
 | `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                            |
 | `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown. |
 | `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                      |
-| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.        |
+| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.      |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
 | `{inline_css}`            | raw CSS      | \[\[Wiki_CLI                                                                                               |
@@ -158,6 +161,7 @@ Replace `{key}` tokens in your wiki page layout:
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
 | `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                         |
+| `{type_label}`            | raw HTML     | Schema type badge from frontmatter `type` / `@type` (empty when unset). Read view only.                    |
 | `{layout_class}`          | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                    |
 | `{infobox_html}`          | raw HTML     | Typed frontmatter property table (empty for index).                                                        |
 | `{toc_html}`              | raw HTML     | Table of contents `<div>` with heading links (empty if no headings).                                       |
@@ -177,24 +181,26 @@ The metadata pane uses the same RDF serialization path as `wiki export` (compact
 
 The wiki builder generates these selectors in the rendered page content:
 
-| Selector                    | Where                                                   |
-| --------------------------- | ------------------------------------------------------- |
-| `#firstHeading`             | The `<h1>` with the page title in the read-view shell.  |
-| `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.  |
-| `article`                   | Wrapper around the rendered markdown body.              |
-| `.toc` / `#toc`             | Table of contents container.                            |
-| `#catlinks` / `.catlinks`   | Category links box.                                     |
-| `.backlinks` / `#backlinks` | Backlinks section.                                      |
-| `.catlinks-label`           | Categories heading label.                               |
-| `.catlinks-list`            | Categories `<ul>`.                                      |
-| `.infobox`                  | Typed frontmatter property table.                       |
-| `.page-meta`                | Infobox class (used for styling).                       |
-| `.template-SLUG`            | Per-template class on infobox (e.g. `template-person`). |
-| `toclevel-N` / `lN`         | TOC list item classes for heading level N.              |
-| `.wikilink`                 | Internal wiki page links.                               |
-| `pre[data-copy]`            | Block code with raw source for clipboard copy.          |
-| `.code-block`               | Wrapper injected around copyable pre blocks.            |
-| `.code-copy-btn`            | Copy button shown on code-block hover/focus.            |
+| Selector                    | Where                                                       |
+| --------------------------- | ----------------------------------------------------------- |
+| `#article-top`              | Read-view `<article>` anchor; TOC “(Top)” links here.       |
+| `#firstHeading`             | Talk / Source / Metadata pane `<h1>` titles (not read).     |
+| `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.      |
+| `article`                   | Wrapper around the rendered markdown body (`#article-top`). |
+| `.layout-label`             | Uppercase type or custom-layout badge in read view.         |
+| `.toc` / `#toc`             | Table of contents container.                                |
+| `#catlinks` / `.catlinks`   | Category links box.                                         |
+| `.backlinks` / `#backlinks` | Backlinks section.                                          |
+| `.catlinks-label`           | Categories heading label.                                   |
+| `.catlinks-list`            | Categories `<ul>`.                                          |
+| `.infobox`                  | Typed frontmatter property table.                           |
+| `.page-meta`                | Infobox class (used for styling).                           |
+| `.template-SLUG`            | Per-template class on infobox (e.g. `template-person`).     |
+| `toclevel-N` / `lN`         | TOC list item classes for heading level N.                  |
+| `.wikilink`                 | Internal wiki page links.                                   |
+| `pre[data-copy]`            | Block code with raw source for clipboard copy.              |
+| `.code-block`               | Wrapper injected around copyable pre blocks.                |
+| `.code-copy-btn`            | Copy button shown on code-block hover/focus.                |
 
 ### JavaScript hooks
 
@@ -239,15 +245,28 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 Optional map of **old slug → new route** used by `wiki link --fix-broken` when a page was renamed but wikilinks still use the old target. Fuzzy slug matching applies only when exactly one vault route is a close match.
 
+## Link style (`link_style`)
+
+Controls how `wiki link --apply` inserts new internal links:
+
+| Value      | Inserts               | Default |
+| ---------- | --------------------- | ------- |
+| `markdown` | `[display](Route.md)` | yes     |
+| `wikilink` | `[[Route\|display]]`  |         |
+
+`wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link_style`.
+
+When `link_style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link_style: wikilink` for an Obsidian-style vault.
+
 ## Integrity checks (`check`)
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key                  | Default   | What it audits                                                                |
-| ------------------------- | --------- | ----------------------------------------------------------------------------- |
-| `broken_links`            | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `forbidden_layout_keys`   | `error`   | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead)  |
-| `missing_layout_file`     | `error`   | `wazoo:layout` paths that do not resolve to a readable `.html` file           |
+| Rule key                | Default   | What it audits                                                                |
+| ----------------------- | --------- | ----------------------------------------------------------------------------- |
+| `broken_links`          | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `forbidden_layout_keys` | `error`   | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead)  |
+| `missing_layout_file`   | `error`   | `wazoo:layout` paths that do not resolve to a readable `.html` file           |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
@@ -255,14 +274,15 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 
 Under `lint`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                    |
-| ------------------ | --------- | ----------------------------------------------------------------- |
-| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex               |
-| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body |
+| Rule key           | Default   | What it audits                                                                                                                         |
+| ------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                                                                                    |
+| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings, thematic `---` in body |
+| `link_style`       | `warning` | Wikilinks in body prose when top-level `link_style` is `markdown`                                                                      |
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `link_style: markdown` with `lint.link_style: warning`, and `lint.headings: warning` for ATX headings and sentence-case H2+.
 
 ## Related
 

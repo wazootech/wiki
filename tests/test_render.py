@@ -8,10 +8,19 @@ from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
 from wiki.graph import load_graph
-from wiki.render import render_markdown_files
+from wiki.render import _sparql_table_matches, render_markdown_files
 
 
 class RenderMarkdownFilesTest(unittest.TestCase):
+    def test_sparql_table_matches_ignores_mdformat_padding(self) -> None:
+        compact = "| class |\n| --- |\n| https://schema.org/TechArticle |\n"
+        padded = (
+            "| Class                                  |\n"
+            "| -------------------------------------- |\n"
+            "| https://schema.org/TechArticle         |\n"
+        )
+        self.assertTrue(_sparql_table_matches(padded, compact))
+
     def test_render_preserves_query_fence_formatting(self) -> None:
         """Render should update only the result table, not the fenced SPARQL query."""
         with TemporaryDirectory() as tmpdir:

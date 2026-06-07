@@ -1218,7 +1218,7 @@ name: ConfigTest
 
             apply_result = runner.invoke(main, ["--input-dir", str(wiki_dir), "link", "--apply"])
             self.assertEqual(apply_result.exit_code, 0)
-            self.assertIn("[[Wiki_CLI|Wiki CLI]]", guide.read_text(encoding="utf-8"))
+            self.assertIn("[Wiki CLI](Wiki_CLI.md)", guide.read_text(encoding="utf-8"))
 
             clean = runner.invoke(main, ["--input-dir", str(wiki_dir), "link", "--check"])
             self.assertEqual(clean.exit_code, 0)

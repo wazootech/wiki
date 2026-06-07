@@ -54,6 +54,7 @@ class TestWikiConfig(unittest.TestCase):
         self.assertIsNotNone(config.context)
         self.assertFalse(config.serve_api_enabled)
         self.assertEqual(config.serve_api_path, "/api/sparql")
+        self.assertEqual(config.link_style, "markdown")
 
     def test_wikiconfig_load_no_files(self) -> None:
         """Test WikiConfig.load falls back to defaults when no files exist."""
@@ -97,6 +98,17 @@ class TestWikiConfig(unittest.TestCase):
             self.assertFalse(config.serve_api_enabled)
             self.assertEqual(config.serve_api_path, "/sparql")
             self.assertIn("custom_pref", config.namespaces)
+
+    def test_wikiconfig_load_link_style(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text("link_style: markdown\n", encoding="utf-8")
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.link_style, "markdown")
+
+    def test_wikiconfig_rejects_invalid_link_style(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Invalid link_style"):
+            WikiConfig(link_style="obsidian")
 
     def test_wikiconfig_load_json(self) -> None:
         """Test WikiConfig.load correctly parses wiki.json."""

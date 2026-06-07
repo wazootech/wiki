@@ -6,7 +6,7 @@ description: Canonical rules for vault filenames, links, prose, frontmatter, sha
 
 # Style guide
 
-This is the **canonical style guide** for authoring pages in an [[LLM_Wiki|LLM Wiki]] vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
 In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose here—link here instead.
 
@@ -24,11 +24,16 @@ Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to m
 
 ## Prose and headings
 
-- Use **sentence-case headings** (capitalize only the first word and proper nouns).
+- Use **ATX `#` headings only**; do not use underlined Setext headings (`===` / `---`). Wiki tooling indexes ATX for titles, TOC, and fragment links.
+- Use **title-case H1** headings (the page title; align with `headline` frontmatter).
+- Use **sentence-case H2+** headings (capitalize only the first word and proper nouns). Only H2 and deeper are machine-checked.
 - Avoid numbered headings; keep headings concise.
 - Do not use horizontal rules (`---`) for thematic breaks inside page bodies (reserve `---` for YAML frontmatter delimiters only).
 
-**Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki lint --strict` in CI only after enabling the rules you want enforced as errors.
+**Enforcers:**
+
+- **ATX heading syntax** — `wiki fmt` / `.mdformat.toml` (Setext headings are converted to ATX; run `fmt --check` in CI).
+- **Sentence-case H2+, no numbering** — `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki lint --strict` in CI only after enabling the rules you want enforced as errors.
 
 ## Frontmatter
 
@@ -72,7 +77,9 @@ Data-only records may use `.yaml`, `.yml`, or `.json` without a markdown body.
 
 ## SPARQL query conventions
 
-When writing `<!-- sparql:start -->` blocks or ad-hoc `wiki query` commands:
+When writing \`
+
+<!-- sparql:start -->` blocks or ad-hoc `wiki query` commands:
 
 - **People** — query `schema:givenName` and `schema:familyName`, not `schema:name`.
 - **TechArticle** — query `schema:headline` and `schema:description`.
@@ -97,7 +104,9 @@ All internal links must resolve to existing documents in the wiki.
 
 **Enforcer:** `check.broken_links` (warning by default).
 
-Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
+Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in vault prose.
+
+Markdown links are the default (`link_style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
 
 ## References (external standards)
 
@@ -139,7 +148,7 @@ ORDER BY ?class
 
 Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki_Subcommand_render](Wiki_Subcommand_render.md) and [Graph_Cache](Graph_Cache.md).
 
-## HTML [[Microdata|microdata]]
+## HTML [microdata](Microdata.md)
 
 The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and adds triples to the graph. CURIEs in attributes use the same `context` prefixes as frontmatter.
 

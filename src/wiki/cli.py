@@ -188,6 +188,7 @@ def link(
     """Suggest or repair wikilinks for vault pages."""
     from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
     from .link_suggest import apply_link_opportunities, find_link_opportunities
+    from .links import format_internal_link
     from .paths import route_for_document_file
 
     file_filter = None
@@ -236,10 +237,11 @@ def link(
         sys.exit(0)
 
     for item in opportunities:
-        target = item.target_route if not verbose else f"{item.target_route} ({item.target_title})"
+        suggestion = format_internal_link(item.target_route, item.matched_text, config.link_style)
+        target = f"{item.target_route} ({item.target_title})" if verbose else suggestion
         click.echo(
             f"{item.source_file}:{item.line}:{item.column}: "
-            f'"{item.matched_text}" -> [[{target}]]'
+            f'"{item.matched_text}" -> {target}'
         )
     sys.exit(1 if check else 0)
 
@@ -709,7 +711,7 @@ def init(force: bool, init_git: bool) -> None:
 @click.pass_obj
 def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> None:
     """Format markdown vault pages using mdformat."""
-    import mdformat
+    from .fmt_util import format_markdown
     from .paths import iter_markdown_files
 
     if file:
@@ -726,7 +728,7 @@ def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> No
     for f in files:
         try:
             original = f.read_text(encoding="utf-8")
-            formatted = mdformat.text(original, extensions=["wikilink", "frontmatter", "gfm"])
+            formatted = format_markdown(original, f)
             if original != formatted:
                 stale_files.append(f)
                 if not check:

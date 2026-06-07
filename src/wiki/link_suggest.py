@@ -8,6 +8,7 @@ from pathlib import Path
 from .audit import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, _markdown_body
 from .config import WikiConfig
 from .parser import document_data_from_path
+from .links import format_internal_link
 from .paths import iter_markdown_files, route_for_document_file
 from .site import extract_title, humanize_route
 
@@ -213,10 +214,14 @@ def apply_link_opportunities(
                 continue
             if line_content[column_index : column_index + len(opportunity.matched_text)] != opportunity.matched_text:
                 continue
-            wikilink = f"[[{opportunity.target_route}|{opportunity.matched_text}]]"
+            link = format_internal_link(
+                opportunity.target_route,
+                opportunity.matched_text,
+                config.link_style,
+            )
             lines[line_index] = (
                 line_content[:column_index]
-                + wikilink
+                + link
                 + line_content[column_index + len(opportunity.matched_text) :]
                 + line[len(line_content) :]
             )

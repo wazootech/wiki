@@ -51,6 +51,7 @@ WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
 
 WIKILINK_FULL_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
 MARKDOWN_LINK_FULL_REGEX = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
+FENCED_CODE_RE = re.compile(r"```[\s\S]*?```")
 
 
 @dataclass(frozen=True)
@@ -343,6 +344,10 @@ def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) 
 HEADING_LINE_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 NUMBERED_HEADING_RE = re.compile(r"^\d+[\.)]\s+")
 THEMATIC_BREAK_RE = re.compile(r"^(\-{3,}|\*{3,}|_{3,})\s*$", re.MULTILINE)
+SETEXT_H1_UNDERLINE_RE = re.compile(r"^={3,}\s*$")
+SETEXT_H2_UNDERLINE_RE = re.compile(r"^-{3,}\s*$")
+MARKDOWN_LINK_IN_HEADING_RE = re.compile(r"!?\[[^\]]*\]\([^)]*\)")
+SETEXT_ATX_HINT = "use ATX headings (# ...) so title, TOC, and fragment links work."
 
 
 def _markdown_body(content: str) -> str:
@@ -374,8 +379,72 @@ def _strip_inline_code(markdown: str) -> str:
     return re.sub(r"`[^`\n]*`", "", markdown)
 
 
-def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit markdown heading style (sentence case, no numbering, no body thematic breaks)."""
+def _body_code_spans(body: str) -> list[tuple[int, int]]:
+    spans = _protected_inline_code_spans(body)
+    for match in FENCED_CODE_RE.finditer(body):
+        spans.append(match.span())
+    return spans
+
+
+def _heading_plain_text(text: str) -> str:
+    """Remove markdown links from heading text before title-case analysis."""
+    plain = MARKDOWN_LINK_IN_HEADING_RE.sub("", text)
+    return re.sub(r"\s+", " ", plain).strip(" ,;:")
+
+
+def _normalize_heading_word(word: str) -> str:
+    return word.strip(".,;:!?")
+
+
+def _is_proper_noun_token(word: str) -> bool:
+    word = _normalize_heading_word(word)
+    if not word:
+        return True
+    if word.isupper() and len(word) > 1:
+        return True
+    if any(ch.isdigit() for ch in word) or "-" in word:
+        return True
+    if word[0].isupper() and any(ch.islower() for ch in word) and any(ch.isupper() for ch in word[1:]):
+        return True
+    return False
+
+
+def _is_setext_text_line(line: str) -> bool:
+    """True when a line can be the text row of a Setext heading (not ATX or HR)."""
+    stripped = line.strip()
+    if not stripped:
+        return False
+    if HEADING_LINE_RE.match(line):
+        return False
+    if THEMATIC_BREAK_RE.match(stripped):
+        return False
+    return True
+
+
+def _format_setext_warning(file_name: str, line_no: int, title: str, underline: str) -> str:
+    return (
+        f"In {file_name}:{line_no}: Setext heading {title!r} with {underline} underline; "
+        f"{SETEXT_ATX_HINT}"
+    )
+
+
+def _title_case_words_after_first(text: str) -> list[str]:
+    plain = _heading_plain_text(text)
+    words = [_normalize_heading_word(w) for w in re.split(r"\s+", plain) if w]
+    if len(words) < 2:
+        return []
+    return [
+        w
+        for w in words[1:]
+        if len(w) > 2
+        and w[0].isupper()
+        and any(ch.islower() for ch in w)
+        and not _is_proper_noun_token(w)
+    ]
+
+
+def audit_thematic_breaks(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Audit horizontal rules (thematic breaks) in markdown body text."""
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
         route = route_for_document_file(config, file_path)
@@ -383,12 +452,59 @@ def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> l
             continue
         content = file_path.read_text(encoding="utf-8")
         body = _markdown_body(content)
-        for line_no, line in enumerate(body.splitlines(), start=1):
-            if THEMATIC_BREAK_RE.match(line.strip()):
+        protected = _body_code_spans(body)
+        lines = body.splitlines()
+        offset = 0
+        prev_line: str | None = None
+        prev_line_start = 0
+        prev_line_end = 0
+        for line_no, line in enumerate(lines, start=1):
+            line_start = offset
+            line_end = offset + len(line)
+            stripped = line.strip()
+            in_code = _span_overlaps(line_start, line_end, protected)
+            prev_in_code = (
+                prev_line is not None
+                and _span_overlaps(prev_line_start, prev_line_end, protected)
+            )
+            is_setext = False
+            if (
+                prev_line is not None
+                and _is_setext_text_line(prev_line)
+                and not in_code
+                and not prev_in_code
+            ):
+                if SETEXT_H2_UNDERLINE_RE.match(stripped):
+                    is_setext = True
+            if (
+                not is_setext
+                and THEMATIC_BREAK_RE.match(stripped)
+                and not in_code
+            ):
                 warnings.append(
-                    f"In {file_path.name}:{line_no}: Thematic break '{line.strip()}' in body; "
+                    f"In {file_path.name}:{line_no}: Thematic break '{stripped}' in body; "
                     "use headings instead of horizontal rules."
                 )
+            prev_line = line
+            prev_line_start = line_start
+            prev_line_end = line_end
+            offset = line_end + 1
+    return warnings
+
+
+def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Audit editorial heading style (H2+ sentence case, no numbering).
+
+    ATX heading syntax is enforced by ``wiki fmt`` (mdformat); Setext headings
+    are converted there rather than reported here.
+    """
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = route_for_document_file(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        content = file_path.read_text(encoding="utf-8")
+        body = _markdown_body(content)
         for match in HEADING_LINE_RE.finditer(body):
             level, text = match.group(1), match.group(2).strip()
             if NUMBERED_HEADING_RE.match(text):
@@ -396,23 +512,41 @@ def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> l
                     f"In {file_path.name}: Numbered heading {level} {text!r}; use unnumbered headings."
                 )
                 continue
-            words = [w for w in re.split(r"\s+", text) if w]
-            if len(words) >= 2:
-                title_case_words = [
-                    w
-                    for w in words[1:]
-                    if len(w) > 2 and w[0].isupper() and any(ch.islower() for ch in w)
-                ]
-                if len(title_case_words) >= 2:
-                    warnings.append(
-                        f"In {file_path.name}: Heading {level} {text!r} looks like title case; "
-                        "use sentence case (capitalize only the first word and proper nouns)."
-                    )
+            if len(level) > 1 and len(_title_case_words_after_first(text)) >= 2:
+                warnings.append(
+                    f"In {file_path.name}: H2+ heading {level} {text!r} looks like title case; "
+                    "use sentence case (capitalize only the first word and proper nouns)."
+                )
     return warnings
 
 
+def _line_number_for_offset(content: str, offset: int) -> int:
+    return content[:offset].count("\n") + 1
 
 
+def audit_link_style(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Flag Obsidian wikilinks in body prose when vault link_style is markdown."""
+    if config.link_style != "markdown":
+        return []
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = route_for_document_file(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        content = file_path.read_text(encoding="utf-8")
+        prefix, body = _split_frontmatter(content)
+        body_offset = len(prefix)
+        protected = _body_code_spans(body)
+        for match in WIKILINK_FULL_REGEX.finditer(body):
+            start, end = match.span()
+            if _span_overlaps(start, end, protected):
+                continue
+            line_no = _line_number_for_offset(content, body_offset + start)
+            warnings.append(
+                f"In {file_path.name}:{line_no}: Wikilink {match.group(0)!r}; "
+                "use Markdown links ([display](Page.md)) per link_style."
+            )
+    return warnings
 
 
 def _heading_ids(markdown: str) -> set[str]:
@@ -626,7 +760,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
 
 
 def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run convention audits: filename pattern and heading style."""
+    """Run convention audits: filename pattern, heading style, and link style."""
     results = _empty_results()
 
     safety_issues = validate_route_safety(config)
@@ -640,6 +774,12 @@ def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[st
 
     heading_issues = audit_headings(config, file_filter=file_filter)
     _apply_issues(results, "headings", heading_issues, config.lint)
+
+    thematic_break_issues = audit_thematic_breaks(config, file_filter=file_filter)
+    _apply_issues(results, "thematic_breaks", thematic_break_issues, config.lint)
+
+    link_style_issues = audit_link_style(config, file_filter=file_filter)
+    _apply_issues(results, "link_style", link_style_issues, config.lint)
 
     return results
 

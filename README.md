@@ -127,7 +127,7 @@ wiki check --strict
 Default configurable rule: `check.broken_links` (`warning`). Filename pattern and heading style moved to `wiki lint`.
 
 ### `lint`
-Run **convention** audits: filename pattern and heading style.
+Run **convention** audits: filename pattern, heading style (ATX `#` only, sentence-case H2+), and link style.
 
 ```bash
 wiki lint
@@ -145,6 +145,8 @@ check:
 lint:
   filename_pattern: warning
   headings: off
+  link_style: warning
+link_style: markdown
 ```
 
 **Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
@@ -162,7 +164,7 @@ wiki link --apply
 wiki link --fix-broken
 ```
 
-`wiki check` reports broken links (`check.broken_links`). `wiki link` enriches prose with new wikilinks (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). Optional `link_renames` in `wiki.yaml` maps old slugs to new routes for renames.
+`wiki check` reports broken links (`check.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link_style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link_style` is `markdown`. Optional `link_renames` maps old slugs to new routes for renames.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
@@ -355,7 +357,7 @@ id: wiki:Gregory_Davidson
 type: schema:Person
 wazoo:layout: layouts/article.html
 knows: wiki:Bella_Davidson
-url: https://example.com/gregory
+url: https://gregorydavidson.com
 ```
 
 When `wazoo:layout` is omitted, the page uses the site `page_layout`. Layout files use the same `{placeholder}` contract (`{infobox_html}`, `{page_content}`, `{layout_class}`, and so on).
@@ -365,7 +367,7 @@ Any article with displayable frontmatter gets a sidebar infobox. Structural keys
 In the built site:
 
 - `wiki:Bella_Davidson` links to the `Bella_Davidson` page when that page exists
-- `https://example.com/gregory` renders as an external link
+- `https://gregorydavidson.com` renders as an external link
 - `wazoo:layout` is presentation metadata only (not exported to RDF)
 
 `wiki check` errors on legacy `template` / `wiki:template` keys and on missing `wazoo:layout` files.
@@ -655,7 +657,10 @@ check:
 
 lint:
   filename_pattern: warning  # "error" | "warning" | "off"
-  headings: off              # sentence case, numbered headings, body ---
+  headings: off              # ATX # only, sentence-case H2+, numbered headings, body ---
+  link_style: warning        # wikilinks in body when link_style is markdown
+
+link_style: markdown         # wikilink | markdown — wiki link --apply output format
 
 page_layout: layouts/default.html    # site default page layout; see docs/wiki/Wiki_Configuration.md
 

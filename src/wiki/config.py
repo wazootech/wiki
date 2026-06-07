@@ -13,6 +13,20 @@ from rdflib.namespace import XSD
 
 logger = logging.getLogger(__name__)
 
+_LINK_STYLES = frozenset({"wikilink", "markdown"})
+DEFAULT_LINK_STYLE = "markdown"
+
+
+def _normalize_link_style(value: str | None) -> str:
+    if value is None:
+        return DEFAULT_LINK_STYLE
+    if not isinstance(value, str):
+        raise ValueError(f"Invalid link_style: {value!r} (expected wikilink or markdown)")
+    normalized = value.strip().lower()
+    if normalized not in _LINK_STYLES:
+        raise ValueError(f"Invalid link_style: {value!r} (expected wikilink or markdown)")
+    return normalized
+
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
 VALID_URL_STYLES = {"dir", "file"}
@@ -37,6 +51,8 @@ DEFAULT_CHECK_RULES = {
 DEFAULT_LINT_RULES = {
     "filename_pattern": "warning",
     "headings": "off",
+    "thematic_breaks": "off",
+    "link_style": "warning",
 }
 
 ALLOWED_SEVERITIES = {"error", "warning", "off"}
@@ -58,6 +74,7 @@ ALLOWED_CONFIG_KEYS = {
     "page_layout",
     "serve_api",
     "link_renames",
+    "link_style",
 }
 
 ALLOWED_CHECK_KEYS = {
@@ -65,7 +82,7 @@ ALLOWED_CHECK_KEYS = {
     "forbidden_layout_keys",
     "missing_layout_file",
 }
-ALLOWED_LINT_KEYS = {"filename_pattern", "headings"}
+ALLOWED_LINT_KEYS = {"filename_pattern", "headings", "thematic_breaks", "link_style"}
 ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 
 
@@ -216,6 +233,7 @@ class WikiConfig:
         serve_api_enabled: bool = False,
         serve_api_path: str = "/api/sparql",
         link_renames: dict[str, str] | None = None,
+        link_style: str | None = None,
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -236,6 +254,7 @@ class WikiConfig:
         self.serve_api_enabled = bool(serve_api_enabled)
         self.serve_api_path = normalize_api_path(serve_api_path)
         self.link_renames = dict(link_renames or {})
+        self.link_style = _normalize_link_style(link_style)
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -356,6 +375,7 @@ class WikiConfig:
                             serve_api_enabled=serve_api_enabled,
                             serve_api_path=serve_api_path,
                             link_renames=link_renames,
+                            link_style=data.get("link_style"),
                         )
                     raise ValueError(f"Invalid config file {config_path.name}: top-level content must be a mapping")
                 except Exception as e:

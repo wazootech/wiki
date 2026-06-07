@@ -34,7 +34,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and configurable `broken_links`. _Avoid_: Linting (use `wiki lint` for conventions).
 
-**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern` and `headings`. _Avoid_: Checking (use `wiki check` for integrity).
+**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (ATX-only, sentence-case H2+), and `link_style`. _Avoid_: Checking (use `wiki check` for integrity).
 
 **Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
 
