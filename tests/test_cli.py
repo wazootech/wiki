@@ -14,6 +14,7 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
+from wiki.init_scaffold import InitOptions, render_wiki_yaml
 
 
 class TestCLI(unittest.TestCase):
@@ -407,8 +408,11 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(default_layout.is_file())
                 self.assertIn("Wiki CLI", default_layout.read_text(encoding="utf-8"))
 
-                expected_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
-                self.assertEqual(config_content, expected_template.replace("__WIKI_BASE__", "https://wiki.example.org/"))
+                expected_content = render_wiki_yaml(
+                    InitOptions(wiki_base="https://wiki.example.org/"),
+                )
+                self.assertEqual(config_content, expected_content)
+                self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
                 # Check --force protects existing layouts (second init)
                 result2 = runner.invoke(main, ["init", "--force"], input="https://wiki.example.org/\n")
@@ -422,6 +426,66 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertEqual(result3.exit_code, 0)
 
                 self.assertFalse((Path(".git")).exists())
+
+    def test_cli_init_with_repo_flag(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    ["init", "--force", "--repo", "wazootech/wiki"],
+                    catch_exceptions=False,
+                )
+                self.assertEqual(result.exit_code, 0)
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("wiki_base: https://wazootech.github.io/wiki/", config_content)
+                self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
+                self.assertIn("base_url: /wiki", config_content)
+                self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
+
+    def test_cli_init_wiki_base_overrides_repo(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    [
+                        "init",
+                        "--force",
+                        "--repo",
+                        "wazootech/wiki",
+                        "--wiki-base",
+                        "https://example.org/custom/",
+                        "--base-url",
+                        "/custom",
+                    ],
+                    catch_exceptions=False,
+                )
+                self.assertEqual(result.exit_code, 0)
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("wiki_base: https://example.org/custom/", config_content)
+                self.assertIn("wiki: https://example.org/custom/", config_content)
+                self.assertIn("base_url: /custom", config_content)
+
+    @patch("wiki.init_scaffold.detect_origin_repo", return_value="wazootech/wiki")
+    def test_cli_init_detects_git_remote(self, _detect_mock) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                (Path(".git")).mkdir()
+                result = runner.invoke(main, ["init", "--force"], catch_exceptions=False)
+                self.assertEqual(result.exit_code, 0)
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("wiki_base: https://wazootech.github.io/wiki/", config_content)
+                self.assertIn("base_url: /wiki", config_content)
+
+    def test_cli_init_invalid_repo_exits(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(main, ["init", "--force", "--repo", "not-valid"], catch_exceptions=False)
+                self.assertNotEqual(result.exit_code, 0)
+                self.assertIn("Invalid GitHub repo", result.output)
 
     def test_docs_default_layout_matches_packaged_template(self) -> None:
         docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
@@ -451,8 +515,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 with patch("shutil.which", return_value="git"), patch("subprocess.run") as run_mock:
                     result = runner.invoke(
                         main,
-                        ["init", "--force", "--git"],
-                        input="https://wiki.example.org/\n",
+                        ["init", "--force", "--git", "--wiki-base", "https://wiki.example.org/"],
                         catch_exceptions=False,
                     )
 

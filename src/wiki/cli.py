@@ -571,11 +571,30 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 @main.command()
 @click.option("--force", is_flag=True, help="Overwrite existing scaffold files if present.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
-def init(force: bool, init_git: bool) -> None:
-    """Interactively scaffold a new wiki workspace in the current directory."""
+@click.option("--repo", default=None, help="GitHub owner/repo; infer wiki_base and base_url for GitHub Pages.")
+@click.option("--wiki-base", default=None, help="Explicit wiki_base URI (overrides --repo inference).")
+@click.option("--base-url", default=None, help="URL prefix for built/served pages (default /wiki or inferred from --repo).")
+@click.option("--url-style", default=None, type=click.Choice(["file", "dir"]), help="URL style: dir or file.")
+@click.option("--wazoo", default=None, help="context.wazoo namespace URI (default https://schema.wazoo.dev/).")
+@click.option("--content-predicate", default=None, help="Optional content_predicate CURIE (e.g. schema:articleBody).")
+@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Default link style for wiki link --apply.")
+def init(
+    force: bool,
+    init_git: bool,
+    repo: str | None,
+    wiki_base: str | None,
+    base_url: str | None,
+    url_style: str | None,
+    wazoo: str | None,
+    content_predicate: str | None,
+    link_style: str | None,
+) -> None:
+    """Scaffold a new wiki workspace in the current directory."""
     from importlib.resources import files as pkg_files
     import shutil
     import subprocess
+
+    from .init_scaffold import resolve_init_options, render_wiki_yaml
 
     cwd = Path.cwd()
     config_path = cwd / "wiki.yaml"
@@ -593,10 +612,30 @@ def init(force: bool, init_git: bool) -> None:
             click.echo("Error: wiki/ is not empty. Use --force to overwrite.", err=True)
             sys.exit(1)
 
-    wiki_base = click.prompt("Custom base URI prefix", default="https://wiki.example.org/")
-    wiki_base = str(wiki_base).rstrip("/") + "/"
-    config_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
-    config_content = config_template.replace("__WIKI_BASE__", wiki_base)
+    if repo is not None:
+        try:
+            from .init_scaffold import parse_github_repo
+            parse_github_repo(repo)
+        except ValueError as exc:
+            click.echo(f"Error: {exc}", err=True)
+            sys.exit(1)
+
+    def prompt_wiki_base(default: str) -> str:
+        return str(click.prompt("Custom base URI prefix", default=default))
+
+    init_options = resolve_init_options(
+        repo=repo,
+        wiki_base=wiki_base,
+        base_url=base_url,
+        url_style=url_style,
+        wazoo=wazoo,
+        content_predicate=content_predicate,
+        link_style=link_style,
+        cwd=cwd,
+        init_git=init_git,
+        prompt_wiki_base=prompt_wiki_base,
+    )
+    config_content = render_wiki_yaml(init_options)
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
     readme_path.write_text(

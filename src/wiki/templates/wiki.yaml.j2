@@ -1,0 +1,27 @@
+{# wiki init scaffold — variables: wiki_base, base_url, url_style, wazoo, content_predicate, link_style #}
+input_dirs:
+  - wiki
+wiki_base: {{ wiki_base }}
+base_url: {{ base_url }}
+url_style: {{ url_style }}
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+{% if content_predicate %}
+content_predicate: {{ content_predicate }}
+{% endif %}
+{% if link_style %}
+link_style: {{ link_style }}
+{% endif %}
+lint:
+  broken_links: warning
+  filename_pattern: warning
+  headings: warning
+context:
+  schema: https://schema.org/
+  wiki: {{ wiki_base }}
+  wazoo: {{ wazoo }}
+  foaf: http://xmlns.com/foaf/0.1/
+  dc: http://purl.org/dc/elements/1.1/
+  dcterms: http://purl.org/dc/terms/
+  sh: http://www.w3.org/ns/shacl#
+  xsd: http://www.w3.org/2001/XMLSchema#
+page_layout: layouts/default.html

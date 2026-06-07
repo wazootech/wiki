@@ -26,11 +26,14 @@ From an empty directory:
 ```bash
 wiki init
 
+# GitHub Pages defaults from owner/repo
+wiki init --repo wazootech/wiki
+
 # Also initialize a Git repository explicitly
 wiki init --git
 ```
 
-`wiki init` interactively writes `wiki.yaml`, `README.md`, `layouts/` wiki page layouts, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
+`wiki init` writes `wiki.yaml`, `README.md`, `layouts/` wiki page layouts, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--wiki-base` / `--base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for all flags and `--force` behavior.
 
 ## Daily workflow
 

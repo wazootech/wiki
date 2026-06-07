@@ -17,6 +17,7 @@ dependencies = [
     "mdformat>=0.7.19",
     "mdformat-frontmatter>=2.0.1",
     "mdformat-gfm>=0.3.5",
+    "jinja2>=3.1.0",
 ]
 
 [project.scripts]
