@@ -20,6 +20,9 @@ Defines the media types that the client is willing to receive.
 - `Accept: application/ld+json` (Requesting machine-readable [JSON_LD](JSON_LD.md))
 - `Accept: text/turtle` (Requesting standard triples via [Turtle](Turtle.md))
 - `Accept: text/n3` (Requesting verbose RDF via [Notation3](Notation3.md))
+- `Accept: application/n-triples` (Requesting line-oriented triples via [N_Triples](N_Triples.md))
+- `Accept: application/trig` (Requesting named-graph RDF via [TriG](TriG.md))
+- `Accept: application/n-quads` (Requesting line-oriented quads via [N_Quads](N_Quads.md))
 - `Accept: text/csv` (Requesting tabular data via [CSV](CSV.md))
 
 ### `Accept-Language`
