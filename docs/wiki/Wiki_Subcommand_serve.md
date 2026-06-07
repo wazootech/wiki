@@ -32,12 +32,14 @@ Default URL with config `base_url: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
 ## SPARQL endpoint
 
-When `serve_api.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `serve_api.path` (default `/api/sparql`).
+When `sparql_service.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `sparql_service.path` (default `/api/sparql`).
+
+A bare `GET` on that path (no query string) returns a [SPARQL 1.1 Service Description](https://www.w3.org/TR/sparql11-service-description/) document describing supported languages, result formats, and the default dataset. Content negotiation applies (`text/turtle`, `application/rdf+xml`, or `application/n-triples`).
 
 Example config:
 
 ```yaml
-serve_api:
+sparql_service:
   enabled: true
   path: /api/sparql
 ```
@@ -45,6 +47,9 @@ serve_api:
 Supported request forms:
 
 ```bash
+# Service description (SPARQL 1.1 Service Description)
+curl "http://127.0.0.1:8080/api/sparql" -H "Accept: text/turtle"
+
 # GET with query string
 curl "http://127.0.0.1:8080/api/sparql?query=SELECT%20*%20WHERE%20%7B%20?s%20?p%20?o%20%7D" \
   -H "Accept: application/sparql-results+json"

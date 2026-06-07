@@ -8,7 +8,7 @@ description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 
 The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
-Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `serve_api`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
 
 ## Config semantics
 
@@ -92,13 +92,13 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 
 | Key                 | Default       | Purpose                                               |
 | ------------------- | ------------- | ----------------------------------------------------- |
-| `serve_api.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
-| `serve_api.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
+| `sparql_service.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
+| `sparql_service.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
 
 Example:
 
 ```yaml
-serve_api:
+sparql_service:
   enabled: true
   path: /api/sparql
 ```
@@ -107,7 +107,7 @@ The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and 
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
-`serve_api.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
+`sparql_service.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
 ## Page layout
 

@@ -17,6 +17,7 @@ from typing import Any, Optional
 from .config import WikiConfig
 from .format import detect_query_form, is_sparql_update, normalize_metadata_format, normalize_metadata_mode, run_query
 from .graph import load_graph
+from .sparql_service import build_service_description_graph, serialize_service_description
 from .site import (
     WikiSite,
     VirtualPage,
@@ -36,15 +37,15 @@ class WikiHandler(BaseHTTPRequestHandler):
     watch_enabled: bool = False
     build_id: int = 0
     page_layout: str | None = None
-    serve_api_enabled: bool = True
-    serve_api_path: str = "/api/sparql"
+    sparql_service_enabled: bool = True
+    sparql_service_path: str = "/api/sparql"
 
     def do_GET(self) -> None:
         base = self.base_url
         parsed_url = urlsplit(self.path)
         parsed = parsed_url.path
         query_params = parse_qs(parsed_url.query, keep_blank_values=True)
-        if parsed.rstrip("/") == self.serve_api_path.rstrip("/"):
+        if parsed.rstrip("/") == self.sparql_service_path.rstrip("/"):
             self._handle_sparql_request("GET", parsed_url.query)
             return
         if parsed.rstrip("/") == f"{base}/__watch":
@@ -86,7 +87,7 @@ class WikiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed_url = urlsplit(self.path)
-        if parsed_url.path.rstrip("/") == self.serve_api_path.rstrip("/"):
+        if parsed_url.path.rstrip("/") == self.sparql_service_path.rstrip("/"):
             self._handle_sparql_request("POST", parsed_url.query)
             return
         self._send_error(404, f"Not found: {self.path}")
@@ -190,9 +191,38 @@ class WikiHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:
         sys.stderr.write(f"[{self.log_date_time_string()}] {fmt % args}\n")
 
+    def _sparql_endpoint_url(self) -> str:
+        host = self.headers.get("Host")
+        if not host:
+            server_host, server_port = self.server.server_address[:2]
+            host = f"{server_host}:{server_port}"
+        path = self.sparql_service_path if self.sparql_service_path.startswith("/") else f"/{self.sparql_service_path}"
+        return f"http://{host}{path}"
+
+    def _handle_sparql_service_description(self) -> None:
+        try:
+            graph = load_graph(self.config, infer=True, reload=False)
+            triple_count = len(graph)
+        except Exception:
+            triple_count = None
+        description = build_service_description_graph(
+            self._sparql_endpoint_url(),
+            default_triple_count=triple_count,
+        )
+        try:
+            body, content_type = serialize_service_description(description, self.headers.get("Accept", ""))
+        except ValueError as exc:
+            self._send_error(406, str(exc))
+            return
+        self._send_bytes(200, body, content_type)
+
     def _handle_sparql_request(self, method: str, raw_query_string: str) -> None:
-        if not self.serve_api_enabled:
+        if not self.sparql_service_enabled:
             self._send_error(404, "SPARQL endpoint is disabled.")
+            return
+
+        if method == "GET" and not raw_query_string:
+            self._handle_sparql_service_description()
             return
 
         try:
@@ -259,7 +289,7 @@ def create_server(
     """Build the site and return a configured HTTPServer (not yet started)."""
     resolved_base_url = config.base_url if base_url is None else base_url
     resolved_url_style = config.url_style if url_style is None else url_style
-    _validate_serve_api_path(config, resolved_base_url)
+    _validate_sparql_service_path(config, resolved_base_url)
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     WikiHandler.site = site
     WikiHandler.config = config
@@ -267,8 +297,8 @@ def create_server(
     WikiHandler.url_style = resolved_url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
-    WikiHandler.serve_api_enabled = config.serve_api_enabled
-    WikiHandler.serve_api_path = config.serve_api_path
+    WikiHandler.sparql_service_enabled = config.sparql_service_enabled
+    WikiHandler.sparql_service_path = config.sparql_service_path
 
     # Load site wiki page layout if configured; silently fall back to default if file missing
     if config.page_layout is not None and config.page_layout.is_file():
@@ -292,22 +322,22 @@ class _BadSparqlRequest(Exception):
         self.message = message
 
 
-def _validate_serve_api_path(config: WikiConfig, base_url: str) -> None:
+def _validate_sparql_service_path(config: WikiConfig, base_url: str) -> None:
     """Validate that the configured SPARQL route does not shadow page routes."""
-    if not config.serve_api_enabled:
+    if not config.sparql_service_enabled:
         return
 
-    api_path = config.serve_api_path.rstrip("/") or "/"
+    api_path = config.sparql_service_path.rstrip("/") or "/"
     resolved_base = base_url.rstrip("/") if base_url else ""
     watch_path = f"{resolved_base}/__watch" if resolved_base else "/__watch"
 
     if api_path == "/":
-        raise ValueError("Invalid serve_api.path: '/' would shadow the entire server.")
+        raise ValueError("Invalid sparql_service.path: '/' would shadow the entire server.")
     if api_path == watch_path:
-        raise ValueError(f"Invalid serve_api.path: '{config.serve_api_path}' collides with the watch endpoint.")
+        raise ValueError(f"Invalid sparql_service.path: '{config.sparql_service_path}' collides with the watch endpoint.")
     if resolved_base and (api_path == resolved_base or api_path.startswith(f"{resolved_base}/")):
         raise ValueError(
-            f"Invalid serve_api.path: '{config.serve_api_path}' collides with page routes under base_url '{resolved_base}'."
+            f"Invalid sparql_service.path: '{config.sparql_service_path}' collides with page routes under base_url '{resolved_base}'."
         )
 
 

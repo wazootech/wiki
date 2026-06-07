@@ -72,7 +72,7 @@ ALLOWED_CONFIG_KEYS = {
     "url_style",
     "exclude",
     "page_layout",
-    "serve_api",
+    "sparql_service",
     "link_renames",
     "link_style",
 }
@@ -82,7 +82,7 @@ ALLOWED_CHECK_KEYS = {
     "missing_layout_file",
 }
 ALLOWED_LINT_KEYS = {"broken_links", "filename_pattern", "headings", "thematic_breaks", "link_style"}
-ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
+ALLOWED_SPARQL_SERVICE_KEYS = {"enabled", "path"}
 
 
 def _looks_like_regex(value: str) -> bool:
@@ -143,6 +143,10 @@ def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
         raise ValueError(
             f"Invalid config file {config_name}: wiki_page_layout was renamed to page_layout"
         )
+    if "serve_api" in data:
+        raise ValueError(
+            f"Invalid config file {config_name}: serve_api was renamed to sparql_service"
+        )
     unknown_top_level = _unknown_keys(data, ALLOWED_CONFIG_KEYS)
     if unknown_top_level:
         raise ValueError(f"Invalid config file {config_name}: unknown top-level keys: {', '.join(unknown_top_level)}")
@@ -163,13 +167,15 @@ def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
         if unknown_lint:
             raise ValueError(f"Invalid config file {config_name}: unknown lint keys: {', '.join(unknown_lint)}")
 
-    serve_api_data = data.get("serve_api")
-    if serve_api_data is not None:
-        if not isinstance(serve_api_data, dict):
-            raise ValueError(f"Invalid config file {config_name}: serve_api must be a mapping")
-        unknown_serve_api = _unknown_keys(serve_api_data, ALLOWED_SERVE_API_KEYS)
-        if unknown_serve_api:
-            raise ValueError(f"Invalid config file {config_name}: unknown serve_api keys: {', '.join(unknown_serve_api)}")
+    sparql_service_data = data.get("sparql_service")
+    if sparql_service_data is not None:
+        if not isinstance(sparql_service_data, dict):
+            raise ValueError(f"Invalid config file {config_name}: sparql_service must be a mapping")
+        unknown_sparql_service = _unknown_keys(sparql_service_data, ALLOWED_SPARQL_SERVICE_KEYS)
+        if unknown_sparql_service:
+            raise ValueError(
+                f"Invalid config file {config_name}: unknown sparql_service keys: {', '.join(unknown_sparql_service)}"
+            )
 
 
 DEFAULT_NAMESPACES = {
@@ -225,8 +231,8 @@ class WikiConfig:
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
         page_layout: Path | None = None,
-        serve_api_enabled: bool = False,
-        serve_api_path: str = "/api/sparql",
+        sparql_service_enabled: bool = False,
+        sparql_service_path: str = "/api/sparql",
         link_renames: dict[str, str] | None = None,
         link_style: str | None = None,
     ) -> None:
@@ -246,8 +252,8 @@ class WikiConfig:
         self.url_style = normalize_url_style(url_style)
         self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
         self.page_layout = page_layout
-        self.serve_api_enabled = bool(serve_api_enabled)
-        self.serve_api_path = normalize_api_path(serve_api_path)
+        self.sparql_service_enabled = bool(sparql_service_enabled)
+        self.sparql_service_path = normalize_api_path(sparql_service_path)
         self.link_renames = dict(link_renames or {})
         self.link_style = _normalize_link_style(link_style)
 
@@ -337,11 +343,13 @@ class WikiConfig:
                             p = Path(layout_raw.strip())
                             page_layout_path = (p if p.is_absolute() else base_dir / p).resolve()
 
-                        serve_api_data = data.get("serve_api") if isinstance(data.get("serve_api"), dict) else {}
-                        serve_api_enabled = serve_api_data.get("enabled", False)
-                        if not isinstance(serve_api_enabled, bool):
-                            serve_api_enabled = True
-                        serve_api_path = serve_api_data.get("path", "/api/sparql")
+                        sparql_service_data = (
+                            data.get("sparql_service") if isinstance(data.get("sparql_service"), dict) else {}
+                        )
+                        sparql_service_enabled = sparql_service_data.get("enabled", False)
+                        if not isinstance(sparql_service_enabled, bool):
+                            sparql_service_enabled = True
+                        sparql_service_path = sparql_service_data.get("path", "/api/sparql")
 
                         link_renames_raw = data.get("link_renames")
                         link_renames: dict[str, str] = {}
@@ -367,8 +375,8 @@ class WikiConfig:
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
                             page_layout=page_layout_path,
-                            serve_api_enabled=serve_api_enabled,
-                            serve_api_path=serve_api_path,
+                            sparql_service_enabled=sparql_service_enabled,
+                            sparql_service_path=sparql_service_path,
                             link_renames=link_renames,
                             link_style=data.get("link_style"),
                         )
@@ -400,7 +408,7 @@ def normalize_url_style(value: str | None) -> str:
 def normalize_api_path(value: str | None) -> str:
     raw = str(value or "/api/sparql").strip()
     if not raw.startswith("/"):
-        raise ValueError(f"Invalid serve_api.path: {value}")
+        raise ValueError(f"Invalid sparql_service.path: {value}")
     normalized = raw.rstrip("/")
     return normalized or "/"
 

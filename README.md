@@ -464,7 +464,7 @@ python -m wiki serve --watch
 
 `--watch` polls `input_dirs` and `asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
 
-When `serve_api.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
+When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
 ### `init`
 Interactively scaffold a new wiki workspace (`wiki.yaml` + starter `wiki/` content) in the current directory.
@@ -661,7 +661,7 @@ link_style: markdown         # wikilink | markdown — wiki link --apply output 
 
 page_layout: layouts/default.html    # site default page layout; see docs/wiki/Wiki_Configuration.md
 
-serve_api:
+sparql_service:
   enabled: false             # opt-in read-only SPARQL endpoint on wiki serve
   path: /api/sparql
 

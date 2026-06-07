@@ -52,8 +52,8 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.check, DEFAULT_CHECK_RULES)
         self.assertEqual(config.lint, DEFAULT_LINT_RULES)
         self.assertIsNotNone(config.context)
-        self.assertFalse(config.serve_api_enabled)
-        self.assertEqual(config.serve_api_path, "/api/sparql")
+        self.assertFalse(config.sparql_service_enabled)
+        self.assertEqual(config.sparql_service_path, "/api/sparql")
         self.assertEqual(config.link_style, "markdown")
 
     def test_wikiconfig_load_no_files(self) -> None:
@@ -80,7 +80,7 @@ class TestWikiConfig(unittest.TestCase):
                 "filename_pattern": "[A-Za-z0-9_()-]+\\.md",
                 "base_url": "/docs",
                 "url_style": "file",
-                "serve_api": {"enabled": False, "path": "/sparql"},
+                "sparql_service": {"enabled": False, "path": "/sparql"},
                 "context": {
                     "custom_pref": "http://custom-pref.org/"
                 }
@@ -97,8 +97,8 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+\\.md")
             self.assertEqual(config.base_url, "/docs")
             self.assertEqual(config.url_style, "file")
-            self.assertFalse(config.serve_api_enabled)
-            self.assertEqual(config.serve_api_path, "/sparql")
+            self.assertFalse(config.sparql_service_enabled)
+            self.assertEqual(config.sparql_service_path, "/sparql")
             self.assertIn("custom_pref", config.namespaces)
 
     def test_wikiconfig_load_link_style(self) -> None:
@@ -159,15 +159,26 @@ class TestWikiConfig(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown check keys"):
                 WikiConfig.load(base_path)
 
-    def test_wikiconfig_load_unknown_serve_api_keys_raise_error(self) -> None:
+    def test_wikiconfig_load_unknown_sparql_service_keys_raise_error(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "serve_api": {"enable": True}}),
+                yaml.dump({"input_dirs": "wiki", "sparql_service": {"enable": True}}),
                 encoding="utf-8",
             )
 
-            with self.assertRaisesRegex(ValueError, "unknown serve_api keys"):
+            with self.assertRaisesRegex(ValueError, "unknown sparql_service keys"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_rejects_renamed_serve_api_key(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "serve_api": {"enabled": True}}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "serve_api was renamed to sparql_service"):
                 WikiConfig.load(base_path)
 
     def test_wikiconfig_default_asset_dir_when_present(self) -> None:

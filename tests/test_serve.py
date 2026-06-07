@@ -367,9 +367,64 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         self.assertRegex(page.read_text(encoding="utf-8"), r"\| givenName\s+\|")
         self.assertGreater(len(site.pages), 0)
 
+    def test_sparql_endpoint_get_service_description_turtle(self) -> None:
+        self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("GET", "/api/sparql", headers={"Accept": "text/turtle"})
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("Content-Type"), "text/turtle; charset=utf-8")
+        self.assertIn("sd:endpoint", body)
+        self.assertIn(f"<http://127.0.0.1:{port}/api/sparql>", body)
+        self.assertIn("sd:SPARQL11Query", body)
+
+    def test_sparql_endpoint_get_service_description_rdf_xml(self) -> None:
+        self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("GET", "/api/sparql", headers={"Accept": "application/rdf+xml"})
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.getheader("Content-Type"), "application/rdf+xml; charset=utf-8")
+        self.assertIn("sd:endpoint", body)
+        self.assertIn(f"http://127.0.0.1:{port}/api/sparql", body)
+
     def test_sparql_endpoint_get_select_json(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -396,7 +451,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_post_construct_turtle(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -433,7 +488,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_sparql_endpoint_can_be_disabled(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
         port = _free_port()
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=False)
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=False)
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
         t.start()
@@ -459,7 +514,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_sparql_endpoint_custom_path(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
         port = _free_port()
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/sparql")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True, sparql_service_path="/sparql")
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
         t.start()
@@ -484,7 +539,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_rejects_update_queries(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -518,7 +573,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_allows_literals_with_update_keywords(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Delete\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True)
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -548,25 +603,25 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_invalid_root_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True, sparql_service_path="/")
         with self.assertRaisesRegex(ValueError, "shadow the entire server"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_base_url_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True, sparql_service_path="/wiki")
         with self.assertRaisesRegex(ValueError, "collides with page routes"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_page_subpath_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki/foo")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True, sparql_service_path="/wiki/foo")
         with self.assertRaisesRegex(ValueError, "collides with page routes"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_watch_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, serve_api_enabled=True, serve_api_path="/wiki/__watch")
+        config = WikiConfig(input_dirs=[self.wiki_dir], config_root=self.wiki_dir, sparql_service_enabled=True, sparql_service_path="/wiki/__watch")
         with self.assertRaisesRegex(ValueError, "collides with the watch endpoint"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
