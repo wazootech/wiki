@@ -179,8 +179,8 @@ The wiki builder generates these selectors in the rendered page content:
 
 | Selector                    | Where                                                   |
 | --------------------------- | ------------------------------------------------------- |
-| `#firstHeading`             | The `<h1>` with the page title (in article body).       |
-| `#siteSub`                  | Subtitle line under the heading.                        |
+| `#firstHeading`             | The `<h1>` with the page title in the read-view shell.  |
+| `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.  |
 | `article`                   | Wrapper around the rendered markdown body.              |
 | `.toc` / `#toc`             | Table of contents container.                            |
 | `#catlinks` / `.catlinks`   | Category links box.                                     |

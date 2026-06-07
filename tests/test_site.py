@@ -10,6 +10,7 @@ from wiki.site import (
     build_page_html,
     build_site,
     render_wiki_markdown,
+    strip_leading_title_heading,
 )
 
 _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
@@ -44,7 +45,7 @@ class TestWikiSite(unittest.TestCase):
             self.assertEqual(len(site.pages), 1)
             page = site.pages[0]
             self.assertEqual(page.full_slug, "Bob")
-            self.assertIn('id="bob"', page.html)
+            self.assertNotIn('id="bob"', page.html)
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
@@ -300,6 +301,37 @@ specialty: Diagnostics
             self.assertNotIn("<style>", html)
             self.assertNotIn("infobox page-meta", html)
 
+    def test_strip_leading_title_heading_removes_matching_h1(self) -> None:
+        markdown = "# My Article\n\nLead paragraph."
+        self.assertEqual(
+            strip_leading_title_heading(markdown, "My Article"),
+            "Lead paragraph.",
+        )
+
+    def test_strip_leading_title_heading_keeps_non_matching_h1(self) -> None:
+        markdown = "# Different Title\n\nLead paragraph."
+        self.assertEqual(
+            strip_leading_title_heading(markdown, "My Article"),
+            markdown,
+        )
+
+    def test_build_site_strips_duplicate_title_from_rendered_html(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "---\nname: Content negotiation\ntype: TechArticle\n---\n\n"
+                "# Content negotiation\n\nLead paragraph.\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            self.assertIn("Lead paragraph.", page.html)
+            self.assertNotIn("<h1", page.html)
+            self.assertIn("# Content negotiation", page.markdown)
+
     def test_fallback_article_uses_minimal_template(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -311,11 +343,25 @@ specialty: Diagnostics
             page = site.pages[0]
             html = build_page_html(page, site)
             self.assertIn("<h1 id=\"firstHeading\">My Article</h1>", html)
+            self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
             self.assertNotIn("infobox page-meta", html)
             self.assertNotIn("Backlinks", html)
             self.assertNotIn("On this page", html)
+
+    def test_read_view_does_not_include_generic_site_sub(self) -> None:
+        seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n\nBody.", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html = build_page_html(page, site, html_template=seed_template)
+            self.assertNotIn("From Wiki CLI, the semantic knowledge base", html)
 
     def test_fallback_has_page_kind(self) -> None:
         with TemporaryDirectory() as tmpdir:

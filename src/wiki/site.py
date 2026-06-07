@@ -1067,6 +1067,32 @@ def extract_title(markdown: str, fallback: str) -> str:
     return humanize_route(fallback)
 
 
+def _normalize_title(text: str) -> str:
+    return " ".join(text.strip().casefold().split())
+
+
+def strip_leading_title_heading(markdown: str, title: str) -> str:
+    """Remove a leading # heading when it duplicates the page title."""
+    if not _normalize_title(title):
+        return markdown
+    lines = markdown.split("\n")
+    index = 0
+    while index < len(lines) and not lines[index].strip():
+        index += 1
+    if index >= len(lines):
+        return markdown
+    match = HEADING_RE.match(lines[index])
+    if match is None or len(match.group(1)) != 1:
+        return markdown
+    heading = match.group(2).strip()
+    if _normalize_title(heading) != _normalize_title(title):
+        return markdown
+    index += 1
+    while index < len(lines) and not lines[index].strip():
+        index += 1
+    return "\n".join(lines[index:])
+
+
 def humanize_route(route: str) -> str:
     stem = route.split("/")[-1] if route else "Index"
     return stem.replace("_", " ").replace("-", " ").strip() or "Index"
@@ -1130,8 +1156,9 @@ def build_site(
         wiki_ids = _page_wiki_ids(config, doc_slug, frontmatter)
         template_name = _select_template_name(frontmatter, type_names)
 
+        display_body = strip_leading_title_heading(body, h1_title)
         h1_html = render_wiki_markdown(
-            body,
+            display_body,
             base_url=resolved_base_url,
             url_style=resolved_url_style,
             current_route=doc_slug,
