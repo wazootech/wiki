@@ -659,6 +659,13 @@ textarea.wiki-textarea:focus {
   position: relative;
 }
 
+.metadata-mode-heading {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #54595d;
+}
+
 .metadata-mode-input {
   position: absolute;
   opacity: 0;
@@ -703,6 +710,10 @@ textarea.wiki-textarea:focus {
 
 .metadata-mode-input[value="compacted"]:checked ~ .metadata-mode-panels .metadata-mode-panel-compacted {
   display: block;
+}
+
+#view-metadata-content:target {
+  display: block !important;
 }
 
 /* Template Label badge */
@@ -1193,8 +1204,8 @@ def build_page_html(
 
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_mode)
     if page.has_frontmatter:
-        metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
-        metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON-LD)</a></li>'
+        metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
+        metadata_tab_html = '<li id="ca-metadata"><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">Metadata (JSON-LD)</a></li>'
         metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
     <div id="view-metadata-content" class="wiki-view-pane" style="display: none;">
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
@@ -1369,6 +1380,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_mode:
     return f"""<section class="page-meta metadata-panel">
 <h2>Metadata</h2>
 <div class="metadata-mode-switch" role="group" aria-label="Metadata display mode">
+  <div class="metadata-mode-heading">View as format</div>
   <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-expanded" value="expanded"{expanded_checked}>
   <label class="metadata-mode-label" for="{mode_id}-expanded">Expanded</label>
   <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-compacted" value="compacted"{compacted_checked}>

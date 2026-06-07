@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 import re
+import warnings
 from pathlib import Path
 from typing import Any, Optional
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag, XMLParsedAsHTMLWarning
 from rdflib import Graph, Literal, URIRef, RDF, BNode
 from rdflib.namespace import XSD
 from rdflib.parser import InputSource, Parser, StringInputSource
@@ -182,7 +183,9 @@ class MicrodataParser(Parser):
             content = content.decode("utf-8", errors="ignore")
             
         try:
-            soup = BeautifulSoup(content, "html.parser")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+                soup = BeautifulSoup(content, "html.parser")
         except Exception as e:
             logger.warning("Failed to parse HTML: %s", e)
             return
