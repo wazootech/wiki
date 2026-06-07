@@ -44,24 +44,18 @@ def _file_slug(file_path: Path, input_dirs: list[Path]) -> str:
     return _slugify_path(file_path)
 
 
-_PREDICATE_ALIASES: dict[str, tuple[str, str]] = {
-    "label": ("rdfs", "label"),
-    "comment": ("rdfs", "comment"),
-}
-
-
 def resolve_predicate(key: str, context: Context) -> URIRef:
-    """Map a frontmatter key to an RDF predicate URI using managed namespaces."""
+    """Map a frontmatter key to an RDF predicate URI using managed namespaces.
+
+    Resolution order: CURIE (prefix:localName) → wiki.* dotted keys → schema: default.
+    Non-schema vocabulary must use an explicit prefix (for example rdfs:label).
+    """
     if ":" in key:
         prefix, name = key.split(":", 1)
         if prefix in context.namespaces:
             return context.namespaces[prefix][name]
     if key.startswith("wiki."):
         return context.namespaces["wiki"][key[5:]]
-    alias = _PREDICATE_ALIASES.get(key)
-    if alias is not None:
-        prefix, name = alias
-        return context.namespaces[prefix][name]
     return context.namespaces["schema"][key]
 
 

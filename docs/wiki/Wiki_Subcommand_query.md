@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki query
-comment: Run SPARQL SELECT or CONSTRUCT against the vault graph.
+headline: wiki query
+description: Run SPARQL SELECT or CONSTRUCT against the vault graph.
 ---
 
 # `wiki query`

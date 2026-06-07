@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: SPARQL
-comment: Standard query language and protocol for RDF.
+headline: SPARQL
+description: Standard query language and protocol for RDF.
 ---
 
 # SPARQL
@@ -37,16 +37,15 @@ SELECT ?person ?given ?family WHERE {
 
 ### Filtered query
 
-Uses standard string or URI filters to constrain your results. For other resources, `rdfs:label` and `rdfs:comment` are common display fields:
+Uses standard string or URI filters to constrain your results. For TechArticle pages, `schema:headline` and `schema:description` are the display fields:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?doc ?label ?comment WHERE {
+SELECT ?doc ?headline ?description WHERE {
   ?doc rdf:type schema:TechArticle .
-  ?doc rdfs:label ?label .
-  OPTIONAL { ?doc rdfs:comment ?comment . }
+  ?doc schema:headline ?headline .
+  OPTIONAL { ?doc schema:description ?description . }
   FILTER(STRSTARTS(STR(?doc), "https://wazootech.github.io/wiki/wiki/"))
 }
 ```

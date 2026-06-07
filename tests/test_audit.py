@@ -302,14 +302,14 @@ id: wiki:ProjectShape
 type: sh:NodeShape
 sh:targetClass: schema:Project
 sh:property:
-  - sh:path: rdfs:label
+  - sh:path: schema:name
     sh:minCount: 1
     sh:datatype: xsd:string
 ---
 # Project Shape
 """, encoding="utf-8")
 
-            # Create an invalid project (missing label)
+            # Create an invalid project (missing name)
             invalid_project = wiki_dir / "invalid-project.md"
             invalid_project.write_text("""---
 type: Project
@@ -320,14 +320,14 @@ type: Project
             valid_project = wiki_dir / "valid-project.md"
             valid_project.write_text("""---
 type: Project
-label: Wiki CLI
+name: Wiki CLI
 ---
 """, encoding="utf-8")
 
             # Validate the invalid project
             res_invalid = check_shacl_file(invalid_project, config)
             self.assertIsNotNone(res_invalid)
-            self.assertFalse(res_invalid[0])  # Should NOT conform because of missing label
+            self.assertFalse(res_invalid[0])  # Should NOT conform because of missing name
 
             # Validate the valid project
             res_valid = check_shacl_file(valid_project, config)
@@ -376,7 +376,6 @@ label: Wiki CLI
             results = run_check(config)
             self.assertFalse(results["conforms"])
             self.assertTrue(any("wiki:template" in err for err in results["errors"]))
-
 
 if __name__ == "__main__":
     unittest.main()

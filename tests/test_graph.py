@@ -44,12 +44,16 @@ class TestRDFFrontmatter(unittest.TestCase):
             self.context.namespaces["schema"]["givenName"]
         )
         self.assertEqual(
-            resolve_predicate("label", self.context),
+            resolve_predicate("headline", self.context),
+            self.context.namespaces["schema"]["headline"]
+        )
+        self.assertEqual(
+            resolve_predicate("rdfs:label", self.context),
             self.context.namespaces["rdfs"]["label"]
         )
         self.assertEqual(
-            resolve_predicate("comment", self.context),
-            self.context.namespaces["rdfs"]["comment"]
+            resolve_predicate("label", self.context),
+            self.context.namespaces["schema"]["label"]
         )
         self.assertEqual(
             resolve_predicate("unregistered:prop", self.context),

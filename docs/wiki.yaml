@@ -3,7 +3,7 @@ input_dirs:
 wiki_base: https://wazootech.github.io/wiki/
 base_url: /wiki
 url_style: dir
-content_predicate: schema:text
+content_predicate: schema:articleBody
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 check:
   broken_links: warning

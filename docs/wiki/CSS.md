@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: CSS
-comment: Cascading Style Sheets for describing document presentation.
+headline: CSS
+description: Cascading Style Sheets for describing document presentation.
 ---
 
 # CSS

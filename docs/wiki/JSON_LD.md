@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: JSON-LD
-comment: JavaScript Object Notation for Linked Data.
+headline: JSON-LD
+description: JavaScript Object Notation for Linked Data.
 ---
 
 # JSON-LD

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Notation3
-comment: N3 is a compact and readable alternative to RDF/XML.
+headline: Notation3
+description: N3 is a compact and readable alternative to RDF/XML.
 ---
 
 # Notation3

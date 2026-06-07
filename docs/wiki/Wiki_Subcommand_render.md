@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki render
-comment: Update inline SPARQL result tables in markdown files.
+headline: wiki render
+description: Update inline SPARQL result tables in markdown files.
 ---
 
 # `wiki render`

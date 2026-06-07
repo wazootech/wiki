@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Second brain
-comment: External system for capturing and organizing personal knowledge outside your head.
+headline: Second brain
+description: External system for capturing and organizing personal knowledge outside your head.
 ---
 
 # Second brain

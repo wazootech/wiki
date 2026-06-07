@@ -81,7 +81,7 @@ name: Invalid Page
             extra_dir.mkdir()
             (config_dir / "wiki.yaml").write_text("input_dirs:\n  - wiki\n", encoding="utf-8")
             (extra_dir / "note.md").write_text(
-                "---\ntype: schema:WebPage\nlabel: Extra\n---\n",
+                "---\ntype: schema:WebPage\nname: Extra\n---\n",
                 encoding="utf-8",
             )
 
@@ -94,7 +94,7 @@ name: Invalid Page
                     "extra",
                     "query",
                     "--no-inference",
-                    "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }",
+                    "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }",
                     "-f",
                     "json",
                 ],
@@ -1042,18 +1042,18 @@ Hello from [[alice]].""", encoding="utf-8")
             (wiki_dir / "doc.md").write_text("""---
 type: schema:WebPage
 id: wiki:doc
-label: FromWiki
+name: FromWiki
 ---""", encoding="utf-8")
             (raw_dir / "note.md").write_text("""---
 type: schema:WebPage
 id: wiki:note
-label: FromRaw
+name: FromRaw
 ---""", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),
                 "query", "--no-inference",
-                "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label } ORDER BY ?label",
+                "SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name",
                 "-f", "json",
             ])
             self.assertEqual(result.exit_code, 0)
@@ -1178,14 +1178,14 @@ Custom base URL test.
             (wiki_dir / "doc.md").write_text("""---
 type: schema:WebPage
 id: wiki:doc
-label: ConfigTest
+name: ConfigTest
 ---""", encoding="utf-8")
             (config_dir / "wiki.yaml").write_text("input_dirs: ../wiki", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),
                 "query", "--no-inference",
-                "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }",
+                "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }",
                 "-f", "json",
             ])
             self.assertEqual(result.exit_code, 0)

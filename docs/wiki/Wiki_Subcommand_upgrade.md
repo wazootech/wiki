@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki upgrade
-comment: Check PyPI for updates and upgrade wazootech-wiki.
+headline: wiki upgrade
+description: Check PyPI for updates and upgrade wazootech-wiki.
 ---
 
 # `wiki upgrade`

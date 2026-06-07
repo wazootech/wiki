@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Declarative knowledge
-comment: Knowing what — facts, types, and relationships expressed as structured data.
+headline: Declarative knowledge
+description: Knowing what — facts, types, and relationships expressed as structured data.
 ---
 
 # Declarative knowledge

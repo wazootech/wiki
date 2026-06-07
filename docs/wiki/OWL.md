@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: OWL
-comment: Web Ontology Language for rich and complex knowledge about things.
+headline: OWL
+description: Web Ontology Language for rich and complex knowledge about things.
 ---
 
 # OWL

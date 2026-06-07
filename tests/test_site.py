@@ -153,7 +153,7 @@ name: Bella Davidson
                 """---
 type: schema:CreativeWork
 wazoo:layout: layouts/project.html
-label: Project Atlas
+name: Project Atlas
 related:
   - wiki:Project_Atlas
 ---
@@ -164,7 +164,7 @@ related:
             (wiki / "Project_Atlas.yaml").write_text(
                 """id: wiki:Project_Atlas
 type: schema:CreativeWork
-label: Project Atlas Record
+name: Project Atlas Record
 """,
                 encoding="utf-8",
             )
@@ -190,7 +190,7 @@ label: Project Atlas Record
 type: schema:CreativeWork
 template: layouts/project.html
 wiki:template: layouts/project.html
-label: Project Atlas
+name: Project Atlas
 ---
 # Project Atlas
 """,

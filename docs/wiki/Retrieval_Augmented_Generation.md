@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Retrieval-augmented generation
-comment: Pattern where an LLM retrieves external chunks at query time instead of relying on a precompiled knowledge structure.
+headline: Retrieval-augmented generation
+description: Pattern where an LLM retrieves external chunks at query time instead of relying on a precompiled knowledge structure.
 ---
 
 # Retrieval-augmented generation

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki fmt
-comment: Format markdown vault pages using mdformat with wikilink preservation.
+headline: wiki fmt
+description: Format markdown vault pages using mdformat with wikilink preservation.
 ---
 
 # `wiki fmt`

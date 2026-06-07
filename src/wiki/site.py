@@ -1262,7 +1262,11 @@ def build_site(
         frontmatter = fm_data if fm_data is not None else {}
 
         doc_slug = file_slug(file_path)
-        h1_title = frontmatter.get("name") or extract_title(body, doc_slug)
+        h1_title = (
+            frontmatter.get("headline")
+            or frontmatter.get("name")
+            or extract_title(body, doc_slug)
+        )
         h1_toc = extract_outline(body)
         wiki_ids = _page_wiki_ids(config, doc_slug, frontmatter)
         layout_path, layout_stem = _parse_page_layout(frontmatter, config.config_root)

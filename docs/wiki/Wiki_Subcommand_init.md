@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki init
-comment: Scaffold wiki.yaml and starter wiki pages interactively.
+headline: wiki init
+description: Scaffold wiki.yaml and starter wiki pages interactively.
 ---
 
 # `wiki init`

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Procedural knowledge
-comment: Knowing how — workflows, rules, and executable processes rather than static facts.
+headline: Procedural knowledge
+description: Knowing how — workflows, rules, and executable processes rather than static facts.
 ---
 
 # Procedural knowledge

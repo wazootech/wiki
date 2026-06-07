@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Wiki configuration
-comment: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
+headline: Wiki configuration
+description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 ---
 
 # Wiki configuration
@@ -39,7 +39,7 @@ url_style: dir
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 exclude:
   - assets/private/**
-content_predicate: schema:text
+content_predicate: schema:articleBody
 
 check:
   broken_links: warning
@@ -76,7 +76,7 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 | ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
 | `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and \[\[Microdata                                                    |
-| `content_predicate`    | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
+| `content_predicate`    | —                                                  | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
 | `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                        |
 
 ## Site output
@@ -262,7 +262,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:text` so page bodies participate in SPARQL when needed.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed.
 
 ## Related
 

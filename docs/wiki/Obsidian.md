@@ -1,7 +1,7 @@
 ---
 type: schema:SoftwareApplication
-label: Obsidian
-comment: A powerful and extensible knowledge base that works on top of a local folder of plain text Markdown files.
+name: Obsidian
+description: A powerful and extensible knowledge base that works on top of a local folder of plain text Markdown files.
 ---
 
 # Obsidian

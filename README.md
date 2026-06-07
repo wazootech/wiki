@@ -559,13 +559,13 @@ id: wiki:DogShape
 type: sh:NodeShape
 sh:targetClass: wiki:Dog
 sh:property:
-  sh:path: rdfs:label
+  sh:path: schema:name
   sh:datatype: xsd:string
   sh:minCount: 1
 ---
 
 # Dog Shape
-Requires that all `wiki:Dog` documents must declare a label.
+Requires that all `wiki:Dog` documents must declare a name.
 ```
 
 #### Native microdata via HTML attributes
@@ -576,7 +576,7 @@ You are not limited to YAML headers! For rich semantic embedding directly inside
 Product X is state-of-the-art.
 
 <div itemscope itemtype="schema:Product" itemid="wiki:Product_X">
-  Our latest model is the <span itemprop="rdfs:label">Quantum Processor X</span>.
+  Our latest model is the <span itemprop="schema:name">Quantum Processor X</span>.
   
   <div itemprop="schema:offers" itemscope itemtype="schema:Offer">
     Price: <span itemprop="schema:price">999.99</span> 
@@ -621,14 +621,14 @@ SELECT ?given ?family WHERE {
 ```
 
 #### Opt-in full-text SPARQL over markdown content
-By enabling `content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (e.g. `schema:text`). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
+By enabling `content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article vaults). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
 
 SELECT ?doc ?content WHERE {
-  ?doc a wiki:Dog ;
-       schema:text ?content .
+  ?doc a schema:TechArticle ;
+       schema:articleBody ?content .
   FILTER(CONTAINS(LCASE(?content), "swimming"))
 }
 ```
@@ -648,7 +648,7 @@ url_style: dir
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 exclude:
   - assets/private/**
-content_predicate: schema:text # Opt-in full-text markdown body auto-injection
+content_predicate: schema:articleBody # Opt-in markdown body auto-injection
 
 check:
   broken_links: warning      # "error" | "warning" | "off"

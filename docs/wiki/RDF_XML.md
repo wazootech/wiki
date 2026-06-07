@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: RDF XML
-comment: XML-based W3C serialization for RDF graphs.
+headline: RDF XML
+description: XML-based W3C serialization for RDF graphs.
 ---
 
 # RDF XML

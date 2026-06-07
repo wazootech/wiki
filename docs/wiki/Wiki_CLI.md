@@ -1,8 +1,8 @@
 ---
 type: schema:SoftwareApplication
-label: Wiki CLI
+name: Wiki CLI
 softwareVersion: 0.1.8
-comment: Command-line interface for querying, validating, and publishing semantic markdown wikis.
+description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 ---
 
 # Wiki CLI
@@ -83,27 +83,27 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <https://schema.org/>
 
-SELECT ?command ?comment WHERE {
+SELECT ?command ?description WHERE {
   ?command rdf:type schema:TechArticle .
   FILTER(STRSTARTS(STR(?command), "https://wazootech.github.io/wiki/Wiki_Subcommand_"))
-  OPTIONAL { ?command rdfs:comment ?comment }
+  OPTIONAL { ?command schema:description ?description }
 }
 ORDER BY ?command
 ```
 
-| Command                                               | Comment |
-| ----------------------------------------------------- | ------- |
-| [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     |         |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     |         |
-| [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   |         |
-| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         |         |
-| [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       |         |
-| [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       |         |
-| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       |         |
-| [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     |         |
-| [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   |         |
-| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     |         |
-| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) |         |
+| Command                                               | Description                                                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     | Generate a static HTML site from the vault.                             |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and broken links.    |
+| [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                          |
+| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation.  |
+| [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       | Scaffold wiki.yaml and starter wiki pages interactively.                |
+| [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links. |
+| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for filename patterns and heading style.              |
+| [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                 |
+| [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                   |
+| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview.                                |
+| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki.                      |
 
 <!-- sparql:end -->
 

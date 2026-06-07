@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Content negotiation
-comment: Managing resource representations through HTTP request headers.
+headline: Content negotiation
+description: Managing resource representations through HTTP request headers.
 ---
 
 # Content negotiation

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki link
-comment: Suggest missing wikilinks and repair unambiguous broken internal links.
+headline: wiki link
+description: Suggest missing wikilinks and repair unambiguous broken internal links.
 ---
 
 # `wiki link`

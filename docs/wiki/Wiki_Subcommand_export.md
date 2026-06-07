@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: wiki export
-comment: Export document frontmatter as RDF or JSON-LD.
+headline: wiki export
+description: Export document frontmatter as RDF or JSON-LD.
 ---
 
 # `wiki export`

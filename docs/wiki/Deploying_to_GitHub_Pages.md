@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: Deploying to GitHub Pages
-comment: CI workflow to check, build, and publish the docs wiki.
+headline: Deploying to GitHub Pages
+description: CI workflow to check, build, and publish the docs wiki.
 ---
 
 # Deploying to GitHub Pages

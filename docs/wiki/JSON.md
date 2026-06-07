@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: JSON
-comment: JavaScript Object Notation, a standard data interchange format.
+headline: JSON
+description: JavaScript Object Notation, a standard data interchange format.
 ---
 
 # JSON

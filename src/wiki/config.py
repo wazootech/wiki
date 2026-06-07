@@ -60,7 +60,11 @@ ALLOWED_CONFIG_KEYS = {
     "link_renames",
 }
 
-ALLOWED_CHECK_KEYS = {"broken_links", "forbidden_layout_keys", "missing_layout_file"}
+ALLOWED_CHECK_KEYS = {
+    "broken_links",
+    "forbidden_layout_keys",
+    "missing_layout_file",
+}
 ALLOWED_LINT_KEYS = {"filename_pattern", "headings"}
 ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 

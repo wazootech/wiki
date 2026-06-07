@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-label: SHACL
-comment: Shapes Constraint Language for validating RDF graphs.
+headline: SHACL
+description: Shapes Constraint Language for validating RDF graphs.
 ---
 
 # SHACL
@@ -31,11 +31,11 @@ schema:ProjectShape a sh:NodeShape ;
   
   # Required properties
   sh:property [
-    sh:path rdfs:label ;
+    sh:path schema:name ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:string ;
-    sh:message "Project must have exactly one label string." ;
+    sh:message "Project must have exactly one name string." ;
   ] ;
   
   sh:property [
