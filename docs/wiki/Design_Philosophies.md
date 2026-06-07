@@ -10,17 +10,20 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 [Wiki_Subcommand_check](Wiki_Subcommand_check.md), [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md), [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
 
-## Check, lint, and fmt
+## Check, lint, fmt, and link
 
-Three lanes, three commands (aligned with common CLI tooling):
+Four audit/format lanes (aligned with common CLI tooling):
 
-| Lane        | Command      | Config / tool        |
-| ----------- | ------------ | -------------------- |
-| Integrity   | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) |
-| Convention  | `wiki lint`  | `lint.filename_pattern`, `lint.headings` |
-| Formatting  | `wiki fmt`   | mdformat             |
+| Lane          | Command      | Config / tool        |
+| ------------- | ------------ | -------------------- |
+| Integrity     | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) — **report only** |
+| Convention    | `wiki lint`  | `lint.filename_pattern`, `lint.headings` |
+| Formatting    | `wiki fmt`   | mdformat             |
+| Link hygiene  | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags |
 
-`wiki build` runs integrity and convention preflight (`check` then `lint`) unless `--no-check`.
+`wiki check` answers whether the vault is **valid** — it never mutates prose. `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `check` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
+
+`wiki build` runs integrity and convention preflight (`check` then `lint`) unless `--no-check`. `wiki link` is never part of that preflight.
 
 ## Pipes and filters
 

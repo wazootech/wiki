@@ -38,6 +38,8 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
 
+**Link hygiene**: Suggest missing wikilinks or repair unambiguous broken internal links via `wiki link` (`--apply`, `--fix-broken`). Detection of broken links stays in **Checking**; mutation is explicit and never part of `wiki build` preflight. _Avoid_: Treating enrichment as lint or folding repair into `wiki check`.
+
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 
 **CLI**: The command-line interface built with Click for managing the wiki.
@@ -50,7 +52,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
-- **Checking** runs integrity checks on the **Vault** via `wiki check`; **Linting** runs convention audits via `wiki lint`; stale SPARQL blocks use `wiki render --check`
+- **Checking** runs integrity checks on the **Vault** via `wiki check`; **Linting** runs convention audits via `wiki lint`; **Link hygiene** is optional via `wiki link`; stale SPARQL blocks use `wiki render --check`
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
 - **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph

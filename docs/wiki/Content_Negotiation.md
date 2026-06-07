@@ -30,6 +30,6 @@ Informs the server about the client's language preferences (e.g., `en-US`, `fr`)
 
 Identifies what compression algorithms (gzip, deflate, br) the client understands.
 
-## Importance in the semantic web
+## Importance in the [[Semantic_Web|semantic web]]
 
 In a [Semantic_Web](Semantic_Web.md) compliant system, URIs identifying real-world resources should behave intelligently. When a human navigates to the URI, the server employs content negotiation to render the [HTML](HTML.md) page. When a crawler or reasoning agent requests the exact same URI, the server can provide the machine-readable, structured data, like [RDF](RDF.md) or [JSON](JSON_LD.md).

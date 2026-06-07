@@ -6,7 +6,7 @@ description: Canonical rules for vault filenames, links, prose, frontmatter, sha
 
 # Style guide
 
-This is the **canonical style guide** for authoring pages in an LLM Wiki vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an [[LLM_Wiki|LLM Wiki]] vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
 In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose here—link here instead.
 
@@ -90,7 +90,7 @@ ORDER BY ?class
 
 Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki_Subcommand_render](Wiki_Subcommand_render.md) and [Graph_Cache](Graph_Cache.md).
 
-## HTML microdata
+## HTML [[Microdata|microdata]]
 
 The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and adds triples to the graph. CURIEs in attributes use the same `context` prefixes as frontmatter.
 

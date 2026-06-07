@@ -73,7 +73,7 @@ This works well with typed HTML rendering:
 ```yaml
 id: wiki:Gregory_Davidson
 type: schema:Person
-name: Gregory House
+name: Gregory Davidson
 wiki:template: person
 spouse: wiki:Bella_Davidson
 ```

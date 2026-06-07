@@ -12,14 +12,14 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Python CLI**: Comprehensive command suite — `check`, `lint`, `fmt`, `query`, `render`, `build`, `serve`, `export`.
+- **Pure Python CLI**: Comprehensive command suite — `check`, `lint`, `link`, `fmt`, `query`, `render`, `build`, `serve`, `view`, `export`, `init`.
 - **Terminal Document View**: Render a single wiki document as a readable terminal infobox with `wiki view`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
 - **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
 - **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
-- **Typed HTML Rendering**: Build typed pages with template selection via `template` or `wiki:template`, plus generated infoboxes with clickable wiki and external links.
+- **Typed HTML Rendering**: Build typed pages with template selection via `template` or `wiki:template`, sidebar infoboxes with clickable wiki and external links, and a no-JavaScript metadata pane (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads).
 
 ## Installation
 
@@ -80,10 +80,12 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
+`serve --watch` rebuilds when files under `input_dirs` and `asset_dirs` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+
 Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
-- Use `python -m wiki -c docs/wiki.yaml serve --watch` for the main live-preview workflow.
+- Use `python -m wiki -c docs/wiki.yaml serve --watch` for the main live-preview workflow (restart after CLI changes).
 - Run `wiki -c docs/wiki.yaml check --strict -v` and `wiki -c docs/wiki.yaml lint --strict -v` before landing documentation changes.
 - Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
 
@@ -147,6 +149,21 @@ lint:
 
 **Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
 
+### `link`
+Suggest missing wikilinks for plain-text page mentions, or repair unambiguous broken internal links. Report-only by default.
+
+```bash
+wiki link
+wiki link wiki/Some_Page.md
+wiki link -v
+wiki link --check
+wiki link --dry-run --apply
+wiki link --apply
+wiki link --fix-broken
+```
+
+`wiki check` reports broken links (`check.broken_links`). `wiki link` enriches prose with new wikilinks (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). Optional `link_renames` in `wiki.yaml` maps old slugs to new routes for renames.
+
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
 
@@ -201,7 +218,7 @@ wiki render --glob "wiki/people/*.md"
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when vault files change.
+**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `input_dirs` or `asset_dirs` change (not when CLI source code changes).
 
 Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged vaults, but it adds `.wiki/cache/` artifacts and still invalidates on vault or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
@@ -249,6 +266,9 @@ wiki build --render --reload
 
 # Persist a warm graph for reuse across repeated build --render runs
 wiki build --render --cache
+
+# Skip pre-build integrity and lint checks
+wiki build --no-check
 ```
 
 The `--url-style` flag controls how pages are written to disk and linked:
@@ -305,21 +325,21 @@ Asset directories are relative to the config file and copied under the base URL 
 
 #### Page templates and infoboxes
 
-The HTML builder now supports lightweight typed page templates. Template selection order is:
+The HTML builder supports lightweight typed page templates. Template selection order is:
 
 1. `wiki:template` frontmatter property
 2. `template` frontmatter property
-3. first page `type` / `@type`
-4. built-in `default`
+3. among `type` / `@type` values, the first whose stem is `person`, `thing`, or `pet` (built-in layout names)
+4. otherwise the first `type` / `@type` value
+5. `default` when no type is set
 
-Built-in typed layouts currently include `person` and `thing`, both of which render a sidebar infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
+Any article with displayable frontmatter gets a sidebar infobox (not only `person` / `thing` / `pet` pages). Structural keys such as `@context`, `@id`, `id`, `@type`, `type`, `template`, and `wiki:template` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
 ```yaml
 id: wiki:Gregory_Davidson
 type: schema:Person
-name: Gregory House
 wiki:template: person
-spouse: wiki:Bella_Davidson
+knows: wiki:Bella_Davidson
 url: https://example.com/gregory
 ```
 
@@ -327,7 +347,7 @@ In the built site:
 
 - `wiki:Bella_Davidson` links to the `Bella_Davidson` page when that page exists
 - `https://example.com/gregory` renders as an external link
-- `wiki:template` controls the page layout and is hidden from the infobox itself
+- `wiki:template` controls the page layout class and is hidden from the infobox itself
 
 Use SHACL to constrain template usage when needed, for example requiring at most one `wiki:template` value:
 
@@ -344,23 +364,15 @@ sh:property:
     sh:maxCount: 1
 ```
 
-### `view`
-Render a single wiki document as a terminal-friendly infobox view.
+#### Metadata pane (RDF views)
 
-```bash
-# View a markdown page with infobox and body
-wiki view wiki/Gregory_Davidson.md
+Built and served HTML pages include a **Metadata** tab with a no-JavaScript format picker (CSS radio buttons). The pane uses the same serialization path as `wiki export`:
 
-# View a data-only record
-wiki view wiki/Bella_Davidson.yaml
-```
+- JSON-LD (expanded and compacted)
+- Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads
 
-`wiki view` reuses the same page typing and infobox resolution as `wiki build` and `wiki serve`:
+`wiki build` embeds all format views in each page. On `wiki serve`, set the initial view with query parameters, for example `?metadata_format=turtle` or `?metadata_format=json-ld&metadata_mode=compacted`. Aliases such as `ttl`, `rdf`, and `jsonld` are accepted.
 
-- template names are shown as file-style identifiers like `Person.html`
-- internal wiki references are displayed using the target page title
-- markdown pages include their body below the infobox
-- data-only pages show their title and infobox without a markdown body
 #### GitHub Pages deployment
 
 Create `.github/workflows/deploy-pages.yml` in your wiki repository:
@@ -426,22 +438,44 @@ jobs:
 
 Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
 
-### `serve`
-Start a local development HTTP server that renders wiki markdown files as HTML (wikilinks, backlinks, ToC included). Uses the same rendering engine as `build` but serves pages on-the-fly without writing files to disk.
+### `view`
+Render a single wiki document as a terminal-friendly infobox view.
 
 ```bash
-# Default: http://127.0.0.1:8080
+# View a markdown page with infobox and body
+wiki view wiki/Gregory_Davidson.md
+
+# View a data-only record
+wiki view wiki/Bella_Davidson.yaml
+```
+
+`wiki view` reuses the same page typing and infobox resolution as `wiki build` and `wiki serve`:
+
+- template names are shown as file-style identifiers like `Person.html`
+- internal wiki references are displayed using the target page title
+- markdown pages include their body below the infobox
+- data-only pages show their title and infobox without a markdown body
+
+### `serve`
+Start a local development HTTP server that renders wiki markdown files as HTML (wikilinks, backlinks, ToC, infobox, and metadata pane included). Uses the same rendering engine as `build` but serves pages on-the-fly without writing files to disk.
+
+```bash
+# Default: http://127.0.0.1:8080/wiki/ (when base_url is /wiki)
 wiki serve
 
 # Custom host and port
 wiki serve --host 0.0.0.0 --port 3000
 
-# Watch vault files; rebuild graph, SPARQL blocks, and site on change
+# Watch vault files; rebuild graph, SPARQL blocks, and reload the browser on change
 wiki serve --watch
 
-# Run directly from source (no reinstall needed)
+# Editable install: run the in-repo package without reinstalling after pip/uv -e .
 python -m wiki serve --watch
 ```
+
+`--watch` polls `input_dirs` and `asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`) and, for JSON-LD, `?metadata_mode=expanded|compacted`.
+
+When `serve_api.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
 ### `init`
 Interactively scaffold a new wiki workspace (`wiki.yaml` + starter `wiki/` content) in the current directory.
@@ -584,7 +618,7 @@ Declare an instance somewhere else:
 ---
 id: wiki:Gregory_Davidson
 type: wiki:Engineer
-name: Gregory House
+name: Gregory Davidson
 ---
 ```
 
@@ -633,6 +667,12 @@ check:
 lint:
   filename_pattern: warning  # "error" | "warning" | "off"
   headings: off              # sentence case, numbered headings, body ---
+
+html_template: index.html    # optional custom HTML shell; see docs/wiki/Wiki_Configuration.md
+
+serve_api:
+  enabled: false             # opt-in read-only SPARQL endpoint on wiki serve
+  path: /api/sparql
 
 context:
   schema: https://schema.org/

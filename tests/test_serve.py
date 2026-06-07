@@ -234,16 +234,25 @@ class TestServe(unittest.TestCase):
     def test_metadata_mode_query_switches_initial_selection(self) -> None:
         self._write("page.md", "---\ntype: Article\nname: My Page\nabout: wiki:My_Page\n---\n\n# My Page\n")
         for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
-            status, expanded = self._get(port, "/wiki/page?metadata_mode=expanded")
-            compact_status, compacted = self._get(port, "/wiki/page?metadata_mode=compacted")
+            status, expanded = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=expanded")
+            compact_status, compacted = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=compacted")
 
         self.assertEqual(status, 200)
         self.assertEqual(compact_status, 200)
-        self.assertIn('value="expanded" checked="checked"', expanded)
-        self.assertIn('value="compacted" checked="checked"', compacted)
+        self.assertIn('value="json-ld-expanded" checked="checked"', expanded)
+        self.assertIn('value="json-ld-compacted" checked="checked"', compacted)
         self.assertIn('&quot;@id&quot;', expanded)
         self.assertIn('&quot;@context&quot;', compacted)
         self.assertIn('schema:about', compacted)
+
+    def test_metadata_format_query_selects_turtle_view(self) -> None:
+        self._write("page.md", "---\ntype: schema:Person\nname: My Page\n---\n\n# My Page\n")
+        for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
+            status, body = self._get(port, "/wiki/page?metadata_format=turtle")
+
+        self.assertEqual(status, 200)
+        self.assertIn('value="turtle" checked="checked"', body)
+        self.assertIn('metadata-format-panel-turtle', body)
 
     def test_404(self) -> None:
         self._write("exists.md", "# Exists")

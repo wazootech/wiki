@@ -6,7 +6,7 @@ description: Run Wiki CLI from Obsidian via Shell Commands.
 
 # Obsidian integration
 
-The CLI works well beside [Obsidian](Obsidian.md) because Obsidian markdown (including wikilinks) is natively supported by the CLI.
+The CLI works well beside [Obsidian](Obsidian.md) because [[Obsidian|Obsidian]] markdown (including wikilinks) is natively supported by the CLI.
 
 Use the community **Shell Commands** plugin to run `wiki` against your vault root (where `wiki.yaml` lives).
 
@@ -22,7 +22,7 @@ Point the plugin’s working directory at the folder containing `wiki.yaml`.
 
 ## Wikilinks
 
-Obsidian wikilinks are natively supported by the Wiki CLI. They match the CLI resolver when filenames follow vault route rules; `check.broken_links` still validates that each link resolves.
+[[Obsidian|Obsidian]] wikilinks are natively supported by the [[Wiki_CLI|Wiki CLI]]. They match the CLI resolver when filenames follow vault route rules; `check.broken_links` still validates that each link resolves.
 
 ## Related
 

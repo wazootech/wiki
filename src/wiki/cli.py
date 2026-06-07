@@ -169,6 +169,82 @@ def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> 
 
 
 @main.command()
+@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@click.option("--apply", is_flag=True, help="Insert suggested wikilinks into vault files.")
+@click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
+@click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
+@click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
+@click.option("-v", "--verbose", is_flag=True, help="Include target page titles in output.")
+@click.pass_obj
+def link(
+    config: Context,
+    file: Optional[Path],
+    apply: bool,
+    fix_broken: bool,
+    dry_run: bool,
+    check: bool,
+    verbose: bool,
+) -> None:
+    """Suggest or repair wikilinks for vault pages."""
+    from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
+    from .link_suggest import apply_link_opportunities, find_link_opportunities
+    from .paths import route_for_document_file
+
+    file_filter = None
+    if file:
+        if file.suffix.lower() != ".md":
+            raise click.ClickException(f"link only supports markdown files, got {file.name}.")
+        file_filter = {route_for_document_file(config, file)}
+
+    if fix_broken:
+        fixes = find_broken_link_fixes(config, file_filter=file_filter)
+        for fix in fixes:
+            click.echo(
+                f"{fix.issue.source_path.name}: "
+                f"{fix.issue.link_kind} [{fix.issue.raw_target}] -> {fix.description}"
+            )
+        if fixes:
+            changed = apply_broken_link_fixes(config, fixes, dry_run=dry_run)
+            if verbose:
+                prefix = "would fix" if dry_run else "fixed"
+                for changed_path in changed:
+                    click.echo(f"{prefix} {changed_path}")
+        if check:
+            remaining = remaining_broken_links(
+                config,
+                file_filter=file_filter,
+                fixes=fixes if dry_run else None,
+            )
+            if remaining:
+                sys.exit(1)
+        if not apply:
+            sys.exit(0)
+
+    opportunities = find_link_opportunities(config, file_filter=file_filter)
+    if apply:
+        if opportunities:
+            changed = apply_link_opportunities(config, opportunities, dry_run=dry_run)
+            if verbose or dry_run:
+                prefix = "would update" if dry_run else "updated"
+                for changed_path in changed:
+                    click.echo(f"{prefix} {changed_path}")
+        if check and find_link_opportunities(config, file_filter=file_filter):
+            sys.exit(1)
+        sys.exit(0)
+
+    if not opportunities:
+        sys.exit(0)
+
+    for item in opportunities:
+        target = item.target_route if not verbose else f"{item.target_route} ({item.target_title})"
+        click.echo(
+            f"{item.source_file}:{item.line}:{item.column}: "
+            f'"{item.matched_text}" -> [[{target}]]'
+        )
+    sys.exit(1 if check else 0)
+
+
+@main.command()
 @click.argument("query_args", nargs=-1, required=False)
 @click.option("-f", "--format", "output_format", type=FormatChoice(["table", "json", "csv", "tsv", "turtle", "n3", "markdown"], case_sensitive=False), default="table", show_default=True, help="Output format for query results.")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")

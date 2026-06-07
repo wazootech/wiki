@@ -70,7 +70,7 @@ class TestWikiSite(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "person.yaml").write_text("type: Person\nname: Gregory House\n", encoding="utf-8")
+            (wiki / "person.yaml").write_text("type: Person\nname: Gregory Davidson\n", encoding="utf-8")
             (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
             (wiki / "index.md").write_text("# Home", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
@@ -79,8 +79,8 @@ class TestWikiSite(unittest.TestCase):
 
             page_by_slug = {page.full_slug: page for page in site.pages}
             self.assertIn("person", page_by_slug)
-            self.assertEqual(page_by_slug["person"].title, "Gregory House")
-            self.assertIn("Gregory House", page_by_slug["person"].html + str(page_by_slug["person"].frontmatter))
+            self.assertEqual(page_by_slug["person"].title, "Gregory Davidson")
+            self.assertIn("Gregory Davidson", page_by_slug["person"].html + str(page_by_slug["person"].frontmatter))
             self.assertIn("place", page_by_slug)
             self.assertEqual(page_by_slug["place"].title, "Princeton")
 
@@ -243,12 +243,14 @@ specialty: Diagnostics
             html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=html_template)
 
-            self.assertIn("Metadata (JSON-LD)", html)
+            self.assertIn("Metadata</a>", html)
             self.assertIn('href="#view-metadata-content"', html)
-            self.assertIn('metadata-mode-panel-expanded', html)
-            self.assertIn('metadata-mode-panel-compacted', html)
-            self.assertIn('value="expanded" checked="checked"', html)
+            self.assertIn('metadata-format-panel-json-ld-expanded', html)
+            self.assertIn('metadata-format-panel-json-ld-compacted', html)
+            self.assertIn('metadata-format-panel-turtle', html)
+            self.assertIn('value="json-ld-expanded" checked="checked"', html)
             self.assertIn('class="language-json"', html)
+            self.assertIn('class="language-turtle"', html)
             self.assertIn('class="highlight"', html)
             self.assertIn("<span", html)
             self.assertIn('&quot;@id&quot;', html)
@@ -328,6 +330,25 @@ specialty: Diagnostics
             page = site.pages[0]
             article_html = build_page_html(page, site)
             self.assertIn("Page", article_html)
+
+    def test_page_content_does_not_expand_documented_placeholder_tokens(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Placeholders.md").write_text(
+                "---\nname: Placeholders\ntype: TechArticle\n---\n\n"
+                "| Placeholder | Description |\n"
+                "| --- | --- |\n"
+                "| `{metadata_pane_html}` | Metadata pane |\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html = build_page_html(page, site, html_template=_FULL_TEST_TEMPLATE)
+            self.assertIn("{metadata_pane_html}", html)
+            self.assertNotIn("metadata-format-switch", html)
 
     def test_build_index_html_respects_url_style(self) -> None:
         with TemporaryDirectory() as tmpdir:

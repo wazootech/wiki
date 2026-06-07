@@ -10,7 +10,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 
 ### Internal links
 - **Rule:** Prefer standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links and Obsidian-style `[[slug]]` wikilinks also resolve when valid. Ensure internal links point at existing documents.
-- **Enforcer:** `check.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata.
+- **Enforcer:** `check.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. Repair with `wiki link --fix-broken`; suggest missing wikilinks with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
 - **Rule:** Use sentence-case headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
@@ -42,7 +42,7 @@ wiki check --strict
 wiki lint --strict
 ```
 
-CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate lanes.
+CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate lanes. Optional: `wiki link --check` for missing-wikilink opportunities.
 
 ### Architecture
 See [CONTEXT.md](CONTEXT.md) for domain language and [docs/wiki/Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

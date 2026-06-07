@@ -12,7 +12,7 @@ A growing class of tools gives LLM agents **persistent memory through a filesyst
 
 Traditional chat UIs are largely stateless. These systems let an agent (and often a human) **read and write durable artifacts** as files, compounding knowledge across sessions. They pair well with coding agents ([Obsidian_Integration](Obsidian_Integration.md) as viewer, terminal tools as compiler) but differ in where truth lives and how recall works.
 
-## Comparison with Wiki CLI, Letta MemFS, and Supermemory SMFS
+## Comparison with [[Wiki_CLI|Wiki CLI]], [[Letta_MemFS|Letta MemFS]], and [[Supermemory_SMFS|Supermemory SMFS]]
 
 ### Feature matrix
 
@@ -37,7 +37,7 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 
 ## Complementary use
 
-These are not always mutually exclusive. A team might maintain a published **[Wiki CLI](Wiki_CLI.md)** vault for product knowledge while a Letta agent keeps **private MemFS** notes, or mount **SMFS** for ingested corpora that feed summaries written into the wiki. The wiki CLI’s strength is **shared, validated, link-stable markdown**; SMFS and MemFS optimize **per-agent runtime memory**.
+These are not always mutually exclusive. A team might maintain a published **[Wiki CLI](Wiki_CLI.md)** vault for product knowledge while a Letta agent keeps **private MemFS** notes, or mount **SMFS** for ingested corpora that feed summaries written into the wiki. The [[Wiki_CLI|wiki CLI]]’s strength is **shared, validated, link-stable markdown**; SMFS and MemFS optimize **per-agent runtime memory**.
 
 ## Related pages
 

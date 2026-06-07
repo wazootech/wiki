@@ -6,7 +6,7 @@ description: External system for capturing and organizing personal knowledge out
 
 # Second brain
 
-A **second brain** is a personal knowledge management (PKM) practice: an external, trusted place to store ideas, notes, and references so you can think clearly and act without holding everything in working memory.
+A **second brain** is a [[Personal_Knowledge|personal knowledge]] management (PKM) practice: an external, trusted place to store ideas, notes, and references so you can think clearly and act without holding everything in working memory.
 
 Modern implementations often use tools like [Obsidian](Obsidian_Integration.md) or semantic vaults that combine markdown files with structured metadata. An [LLM Wiki](LLM_Wiki.md) extends the idea by having an agent compile and maintain interlinked articles—turning a passive archive into a [Personal_Knowledge](Personal_Knowledge.md) base that agents can navigate.
 

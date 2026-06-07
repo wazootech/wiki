@@ -29,7 +29,7 @@ This expresses the RDF statement:
 - predicate: `https://schema.org/name`
 - object: `Alice`
 
-## In Wiki CLI
+## In [[Wiki_CLI|Wiki CLI]]
 
 Use `wiki export -f xml` when you want RDF serialized in RDF/XML form.
 

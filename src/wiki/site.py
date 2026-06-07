@@ -18,7 +18,7 @@ from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
-from .format import normalize_metadata_mode, process_rdf_format
+from .format import METADATA_VIEWS, process_rdf_format, resolve_metadata_view
 from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
@@ -29,6 +29,22 @@ WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
 
 PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
 PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
+
+
+def _metadata_format_css() -> str:
+    rules: list[str] = []
+    for view in METADATA_VIEWS:
+        view_id = view["id"]
+        rules.append(
+            f'.metadata-format-input[value="{view_id}"]:checked ~ .metadata-format-panels '
+            f".metadata-format-panel-{view_id} {{ display: block; }}"
+        )
+        rules.append(
+            f'.metadata-format-input[value="{view_id}"]:checked + .metadata-format-label '
+            "{ background: #36c; color: #fff; border-color: #36c; }"
+        )
+    return "\n".join(rules)
+
 
 INLINE_CSS = """
 /* Google Fonts */
@@ -498,6 +514,8 @@ th {
   color: #54595d;
   border-bottom: 1px solid #eaecf0;
   padding-bottom: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .infobox dd {
@@ -506,6 +524,7 @@ th {
   border-bottom: 1px solid #eaecf0;
   padding-bottom: 4px;
   color: #202122;
+  overflow-wrap: anywhere;
 }
 
 .infobox-list {
@@ -513,18 +532,62 @@ th {
   padding-left: 0;
   margin: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
   gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.infobox-list > li {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .infobox-chip {
-  display: inline-flex;
-  align-items: center;
+  display: block;
   border: 1px solid #dbe4f0;
   border-radius: 4px;
   padding: 2px 8px;
   background: #ffffff;
   font-size: 0.9em;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.infobox-dict {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.infobox-dict-row {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 4px 8px;
+  padding: 4px 6px;
+  background: #ffffff;
+  border: 1px solid #dbe4f0;
+  border-radius: 4px;
+  font-size: 0.95em;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.infobox-dict-row > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.infobox-key {
+  font-weight: 600;
+  color: #54595d;
+  overflow-wrap: anywhere;
 }
 
 /* Category Links box */
@@ -660,24 +723,24 @@ textarea.wiki-textarea:focus {
   color: #54595d;
 }
 
-.metadata-mode-switch {
+.metadata-format-switch {
   position: relative;
 }
 
-.metadata-mode-heading {
+.metadata-format-heading {
   margin: 0 0 8px;
   font-size: 0.85em;
   font-weight: 600;
   color: #54595d;
 }
 
-.metadata-mode-input {
+.metadata-format-input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.metadata-mode-label {
+.metadata-format-label {
   display: inline-block;
   margin: 0 8px 12px 0;
   padding: 6px 10px;
@@ -690,31 +753,16 @@ textarea.wiki-textarea:focus {
   cursor: pointer;
 }
 
-.metadata-mode-label:hover {
+.metadata-format-label:hover {
   background: #eaecf0;
 }
 
-.metadata-mode-input[value="expanded"]:checked + .metadata-mode-label,
-.metadata-mode-input[value="compacted"]:checked + .metadata-mode-label {
-  background: #36c;
-  color: #fff;
-  border-color: #36c;
-}
-
-.metadata-mode-panels {
+.metadata-format-panels {
   margin-top: 8px;
 }
 
-.metadata-mode-panel {
+.metadata-format-panel {
   display: none;
-}
-
-.metadata-mode-input[value="expanded"]:checked ~ .metadata-mode-panels .metadata-mode-panel-expanded {
-  display: block;
-}
-
-.metadata-mode-input[value="compacted"]:checked ~ .metadata-mode-panels .metadata-mode-panel-compacted {
-  display: block;
 }
 
 #view-metadata-content:target {
@@ -773,7 +821,7 @@ textarea.wiki-textarea:focus {
     margin: 20px 0;
   }
 }
-""".strip().strip() + "\n\n" + PYGMENTS_CSS
+""".strip().strip() + "\n\n" + _metadata_format_css() + "\n\n" + PYGMENTS_CSS
 
 DEFAULT_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -797,7 +845,7 @@ def slugify_segment(text: str) -> str:
 
 
 def slugify_path(text: str) -> str:
-    """Slugify a potentially nested slug like 'people/Gregory House' -> 'people/gregory-house'."""
+    """Slugify a potentially nested slug like 'people/Gregory Davidson' -> 'people/gregory-house'."""
     return "/".join(heading_slug(part) for part in text.split("/"))
 
 
@@ -1062,9 +1110,17 @@ def build_site(
 
 def _render_html(shell: str, context: dict[str, str]) -> str:
     """Replace {placeholder} tokens in shell with values from context."""
+    # page_content is rendered markdown and may document placeholder names literally.
+    # Substitute it last so tokens like {metadata_pane_html} in article bodies stay intact.
+    deferred_keys = ("page_content",)
     result = shell
     for key, value in context.items():
+        if key in deferred_keys:
+            continue
         result = result.replace("{" + key + "}", value)
+    for key in deferred_keys:
+        if key in context:
+            result = result.replace("{" + key + "}", context[key])
     return result
 
 
@@ -1152,9 +1208,10 @@ def build_page_html(
     url_style: str = DEFAULT_URL_STYLE,
     html_template: str | None = None,
     metadata_mode: str = "expanded",
+    metadata_format: str = "json-ld",
 ) -> str:
     """Compile individual page HTML."""
-    selected_mode = normalize_metadata_mode(metadata_mode)
+    selected_view = resolve_metadata_view(metadata_format, metadata_mode)
     toc_html = _build_toc_html(page)
     sidebar_contents_html = _build_sidebar_contents_html(page)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)
@@ -1207,14 +1264,14 @@ def build_page_html(
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    metadata_mode_html = _build_metadata_panel_html(page, site, selected_mode)
+    metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
     if page.has_frontmatter:
         metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
-        metadata_tab_html = '<li id="ca-metadata"><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">Metadata (JSON-LD)</a></li>'
-        metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
+        metadata_tab_html = '<li id="ca-metadata"><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">Metadata</a></li>'
+        metadata_pane_html = f"""<!-- METADATA VIEW (RDF frontmatter) -->
     <div id="view-metadata-content" class="wiki-view-pane" style="display: none;">
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
-      <div id="siteSub">JSON-LD representation compiled from frontmatter</div>
+      <div id="siteSub">RDF representation compiled from frontmatter</div>
       
       {metadata_mode_html}
     </div>"""
@@ -1370,51 +1427,66 @@ def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_
 </section>"""
 
 
-def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_mode: str) -> str:
+def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view: str) -> str:
     if not page.frontmatter:
         return ""
 
     page_config = site.config or WikiConfig(input_dirs=[])
-    mode_id = _metadata_mode_dom_id(page)
-    expanded_checked = ' checked="checked"' if selected_mode == "expanded" else ""
-    compacted_checked = ' checked="checked"' if selected_mode == "compacted" else ""
+    view_group_id = _metadata_view_dom_id(page)
+    radios_and_labels: list[str] = []
+    panels: list[str] = []
 
-    expanded_json = _metadata_json_for_page(page, page_config, "expanded")
-    compacted_json = _metadata_json_for_page(page, page_config, "compacted")
+    for view in METADATA_VIEWS:
+        view_id = view["id"]
+        input_id = f"{view_group_id}-{view_id}"
+        checked = ' checked="checked"' if view_id == selected_view else ""
+        radios_and_labels.append(
+            f'<input class="metadata-format-input" type="radio" name="{view_group_id}" '
+            f'id="{input_id}" value="{view_id}"{checked}>'
+            f'<label class="metadata-format-label" for="{input_id}">{html_module.escape(view["label"])}</label>'
+        )
+        highlighted, lexer = _metadata_content_for_page(page, page_config, view)
+        panels.append(
+            f'<div class="metadata-format-panel metadata-format-panel-{view_id}">'
+            f'<pre class="highlight"><code class="language-{html_module.escape(lexer)}">{highlighted}</code></pre>'
+            f"</div>"
+        )
 
     return f"""<section class="page-meta metadata-panel">
 <h2>Metadata</h2>
-<div class="metadata-mode-switch" role="group" aria-label="Metadata display mode">
-  <div class="metadata-mode-heading">View as format</div>
-  <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-expanded" value="expanded"{expanded_checked}>
-  <label class="metadata-mode-label" for="{mode_id}-expanded">Expanded</label>
-  <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-compacted" value="compacted"{compacted_checked}>
-  <label class="metadata-mode-label" for="{mode_id}-compacted">Compacted</label>
-  <div class="metadata-mode-panels">
-    <div class="metadata-mode-panel metadata-mode-panel-expanded">
-      <pre class="highlight"><code class="language-json">{expanded_json}</code></pre>
-    </div>
-    <div class="metadata-mode-panel metadata-mode-panel-compacted">
-      <pre class="highlight"><code class="language-json">{compacted_json}</code></pre>
-    </div>
+<div class="metadata-format-switch" role="group" aria-label="Metadata RDF format">
+  <div class="metadata-format-heading">View as format</div>
+  {''.join(radios_and_labels)}
+  <div class="metadata-format-panels">
+    {''.join(panels)}
   </div>
 </div>
 </section>"""
 
 
-def _metadata_json_for_page(page: VirtualPage, config: WikiConfig, mode: str) -> str:
-    rdf = process_rdf_format(page.frontmatter, page.full_slug, config.context, "json-ld", mode=mode)
-    return _highlight_json(json.dumps(rdf, indent=2, default=str))
+def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict[str, str]) -> tuple[str, str]:
+    rdf = process_rdf_format(
+        page.frontmatter,
+        page.full_slug,
+        config.context,
+        view["format"],
+        mode=view["mode"],
+    )
+    if view["format"] == "json-ld":
+        text = json.dumps(rdf, indent=2, default=str)
+    else:
+        text = rdf if isinstance(rdf, str) else str(rdf)
+    return _highlight_metadata(text, view["lexer"]), view["lexer"]
 
 
-def _metadata_mode_dom_id(page: VirtualPage) -> str:
+def _metadata_view_dom_id(page: VirtualPage) -> str:
     safe_slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", page.full_slug or "index").strip("-") or "index"
-    return f"metadata-mode-{safe_slug.lower()}"
+    return f"metadata-format-{safe_slug.lower()}"
 
 
-def _highlight_json(value: str) -> str:
+def _highlight_metadata(value: str, lexer_name: str) -> str:
     try:
-        lexer = get_lexer_by_name("json")
+        lexer = get_lexer_by_name(lexer_name)
     except ClassNotFound:
         return html_module.escape(value)
     return highlight(value, lexer, PYGMENTS_FORMATTER)
@@ -1443,6 +1515,12 @@ def build_infobox_rows(page: VirtualPage, site: WikiSite, base_url: str, url_sty
         if html:
             rows.append(InfoboxRow(label=label, text=text, html=html))
     return rows
+def _infobox_list_item_html(html: str) -> str:
+    if 'class="infobox-dict"' in html:
+        return f'<li class="infobox-list-block">{html}</li>'
+    return f'<li><span class="infobox-chip">{html}</span></li>'
+
+
 def _render_metadata_value(value: Any, page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
     if value is None:
         return ""
@@ -1450,7 +1528,7 @@ def _render_metadata_value(value: Any, page: VirtualPage, site: WikiSite, base_u
         items = [item for item in (_render_metadata_value(v, page, site, base_url, url_style) for v in value) if item]
         if not items:
             return ""
-        return '<ul class="infobox-list">' + ''.join(f'<li><span class="infobox-chip">{item}</span></li>' for item in items) + '</ul>'
+        return '<ul class="infobox-list">' + ''.join(_infobox_list_item_html(item) for item in items) + '</ul>'
 
 
 def _render_metadata_value_parts(
@@ -1471,7 +1549,7 @@ def _render_metadata_value_parts(
         if not items:
             return "", ""
         text = ", ".join(text for text, _ in rendered_items if text)
-        html = '<ul class="infobox-list">' + ''.join(f'<li><span class="infobox-chip">{item}</span></li>' for item in items) + '</ul>'
+        html = '<ul class="infobox-list">' + ''.join(_infobox_list_item_html(item) for item in items) + '</ul>'
         return text, html
     if isinstance(value, dict):
         target_id = value.get("@id") or value.get("id")

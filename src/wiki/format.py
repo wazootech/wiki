@@ -4,9 +4,35 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, TypedDict
 
 from rdflib import Graph
+
+from .format_choice import FormatChoice
+
+
+class MetadataView(TypedDict):
+    id: str
+    format: str
+    mode: str
+    label: str
+    lexer: str
+
+
+METADATA_VIEWS: list[MetadataView] = [
+    {"id": "json-ld-expanded", "format": "json-ld", "mode": "expanded", "label": "JSON-LD (expanded)", "lexer": "json"},
+    {"id": "json-ld-compacted", "format": "json-ld", "mode": "compacted", "label": "JSON-LD (compacted)", "lexer": "json"},
+    {"id": "turtle", "format": "turtle", "mode": "expanded", "label": "Turtle", "lexer": "turtle"},
+    {"id": "n3", "format": "n3", "mode": "expanded", "label": "N3", "lexer": "n3"},
+    {"id": "xml", "format": "xml", "mode": "expanded", "label": "RDF/XML", "lexer": "xml"},
+    {"id": "nt", "format": "nt", "mode": "expanded", "label": "N-Triples", "lexer": "nt"},
+    {"id": "trig", "format": "trig", "mode": "expanded", "label": "TriG", "lexer": "trig"},
+    {"id": "nquads", "format": "nquads", "mode": "expanded", "label": "N-Quads", "lexer": "nt"},
+]
+
+_METADATA_VIEW_IDS = {view["id"] for view in METADATA_VIEWS}
+_METADATA_FORMATS = {view["format"] for view in METADATA_VIEWS}
+_FORMAT_ALIASES = FormatChoice.FORMAT_ALIASES
 
 
 def _wiki_link(s: str, wiki_base: str, known_slugs: set[str] | None = None) -> str:
@@ -175,6 +201,34 @@ def is_sparql_update(query: str) -> bool:
 def normalize_metadata_mode(mode: str | None) -> str:
     """Normalize the metadata/RDF display mode to a known value."""
     return "compacted" if str(mode).strip().lower() == "compacted" else "expanded"
+
+
+def normalize_metadata_format(fmt: str | None) -> str:
+    """Normalize a metadata RDF format name or alias to a canonical export format."""
+    raw = str(fmt or "json-ld").strip()
+    if not raw:
+        return "json-ld"
+    lookup = raw.casefold()
+    canonical = _FORMAT_ALIASES.get(lookup, raw.casefold())
+    if canonical in _METADATA_FORMATS:
+        return canonical
+    if lookup in _METADATA_FORMATS:
+        return lookup
+    return "json-ld"
+
+
+def resolve_metadata_view(fmt: str | None, mode: str | None) -> str:
+    """Map format + mode query params to a metadata view id."""
+    normalized_format = normalize_metadata_format(fmt)
+    normalized_mode = normalize_metadata_mode(mode)
+    if normalized_format == "json-ld":
+        view_id = f"json-ld-{normalized_mode}"
+        if view_id in _METADATA_VIEW_IDS:
+            return view_id
+    for view in METADATA_VIEWS:
+        if view["format"] == normalized_format:
+            return view["id"]
+    return "json-ld-expanded"
 
 
 def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded", context: Any = None) -> Any:

@@ -54,6 +54,7 @@ ALLOWED_CONFIG_KEYS = {
     "exclude",
     "html_template",
     "serve_api",
+    "link_renames",
 }
 
 ALLOWED_CHECK_KEYS = {"broken_links"}
@@ -198,6 +199,7 @@ class WikiConfig:
         html_template: Path | None = None,
         serve_api_enabled: bool = False,
         serve_api_path: str = "/api/sparql",
+        link_renames: dict[str, str] | None = None,
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -217,6 +219,7 @@ class WikiConfig:
         self.html_template = html_template
         self.serve_api_enabled = bool(serve_api_enabled)
         self.serve_api_path = normalize_api_path(serve_api_path)
+        self.link_renames = dict(link_renames or {})
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -310,6 +313,15 @@ class WikiConfig:
                             serve_api_enabled = True
                         serve_api_path = serve_api_data.get("path", "/api/sparql")
 
+                        link_renames_raw = data.get("link_renames")
+                        link_renames: dict[str, str] = {}
+                        if isinstance(link_renames_raw, dict):
+                            link_renames = {
+                                str(key): str(value)
+                                for key, value in link_renames_raw.items()
+                                if isinstance(key, str) and isinstance(value, str)
+                            }
+
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             asset_dirs=[resolve(d) for d in asset_data],
@@ -327,6 +339,7 @@ class WikiConfig:
                             html_template=html_template_path,
                             serve_api_enabled=serve_api_enabled,
                             serve_api_path=serve_api_path,
+                            link_renames=link_renames,
                         )
                     raise ValueError(f"Invalid config file {config_path.name}: top-level content must be a mapping")
                 except Exception as e:

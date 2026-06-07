@@ -42,7 +42,7 @@ Files under configured **memory paths** (for example `user.md`, `memory.md`, or 
 
 ## Comparison with [Wiki CLI](Wiki_CLI.md) and [Letta_MemFS](Letta_MemFS.md)
 
-Choose SMFS when you want **semantic search hidden behind bash**, multi-platform sync, integrations, and managed scale without maintaining a vault toolchain. Choose the Wiki CLI when you want **explicit, inspectable [Declarative_Knowledge](Declarative_Knowledge.md)**, [Procedural_Knowledge](Procedural_Knowledge.md) via `wiki check` / `wiki render`, and a compounding markdown codebase under your control.
+Choose SMFS when you want **semantic search hidden behind bash**, multi-platform sync, integrations, and managed scale without maintaining a vault toolchain. Choose the [[Wiki_CLI|Wiki CLI]] when you want **explicit, inspectable [Declarative_Knowledge](Declarative_Knowledge.md)**, [Procedural_Knowledge](Procedural_Knowledge.md) via `wiki check` / `wiki render`, and a compounding markdown codebase under your control.
 
 For the full cross-tool comparison, see [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
 

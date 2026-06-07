@@ -1157,6 +1157,26 @@ name: ConfigTest
             self.assertIn("Failed to load config file wiki.yaml", result.output)
             self.assertIn("unknown top-level keys", result.output)
 
+    def test_cli_link_apply_and_check(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            wiki_dir.mkdir()
+            (wiki_dir / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            guide = wiki_dir / "Guide.md"
+            guide.write_text("# Guide\n\nRead the Wiki CLI guide.\n", encoding="utf-8")
+
+            report = runner.invoke(main, ["--input-dir", str(wiki_dir), "link", "--check"])
+            self.assertEqual(report.exit_code, 1)
+            self.assertIn("Wiki CLI", report.output)
+
+            apply_result = runner.invoke(main, ["--input-dir", str(wiki_dir), "link", "--apply"])
+            self.assertEqual(apply_result.exit_code, 0)
+            self.assertIn("[[Wiki_CLI|Wiki CLI]]", guide.read_text(encoding="utf-8"))
+
+            clean = runner.invoke(main, ["--input-dir", str(wiki_dir), "link", "--check"])
+            self.assertEqual(clean.exit_code, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

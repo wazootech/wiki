@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlsplit
 from typing import Any, Optional
 
 from .config import WikiConfig
-from .format import detect_query_form, is_sparql_update, normalize_metadata_mode, run_query
+from .format import detect_query_form, is_sparql_update, normalize_metadata_format, normalize_metadata_mode, run_query
 from .graph import load_graph
 from .site import (
     WikiSite,
@@ -63,6 +63,7 @@ class WikiHandler(BaseHTTPRequestHandler):
             target = self._find_page(slug)
             if target:
                 metadata_mode = normalize_metadata_mode(query_params.get("metadata_mode", ["expanded"])[-1])
+                metadata_format = normalize_metadata_format(query_params.get("metadata_format", ["json-ld"])[-1])
                 self._send_html(
                     build_page_html(
                         target,
@@ -71,6 +72,7 @@ class WikiHandler(BaseHTTPRequestHandler):
                         url_style=self.url_style,
                         html_template=self.html_template,
                         metadata_mode=metadata_mode,
+                        metadata_format=metadata_format,
                     )
                 )
             elif self._serve_asset(parsed[len(base) + 1:]):

@@ -43,6 +43,8 @@ wiki check --strict
 
 Default: `broken_links` is `warning`.
 
+`wiki check` reports broken links only — it does not repair them. Use [Wiki_Subcommand_link](Wiki_Subcommand_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
+
 Filename pattern and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
 
 ### Single-file mode
@@ -56,6 +58,7 @@ Filename pattern and heading style are **not** part of `wiki check` — use [Wik
 | `wiki lint --strict`  | Filename pattern and headings     |
 | `wiki fmt --check`    | mdformat consistency              |
 | `wiki render --check` | Stale inline SPARQL result blocks |
+| `wiki link --check`   | Remaining missing-wikilink opportunities |
 
 `wiki build` runs `wiki check` and `wiki lint` before writing output unless `--no-check`.
 

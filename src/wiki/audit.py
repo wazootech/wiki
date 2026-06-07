@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import unquote
@@ -41,6 +42,26 @@ MICRODATA_WIKI_CURIE_ATTR = re.compile(
 )
 
 WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
+
+WIKILINK_FULL_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
+MARKDOWN_LINK_FULL_REGEX = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
+
+
+@dataclass(frozen=True)
+class BrokenLink:
+    source_route: str
+    source_path: Path
+    link_kind: str
+    raw_target: str
+    issue_kind: str
+    message: str
+    match_start: int | None = None
+    match_end: int | None = None
+    full_match: str | None = None
+
+
+def format_broken_link(issue: BrokenLink) -> str:
+    return issue.message
 
 
 def load_shapes(data_graph: Graph) -> Graph:
@@ -156,14 +177,9 @@ def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> 
     return warnings
 
 
-def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
-
-    If file_filter is set, only check files whose route is in the set.
-
-    Returns a list of warnings.
-    """
-    warnings: list[str] = []
+def collect_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[BrokenLink]:
+    """Collect structured broken-link issues for wikilinks, markdown links, assets, and wiki: CURIEs."""
+    issues: list[BrokenLink] = []
 
     existing_files: set[str] = set()
     heading_ids_by_route: dict[str, set[str]] = {}
@@ -184,38 +200,138 @@ def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) 
 
             if file_path.suffix.lower() == ".md":
                 content = file_path.read_text(encoding="utf-8")
-                link_scan = _strip_inline_code(_markdown_body(content))
-                wikilinks = WIKILINK_REGEX.findall(link_scan)
-                for link in wikilinks:
-                    _audit_page_target(warnings, existing_files, heading_ids_by_route, file_slug, link, "WikiLink")
+                prefix, body = _split_frontmatter(content)
+                body_offset = len(prefix)
+                protected = _protected_inline_code_spans(body)
 
-                md_links = MARKDOWN_LINK_REGEX.findall(link_scan)
-                for target in md_links:
-                    target = unquote(target.split("?")[0])
+                for match in WIKILINK_FULL_REGEX.finditer(body):
+                    start, end = match.span()
+                    if _span_overlaps(start, end, protected):
+                        continue
+                    link_target = match.group(1).strip()
+                    issue = _page_target_issue(
+                        existing_files,
+                        heading_ids_by_route,
+                        file_slug,
+                        link_target,
+                        "WikiLink",
+                    )
+                    if issue is not None:
+                        issues.append(
+                            BrokenLink(
+                                source_route=file_slug,
+                                source_path=file_path,
+                                link_kind="WikiLink",
+                                raw_target=link_target,
+                                issue_kind=issue,
+                                message=_page_target_message(file_slug, link_target, "WikiLink", issue),
+                                match_start=body_offset + start,
+                                match_end=body_offset + end,
+                                full_match=match.group(0),
+                            )
+                        )
+
+                for match in MARKDOWN_LINK_FULL_REGEX.finditer(body):
+                    start, end = match.span()
+                    if _span_overlaps(start, end, protected):
+                        continue
+                    target = unquote(match.group(2).split("?")[0])
                     if is_external_link(target):
                         continue
                     if markdown_link_is_page(target):
-                        _audit_page_target(warnings, existing_files, heading_ids_by_route, file_slug, target, "Markdown link")
+                        issue = _page_target_issue(
+                            existing_files,
+                            heading_ids_by_route,
+                            file_slug,
+                            target,
+                            "Markdown link",
+                        )
+                        if issue is not None:
+                            issues.append(
+                                BrokenLink(
+                                    source_route=file_slug,
+                                    source_path=file_path,
+                                    link_kind="Markdown link",
+                                    raw_target=target,
+                                    issue_kind=issue,
+                                    message=_page_target_message(file_slug, target, "Markdown link", issue),
+                                    match_start=body_offset + start,
+                                    match_end=body_offset + end,
+                                    full_match=match.group(0),
+                                )
+                            )
                     else:
-                        issue = asset_reference_issue(config, file_path, target)
-                        if issue:
-                            warnings.append(f"In {file_path.name}: Broken asset link [{target}] {issue}.")
+                        asset_issue = asset_reference_issue(config, file_path, target)
+                        if asset_issue:
+                            issues.append(
+                                BrokenLink(
+                                    source_route=file_slug,
+                                    source_path=file_path,
+                                    link_kind="Asset link",
+                                    raw_target=target,
+                                    issue_kind="missing_asset",
+                                    message=f"In {file_path.name}: Broken asset link [{target}] {asset_issue}.",
+                                    match_start=body_offset + start,
+                                    match_end=body_offset + end,
+                                    full_match=match.group(0),
+                                )
+                            )
 
+                link_scan = _strip_inline_code(body)
                 for curie in MICRODATA_WIKI_CURIE_ATTR.findall(link_scan):
-                    _audit_wiki_curie(warnings, existing_files, file_slug, curie, "Microdata reference")
+                    _append_wiki_curie_issue(issues, existing_files, file_slug, file_path, curie, "Microdata reference")
 
             for curie in _wiki_curies_in_metadata(data or {}):
-                _audit_wiki_curie(warnings, existing_files, file_slug, curie, "Metadata reference")
+                _append_wiki_curie_issue(issues, existing_files, file_slug, file_path, curie, "Metadata reference")
 
             for target in _frontmatter_asset_targets(data or {}):
-                issue = asset_reference_issue(config, file_path, target)
-                if issue:
-                    warnings.append(f"In {file_path.name}: Broken frontmatter asset [{target}] {issue}.")
+                asset_issue = asset_reference_issue(config, file_path, target)
+                if asset_issue:
+                    issues.append(
+                        BrokenLink(
+                            source_route=file_slug,
+                            source_path=file_path,
+                            link_kind="Frontmatter asset",
+                            raw_target=target,
+                            issue_kind="missing_asset",
+                            message=f"In {file_path.name}: Broken frontmatter asset [{target}] {asset_issue}.",
+                        )
+                    )
         except Exception as e:
-            warnings.append(f"Failed to read {file_path.name} for link audit: {e}")
+            issues.append(
+                BrokenLink(
+                    source_route=file_slug,
+                    source_path=file_path,
+                    link_kind="Read error",
+                    raw_target="",
+                    issue_kind="read_error",
+                    message=f"Failed to read {file_path.name} for link audit: {e}",
+                )
+            )
 
-    warnings.extend(audit_asset_dirs(config))
-    return warnings
+    for warning in audit_asset_dirs(config):
+        issues.append(
+            BrokenLink(
+                source_route="",
+                source_path=config.config_root,
+                link_kind="Asset directory",
+                raw_target="",
+                issue_kind="missing_asset",
+                message=warning,
+            )
+        )
+
+    return issues
+
+
+def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Audit wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
+
+    If file_filter is set, only check files whose route is in the set.
+
+    Returns a list of warnings.
+    """
+    return [format_broken_link(issue) for issue in collect_broken_links(config, file_filter=file_filter)]
 
 
 HEADING_LINE_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
@@ -224,11 +340,27 @@ THEMATIC_BREAK_RE = re.compile(r"^(\-{3,}|\*{3,}|_{3,})\s*$", re.MULTILINE)
 
 
 def _markdown_body(content: str) -> str:
+    _, body = _split_frontmatter(content)
+    return body
+
+
+def _split_frontmatter(content: str) -> tuple[str, str]:
     if content.startswith("---"):
         parts = content.split("---", 2)
         if len(parts) > 2:
-            return parts[2]
-    return content
+            return f"---{parts[1]}---", parts[2]
+    return "", content
+
+
+def _protected_inline_code_spans(markdown: str) -> list[tuple[int, int]]:
+    spans: list[tuple[int, int]] = []
+    for match in re.finditer(r"`[^`\n]*`", markdown):
+        spans.append(match.span())
+    return spans
+
+
+def _span_overlaps(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
+    return any(start < span_end and end > span_start for span_start, span_end in spans)
 
 
 def _strip_inline_code(markdown: str) -> str:
@@ -285,23 +417,59 @@ def _heading_ids(markdown: str) -> set[str]:
     return ids
 
 
-def _audit_page_target(
-    warnings: list[str],
+def _page_target_issue(
     existing_files: set[str],
     heading_ids_by_route: dict[str, set[str]],
     current_route: str,
     target: str,
     label: str,
-) -> None:
+) -> str | None:
     page_part, fragment = split_target(target)
     route = current_route if page_part == "" else resolve_page_route(current_route, target)
     if route is None or route not in existing_files:
-        warnings.append(f"In {current_route}: Broken {label} [{target}] points to non-existent document.")
-        return
+        return "missing_document"
     if fragment:
         target_fragment = fragment_id(fragment)
         if target_fragment not in heading_ids_by_route.get(route, set()):
-            warnings.append(f"In {current_route}: Broken {label} [{target}] points to missing heading '#{target_fragment}'.")
+            return "missing_heading"
+    return None
+
+
+def _page_target_message(current_route: str, target: str, label: str, issue_kind: str) -> str:
+    if issue_kind == "missing_document":
+        return f"In {current_route}: Broken {label} [{target}] points to non-existent document."
+    _, fragment = split_target(target)
+    target_fragment = fragment_id(fragment)
+    return (
+        f"In {current_route}: Broken {label} [{target}] "
+        f"points to missing heading '#{target_fragment}'."
+    )
+
+
+def _append_wiki_curie_issue(
+    issues: list[BrokenLink],
+    existing_files: set[str],
+    current_route: str,
+    file_path: Path,
+    curie: str,
+    label: str,
+) -> None:
+    route = _wiki_route_from_curie(curie)
+    if route is None:
+        return
+    if route not in existing_files:
+        issues.append(
+            BrokenLink(
+                source_route=current_route,
+                source_path=file_path,
+                link_kind=label,
+                raw_target=curie,
+                issue_kind="missing_document",
+                message=(
+                    f"In {current_route}: Broken {label} [{curie}] points to non-existent wiki document."
+                ),
+            )
+        )
 
 
 def _wiki_route_from_curie(curie: str) -> str | None:
@@ -312,22 +480,6 @@ def _wiki_route_from_curie(curie: str) -> str | None:
     if local.endswith(".md"):
         local = local[:-3]
     return local
-
-
-def _audit_wiki_curie(
-    warnings: list[str],
-    existing_files: set[str],
-    current_route: str,
-    curie: str,
-    label: str,
-) -> None:
-    route = _wiki_route_from_curie(curie)
-    if route is None:
-        return
-    if route not in existing_files:
-        warnings.append(
-            f"In {current_route}: Broken {label} [{curie}] points to non-existent wiki document."
-        )
 
 
 _METADATA_SKIP_KEYS = frozenset({"@context", "@id", "id", "@type", "type"})

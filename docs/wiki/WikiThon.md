@@ -32,5 +32,5 @@ The [Luma page](https://luma.com/6pybuh79) advertised roughly **$800** in prizes
 ## See also
 
 - [LLM_Wiki](LLM_Wiki.md) — design pattern and primary sources
-- [Farzapedia](Farzapedia.md) — reference personal wiki build
+- [Farzapedia](Farzapedia.md) — reference personal [[Wiki_Subcommand_build|wiki build]]
 - [Obsidian_Integration](Obsidian_Integration.md) — common viewer for markdown wikis

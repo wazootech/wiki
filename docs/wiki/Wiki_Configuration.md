@@ -48,6 +48,10 @@ lint:
   filename_pattern: warning
   headings: off
 
+# Optional: old slug -> new route for wiki link --fix-broken after renames
+link_renames:
+  Old_Page_Name: New_Page_Name
+
 context:
   schema: https://schema.org/
   wiki: https://example.org/wiki/
@@ -71,7 +75,7 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 | Key                    | Default                                            | Purpose                                                                                                                   |
 | ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
-| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and microdata                                                        |
+| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and [[Microdata|microdata]]                                                        |
 | `content_predicate`    | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
 | `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                        |
 
@@ -104,7 +108,7 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 `serve_api.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
-## HTML template
+## [[HTML_Template|HTML template]]
 
 When `html_template` is set, the CLI renders every page through that file using `{placeholder}` tokens.
 
@@ -112,7 +116,7 @@ When `html_template` is set, the CLI renders every page through that file using 
 
 The current first-class template contract in this repository is the optional `index.html` / `html_template` shell.
 
-- The Wiki CLI owns the semantic markdown-to-HTML pipeline and placeholder contract.
+- The [[Wiki_CLI|Wiki CLI]] owns the semantic markdown-to-HTML pipeline and placeholder contract.
 - This repository treats custom HTML shells as the primary built-in extension point for presentation.
 - Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate template repositories unless they need core CLI changes.
 
@@ -149,7 +153,7 @@ Replace `{key}` tokens in your HTML shell:
 | `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page template-{slug}` for articles.    |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
-| `{inline_css}`            | raw CSS      | Wiki CLI's bundled Wikipedia-style CSS.                                                                    |
+| `{inline_css}`            | raw CSS      | [[Wiki_CLI|Wiki CLI]]'s bundled Wikipedia-style CSS.                                                                    |
 | `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo.                                                                                |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
@@ -162,12 +166,12 @@ Replace `{key}` tokens in your HTML shell:
 | `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                 |
 | `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                             |
 | `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                             |
-| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata (JSON-LD)" `<li>` (empty if no frontmatter).                                             |
+| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata" `<li>` (empty if no frontmatter).                                                       |
 | `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                              |
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
 
-The metadata pane is rendered from the same JSON-LD serialization path used by `wiki export`. In `wiki serve`, the initial view can be selected with `?metadata_mode=expanded|compacted`. In `wiki build`, both modes are embedded in the page HTML so the toggle works without JavaScript.
+The metadata pane uses the same RDF serialization path as `wiki export` (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). JSON-LD has separate expanded and compacted views; other formats render once. In `wiki serve`, set the initial pill with `?metadata_format=FORMAT` and, for JSON-LD only, `?metadata_mode=expanded|compacted`. In `wiki build`, all format views are embedded in the page HTML so the toggle works without JavaScript.
 
 ### Built-in CSS classes and IDs
 
@@ -225,6 +229,10 @@ filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 **Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
+
+## Link renames (`link_renames`)
+
+Optional map of **old slug → new route** used by `wiki link --fix-broken` when a page was renamed but wikilinks still use the old target. Fuzzy slug matching applies only when exactly one vault route is a close match.
 
 ## Integrity checks (`check`)
 

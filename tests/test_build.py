@@ -90,7 +90,7 @@ class TestWikiBuild(unittest.TestCase):
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text("input_dirs: wiki\n", encoding="utf-8")
-            (wiki / "person.yaml").write_text("type: Person\nname: Gregory House\n", encoding="utf-8")
+            (wiki / "person.yaml").write_text("type: Person\nname: Gregory Davidson\n", encoding="utf-8")
             (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
@@ -156,7 +156,7 @@ name: Bella Davidson
             self.assertIn('href="/wiki/Bella_Davidson/"', html)
             self.assertIn('href="https://example.com/gregory-davidson"', html)
 
-    def test_build_embeds_both_metadata_modes(self) -> None:
+    def test_build_embeds_all_metadata_format_views(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -194,10 +194,13 @@ about: wiki:Alice_Theory
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
             self.assertIn("View as format", html)
-            self.assertIn('metadata-mode-panel-expanded', html)
-            self.assertIn('metadata-mode-panel-compacted', html)
-            self.assertIn('value="expanded" checked="checked"', html)
-            self.assertIn('value="compacted"', html)
+            self.assertIn('metadata-format-panel-json-ld-expanded', html)
+            self.assertIn('metadata-format-panel-json-ld-compacted', html)
+            self.assertIn('metadata-format-panel-turtle', html)
+            self.assertIn('metadata-format-panel-xml', html)
+            self.assertIn('value="json-ld-expanded" checked="checked"', html)
+            self.assertIn('value="json-ld-compacted"', html)
+            self.assertIn('value="turtle"', html)
 
     def test_missing_configured_template_falls_back_silently(self) -> None:
         runner = CliRunner()
