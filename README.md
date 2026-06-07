@@ -115,7 +115,7 @@ wiki serve
 
 
 ### `check`
-Run **integrity** validations: strict SHACL schema validation, route safety, output collisions, and configurable broken-link audits. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Run **integrity** validations: strict SHACL schema validation, route safety, output collisions, and layout frontmatter. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 wiki check
@@ -124,10 +124,10 @@ wiki check -v
 wiki check --strict
 ```
 
-Default configurable rule: `check.broken_links` (`warning`). Filename pattern and heading style moved to `wiki lint`.
+Single-file mode runs SHACL validation for that document only. Broken links and other conventions are **`wiki lint`**.
 
 ### `lint`
-Run **convention** audits: filename pattern, heading style (ATX `#` only, sentence-case H2+), and link style.
+Run **convention** audits: broken links, filename pattern, heading style (ATX `#` only, sentence-case H2+), and link style.
 
 ```bash
 wiki lint
@@ -140,9 +140,8 @@ Use top-level `filename_pattern` for the regex (matched against the **full** `.m
 
 ```yaml
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
-check:
-  broken_links: warning
 lint:
+  broken_links: warning
   filename_pattern: warning
   headings: off
   link_style: warning
@@ -164,7 +163,7 @@ wiki link --apply
 wiki link --fix-broken
 ```
 
-`wiki check` reports broken links (`check.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link_style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link_style` is `markdown`. Optional `link_renames` maps old slugs to new routes for renames.
+`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link_style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link_style` is `markdown`. Optional `link_renames` maps old slugs to new routes for renames.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
@@ -652,10 +651,8 @@ exclude:
   - assets/private/**
 content_predicate: schema:articleBody # Opt-in markdown body auto-injection
 
-check:
-  broken_links: warning      # "error" | "warning" | "off"
-
 lint:
+  broken_links: warning      # "error" | "warning" | "off"
   filename_pattern: warning  # "error" | "warning" | "off"
   headings: off              # ATX # only, sentence-case H2+, numbered headings, body ---
   link_style: warning        # wikilinks in body when link_style is markdown

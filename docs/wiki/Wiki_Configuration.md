@@ -16,12 +16,12 @@ Three audit lanes map to three commands:
 
 | Lane       | Command      | YAML block | Purpose                                                             |
 | ---------- | ------------ | ---------- | ------------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links`, layout frontmatter |
-| Convention | `wiki lint`  | `lint:`    | `filename_pattern`, `headings`, `link_style` (plus top-level regex) |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                   |
+| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `link_style` (plus top-level regex) |
 | Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                    |
 
 - Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
-- Putting a regex under `check.filename_pattern` or `lint.broken_links` fails at load with a hint.
+- Putting a regex under `check.filename_pattern` fails at load with a hint.
 - Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
 
 Relative **`--input-dir`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
@@ -41,10 +41,8 @@ exclude:
   - assets/private/**
 content_predicate: schema:articleBody
 
-check:
-  broken_links: warning
-
 lint:
+  broken_links: warning
   filename_pattern: warning
   headings: off
 
@@ -262,11 +260,10 @@ When `link_style` is `markdown`, `lint.link_style` (default `warning`) flags Obs
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key                | Default   | What it audits                                                                |
-| ----------------------- | --------- | ----------------------------------------------------------------------------- |
-| `broken_links`          | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `forbidden_layout_keys` | `error`   | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead)  |
-| `missing_layout_file`   | `error`   | `wazoo:layout` paths that do not resolve to a readable `.html` file           |
+| Rule key                | Default | What it audits                                                               |
+| ----------------------- | ------- | ---------------------------------------------------------------------------- |
+| `forbidden_layout_keys` | `error` | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead) |
+| `missing_layout_file`   | `error` | `wazoo:layout` paths that do not resolve to a readable `.html` file          |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
@@ -276,13 +273,15 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 | Rule key           | Default   | What it audits                                                                                                                         |
 | ------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                                        |
 | `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                                                                                    |
-| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings, thematic `---` in body |
+| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings                         |
+| `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                                                   |
 | `link_style`       | `warning` | Wikilinks in body prose when top-level `link_style` is `markdown`                                                                      |
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `link_style: markdown` with `lint.link_style: warning`, and `lint.headings: warning` for ATX headings and sentence-case H2+.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and `lint.headings: warning` for ATX headings and sentence-case H2+.
 
 ## Related
 

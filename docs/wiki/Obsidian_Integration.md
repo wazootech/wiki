@@ -22,7 +22,7 @@ Point the plugin’s working directory at the folder containing `wiki.yaml`.
 
 ## Internal links
 
-This vault uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) vaults may use wikilinks (`[[Page]]`); the [Wiki CLI](Wiki_CLI.md) still resolves them when filenames follow vault route rules, and `check.broken_links` validates that each link resolves.
+This vault uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) vaults may use wikilinks (`[[Page]]`); the [Wiki CLI](Wiki_CLI.md) still resolves them when filenames follow vault route rules, and `lint.broken_links` validates that each link resolves.
 
 ## Related
 

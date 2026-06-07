@@ -4,9 +4,8 @@ wiki_base: __WIKI_BASE__
 base_url: /wiki
 url_style: dir
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
-check:
-  broken_links: warning
 lint:
+  broken_links: warning
   filename_pattern: warning
   headings: "off"
 context:

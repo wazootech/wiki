@@ -722,7 +722,7 @@ def audit_layout_frontmatter(
 
 
 def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run integrity checks: SHACL, route safety, collisions, broken links."""
+    """Run integrity checks: SHACL, route safety, collisions, and layout frontmatter."""
     results = _empty_results()
 
     try:
@@ -748,10 +748,6 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
             results["conforms"] = False
             results["errors"].extend(collision_issues)
 
-    if not safety_issues:
-        link_issues = audit_broken_links(config, file_filter=file_filter)
-        _apply_issues(results, "broken_links", link_issues, config.check)
-
     layout_issues = audit_layout_frontmatter(config, file_filter=file_filter)
     _apply_issues(results, "forbidden_layout_keys", layout_issues["forbidden"], config.check)
     _apply_issues(results, "missing_layout_file", layout_issues["missing"], config.check)
@@ -760,7 +756,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
 
 
 def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run convention audits: filename pattern, heading style, and link style."""
+    """Run convention audits: broken links, filename pattern, heading style, and link style."""
     results = _empty_results()
 
     safety_issues = validate_route_safety(config)
@@ -768,6 +764,9 @@ def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[st
         results["conforms"] = False
         results["errors"].extend(safety_issues)
         return results
+
+    link_issues = audit_broken_links(config, file_filter=file_filter)
+    _apply_issues(results, "broken_links", link_issues, config.lint)
 
     filename_issues = audit_filenames(config, file_filter=file_filter)
     _apply_issues(results, "filename_pattern", filename_issues, config.lint)

@@ -6,9 +6,8 @@ url_style: dir
 content_predicate: schema:articleBody
 filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 link_style: markdown
-check:
-  broken_links: warning
 lint:
+  broken_links: warning
   filename_pattern: warning
   headings: warning
   thematic_breaks: warning
@@ -16,7 +15,7 @@ lint:
 context:
   schema: https://schema.org/
   wiki: https://wazootech.github.io/wiki/
-  wazoo: https://wazootech.github.io/wiki-cli/vocab/
+  wazoo: https://schema.wazoo.dev/
   foaf: http://xmlns.com/foaf/0.1/
   dcterms: http://purl.org/dc/terms/
   sh: http://www.w3.org/ns/shacl#

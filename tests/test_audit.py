@@ -250,7 +250,7 @@ type: schema:WebPage
             )
 
             config = WikiConfig(input_dirs=[wiki_dir])
-            res = run_check(config)
+            res = run_lint(config)
 
             self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
 

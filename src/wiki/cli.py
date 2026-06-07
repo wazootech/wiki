@@ -79,7 +79,7 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Run integrity checks: SHACL validation, route safety, and broken links."""
+    """Run integrity checks: SHACL validation, route safety, and layout frontmatter."""
     if file:
         res = check_shacl_file(file, config, verbose=verbose)
         conforms = True
@@ -94,24 +94,6 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
             if not shacl_conforms:
                 conforms = False
                 errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
-
-        from .audit import audit_broken_links
-        from .paths import route_for_document_file
-
-        try:
-            file_filter = {route_for_document_file(config, file)}
-            link_issues = audit_broken_links(config, file_filter=file_filter)
-            severity = config.check.get("broken_links", "warning")
-            if severity != "off":
-                if severity == "error":
-                    errors.extend(link_issues)
-                    if link_issues:
-                        conforms = False
-                else:
-                    warnings.extend(link_issues)
-        except ValueError as exc:
-            errors.append(str(exc))
-            conforms = False
 
         if strict and warnings:
             errors.extend(warnings)
@@ -140,7 +122,7 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Run convention audits: filename pattern and heading style."""
+    """Run convention audits: broken links, filename pattern, and heading style."""
     from .paths import route_for_document_file
 
     file_filter = None
@@ -443,9 +425,9 @@ def build(
     config.url_style = url_style
 
     if not no_check:
-        check_results = run_check(config)
         lint_results = run_lint(config)
-        results = merge_results(check_results, lint_results)
+        check_results = run_check(config)
+        results = merge_results(lint_results, check_results)
         _print_check_messages(results["errors"], results["warnings"], verbose)
         if results["errors"] or not results["conforms"]:
             sys.exit(1)

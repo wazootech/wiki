@@ -71,9 +71,10 @@ class TestWikiConfig(unittest.TestCase):
                 "asset_dirs": ["assets", "media/photos"],
                 "exclude": ["wiki/drafts/**", "assets/private/**"],
                 "check": {
-                    "broken_links": "error"
+                    "missing_layout_file": "error"
                 },
                 "lint": {
+                    "broken_links": "error",
                     "filename_pattern": "error"
                 },
                 "filename_pattern": "[A-Za-z0-9_()-]+\\.md",
@@ -90,7 +91,8 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
             self.assertEqual(config.exclude, ["wiki/drafts/**", "assets/private/**"])
-            self.assertEqual(config.check.get("broken_links"), "error")
+            self.assertEqual(config.check.get("missing_layout_file"), "error")
+            self.assertEqual(config.lint.get("broken_links"), "error")
             self.assertEqual(config.lint.get("filename_pattern"), "error")
             self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+\\.md")
             self.assertEqual(config.base_url, "/docs")
@@ -206,7 +208,7 @@ class TestWikiConfig(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Invalid check keys"):
             WikiConfig(check={"filename_pattern": "[A-Za-z]+"})
 
-    def test_wikiconfig_load_unknown_lint_keys_raise_error(self) -> None:
+    def test_wikiconfig_load_lint_broken_links(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
@@ -214,12 +216,27 @@ class TestWikiConfig(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.lint.get("broken_links"), "error")
+
+    def test_wikiconfig_load_unknown_lint_keys_raise_error(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "lint": {"brokenLinks": "error"}}),
+                encoding="utf-8",
+            )
+
             with self.assertRaisesRegex(ValueError, "unknown lint keys"):
                 WikiConfig.load(base_path)
 
+    def test_wikiconfig_rejects_check_broken_links_at_init(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Invalid check keys: broken_links"):
+            WikiConfig(check={"broken_links": "error"})
+
     def test_wikiconfig_invalid_severity_raises(self) -> None:
-        with self.assertRaisesRegex(ValueError, "Invalid check.broken_links severity"):
-            WikiConfig(check={"broken_links": "maybe"})
+        with self.assertRaisesRegex(ValueError, "Invalid lint.broken_links severity"):
+            WikiConfig(lint={"broken_links": "maybe"})
 
     def test_wikiconfig_load_invalid_syntax_raises_error(self) -> None:
         """Test WikiConfig.load raises on config syntax errors."""

@@ -102,7 +102,7 @@ Prefer canonical relative Markdown links in source; they read cleanly in prose a
 
 All internal links must resolve to existing documents in the wiki.
 
-**Enforcer:** `check.broken_links` (warning by default).
+**Enforcer:** `lint.broken_links` (warning by default).
 
 Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in vault prose.
 

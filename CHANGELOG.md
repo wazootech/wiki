@@ -15,17 +15,17 @@
 
 ### Changed (breaking)
 
-- Split audit lanes: **`wiki check`** = integrity only (`check.broken_links` + always-on SHACL/routes/collisions); **`wiki lint`** = conventions (`lint.filename_pattern`, `lint.headings`)
+- Move `check.broken_links` to `lint.broken_links` in `wiki.yaml` (unknown `check` keys fail at load)
+- **`wiki build`** preflight runs `lint` then `check` (unless `--no-check`)
+- Split audit lanes: **`wiki check`** = integrity (SHACL, routes, collisions, layout); **`wiki lint`** = conventions including `lint.broken_links`
 - Move `filename_pattern` and `headings` severities from `check:` to `lint:` in `wiki.yaml` (old keys fail at load)
-- **`filename_pattern`** regex now matches the **full** `.md` filename — include `\.md` in the pattern (for example `[A-Za-z0-9_()-]+\.md`)
-- Relative **`--input-dir`** paths resolve against the config file directory, not the shell cwd
-- **`wiki build`** preflight runs `check` then `lint` (unless `--no-check`)
 
 ### Migration
 
-1. In `wiki.yaml`, move `check.filename_pattern` and `check.headings` to a new `lint:` block
-2. Add `\.md` to your top-level `filename_pattern` regex
-3. Run `wiki lint` in CI alongside `wiki check`
+1. In `wiki.yaml`, move `check.broken_links` to `lint.broken_links`
+2. Move `check.filename_pattern` and `check.headings` to a `lint:` block if still present
+3. Add `\.md` to your top-level `filename_pattern` regex
+4. Run `wiki lint` then `wiki check` in CI
 
 ## 0.1.8 — 2026-06-05
 

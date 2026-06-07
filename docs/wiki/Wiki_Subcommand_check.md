@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki check
-description: Integrity checks — SHACL validation, route safety, and broken links.
+description: Integrity checks — SHACL validation, route safety, and layout frontmatter.
 ---
 
 # `wiki check`
 
-Run **integrity** checks on the vault: strict **SHACL** validation, route safety, output collisions, and broken links.
+Run **integrity** checks on the vault: strict **SHACL** validation, route safety, output collisions, and layout frontmatter contracts.
 
 Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](Design_Philosophies.md).
 
@@ -37,30 +37,29 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key       | What it audits                                                                |
-| -------------- | ----------------------------------------------------------------------------- |
-| `broken_links` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| Rule key                | What it audits                                                               |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `forbidden_layout_keys` | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead) |
+| `missing_layout_file`   | `wazoo:layout` paths that do not resolve to a readable `.html` file          |
 
-Default: `broken_links` is `warning`.
+Defaults: both layout rules are `error`.
 
-`wiki check` reports broken links only — it does not repair them. Use [Wiki_Subcommand_link](Wiki_Subcommand_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
-
-Filename pattern and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
+Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
 
 ### Single-file mode
 
-`wiki check path/to/Page.md` runs per-file SHACL plus broken-link audits for that route. Cross-document SHACL interactions may only appear in a full-vault check.
+`wiki check path/to/Page.md` runs per-file SHACL for that route. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on that page require `wiki lint path/to/Page.md`.
 
 ### Related CI commands
 
-| Command               | Purpose                                    |
-| --------------------- | ------------------------------------------ |
-| `wiki lint --strict`  | Filename pattern, headings, and link style |
-| `wiki fmt --check`    | mdformat consistency                       |
-| `wiki render --check` | Stale inline SPARQL result blocks          |
-| `wiki link --check`   | Remaining missing-wikilink opportunities   |
+| Command               | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `wiki lint --strict`  | Broken links, filename pattern, headings, link style |
+| `wiki fmt --check`    | mdformat consistency                                 |
+| `wiki render --check` | Stale inline SPARQL result blocks                  |
+| `wiki link --check`   | Remaining missing-wikilink opportunities           |
 
-`wiki build` runs `wiki check` and `wiki lint` before writing output unless `--no-check`.
+`wiki build` runs `wiki lint` then `wiki check` before writing output unless `--no-check`.
 
 ## Related
 

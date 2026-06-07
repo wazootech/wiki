@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki lint
-description: Convention audits for filename patterns, heading style, and internal link style.
+description: Convention audits for broken links, filename patterns, heading style, and internal link style.
 ---
 
 # `wiki lint`
 
-Run **convention** audits on the vault: filename pattern, heading style, and internal link style.
+Run **convention** audits on the vault: broken links, filename pattern, heading style, and internal link style.
 
 Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](Design_Philosophies.md).
 
@@ -33,31 +33,34 @@ wiki lint --strict
 
 | Rule key           | What it audits                                                                                       |
 | ------------------ | ---------------------------------------------------------------------------------------------------- |
+| `broken_links`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                        |
 | `filename_pattern` | Full filename vs top-level `filename_pattern` regex (`.md` files only)                               |
 | `headings`         | ATX `#` headings only (no Setext), sentence-case H2+ (H1 title case conventional), numbered headings |
 | `thematic_breaks`  | Horizontal rules (`---`, `***`, `___`) in body prose                                                 |
 | `link_style`       | Wikilinks in body prose when top-level `link_style` is `markdown`                                    |
 
-Each rule is `error`, `warning`, or `off`. Defaults: `filename_pattern` and `link_style` are `warning`; `headings` and `thematic_breaks` are `off`.
+Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings` and `thematic_breaks` are `off`.
+
+`wiki lint` reports broken links only — it does not repair them. Use [Wiki_Subcommand_link](Wiki_Subcommand_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
 
 Route safety errors (spaces, unsafe URL characters) abort lint with errors before convention rules run.
 
 ### Single-file mode
 
-`wiki lint path/to/Page.md` runs filename, heading, and link-style audits for that route only.
+`wiki lint path/to/Page.md` runs broken-link, filename, heading, and link-style audits for that route only.
 
 ## Related CI commands
 
 | Command               | Purpose                                 |
 | --------------------- | --------------------------------------- |
 | `wiki fmt --check`    | mdformat consistency (`.mdformat.toml`) |
-| `wiki lint --strict`  | Editorial conventions (`lint:` in yaml) |
-| `wiki check --strict` | SHACL, route safety, broken links       |
+| `wiki lint --strict`  | Conventions (`lint:` in yaml)           |
+| `wiki check --strict` | SHACL, route safety, layout frontmatter |
 | `wiki render --check` | Stale inline SPARQL result blocks       |
 
-Run in that order in CI so mechanical fixes land before editorial and integrity checks.
+Run in that order in CI: `fmt`, then `lint`, then `check` — so mechanical fixes land before conventions and integrity checks.
 
-`wiki build` runs both `wiki check` and `wiki lint` before writing output unless `--no-check`.
+`wiki build` runs `wiki lint` then `wiki check` before writing output unless `--no-check`.
 
 ## Related
 

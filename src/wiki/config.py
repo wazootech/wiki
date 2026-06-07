@@ -43,12 +43,12 @@ WAZOO = Namespace("https://wazootech.github.io/wiki-cli/vocab/")
 DEFAULT_FILENAME_PATTERN = r"[A-Za-z0-9_()-]+\.md"
 
 DEFAULT_CHECK_RULES = {
-    "broken_links": "warning",
     "forbidden_layout_keys": "error",
     "missing_layout_file": "error",
 }
 
 DEFAULT_LINT_RULES = {
+    "broken_links": "warning",
     "filename_pattern": "warning",
     "headings": "off",
     "thematic_breaks": "off",
@@ -78,11 +78,10 @@ ALLOWED_CONFIG_KEYS = {
 }
 
 ALLOWED_CHECK_KEYS = {
-    "broken_links",
     "forbidden_layout_keys",
     "missing_layout_file",
 }
-ALLOWED_LINT_KEYS = {"filename_pattern", "headings", "thematic_breaks", "link_style"}
+ALLOWED_LINT_KEYS = {"broken_links", "filename_pattern", "headings", "thematic_breaks", "link_style"}
 ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 
 
@@ -113,10 +112,6 @@ def _normalize_severity_rules(
                 raise ValueError(
                     "check.filename_pattern must be error, warning, or off; "
                     "put the regex in top-level filename_pattern"
-                )
-            if block_name == "lint" and key == "broken_links":
-                raise ValueError(
-                    "lint.broken_links is not supported; use check.broken_links for link integrity"
                 )
             raise ValueError(
                 f"Invalid {block_name}.{key} severity: {value!r} (expected error, warning, or off)"

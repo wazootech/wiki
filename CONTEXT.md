@@ -32,7 +32,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and configurable `broken_links`. _Avoid_: Linting (use `wiki lint` for conventions).
+**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter. **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 
 **Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (ATX-only, sentence-case H2+), and `link_style`. _Avoid_: Checking (use `wiki check` for integrity).
 
