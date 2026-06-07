@@ -397,6 +397,53 @@ pre code {
   color: inherit;
 }
 
+pre[data-copy] {
+  padding-top: 36px;
+}
+
+.code-block {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.code-block pre {
+  margin-bottom: 0;
+}
+
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  background-color: rgba(248, 249, 250, 0.92);
+  color: #202122;
+  border: 1px solid #a2a9b1;
+  padding: 4px 10px;
+  font-size: 0.75em;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.code-block:hover .code-copy-btn,
+.code-block:focus-within .code-copy-btn,
+.code-copy-btn:focus {
+  opacity: 1;
+}
+
+.code-copy-btn:hover {
+  background-color: #eaecf0;
+}
+
+.code-copy-btn-copied {
+  background-color: #28a745 !important;
+  color: #fff !important;
+  border-color: #28a745 !important;
+  opacity: 1 !important;
+}
+
 blockquote {
   border-left: 4px solid #3b82f6;
   padding-left: 16px;
@@ -926,6 +973,23 @@ def _get_page_categories(page: VirtualPage) -> list[str]:
     return unique_cats
 
 
+def render_copyable_pre(
+    raw_text: str,
+    code_inner_html: str,
+    *,
+    pre_class: str = "",
+    code_class: str = "",
+) -> str:
+    """Render a pre/code block with data-copy for progressive clipboard enhancement."""
+    copy_attr = html_module.escape(raw_text, quote=True)
+    pre_class_attr = f' class="{pre_class}"' if pre_class else ""
+    code_class_attr = f' class="{code_class}"' if code_class else ""
+    return (
+        f'<pre data-copy="{copy_attr}"{pre_class_attr}>'
+        f"<code{code_class_attr}>{code_inner_html}</code></pre>\n"
+    )
+
+
 def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
@@ -943,15 +1007,24 @@ def render_wiki_markdown(
         escaped_language = html_module.escape(language)
         escaped_code = html_module.escape(token.content)
         if not language:
-            return f'<pre><code>{escaped_code}</code></pre>\n'
+            return render_copyable_pre(token.content, escaped_code)
 
         try:
             lexer = get_lexer_by_name(language)
         except ClassNotFound:
-            return f'<pre><code class="language-{escaped_language}">{escaped_code}</code></pre>\n'
+            return render_copyable_pre(
+                token.content,
+                escaped_code,
+                code_class=f"language-{escaped_language}",
+            )
 
         highlighted = highlight(token.content, lexer, PYGMENTS_FORMATTER)
-        return f'<pre class="highlight"><code class="language-{escaped_language}">{highlighted}</code></pre>\n'
+        return render_copyable_pre(
+            token.content,
+            highlighted,
+            pre_class="highlight",
+            code_class=f"language-{escaped_language}",
+        )
 
     md.add_render_rule("fence", _fence_renderer)
 
@@ -1522,10 +1595,10 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
             f'id="{input_id}" value="{view_id}"{checked}>'
             f'<label class="metadata-format-label" for="{input_id}">{html_module.escape(view["label"])}</label>'
         )
-        highlighted, lexer = _metadata_content_for_page(page, page_config, view)
+        highlighted, lexer, raw_text = _metadata_content_for_page(page, page_config, view)
         panels.append(
             f'<div class="metadata-format-panel metadata-format-panel-{view_id}">'
-            f'<pre class="highlight"><code class="language-{html_module.escape(lexer)}">{highlighted}</code></pre>'
+            f'{render_copyable_pre(raw_text, highlighted, pre_class="highlight", code_class=f"language-{html_module.escape(lexer)}")}'
             f"</div>"
         )
 
@@ -1542,7 +1615,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
 </section>"""
 
 
-def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict[str, str]) -> tuple[str, str]:
+def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict[str, str]) -> tuple[str, str, str]:
     rdf = process_rdf_format(
         page.frontmatter,
         page.full_slug,
@@ -1554,7 +1627,7 @@ def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict
         text = json.dumps(rdf, indent=2, default=str)
     else:
         text = rdf if isinstance(rdf, str) else str(rdf)
-    return _highlight_metadata(text, view["lexer"]), view["lexer"]
+    return _highlight_metadata(text, view["lexer"]), view["lexer"], text
 
 
 def _metadata_view_dom_id(page: VirtualPage) -> str:

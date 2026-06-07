@@ -9,6 +9,7 @@ from wiki.site import (
     build_index_html,
     build_page_html,
     build_site,
+    render_copyable_pre,
     render_wiki_markdown,
     strip_leading_title_heading,
 )
@@ -205,6 +206,7 @@ name: Project Atlas
 
         self.assertIn('class="highlight"', html)
         self.assertIn('class="language-python"', html)
+        self.assertIn('data-copy="print(&quot;&lt;hello&gt;&quot;)\n"', html)
         self.assertIn("<span", html)
         self.assertIn("&lt;hello&gt;", html)
 
@@ -212,15 +214,31 @@ name: Project Atlas
         html = render_wiki_markdown("```not-a-real-language\n<tag>\n```\n")
 
         self.assertIn('class="language-not-a-real-language"', html)
+        self.assertIn('data-copy="&lt;tag&gt;\n"', html)
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn("<span", html)
 
     def test_render_unlabeled_fence_remains_plain_code(self) -> None:
         html = render_wiki_markdown("```\n<tag>\n```\n")
 
-        self.assertIn("<pre><code>", html)
+        self.assertIn('data-copy="&lt;tag&gt;\n"', html)
+        self.assertIn("<pre data-copy=", html)
+        self.assertIn("<code>", html)
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn('class="highlight"', html)
+
+    def test_render_copyable_pre_escapes_attribute_text(self) -> None:
+        html = render_copyable_pre('line "one"\nline two', "&lt;tag&gt;")
+
+        self.assertIn('data-copy="line &quot;one&quot;', html)
+        self.assertIn('line two"', html)
+        self.assertIn("<code>&lt;tag&gt;</code>", html)
+
+    def test_seed_template_includes_code_copy_initialization(self) -> None:
+        seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+        self.assertIn("initCodeCopyButtons", seed_template)
+        self.assertIn("pre[data-copy]", seed_template)
+        self.assertIn("copyPreContent", seed_template)
 
     def test_build_page_html_highlights_metadata_json(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -253,6 +271,9 @@ specialty: Diagnostics
             self.assertIn('class="language-json"', html)
             self.assertIn('class="language-turtle"', html)
             self.assertIn('class="highlight"', html)
+            self.assertIn('data-copy="', html)
+            self.assertIn('&quot;@context&quot;', html)
+            self.assertGreater(html.count('data-copy="'), 1)
             self.assertIn("<span", html)
             self.assertIn('&quot;@id&quot;', html)
             self.assertIn('&quot;@type&quot;', html)

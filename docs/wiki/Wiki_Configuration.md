@@ -192,6 +192,9 @@ The wiki builder generates these selectors in the rendered page content:
 | `.template-SLUG`            | Per-template class on infobox (e.g. `template-person`). |
 | `toclevel-N` / `lN`         | TOC list item classes for heading level N.              |
 | `.wikilink`                 | Internal wiki page links.                               |
+| `pre[data-copy]`            | Block code with raw source for clipboard copy.          |
+| `.code-block`               | Wrapper injected around copyable pre blocks.            |
+| `.code-copy-btn`            | Copy button shown on code-block hover/focus.            |
 
 ### JavaScript hooks
 
@@ -204,6 +207,8 @@ The bundled seed template (`index.html` created by `wiki init`) provides:
 | `saveTalkNotes()`              | Save per-page notes to localStorage.                 |
 | `clearTalkNotes()`             | Clear per-page notes.                                |
 | `copySourceCode()`             | Copy markdown source to clipboard.                   |
+| `copyPreContent()`             | Copy a `pre[data-copy]` block to clipboard.          |
+| `initCodeCopyButtons()`        | Wrap copyable pre blocks and inject copy buttons.    |
 | `toggleToc()`                  | Show/hide table of contents.                         |
 | `goToRandomArticle()`          | Navigate to a random page.                           |
 | `triggerSearch()`              | Execute search and navigate to first match.          |

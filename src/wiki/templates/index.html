@@ -192,22 +192,62 @@ function updateCharCount() {
   countEl.textContent = count + ' character' + (count === 1 ? '' : 's');
 }
 
+function copyTextWithFeedback(text, button) {
+  const write = navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(text)
+    : new Promise((resolve, reject) => {
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.left = '-9999px';
+        document.body.appendChild(area);
+        area.select();
+        try {
+          document.execCommand('copy') ? resolve() : reject();
+        } catch (err) {
+          reject(err);
+        } finally {
+          document.body.removeChild(area);
+        }
+      });
+
+  return write.then(() => {
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    button.classList.add('code-copy-btn-copied');
+    setTimeout(() => {
+      button.textContent = originalText;
+      button.classList.remove('code-copy-btn-copied');
+    }, 2000);
+  });
+}
+
 function copySourceCode() {
   const area = document.getElementById('markdownSourceArea');
   if (!area) return;
-  area.select();
-  area.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(area.value).then(() => {
-    const btn = document.getElementById('copySourceBtn');
-    const originalText = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.style.background = '#28a745';
-    btn.style.color = '#fff';
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.style.background = '';
-      btn.style.color = '';
-    }, 2000);
+  const btn = document.getElementById('copySourceBtn');
+  copyTextWithFeedback(area.value, btn);
+}
+
+function copyPreContent(pre, button) {
+  const text = pre.getAttribute('data-copy') ?? '';
+  copyTextWithFeedback(text, button);
+}
+
+function initCodeCopyButtons() {
+  document.querySelectorAll('pre[data-copy]:not([data-copy-ready])').forEach((pre) => {
+    pre.setAttribute('data-copy-ready', '');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    pre.parentNode.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-copy-btn';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', () => copyPreContent(pre, btn));
+    wrapper.insertBefore(btn, pre);
   });
 }
 
@@ -390,6 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
     applyCategoryFilterFromUrl();
   }
+
+  initCodeCopyButtons();
 });
 </script>
 </body>
