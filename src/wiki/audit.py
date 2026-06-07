@@ -370,16 +370,30 @@ def _frontmatter_asset_targets(data: dict[str, Any]) -> list[str]:
     return targets
 
 
-def run_checks(config: WikiConfig) -> dict[str, Any]:
-    """Run both strict SHACL validation and configured style audits.
+def _apply_issues(
+    results: dict[str, Any],
+    rule_key: str,
+    issues: list[str],
+    rules: dict[str, str],
+) -> None:
+    severity = rules.get(rule_key, "warning")
+    if severity == "off":
+        return
+    if severity == "error":
+        if issues:
+            results["conforms"] = False
+            results["errors"].extend(issues)
+    else:
+        results["warnings"].extend(issues)
 
-    Returns a dict with 'conforms' (bool), 'errors' (list of str), and 'warnings' (list of str).
-    """
-    results = {
-        "conforms": True,
-        "errors": [],
-        "warnings": [],
-    }
+
+def _empty_results() -> dict[str, Any]:
+    return {"conforms": True, "errors": [], "warnings": []}
+
+
+def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
+    """Run integrity checks: SHACL, route safety, collisions, broken links."""
+    results = _empty_results()
 
     try:
         shacl_conforms, shacl_text = check_shacl_all(config)
@@ -389,17 +403,6 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
     except Exception as e:
         results["conforms"] = False
         results["errors"].append(f"SHACL validation system error: {e}")
-
-    def process_issues(rule_key: str, issues: list[str]) -> None:
-        severity = config.check.get(rule_key, "warning")
-        if severity == "off":
-            return
-        elif severity == "error":
-            if issues:
-                results["conforms"] = False
-                results["errors"].extend(issues)
-        else:  # "warning"
-            results["warnings"].extend(issues)
 
     safety_issues = validate_route_safety(config)
     if safety_issues:
@@ -416,15 +419,35 @@ def run_checks(config: WikiConfig) -> dict[str, Any]:
             results["errors"].extend(collision_issues)
 
     if not safety_issues:
-        filename_issues = audit_filenames(config)
-        process_issues("filename_pattern", filename_issues)
-
-
-
-        link_issues = audit_broken_links(config)
-        process_issues("broken_links", link_issues)
-
-        heading_issues = audit_headings(config)
-        process_issues("headings", heading_issues)
+        link_issues = audit_broken_links(config, file_filter=file_filter)
+        _apply_issues(results, "broken_links", link_issues, config.check)
 
     return results
+
+
+def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
+    """Run convention audits: filename pattern and heading style."""
+    results = _empty_results()
+
+    safety_issues = validate_route_safety(config)
+    if safety_issues:
+        results["conforms"] = False
+        results["errors"].extend(safety_issues)
+        return results
+
+    filename_issues = audit_filenames(config, file_filter=file_filter)
+    _apply_issues(results, "filename_pattern", filename_issues, config.lint)
+
+    heading_issues = audit_headings(config, file_filter=file_filter)
+    _apply_issues(results, "headings", heading_issues, config.lint)
+
+    return results
+
+
+def merge_results(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
+    """Merge two audit result dicts from run_check and run_lint."""
+    return {
+        "conforms": first["conforms"] and second["conforms"],
+        "errors": first["errors"] + second["errors"],
+        "warnings": first["warnings"] + second["warnings"],
+    }

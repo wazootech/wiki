@@ -11,7 +11,7 @@ Render one document as a terminal-friendly **infobox** plus markdown body (same 
 ## Usage
 
 ```bash
-wiki view wiki/Gregory_House.md
+wiki view wiki/Gregory_Davidson.md
 wiki view wiki/record.yaml
 ```
 

@@ -16,7 +16,9 @@ wiki --help
 
 ## Features
 
-- **Check** — PySHACL plus hygiene audits ([Wiki_Subcommand_check](Wiki_Subcommand_check.md))
+- **Check** — SHACL integrity, route safety, broken links ([Wiki_Subcommand_check](Wiki_Subcommand_check.md))
+- **Lint** — filename pattern and heading conventions ([Wiki_Subcommand_lint](Wiki_Subcommand_lint.md))
+- **Fmt** — mdformat for markdown ([Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md))
 - **Query** — SPARQL with OWL-RL ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [Graph_Cache](Graph_Cache.md))
 - **Render** — live tables from inline SPARQL ([Wiki_Subcommand_render](Wiki_Subcommand_render.md))
 - **Build / serve** — static site and local preview ([Wiki_Subcommand_build](Wiki_Subcommand_build.md), [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md))
@@ -32,6 +34,7 @@ pip install wazootech-wiki
 mkdir my-wiki && cd my-wiki
 wiki init
 wiki check
+wiki lint
 wiki serve
 ```
 
@@ -61,7 +64,7 @@ wiki -c docs/wiki.yaml check
 
 ### `--input-dir PATH` (repeatable)
 
-Override or extend `input_dirs` from config for a single invocation. Useful for one-off queries against a subdirectory.
+Override or extend `input_dirs` from config for a single invocation. Relative paths resolve against the config file directory. Useful for one-off queries against a subdirectory.
 
 Example:
 
@@ -90,10 +93,11 @@ ORDER BY ?command
 | Command                                               | Description                                                            |
 | ----------------------------------------------------- | ---------------------------------------------------------------------- |
 | [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     | Generate a static HTML site from the vault.                            |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Unified SHACL validation and vault hygiene audits.                     |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and broken links.   |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                         |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       | Scaffold wiki.yaml and starter wiki pages interactively.               |
+| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for filename patterns and heading style.             |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                |
 | [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                  |
 | [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview.                               |

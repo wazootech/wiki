@@ -33,8 +33,11 @@ jobs:
         PYTHONPATH: src
       run: uv run python -m unittest discover -s tests
 
-    - name: Run Docs Wiki Style and SHACL Audits
+    - name: Run Docs Wiki Integrity Audits
       run: uv run wiki -c docs/wiki.yaml check --strict -v
+
+    - name: Run Docs Wiki Convention Audits
+      run: uv run wiki -c docs/wiki.yaml lint --strict -v
 
     - name: Verify Docs Wiki Formatting
       run: uv run wiki -c docs/wiki.yaml fmt --check -v

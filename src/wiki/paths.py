@@ -115,11 +115,13 @@ def detect_output_collisions(entries: list[OutputEntry]) -> list[str]:
 def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
     if not config.filename_pattern:
         return None
+    if md_file.suffix.lower() != ".md":
+        return None
     try:
         pattern = re.compile(config.filename_pattern)
     except re.error as exc:
         return f"Invalid filename_pattern: {exc}"
-    if pattern.fullmatch(md_file.stem) is None:
+    if pattern.fullmatch(md_file.name) is None:
         return f"Filename '{md_file.name}' does not match filename_pattern."
     return None
 

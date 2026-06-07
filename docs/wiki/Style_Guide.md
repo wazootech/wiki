@@ -6,21 +6,21 @@ description: Canonical rules for vault filenames, links, prose, frontmatter, sha
 
 # Style guide
 
-This is the **canonical style guide** for authoring pages in an LLM Wiki vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) enforces the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an LLM Wiki vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
-In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose there—link here instead.
+In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose here—link here instead.
 
 ## File layout
 
 - Put pages under directories listed in `input_dirs` (usually `wiki/`).
-- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_House.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `filename_pattern`.
+- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
 
-Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+` (Wikipedia-style).
+Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
 
-**Enforcer:** `check.filename_pattern` (warning by default).
+**Enforcer:** `lint.filename_pattern` (warning by default).
 
 ## Prose and headings
 
@@ -28,7 +28,7 @@ Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to m
 - Avoid numbered headings; keep headings concise.
 - Do not use horizontal rules (`---`) for thematic breaks inside page bodies (reserve `---` for YAML frontmatter delimiters only).
 
-**Enforcer:** `check.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki check --strict` in CI only after enabling the rules you want enforced as errors.
+**Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki lint --strict` in CI only after enabling the rules you want enforced as errors.
 
 ## Frontmatter
 

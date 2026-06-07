@@ -1,12 +1,12 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the `wiki check` subcommand of the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki check` (integrity) and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
 
 ## Vault rules
 
 ### Clean filenames
-- **Rule:** Default user-facing examples should prefer **Wikipedia-style** filenames for ordinary pages (e.g., `Opal_Security.md`, `Gregory_House.md`) — preserved capitalization and underscores. Do not default to lowercase kebab-case (`opal-security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
-- **Enforcer:** `check.filename_pattern` in `wiki.yaml` (warning by default). Route safety (spaces, unsafe URL characters) always fails as an error.
+- **Rule:** Default user-facing examples should prefer **Wikipedia-style** filenames for ordinary pages (e.g., `Opal_Security.md`, `Gregory_Davidson.md`) — preserved capitalization and underscores. Do not default to lowercase kebab-case (`opal-security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
+- **Enforcer:** `lint.filename_pattern` in `wiki.yaml` (warning by default). Route safety (spaces, unsafe URL characters) always fails as an error in `wiki check`.
 
 ### Internal links
 - **Rule:** Prefer standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links and Obsidian-style `[[slug]]` wikilinks also resolve when valid. Ensure internal links point at existing documents.
@@ -15,7 +15,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 ### Style guidelines
 - **Rule:** Use sentence-case headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
 - **Rule:** Avoid using horizontal rules (`---`) for thematic breaks within page bodies.
-- **Enforcer:** `check.headings` (off by default; set to `warning` or `error` in `wiki.yaml`).
+- **Enforcer:** `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`).
 
 ### Markdown flavor
 Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
@@ -27,21 +27,22 @@ Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URL
 ### Running validations
 Before submitting commits, verify your changes against the active schema and guidelines:
 ```bash
-# Run unified check (SHACL + hygiene; strict elevates warnings)
+# Integrity: SHACL + broken links
 wiki check
 
-# Run with verbose output to see warnings
+# Conventions: filename pattern + headings
+wiki lint
+
+# Verbose output
 wiki check -v
+wiki lint -v
 
-# Run with strict mode (warnings become errors and fail CI)
+# CI: elevate warnings to errors
 wiki check --strict
+wiki lint --strict
 ```
 
-CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate from `wiki check`.
+CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate lanes.
 
-It is highly recommended to run the full CI-equivalent local checks before committing, even though they are not a required pre-commit step:
-```bash
-wiki check --strict -v
-wiki fmt --check -v
-wiki render --check
-```
+### Architecture
+See [CONTEXT.md](CONTEXT.md) for domain language and [docs/wiki/Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

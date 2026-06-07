@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 name: wiki check
-description: Unified SHACL validation and vault hygiene audits.
+description: Integrity checks — SHACL validation, route safety, and broken links.
 ---
 
 # `wiki check`
 
-Run strict **SHACL** validation plus configurable hygiene audits on the vault.
+Run **integrity** checks on the vault: strict **SHACL** validation, route safety, output collisions, and broken links.
 
 Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](Design_Philosophies.md).
 
@@ -37,28 +37,30 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key           | What it audits                                                                |
-| ------------------ | ----------------------------------------------------------------------------- |
-| `filename_pattern` | Filename stem vs top-level `filename_pattern` regex                           |
-| `broken_links`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`         | Sentence-case headings, numbered headings, thematic `---` in body             |
+| Rule key       | What it audits                                                                |
+| -------------- | ----------------------------------------------------------------------------- |
+| `broken_links` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
 
-Each rule is `error`, `warning`, or `off`. Defaults: `filename_pattern` and `broken_links` are `warning`; `headings` is `off`.
+Default: `broken_links` is `warning`.
+
+Filename pattern and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
 
 ### Single-file mode
 
-`wiki check path/to/Page.md` runs per-file SHACL plus filtered hygiene audits for that route. Cross-document SHACL interactions may only appear in a full-vault check.
+`wiki check path/to/Page.md` runs per-file SHACL plus broken-link audits for that route. Cross-document SHACL interactions may only appear in a full-vault check.
 
 ### Related CI commands
 
 | Command               | Purpose                           |
 | --------------------- | --------------------------------- |
+| `wiki lint --strict`  | Filename pattern and headings     |
 | `wiki fmt --check`    | mdformat consistency              |
 | `wiki render --check` | Stale inline SPARQL result blocks |
 
-`wiki build` runs `wiki check` before writing output unless `--no-check`.
+`wiki build` runs `wiki check` and `wiki lint` before writing output unless `--no-check`.
 
 ## Related
 
 - [Wiki_Configuration](Wiki_Configuration.md) — `check.*` severities
+- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention lane
 - [Style_Guide](Style_Guide.md)

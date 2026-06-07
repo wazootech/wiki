@@ -8,7 +8,19 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 ## Silence is golden
 
-[Wiki_Subcommand_check](Wiki_Subcommand_check.md), [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` so warnings fail loudly.
+[Wiki_Subcommand_check](Wiki_Subcommand_check.md), [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md), [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
+
+## Check, lint, and fmt
+
+Three lanes, three commands (aligned with common CLI tooling):
+
+| Lane        | Command      | Config / tool        |
+| ----------- | ------------ | -------------------- |
+| Integrity   | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) |
+| Convention  | `wiki lint`  | `lint.filename_pattern`, `lint.headings` |
+| Formatting  | `wiki fmt`   | mdformat             |
+
+`wiki build` runs integrity and convention preflight (`check` then `lint`) unless `--no-check`.
 
 ## Pipes and filters
 

@@ -10,7 +10,8 @@ from wiki.audit import (
     load_shapes,
     check_shacl_file,
     check_shacl_all,
-    run_checks,
+    run_check,
+    run_lint,
 )
 
 
@@ -18,7 +19,7 @@ class TestChecking(unittest.TestCase):
     def test_audit_filenames_validation(self) -> None:
         """Test auditing of filenames for lowercase kebab-case naming standard."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], filename_pattern="[a-z0-9-]+")
+            config = WikiConfig(input_dirs=[tmpdir], filename_pattern=r"[a-z0-9-]+\.md")
             
             # Create valid and invalid files
             valid_path = Path(tmpdir) / "valid-kebab-case.md"
@@ -98,19 +99,16 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             warnings = audit_broken_links(config)
             self.assertEqual(warnings, [])
 
-    def test_audit_filenames_includes_yaml_documents(self) -> None:
+    def test_audit_filenames_skips_yaml_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], filename_pattern="[a-z0-9-]+")
+            config = WikiConfig(input_dirs=[tmpdir], filename_pattern=r"[a-z0-9-]+\.md")
 
-            invalid_yml = Path(tmpdir) / "Invalid_Name.yml"
-            invalid_yml.write_text("type: Thing\n", encoding="utf-8")
-            invalid_yaml = Path(tmpdir) / "Invalid_Name.yaml"
-            invalid_yaml.write_text("type: Thing\n", encoding="utf-8")
+            Path(tmpdir, "Invalid_Name.yml").write_text("type: Thing\n", encoding="utf-8")
+            Path(tmpdir, "Invalid_Name.yaml").write_text("type: Thing\n", encoding="utf-8")
+            Path(tmpdir, "valid-name.md").write_text("content", encoding="utf-8")
 
             warnings = audit_filenames(config)
-            self.assertEqual(len(warnings), 2)
-            self.assertTrue(any("Invalid_Name.yml" in w for w in warnings))
-            self.assertTrue(any("Invalid_Name.yaml" in w for w in warnings))
+            self.assertEqual(warnings, [])
 
     def test_load_shapes_edge_cases(self) -> None:
         """Test load_shapes behaves predictably with different underlying graph states."""
@@ -183,48 +181,56 @@ type: Person
             conforms_all, results_all = check_shacl_all(config)
             self.assertFalse(conforms_all)
 
-    def test_run_checks_severity_and_promotion(self) -> None:
-        """Test run_checks respects configuration for warning levels and promotions."""
+    def test_run_lint_severity_and_promotion(self) -> None:
+        """Test run_lint respects configuration for warning levels and promotions."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            
-            # Create an invalid filename violating lowercase kebab-case
+
             invalid_file = wiki_dir / "Invalid_Name.md"
             invalid_file.write_text("""---
 type: schema:WebPage
 ---
 """, encoding="utf-8")
-            
-            # Scenario A: check.filename_pattern is "warning"
-            config_warning = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "warning"})
-            res_warning = run_checks(config_warning)
+
+            config_warning = WikiConfig(
+                input_dirs=[wiki_dir],
+                filename_pattern=r"[a-z0-9-]+\.md",
+                lint={"filename_pattern": "warning"},
+            )
+            res_warning = run_lint(config_warning)
             self.assertTrue(res_warning["conforms"])
             self.assertEqual(len(res_warning["warnings"]), 1)
             self.assertEqual(len(res_warning["errors"]), 0)
-            
-            # Scenario B: check.filename_pattern is "error"
-            config_error = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "error"})
-            res_error = run_checks(config_error)
+
+            config_error = WikiConfig(
+                input_dirs=[wiki_dir],
+                filename_pattern=r"[a-z0-9-]+\.md",
+                lint={"filename_pattern": "error"},
+            )
+            res_error = run_lint(config_error)
             self.assertFalse(res_error["conforms"])
             self.assertEqual(len(res_error["warnings"]), 0)
             self.assertEqual(len(res_error["errors"]), 1)
-            
-            # Scenario C: check.filename_pattern is "off"
-            config_off = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[a-z0-9-]+", check={"filename_pattern": "off"})
-            res_off = run_checks(config_off)
+
+            config_off = WikiConfig(
+                input_dirs=[wiki_dir],
+                filename_pattern=r"[a-z0-9-]+\.md",
+                lint={"filename_pattern": "off"},
+            )
+            res_off = run_lint(config_off)
             self.assertTrue(res_off["conforms"])
             self.assertEqual(len(res_off["warnings"]), 0)
             self.assertEqual(len(res_off["errors"]), 0)
 
-    def test_filename_pattern_reports_non_matching_stems(self) -> None:
-        """Custom filenamePattern controls filename hygiene without preset styles."""
+    def test_filename_pattern_reports_non_matching_names(self) -> None:
+        """Custom filename_pattern controls filename hygiene without preset styles."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
             (wiki_dir / "ethan-davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern="[A-Z][A-Za-z0-9_]*")
-            res = run_checks(config)
+            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern=r"[A-Z][A-Za-z0-9_]*\.md")
+            res = run_lint(config)
 
             self.assertTrue(res["conforms"])
             self.assertEqual(len(res["warnings"]), 1)
@@ -241,7 +247,7 @@ type: schema:WebPage
             )
 
             config = WikiConfig(input_dirs=[wiki_dir])
-            res = run_checks(config)
+            res = run_check(config)
 
             self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
 
@@ -267,7 +273,7 @@ type: schema:WebPage
             warnings = audit_headings(config)
             self.assertTrue(any("title case" in w for w in warnings))
 
-    def test_run_checks_headings_severity(self) -> None:
+    def test_run_lint_headings_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
             wiki_dir.mkdir()
@@ -275,8 +281,8 @@ type: schema:WebPage
                 "---\ntype: TechArticle\n---\n## 1. Bad\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], check={"headings": "error"})
-            res = run_checks(config)
+            config = WikiConfig(input_dirs=[wiki_dir], lint={"headings": "error"})
+            res = run_lint(config)
             self.assertFalse(res["conforms"])
             self.assertTrue(any("Numbered heading" in e for e in res["errors"]))
 

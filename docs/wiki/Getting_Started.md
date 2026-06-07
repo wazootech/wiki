@@ -35,8 +35,11 @@ wiki init --git
 ## Daily workflow
 
 ```bash
-# Validate SHACL + hygiene (silent on success)
+# Validate integrity (SHACL + broken links; silent on success)
 wiki check
+
+# Validate conventions (filename pattern, headings)
+wiki lint
 
 # Refresh embedded SPARQL tables
 wiki render
@@ -54,7 +57,7 @@ wiki serve --watch
 wiki build --output-dir _site
 ```
 
-Use `wiki check -v` to see warnings, and `wiki check --strict` in CI so warnings fail the job.
+Use `wiki check -v` / `wiki lint -v` to see warnings. In CI, run both with `--strict` so warnings fail the job.
 
 ## Work in this repository’s docs vault
 
@@ -62,6 +65,7 @@ The published site under `docs/wiki/` is built with:
 
 ```bash
 wiki -c docs/wiki.yaml check --strict -v
+wiki -c docs/wiki.yaml lint --strict -v
 python -m wiki -c docs/wiki.yaml serve --watch
 wiki -c docs/wiki.yaml render --cache
 wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki

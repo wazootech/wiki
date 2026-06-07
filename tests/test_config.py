@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import yaml
 from rdflib import Graph, Namespace
 
-from wiki.config import Context, WikiConfig, DEFAULT_NAMESPACES
+from wiki.config import Context, WikiConfig, DEFAULT_CHECK_RULES, DEFAULT_LINT_RULES, DEFAULT_NAMESPACES
 
 
 class TestContext(unittest.TestCase):
@@ -49,9 +49,8 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.base_url, "/wiki")
         self.assertEqual(config.url_style, "dir")
         self.assertIsNone(config.filename_pattern)
-        self.assertEqual(config.check.get("filename_pattern"), "warning")
-        self.assertEqual(config.check.get("broken_links"), "warning")
-        self.assertEqual(config.check.get("headings"), "off")
+        self.assertEqual(config.check, DEFAULT_CHECK_RULES)
+        self.assertEqual(config.lint, DEFAULT_LINT_RULES)
         self.assertIsNotNone(config.context)
         self.assertFalse(config.serve_api_enabled)
         self.assertEqual(config.serve_api_path, "/api/sparql")
@@ -71,9 +70,12 @@ class TestWikiConfig(unittest.TestCase):
                 "asset_dirs": ["assets", "media/photos"],
                 "exclude": ["wiki/drafts/**", "assets/private/**"],
                 "check": {
+                    "broken_links": "error"
+                },
+                "lint": {
                     "filename_pattern": "error"
                 },
-                "filename_pattern": "[A-Za-z0-9_()-]+",
+                "filename_pattern": "[A-Za-z0-9_()-]+\\.md",
                 "base_url": "/docs",
                 "url_style": "file",
                 "serve_api": {"enabled": False, "path": "/sparql"},
@@ -87,8 +89,9 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
             self.assertEqual(config.exclude, ["wiki/drafts/**", "assets/private/**"])
-            self.assertEqual(config.check.get("filename_pattern"), "error")
-            self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+")
+            self.assertEqual(config.check.get("broken_links"), "error")
+            self.assertEqual(config.lint.get("filename_pattern"), "error")
+            self.assertEqual(config.filename_pattern, "[A-Za-z0-9_()-]+\\.md")
             self.assertEqual(config.base_url, "/docs")
             self.assertEqual(config.url_style, "file")
             self.assertFalse(config.serve_api_enabled)
@@ -170,6 +173,41 @@ class TestWikiConfig(unittest.TestCase):
             self.assertTrue(config.is_excluded(base_path / "wiki" / "drafts" / "note.md"))
             self.assertTrue(config.is_excluded(base_path / "assets" / ".env.local"))
             self.assertFalse(config.is_excluded(base_path / "wiki" / "published.md"))
+
+    def test_wikiconfig_load_rejects_legacy_check_keys(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump(
+                    {
+                        "input_dirs": "wiki",
+                        "check": {"filename_pattern": "warning", "broken_links": "warning"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unknown check keys"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_rejects_legacy_check_keys_at_init(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Invalid check keys"):
+            WikiConfig(check={"filename_pattern": "[A-Za-z]+"})
+
+    def test_wikiconfig_load_unknown_lint_keys_raise_error(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "lint": {"broken_links": "error"}}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "unknown lint keys"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_invalid_severity_raises(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Invalid check.broken_links severity"):
+            WikiConfig(check={"broken_links": "maybe"})
 
     def test_wikiconfig_load_invalid_syntax_raises_error(self) -> None:
         """Test WikiConfig.load raises on config syntax errors."""

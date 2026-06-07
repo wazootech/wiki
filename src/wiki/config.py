@@ -25,17 +25,25 @@ DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 SH = Namespace("http://www.w3.org/ns/shacl#")
 
+DEFAULT_FILENAME_PATTERN = r"[A-Za-z0-9_()-]+\.md"
+
 DEFAULT_CHECK_RULES = {
-    "filename_pattern": "warning",
     "broken_links": "warning",
+}
+
+DEFAULT_LINT_RULES = {
+    "filename_pattern": "warning",
     "headings": "off",
 }
+
+ALLOWED_SEVERITIES = {"error", "warning", "off"}
 
 ALLOWED_CONFIG_KEYS = {
     "input_dirs",
     "asset_dirs",
     "wiki_base",
     "check",
+    "lint",
     "context",
     "@context",
     "content_predicate",
@@ -48,16 +56,58 @@ ALLOWED_CONFIG_KEYS = {
     "serve_api",
 }
 
-ALLOWED_CHECK_KEYS = {"filename_pattern", "broken_links", "headings"}
+ALLOWED_CHECK_KEYS = {"broken_links"}
+ALLOWED_LINT_KEYS = {"filename_pattern", "headings"}
 ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 
 
-def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
-    """Merge user check severities with defaults."""
-    merged = {**DEFAULT_CHECK_RULES}
-    if check:
-        merged.update(check)
+def _looks_like_regex(value: str) -> bool:
+    return any(ch in value for ch in "[]()\\")
+
+
+def _normalize_severity_rules(
+    rules: dict[str, str] | None,
+    defaults: dict[str, str],
+    block_name: str,
+    allowed_keys: set[str],
+) -> dict[str, str]:
+    """Merge user severities with defaults and validate values."""
+    merged = {**defaults}
+    if not rules:
+        return merged
+    unknown = sorted(k for k in rules if k not in allowed_keys)
+    if unknown:
+        raise ValueError(f"Invalid {block_name} keys: {', '.join(unknown)}")
+    for key, value in rules.items():
+        if value is False or value == "false":
+            value = "off"
+        elif value is True or value == "true":
+            value = "error"
+        if value not in ALLOWED_SEVERITIES:
+            if block_name == "check" and key == "filename_pattern" and _looks_like_regex(str(value)):
+                raise ValueError(
+                    "check.filename_pattern must be error, warning, or off; "
+                    "put the regex in top-level filename_pattern"
+                )
+            if block_name == "lint" and key == "broken_links":
+                raise ValueError(
+                    "lint.broken_links is not supported; use check.broken_links for link integrity"
+                )
+            raise ValueError(
+                f"Invalid {block_name}.{key} severity: {value!r} (expected error, warning, or off)"
+            )
+        merged[key] = value
     return merged
+
+
+def normalize_check_rules(check: dict[str, str] | None) -> dict[str, str]:
+    """Merge user check (integrity) severities with defaults."""
+    return _normalize_severity_rules(check, DEFAULT_CHECK_RULES, "check", ALLOWED_CHECK_KEYS)
+
+
+def normalize_lint_rules(lint: dict[str, str] | None) -> dict[str, str]:
+    """Merge user lint (convention) severities with defaults."""
+    return _normalize_severity_rules(lint, DEFAULT_LINT_RULES, "lint", ALLOWED_LINT_KEYS)
 
 
 def _unknown_keys(data: dict[str, Any], allowed: set[str]) -> list[str]:
@@ -76,6 +126,14 @@ def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
         unknown_check = _unknown_keys(check_data, ALLOWED_CHECK_KEYS)
         if unknown_check:
             raise ValueError(f"Invalid config file {config_name}: unknown check keys: {', '.join(unknown_check)}")
+
+    lint_data = data.get("lint")
+    if lint_data is not None:
+        if not isinstance(lint_data, dict):
+            raise ValueError(f"Invalid config file {config_name}: lint must be a mapping")
+        unknown_lint = _unknown_keys(lint_data, ALLOWED_LINT_KEYS)
+        if unknown_lint:
+            raise ValueError(f"Invalid config file {config_name}: unknown lint keys: {', '.join(unknown_lint)}")
 
     serve_api_data = data.get("serve_api")
     if serve_api_data is not None:
@@ -120,7 +178,7 @@ class Context:
 
 
 class WikiConfig:
-    """Manages the overall wiki configuration, including paths, check rules, and Context."""
+    """Manages wiki configuration: paths, check/lint severities, and RDF context."""
 
     def __init__(
         self,
@@ -128,6 +186,7 @@ class WikiConfig:
         asset_dirs: list[str | Path] | None = None,
         wiki_base: str = "https://wiki.example.org/",
         check: dict[str, str] | None = None,
+        lint: dict[str, str] | None = None,
         context: Context | None = None,
         content_predicate: str | None = None,
         uri_ext: bool = False,
@@ -146,6 +205,7 @@ class WikiConfig:
 
         self.wiki_base = wiki_base
         self.check = normalize_check_rules(check)
+        self.lint = normalize_lint_rules(lint)
         self.context = context if context is not None else Context({"wiki": wiki_base}, wiki_base=wiki_base)
         self.context.wiki_base = wiki_base
         self.content_predicate = content_predicate
@@ -255,6 +315,7 @@ class WikiConfig:
                             asset_dirs=[resolve(d) for d in asset_data],
                             wiki_base=data.get("wiki_base") or context_wiki_base or "https://wiki.example.org/",
                             check=data.get("check"),
+                            lint=data.get("lint"),
                             context=context_obj,
                             content_predicate=data.get("content_predicate"),
                             uri_ext=uri_ext,

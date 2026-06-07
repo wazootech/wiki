@@ -14,7 +14,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a WikiConfig. _Avoid_: Namespace list.
 
-**WikiConfig**: The central configuration managing CLI settings, directories, check rules, and the Context. _Avoid_: Config, parameters, settings.
+**WikiConfig**: The central configuration managing CLI settings, directories, check/lint severities, and the Context. _Avoid_: Config, parameters, settings.
 
 **Namespaces**: The mapping of prefix keys to URI values used for RDF conversion and SPARQL queries. _Avoid_: Prefixes, prefixes list.
 
@@ -32,7 +32,11 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: The process of running unified validations on the **Vault**, combining strict SHACL validation and configurable hygiene audits (`filename_pattern`, `broken_links`, optional `headings`). _Avoid_: Linting, testing.
+**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and configurable `broken_links`. _Avoid_: Linting (use `wiki lint` for conventions).
+
+**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern` and `headings`. _Avoid_: Checking (use `wiki check` for integrity).
+
+**Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 
@@ -46,7 +50,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
-- **Checking** runs unified health checks (including **Validation**) on the **Vault** via `wiki check`; stale SPARQL blocks use `wiki render --check`
+- **Checking** runs integrity checks on the **Vault** via `wiki check`; **Linting** runs convention audits via `wiki lint`; stale SPARQL blocks use `wiki render --check`
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
 - **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph

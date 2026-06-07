@@ -15,7 +15,7 @@ from .format import run_query, process_rdf_format
 from .render import render_markdown_files
 from .parser import document_data_from_path
 from .graph import load_graph, graph_stats
-from .audit import check_shacl_file, run_checks
+from .audit import check_shacl_file, merge_results, run_check, run_lint
 from .jqfilter import resolve_path
 from .format_choice import FormatChoice
 from .paths import iter_document_files
@@ -32,7 +32,10 @@ def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if cli_input_dirs:
-        config.input_dirs = [Path(d) for d in cli_input_dirs]
+        config.input_dirs = [
+            Path(d) if Path(d).is_absolute() else config.config_root / d
+            for d in cli_input_dirs
+        ]
 
     ctx.obj = config
 
@@ -72,11 +75,11 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("-v", "--verbose", is_flag=True, help="Show style/guideline warnings.")
+@click.option("-v", "--verbose", is_flag=True, help="Show integrity audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Run unified checks: strict SHACL validation + style audits."""
+    """Run integrity checks: SHACL validation, route safety, and broken links."""
     if file:
         res = check_shacl_file(file, config, verbose=verbose)
         conforms = True
@@ -92,19 +95,20 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
                 conforms = False
                 errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
 
-        # Style audits specifically for this file (delegates to audit.py)
-        from .audit import (
-            audit_broken_links,
-            audit_filenames,
-            audit_headings,
-        )
+        from .audit import audit_broken_links
         from .paths import route_for_document_file
 
         try:
             file_filter = {route_for_document_file(config, file)}
-            warnings.extend(audit_filenames(config, file_filter=file_filter))
-            warnings.extend(audit_broken_links(config, file_filter=file_filter))
-            warnings.extend(audit_headings(config, file_filter=file_filter))
+            link_issues = audit_broken_links(config, file_filter=file_filter)
+            severity = config.check.get("broken_links", "warning")
+            if severity != "off":
+                if severity == "error":
+                    errors.extend(link_issues)
+                    if link_issues:
+                        conforms = False
+                else:
+                    warnings.extend(link_issues)
         except ValueError as exc:
             errors.append(str(exc))
             conforms = False
@@ -116,7 +120,41 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
 
         _exit_check_results(conforms, errors, warnings, verbose)
 
-    results = run_checks(config)
+    results = run_check(config)
+
+    conforms = results["conforms"]
+    errors = results["errors"]
+    warnings = results["warnings"]
+
+    if strict and warnings:
+        errors.extend(warnings)
+        warnings = []
+        conforms = False
+
+    _exit_check_results(conforms, errors, warnings, verbose)
+
+
+@main.command()
+@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@click.option("-v", "--verbose", is_flag=True, help="Show convention audit warnings.")
+@click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
+@click.pass_obj
+def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
+    """Run convention audits: filename pattern and heading style."""
+    from .paths import route_for_document_file
+
+    file_filter = None
+    if file:
+        if file.suffix.lower() != ".md":
+            click.echo(f"Error: lint only supports markdown files, got {file.name}.", err=True)
+            sys.exit(1)
+        try:
+            file_filter = {route_for_document_file(config, file)}
+        except ValueError as exc:
+            click.echo(f"Error: {exc}", err=True)
+            sys.exit(1)
+
+    results = run_lint(config, file_filter=file_filter)
 
     conforms = results["conforms"]
     errors = results["errors"]
@@ -328,7 +366,9 @@ def build(
     config.url_style = url_style
 
     if not no_check:
-        results = run_checks(config)
+        check_results = run_check(config)
+        lint_results = run_lint(config)
+        results = merge_results(check_results, lint_results)
         _print_check_messages(results["errors"], results["warnings"], verbose)
         if results["errors"] or not results["conforms"]:
             sys.exit(1)
@@ -509,9 +549,13 @@ def init(force: bool, init_git: bool) -> None:
         "  - `Person_Shape.md` — Validation shape for Person documents.\n"
         "  - `Ethan_Davidson.md` — An example Person document.\n\n"
         "## Commands\n\n"
-        "- **Check** (runs SHACL validation and hygiene checks):\n"
+        "- **Check** (integrity: SHACL, route safety, broken links):\n"
         "  ```bash\n"
         "  wiki check\n"
+        "  ```\n"
+        "- **Lint** (conventions: filename pattern, heading style):\n"
+        "  ```bash\n"
+        "  wiki lint\n"
         "  ```\n"
         "- **Preview** (starts a local dev server with auto-reload):\n"
         "  ```bash\n"

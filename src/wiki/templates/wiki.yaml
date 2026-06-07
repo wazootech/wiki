@@ -3,10 +3,12 @@ input_dirs:
 wiki_base: __WIKI_BASE__
 base_url: /wiki
 url_style: dir
-filename_pattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 check:
-  filename_pattern: warning
   broken_links: warning
+lint:
+  filename_pattern: warning
+  headings: "off"
 context:
   schema: https://schema.org/
   wiki: __WIKI_BASE__

@@ -2,6 +2,7 @@ import json
 import threading
 import time
 import unittest
+import yaml
 from importlib.resources import files as pkg_files
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -39,6 +40,66 @@ name: Invalid Page
             self.assertEqual(result_strict.exit_code, 1)
             self.assertIn("Errors:", result_strict.output)
             self.assertIn("spaces are not allowed", result_strict.output)
+
+    def test_cli_lint_reports_filename_pattern(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            (config_dir / "wiki.yaml").write_text(
+                yaml.dump(
+                    {
+                        "input_dirs": ["wiki"],
+                        "filename_pattern": r"[A-Za-z0-9_()-]+\.md",
+                        "lint": {"filename_pattern": "warning"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (wiki_dir / "bad.name.md").write_text("---\ntype: schema:WebPage\n---\n", encoding="utf-8")
+            result = runner.invoke(
+                main,
+                [
+                    "-c",
+                    str(config_dir),
+                    "lint",
+                    "--strict",
+                    "-v",
+                ],
+            )
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("Errors:", result.output)
+            self.assertIn("filename_pattern", result.output)
+
+    def test_cli_input_dir_resolves_relative_to_config_root(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            extra_dir = config_dir / "extra"
+            extra_dir.mkdir()
+            (config_dir / "wiki.yaml").write_text("input_dirs:\n  - wiki\n", encoding="utf-8")
+            (extra_dir / "note.md").write_text(
+                "---\ntype: schema:WebPage\nname: Extra\n---\n",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(
+                main,
+                [
+                    "-c",
+                    str(config_dir),
+                    "--input-dir",
+                    "extra",
+                    "query",
+                    "--no-inference",
+                    "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }",
+                    "-f",
+                    "json",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Extra", result.output)
 
     def test_cli_check_does_not_normalize_frontmatter(self) -> None:
         """Test that check performs no frontmatter key normalization (strict SHACL on exact keys)."""

@@ -71,7 +71,7 @@ sh:property:
 This works well with typed HTML rendering:
 
 ```yaml
-id: wiki:Gregory_House
+id: wiki:Gregory_Davidson
 type: schema:Person
 name: Gregory House
 wiki:template: person

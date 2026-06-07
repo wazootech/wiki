@@ -12,7 +12,7 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Python CLI**: Comprehensive command suite — `check`, `query`, `render`, `build`, `serve`, `export`.
+- **Pure Python CLI**: Comprehensive command suite — `check`, `lint`, `fmt`, `query`, `render`, `build`, `serve`, `export`.
 - **Terminal Document View**: Render a single wiki document as a readable terminal infobox with `wiki view`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
@@ -72,8 +72,9 @@ Use this repo's docs wiki as the main contributor sandbox.
 # Install the project in editable mode
 uv pip install -e .
 
-# Run the docs wiki checks from the repo root
+# Run the docs wiki integrity checks from the repo root
 wiki -c docs/wiki.yaml check
+wiki -c docs/wiki.yaml lint
 
 # Start the docs wiki local preview with auto-reload
 python -m wiki -c docs/wiki.yaml serve --watch
@@ -83,7 +84,7 @@ Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
 - Use `python -m wiki -c docs/wiki.yaml serve --watch` for the main live-preview workflow.
-- Run `wiki -c docs/wiki.yaml check --strict -v` before landing documentation changes.
+- Run `wiki -c docs/wiki.yaml check --strict -v` and `wiki -c docs/wiki.yaml lint --strict -v` before landing documentation changes.
 - Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
 
 ## Quickstart
@@ -98,8 +99,11 @@ wiki init
 # Also initialize a Git repository explicitly
 wiki init --git
 
-# Run unified checks (silent on success)
+# Run integrity checks (silent on success)
 wiki check
+
+# Run convention audits (silent on success)
+wiki lint
 
 # Start a local server (default: http://127.0.0.1:8080/wiki/)
 wiki serve
@@ -109,31 +113,39 @@ wiki serve
 
 
 ### `check`
-Perform unified validations of your vault, including strict SHACL schema validation and configurable hygiene audits (`filename_pattern`, `broken_links`, and optional `headings`). Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Run **integrity** validations: strict SHACL schema validation, route safety, output collisions, and configurable broken-link audits. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
-# Run unified checks on the entire vault silently (default)
 wiki check
-
-# Check a single file specifically
-wiki check wiki/Gregory_House.md
-
-# Run with verbose output to show style/guideline warnings
+wiki check wiki/Gregory_Davidson.md
 wiki check -v
-
-# Run in strict mode (warnings become errors and fail with non-zero exit code)
 wiki check --strict
 ```
 
-Use `filename_pattern` when a project wants a custom filename hygiene rule. **Wikipedia-style** names (for example `Gregory_House.md`, `Wiki_CLI.md`) are the recommended default; set an explicit pattern such as `[A-Za-z0-9_()-]+`. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+`). The regex is matched against the full filename stem. Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately.
+Default configurable rule: `check.broken_links` (`warning`). Filename pattern and heading style moved to `wiki lint`.
+
+### `lint`
+Run **convention** audits: filename pattern and heading style.
+
+```bash
+wiki lint
+wiki lint wiki/Gregory_Davidson.md
+wiki lint -v
+wiki lint --strict
+```
+
+Use top-level `filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
 
 ```yaml
-filename_pattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 check:
-  filename_pattern: warning
   broken_links: warning
+lint:
+  filename_pattern: warning
   headings: off
 ```
+
+**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
@@ -180,7 +192,7 @@ wiki render --cache
 wiki render --check
 
 # Render a single file during an edit loop
-wiki render wiki/people/Gregory_House.md
+wiki render wiki/people/Gregory_Davidson.md
 
 # Render only matching markdown files
 wiki render --glob "wiki/people/*.md"
@@ -276,9 +288,9 @@ _site/
     └── ...
 ```
 
-Page URLs are derived from the source path under `input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_House.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
-`wiki build` runs `wiki check` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
+`wiki build` runs `wiki check` and `wiki lint` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
 Static assets can be published from configured asset directories:
 
@@ -303,7 +315,7 @@ The HTML builder now supports lightweight typed page templates. Template selecti
 Built-in typed layouts currently include `person` and `thing`, both of which render a sidebar infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
 ```yaml
-id: wiki:Gregory_House
+id: wiki:Gregory_Davidson
 type: schema:Person
 name: Gregory House
 wiki:template: person
@@ -393,8 +405,11 @@ jobs:
       - name: Install Dependencies
         run: uv sync
       
-      - name: Run Docs Wiki Style and SHACL Audits
+      - name: Run Docs Wiki Integrity Audits
         run: uv run wiki -c docs/wiki.yaml check --strict -v
+
+      - name: Run Docs Wiki Convention Audits
+        run: uv run wiki -c docs/wiki.yaml lint --strict -v
 
       - name: Build Static Site
         run: uv run wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki
@@ -450,7 +465,7 @@ When run without a file argument, exports all documents in the wiki directory.
 wiki export
 
 # Export a single file
-wiki export wiki/Gregory_House.md
+wiki export wiki/Gregory_Davidson.md
 
 # Export as JSON-LD
 wiki export wiki/rdf.md -f json-ld
@@ -482,7 +497,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 * **Format and Print a Document:**
   Use `pr` to add headers, margins, and page numbers before sending to `lp`:
   ```bash
-  cat wiki/Gregory_House.md | pr -h "Gregory Document" | lp
+  cat wiki/Gregory_Davidson.md | pr -h "Gregory Document" | lp
   ```
 * **Format and Print Query Results:**
   Run a query and print its tabular results:
@@ -493,7 +508,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 #### Windows
 * **Print a Document:**
   ```powershell
-  Get-Content wiki/Gregory_House.md | Out-Printer
+  Get-Content wiki/Gregory_Davidson.md | Out-Printer
   ```
 * **Print Query Results:**
   ```powershell
@@ -532,7 +547,7 @@ Requires that all `wiki:Dog` documents must declare a name.
 ```
 
 #### Native microdata via HTML attributes
-You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool. Prefixed CURIEs in `itemtype`, `itemid`, `itemprop`, `href`, and `src` expand through the same `context` bindings as frontmatter (for example `schema:Product`, `wiki:Gregory_House`).
+You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool. Prefixed CURIEs in `itemtype`, `itemid`, `itemprop`, `href`, and `src` expand through the same `context` bindings as frontmatter (for example `schema:Product`, `wiki:Gregory_Davidson`).
 
 ````markdown
 # Product X Overview
@@ -565,9 +580,9 @@ An Engineer is a specialized subset of Person.
 
 Declare an instance somewhere else:
 ```yaml
-# wiki/Gregory_House.md
+# wiki/Gregory_Davidson.md
 ---
-id: wiki:Gregory_House
+id: wiki:Gregory_Davidson
 type: wiki:Engineer
 name: Gregory House
 ---
@@ -597,7 +612,7 @@ SELECT ?doc ?content WHERE {
 
 ## Workspace configuration (`WikiConfig`)
 
-The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. The configuration file holds CLI parameters and custom checking severities, with an embedded `@context` or `context` block defining prefix mappings:
+The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. The configuration file holds CLI parameters and check/lint severities, with an embedded `@context` or `context` block defining prefix mappings:
 
 ```yaml
 # wiki.yaml
@@ -607,14 +622,16 @@ asset_dirs:
   - assets
 base_url: /wiki
 url_style: dir
-filename_pattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 exclude:
   - assets/private/**
 content_predicate: schema:text # Opt-in full-text markdown body auto-injection
 
 check:
-  filename_pattern: warning  # "error" | "warning" | "off"
   broken_links: warning      # "error" | "warning" | "off"
+
+lint:
+  filename_pattern: warning  # "error" | "warning" | "off"
   headings: off              # sentence case, numbered headings, body ---
 
 context:

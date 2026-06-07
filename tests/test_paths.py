@@ -75,7 +75,7 @@ class TestWikiPaths(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             page = Path(tmpdir) / "Bad Name.md"
             page.write_text("# Bad", encoding="utf-8")
-            config = WikiConfig(filename_pattern="[A-Za-z0-9_()-]+")
+            config = WikiConfig(filename_pattern=r"[A-Za-z0-9_()-]+\.md")
 
             self.assertEqual(validate_filename_pattern(config, page), "Filename 'Bad Name.md' does not match filename_pattern.")
 

@@ -8,7 +8,23 @@ description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 
 The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
-Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check` or `serve_api`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `serve_api`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+
+## Config semantics
+
+Three audit lanes map to three commands:
+
+| Lane        | Command      | YAML block | Purpose |
+| ----------- | ------------ | ---------- | ------- |
+| Integrity   | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links` |
+| Convention  | `wiki lint`  | `lint:`    | `filename_pattern`, `headings` (plus top-level regex) |
+| Formatting  | `wiki fmt`   | —          | mdformat (not configured in yaml) |
+
+- Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
+- Putting a regex under `check.filename_pattern` or `lint.broken_links` fails at load with a hint.
+- Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
+
+Relative **`--input-dir`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
 
 ## Example
 
@@ -20,14 +36,16 @@ asset_dirs:
 wiki_base: https://example.org/wiki/
 base_url: /wiki
 url_style: dir
-filename_pattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 exclude:
   - assets/private/**
 content_predicate: schema:text
 
 check:
-  filename_pattern: warning
   broken_links: warning
+
+lint:
+  filename_pattern: warning
   headings: off
 
 context:
@@ -196,29 +214,36 @@ CLI flags on `wiki build` and `wiki serve` can override `base_url` and `url_styl
 
 ## Filename conventions
 
-The CLI does not hard-code kebab-case. Projects choose a convention with **`filename_pattern`**, matched against each document’s filename stem (without `.md`).
+The CLI does not hard-code kebab-case. Projects choose a convention with **`filename_pattern`**, matched against the **full filename** (including `.md`) on markdown files only.
 
-**Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_House.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
+**Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_Davidson.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
 
 ```yaml
-filename_pattern: "[A-Za-z0-9_()-]+"
+filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 ```
 
-**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+`) and enforce it via `check.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
+**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
-## Hygiene checks
+## Integrity checks (`check`)
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                |
-| ------------------ | --------- | ----------------------------------------------------------------------------- |
-| `filename_pattern` | `warning` | Custom regex on filename stems (see top-level `filename_pattern`)             |
-| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
-| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
+| Rule key       | Default   | What it audits                                                                |
+| -------------- | --------- | ----------------------------------------------------------------------------- |
+| `broken_links` | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
+
+## Convention audits (`lint`)
+
+Under `lint`, each rule is `error`, `warning`, or `off`:
+
+| Rule key           | Default   | What it audits                                                                |
+| ------------------ | --------- | ----------------------------------------------------------------------------- |
+| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                          |
+| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
 
 ## This repository
 
@@ -227,5 +252,6 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 ## Related
 
 - [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--input-dir` global options
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — running audits
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity checks
+- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention audits
 - [Style_Guide](Style_Guide.md) — shapes and frontmatter
