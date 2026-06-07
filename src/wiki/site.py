@@ -208,6 +208,11 @@ a:hover {
   background: #f0f3f9;
 }
 
+.suggestion-item-empty {
+  cursor: default;
+  color: #72777d;
+}
+
 .suggestion-title {
   font-weight: 600;
   color: #202122;

@@ -54,6 +54,15 @@
         <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
       </div>
       <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+      <template id="search-suggestion-template">
+        <div class="suggestion-item" role="option" tabindex="-1">
+          <span class="suggestion-title"></span>
+          <span class="suggestion-type"></span>
+        </div>
+      </template>
+      <template id="search-empty-template">
+        <div class="suggestion-item suggestion-item-empty" role="status">No matches found</div>
+      </template>
     </div>
   </div>
 </div>
@@ -111,29 +120,38 @@
 </main>
 
 <script>
-var ALL_PAGES = {all_pages_json};
-var WIKI_BASE_URL = "{base_url}";
-var WIKI_URL_STYLE = "{url_style}";
-var CURRENT_SLUG = {current_slug_json};
+const ALL_PAGES = {all_pages_json};
+const WIKI_BASE_URL = "{base_url}";
+const WIKI_URL_STYLE = "{url_style}";
+const CURRENT_SLUG = {current_slug_json};
+
+let selectedSuggestionIndex = -1;
+
+function pageUrl(slug) {
+  if (WIKI_URL_STYLE === 'dir') {
+    return WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
+  }
+  return WIKI_BASE_URL + '/' + (slug ? slug + '.html' : 'index.html');
+}
 
 function switchTab(viewName) {
-  document.querySelectorAll('.vector-tabs li').forEach(function(li) {
+  document.querySelectorAll('.vector-tabs li').forEach((li) => {
     li.classList.remove('selected');
   });
 
-  var tabId = 'ca-read';
+  let tabId = 'ca-read';
   if (viewName === 'talk') tabId = 'ca-talk';
   else if (viewName === 'source') tabId = 'ca-source';
   else if (viewName === 'metadata') tabId = 'ca-metadata';
 
-  var tabEl = document.getElementById(tabId);
+  const tabEl = document.getElementById(tabId);
   if (tabEl) tabEl.classList.add('selected');
 
-  document.querySelectorAll('.wiki-view-pane').forEach(function(pane) {
+  document.querySelectorAll('.wiki-view-pane').forEach((pane) => {
     pane.style.display = 'none';
   });
 
-  var paneEl = document.getElementById('view-' + viewName + '-content');
+  const paneEl = document.getElementById('view-' + viewName + '-content');
   if (paneEl) paneEl.style.display = 'block';
 
   if (viewName === 'talk') {
@@ -142,15 +160,15 @@ function switchTab(viewName) {
 }
 
 function loadTalkNotes() {
-  var area = document.getElementById('talkNotesArea');
+  const area = document.getElementById('talkNotesArea');
   if (!area) return;
-  var saved = localStorage.getItem('wiki_notes_' + CURRENT_SLUG);
+  const saved = localStorage.getItem('wiki_notes_' + CURRENT_SLUG);
   area.value = saved || '';
   updateCharCount();
 }
 
 function saveTalkNotes() {
-  var area = document.getElementById('talkNotesArea');
+  const area = document.getElementById('talkNotesArea');
   if (!area) return;
   localStorage.setItem('wiki_notes_' + CURRENT_SLUG, area.value);
   updateCharCount();
@@ -158,7 +176,7 @@ function saveTalkNotes() {
 
 function clearTalkNotes() {
   if (confirm('Are you sure you want to clear your local notes for this article?')) {
-    var area = document.getElementById('talkNotesArea');
+    const area = document.getElementById('talkNotesArea');
     if (area) {
       area.value = '';
       localStorage.removeItem('wiki_notes_' + CURRENT_SLUG);
@@ -167,35 +185,27 @@ function clearTalkNotes() {
   }
 }
 
-document.addEventListener('click', function(e) {
-  var searchBox = document.getElementById('searchInput');
-  var suggestionsBox = document.getElementById('search-suggestions');
-  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
-    suggestionsBox.style.display = 'none';
-  }
-});
-
 function updateCharCount() {
-  var area = document.getElementById('talkNotesArea');
-  var countEl = document.getElementById('charCountDisplay');
+  const area = document.getElementById('talkNotesArea');
+  const countEl = document.getElementById('charCountDisplay');
   if (!area || !countEl) return;
-  var count = area.value.length;
-  countEl.innerText = count + ' character' + (count === 1 ? '' : 's');
+  const count = area.value.length;
+  countEl.textContent = count + ' character' + (count === 1 ? '' : 's');
 }
 
 function copySourceCode() {
-  var area = document.getElementById('markdownSourceArea');
+  const area = document.getElementById('markdownSourceArea');
   if (!area) return;
   area.select();
   area.setSelectionRange(0, 99999);
-  navigator.clipboard.writeText(area.value).then(function() {
-    var btn = document.getElementById('copySourceBtn');
-    var originalText = btn.innerText;
-    btn.innerText = 'Copied!';
+  navigator.clipboard.writeText(area.value).then(() => {
+    const btn = document.getElementById('copySourceBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
     btn.style.background = '#28a745';
     btn.style.color = '#fff';
-    setTimeout(function() {
-      btn.innerText = originalText;
+    setTimeout(() => {
+      btn.textContent = originalText;
       btn.style.background = '';
       btn.style.color = '';
     }, 2000);
@@ -203,99 +213,92 @@ function copySourceCode() {
 }
 
 function toggleToc() {
-  var list = document.getElementById('toc-list');
-  var toggleBtn = document.getElementById('toggleTocBtn');
+  const list = document.getElementById('toc-list');
+  const toggleBtn = document.getElementById('toggleTocBtn');
   if (!list || !toggleBtn) return;
 
   if (list.style.display === 'none') {
     list.style.display = 'block';
-    toggleBtn.innerText = '[hide]';
+    toggleBtn.textContent = '[hide]';
     localStorage.setItem('wiki_toc_visible', 'true');
   } else {
     list.style.display = 'none';
-    toggleBtn.innerText = '[show]';
+    toggleBtn.textContent = '[show]';
     localStorage.setItem('wiki_toc_visible', 'false');
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  var savedState = localStorage.getItem('wiki_toc_visible');
-  var list = document.getElementById('toc-list');
-  var toggleBtn = document.getElementById('toggleTocBtn');
-  if (savedState === 'false' && list && toggleBtn) {
-    list.style.display = 'none';
-    toggleBtn.innerText = '[show]';
-  }
-
-  if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
-    applyCategoryFilterFromUrl();
-  }
-});
-
 function goToRandomArticle() {
   if (ALL_PAGES.length === 0) return;
-  var randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
-  var url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (randomPage.slug ? randomPage.slug + '.html' : 'index.html');
-  }
-  window.location.href = url;
+  const randomPage = ALL_PAGES[Math.floor(Math.random() * ALL_PAGES.length)];
+  window.location.href = pageUrl(randomPage.slug);
 }
 
 function triggerSearch() {
-  var query = document.getElementById('searchInput').value.toLowerCase().trim();
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
   if (!query) return;
-  var matches = ALL_PAGES.filter(function(p) {
-    return p.title.toLowerCase().includes(query) || p.slug.toLowerCase().includes(query);
-  });
+  const matches = ALL_PAGES.filter((page) =>
+    page.title.toLowerCase().includes(query) || page.slug.toLowerCase().includes(query)
+  );
   if (matches.length > 0) {
     navigateSearch(matches[0].slug);
   }
 }
 
-var selectedSuggestionIndex = -1;
+function renderSearchSuggestions(matches) {
+  const suggestionsBox = document.getElementById('search-suggestions');
+  const suggestionTemplate = document.getElementById('search-suggestion-template');
+  const emptyTemplate = document.getElementById('search-empty-template');
+  if (!suggestionsBox || !suggestionTemplate || !emptyTemplate) return;
 
-function onSearchInput(e) {
-  var query = e.target.value.toLowerCase().trim();
-  var suggestionsBox = document.getElementById('search-suggestions');
-  if (!suggestionsBox) return;
-
-  if (!query) {
-    suggestionsBox.style.display = 'none';
-    suggestionsBox.innerHTML = '';
-    selectedSuggestionIndex = -1;
-    return;
-  }
-
-  var matches = ALL_PAGES.filter(function(p) {
-    return p.title.toLowerCase().includes(query) || p.slug.toLowerCase().includes(query);
-  }).slice(0, 8);
+  suggestionsBox.replaceChildren();
 
   if (matches.length === 0) {
+    suggestionsBox.appendChild(emptyTemplate.content.cloneNode(true));
     suggestionsBox.style.display = 'block';
-    suggestionsBox.innerHTML = '<div class="suggestion-item" style="cursor: default; color: #72777d;">No matches found</div>';
     selectedSuggestionIndex = -1;
     return;
   }
 
-  suggestionsBox.innerHTML = matches.map(function(p, idx) {
-    return '<div class="suggestion-item" data-slug="' + p.slug + '" data-idx="' + idx + '" onclick="navigateSearch(\'' + p.slug + '\')">' +
-      '<span class="suggestion-title">' + escapeHtml(p.title) + '</span>' +
-      '<span class="suggestion-type">' + escapeHtml(p.slug) + '</span>' +
-    '</div>';
-  }).join('');
+  const fragment = document.createDocumentFragment();
+  matches.forEach((page, idx) => {
+    const item = suggestionTemplate.content.firstElementChild.cloneNode(true);
+    item.dataset.slug = page.slug;
+    item.dataset.idx = String(idx);
+    item.querySelector('.suggestion-title').textContent = page.title;
+    item.querySelector('.suggestion-type').textContent = page.slug;
+    fragment.appendChild(item);
+  });
+  suggestionsBox.appendChild(fragment);
   suggestionsBox.style.display = 'block';
   selectedSuggestionIndex = -1;
 }
 
+function onSearchInput(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (!suggestionsBox) return;
+
+  if (!query) {
+    suggestionsBox.style.display = 'none';
+    suggestionsBox.replaceChildren();
+    selectedSuggestionIndex = -1;
+    return;
+  }
+
+  const matches = ALL_PAGES.filter((page) =>
+    page.title.toLowerCase().includes(query) || page.slug.toLowerCase().includes(query)
+  ).slice(0, 8);
+
+  renderSearchSuggestions(matches);
+}
+
 function handleSearchKey(e) {
-  var suggestionsBox = document.getElementById('search-suggestions');
+  const suggestionsBox = document.getElementById('search-suggestions');
   if (!suggestionsBox || suggestionsBox.style.display === 'none') return;
 
-  var items = suggestionsBox.querySelectorAll('.suggestion-item');
-  if (items.length === 0 || (items.length === 1 && items[0].style.cursor === 'default')) return;
+  const items = suggestionsBox.querySelectorAll('.suggestion-item:not(.suggestion-item-empty)');
+  if (items.length === 0) return;
 
   if (e.key === 'ArrowDown') {
     e.preventDefault();
@@ -307,20 +310,15 @@ function handleSearchKey(e) {
     highlightSuggestion(items);
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
-      var slug = items[selectedSuggestionIndex].getAttribute('data-slug');
-      navigateSearch(slug);
-    } else if (items.length > 0) {
-      var slug = items[0].getAttribute('data-slug');
-      navigateSearch(slug);
-    }
+    const index = selectedSuggestionIndex >= 0 ? selectedSuggestionIndex : 0;
+    navigateSearch(items[index].dataset.slug);
   } else if (e.key === 'Escape') {
     suggestionsBox.style.display = 'none';
   }
 }
 
 function highlightSuggestion(items) {
-  items.forEach(function(item, idx) {
+  items.forEach((item, idx) => {
     if (idx === selectedSuggestionIndex) {
       item.classList.add('selected');
       item.scrollIntoView({ block: 'nearest' });
@@ -331,47 +329,69 @@ function highlightSuggestion(items) {
 }
 
 function navigateSearch(slug) {
-  var url = '';
-  if (WIKI_URL_STYLE === 'dir') {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '/' : '');
-  } else {
-    url = WIKI_BASE_URL + '/' + (slug ? slug + '.html' : 'index.html');
-  }
-  window.location.href = url;
-}
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  window.location.href = pageUrl(slug);
 }
 
 function applyCategoryFilterFromUrl() {
-  var params = new URLSearchParams(window.location.search);
-  var cat = params.get('category');
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('category');
   if (!cat) return;
 
-  var mainHeading = document.querySelector('main h1');
+  const mainHeading = document.querySelector('main h1');
   if (mainHeading) {
-    mainHeading.innerHTML = 'Pages in Category: <span style="color: #54595d; font-family: sans-serif; font-size: 0.85em;">' + escapeHtml(cat) + '</span>';
+    mainHeading.replaceChildren();
+    mainHeading.append('Pages in Category: ');
+    const catLabel = document.createElement('span');
+    catLabel.textContent = cat;
+    catLabel.style.color = '#54595d';
+    catLabel.style.fontFamily = 'sans-serif';
+    catLabel.style.fontSize = '0.85em';
+    mainHeading.append(catLabel);
 
-    var clearLink = document.createElement('a');
+    const clearLink = document.createElement('a');
     clearLink.href = WIKI_BASE_URL + '/';
-    clearLink.innerText = ' [show all pages]';
+    clearLink.textContent = ' [show all pages]';
     clearLink.style.fontSize = '0.5em';
     clearLink.style.marginLeft = '12px';
     clearLink.style.fontWeight = 'normal';
-    mainHeading.appendChild(clearLink);
+    mainHeading.append(clearLink);
   }
 
-  document.querySelectorAll('.pages-list li').forEach(function(li) {
-    var catsAttr = li.getAttribute('data-categories') || '';
-    var cats = catsAttr.split(',').map(function(c) { return c.trim().toLowerCase(); });
-    if (cats.includes(cat.toLowerCase())) {
-      li.style.display = '';
-    } else {
-      li.style.display = 'none';
-    }
+  document.querySelectorAll('.pages-list li').forEach((li) => {
+    const catsAttr = li.getAttribute('data-categories') || '';
+    const cats = catsAttr.split(',').map((value) => value.trim().toLowerCase());
+    li.style.display = cats.includes(cat.toLowerCase()) ? '' : 'none';
   });
 }
+
+document.addEventListener('click', (e) => {
+  const searchBox = document.getElementById('searchInput');
+  const suggestionsBox = document.getElementById('search-suggestions');
+  if (suggestionsBox && e.target !== searchBox && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.style.display = 'none';
+  }
+});
+
+document.getElementById('search-suggestions')?.addEventListener('click', (e) => {
+  const item = e.target.closest('.suggestion-item:not(.suggestion-item-empty)');
+  if (item?.dataset.slug) {
+    navigateSearch(item.dataset.slug);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedState = localStorage.getItem('wiki_toc_visible');
+  const list = document.getElementById('toc-list');
+  const toggleBtn = document.getElementById('toggleTocBtn');
+  if (savedState === 'false' && list && toggleBtn) {
+    list.style.display = 'none';
+    toggleBtn.textContent = '[show]';
+  }
+
+  if (CURRENT_SLUG === '' || CURRENT_SLUG === 'index') {
+    applyCategoryFilterFromUrl();
+  }
+});
 </script>
 </body>
 </html>
