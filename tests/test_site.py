@@ -10,6 +10,7 @@ from wiki.site import (
     build_page_html,
     build_site,
     render_copyable_pre,
+    render_outline_title,
     render_wiki_markdown,
     strip_leading_title_heading,
 )
@@ -194,6 +195,40 @@ name: Project Atlas
             self.assertEqual(page.template_name, "Person.html")
             self.assertIn('class="infobox page-meta"', html)
             self.assertNotIn("Wiki:Template", html)
+
+    def test_render_outline_title_renders_inline_code(self) -> None:
+        html = render_outline_title("`Accept`")
+        self.assertIn("<code>Accept</code>", html)
+        self.assertNotIn("`Accept`", html)
+
+    def test_render_outline_title_renders_wikilinks_without_nested_anchors(self) -> None:
+        html = render_outline_title("Importance in the [[Semantic_Web|semantic web]]")
+        self.assertIn('<span class="wikilink">semantic web</span>', html)
+        self.assertNotIn("[[", html)
+        self.assertNotIn("<a ", html)
+
+    def test_build_page_html_renders_toc_heading_markdown(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "# Page\n\n## Request headers\n\n### `Accept`\n\n"
+                "## Importance in the [[Semantic_Web|semantic web]]\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+            html = build_page_html(page, site, html_template=html_template)
+
+            self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
+            self.assertIn('<span class="wikilink">semantic web</span>', html)
+            sidebar_start = html.index('id="p-contents"')
+            sidebar_html = html[sidebar_start:sidebar_start + 1500]
+            self.assertNotIn("`Accept`", sidebar_html)
+            self.assertNotIn("[[Semantic_Web|semantic web]]", sidebar_html)
 
     def test_render_adds_github_heading_ids_to_all_heading_levels(self) -> None:
         html = render_wiki_markdown("# Title\n\n### API: read/write?\n")

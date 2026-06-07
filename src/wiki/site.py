@@ -990,6 +990,67 @@ def render_copyable_pre(
     )
 
 
+def _register_wiki_inline_render_rules(
+    md: MarkdownIt,
+    base_url: str,
+    url_style: str,
+    current_route: str,
+    *,
+    toc_mode: bool = False,
+) -> None:
+    md.use(wikilink_plugin)
+
+    if toc_mode:
+
+        def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+            token = tokens[idx]
+            return f'<span class="wikilink">{html_module.escape(token.content)}</span>'
+
+        def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+            return '<span class="toc-inline-link">'
+
+        def _link_close_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+            return "</span>"
+
+        md.add_render_rule("wikilink", _wikilink_renderer)
+        md.add_render_rule("link_open", _link_open_renderer)
+        md.add_render_rule("link_close", _link_close_renderer)
+        return
+
+    def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        href = token.attrs.get("href", "")
+        content = token.content
+        resolved = resolve_page_href(current_route, href, base_url, url_style)
+        if resolved is None:
+            return html_module.escape(f"[[{href}|{content}]]" if content != href else f"[[{href}]]")
+        return f'<a class="wikilink" href="{html_module.escape(resolved)}">{html_module.escape(content)}</a>'
+
+    def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        token = tokens[idx]
+        href = token.attrGet("href") or ""
+        if href and not is_external_link(href) and markdown_link_is_page(href):
+            resolved = resolve_page_href(current_route, href, base_url, url_style)
+            if resolved is not None:
+                token.attrSet("href", resolved)
+        return self.renderToken(tokens, idx, options, env)
+
+    md.add_render_rule("wikilink", _wikilink_renderer)
+    md.add_render_rule("link_open", _link_open_renderer)
+
+
+def render_outline_title(
+    title: str,
+    base_url: str = "/wiki",
+    url_style: str = DEFAULT_URL_STYLE,
+    current_route: str = "",
+) -> str:
+    """Render heading inline markdown for TOC labels without nested section links."""
+    md = MarkdownIt("gfm-like", {"linkify": False})
+    _register_wiki_inline_render_rules(md, base_url, url_style, current_route, toc_mode=True)
+    return md.renderInline(title).strip()
+
+
 def render_wiki_markdown(
     text: str,
     base_url: str = "/wiki",
@@ -997,7 +1058,7 @@ def render_wiki_markdown(
     current_route: str = "",
 ) -> str:
     md = MarkdownIt("gfm-like", {"linkify": False})
-    md.use(wikilink_plugin)
+    _register_wiki_inline_render_rules(md, base_url, url_style, current_route)
     heading_slugger = GitHubHeadingSlugger()
 
     def _fence_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
@@ -1028,17 +1089,6 @@ def render_wiki_markdown(
 
     md.add_render_rule("fence", _fence_renderer)
 
-    def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        href = token.attrs.get("href", "")
-        content = token.content
-        resolved = resolve_page_href(current_route, href, base_url, url_style)
-        if resolved is None:
-            return html_module.escape(f"[[{href}|{content}]]" if content != href else f"[[{href}]]")
-        return f'<a class="wikilink" href="{html_module.escape(resolved)}">{html_module.escape(content)}</a>'
-
-    md.add_render_rule("wikilink", _wikilink_renderer)
-
     def _heading_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         token = tokens[idx]
         title = ""
@@ -1048,17 +1098,6 @@ def render_wiki_markdown(
         return self.renderToken(tokens, idx, options, env)
 
     md.add_render_rule("heading_open", _heading_open_renderer)
-
-    def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        href = token.attrGet("href") or ""
-        if href and not is_external_link(href) and markdown_link_is_page(href):
-            resolved = resolve_page_href(current_route, href, base_url, url_style)
-            if resolved is not None:
-                token.attrSet("href", resolved)
-        return self.renderToken(tokens, idx, options, env)
-
-    md.add_render_rule("link_open", _link_open_renderer)
     return md.render(text)
 
 
@@ -1362,8 +1401,8 @@ def build_page_html(
 ) -> str:
     """Compile individual page HTML."""
     selected_view = resolve_metadata_view(metadata_format, metadata_mode)
-    toc_html = _build_toc_html(page)
-    sidebar_contents_html = _build_sidebar_contents_html(page)
+    toc_html = _build_toc_html(page, base_url, url_style)
+    sidebar_contents_html = _build_sidebar_contents_html(page, base_url, url_style)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)
     infobox_html = _build_infobox_html(page, site, base_url, url_style)
     
@@ -1529,12 +1568,13 @@ def _expand_known_curie(value: str, config: WikiConfig) -> str:
     return f"{namespace}{local}"
 
 
-def _build_toc_html(page: VirtualPage) -> str:
+def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
     items = f'<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
     for item in page.outline:
-        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
+        title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
+        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'
     return f"""<div class="toc" id="toc">
 <div class="toctitle">
 <h2>Contents<span style="display:none">On this page</span></h2>
@@ -1546,12 +1586,13 @@ def _build_toc_html(page: VirtualPage) -> str:
 </div>"""
 
 
-def _build_sidebar_contents_html(page: VirtualPage) -> str:
+def _build_sidebar_contents_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
     items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
     for item in page.outline:
-        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{html_module.escape(item.title)}</a></li>\n'
+        title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
+        items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'
     return f"""<div class="portal portal-contents" role="navigation" id="p-contents" aria-label="Page contents">
     <h3>Contents</h3>
     <ul>
