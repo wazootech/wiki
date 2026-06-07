@@ -21,20 +21,20 @@ wiki lint --strict
 
 ## Options
 
-| Flag              | Description                                      |
-| ----------------- | ------------------------------------------------ |
-| `FILE`            | Optional single markdown document                |
-| `-v`, `--verbose` | Print warnings                                   |
-| `--strict`        | Treat warnings as errors (exit 1)                |
+| Flag              | Description                       |
+| ----------------- | --------------------------------- |
+| `FILE`            | Optional single markdown document |
+| `-v`, `--verbose` | Print warnings                    |
+| `--strict`        | Treat warnings as errors (exit 1) |
 
 ## What is linted
 
 ### Configurable (`lint.*` in `wiki.yaml`)
 
-| Rule key           | What it audits                                                                |
-| ------------------ | ----------------------------------------------------------------------------- |
-| `filename_pattern` | Full filename vs top-level `filename_pattern` regex (`.md` files only)        |
-| `headings`         | Sentence-case headings, numbered headings, thematic `---` in body             |
+| Rule key           | What it audits                                                         |
+| ------------------ | ---------------------------------------------------------------------- |
+| `filename_pattern` | Full filename vs top-level `filename_pattern` regex (`.md` files only) |
+| `headings`         | Sentence-case headings, numbered headings, thematic `---` in body      |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `filename_pattern` is `warning`; `headings` is `off`.
 

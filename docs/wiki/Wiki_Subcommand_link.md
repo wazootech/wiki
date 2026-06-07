@@ -23,14 +23,14 @@ wiki link --fix-broken --dry-run
 
 ## Options
 
-| Flag | Description |
-| ---- | ----------- |
-| `FILE` | Optional single markdown document; otherwise entire vault |
-| `--apply` | Insert `[[target\|matched text]]` for each suggestion (body only, never frontmatter) |
-| `--fix-broken` | Repair unambiguous broken wikilinks and internal markdown page links |
-| `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files |
-| `-c`, `--check` | Exit 1 if opportunities or broken links remain (CI gate) |
-| `-v`, `--verbose` | Include target titles in report output; print changed files when applying |
+| Flag              | Description                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `FILE`            | Optional single markdown document; otherwise entire vault                            |
+| `--apply`         | Insert `[[target\|matched text]]` for each suggestion (body only, never frontmatter) |
+| `--fix-broken`    | Repair unambiguous broken wikilinks and internal markdown page links                 |
+| `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files                            |
+| `-c`, `--check`   | Exit 1 if opportunities or broken links remain (CI gate)                             |
+| `-v`, `--verbose` | Include target titles in report output; print changed files when applying            |
 
 ## Detection rules
 

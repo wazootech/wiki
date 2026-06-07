@@ -14,12 +14,12 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 Four audit/format lanes (aligned with common CLI tooling):
 
-| Lane          | Command      | Config / tool        |
-| ------------- | ------------ | -------------------- |
-| Integrity     | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) — **report only** |
-| Convention    | `wiki lint`  | `lint.filename_pattern`, `lint.headings` |
-| Formatting    | `wiki fmt`   | mdformat             |
-| Link hygiene  | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags |
+| Lane         | Command      | Config / tool                                                                  |
+| ------------ | ------------ | ------------------------------------------------------------------------------ |
+| Integrity    | `wiki check` | `check.broken_links` (+ always-on SHACL, routes, collisions) — **report only** |
+| Convention   | `wiki lint`  | `lint.filename_pattern`, `lint.headings`                                       |
+| Formatting   | `wiki fmt`   | mdformat                                                                       |
+| Link hygiene | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags   |
 
 `wiki check` answers whether the vault is **valid** — it never mutates prose. `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `check` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
 
