@@ -144,10 +144,12 @@ Replace `{key}` tokens in your HTML shell:
 | `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                 |
 | `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                             |
 | `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                             |
-| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata (JSON)" `<li>` (empty if no frontmatter).                                                |
+| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata (JSON-LD)" `<li>` (empty if no frontmatter).                                             |
 | `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                              |
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
+
+The metadata pane is rendered from the same JSON-LD serialization path used by `wiki export`. In `wiki serve`, the initial view can be selected with `?metadata_mode=expanded|compacted`. In `wiki build`, both modes are embedded in the page HTML so the toggle works without JavaScript.
 
 ### Built-in CSS classes and IDs
 

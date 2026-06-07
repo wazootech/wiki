@@ -45,6 +45,23 @@ _RICH_TEMPLATE = """<!DOCTYPE html>
 </html>"""
 
 
+_METADATA_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{page_title}</title>
+</head>
+<body>
+<h1>{page_title}</h1>
+{metadata_tool_html}
+{metadata_tab_html}
+{metadata_pane_html}
+{page_content}
+</body>
+</html>"""
+
+
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
     port = _free_port()
     config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
@@ -213,6 +230,20 @@ class TestServe(unittest.TestCase):
         self.assertIn("My Page", body)
         self.assertIn("My Page", body)
         self.assertIn("Article", body)
+
+    def test_metadata_mode_query_switches_initial_selection(self) -> None:
+        self._write("page.md", "---\ntype: Article\nname: My Page\nabout: wiki:My_Page\n---\n\n# My Page\n")
+        for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
+            status, expanded = self._get(port, "/wiki/page?metadata_mode=expanded")
+            compact_status, compacted = self._get(port, "/wiki/page?metadata_mode=compacted")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(compact_status, 200)
+        self.assertIn('value="expanded" checked="checked"', expanded)
+        self.assertIn('value="compacted" checked="checked"', compacted)
+        self.assertIn('&quot;@id&quot;', expanded)
+        self.assertIn('&quot;@context&quot;', compacted)
+        self.assertIn('schema:about', compacted)
 
     def test_404(self) -> None:
         self._write("exists.md", "# Exists")

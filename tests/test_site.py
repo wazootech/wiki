@@ -243,7 +243,11 @@ specialty: Diagnostics
             html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=html_template)
 
-            self.assertIn("Metadata (JSON)", html)
+            self.assertIn("Metadata (JSON-LD)", html)
+            self.assertIn('href="#view-metadata-content"', html)
+            self.assertIn('metadata-mode-panel-expanded', html)
+            self.assertIn('metadata-mode-panel-compacted', html)
+            self.assertIn('value="expanded" checked="checked"', html)
             self.assertIn('class="language-json"', html)
             self.assertIn('class="highlight"', html)
             self.assertIn("<span", html)
@@ -251,7 +255,10 @@ specialty: Diagnostics
             self.assertIn('&quot;@type&quot;', html)
             self.assertNotIn('&quot;type&quot;', html)
             self.assertLess(html.index('&quot;@id&quot;'), html.index('&quot;@type&quot;'))
-            self.assertLess(html.index('&quot;@type&quot;'), html.index('&quot;name&quot;'))
+            self.assertLess(html.index('&quot;@type&quot;'), html.index('&quot;https://schema.org/name&quot;'))
+            self.assertIn('&quot;@context&quot;', html)
+            self.assertIn('schema:Person', html)
+            self.assertIn('schema:name', html)
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(

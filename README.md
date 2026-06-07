@@ -452,8 +452,11 @@ wiki export
 # Export a single file
 wiki export wiki/Gregory_House.md
 
-# Export as expanded JSON-LD
+# Export as JSON-LD
 wiki export wiki/rdf.md -f json-ld
+
+# Export as compacted JSON-LD
+wiki export wiki/rdf.md -f json-ld --mode compacted
 
 # Export in other RDF formats (turtle, xml, n3, nt, trig, nquads)
 wiki export wiki/rdf.md -f turtle

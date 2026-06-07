@@ -18,6 +18,7 @@ from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
+from .format import normalize_metadata_mode, process_rdf_format
 from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
@@ -654,6 +655,67 @@ textarea.wiki-textarea:focus {
   color: #54595d;
 }
 
+.metadata-mode-switch {
+  position: relative;
+}
+
+.metadata-mode-heading {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #54595d;
+}
+
+.metadata-mode-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.metadata-mode-label {
+  display: inline-block;
+  margin: 0 8px 12px 0;
+  padding: 6px 10px;
+  border: 1px solid #a2a9b1;
+  border-radius: 999px;
+  background: #fff;
+  color: #202122;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.metadata-mode-label:hover {
+  background: #eaecf0;
+}
+
+.metadata-mode-input[value="expanded"]:checked + .metadata-mode-label,
+.metadata-mode-input[value="compacted"]:checked + .metadata-mode-label {
+  background: #36c;
+  color: #fff;
+  border-color: #36c;
+}
+
+.metadata-mode-panels {
+  margin-top: 8px;
+}
+
+.metadata-mode-panel {
+  display: none;
+}
+
+.metadata-mode-input[value="expanded"]:checked ~ .metadata-mode-panels .metadata-mode-panel-expanded {
+  display: block;
+}
+
+.metadata-mode-input[value="compacted"]:checked ~ .metadata-mode-panels .metadata-mode-panel-compacted {
+  display: block;
+}
+
+#view-metadata-content:target {
+  display: block !important;
+}
+
 /* Template Label badge */
 .template-label {
   display: inline-block;
@@ -863,6 +925,7 @@ class VirtualPage:
 @dataclass
 class WikiSite:
     pages: list[VirtualPage]
+    config: WikiConfig | None = None
     pages_by_route: dict[str, VirtualPage] = field(default_factory=dict)
     routes_by_wiki_id: dict[str, str] = field(default_factory=dict)
 
@@ -989,7 +1052,7 @@ def build_site(
         for wiki_id in page.wiki_ids:
             routes_by_wiki_id[wiki_id] = page.file_slug
 
-    return WikiSite(pages=pages, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
+    return WikiSite(pages=pages, config=config, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
 
 
 def _render_html(shell: str, context: dict[str, str]) -> str:
@@ -1077,8 +1140,16 @@ def build_index_html(
     return _render_html(shell, context)
 
 
-def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", url_style: str = DEFAULT_URL_STYLE, html_template: str | None = None) -> str:
+def build_page_html(
+    page: VirtualPage,
+    site: WikiSite,
+    base_url: str = "/wiki",
+    url_style: str = DEFAULT_URL_STYLE,
+    html_template: str | None = None,
+    metadata_mode: str = "expanded",
+) -> str:
     """Compile individual page HTML."""
+    selected_mode = normalize_metadata_mode(metadata_mode)
     toc_html = _build_toc_html(page)
     sidebar_contents_html = _build_sidebar_contents_html(page)
     bl_html = _build_backlinks_html(page, site, base_url, url_style)
@@ -1131,17 +1202,16 @@ def build_page_html(page: VirtualPage, site: WikiSite, base_url: str = "/wiki", 
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    metadata_formatted = json.dumps(_metadata_view_frontmatter(page), indent=2, default=str)
+    metadata_mode_html = _build_metadata_panel_html(page, site, selected_mode)
     if page.has_frontmatter:
-        metadata_highlighted = _highlight_json(metadata_formatted)
-        metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
-        metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON)</a></li>'
+        metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
+        metadata_tab_html = '<li id="ca-metadata"><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">Metadata (JSON-LD)</a></li>'
         metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
     <div id="view-metadata-content" class="wiki-view-pane" style="display: none;">
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>
-      <div id="siteSub">JSON representation compiled from frontmatter</div>
+      <div id="siteSub">JSON-LD representation compiled from frontmatter</div>
       
-      <pre class="highlight"><code class="language-json">{metadata_highlighted}</code></pre>
+      {metadata_mode_html}
     </div>"""
     else:
         metadata_tool_html = ""
@@ -1295,14 +1365,46 @@ def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_
 </section>"""
 
 
-def _build_metadata_json_html(page: VirtualPage) -> str:
+def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_mode: str) -> str:
     if not page.frontmatter:
         return ""
-    highlighted_json = _highlight_json(json.dumps(_metadata_view_frontmatter(page), indent=2, default=str))
-    return f"""<section class="page-meta">
+
+    page_config = site.config or WikiConfig(input_dirs=[])
+    mode_id = _metadata_mode_dom_id(page)
+    expanded_checked = ' checked="checked"' if selected_mode == "expanded" else ""
+    compacted_checked = ' checked="checked"' if selected_mode == "compacted" else ""
+
+    expanded_json = _metadata_json_for_page(page, page_config, "expanded")
+    compacted_json = _metadata_json_for_page(page, page_config, "compacted")
+
+    return f"""<section class="page-meta metadata-panel">
 <h2>Metadata</h2>
-<pre class="highlight"><code class="language-json">{highlighted_json}</code></pre>
+<div class="metadata-mode-switch" role="group" aria-label="Metadata display mode">
+  <div class="metadata-mode-heading">View as format</div>
+  <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-expanded" value="expanded"{expanded_checked}>
+  <label class="metadata-mode-label" for="{mode_id}-expanded">Expanded</label>
+  <input class="metadata-mode-input" type="radio" name="{mode_id}" id="{mode_id}-compacted" value="compacted"{compacted_checked}>
+  <label class="metadata-mode-label" for="{mode_id}-compacted">Compacted</label>
+  <div class="metadata-mode-panels">
+    <div class="metadata-mode-panel metadata-mode-panel-expanded">
+      <pre class="highlight"><code class="language-json">{expanded_json}</code></pre>
+    </div>
+    <div class="metadata-mode-panel metadata-mode-panel-compacted">
+      <pre class="highlight"><code class="language-json">{compacted_json}</code></pre>
+    </div>
+  </div>
+</div>
 </section>"""
+
+
+def _metadata_json_for_page(page: VirtualPage, config: WikiConfig, mode: str) -> str:
+    rdf = process_rdf_format(page.frontmatter, page.full_slug, config.context, "json-ld", mode=mode)
+    return _highlight_json(json.dumps(rdf, indent=2, default=str))
+
+
+def _metadata_mode_dom_id(page: VirtualPage) -> str:
+    safe_slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", page.full_slug or "index").strip("-") or "index"
+    return f"metadata-mode-{safe_slug.lower()}"
 
 
 def _highlight_json(value: str) -> str:
@@ -1311,30 +1413,6 @@ def _highlight_json(value: str) -> str:
     except ClassNotFound:
         return html_module.escape(value)
     return highlight(value, lexer, PYGMENTS_FORMATTER)
-
-
-def _metadata_view_frontmatter(page: VirtualPage) -> dict[str, Any]:
-    frontmatter = page.frontmatter
-    normalized: dict[str, Any] = {}
-
-    metadata_id = frontmatter.get("@id") or frontmatter.get("id") or (page.wiki_ids[0] if page.wiki_ids else None)
-    if metadata_id is not None:
-        normalized["@id"] = metadata_id
-
-    if "@type" in frontmatter:
-        normalized["@type"] = frontmatter["@type"]
-    elif "type" in frontmatter:
-        normalized["@type"] = frontmatter["type"]
-
-    for key, value in frontmatter.items():
-        if key in {"@id", "id", "@type", "type"}:
-            continue
-        normalized[key] = value
-
-    if normalized:
-        return normalized
-
-    return frontmatter
 
 
 def _build_infobox_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:

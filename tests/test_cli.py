@@ -619,6 +619,7 @@ name: Gregory
             page.write_text("""---
 type: Person
 name: Alice
+about: wiki:Alice_Theory
 ---
 """, encoding="utf-8")
             
@@ -628,9 +629,19 @@ name: Alice
             data = json.loads(result.output)
             self.assertIsInstance(data["rdf"], list)
             self.assertIn("@id", data["rdf"][0])
+            self.assertIn("https://schema.org/name", data["rdf"][0])
+
+            # compacted JSON-LD includes @context and compacted predicates
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(page), "--format", "json-ld", "--mode", "compacted"])
+            self.assertEqual(result.exit_code, 0)
+            compacted = json.loads(result.output)
+            self.assertIn("@context", compacted["rdf"])
+            self.assertEqual(compacted["rdf"]["@type"], "schema:Person")
+            self.assertEqual(compacted["rdf"]["schema:name"], "Alice")
+            self.assertEqual(compacted["rdf"]["schema:about"]["@id"], "wiki:Alice_Theory")
             
             # turtle format returns raw serialized turtle (no JSON wrapper)
-            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(page), "--format", "turtle"])
+            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(page), "--format", "turtle", "--mode", "compacted"])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("schema:name", result.output)  # turtle has prefix:name
             self.assertIn("Alice", result.output)

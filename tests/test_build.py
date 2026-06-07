@@ -156,6 +156,49 @@ name: Bella Davidson
             self.assertIn('href="/wiki/Bella_Davidson/"', html)
             self.assertIn('href="https://example.com/gregory-davidson"', html)
 
+    def test_build_embeds_both_metadata_modes(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            template = """<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"UTF-8\">
+<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
+<title>{page_title}</title>
+</head>
+<body>
+<h1>{page_title}</h1>
+{page_content}
+{metadata_pane_html}
+</body>
+</html>"""
+            (root / "wiki.yaml").write_text("input_dirs: wiki\nhtml_template: test_shell.html\n", encoding="utf-8")
+            (root / "test_shell.html").write_text(template, encoding="utf-8")
+            (wiki / "Page.md").write_text(
+                """---
+type: Person
+name: Alice
+about: wiki:Alice_Theory
+---
+# Alice
+""",
+                encoding="utf-8",
+            )
+
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("View as format", html)
+            self.assertIn('metadata-mode-panel-expanded', html)
+            self.assertIn('metadata-mode-panel-compacted', html)
+            self.assertIn('value="expanded" checked="checked"', html)
+            self.assertIn('value="compacted"', html)
+
     def test_missing_configured_template_falls_back_silently(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
