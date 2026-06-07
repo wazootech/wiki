@@ -71,7 +71,7 @@ The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md#html-te
 
 ## Metadata view
 
-The live page metadata panel supports RDF formats without JavaScript: JSON-LD (expanded and compacted), Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. Set the initial view with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). For JSON-LD only, add `?metadata_mode=expanded|compacted`.
+The live page metadata panel supports RDF formats without JavaScript: compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. A compact **Format** chip row selects the view. Set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`).
 
 ## Related
 

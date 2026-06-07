@@ -20,14 +20,13 @@ class MetadataView(TypedDict):
 
 
 METADATA_VIEWS: list[MetadataView] = [
-    {"id": "json-ld-expanded", "format": "json-ld", "mode": "expanded", "label": "JSON-LD (expanded)", "lexer": "json"},
-    {"id": "json-ld-compacted", "format": "json-ld", "mode": "compacted", "label": "JSON-LD (compacted)", "lexer": "json"},
+    {"id": "json-ld-compacted", "format": "json-ld", "mode": "compacted", "label": "JSON-LD", "lexer": "json"},
     {"id": "turtle", "format": "turtle", "mode": "expanded", "label": "Turtle", "lexer": "turtle"},
     {"id": "n3", "format": "n3", "mode": "expanded", "label": "N3", "lexer": "n3"},
     {"id": "xml", "format": "xml", "mode": "expanded", "label": "RDF/XML", "lexer": "xml"},
-    {"id": "nt", "format": "nt", "mode": "expanded", "label": "N-Triples", "lexer": "nt"},
+    {"id": "nt", "format": "nt", "mode": "expanded", "label": "NT", "lexer": "nt"},
     {"id": "trig", "format": "trig", "mode": "expanded", "label": "TriG", "lexer": "trig"},
-    {"id": "nquads", "format": "nquads", "mode": "expanded", "label": "N-Quads", "lexer": "nt"},
+    {"id": "nquads", "format": "nquads", "mode": "expanded", "label": "NQ", "lexer": "nt"},
 ]
 
 _METADATA_VIEW_IDS = {view["id"] for view in METADATA_VIEWS}
@@ -220,15 +219,12 @@ def normalize_metadata_format(fmt: str | None) -> str:
 def resolve_metadata_view(fmt: str | None, mode: str | None) -> str:
     """Map format + mode query params to a metadata view id."""
     normalized_format = normalize_metadata_format(fmt)
-    normalized_mode = normalize_metadata_mode(mode)
     if normalized_format == "json-ld":
-        view_id = f"json-ld-{normalized_mode}"
-        if view_id in _METADATA_VIEW_IDS:
-            return view_id
+        return "json-ld-compacted"
     for view in METADATA_VIEWS:
         if view["format"] == normalized_format:
             return view["id"]
-    return "json-ld-expanded"
+    return "json-ld-compacted"
 
 
 def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded", context: Any = None) -> Any:

@@ -14,11 +14,11 @@ Config files are validated strictly. Unknown keys, removed aliases, wrong nested
 
 Three audit lanes map to three commands:
 
-| Lane        | Command      | YAML block | Purpose |
-| ----------- | ------------ | ---------- | ------- |
-| Integrity   | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links` |
-| Convention  | `wiki lint`  | `lint:`    | `filename_pattern`, `headings` (plus top-level regex) |
-| Formatting  | `wiki fmt`   | —          | mdformat (not configured in yaml) |
+| Lane       | Command      | YAML block | Purpose                                               |
+| ---------- | ------------ | ---------- | ----------------------------------------------------- |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links`       |
+| Convention | `wiki lint`  | `lint:`    | `filename_pattern`, `headings` (plus top-level regex) |
+| Formatting | `wiki fmt`   | —          | mdformat (not configured in yaml)                     |
 
 - Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` or `lint.broken_links` fails at load with a hint.
@@ -75,7 +75,7 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 | Key                    | Default                                            | Purpose                                                                                                                   |
 | ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                       |
-| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and [[Microdata|microdata]]                                                        |
+| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and \[\[Microdata                                                    |
 | `content_predicate`    | —                                                  | When set (for example `schema:text`), markdown body text is added as a literal on each document node for full-text SPARQL |
 | `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                        |
 
@@ -153,7 +153,7 @@ Replace `{key}` tokens in your HTML shell:
 | `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page template-{slug}` for articles.    |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
-| `{inline_css}`            | raw CSS      | [[Wiki_CLI|Wiki CLI]]'s bundled Wikipedia-style CSS.                                                                    |
+| `{inline_css}`            | raw CSS      | \[\[Wiki_CLI                                                                                               |
 | `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo.                                                                                |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
@@ -171,7 +171,7 @@ Replace `{key}` tokens in your HTML shell:
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
 
-The metadata pane uses the same RDF serialization path as `wiki export` (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). JSON-LD has separate expanded and compacted views; other formats render once. In `wiki serve`, set the initial pill with `?metadata_format=FORMAT` and, for JSON-LD only, `?metadata_mode=expanded|compacted`. In `wiki build`, all format views are embedded in the page HTML so the toggle works without JavaScript.
+The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
 
 ### Built-in CSS classes and IDs
 
@@ -248,10 +248,10 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 
 Under `lint`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                |
-| ------------------ | --------- | ----------------------------------------------------------------------------- |
-| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                          |
-| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body             |
+| Rule key           | Default   | What it audits                                                    |
+| ------------------ | --------- | ----------------------------------------------------------------- |
+| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex               |
+| `headings`         | `off`     | Sentence-case headings, numbered headings, thematic `---` in body |
 
 ## This repository
 

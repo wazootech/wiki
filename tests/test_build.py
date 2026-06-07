@@ -193,13 +193,13 @@ about: wiki:Alice_Theory
 
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("View as format", html)
-            self.assertIn('metadata-format-panel-json-ld-expanded', html)
+            self.assertIn("metadata-format-heading", html)
+            self.assertIn("Format</span>", html)
             self.assertIn('metadata-format-panel-json-ld-compacted', html)
+            self.assertNotIn('metadata-format-panel-json-ld-expanded', html)
             self.assertIn('metadata-format-panel-turtle', html)
             self.assertIn('metadata-format-panel-xml', html)
-            self.assertIn('value="json-ld-expanded" checked="checked"', html)
-            self.assertIn('value="json-ld-compacted"', html)
+            self.assertIn('value="json-ld-compacted" checked="checked"', html)
             self.assertIn('value="turtle"', html)
 
     def test_missing_configured_template_falls_back_silently(self) -> None:

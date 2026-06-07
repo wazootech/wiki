@@ -7,7 +7,7 @@ description: Generate a static HTML site from the vault.
 # `wiki build`
 
 Compile markdown and data files into static HTML with wikilinks, backlinks, table of contents, and typed templates/infoboxes.
-The generated pages now embed both expanded and compacted metadata views so the toggle works without JavaScript.
+Pages with frontmatter embed all metadata format views so the chip picker works without JavaScript.
 
 ## Usage
 
@@ -31,7 +31,7 @@ wiki build --no-check
 | `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
 | `--reload`        | off         | Rebuild graph when using `--render`                                     |
 | `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
-| `--no-check`      | off         | Skip pre-build integrity and lint (`check` + `lint`)                   |
+| `--no-check`      | off         | Skip pre-build integrity and lint (`check` + `lint`)                    |
 | `-v`, `--verbose` | off         | List output paths                                                       |
 
 ## Output layout
@@ -46,7 +46,7 @@ Assets from `asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wi
 
 ## Metadata view
 
-Each built page includes both expanded and compacted metadata blocks. The page defaults to expanded, and the switch stays usable without JavaScript.
+Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. JSON-LD is selected by default; the chip row stays usable without JavaScript.
 
 ## Custom HTML shell
 

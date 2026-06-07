@@ -366,12 +366,12 @@ sh:property:
 
 #### Metadata pane (RDF views)
 
-Built and served HTML pages include a **Metadata** tab with a no-JavaScript format picker (CSS radio buttons). The pane uses the same serialization path as `wiki export`:
+Built and served HTML pages include a **Metadata** tab with a compact no-JavaScript format picker (CSS radio chips). The pane uses the same serialization path as `wiki export`:
 
-- JSON-LD (expanded and compacted)
+- JSON-LD (compacted, with `@context`)
 - Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads
 
-`wiki build` embeds all format views in each page. On `wiki serve`, set the initial view with query parameters, for example `?metadata_format=turtle` or `?metadata_format=json-ld&metadata_mode=compacted`. Aliases such as `ttl`, `rdf`, and `jsonld` are accepted.
+`wiki build` embeds all format views in each page. On `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). Aliases such as `ttl`, `rdf`, and `jsonld` are accepted.
 
 #### GitHub Pages deployment
 
@@ -473,7 +473,7 @@ wiki serve --watch
 python -m wiki serve --watch
 ```
 
-`--watch` polls `input_dirs` and `asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`) and, for JSON-LD, `?metadata_mode=expanded|compacted`.
+`--watch` polls `input_dirs` and `asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
 
 When `serve_api.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 

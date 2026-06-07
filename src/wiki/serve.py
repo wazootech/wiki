@@ -62,7 +62,7 @@ class WikiHandler(BaseHTTPRequestHandler):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
             if target:
-                metadata_mode = normalize_metadata_mode(query_params.get("metadata_mode", ["expanded"])[-1])
+                metadata_mode = normalize_metadata_mode(query_params.get("metadata_mode", ["compacted"])[-1])
                 metadata_format = normalize_metadata_format(query_params.get("metadata_format", ["json-ld"])[-1])
                 self._send_html(
                     build_page_html(

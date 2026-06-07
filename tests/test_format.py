@@ -27,8 +27,8 @@ class MetadataViewHelpersTest(unittest.TestCase):
         self.assertEqual(normalize_metadata_format("application/rdf+xml"), "xml")
         self.assertEqual(normalize_metadata_format("unknown"), "json-ld")
 
-    def test_resolve_metadata_view_json_ld_modes(self) -> None:
-        self.assertEqual(resolve_metadata_view("json-ld", "expanded"), "json-ld-expanded")
+    def test_resolve_metadata_view_json_ld_is_always_compacted(self) -> None:
+        self.assertEqual(resolve_metadata_view("json-ld", "expanded"), "json-ld-compacted")
         self.assertEqual(resolve_metadata_view("json-ld", "compacted"), "json-ld-compacted")
         self.assertEqual(resolve_metadata_view("jsonld", "compacted"), "json-ld-compacted")
 

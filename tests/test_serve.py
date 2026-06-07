@@ -231,19 +231,19 @@ class TestServe(unittest.TestCase):
         self.assertIn("My Page", body)
         self.assertIn("Article", body)
 
-    def test_metadata_mode_query_switches_initial_selection(self) -> None:
+    def test_metadata_json_ld_defaults_to_compacted_view(self) -> None:
         self._write("page.md", "---\ntype: Article\nname: My Page\nabout: wiki:My_Page\n---\n\n# My Page\n")
         for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
-            status, expanded = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=expanded")
+            status, body = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=expanded")
             compact_status, compacted = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=compacted")
 
         self.assertEqual(status, 200)
         self.assertEqual(compact_status, 200)
-        self.assertIn('value="json-ld-expanded" checked="checked"', expanded)
+        self.assertNotIn('value="json-ld-expanded"', body)
+        self.assertIn('value="json-ld-compacted" checked="checked"', body)
         self.assertIn('value="json-ld-compacted" checked="checked"', compacted)
-        self.assertIn('&quot;@id&quot;', expanded)
-        self.assertIn('&quot;@context&quot;', compacted)
-        self.assertIn('schema:about', compacted)
+        self.assertIn('&quot;@context&quot;', body)
+        self.assertIn('schema:about', body)
 
     def test_metadata_format_query_selects_turtle_view(self) -> None:
         self._write("page.md", "---\ntype: schema:Person\nname: My Page\n---\n\n# My Page\n")

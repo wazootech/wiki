@@ -36,7 +36,7 @@ def _metadata_format_css() -> str:
     for view in METADATA_VIEWS:
         view_id = view["id"]
         rules.append(
-            f'.metadata-format-input[value="{view_id}"]:checked ~ .metadata-format-panels '
+            f'.metadata-format-switch:has(.metadata-format-input[value="{view_id}"]:checked) '
             f".metadata-format-panel-{view_id} {{ display: block; }}"
         )
         rules.append(
@@ -723,15 +723,52 @@ textarea.wiki-textarea:focus {
   color: #54595d;
 }
 
+.metadata-panel.page-meta {
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+
+.metadata-panel.page-meta h2 {
+  display: none;
+}
+
+#view-metadata-content .firstHeading {
+  font-size: 1.5em;
+  margin-bottom: 2px;
+}
+
+#view-metadata-content #siteSub {
+  margin-bottom: 10px;
+  font-size: 0.75em;
+}
+
 .metadata-format-switch {
   position: relative;
 }
 
+.metadata-format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-bottom: 6px;
+}
+
 .metadata-format-heading {
-  margin: 0 0 8px;
-  font-size: 0.85em;
+  margin: 0;
+  font-size: 0.72em;
   font-weight: 600;
   color: #54595d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex: 0 0 auto;
+}
+
+.metadata-format-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1 1 auto;
 }
 
 .metadata-format-input {
@@ -742,15 +779,17 @@ textarea.wiki-textarea:focus {
 
 .metadata-format-label {
   display: inline-block;
-  margin: 0 8px 12px 0;
-  padding: 6px 10px;
-  border: 1px solid #a2a9b1;
-  border-radius: 999px;
+  margin: 0;
+  padding: 2px 7px;
+  border: 1px solid #c8ccd1;
+  border-radius: 4px;
   background: #fff;
   color: #202122;
-  font-size: 0.85em;
+  font-size: 0.72em;
   font-weight: 600;
+  line-height: 1.3;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .metadata-format-label:hover {
@@ -758,11 +797,22 @@ textarea.wiki-textarea:focus {
 }
 
 .metadata-format-panels {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .metadata-format-panel {
   display: none;
+}
+
+.metadata-format-panel .highlight {
+  margin: 0;
+}
+
+.metadata-format-panel pre {
+  margin: 0;
+  padding: 8px 10px !important;
+  font-size: 0.8em;
+  line-height: 1.35;
 }
 
 #view-metadata-content:target {
@@ -1207,7 +1257,7 @@ def build_page_html(
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
     html_template: str | None = None,
-    metadata_mode: str = "expanded",
+    metadata_mode: str = "compacted",
     metadata_format: str = "json-ld",
 ) -> str:
     """Compile individual page HTML."""
@@ -1453,10 +1503,11 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
         )
 
     return f"""<section class="page-meta metadata-panel">
-<h2>Metadata</h2>
 <div class="metadata-format-switch" role="group" aria-label="Metadata RDF format">
-  <div class="metadata-format-heading">View as format</div>
-  {''.join(radios_and_labels)}
+  <div class="metadata-format-toolbar">
+    <span class="metadata-format-heading">Format</span>
+    <div class="metadata-format-options">{''.join(radios_and_labels)}</div>
+  </div>
   <div class="metadata-format-panels">
     {''.join(panels)}
   </div>
