@@ -18,3 +18,7 @@ N3 is much more expressive than Turtle; it provides syntax for RDF itself but al
 - [TriG](TriG.md)
 - [RDF_XML](RDF_XML.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [Notation3 (N3)](https://w3c.github.io/N3/spec/)

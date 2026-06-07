@@ -52,3 +52,7 @@ When you run `wiki check`, any page with `type: Project` is automatically valida
 ## Page layouts vs SHACL
 
 Per-page HTML layouts use `wazoo:layout` with a file path. That key is presentation metadata for the builder and is not exported into the RDF graph, so SHACL cannot constrain it. Use `wiki check` to validate layout file paths and reject legacy `template` / `wiki:template` keys. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
+
+## References
+
+- [SHACL — Shapes Constraint Language](https://www.w3.org/TR/shacl/)

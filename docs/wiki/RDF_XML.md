@@ -40,3 +40,7 @@ Use `wiki export -f xml` when you want RDF serialized in RDF/XML form.
 - [Turtle](Turtle.md)
 - [JSON_LD](JSON_LD.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)

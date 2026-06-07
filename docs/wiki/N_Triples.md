@@ -34,3 +34,7 @@ Use `wiki export -f nt` when you want RDF serialized as N-Triples. Built pages a
 - [N_Quads](N_Quads.md)
 - [JSON_LD](JSON_LD.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/)

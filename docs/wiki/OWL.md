@@ -39,3 +39,7 @@ name: Learning SPARQL
 The reasoning engine automatically infers and adds the following facts to your graph:
 
 - The page is also a `schema:CreativeWork`.
+
+## References
+
+- [OWL 2 Web Ontology Language — Document Overview](https://www.w3.org/TR/owl2-overview/)

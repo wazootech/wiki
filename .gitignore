@@ -42,6 +42,7 @@ htmlcov/
 
 # Static site build output
 _site/
+_site-test/
 
 # Wiki CLI graph and render caches (legacy on-disk layout)
 .wiki/

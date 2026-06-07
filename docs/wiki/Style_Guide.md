@@ -99,6 +99,21 @@ All internal links must resolve to existing documents in the wiki.
 
 Wikilinks (`[[Page]]`) are always supported. Use Markdown links for external URLs.
 
+## References (external standards)
+
+Technology-standard [TechArticle](Tech_Article_Shape.md) pages (for example [HTML](HTML.md), [RDF](RDF.md), [SPARQL](SPARQL.md)) should cite authoritative sources in a **`## References`** section at the end of the page. Place it after any `## Related` block.
+
+Use Markdown links for external URLs. When both exist, list the normative spec first, then MDN where MDN has a relevant overview:
+
+```markdown
+## References
+
+- [HTML Living Standard](https://html.spec.whatwg.org/)
+- [HTML — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTML)
+```
+
+W3C-only topics need only the spec link. Keep `## Related` for internal vault navigation.
+
 ## Active database summary
 
 The table below queries the active graph to list all distinct classes currently instantiated in your vault:

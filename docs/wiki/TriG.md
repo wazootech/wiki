@@ -36,3 +36,7 @@ Use `wiki export -f trig` when you want RDF serialized as TriG. Built pages also
 - [N_Quads](N_Quads.md)
 - [Notation3](Notation3.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [RDF 1.1 TriG](https://www.w3.org/TR/trig/)

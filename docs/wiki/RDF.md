@@ -24,3 +24,7 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 - [SPARQL](SPARQL.md): The query language for RDF graphs.
 - [OWL](OWL.md): Ontology vocabulary and reasoning on top of RDF.
 - [SHACL](SHACL.md): A language for validating RDF graphs.
+
+## References
+
+- [RDF 1.2 Concepts and Abstract Data Model](https://www.w3.org/TR/rdf12-concepts/)

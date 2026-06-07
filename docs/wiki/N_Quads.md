@@ -31,3 +31,7 @@ Use `wiki export -f nquads` when you want RDF serialized as N-Quads. Built pages
 - [Turtle](Turtle.md)
 - [JSON_LD](JSON_LD.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/)

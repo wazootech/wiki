@@ -20,3 +20,7 @@ It is a subset of [Notation3](Notation3.md) and a superset of the minimal [N_Tri
 - [TriG](TriG.md)
 - [JSON_LD](JSON_LD.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+
+## References
+
+- [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/)

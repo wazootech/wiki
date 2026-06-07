@@ -36,3 +36,8 @@ Identifies what compression algorithms (gzip, deflate, br) the client understand
 ## Importance in the [[Semantic_Web|semantic web]]
 
 In a [Semantic_Web](Semantic_Web.md) compliant system, URIs identifying real-world resources should behave intelligently. When a human navigates to the URI, the server employs content negotiation to render the [HTML](HTML.md) page. When a crawler or reasoning agent requests the exact same URI, the server can provide the machine-readable, structured data, like [RDF](RDF.md) or [JSON](JSON_LD.md).
+
+## References
+
+- [RFC 7231 — Content Negotiation](https://www.rfc-editor.org/rfc/rfc7231#section-5.3.2)
+- [Content negotiation — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation)

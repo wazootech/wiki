@@ -24,3 +24,7 @@ To enable this, the Semantic Web stack relies on a group of technologies, includ
 - [SHACL](SHACL.md)
 
 By adding semantic metadata to content, search engines and agents can perform reasoning and fetch precise data across disparate databases.
+
+## References
+
+- [Semantic Web — W3C](https://www.w3.org/standards/semanticweb/)

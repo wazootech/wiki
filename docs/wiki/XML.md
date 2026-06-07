@@ -30,3 +30,8 @@ In the semantic-web context, XML is relevant because some W3C standards use it a
 - [RDF_XML](RDF_XML.md)
 - [RDF](RDF.md)
 - [Semantic_Web](Semantic_Web.md)
+
+## References
+
+- [Extensible Markup Language (XML) 1.0](https://www.w3.org/TR/xml/)
+- [XML — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/XML)

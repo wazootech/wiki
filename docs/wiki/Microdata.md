@@ -25,3 +25,8 @@ The [[Wiki_CLI|Wiki CLI]] extracts this format directly from wiki documents into
     supports extraction via BeautifulSoup.
   </div>
 </div>
+
+## References
+
+- [Microdata — HTML Living Standard](https://html.spec.whatwg.org/multipage/microdata.html)
+- [Microdata — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Microdata)

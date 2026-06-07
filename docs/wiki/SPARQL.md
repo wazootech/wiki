@@ -72,3 +72,7 @@ ORDER BY ?class
 | https://schema.org/TechArticle         |
 
 <!-- sparql:end -->
+
+## References
+
+- [SPARQL 1.2 Query Language](https://www.w3.org/TR/sparql12-query/)
