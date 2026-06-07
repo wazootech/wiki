@@ -95,7 +95,8 @@ class TestWikiSite(unittest.TestCase):
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
 type: schema:Person
-name: Gregory Davidson
+givenName: Gregory
+familyName: Davidson
 knows: wiki:Ethan_Davidson
 owns: wiki:Bella_Davidson
 softwareVersion: 1.2
@@ -106,7 +107,8 @@ url: https://example.com/gregory-davidson
             (wiki / "Ethan_Davidson.yaml").write_text(
                 """id: wiki:Ethan_Davidson
 type: schema:Person
-name: Ethan Davidson
+givenName: Ethan
+familyName: Davidson
 """,
                 encoding="utf-8",
             )
@@ -283,7 +285,8 @@ name: Project Atlas
             (wiki / "person.md").write_text(
                 """---
 type: schema:Person
-name: Gregory Davidson
+givenName: Gregory
+familyName: Davidson
 specialty: Diagnostics
 ---
 # Gregory Davidson
@@ -317,7 +320,7 @@ specialty: Diagnostics
             self.assertLess(html.index('&quot;@id&quot;'), html.index('&quot;@type&quot;'))
             self.assertIn('&quot;@context&quot;', html)
             self.assertIn('schema:Person', html)
-            self.assertIn('schema:name', html)
+            self.assertIn('schema:givenName', html)
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(

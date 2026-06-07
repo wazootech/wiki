@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: RDF XML
-description: XML-based W3C serialization for RDF graphs.
+label: RDF XML
+comment: XML-based W3C serialization for RDF graphs.
 ---
 
 # RDF XML
@@ -18,7 +18,7 @@ Compared with [Turtle](Turtle.md) or [JSON_LD](JSON_LD.md), RDF/XML is usually m
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:schema="https://schema.org/">
   <rdf:Description rdf:about="https://example.org/people/alice">
-    <schema:name>Alice</schema:name>
+    <schema:givenName>Alice</schema:givenName>
   </rdf:Description>
 </rdf:RDF>
 ```
@@ -26,7 +26,7 @@ Compared with [Turtle](Turtle.md) or [JSON_LD](JSON_LD.md), RDF/XML is usually m
 This expresses the RDF statement:
 
 - subject: `https://example.org/people/alice`
-- predicate: `https://schema.org/name`
+- predicate: `https://schema.org/givenName`
 - object: `Alice`
 
 ## In [[Wiki_CLI|Wiki CLI]]

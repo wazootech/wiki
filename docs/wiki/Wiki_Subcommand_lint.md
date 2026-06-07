@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: wiki lint
-description: Convention audits for filename patterns and heading style.
+label: wiki lint
+comment: Convention audits for filename patterns and heading style.
 ---
 
 # `wiki lint`

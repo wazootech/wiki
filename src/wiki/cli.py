@@ -252,6 +252,7 @@ def link(
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
+@click.option("--pretty", is_flag=True, help="Render SELECT results as a Rich table (terminal only).")
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
 def query(
@@ -263,6 +264,7 @@ def query(
     reload: bool,
     disk_cache: bool,
     jq: Optional[str],
+    pretty: bool,
     verbose: bool,
 ) -> None:
     """Run a SPARQL SELECT or CONSTRUCT query."""
@@ -273,6 +275,17 @@ def query(
     else:
         click.echo("Error: No query provided.", err=True)
         sys.exit(1)
+
+    if pretty:
+        if output is not None:
+            click.echo("Error: --pretty writes to stdout only; do not use -o/--output.", err=True)
+            sys.exit(1)
+        if jq is not None:
+            click.echo("Error: --pretty is incompatible with --jq.", err=True)
+            sys.exit(1)
+        if output_format != "table":
+            click.echo("Error: --pretty only supports table format (default -f table).", err=True)
+            sys.exit(1)
 
     graph = load_graph(
         context,
@@ -288,7 +301,13 @@ def query(
     try:
         if jq is not None:
             output_format = "json"
-        result = run_query(graph, sparql_query, output_format=output_format, wiki_base=context.wiki_base)
+        result = run_query(
+            graph,
+            sparql_query,
+            output_format=output_format,
+            wiki_base=context.wiki_base,
+            pretty=pretty,
+        )
         if output:
             output.write_text(result, encoding="utf-8")
             click.echo(f"Written results to {output}")
@@ -363,26 +382,6 @@ def render(
         if error_count:
             parts.append(f"{error_count} errors")
         click.echo(f"Rendered SPARQL: {', '.join(parts)}.")
-
-
-@main.command()
-@click.argument("file", required=True, type=click.Path(exists=True, path_type=Path))
-@click.pass_obj
-def view(config: Context, file: Path) -> None:
-    """Render a single wiki document as a terminal-friendly infobox view."""
-    if file.suffix.lower() not in {".md", ".yaml", ".yml", ".json"}:
-        click.echo(f"Error: view only supports wiki document files, got {file.name}.", err=True)
-        sys.exit(1)
-
-    from .view import render_document_view
-
-    try:
-        output = render_document_view(file, config, base_url=config.base_url, url_style=config.url_style)
-    except ValueError as exc:
-        click.echo(f"Error: {exc}", err=True)
-        sys.exit(1)
-
-    click.echo(output, nl=False)
 
 
 @main.command()

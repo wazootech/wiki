@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import json
 import re
+from io import StringIO
 from typing import Any, TypedDict
 
 from rdflib import Graph
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
 from .format_choice import FormatChoice
 
@@ -97,6 +101,49 @@ def table_format(result: Any) -> str:
     return "\n".join(lines)
 
 
+def _select_result_keys(result: Any, rows: list[Any]) -> list[str]:
+    try:
+        keys = [str(v) for v in result.vars]
+    except Exception:
+        keys = []
+
+    if not keys and rows:
+        first = rows[0]
+        if isinstance(first, tuple):
+            keys = [f"?v{i}" for i in range(len(first))]
+        elif hasattr(first, "keys"):
+            keys = list(first.keys())
+
+    return keys
+
+
+def _select_row_values(row: Any, keys: list[str]) -> list[str]:
+    if isinstance(row, tuple):
+        return [str(v) for v in row]
+    return [str(row.get(k, "")) for k in keys]
+
+
+def pretty_table_format(result: Any) -> str:
+    """Format SPARQL SELECT results as a Rich ASCII table for terminal display."""
+    rows = list(result)
+    if not rows:
+        return "(no results)"
+
+    keys = _select_result_keys(result, rows)
+    if not keys:
+        return "(empty query)"
+
+    buffer = StringIO()
+    console = Console(file=buffer, force_terminal=False, color_system=None, width=100)
+    table = Table(show_header=True, header_style="bold", box=box.ASCII, pad_edge=False)
+    for key in keys:
+        table.add_column(key)
+    for row in rows:
+        table.add_row(*_select_row_values(row, keys))
+    console.print(table)
+    return buffer.getvalue()
+
+
 def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
     """Format SPARQL SELECT results as a GitHub Flavored Markdown table, rendering standard markdown links when applicable."""
     rows = list(result)
@@ -120,8 +167,7 @@ def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[
     if not keys:
         return "(empty query)"
 
-    headers = [k.capitalize() for k in keys]
-    header_line = "| " + " | ".join(headers) + " |"
+    header_line = "| " + " | ".join(keys) + " |"
     divider_line = "| " + " | ".join(["---"] * len(keys)) + " |"
 
     lines = [header_line, divider_line]
@@ -137,10 +183,21 @@ def markdown_format(result: Any, wiki_base: str | None = None, known_slugs: set[
     return "\n".join(lines)
 
 
-def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: str | None = None, known_slugs: set[str] | None = None) -> str:
+def run_query(
+    graph: Any,
+    query: str,
+    output_format: str = "table",
+    wiki_base: str | None = None,
+    known_slugs: set[str] | None = None,
+    *,
+    pretty: bool = False,
+) -> str:
     """Run a SPARQL SELECT or CONSTRUCT query against the graph, returning formatted output."""
     query_form = detect_query_form(query)
     is_construct = query_form in {"CONSTRUCT", "DESCRIBE"}
+
+    if pretty and is_construct:
+        raise ValueError("--pretty only supports SELECT queries (not CONSTRUCT or DESCRIBE).")
 
     if is_construct:
         result = graph.query(query)
@@ -166,6 +223,8 @@ def run_query(graph: Any, query: str, output_format: str = "table", wiki_base: s
         return "\n".join(lines)
     elif output_format in ("markdown", "md"):
         return markdown_format(result, wiki_base=wiki_base, known_slugs=known_slugs)
+    elif pretty:
+        return pretty_table_format(result)
     else:
         return table_format(result)
 

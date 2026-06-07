@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Semantic Web
-description: An extension of the Web through standards by the W3C.
+label: Semantic Web
+comment: An extension of the Web through standards by the W3C.
 ---
 
 # Semantic Web

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Wiki configuration
-description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
+label: Wiki configuration
+comment: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 ---
 
 # Wiki configuration

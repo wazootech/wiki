@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Getting started
-description: Install the wiki CLI and scaffold a new vault.
+label: Getting started
+comment: Install the wiki CLI and scaffold a new vault.
 ---
 
 # Getting started

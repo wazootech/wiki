@@ -1,15 +1,15 @@
 ---
 type: sh:NodeShape
-name: SoftwareApplication Shape
-description: Validation rules for software inventory items.
+label: SoftwareApplication Shape
+comment: Validation rules for software inventory items.
 sh:targetClass: schema:SoftwareApplication
 sh:property:
-  - sh:path: schema:name
+  - sh:path: rdfs:label
     sh:minCount: 1
     sh:datatype: xsd:string
   - sh:path: schema:softwareVersion
     sh:datatype: xsd:string
-  - sh:path: schema:description
+  - sh:path: rdfs:comment
     sh:minCount: 1
     sh:datatype: xsd:string
 ---

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Obsidian integration
-description: Run Wiki CLI from Obsidian via Shell Commands.
+label: Obsidian integration
+comment: Run Wiki CLI from Obsidian via Shell Commands.
 ---
 
 # Obsidian integration

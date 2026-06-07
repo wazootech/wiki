@@ -124,7 +124,8 @@ class TestWikiBuild(unittest.TestCase):
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
 type: schema:Person
-name: Gregory Davidson
+givenName: Gregory
+familyName: Davidson
 knows: wiki:Ethan_Davidson
 owns: wiki:Bella_Davidson
 url: https://example.com/gregory-davidson
@@ -134,7 +135,8 @@ url: https://example.com/gregory-davidson
             (wiki / "Ethan_Davidson.yaml").write_text(
                 """id: wiki:Ethan_Davidson
 type: schema:Person
-name: Ethan Davidson
+givenName: Ethan
+familyName: Davidson
 """,
                 encoding="utf-8",
             )
@@ -181,7 +183,8 @@ name: Bella Davidson
             (wiki / "Page.md").write_text(
                 """---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 about: wiki:Alice_Theory
 ---
 # Alice

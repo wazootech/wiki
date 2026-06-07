@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Design philosophies
-description: Unix-style CLI design for the Wiki CLI tool.
+label: Design philosophies
+comment: Unix-style CLI design for the Wiki CLI tool.
 ---
 
 # Design philosophies
@@ -38,7 +38,7 @@ To format page margins and headers before sending directly to a connected printe
 cat wiki/Getting_Started.md | pr -h "Getting Started" | lp
 
 # Print SPARQL query results
-wiki query "SELECT ?name WHERE { ?s schema:name ?name }" | pr -h "Wiki Names" | lp
+wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | pr -h "Wiki People" | lp
 ```
 
 ### Windows (using PowerShell `Out-Printer`)
@@ -50,7 +50,7 @@ To stream content directly to your default Windows printer:
 Get-Content wiki/Getting_Started.md | Out-Printer
 
 # Print SPARQL query results
-wiki query "SELECT ?name WHERE { ?s schema:name ?name }" | Out-Printer
+wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | Out-Printer
 ```
 
 ## Flat command surface

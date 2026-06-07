@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Project ontology
-description: Global OWL/RDFS axioms and class inheritance mappings.
+label: Project ontology
+comment: Global OWL/RDFS axioms and class inheritance mappings.
 ---
 
 # Project ontology

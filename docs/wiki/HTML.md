@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: HTML
-description: HyperText Markup Language for structuring web documents.
+label: HTML
+comment: HyperText Markup Language for structuring web documents.
 ---
 
 # HTML

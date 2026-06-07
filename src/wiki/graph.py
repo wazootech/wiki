@@ -44,6 +44,12 @@ def _file_slug(file_path: Path, input_dirs: list[Path]) -> str:
     return _slugify_path(file_path)
 
 
+_PREDICATE_ALIASES: dict[str, tuple[str, str]] = {
+    "label": ("rdfs", "label"),
+    "comment": ("rdfs", "comment"),
+}
+
+
 def resolve_predicate(key: str, context: Context) -> URIRef:
     """Map a frontmatter key to an RDF predicate URI using managed namespaces."""
     if ":" in key:
@@ -52,6 +58,10 @@ def resolve_predicate(key: str, context: Context) -> URIRef:
             return context.namespaces[prefix][name]
     if key.startswith("wiki."):
         return context.namespaces["wiki"][key[5:]]
+    alias = _PREDICATE_ALIASES.get(key)
+    if alias is not None:
+        prefix, name = alias
+        return context.namespaces[prefix][name]
     return context.namespaces["schema"][key]
 
 

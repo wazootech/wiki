@@ -23,13 +23,13 @@ class TestJQFilter(unittest.TestCase):
         data = {
             "results": {
                 "bindings": [
-                    {"name": {"value": "Alice"}, "email": {"value": "a@x.com"}},
-                    {"name": {"value": "Bob"}, "email": {"value": "b@x.com"}},
+                    {"givenName": {"value": "Alice"}, "email": {"value": "a@x.com"}},
+                    {"givenName": {"value": "Bob"}, "email": {"value": "b@x.com"}},
                 ]
             }
         }
         self.assertEqual(
-            resolve_path(data, "results.bindings[].name.value"),
+            resolve_path(data, "results.bindings[].givenName.value"),
             ["Alice", "Bob"],
         )
         self.assertEqual(
@@ -50,8 +50,8 @@ class TestJQFilter(unittest.TestCase):
         self.assertEqual(resolve_path([], "[]"), [])
 
     def test_top_level_array(self):
-        data = [{"name": "Alice"}, {"name": "Bob"}]
-        self.assertEqual(resolve_path(data, "[].name"), ["Alice", "Bob"])
+        data = [{"givenName": "Alice"}, {"givenName": "Bob"}]
+        self.assertEqual(resolve_path(data, "[].givenName"), ["Alice", "Bob"])
 
 
 if __name__ == "__main__":

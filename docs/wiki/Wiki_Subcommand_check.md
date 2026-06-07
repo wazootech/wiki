@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: wiki check
-description: Integrity checks — SHACL validation, route safety, and broken links.
+label: wiki check
+comment: Integrity checks — SHACL validation, route safety, and broken links.
 ---
 
 # `wiki check`

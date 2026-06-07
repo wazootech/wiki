@@ -12,8 +12,8 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 
 ## Key features
 - **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Python CLI**: Comprehensive command suite — `check`, `lint`, `link`, `fmt`, `query`, `render`, `build`, `serve`, `view`, `export`, `init`.
-- **Terminal Document View**: Render a single wiki document as a readable terminal infobox with `wiki view`.
+- **Pure Python CLI**: Comprehensive command suite — [`check`](#check), [`lint`](#lint), [`link`](#link), [`fmt`](#fmt), [`query`](#query), [`render`](#render), [`build`](#build), [`serve`](#serve), [`export`](#export), [`init`](#init).
+- **Pretty terminal queries**: Render SPARQL SELECT results as Rich tables with `wiki query --pretty`.
 - **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
 - **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
@@ -178,14 +178,30 @@ wiki query "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }" -f turtle
 cat my_query.sparql | wiki query -f markdown -o results.md
 
 # Extract specific fields from JSON output (automatically selects -f json)
-wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --jq 'results.bindings[].name.value'
+wiki query "SELECT ?given WHERE { ?s schema:givenName ?given }" --jq 'results.bindings[].given.value'
 
 # Rebuild the in-memory graph before querying (same process only)
-wiki query "SELECT ?name WHERE { ?s schema:name ?name }" --reload
+wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" --reload
 
 # Persist a warm graph for reuse across new CLI processes
-wiki query --cache "SELECT ?name WHERE { ?s schema:name ?name }"
+wiki query --cache "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }"
+
+# Pretty-print SELECT results as a Rich table (terminal only)
+wiki query --pretty "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }"
 ```
+
+#### Inspect one document in the terminal
+
+Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout — use [`serve`](#serve) for full page preview.
+
+```bash
+# Pretty-print all triples for a subject
+wiki query --pretty "SELECT ?property ?value WHERE {
+  wiki:Gregory_Davidson ?property ?value .
+}"
+```
+
+`--pretty` requires the default `-f table` format, writes to stdout only (no `-o` or `--jq`), and supports SELECT queries only.
 
 ### `render`
 Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
@@ -226,16 +242,17 @@ An embedded SPARQL block is defined in your markdown files like this:
 ````html
 <!-- sparql:start -->
 ```sparql
-SELECT ?name ?email WHERE {
+SELECT ?given ?family ?email WHERE {
   ?person a schema:Person ;
-          schema:name ?name ;
+          schema:givenName ?given ;
+          schema:familyName ?family ;
           schema:email ?email .
 }
 ```
 
-| Name | Email |
-| --- | --- |
-| Gregory | gregory@example.com |
+| given | family | email |
+| --- | --- | --- |
+| Gregory | Davidson | gregory@example.com |
 <!-- sparql:end -->
 ````
 
@@ -356,7 +373,10 @@ id: wiki:PersonShape
 type: sh:NodeShape
 sh:targetClass: schema:Person
 sh:property:
-  - sh:path: schema:name
+  - sh:path: schema:givenName
+    sh:datatype: xsd:string
+    sh:minCount: 1
+  - sh:path: schema:familyName
     sh:datatype: xsd:string
     sh:minCount: 1
   - sh:path: wiki:template
@@ -437,24 +457,6 @@ jobs:
 ```
 
 Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
-
-### `view`
-Render a single wiki document as a terminal-friendly infobox view.
-
-```bash
-# View a markdown page with infobox and body
-wiki view wiki/Gregory_Davidson.md
-
-# View a data-only record
-wiki view wiki/Bella_Davidson.yaml
-```
-
-`wiki view` reuses the same page typing and infobox resolution as `wiki build` and `wiki serve`:
-
-- template names are shown as file-style identifiers like `Person.html`
-- internal wiki references are displayed using the target page title
-- markdown pages include their body below the infobox
-- data-only pages show their title and infobox without a markdown body
 
 ### `serve`
 Start a local development HTTP server that renders wiki markdown files as HTML (wikilinks, backlinks, ToC, infobox, and metadata pane included). Uses the same rendering engine as `build` but serves pages on-the-fly without writing files to disk.
@@ -571,13 +573,13 @@ id: wiki:DogShape
 type: sh:NodeShape
 sh:targetClass: wiki:Dog
 sh:property:
-  sh:path: schema:name
+  sh:path: rdfs:label
   sh:datatype: xsd:string
   sh:minCount: 1
 ---
 
 # Dog Shape
-Requires that all `wiki:Dog` documents must declare a name.
+Requires that all `wiki:Dog` documents must declare a label.
 ```
 
 #### Native microdata via HTML attributes
@@ -588,7 +590,7 @@ You are not limited to YAML headers! For rich semantic embedding directly inside
 Product X is state-of-the-art.
 
 <div itemscope itemtype="schema:Product" itemid="wiki:Product_X">
-  Our latest model is the <span itemprop="schema:name">Quantum Processor X</span>.
+  Our latest model is the <span itemprop="rdfs:label">Quantum Processor X</span>.
   
   <div itemprop="schema:offers" itemscope itemtype="schema:Offer">
     Price: <span itemprop="schema:price">999.99</span> 
@@ -625,9 +627,10 @@ name: Gregory Davidson
 When you run queries, the reasoner **automatically infers** the implicit connection:
 ```sparql
 # This returns Gregory, even though his type is "Engineer", NOT "Person"!
-SELECT ?name WHERE {
+SELECT ?given ?family WHERE {
   ?entity a schema:Person ;
-          schema:name ?name .
+          schema:givenName ?given ;
+          schema:familyName ?family .
 }
 ```
 

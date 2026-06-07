@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: wiki build
-description: Generate a static HTML site from the vault.
+label: wiki build
+comment: Generate a static HTML site from the vault.
 ---
 
 # `wiki build`

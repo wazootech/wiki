@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: XML
-description: Extensible Markup Language, a structured text format for machine-readable documents.
+label: XML
+comment: Extensible Markup Language, a structured text format for machine-readable documents.
 ---
 
 # XML

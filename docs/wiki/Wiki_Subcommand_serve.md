@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: wiki serve
-description: Local HTTP server for live HTML preview.
+label: wiki serve
+comment: Local HTTP server for live HTML preview.
 ---
 
 # `wiki serve`

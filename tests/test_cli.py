@@ -80,7 +80,7 @@ name: Invalid Page
             extra_dir.mkdir()
             (config_dir / "wiki.yaml").write_text("input_dirs:\n  - wiki\n", encoding="utf-8")
             (extra_dir / "note.md").write_text(
-                "---\ntype: schema:WebPage\nname: Extra\n---\n",
+                "---\ntype: schema:WebPage\nlabel: Extra\n---\n",
                 encoding="utf-8",
             )
 
@@ -93,7 +93,7 @@ name: Invalid Page
                     "extra",
                     "query",
                     "--no-inference",
-                    "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }",
+                    "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }",
                     "-f",
                     "json",
                 ],
@@ -182,12 +182,13 @@ name: Invalid Name
             # Create a simple page
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 """, encoding="utf-8")
             
             # Run simple query SELECT name
-            query_str = "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }"
+            query_str = "SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }"
             
             # Table format
             res_table = runner.invoke(main, ["--input-dir", str(wiki_dir), "query", "--no-inference", query_str])
@@ -211,17 +212,18 @@ name: Alice
             wiki_dir = Path(tmpdir)
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 """, encoding="utf-8")
 
-            query_str = "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }"
+            query_str = "SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }"
 
             # --jq auto-switches to JSON and extracts the value
             result = runner.invoke(main, [
                 "--input-dir", str(wiki_dir),
                 "query", "--no-inference", query_str,
-                "--jq", "results.bindings[].name.value"
+                "--jq", "results.bindings[].givenName.value"
             ])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("Alice", result.output)
@@ -242,10 +244,11 @@ name: Alice
             wiki_dir = Path(tmpdir)
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---""", encoding="utf-8")
 
-            query_str = "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }"
+            query_str = "SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }"
             out_file = Path(tmpdir) / "results.json"
 
             result = runner.invoke(main, [
@@ -266,10 +269,11 @@ name: Alice
             wiki_dir = Path(tmpdir)
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---""", encoding="utf-8")
 
-            query_str = "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }"
+            query_str = "SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }"
 
             # CSV
             res = runner.invoke(main, ["--input-dir", str(wiki_dir), "query", "--no-inference", "-f", "csv", query_str])
@@ -306,11 +310,11 @@ name: Alice
             # Create a source file with SPARQL block
             source_content = """---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 ```
 <!-- sparql:end -->
 """
@@ -331,11 +335,11 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             wiki_dir = Path(tmpdir)
             source_content = """---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 ```
 <!-- sparql:end -->
 """
@@ -452,11 +456,11 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             beta = wiki_dir / "beta.md"
             source = """---
 type: Person
-name: {name}
+givenName: {name}
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
+SELECT ?givenName WHERE {{ ?s <https://schema.org/givenName> ?givenName }}
 ```
 <!-- sparql:end -->
 """
@@ -467,7 +471,7 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             self.assertEqual(result.exit_code, 0)
 
             self.assertIn("Alpha", alpha.read_text(encoding="utf-8"))
-            self.assertNotRegex(beta.read_text(encoding="utf-8"), r"\| Name\s+\|")
+            self.assertNotRegex(beta.read_text(encoding="utf-8"), r"\| givenName\s+\|")
 
     def test_cli_render_glob_scope(self) -> None:
         runner = CliRunner()
@@ -479,11 +483,11 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             projects_dir.mkdir()
             source = """---
 type: Person
-name: {name}
+givenName: {name}
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
+SELECT ?givenName WHERE {{ ?s <https://schema.org/givenName> ?givenName }}
 ```
 <!-- sparql:end -->
 """
@@ -495,15 +499,15 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--glob", "people/*.md", "--no-inference"])
             self.assertEqual(result.exit_code, 0)
 
-            self.assertRegex(person.read_text(encoding="utf-8"), r"\| Name\s+\|")
-            self.assertNotRegex(project.read_text(encoding="utf-8"), r"\| Name\s+\|")
+            self.assertRegex(person.read_text(encoding="utf-8"), r"\| givenName\s+\|")
+            self.assertNotRegex(project.read_text(encoding="utf-8"), r"\| givenName\s+\|")
 
     def test_cli_render_rejects_non_markdown_file(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             record = wiki_dir / "person.yaml"
-            record.write_text("type: Person\nname: Gregory\n", encoding="utf-8")
+            record.write_text("type: Person\ngivenName: Gregory\n", encoding="utf-8")
 
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", str(record), "--no-inference"])
             self.assertEqual(result.exit_code, 1)
@@ -515,11 +519,11 @@ SELECT ?name WHERE {{ ?s <https://schema.org/name> ?name }}
             wiki_dir = Path(tmpdir)
             source = """---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 ```
 <!-- sparql:end -->
 """
@@ -537,11 +541,11 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 wiki_dir.mkdir()
                 source = """---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 ```
 <!-- sparql:end -->
 """
@@ -553,69 +557,52 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
                 self.assertTrue(cache_root.exists())
                 self.assertGreater(len(list(cache_root.glob("graph-asserted-*.nt"))), 0)
 
-    def test_cli_view_markdown_document(self) -> None:
+    def test_cli_query_pretty(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            (wiki_dir / "Ethan_Davidson.yaml").write_text(
-                """id: wiki:Ethan_Davidson
-type: schema:Person
-name: Ethan Davidson
-""",
-                encoding="utf-8",
-            )
-            page = wiki_dir / "Gregory_Davidson.md"
-            page.write_text(
+            (wiki_dir / "alice.md").write_text(
                 """---
-id: wiki:Gregory_Davidson
-type: schema:Person
-name: Gregory Davidson
-knows: wiki:Ethan_Davidson
----
-# Gregory Davidson
-
-Gregory knows Ethan.
-""",
+type: Person
+givenName: Alice
+familyName: Smith
+---""",
                 encoding="utf-8",
             )
+            query_str = "SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }"
 
-            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
-
+            result = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "query", "--no-inference", "--pretty", query_str],
+            )
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("Gregory Davidson", result.output)
-            self.assertIn("Template: Person.html", result.output)
-            self.assertIn("Knows", result.output)
-            self.assertIn("Ethan Davidson", result.output)
-            self.assertIn("Gregory knows Ethan.", result.output)
+            self.assertIn("givenName", result.output)
+            self.assertIn("Alice", result.output)
 
-    def test_cli_view_data_document(self) -> None:
-        runner = CliRunner()
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            (wiki_dir / "Ethan_Davidson.yaml").write_text(
-                """id: wiki:Ethan_Davidson
-type: schema:Person
-name: Ethan Davidson
-""",
-                encoding="utf-8",
+            out_file = Path(tmpdir) / "results.txt"
+            result_output = runner.invoke(
+                main,
+                [
+                    "--input-dir",
+                    str(wiki_dir),
+                    "query",
+                    "--no-inference",
+                    "--pretty",
+                    query_str,
+                    "-o",
+                    str(out_file),
+                ],
             )
-            page = wiki_dir / "Bella_Davidson.yaml"
-            page.write_text(
-                """id: wiki:Bella_Davidson
-type: wiki:Pet
-name: Bella Davidson
-owner: wiki:Ethan_Davidson
-""",
-                encoding="utf-8",
+            self.assertEqual(result_output.exit_code, 1)
+            self.assertIn("stdout only", result_output.output)
+
+            result_json = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "query", "--no-inference", "--pretty", "-f", "json", query_str],
             )
+            self.assertEqual(result_json.exit_code, 1)
+            self.assertIn("table format", result_json.output)
 
-            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "view", str(page)])
-
-            self.assertEqual(result.exit_code, 0)
-            self.assertIn("Bella Davidson", result.output)
-            self.assertIn("Template: Pet.html", result.output)
-            self.assertIn("Owner", result.output)
-            self.assertIn("Ethan Davidson", result.output)
     def test_cli_export(self) -> None:
         """Test that wiki export supports bulk and single file exports."""
         runner = CliRunner()
@@ -626,7 +613,7 @@ owner: wiki:Ethan_Davidson
             valid_file = wiki_dir / "gregory.md"
             valid_file.write_text("""---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 """, encoding="utf-8")
             
@@ -635,13 +622,13 @@ name: Gregory
             self.assertEqual(result_bulk.exit_code, 0)
             data_bulk = json.loads(result_bulk.output)
             self.assertEqual(len(data_bulk), 1)
-            self.assertEqual(data_bulk[0]["rdf"]["name"], "Gregory")
+            self.assertEqual(data_bulk[0]["rdf"]["givenName"], "Gregory")
             
             # Single file export (raw default)
             result_single = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(valid_file)])
             self.assertEqual(result_single.exit_code, 0)
             data_single = json.loads(result_single.output)
-            self.assertEqual(data_single["rdf"]["name"], "Gregory")
+            self.assertEqual(data_single["rdf"]["givenName"], "Gregory")
             
             # Single file export failure (no frontmatter)
             no_fm_file = wiki_dir / "no-fm.md"
@@ -655,8 +642,8 @@ name: Gregory
             wiki_dir = Path(tmpdir)
             yaml_file = wiki_dir / "gregory.yaml"
             json_file = wiki_dir / "alice.json"
-            yaml_file.write_text("type: Person\nname: Gregory\n", encoding="utf-8")
-            json_file.write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+            yaml_file.write_text("type: Person\ngivenName: Gregory\n", encoding="utf-8")
+            json_file.write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8")
 
             result_bulk = runner.invoke(main, ["--input-dir", str(wiki_dir), "export"])
             self.assertEqual(result_bulk.exit_code, 0)
@@ -665,11 +652,11 @@ name: Gregory
 
             result_yaml = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(yaml_file)])
             self.assertEqual(result_yaml.exit_code, 0)
-            self.assertEqual(json.loads(result_yaml.output)["rdf"]["name"], "Gregory")
+            self.assertEqual(json.loads(result_yaml.output)["rdf"]["givenName"], "Gregory")
 
             result_json = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(json_file)])
             self.assertEqual(result_json.exit_code, 0)
-            self.assertEqual(json.loads(result_json.output)["rdf"]["name"], "Alice")
+            self.assertEqual(json.loads(result_json.output)["rdf"]["givenName"], "Alice")
     
     def test_cli_export_formats(self) -> None:
         """Test that wiki export supports various --format options."""
@@ -679,7 +666,8 @@ name: Gregory
             page = wiki_dir / "alice.md"
             page.write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 about: wiki:Alice_Theory
 ---
 """, encoding="utf-8")
@@ -690,7 +678,7 @@ about: wiki:Alice_Theory
             data = json.loads(result.output)
             self.assertIsInstance(data["rdf"], list)
             self.assertIn("@id", data["rdf"][0])
-            self.assertIn("https://schema.org/name", data["rdf"][0])
+            self.assertIn("https://schema.org/givenName", data["rdf"][0])
 
             # compacted JSON-LD includes @context and compacted predicates
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(page), "--format", "json-ld", "--mode", "compacted"])
@@ -698,13 +686,13 @@ about: wiki:Alice_Theory
             compacted = json.loads(result.output)
             self.assertIn("@context", compacted["rdf"])
             self.assertEqual(compacted["rdf"]["@type"], "schema:Person")
-            self.assertEqual(compacted["rdf"]["schema:name"], "Alice")
+            self.assertEqual(compacted["rdf"]["schema:givenName"], "Alice")
             self.assertEqual(compacted["rdf"]["schema:about"]["@id"], "wiki:Alice_Theory")
             
             # turtle format returns raw serialized turtle (no JSON wrapper)
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(page), "--format", "turtle", "--mode", "compacted"])
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("schema:name", result.output)  # turtle has prefix:name
+            self.assertIn("schema:givenName", result.output)  # turtle has prefix:name
             self.assertIn("Alice", result.output)
             
             # xml format returns raw serialized RDF/XML
@@ -726,7 +714,8 @@ about: wiki:Alice_Theory
             page = wiki_dir / "alice.md"
             page.write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---""", encoding="utf-8")
 
             out_file = Path(tmpdir) / "export.json"
@@ -739,7 +728,7 @@ name: Alice
             self.assertIn("Written payload", result.output)
             self.assertTrue(out_file.exists())
             data = json.loads(out_file.read_text(encoding="utf-8"))
-            self.assertEqual(data["rdf"]["name"], "Alice")
+            self.assertEqual(data["rdf"]["givenName"], "Alice")
 
     def test_cli_export_short_format_flag(self) -> None:
         """Test that wiki export -f short form works for format selection."""
@@ -749,7 +738,8 @@ name: Alice
             page = wiki_dir / "alice.md"
             page.write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---""", encoding="utf-8")
 
             result = runner.invoke(main, [
@@ -758,7 +748,7 @@ name: Alice
                 "-f", "turtle"
             ])
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("schema:name", result.output)
+            self.assertIn("schema:givenName", result.output)
             self.assertIn("Alice", result.output)
 
     def test_cli_export_more_formats(self) -> None:
@@ -769,7 +759,8 @@ name: Alice
             page = wiki_dir / "alice.md"
             page.write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---""", encoding="utf-8")
 
             # N3
@@ -820,7 +811,8 @@ name: TestDoc
 
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 # Alice
 Hello from Alice.
@@ -829,7 +821,7 @@ See also [[bob]].""", encoding="utf-8")
 
             (wiki_dir / "bob.md").write_text("""---
 type: Person
-name: Bob
+givenName: Bob
 ---
 # Bob
 Hello from Bob.
@@ -869,12 +861,12 @@ Bob was born.""", encoding="utf-8")
             file_path = wiki_dir / "person.md"
             file_path.write_text("""---
 type: Person
-name: Charlie
+givenName: Charlie
 ---
 # Charlie
 <!-- sparql:start -->
 ```sparql
-SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 ```
 <!-- sparql:end -->
 """, encoding="utf-8")
@@ -889,11 +881,44 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
             # Check that the source file itself was updated inline
             updated_content = file_path.read_text(encoding="utf-8")
             self.assertIn("Charlie", updated_content)
-            self.assertRegex(updated_content, r"\| Name\s+\|")  # It constructs a markdown table
+            self.assertRegex(updated_content, r"\| givenName\s+\|")  # It constructs a markdown table
 
             # Check that the generated HTML contains the rendered content
             html_content = (output_dir / "wiki" / "person" / "index.html").read_text(encoding="utf-8")
             self.assertIn("Charlie", html_content)
+
+    def test_cli_render_check_is_idempotent_for_sparql_blocks(self) -> None:
+        """Rendered SPARQL blocks must be stable across render and render --check."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "person.md"
+            page.write_text(
+                """---
+type: Person
+givenName: Charlie
+---
+<!-- sparql:start -->
+```sparql
+SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
+```
+<!-- sparql:end -->
+""",
+                encoding="utf-8",
+            )
+
+            render = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "render", "--no-inference", str(page)],
+            )
+            self.assertEqual(render.exit_code, 0)
+
+            check = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "render", "--no-inference", "--check", str(page)],
+            )
+            self.assertEqual(check.exit_code, 0, check.output)
 
     def test_cli_build_dir_style(self) -> None:
         """Test that wiki build --url-style dir produces <slug>/index.html with clean links."""
@@ -904,7 +929,8 @@ SELECT ?name WHERE { ?s <https://schema.org/name> ?name }
 
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 # Alice
 Hello from Alice.
@@ -913,7 +939,7 @@ See also [[bob]].""", encoding="utf-8")
 
             (wiki_dir / "bob.md").write_text("""---
 type: Person
-name: Bob
+givenName: Bob
 ---
 # Bob
 Hello from Bob.
@@ -950,14 +976,15 @@ Bob was born.""", encoding="utf-8")
 
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 # Alice
 Hello from [[bob]].""", encoding="utf-8")
 
             (wiki_dir / "bob.md").write_text("""---
 type: Person
-name: Bob
+givenName: Bob
 ---
 # Bob
 Hello from [[alice]].""", encoding="utf-8")
@@ -997,18 +1024,18 @@ Hello from [[alice]].""", encoding="utf-8")
             (wiki_dir / "doc.md").write_text("""---
 type: schema:WebPage
 id: wiki:doc
-name: FromWiki
+label: FromWiki
 ---""", encoding="utf-8")
             (raw_dir / "note.md").write_text("""---
 type: schema:WebPage
 id: wiki:note
-name: FromRaw
+label: FromRaw
 ---""", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),
                 "query", "--no-inference",
-                "SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name",
+                "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label } ORDER BY ?label",
                 "-f", "json",
             ])
             self.assertEqual(result.exit_code, 0)
@@ -1052,7 +1079,8 @@ ex:foo ex:bar "from-import-dir" .
             wiki_dir = Path(tmpdir)
             (wiki_dir / "alice.md").write_text("""---
 type: Person
-name: Alice
+givenName: Alice
+familyName: Smith
 ---
 # Alice
 Hello from server test.
@@ -1092,7 +1120,7 @@ Hello from server test.
             wiki_dir = Path(tmpdir)
             (wiki_dir / "bob.md").write_text("""---
 type: Person
-name: Bob
+givenName: Bob
 ---
 # Bob
 Custom base URL test.
@@ -1132,14 +1160,14 @@ Custom base URL test.
             (wiki_dir / "doc.md").write_text("""---
 type: schema:WebPage
 id: wiki:doc
-name: ConfigTest
+label: ConfigTest
 ---""", encoding="utf-8")
             (config_dir / "wiki.yaml").write_text("input_dirs: ../wiki", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),
                 "query", "--no-inference",
-                "SELECT ?name WHERE { ?s <https://schema.org/name> ?name }",
+                "SELECT ?label WHERE { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?label }",
                 "-f", "json",
             ])
             self.assertEqual(result.exit_code, 0)

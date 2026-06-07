@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Personal Knowledge
-description: Individual strategy and collection of knowledge.
+label: Personal Knowledge
+comment: Individual strategy and collection of knowledge.
 ---
 
 # Personal Knowledge

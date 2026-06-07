@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: RDF
-description: Resource Description Framework, a standard for data interchange on the web.
+label: RDF
+comment: Resource Description Framework, a standard for data interchange on the web.
 ---
 
 # RDF

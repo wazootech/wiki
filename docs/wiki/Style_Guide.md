@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Style guide
-description: Canonical rules for vault filenames, links, prose, frontmatter, shapes, and SPARQL blocks.
+label: Style guide
+comment: Canonical rules for vault filenames, links, prose, frontmatter, shapes, and SPARQL blocks.
 ---
 
 # Style guide
@@ -39,13 +39,23 @@ Example person page:
 ```yaml
 ---
 type: schema:Person
-name: Alice Smith
 givenName: Alice
 familyName: Smith
 ---
 ```
 
+For non-person resources (articles, software, shapes), prefer `label` and `comment` (mapped to `rdfs:label` and `rdfs:comment`) instead of `schema:name` / `schema:description`.
+
 Data-only records may use `.yaml`, `.yml`, or `.json` without a markdown body.
+
+## SPARQL query conventions
+
+When writing `<!-- sparql:start -->` blocks or ad-hoc `wiki query` commands:
+
+- **People** — query `schema:givenName` and `schema:familyName`, not `schema:name`.
+- **Other resources** — query `rdfs:label` and `rdfs:comment` for human-readable titles and summaries.
+- **Types** — use `rdf:type` with full URIs or configured prefixes (`schema:`, `wiki:`, `sh:`).
+- **Inference** — omit `--no-inference` in vault blocks unless you intentionally want raw asserted triples only.
 
 ## SHACL shapes
 

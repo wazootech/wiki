@@ -25,7 +25,7 @@ schema:Person rdfs:subClassOf schema:Agent .
             # Create a mini wiki page stating Gregory is a Person
             (wiki_dir / "gregory.md").write_text("""---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 """, encoding="utf-8")
             

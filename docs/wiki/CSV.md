@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: CSV
-description: Comma-Separated Values, a lightweight tabular format.
+label: CSV
+comment: Comma-Separated Values, a lightweight tabular format.
 ---
 
 # CSV

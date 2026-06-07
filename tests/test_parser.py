@@ -15,7 +15,7 @@ class TestFrontmatter(unittest.TestCase):
         """Test parsing valid YAML frontmatter."""
         content = """---
 id: wiki:gregory
-name: Gregory
+givenName: Gregory
 type: Person
 ---
 Hello World
@@ -24,14 +24,14 @@ Hello World
         self.assertIsNotNone(data)
         self.assertEqual(data.get("id"), "wiki:gregory")
         self.assertEqual(data.get("type"), "Person")
-        self.assertEqual(data.get("name"), "Gregory")
+        self.assertEqual(data.get("givenName"), "Gregory")
 
     def test_parse_frontmatter_json(self) -> None:
         """Test parsing valid JSON frontmatter."""
         content = """---
 {
   "id": "wiki:gregory",
-  "name": "Gregory",
+  "givenName": "Gregory",
   "type": "Person"
 }
 ---
@@ -62,7 +62,7 @@ Hello World
     def test_ensure_context(self) -> None:
         """Test ensure_context injects defaults."""
         # Missing context entirely
-        data = {"name": "Gregory"}
+        data = {"givenName": "Gregory"}
         updated = ensure_context(data)
         self.assertIn("@context", updated)
         self.assertEqual(updated["@context"]["@vocab"], "https://schema.org/")
@@ -84,12 +84,12 @@ Hello World
         # Valid frontmatter
         content = """---
 id: wiki:test
-name: Test
+label: Test
 ---
 Body text here"""
         data, body = split_frontmatter_body(content)
         self.assertIsNotNone(data)
-        self.assertEqual(data["name"], "Test")
+        self.assertEqual(data["label"], "Test")
         self.assertEqual(body, "Body text here")
 
         # No frontmatter
@@ -102,7 +102,7 @@ Body text here"""
         """Test split_frontmatter_body handles --- in body text."""
         content = """---
 id: wiki:test
-name: Test
+label: Test
 ---
 Body with --- dashes --- in text"""
         data, body = split_frontmatter_body(content)
@@ -115,17 +115,17 @@ Body with --- dashes --- in text"""
             yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
             json_file = root / "person.json"
-            yml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
-            yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
-            json_file.write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+            yml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
+            yaml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
+            json_file.write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8")
 
             yml_data = document_data_from_path(yml_file)
             yaml_data = document_data_from_path(yaml_file)
             json_data = document_data_from_path(json_file)
 
-            self.assertEqual(yml_data["name"], "Gregory")
-            self.assertEqual(yaml_data["name"], "Gregory")
-            self.assertEqual(json_data["name"], "Alice")
+            self.assertEqual(yml_data["givenName"], "Gregory")
+            self.assertEqual(yaml_data["givenName"], "Gregory")
+            self.assertEqual(json_data["givenName"], "Alice")
             self.assertIn("@context", yml_data)
             self.assertIn("@context", yaml_data)
             self.assertIn("@context", json_data)
@@ -149,17 +149,17 @@ Body with --- dashes --- in text"""
             root = Path(tmpdir)
             yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
-            yml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
-            yaml_file.write_text('type: Person\nname: Gregory\n', encoding="utf-8")
+            yml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
+            yaml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
 
             yml_data, yml_body = split_document_body(yml_file)
             yaml_data, yaml_body = split_document_body(yaml_file)
 
             self.assertIsNotNone(yml_data)
-            self.assertEqual(yml_data["name"], "Gregory")
+            self.assertEqual(yml_data["givenName"], "Gregory")
             self.assertEqual(yml_body, "")
             self.assertIsNotNone(yaml_data)
-            self.assertEqual(yaml_data["name"], "Gregory")
+            self.assertEqual(yaml_data["givenName"], "Gregory")
             self.assertEqual(yaml_body, "")
 
 

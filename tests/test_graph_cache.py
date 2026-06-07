@@ -33,7 +33,7 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
+                "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)
@@ -47,11 +47,11 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             page = wiki_dir / "page.md"
-            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Ada\n---\n", encoding="utf-8")
             config = self._config(wiki_dir)
 
             g1 = load_graph(config, infer=False)
-            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Grace\n---\n", encoding="utf-8")
             g2 = load_graph(config, infer=False, reload=True)
             self.assertIsNot(g1, g2)
 
@@ -59,14 +59,14 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             page = wiki_dir / "page.md"
-            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Ada\n---\n", encoding="utf-8")
             config = self._config(wiki_dir)
 
             fp1 = vault_fingerprint(config)
             load_graph(config, infer=False)
             self.assertIsNotNone(get_process_graph(config, infer=False))
 
-            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Grace\n---\n", encoding="utf-8")
             fp2 = vault_fingerprint(config)
             self.assertNotEqual(fp1, fp2)
             self.assertIsNone(get_process_graph(config, infer=False))
@@ -75,7 +75,7 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
+                "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)
@@ -91,7 +91,7 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
+                "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
             config_a = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://a.example/")
@@ -103,7 +103,7 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
+                "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)
@@ -121,14 +121,14 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             page = wiki_dir / "page.md"
-            page.write_text("---\ntype: Person\nname: Ada\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Ada\n---\n", encoding="utf-8")
             config = self._config(wiki_dir)
 
             load_graph(config, infer=False, disk_cache=True)
             old_cache = disk_cache_path(config, infer=False)
             self.assertTrue(old_cache.exists())
 
-            page.write_text("---\ntype: Person\nname: Grace\n---\n", encoding="utf-8")
+            page.write_text("---\ntype: Person\ngivenName: Grace\n---\n", encoding="utf-8")
             clear_all_process_graphs()
             with patch("wiki.graph._build_graph_from_vault", wraps=graph_module._build_graph_from_vault) as wrapped_build:
                 g2 = load_graph(config, infer=False, disk_cache=True)
@@ -140,7 +140,7 @@ class TestGraphCache(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "page.md").write_text(
-                "---\ntype: Person\nname: Ada\n---\n",
+                "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
             config = self._config(wiki_dir)

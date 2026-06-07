@@ -44,6 +44,14 @@ class TestRDFFrontmatter(unittest.TestCase):
             self.context.namespaces["schema"]["givenName"]
         )
         self.assertEqual(
+            resolve_predicate("label", self.context),
+            self.context.namespaces["rdfs"]["label"]
+        )
+        self.assertEqual(
+            resolve_predicate("comment", self.context),
+            self.context.namespaces["rdfs"]["comment"]
+        )
+        self.assertEqual(
             resolve_predicate("unregistered:prop", self.context),
             self.context.namespaces["schema"]["unregistered:prop"]
         )
@@ -94,7 +102,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         data = {
             "@type": "Person",
             "@id": "wiki:gregory",
-            "name": "Gregory",
+            "givenName": "Gregory",
             "address": {
                 "street": "123 Main St",
                 "city": "Seattle"
@@ -104,7 +112,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         subject = URIRef(self.context.namespaces["wiki"]["gregory"])
 
         # Verify name predicate
-        name_pred = self.context.namespaces["schema"]["name"]
+        name_pred = self.context.namespaces["schema"]["givenName"]
         self.assertTrue((subject, name_pred, Literal("Gregory")) in graph)
         
         # Verify address predicate points to a blank node
@@ -125,7 +133,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         """Test that the dynamically registered microdata parser extracts triples via format='microdata'."""
         html_content = """
         <div itemscope itemtype="https://schema.org/Person">
-            <span itemprop="name">John Microdata</span>
+            <span itemprop="givenName">John Microdata</span>
             <a itemprop="url" href="https://microdata.io">Page</a>
         </div>
         """
@@ -137,7 +145,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertGreater(len(g), 0)
         found_name = False
         for s, p, o in g:
-            if str(p) == "https://schema.org/name" and str(o) == "John Microdata":
+            if str(p) == "https://schema.org/givenName" and str(o) == "John Microdata":
                 found_name = True
             if str(p) == "https://schema.org/url":
                 self.assertEqual(str(o), "https://microdata.io")
@@ -147,7 +155,7 @@ class TestRDFFrontmatter(unittest.TestCase):
     def test_microdata_curies_expand_using_bound_namespaces(self) -> None:
         html_content = """
         <div itemscope itemtype="schema:Person" itemid="wiki:john_microdata">
-            <span itemprop="schema:name">John Microdata</span>
+            <span itemprop="schema:givenName">John Microdata</span>
             <span itemprop="unknown:role">Tester</span>
         </div>
         """
@@ -158,7 +166,7 @@ class TestRDFFrontmatter(unittest.TestCase):
 
         subject = URIRef("https://wiki.example.org/john_microdata")
         self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-        self.assertTrue((subject, URIRef("https://schema.org/name"), Literal("John Microdata")) in g)
+        self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("John Microdata")) in g)
         self.assertTrue((subject, URIRef("unknown:role"), Literal("Tester")) in g)
 
     def test_microdata_href_expands_curies(self) -> None:
@@ -184,7 +192,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         data = {
             "@type": "Person",
             "@id": "wiki:gregory",
-            "name": "Gregory",
+            "givenName": "Gregory",
             "address": {
                 "@type": "PostalAddress",
                 "street": "123 Main St"
@@ -204,7 +212,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         data = {
             "@type": "Person",
             "@id": "wiki:gregory",
-            "name": "Gregory",
+            "givenName": "Gregory",
             "spouse": {
                 "@id": "wiki:bella"
             }
@@ -242,7 +250,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         data = {
             "@type": "Person",
             "@id": "wiki:gregory",
-            "name": "Gregory"
+            "givenName": "Gregory"
         }
         self.config.content_predicate = "schema:text"
         body_text = "Gregory is a software engineer."
@@ -261,7 +269,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertEqual(len(frontmatter_to_graph({}, self.config)), 0)
         
         # Missing type -> Empty graph
-        self.assertEqual(len(frontmatter_to_graph({"name": "Alice"}, self.config)), 0)
+        self.assertEqual(len(frontmatter_to_graph({"givenName": "Alice"}, self.config)), 0)
         
         # Missing @id, with file_id -> uses file_id without .md
         g_file = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc")
@@ -273,8 +281,8 @@ class TestRDFFrontmatter(unittest.TestCase):
         
         # Missing @id, no file_id -> Empty graph (no Person special-case fallback anymore)
         self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "givenName": "Alice", "familyName": "Smith"}, self.config)), 0)
-        self.assertEqual(len(frontmatter_to_graph({"@type": "WebPage", "name": "Some Page"}, self.config)), 0)
-        self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "name": "Cher"}, self.config)), 0)
+        self.assertEqual(len(frontmatter_to_graph({"@type": "WebPage", "givenName": "Some Page"}, self.config)), 0)
+        self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "givenName": "Cher"}, self.config)), 0)
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
@@ -287,7 +295,7 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
         data = {
             "@type": ["Person", "Developer"],
             "@id": "wiki:multi",
-            "name": "Multi Guy"
+            "givenName": "Multi Guy"
         }
         g = frontmatter_to_graph(data, ctx)
         subj = URIRef(ctx.namespaces["wiki"]["multi"])
@@ -396,7 +404,7 @@ name: Good Page
             html_file = wiki_dir / "data.html"
             html_file.write_text("""<html><body>
 <div itemscope itemtype="https://schema.org/Person">
-    <span itemprop="name">HTML Person</span>
+    <span itemprop="givenName">HTML Person</span>
     <span itemprop="email">html@example.org</span>
 </div>
 </body></html>""", encoding="utf-8")
@@ -407,7 +415,7 @@ name: Good Page
             found = any(
                 str(o) == "HTML Person"
                 for s, p, o in g
-                if str(p) == "https://schema.org/name"
+                if str(p) == "https://schema.org/givenName"
             )
             self.assertTrue(found, "Microdata from .html file not found in graph")
 
@@ -417,7 +425,7 @@ name: Good Page
             html_file = wiki_dir / "data.html"
             html_file.write_text("""<html><body>
 <div itemscope itemtype="schema:Person" itemid="wiki:Bella_Davidson">
-    <span itemprop="schema:name">Bella Davidson</span>
+    <span itemprop="schema:givenName">Bella Davidson</span>
 </div>
 </body></html>""", encoding="utf-8")
 
@@ -430,14 +438,14 @@ name: Good Page
 
             subject = URIRef("https://example.test/wiki/Bella_Davidson")
             self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-            self.assertTrue((subject, URIRef("https://schema.org/name"), Literal("Bella Davidson")) in g)
+            self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("Bella Davidson")) in g)
 
     def test_load_graph_reads_yaml_and_json_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            (wiki_dir / "bob.yml").write_text("type: Person\nname: Bob\n", encoding="utf-8")
-            (wiki_dir / "gregory.yaml").write_text("type: Person\nname: Gregory\n", encoding="utf-8")
-            (wiki_dir / "alice.json").write_text('{"type": "Person", "name": "Alice"}', encoding="utf-8")
+            (wiki_dir / "bob.yml").write_text("type: Person\ngivenName: Bob\n", encoding="utf-8")
+            (wiki_dir / "gregory.yaml").write_text("type: Person\ngivenName: Gregory\n", encoding="utf-8")
+            (wiki_dir / "alice.json").write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8")
 
             config = WikiConfig(input_dirs=[wiki_dir])
             g = load_graph(config, infer=False)
@@ -472,7 +480,7 @@ name: Test Page
         """Test that uri_ext=True uses the actual file extension for data documents."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            (wiki_dir / "person.yaml").write_text("type: Person\nname: Test\n", encoding="utf-8")
+            (wiki_dir / "person.yaml").write_text("type: Person\ngivenName: Test\n", encoding="utf-8")
 
             config = WikiConfig(input_dirs=[wiki_dir], uri_ext=True)
             g = load_graph(config, infer=False)

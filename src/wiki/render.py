@@ -8,17 +8,18 @@ import re
 from typing import Any
 
 import click
-import mdformat
 from markdown_it import MarkdownIt
 
 from .format import run_query
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 from .paths import iter_markdown_files, page_routes, route_for_document_file
 
-# Matches the starting comment, query inside, and ending comment block with SPARQL inside
+# Matches SPARQL wrapper comments, fenced query, rendered table, and end comment.
 SPARQL_BLOCK_REGEX = re.compile(
-    r"<!--\s*sparql:start\s*-->\s*```sparql\s*(.*?)\s*```\s*(.*?)\s*<!--\s*sparql:end\s*-->",
-    re.DOTALL | re.IGNORECASE
+    r"(?P<start><!--\s*sparql:start\s*-->)(?P<prefix>\s*)"
+    r"(?P<fence>```sparql\s*(?P<query>.*?)\s*```)(?P<mid>\s*)"
+    r"(?P<table>.*?)(?P<suffix>\s*)(?P<end><!--\s*sparql:end\s*-->)",
+    re.DOTALL | re.IGNORECASE,
 )
 
 
@@ -40,6 +41,17 @@ def select_markdown_files_for_render(
     """Choose markdown files to process for SPARQL rendering."""
     candidates = _select_markdown_files(context, file_filter=file_filter, glob_filters=glob_filters)
     return [md_file for md_file in candidates if has_sparql_blocks(md_file)]
+
+
+def _replace_sparql_table(match: re.Match[str], rendered_markdown: str) -> str:
+    """Rebuild a SPARQL block, preserving the on-disk query fence and surrounding whitespace."""
+    suffix = match.group("suffix")
+    if not suffix:
+        suffix = "\n"
+    return (
+        f"{match.group('start')}{match.group('prefix')}{match.group('fence')}"
+        f"{match.group('mid')}{rendered_markdown}{suffix}{match.group('end')}"
+    )
 
 
 def render_markdown_files(
@@ -69,20 +81,26 @@ def render_markdown_files(
         modified = False
         file_errors = 0
 
-        def replacer(match: re.Match) -> str:
+        def replacer(match: re.Match[str]) -> str:
             nonlocal modified, file_errors
-            query = match.group(1).strip()
+            query = match.group("query").strip()
             try:
-                rendered_markdown = run_query(graph, query, output_format="markdown", wiki_base=context.wiki_base, known_slugs=known_slugs)
+                rendered_markdown = run_query(
+                    graph,
+                    query,
+                    output_format="markdown",
+                    wiki_base=context.wiki_base,
+                    known_slugs=known_slugs,
+                )
                 modified = True
-                return f"<!-- sparql:start -->\n```sparql\n{query}\n```\n\n{rendered_markdown}\n<!-- sparql:end -->"
+                return _replace_sparql_table(match, rendered_markdown)
             except Exception as e:
                 click.echo(f"Error rendering query in {md_file.name}: {e}", err=True)
                 file_errors += 1
-                return str(match.group(0))
+                return match.group(0)
+
         new_content = SPARQL_BLOCK_REGEX.sub(replacer, content)
         if modified:
-            new_content = mdformat.text(new_content, extensions=["wikilink", "frontmatter", "gfm"])
             if new_content == content:
                 continue
             try:

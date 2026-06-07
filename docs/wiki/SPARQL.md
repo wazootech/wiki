@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: SPARQL
-description: Standard query language and protocol for RDF.
+label: SPARQL
+comment: Standard query language and protocol for RDF.
 ---
 
 # SPARQL
@@ -22,27 +22,31 @@ The [[Wiki_CLI|Wiki CLI]] automatically binds your namespace prefixes dynamicall
 
 ### Simple SELECT query
 
-Extracts specific properties from your notes. For example, to list the names of all people:
+Extracts specific properties from your notes. For people, prefer `schema:givenName` and `schema:familyName` (see [Style_Guide](Style_Guide.md)):
 
 ```sparql
 PREFIX schema: <https://schema.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-SELECT ?person ?name WHERE {
+SELECT ?person ?given ?family WHERE {
   ?person rdf:type schema:Person .
-  ?person schema:name ?name .
+  ?person schema:givenName ?given .
+  ?person schema:familyName ?family .
 }
 ```
 
 ### Filtered query
 
-Uses standard string or URI filters to constrain your results. To list all articles in the wiki_base namespace:
+Uses standard string or URI filters to constrain your results. For other resources, `rdfs:label` and `rdfs:comment` are common display fields:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?doc ?name WHERE {
+SELECT ?doc ?label ?comment WHERE {
   ?doc rdf:type schema:TechArticle .
-  ?doc schema:name ?name .
+  ?doc rdfs:label ?label .
+  OPTIONAL { ?doc rdfs:comment ?comment . }
   FILTER(STRSTARTS(STR(?doc), "https://wazootech.github.io/wiki/wiki/"))
 }
 ```

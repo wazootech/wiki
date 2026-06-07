@@ -143,7 +143,7 @@ schema:PersonShape
     a sh:NodeShape ;
     sh:targetClass schema:Person ;
     sh:property [
-        sh:path schema:name ;
+        sh:path schema:givenName ;
         sh:minCount 1 ;
         sh:datatype xsd:string ;
     ] .
@@ -156,18 +156,18 @@ schema:PersonShape
             no_fm_file.write_text("just text", encoding="utf-8")
             self.assertIsNone(check_shacl_file(no_fm_file, config))
             
-            # 2. File with valid Person (name present)
+            # 2. File with valid Person (givenName present)
             valid_person = wiki_dir / "valid-person.md"
             valid_person.write_text("""---
 type: Person
-name: Gregory
+givenName: Gregory
 ---
 """, encoding="utf-8")
             res_valid = check_shacl_file(valid_person, config)
             self.assertIsNotNone(res_valid)
             self.assertTrue(res_valid[0])  # conforms
             
-            # 3. File with invalid Person (missing name)
+            # 3. File with invalid Person (missing givenName)
             invalid_person = wiki_dir / "invalid-person.md"
             invalid_person.write_text("""---
 type: Person
@@ -301,14 +301,14 @@ id: wiki:ProjectShape
 type: sh:NodeShape
 sh:targetClass: schema:Project
 sh:property:
-  - sh:path: schema:name
+  - sh:path: rdfs:label
     sh:minCount: 1
     sh:datatype: xsd:string
 ---
 # Project Shape
 """, encoding="utf-8")
 
-            # Create an invalid project (missing name)
+            # Create an invalid project (missing label)
             invalid_project = wiki_dir / "invalid-project.md"
             invalid_project.write_text("""---
 type: Project
@@ -319,14 +319,14 @@ type: Project
             valid_project = wiki_dir / "valid-project.md"
             valid_project.write_text("""---
 type: Project
-name: Wiki CLI
+label: Wiki CLI
 ---
 """, encoding="utf-8")
 
             # Validate the invalid project
             res_invalid = check_shacl_file(invalid_project, config)
             self.assertIsNotNone(res_invalid)
-            self.assertFalse(res_invalid[0])  # Should NOT conform because of missing name
+            self.assertFalse(res_invalid[0])  # Should NOT conform because of missing label
 
             # Validate the valid project
             res_valid = check_shacl_file(valid_project, config)

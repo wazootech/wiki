@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Turtle
-description: Terse RDF Triple Language syntax.
+label: Turtle
+comment: Terse RDF Triple Language syntax.
 ---
 
 # Turtle

@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: SHACL
-description: Shapes Constraint Language for validating RDF graphs.
+label: SHACL
+comment: Shapes Constraint Language for validating RDF graphs.
 ---
 
 # SHACL
@@ -21,6 +21,7 @@ To create a custom constraint for a class (e.g., a `Project` class):
 
 ```turtle
 @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix schema: <https://schema.org/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix wiki: <https://wazootech.github.io/wiki/wiki/> .
@@ -30,11 +31,11 @@ schema:ProjectShape a sh:NodeShape ;
   
   # Required properties
   sh:property [
-    sh:path schema:name ;
+    sh:path rdfs:label ;
     sh:minCount 1 ;
     sh:maxCount 1 ;
     sh:datatype xsd:string ;
-    sh:message "Project must have exactly one name string." ;
+    sh:message "Project must have exactly one label string." ;
   ] ;
   
   sh:property [
@@ -59,7 +60,10 @@ id: wiki:PersonShape
 type: sh:NodeShape
 sh:targetClass: schema:Person
 sh:property:
-  - sh:path: schema:name
+  - sh:path: schema:givenName
+    sh:datatype: xsd:string
+    sh:minCount: 1
+  - sh:path: schema:familyName
     sh:datatype: xsd:string
     sh:minCount: 1
   - sh:path: wiki:template
@@ -73,7 +77,8 @@ This works well with typed HTML rendering:
 ```yaml
 id: wiki:Gregory_Davidson
 type: schema:Person
-name: Gregory Davidson
+givenName: Gregory
+familyName: Davidson
 wiki:template: person
 spouse: wiki:Bella_Davidson
 ```

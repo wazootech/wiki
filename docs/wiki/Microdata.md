@@ -1,7 +1,7 @@
 ---
 type: TechArticle
-name: Microdata
-description: HTML5 specification for nesting semantics within content on web pages.
+label: Microdata
+comment: HTML5 specification for nesting semantics within content on web pages.
 ---
 
 # Microdata
@@ -17,11 +17,11 @@ Prefixed CURIEs (`schema:Thing`, `wiki:Page_Name`) in `itemtype`, `itemid`, `ite
 The [[Wiki_CLI|Wiki CLI]] extracts this format directly from wiki documents into the unified RDF pool:
 
 <div itemscope itemtype="schema:TechArticle" itemid="wiki:Microdata#example">
-  <span itemprop="schema:name">Microdata in [[LLM_Wiki|LLM Wiki]]</span>
-  <meta itemprop="schema:description" content="A practical introduction to structuring linked metadata directly in markup." />
+  <span itemprop="rdfs:label">Microdata in [[LLM_Wiki|LLM Wiki]]</span>
+  <meta itemprop="rdfs:comment" content="A practical introduction to structuring linked metadata directly in markup." />
   <div itemprop="schema:about" itemscope itemtype="schema:SoftwareApplication">
-    <span itemprop="name">[[Wiki_CLI|Wiki CLI]]</span> 
-    (<span itemprop="description">A semantic command-line companion for markdown vaults</span>)
+    <span itemprop="rdfs:label">[[Wiki_CLI|Wiki CLI]]</span>
+    (<span itemprop="rdfs:comment">A semantic command-line companion for markdown vaults</span>)
     supports extraction via BeautifulSoup.
   </div>
 </div>
