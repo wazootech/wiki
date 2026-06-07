@@ -48,9 +48,9 @@ Assets from `asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wi
 
 Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. JSON-LD is selected by default; the chip row stays usable without JavaScript.
 
-## Custom HTML shell
+## Wiki page layout
 
-If your [Wiki_Configuration](Wiki_Configuration.md#html-template) sets `html_template`, every page is rendered through that file.
+If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `page_layout`, every page is rendered through that file unless `wazoo:layout` overrides it.
 The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
@@ -63,4 +63,4 @@ By default, integrity (`wiki check`) and convention (`wiki lint`) preflight must
 
 - [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md)
 - [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [Wiki_Configuration](Wiki_Configuration.md#html-template)
+- [Wiki_Configuration](Wiki_Configuration.md#page-layout)

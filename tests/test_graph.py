@@ -304,6 +304,20 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
         self.assertIn(ctx.namespaces["schema"]["Person"], types)
         self.assertIn(ctx.namespaces["schema"]["Developer"], types)
 
+    def test_frontmatter_to_graph_skips_wazoo_layout(self) -> None:
+        config = WikiConfig()
+        ctx = config.context
+        data = {
+            "@type": "Person",
+            "@id": "wiki:ethan",
+            "givenName": "Ethan",
+            "wazoo:layout": "layouts/person.html",
+        }
+        g = frontmatter_to_graph(data, ctx)
+        layout_pred = URIRef(ctx.namespaces["wazoo"]["layout"])
+        self.assertEqual(len(list(g.triples((None, layout_pred, None)))), 0)
+        self.assertEqual(len(list(g.triples((None, None, None)))), 2)
+
     def test_load_graph_advanced_sources(self) -> None:
         """Test the unified graph loader handles multiple input dirs and gracefully ignores broken internal Turtle."""
         with TemporaryDirectory() as tmpdir:

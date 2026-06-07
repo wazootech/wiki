@@ -7,6 +7,7 @@ from wiki.audit import (
     audit_broken_links,
     audit_filenames,
     audit_headings,
+    audit_layout_frontmatter,
     load_shapes,
     check_shacl_file,
     check_shacl_all,
@@ -332,6 +333,49 @@ label: Wiki CLI
             res_valid = check_shacl_file(valid_project, config)
             self.assertIsNotNone(res_valid)
             self.assertTrue(res_valid[0])  # Should conform
+
+    def test_audit_layout_frontmatter_rejects_legacy_keys(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "---\ntype: TechArticle\ntemplate: index.html\nwiki:template: index.html\n---\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            issues = audit_layout_frontmatter(config)
+            self.assertEqual(len(issues["forbidden"]), 2)
+            self.assertEqual(issues["missing"], [])
+
+    def test_audit_layout_frontmatter_requires_existing_html_file(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "---\ntype: TechArticle\nwazoo:layout: layouts/missing.html\n---\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            issues = audit_layout_frontmatter(config)
+            self.assertEqual(issues["forbidden"], [])
+            self.assertEqual(len(issues["missing"]), 1)
+            self.assertIn("layouts/missing.html", issues["missing"][0])
+
+    def test_run_check_fails_on_forbidden_layout_keys(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("---\ntype: TechArticle\nwiki:template: index.html\n---\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+
+            results = run_check(config)
+            self.assertFalse(results["conforms"])
+            self.assertTrue(any("wiki:template" in err for err in results["errors"]))
 
 
 if __name__ == "__main__":

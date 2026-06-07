@@ -151,8 +151,11 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     elif rdf_type:
         graph.add((subject, RDF.type, resolve_type(rdf_type, context)))
 
+    from .layout import FORBIDDEN_LAYOUT_KEYS, PRESENTATION_FRONTMATTER_KEYS
+
+    skip_keys = {"id", "type"} | PRESENTATION_FRONTMATTER_KEYS | FORBIDDEN_LAYOUT_KEYS
     for key, value in data.items():
-        if key.startswith("@") or key in ("id", "type"):
+        if key.startswith("@") or key in skip_keys:
             continue
         if isinstance(value, list):
             for item in value:

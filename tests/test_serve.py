@@ -88,7 +88,7 @@ def _serve_with_template(wiki_dir: Path, template: str = _RICH_TEMPLATE) -> Gene
     config = WikiConfig(
         input_dirs=[wiki_dir],
         config_root=wiki_dir,
-        html_template=template_path,
+        page_layout=template_path,
     )
     server = create_server(config, host="127.0.0.1", port=port)
     t = threading.Thread(target=server.serve_forever, daemon=True)

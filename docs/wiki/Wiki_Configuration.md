@@ -16,7 +16,7 @@ Three audit lanes map to three commands:
 
 | Lane       | Command      | YAML block | Purpose                                               |
 | ---------- | ------------ | ---------- | ----------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links`       |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, `broken_links`, layout frontmatter |
 | Convention | `wiki lint`  | `lint:`    | `filename_pattern`, `headings` (plus top-level regex) |
 | Formatting | `wiki fmt`   | —          | mdformat (not configured in yaml)                     |
 
@@ -85,7 +85,7 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 | --------------- | ------- | ------------------------------------------------------ |
 | `base_url`      | `/wiki` | URL prefix for built/served pages (`""` for site root) |
 | `url_style`     | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`        |
-| `html_template` | —       | Path (relative to config) to a custom HTML shell file  |
+| `page_layout` | —    | Path (relative to config) to the site default page layout HTML file |
 
 ## Serve API
 
@@ -108,21 +108,21 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 `serve_api.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
-## HTML template
+## Page layout
 
-When `html_template` is set, the CLI renders every page through that file using `{placeholder}` tokens.
+When `page_layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
 
-### Template strategy
+### Layout strategy
 
-The current first-class template contract in this repository is the optional `index.html` / `html_template` shell.
+The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html` referenced from `page_layout`).
 
 - The [[Wiki_CLI|Wiki CLI]] owns the semantic markdown-to-HTML pipeline and placeholder contract.
-- This repository treats custom HTML shells as the primary built-in extension point for presentation.
-- Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate template repositories unless they need core CLI changes.
+- Wiki page layout files are the primary built-in extension point for presentation.
+- Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
 
 ### Minimal fallback
 
-Without a custom template, every page is rendered as:
+Without a configured layout file (or when the path is missing), every page is rendered as:
 
 ```html
 <!DOCTYPE html>
@@ -143,22 +143,22 @@ No CSS, JavaScript, infobox, table of contents, backlinks, or categories are inc
 
 ### Placeholders
 
-Replace `{key}` tokens in your HTML shell:
+Replace `{key}` tokens in your wiki page layout:
 
 | Placeholder               | Type         | Description                                                                                                |
 | ------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
 | `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                            |
 | `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown. |
 | `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                      |
-| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page template-{slug}` for articles.    |
+| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.        |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
 | `{inline_css}`            | raw CSS      | \[\[Wiki_CLI                                                                                               |
 | `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo.                                                                                |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
-| `{template_label}`        | raw HTML     | Typed template label (e.g. `<div>Template: Person.html</div>`).                                            |
-| `{template_class}`        | text string  | CSS-safe slug of the template name.                                                                        |
+| `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                         |
+| `{layout_class}`          | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                    |
 | `{infobox_html}`          | raw HTML     | Typed frontmatter property table (empty for index).                                                        |
 | `{toc_html}`              | raw HTML     | Table of contents `<div>` with heading links (empty if no headings).                                       |
 | `{backlinks_html}`        | raw HTML     | Backlinks section (empty if none).                                                                         |
@@ -198,7 +198,7 @@ The wiki builder generates these selectors in the rendered page content:
 
 ### JavaScript hooks
 
-The bundled seed template (`index.html` created by `wiki init`) provides:
+The bundled default wiki page layout (`layouts/default.html` created by `wiki init`) provides:
 
 | Function                       | Purpose                                              |
 | ------------------------------ | ---------------------------------------------------- |
@@ -243,9 +243,11 @@ Optional map of **old slug → new route** used by `wiki link --fix-broken` when
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key       | Default   | What it audits                                                                |
-| -------------- | --------- | ----------------------------------------------------------------------------- |
-| `broken_links` | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| Rule key                  | Default   | What it audits                                                                |
+| ------------------------- | --------- | ----------------------------------------------------------------------------- |
+| `broken_links`            | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs |
+| `forbidden_layout_keys`   | `error`   | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead)  |
+| `missing_layout_file`     | `error`   | `wazoo:layout` paths that do not resolve to a readable `.html` file           |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 

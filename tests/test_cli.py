@@ -13,6 +13,7 @@ from urllib.error import URLError
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.config import WikiConfig
 
 
 class TestCLI(unittest.TestCase):
@@ -398,33 +399,50 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 person_content = (Path("wiki") / "Ethan_Davidson.md").read_text(encoding="utf-8")
                 self.assertIn("givenName: Ethan", person_content)
                 self.assertIn("familyName: Davidson", person_content)
+                self.assertNotIn("wazoo:layout:", person_content)
 
-                # Check html_template is configured and seeded
-                self.assertIn("html_template: index.html", config_content)
-                index_html = Path("index.html")
-                self.assertTrue(index_html.is_file())
-                self.assertIn("Wiki CLI", index_html.read_text(encoding="utf-8"))
+                # Check page_layout is configured and seeded
+                self.assertIn("page_layout: layouts/default.html", config_content)
+                default_layout = Path("layouts") / "default.html"
+                self.assertTrue(default_layout.is_file())
+                self.assertIn("Wiki CLI", default_layout.read_text(encoding="utf-8"))
 
                 expected_template = pkg_files("wiki").joinpath("templates/wiki.yaml").read_text(encoding="utf-8")
                 self.assertEqual(config_content, expected_template.replace("__WIKI_BASE__", "https://wiki.example.org/"))
 
-                # Check --force protects existing index.html (second init)
+                # Check --force protects existing layouts (second init)
                 result2 = runner.invoke(main, ["init", "--force"], input="https://wiki.example.org/\n")
                 self.assertEqual(result2.exit_code, 0)
-                self.assertTrue(index_html.is_file())
-                self.assertIn("Wiki CLI", index_html.read_text(encoding="utf-8"))
+                self.assertTrue(default_layout.is_file())
+                self.assertIn("Wiki CLI", default_layout.read_text(encoding="utf-8"))
 
-                # Check init without --force warns about existing index.html
+                # Check init without --force still succeeds when layouts exist
                 result3 = runner.invoke(main, ["init", "--force"],
                     input="https://wiki.example.org/\n", catch_exceptions=False)
                 self.assertEqual(result3.exit_code, 0)
 
                 self.assertFalse((Path(".git")).exists())
 
-    def test_docs_index_html_matches_packaged_template(self) -> None:
-        docs_template = Path("docs/index.html").read_text(encoding="utf-8")
-        packaged_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+    def test_docs_default_layout_matches_packaged_template(self) -> None:
+        docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
+        packaged_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
         self.assertEqual(docs_template, packaged_template)
+
+    def test_config_rejects_legacy_html_template_key(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "wiki.yaml"
+            config_path.write_text("input_dirs: wiki\nhtml_template: layouts/default.html\n", encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                WikiConfig.load(config_path)
+            self.assertIn("html_template was renamed to page_layout", str(ctx.exception))
+
+    def test_config_rejects_legacy_wiki_page_layout_key(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "wiki.yaml"
+            config_path.write_text("input_dirs: wiki\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                WikiConfig.load(config_path)
+            self.assertIn("wiki_page_layout was renamed to page_layout", str(ctx.exception))
 
     def test_cli_init_git_opt_in_runs_git_init(self) -> None:
         runner = CliRunner()

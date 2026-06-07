@@ -19,7 +19,7 @@ Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wa
 - **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
 - **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
 - **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
-- **Typed HTML Rendering**: Build typed pages with template selection via `template` or `wiki:template`, sidebar infoboxes with clickable wiki and external links, and a no-JavaScript metadata pane (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads).
+- **Typed HTML Rendering**: Build typed pages with optional per-page HTML layouts via `wazoo:layout`, sidebar infoboxes with clickable wiki and external links, and a no-JavaScript metadata pane (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads).
 
 ## Installation
 
@@ -340,49 +340,35 @@ exclude:
 
 Asset directories are relative to the config file and copied under the base URL preserving their configured path, e.g. `assets/items/photo.jpg` becomes `/wiki/assets/items/photo.jpg`.
 
-#### Page templates and infoboxes
+#### Page layouts and infoboxes
 
-The HTML builder supports lightweight typed page templates. Template selection order is:
+The HTML builder distinguishes three concepts:
 
-1. `wiki:template` frontmatter property
-2. `template` frontmatter property
-3. among `type` / `@type` values, the first whose stem is `person`, `thing`, or `pet` (built-in layout names)
-4. otherwise the first `type` / `@type` value
-5. `default` when no type is set
+- **Site page layout** — `page_layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
+- **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
+- **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
 
-Any article with displayable frontmatter gets a sidebar infobox (not only `person` / `thing` / `pet` pages). Structural keys such as `@context`, `@id`, `id`, `@type`, `type`, `template`, and `wiki:template` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
+Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `page_layout` (relative to the directory containing `wiki.yaml`):
 
 ```yaml
 id: wiki:Gregory_Davidson
 type: schema:Person
-wiki:template: person
+wazoo:layout: layouts/article.html
 knows: wiki:Bella_Davidson
 url: https://example.com/gregory
 ```
+
+When `wazoo:layout` is omitted, the page uses the site `page_layout`. Layout files use the same `{placeholder}` contract (`{infobox_html}`, `{page_content}`, `{layout_class}`, and so on).
+
+Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, `type`, and `wazoo:layout` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
 In the built site:
 
 - `wiki:Bella_Davidson` links to the `Bella_Davidson` page when that page exists
 - `https://example.com/gregory` renders as an external link
-- `wiki:template` controls the page layout class and is hidden from the infobox itself
+- `wazoo:layout` is presentation metadata only (not exported to RDF)
 
-Use SHACL to constrain template usage when needed, for example requiring at most one `wiki:template` value:
-
-```yaml
-id: wiki:PersonShape
-type: sh:NodeShape
-sh:targetClass: schema:Person
-sh:property:
-  - sh:path: schema:givenName
-    sh:datatype: xsd:string
-    sh:minCount: 1
-  - sh:path: schema:familyName
-    sh:datatype: xsd:string
-    sh:minCount: 1
-  - sh:path: wiki:template
-    sh:datatype: xsd:string
-    sh:maxCount: 1
-```
+`wiki check` errors on legacy `template` / `wiki:template` keys and on missing `wazoo:layout` files.
 
 #### Metadata pane (RDF views)
 
@@ -671,7 +657,7 @@ lint:
   filename_pattern: warning  # "error" | "warning" | "off"
   headings: off              # sentence case, numbered headings, body ---
 
-html_template: index.html    # optional custom HTML shell; see docs/wiki/Wiki_Configuration.md
+page_layout: layouts/default.html    # site default page layout; see docs/wiki/Wiki_Configuration.md
 
 serve_api:
   enabled: false             # opt-in read-only SPARQL endpoint on wiki serve

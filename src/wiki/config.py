@@ -24,11 +24,14 @@ FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 SH = Namespace("http://www.w3.org/ns/shacl#")
+WAZOO = Namespace("https://wazootech.github.io/wiki-cli/vocab/")
 
 DEFAULT_FILENAME_PATTERN = r"[A-Za-z0-9_()-]+\.md"
 
 DEFAULT_CHECK_RULES = {
     "broken_links": "warning",
+    "forbidden_layout_keys": "error",
+    "missing_layout_file": "error",
 }
 
 DEFAULT_LINT_RULES = {
@@ -52,12 +55,12 @@ ALLOWED_CONFIG_KEYS = {
     "base_url",
     "url_style",
     "exclude",
-    "html_template",
+    "page_layout",
     "serve_api",
     "link_renames",
 }
 
-ALLOWED_CHECK_KEYS = {"broken_links"}
+ALLOWED_CHECK_KEYS = {"broken_links", "forbidden_layout_keys", "missing_layout_file"}
 ALLOWED_LINT_KEYS = {"filename_pattern", "headings"}
 ALLOWED_SERVE_API_KEYS = {"enabled", "path"}
 
@@ -116,6 +119,14 @@ def _unknown_keys(data: dict[str, Any], allowed: set[str]) -> list[str]:
 
 
 def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
+    if "html_template" in data:
+        raise ValueError(
+            f"Invalid config file {config_name}: html_template was renamed to page_layout"
+        )
+    if "wiki_page_layout" in data:
+        raise ValueError(
+            f"Invalid config file {config_name}: wiki_page_layout was renamed to page_layout"
+        )
     unknown_top_level = _unknown_keys(data, ALLOWED_CONFIG_KEYS)
     if unknown_top_level:
         raise ValueError(f"Invalid config file {config_name}: unknown top-level keys: {', '.join(unknown_top_level)}")
@@ -156,6 +167,7 @@ DEFAULT_NAMESPACES = {
     "dc": DC,
     "dcterms": DCTERMS,
     "sh": SH,
+    "wazoo": WAZOO,
 }
 
 
@@ -196,7 +208,7 @@ class WikiConfig:
         url_style: str = DEFAULT_URL_STYLE,
         exclude: list[str] | None = None,
         config_root: str | Path | None = None,
-        html_template: Path | None = None,
+        page_layout: Path | None = None,
         serve_api_enabled: bool = False,
         serve_api_path: str = "/api/sparql",
         link_renames: dict[str, str] | None = None,
@@ -216,7 +228,7 @@ class WikiConfig:
         self.base_url = base_url.rstrip("/") if base_url else ""
         self.url_style = normalize_url_style(url_style)
         self.exclude = [str(p).replace("\\", "/") for p in (exclude or [])]
-        self.html_template = html_template
+        self.page_layout = page_layout
         self.serve_api_enabled = bool(serve_api_enabled)
         self.serve_api_path = normalize_api_path(serve_api_path)
         self.link_renames = dict(link_renames or {})
@@ -300,12 +312,12 @@ class WikiConfig:
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
-                        # Parse html_template as optional path to document shell
-                        html_template_raw = data.get("html_template")
-                        html_template_path: Path | None = None
-                        if isinstance(html_template_raw, str) and html_template_raw.strip():
-                            p = Path(html_template_raw.strip())
-                            html_template_path = (p if p.is_absolute() else base_dir / p).resolve()
+                        # Parse page_layout as optional path to the site default layout file
+                        layout_raw = data.get("page_layout")
+                        page_layout_path: Path | None = None
+                        if isinstance(layout_raw, str) and layout_raw.strip():
+                            p = Path(layout_raw.strip())
+                            page_layout_path = (p if p.is_absolute() else base_dir / p).resolve()
 
                         serve_api_data = data.get("serve_api") if isinstance(data.get("serve_api"), dict) else {}
                         serve_api_enabled = serve_api_data.get("enabled", False)
@@ -336,7 +348,7 @@ class WikiConfig:
                             url_style=data.get("url_style") or DEFAULT_URL_STYLE,
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
-                            html_template=html_template_path,
+                            page_layout=page_layout_path,
                             serve_api_enabled=serve_api_enabled,
                             serve_api_path=serve_api_path,
                             link_renames=link_renames,

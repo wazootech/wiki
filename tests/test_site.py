@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
 from wiki.site import (
-    DEFAULT_HTML_TEMPLATE,
+    DEFAULT_MINIMAL_PAGE_LAYOUT,
     build_index_html,
     build_page_html,
     build_site,
@@ -51,7 +51,7 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
             self.assertIn('class="toc"', html)
             self.assertIn('href="#early-life"', html)
             self.assertIn('href="#firstHeading"', html)
@@ -123,9 +123,10 @@ name: Bella Davidson
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "Gregory_Davidson")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
 
-            self.assertEqual(page.template_name, "Person.html")
+            self.assertIsNone(page.layout_path)
+            self.assertEqual(page.layout_stem, "default")
             self.assertIn('class="infobox page-meta"', html)
             self.assertIn('>Ethan Davidson</a>', html)
             self.assertIn('>Bella Davidson</a>', html)
@@ -138,16 +139,21 @@ name: Bella Davidson
             self.assertNotIn('<dt>Softwareversion</dt>', html)
             self.assertIn("Infobox", html)
 
-    def test_template_frontmatter_override_is_applied(self) -> None:
+    def test_wazoo_layout_frontmatter_loads_custom_shell(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
+            layouts = root / "layouts"
+            layouts.mkdir()
+            custom_shell = """<!DOCTYPE html>
+<html><body><div id="custom-shell">{page_title}{infobox_html}{page_content}</div></body></html>"""
+            (layouts / "project.html").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
 type: schema:CreativeWork
-template: Thing.html
-name: Project Atlas
+wazoo:layout: layouts/project.html
+label: Project Atlas
 related:
   - wiki:Project_Atlas
 ---
@@ -158,7 +164,7 @@ related:
             (wiki / "Project_Atlas.yaml").write_text(
                 """id: wiki:Project_Atlas
 type: schema:CreativeWork
-name: Project Atlas Record
+label: Project Atlas Record
 """,
                 encoding="utf-8",
             )
@@ -166,13 +172,15 @@ name: Project Atlas Record
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
 
-            self.assertEqual(page.template_name, "Thing.html")
+            self.assertEqual(page.layout_path, (layouts / "project.html").resolve())
+            self.assertEqual(page.layout_stem, "project")
+            self.assertIn('id="custom-shell"', html)
             self.assertIn('class="infobox page-meta"', html)
             self.assertIn('href="/wiki/Project_Atlas/"', html)
 
-    def test_wiki_template_frontmatter_override_takes_precedence(self) -> None:
+    def test_legacy_template_frontmatter_does_not_select_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -180,9 +188,9 @@ name: Project Atlas Record
             (wiki / "project.md").write_text(
                 """---
 type: schema:CreativeWork
-template: default.html
-wiki:template: Person.html
-name: Project Atlas
+template: layouts/project.html
+wiki:template: layouts/project.html
+label: Project Atlas
 ---
 # Project Atlas
 """,
@@ -192,11 +200,12 @@ name: Project Atlas
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
 
-            self.assertEqual(page.template_name, "Person.html")
-            self.assertIn('class="infobox page-meta"', html)
-            self.assertNotIn("Wiki:Template", html)
+            self.assertIsNone(page.layout_path)
+            self.assertEqual(page.layout_stem, "default")
+            self.assertNotIn('id="custom-shell"', html)
+            self.assertIn("<h1 id=\"firstHeading\">", html)
 
     def test_render_outline_title_renders_inline_code(self) -> None:
         html = render_outline_title("`Accept`")
@@ -222,8 +231,8 @@ name: Project Atlas
             config = WikiConfig(input_dirs=[wiki], config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
-            html = build_page_html(page, site, html_template=html_template)
+            page_layout_shell = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+            html = build_page_html(page, site, page_layout=page_layout_shell)
 
             self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
             self.assertIn('<span class="wikilink">semantic web</span>', html)
@@ -272,7 +281,7 @@ name: Project Atlas
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
     def test_seed_template_includes_code_copy_initialization(self) -> None:
-        seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
         self.assertIn("initCodeCopyButtons", seed_template)
         self.assertIn("pre[data-copy]", seed_template)
         self.assertIn("copyPreContent", seed_template)
@@ -297,8 +306,8 @@ specialty: Diagnostics
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
-            html_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=html_template)
+            page_layout_shell = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=page_layout_shell)
 
             self.assertIn("Metadata</a>", html)
             self.assertIn('href="#view-metadata-content"', html)
@@ -410,7 +419,7 @@ specialty: Diagnostics
             self.assertNotIn("On this page", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
-        seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
+        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -419,7 +428,7 @@ specialty: Diagnostics
             config = WikiConfig(input_dirs=[wiki], config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, html_template=seed_template)
+            html = build_page_html(page, site, page_layout=seed_template)
             self.assertNotIn("From Wiki CLI, the semantic knowledge base", html)
 
     def test_fallback_has_page_kind(self) -> None:
@@ -451,7 +460,7 @@ specialty: Diagnostics
             config = WikiConfig(input_dirs=[wiki], config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, html_template=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, page_layout=_FULL_TEST_TEMPLATE)
             self.assertIn("{metadata_pane_html}", html)
             self.assertNotIn("metadata-format-switch", html)
 

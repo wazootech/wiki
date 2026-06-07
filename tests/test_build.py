@@ -119,7 +119,7 @@ class TestWikiBuild(unittest.TestCase):
 {page_content}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nhtml_template: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(test_template, encoding="utf-8")
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
@@ -178,7 +178,7 @@ name: Bella Davidson
 {metadata_pane_html}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nhtml_template: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(template, encoding="utf-8")
             (wiki / "Page.md").write_text(
                 """---
@@ -212,7 +212,7 @@ about: wiki:Alice_Theory
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nhtml_template: nonexistent.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: nonexistent.html\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
@@ -222,17 +222,15 @@ about: wiki:Alice_Theory
             self.assertNotIn("<style>", html)
 
     def test_seed_template_parity(self) -> None:
-        from pathlib import Path
-        import sys
         repo_root = Path(__file__).resolve().parent.parent
-        docs_html = repo_root / "docs" / "index.html"
-        pkg_html = repo_root / "src" / "wiki" / "templates" / "index.html"
-        self.assertTrue(docs_html.is_file(), f"docs/index.html not found at {docs_html}")
-        self.assertTrue(pkg_html.is_file(), f"templates/index.html not found at {pkg_html}")
+        docs_html = repo_root / "docs" / "layouts" / "default.html"
+        pkg_html = repo_root / "src" / "wiki" / "templates" / "layouts" / "default.html"
+        self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html not found at {docs_html}")
+        self.assertTrue(pkg_html.is_file(), f"templates/layouts/default.html not found at {pkg_html}")
         self.assertEqual(
             docs_html.read_text(encoding="utf-8"),
             pkg_html.read_text(encoding="utf-8"),
-            "docs/index.html and src/wiki/templates/index.html must be identical",
+            "docs/layouts/default.html and src/wiki/templates/layouts/default.html must be identical",
         )
 
 

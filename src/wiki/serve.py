@@ -35,7 +35,7 @@ class WikiHandler(BaseHTTPRequestHandler):
     url_style: str = "dir"
     watch_enabled: bool = False
     build_id: int = 0
-    html_template: str | None = None
+    page_layout: str | None = None
     serve_api_enabled: bool = True
     serve_api_path: str = "/api/sparql"
 
@@ -55,9 +55,9 @@ class WikiHandler(BaseHTTPRequestHandler):
         parsed = parsed.rstrip("/")
 
         if parsed == "" or parsed == "/index":
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, page_layout=self.page_layout))
         elif parsed == base:
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, html_template=self.html_template))
+            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, page_layout=self.page_layout))
         elif parsed.startswith(base + "/"):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
@@ -70,7 +70,7 @@ class WikiHandler(BaseHTTPRequestHandler):
                         self.site,
                         base_url=base,
                         url_style=self.url_style,
-                        html_template=self.html_template,
+                        page_layout=self.page_layout,
                         metadata_mode=metadata_mode,
                         metadata_format=metadata_format,
                     )
@@ -270,11 +270,11 @@ def create_server(
     WikiHandler.serve_api_enabled = config.serve_api_enabled
     WikiHandler.serve_api_path = config.serve_api_path
 
-    # Load custom HTML template if configured; silently fall back to default if file missing
-    if config.html_template is not None and config.html_template.is_file():
-        WikiHandler.html_template = config.html_template.read_text(encoding="utf-8")
+    # Load site wiki page layout if configured; silently fall back to default if file missing
+    if config.page_layout is not None and config.page_layout.is_file():
+        WikiHandler.page_layout = config.page_layout.read_text(encoding="utf-8")
     else:
-        WikiHandler.html_template = None
+        WikiHandler.page_layout = None
 
     server = HTTPServer((host, port), WikiHandler)
     print(f"Wiki server ready at http://{host}:{port}/")

@@ -451,10 +451,10 @@ def build(
     site = build_site(config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
-    # Load custom HTML template if configured; silently fall back to default if file missing
-    html_template_str: str | None = None
-    if config.html_template is not None and config.html_template.is_file():
-        html_template_str = config.html_template.read_text(encoding="utf-8")
+    # Load site wiki page layout if configured; silently fall back to default if file missing
+    page_layout_str: str | None = None
+    if config.page_layout is not None and config.page_layout.is_file():
+        page_layout_str = config.page_layout.read_text(encoding="utf-8")
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
@@ -472,7 +472,7 @@ def build(
 
     has_root_index = any(page.full_slug == "" for page in site.pages)
     if not has_root_index:
-        index_html = build_index_html(site, base_url=base_url, url_style=url_style, html_template=html_template_str)
+        index_html = build_index_html(site, base_url=base_url, url_style=url_style, page_layout=page_layout_str)
         (page_output_dir / "index.html").write_text(index_html, encoding="utf-8")
         if verbose:
             rel = page_output_dir.relative_to(output_dir)
@@ -491,7 +491,7 @@ def build(
                 section_dir = page_output_dir.joinpath(*parts[:-1])
                 section_dir.mkdir(parents=True, exist_ok=True)
                 file_path = section_dir / f"{parts[-1]}.html"
-        file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style, html_template=html_template_str), encoding="utf-8")
+        file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style, page_layout=page_layout_str), encoding="utf-8")
         if verbose:
             rel_path = file_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
@@ -659,6 +659,12 @@ def init(force: bool, init_git: bool) -> None:
         "Defines validation rules for Person profiles in this wiki.\n",
         encoding="utf-8",
     )
+    seed_template = ""
+    try:
+        seed_template = pkg_files("wiki").joinpath("templates/layouts/default.html").read_text(encoding="utf-8")
+    except Exception as exc:
+        click.echo(f"Warning: could not load packaged wiki page layout: {exc}", err=True)
+
     (wiki_dir / "Ethan_Davidson.md").write_text(
         "---\n"
         "type: schema:Person\n"
@@ -672,16 +678,12 @@ def init(force: bool, init_git: bool) -> None:
 
     config_path.write_text(config_content, encoding="utf-8")
 
-    # Seed index.html HTML template from packaged resource
-    index_html_path = cwd / "index.html"
-    if not force and index_html_path.exists():
-        click.echo("Warning: index.html already exists (not overwritten). Use --force to replace.", err=True)
-    else:
-        try:
-            seed_template = pkg_files("wiki").joinpath("templates/index.html").read_text(encoding="utf-8")
-            index_html_path.write_text(seed_template, encoding="utf-8")
-        except Exception as exc:
-            click.echo(f"Warning: could not seed index.html template: {exc}", err=True)
+    layouts_dir = cwd / "layouts"
+    default_layout_path = layouts_dir / "default.html"
+    if seed_template:
+        layouts_dir.mkdir(parents=True, exist_ok=True)
+        if force or not default_layout_path.exists():
+            default_layout_path.write_text(seed_template, encoding="utf-8")
 
     if init_git:
         if shutil.which("git") is None:
@@ -694,7 +696,7 @@ def init(force: bool, init_git: bool) -> None:
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and index.html template."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html."
     if init_git:
         message += " Ran git init."
     click.echo(message)

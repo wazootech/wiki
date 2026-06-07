@@ -104,9 +104,9 @@ Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki_Subcomm
 
 The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and adds triples to the graph. CURIEs in attributes use the same `context` prefixes as frontmatter.
 
-## Page templates (HTML)
+## Page layouts (HTML)
 
-For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md), set `wiki:template` or `template` (for example `person`) to pick a typed layout with an infobox. Internal values like `wiki:Other_Page` link when that page exists.
+For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `page_layout` from `wiki.yaml`. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
 
 ## Related
 

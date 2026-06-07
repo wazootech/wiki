@@ -30,7 +30,7 @@ wiki init
 wiki init --git
 ```
 
-`wiki init` interactively writes `wiki.yaml`, `README.md`, `index.html`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
+`wiki init` interactively writes `wiki.yaml`, `README.md`, `layouts/` wiki page layouts, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki_Subcommand_init](Wiki_Subcommand_init.md) for prompts and `--force` behavior.
 
 ## Daily workflow
 

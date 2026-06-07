@@ -12,9 +12,10 @@ lint:
 context:
   schema: https://schema.org/
   wiki: __WIKI_BASE__
+  wazoo: https://wazootech.github.io/wiki-cli/vocab/
   foaf: http://xmlns.com/foaf/0.1/
   dc: http://purl.org/dc/elements/1.1/
   dcterms: http://purl.org/dc/terms/
   sh: http://www.w3.org/ns/shacl#
   xsd: http://www.w3.org/2001/XMLSchema#
-html_template: index.html
+page_layout: layouts/default.html

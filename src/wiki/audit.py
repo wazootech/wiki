@@ -24,8 +24,14 @@ from .paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from .parser import document_data_from_path
+from .parser import document_data_from_path, split_document_body
 from .graph import frontmatter_to_graph, load_graph
+from .layout import (
+    FORBIDDEN_LAYOUT_KEYS,
+    LAYOUT_FRONTMATTER_KEY,
+    layout_file_is_valid,
+    resolve_layout_path,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -543,6 +549,44 @@ def _empty_results() -> dict[str, Any]:
     return {"conforms": True, "errors": [], "warnings": []}
 
 
+def audit_layout_frontmatter(
+    config: WikiConfig,
+    file_filter: set[str] | None = None,
+) -> dict[str, list[str]]:
+    """Check wazoo:layout paths and reject legacy template frontmatter keys."""
+    forbidden: list[str] = []
+    missing: list[str] = []
+    config_root = config.config_root.resolve()
+
+    for file_path in iter_markdown_files(config):
+        try:
+            route = route_for_document_file(config, file_path)
+        except ValueError:
+            continue
+        if file_filter is not None and route not in file_filter:
+            continue
+        fm_data, _ = split_document_body(file_path)
+        if fm_data is None:
+            continue
+
+        for key in FORBIDDEN_LAYOUT_KEYS:
+            if key in fm_data:
+                forbidden.append(
+                    f"In {route}: frontmatter key {key!r} is not supported; use {LAYOUT_FRONTMATTER_KEY!r} with an HTML file path."
+                )
+
+        raw_layout = fm_data.get(LAYOUT_FRONTMATTER_KEY)
+        if not isinstance(raw_layout, str) or not raw_layout.strip():
+            continue
+        layout_path = resolve_layout_path(raw_layout, config_root)
+        if not layout_file_is_valid(layout_path, config_root):
+            missing.append(
+                f"In {route}: {LAYOUT_FRONTMATTER_KEY} {raw_layout!r} must resolve to a readable .html file under the wiki config root."
+            )
+
+    return {"forbidden": forbidden, "missing": missing}
+
+
 def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
     """Run integrity checks: SHACL, route safety, collisions, broken links."""
     results = _empty_results()
@@ -573,6 +617,10 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
     if not safety_issues:
         link_issues = audit_broken_links(config, file_filter=file_filter)
         _apply_issues(results, "broken_links", link_issues, config.check)
+
+    layout_issues = audit_layout_frontmatter(config, file_filter=file_filter)
+    _apply_issues(results, "forbidden_layout_keys", layout_issues["forbidden"], config.check)
+    _apply_issues(results, "missing_layout_file", layout_issues["missing"], config.check)
 
     return results
 

@@ -65,9 +65,9 @@ The endpoint reuses the same query engine as [Wiki_Subcommand_query](Wiki_Subcom
 
 For safety, the endpoint is **disabled by default**. Its path is also validated at startup and rejected if it would shadow page routes or the `__watch` endpoint.
 
-## Custom HTML shell
+## Wiki page layout
 
-The same `html_template` from [Wiki_Configuration](Wiki_Configuration.md#html-template) applies to the dev server.
+The same `page_layout` from [Wiki_Configuration](Wiki_Configuration.md#page-layout) applies to the dev server.
 
 ## Metadata view
 
@@ -77,4 +77,4 @@ The live page metadata panel supports RDF formats without JavaScript: compacted 
 
 - [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
 - [Graph_Cache](Graph_Cache.md)
-- [Wiki_Configuration](Wiki_Configuration.md#html-template)
+- [Wiki_Configuration](Wiki_Configuration.md#page-layout)

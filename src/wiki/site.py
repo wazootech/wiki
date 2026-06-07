@@ -867,7 +867,7 @@ textarea.wiki-textarea:focus {
 }
 
 /* Template Label badge */
-.template-label {
+.layout-label {
   display: inline-block;
   margin-bottom: 6px;
   padding: 2px 6px;
@@ -920,7 +920,7 @@ textarea.wiki-textarea:focus {
 }
 """.strip().strip() + "\n\n" + _metadata_format_css() + "\n\n" + PYGMENTS_CSS
 
-DEFAULT_HTML_TEMPLATE = """<!DOCTYPE html>
+DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -933,7 +933,7 @@ DEFAULT_HTML_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>"""
 
-METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "template", "wiki:template"}
+METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "wazoo:layout"}
 
 
 def slugify_segment(text: str) -> str:
@@ -952,8 +952,8 @@ def _url(base_url: str, slug: str, style: str) -> str:
 
 def _get_page_categories(page: VirtualPage) -> list[str]:
     cats = []
-    if page.template_name and page.template_name != "default.html":
-        cats.append(page.template_name.replace(".html", ""))
+    if page.layout_stem and page.layout_stem != "default":
+        cats.append(page.layout_stem)
     
     raw_types = page.frontmatter.get("@type") or page.frontmatter.get("type")
     if raw_types:
@@ -1122,8 +1122,8 @@ class VirtualPage:
     markdown: str
     html: str
     frontmatter: dict[str, Any]
-    type_names: list[str] = field(default_factory=list)
-    template_name: str = "default.html"
+    layout_path: Path | None = None
+    layout_stem: str = "default"
     wiki_ids: list[str] = field(default_factory=list)
     outline: list[TocItem] = field(default_factory=list)
     backlink_slugs: list[str] = field(default_factory=list)
@@ -1264,9 +1264,8 @@ def build_site(
         doc_slug = file_slug(file_path)
         h1_title = frontmatter.get("name") or extract_title(body, doc_slug)
         h1_toc = extract_outline(body)
-        type_names = _page_type_names(frontmatter)
         wiki_ids = _page_wiki_ids(config, doc_slug, frontmatter)
-        template_name = _select_template_name(frontmatter, type_names)
+        layout_path, layout_stem = _parse_page_layout(frontmatter, config.config_root)
 
         display_body = strip_leading_title_heading(body, h1_title)
         h1_html = render_wiki_markdown(
@@ -1281,8 +1280,8 @@ def build_site(
             markdown=body,
             html=h1_html,
             frontmatter=frontmatter,
-            type_names=type_names,
-            template_name=template_name,
+            layout_path=layout_path,
+            layout_stem=layout_stem,
             wiki_ids=wiki_ids,
             outline=h1_toc,
             backlink_slugs=backlink_index.get(doc_slug, []),
@@ -1317,7 +1316,7 @@ def build_index_html(
     site: WikiSite,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
-    html_template: str | None = None,
+    page_layout: str | None = None,
 ) -> str:
     """Compile root Index page HTML."""
     links_html = ""
@@ -1373,8 +1372,8 @@ def build_index_html(
         "all_pages_json": pages_json,
         "current_slug_json": json.dumps(""),
         "page_content": page_content,
-        "template_label": "",
-        "template_class": "index",
+        "layout_label": "",
+        "layout_class": "index",
         "infobox_html": "",
         "toc_html": "",
         "backlinks_html": "",
@@ -1386,7 +1385,7 @@ def build_index_html(
         "metadata_pane_html": "",
     }
 
-    shell = DEFAULT_HTML_TEMPLATE if html_template is None else html_template
+    shell = DEFAULT_MINIMAL_PAGE_LAYOUT if page_layout is None else page_layout
     return _render_html(shell, context)
 
 
@@ -1395,7 +1394,7 @@ def build_page_html(
     site: WikiSite,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
-    html_template: str | None = None,
+    page_layout: str | None = None,
     metadata_mode: str = "compacted",
     metadata_format: str = "json-ld",
 ) -> str:
@@ -1418,9 +1417,8 @@ def build_page_html(
 </ul>
 </div>"""
 
-    # Template Label
-    template_label = _template_label(page)
-    template_class = html_module.escape(_template_stem(page.template_name))
+    layout_label = _layout_label(page)
+    layout_class = html_module.escape(page.layout_stem)
 
     # All Pages JSON for search and random redirect
     import json
@@ -1474,14 +1472,14 @@ def build_page_html(
         "base_url": base_url,
         "logo_svg": logo_svg,
         "page_title": html_module.escape(page.title),
-        "body_class": f"wiki-page template-{template_class}",
+        "body_class": f"wiki-page layout-{layout_class}",
         "page_kind": "article",
         "url_style": url_style,
         "all_pages_json": pages_json,
         "current_slug_json": json.dumps(page.full_slug),
         "page_content": page.html,
-        "template_label": template_label,
-        "template_class": template_class,
+        "layout_label": layout_label,
+        "layout_class": layout_class,
         "infobox_html": infobox_html,
         "toc_html": toc_html,
         "backlinks_html": bl_html,
@@ -1493,54 +1491,20 @@ def build_page_html(
         "metadata_pane_html": metadata_pane_html,
     }
 
-    shell = DEFAULT_HTML_TEMPLATE if html_template is None else html_template
+    shell = _page_shell(page, page_layout)
     return _render_html(shell, context)
 
 
-def _page_type_names(frontmatter: dict[str, Any]) -> list[str]:
-    raw_types = frontmatter.get("@type") or frontmatter.get("type")
-    if raw_types is None:
-        return []
-    values = raw_types if isinstance(raw_types, list) else [raw_types]
-    return [_type_template_name(value) for value in values if _type_template_name(value)]
+def _page_shell(page: VirtualPage, default_shell: str | None) -> str:
+    if page.layout_path is not None:
+        return page.layout_path.read_text(encoding="utf-8")
+    return DEFAULT_MINIMAL_PAGE_LAYOUT if default_shell is None else default_shell
 
 
-def _type_template_name(value: Any) -> str:
-    if not isinstance(value, str):
-        return ""
-    text = value.strip()
-    if not text:
-        return ""
-    if ":" in text:
-        text = text.split(":", 1)[1]
-    elif "/" in text:
-        text = text.rstrip("/").rsplit("/", 1)[-1]
-    return f"{text}.html"
+def _parse_page_layout(frontmatter: dict[str, Any], config_root: Path) -> tuple[Path | None, str]:
+    from .layout import parse_layout_from_frontmatter
 
-
-def _select_template_name(frontmatter: dict[str, Any], type_names: list[str]) -> str:
-    override = frontmatter.get("wiki:template") or frontmatter.get("template")
-    if isinstance(override, str) and override.strip():
-        return _normalize_template_name(override)
-    for type_name in type_names:
-        if _template_stem(type_name) in {"person", "thing", "pet"}:
-            return type_name
-    return type_names[0] if type_names else "default.html"
-
-
-def _normalize_template_name(value: str) -> str:
-    template_name = value.strip().replace("\\", "/")
-    if not template_name:
-        return "default.html"
-    template_name = template_name.rsplit("/", 1)[-1]
-    if "." not in template_name:
-        return f"{template_name}.html"
-    return template_name
-
-
-def _template_stem(template_name: str) -> str:
-    stem = Path(template_name).stem
-    return heading_slug(stem)
+    return parse_layout_from_frontmatter(frontmatter, config_root)
 
 
 def _page_wiki_ids(config: WikiConfig, route: str, frontmatter: dict[str, Any]) -> list[str]:
@@ -1825,11 +1789,11 @@ def _display_label_for_target(label: str, target: str, target_page: VirtualPage 
     return label
 
 
-def _template_label(page: VirtualPage) -> str:
-    label = humanize_route(Path(page.template_name).stem)
-    if label == "Default":
+def _layout_label(page: VirtualPage) -> str:
+    if page.layout_stem == "default":
         return ""
-    return f'<div class="template-label">{html_module.escape(label)}</div>'
+    label = humanize_route(page.layout_stem)
+    return f'<div class="layout-label">{html_module.escape(label)}</div>'
 
 
 
