@@ -712,6 +712,10 @@ textarea.wiki-textarea:focus {
   display: block;
 }
 
+#view-metadata-content:target {
+  display: block !important;
+}
+
 /* Template Label badge */
 .template-label {
   display: inline-block;
@@ -1200,8 +1204,8 @@ def build_page_html(
 
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_mode)
     if page.has_frontmatter:
-        metadata_tool_html = '<li><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">View metadata</a></li>'
-        metadata_tab_html = '<li id="ca-metadata"><a href="javascript:void(0)" onclick="switchTab(\'metadata\')">Metadata (JSON-LD)</a></li>'
+        metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
+        metadata_tab_html = '<li id="ca-metadata"><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">Metadata (JSON-LD)</a></li>'
         metadata_pane_html = f"""<!-- METADATA VIEW (JSON-LD frontmatter) -->
     <div id="view-metadata-content" class="wiki-view-pane" style="display: none;">
       <h1 class="firstHeading">Metadata: {html_module.escape(page.title)}</h1>

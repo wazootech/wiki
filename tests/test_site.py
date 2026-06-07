@@ -244,6 +244,7 @@ specialty: Diagnostics
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", html_template=html_template)
 
             self.assertIn("Metadata (JSON-LD)", html)
+            self.assertIn('href="#view-metadata-content"', html)
             self.assertIn('metadata-mode-panel-expanded', html)
             self.assertIn('metadata-mode-panel-compacted', html)
             self.assertIn('value="expanded" checked="checked"', html)
