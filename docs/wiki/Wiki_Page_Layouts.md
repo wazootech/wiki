@@ -8,15 +8,16 @@ description: Wiki page layout files for build and serve output.
 
 Wiki CLI builds each article into HTML using a **page layout** file with `{placeholder}` tokens. Two levels apply:
 
-1. **Site default** — `page_layout` in [Wiki_Configuration](Wiki_Configuration.md) (usually `layouts/default.html`)
+1. **Site default** — `site.layout` in [Wiki_Configuration](Wiki_Configuration.md) (usually `layouts/default.html`)
 1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file
 
-## `page_layout`
+## `site.layout`
 
 Set the path in `wiki.yaml` relative to the directory that contains the config file:
 
 ```yaml
-page_layout: layouts/default.html
+site:
+  layout: layouts/default.html
 ```
 
 `wiki init` seeds `layouts/default.html` from the packaged default layout.
@@ -32,7 +33,7 @@ givenName: Ethan
 familyName: Davidson
 ```
 
-When `wazoo:layout` is omitted, the page uses `page_layout`. Layout files must exist and end in `.html`; `wiki check` reports missing `wazoo:layout` paths as errors.
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must exist and end in `.html`; `wiki check` reports missing `wazoo:layout` paths as errors.
 
 `wazoo:layout` is ordinary frontmatter: it appears in the RDF graph, infobox, and metadata pane like other properties.
 

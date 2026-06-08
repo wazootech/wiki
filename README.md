@@ -80,7 +80,7 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
-`serve --watch` rebuilds when files under `input_dirs` and `asset_dirs` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `vault.input_dirs` and `vault.asset_dirs` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
 
 Suggested contributor loop:
 
@@ -136,16 +136,18 @@ wiki lint -v
 wiki lint --strict
 ```
 
-Use top-level `filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
+Use `vault.filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
 
 ```yaml
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+vault:
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 lint:
   broken_links: warning
   filename_pattern: warning
   headings: off
   link_style: warning
-link_style: markdown
+link:
+  style: markdown
 ```
 
 **Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
@@ -163,7 +165,7 @@ wiki link --apply
 wiki link --fix-broken
 ```
 
-`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link_style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link_style` is `markdown`. Optional `link_renames` maps old slugs to new routes for renames.
+`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link.style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link.style` is `markdown`. Optional `link.renames` maps old slugs to new routes for renames.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
@@ -235,7 +237,7 @@ wiki render wiki/people/*.md
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `input_dirs` or `asset_dirs` change (not when CLI source code changes).
+**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.input_dirs` or `vault.asset_dirs` change (not when CLI source code changes).
 
 Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged vaults, but it adds `.wiki/cache/` artifacts and still invalidates on vault or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
@@ -326,17 +328,18 @@ _site/
     └── ...
 ```
 
-Page URLs are derived from the source path under `input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `vault.input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
 `wiki build` runs `wiki check` and `wiki lint` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
 Static assets can be published from configured asset directories:
 
 ```yaml
-asset_dirs:
-  - assets
-exclude:
-  - assets/private/**
+vault:
+  asset_dirs:
+    - assets
+  exclude:
+    - assets/private/**
 ```
 
 Asset directories are relative to the config file and copied under the base URL preserving their configured path, e.g. `assets/items/photo.jpg` becomes `/wiki/assets/items/photo.jpg`.
@@ -345,11 +348,11 @@ Asset directories are relative to the config file and copied under the base URL 
 
 The HTML builder distinguishes three concepts:
 
-- **Site page layout** — `page_layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
+- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
 - **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
 - **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
 
-Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `page_layout` (relative to the directory containing `wiki.yaml`):
+Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `site.layout` (relative to the directory containing `wiki.yaml`):
 
 ```yaml
 id: wiki:Gregory_Davidson
@@ -359,7 +362,7 @@ knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses the site `page_layout`. Layout files use the same `{placeholder}` contract (`{infobox_html}`, `{page_content}`, `{layout_class}`, and so on).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files use the same `{placeholder}` contract (`{infobox_html}`, `{page_content}`, `{layout_class}`, and so on).
 
 Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, and `type` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
@@ -448,7 +451,7 @@ Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
 Start a local development HTTP server that renders wiki markdown files as HTML (wikilinks, backlinks, ToC, infobox, and metadata pane included). Uses the same rendering engine as `build` but serves pages on-the-fly without writing files to disk.
 
 ```bash
-# Default: http://127.0.0.1:8080/wiki/ (when base_url is /wiki)
+# Default: http://127.0.0.1:8080/wiki/ (when site.base_url is /wiki)
 wiki serve
 
 # Custom host and port
@@ -461,7 +464,7 @@ wiki serve --watch
 python -m wiki serve --watch
 ```
 
-`--watch` polls `input_dirs` and `asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
+`--watch` polls `vault.input_dirs` and `vault.asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
 
 When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
@@ -621,7 +624,7 @@ SELECT ?given ?family WHERE {
 ```
 
 #### Opt-in full-text SPARQL over markdown content
-By enabling `content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article vaults). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
+By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article vaults). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
@@ -635,39 +638,38 @@ SELECT ?doc ?content WHERE {
 
 ## Workspace configuration (`WikiConfig`)
 
-The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. The configuration file holds CLI parameters and check/lint severities, with an embedded `@context` or `context` block defining prefix mappings:
+The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `vault`, `graph`, `site`, and `link` blocks (see [Wiki_Configuration](docs/wiki/Wiki_Configuration.md)).
 
 ```yaml
 # wiki.yaml
-input_dirs:
-  - wiki
-asset_dirs:
-  - assets
-base_url: /wiki
-url_style: dir
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
-exclude:
-  - assets/private/**
-content_predicate: schema:articleBody # Opt-in markdown body auto-injection
+vault:
+  input_dirs: [wiki]
+  asset_dirs: [assets]
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+
+graph:
+  wiki_base: https://book.etok.me/wiki/
+  content_predicate: schema:articleBody
+  context:
+    schema: https://schema.org/
+    wiki: https://book.etok.me/wiki/
+
+site:
+  base_url: /wiki
+  url_style: dir
+  layout: layouts/default.html
+
+link:
+  style: markdown
 
 lint:
-  broken_links: warning      # "error" | "warning" | "off"
-  filename_pattern: warning  # "error" | "warning" | "off"
-  headings: off              # ATX # only, sentence-case H2+, numbered headings, body ---
-  link_style: warning        # wikilinks in body when link_style is markdown
-
-link_style: markdown         # wikilink | markdown — wiki link --apply output format
-
-page_layout: layouts/default.html    # site default page layout; see docs/wiki/Wiki_Configuration.md
+  broken_links: warning
+  filename_pattern: warning
+  link_style: warning
 
 sparql_service:
-  enabled: false             # opt-in read-only SPARQL endpoint on wiki serve
+  enabled: false
   path: /api/sparql
-
-context:
-  schema: https://schema.org/
-  wiki: https://book.etok.me/wiki/
-  foaf: http://xmlns.com/foaf/0.1/
 ```
 
 ## Glossary and decisions

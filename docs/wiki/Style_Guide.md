@@ -12,13 +12,13 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 
 ## File layout
 
-- Put pages under directories listed in `input_dirs` (usually `wiki/`).
-- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `filename_pattern`.
+- Put pages under directories listed in `vault.input_dirs` (usually `wiki/`).
+- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `vault.filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
 
-Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
+Configure `vault.filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
 
 **Enforcer:** `lint.filename_pattern` (warning by default).
 
@@ -38,7 +38,7 @@ Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to m
 
 ## Frontmatter
 
-Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem relative to `wiki_base`) — no explicit `id:` is needed.
+Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `graph.context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem relative to `graph.wiki_base`) — no explicit `id:` is needed.
 
 Example person page:
 
@@ -107,7 +107,7 @@ All internal links must resolve to existing documents in the wiki.
 
 Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in vault prose.
 
-Markdown links are the default (`link_style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
+Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
 
 ## References (external standards)
 
@@ -155,7 +155,7 @@ The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and ad
 
 ## Page layouts (HTML)
 
-For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `page_layout` from `wiki.yaml`. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
+For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yaml`. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
 
 ## Related
 

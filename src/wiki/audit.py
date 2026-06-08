@@ -29,7 +29,6 @@ from .paths import (
 from .parser import document_data_from_path, split_document_body
 from .graph import frontmatter_to_graph, load_graph
 from .layout import (
-    FORBIDDEN_LAYOUT_KEYS,
     LAYOUT_FRONTMATTER_KEY,
     layout_file_is_valid,
     resolve_layout_path,
@@ -762,9 +761,8 @@ def _empty_results() -> dict[str, Any]:
 def check_layout_frontmatter(
     config: WikiConfig,
     file_filter: set[str] | None = None,
-) -> dict[str, list[str]]:
-    """Check wazoo:layout paths and reject legacy template frontmatter keys."""
-    forbidden: list[str] = []
+) -> list[str]:
+    """Check that wazoo:layout paths resolve to readable HTML files."""
     missing: list[str] = []
     config_root = config.config_root.resolve()
 
@@ -779,12 +777,6 @@ def check_layout_frontmatter(
         if fm_data is None:
             continue
 
-        for key in FORBIDDEN_LAYOUT_KEYS:
-            if key in fm_data:
-                forbidden.append(
-                    f"In {route}: frontmatter key {key!r} is not supported; use {LAYOUT_FRONTMATTER_KEY!r} with an HTML file path."
-                )
-
         raw_layout = fm_data.get(LAYOUT_FRONTMATTER_KEY)
         if not isinstance(raw_layout, str) or not raw_layout.strip():
             continue
@@ -794,7 +786,7 @@ def check_layout_frontmatter(
                 f"In {route}: {LAYOUT_FRONTMATTER_KEY} {raw_layout!r} must resolve to a readable .html file under the wiki config root."
             )
 
-    return {"forbidden": forbidden, "missing": missing}
+    return missing
 
 
 def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
@@ -825,8 +817,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
             results["errors"].extend(collision_issues)
 
     layout_issues = check_layout_frontmatter(config, file_filter=file_filter)
-    _apply_issues(results, "forbidden_layout_keys", layout_issues["forbidden"], config.check)
-    _apply_issues(results, "missing_layout_file", layout_issues["missing"], config.check)
+    _apply_issues(results, "missing_layout_file", layout_issues, config.check)
 
     return results
 

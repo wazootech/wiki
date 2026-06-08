@@ -6,7 +6,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Vault**: The markdown corpus the CLI loads from `input_dirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Vault**: The markdown corpus the CLI loads from `vault.input_dirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
 
 **Document**: An individual Markdown page in the vault containing a metadata block. _Avoid_: Page, post, wiki page.
 
@@ -32,7 +32,9 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter. **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
+**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter.
+
+**Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 
 **Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (mdformat). _Avoid_: Checking (use `wiki check` for integrity).
 
@@ -46,7 +48,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 ## Relationships
 
-- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `input_dirs`
+- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `vault.input_dirs`
 - A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
@@ -57,11 +59,6 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
 - **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph
 - **Exporting** packages the **Frontmatter** of the **Wiki** into a unified JSON-LD graph
-
-
-
-
-
 
 ## Example dialogue
 

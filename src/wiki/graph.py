@@ -145,9 +145,7 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
     elif rdf_type:
         graph.add((subject, RDF.type, resolve_type(rdf_type, context)))
 
-    from .layout import FORBIDDEN_LAYOUT_KEYS
-
-    skip_keys = {"id", "type"} | FORBIDDEN_LAYOUT_KEYS
+    skip_keys = {"id", "type"}
     for key, value in data.items():
         if key.startswith("@") or key in skip_keys:
             continue

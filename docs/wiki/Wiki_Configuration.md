@@ -17,85 +17,117 @@ Three audit lanes map to three commands:
 | Lane       | Command      | YAML block | Purpose                                                                                                                                        |
 | ---------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                            |
-| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
+| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus `vault.filename_pattern` regex) |
 | Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                            |
 
 ### Rule placement
 
 Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style_Guide](Style_Guide.md) for the full matrix.
 
-- Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
+- **`vault.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
 - Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
 
 Relative **`--input-dir`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
 
+## Top-level blocks
+
+| Block | Purpose |
+| ----- | ------- |
+| `vault:` | Content paths, indexing excludes, filename regex |
+| `graph:` | RDF document URIs, namespace prefixes, SPARQL body literals |
+| `site:` | Built/served HTML chrome and URL routing |
+| `link:` | `wiki link` authoring format and rename repair map |
+| `check:` | Integrity severities (`wiki check`) |
+| `lint:` | Convention severities (`wiki lint`) |
+| `fmt:` | mdformat options (`wiki fmt`) |
+| `sparql_service:` | Optional SPARQL HTTP endpoint on `wiki serve` |
+
 ## Example
 
 ```yaml
-input_dirs:
-  - wiki
-asset_dirs:
-  - assets
-wiki_base: https://example.org/wiki/
-base_url: /wiki
-url_style: dir
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
-exclude:
-  - assets/private/**
-content_predicate: schema:articleBody
+vault:
+  input_dirs:
+    - wiki
+  asset_dirs:
+    - assets
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+  exclude:
+    - assets/private/**
+
+graph:
+  wiki_base: https://example.org/wiki/
+  content_predicate: schema:articleBody
+  context:
+    schema: https://schema.org/
+    wiki: https://example.org/wiki/
+    foaf: http://xmlns.com/foaf/0.1/
+
+site:
+  title: Example Wiki
+  layout: layouts/default.html
+  base_url: /wiki
+  url_style: dir
+
+link:
+  style: markdown
+  renames:
+    Old_Page_Name: New_Page_Name
 
 lint:
   broken_links: warning
   filename_pattern: warning
   headings: off
 
-# Optional: old slug -> new route for wiki link --fix-broken after renames
-link_renames:
-  Old_Page_Name: New_Page_Name
-
-# Optional: format for wiki link --apply (markdown | wikilink; default markdown)
-link_style: markdown
-
 fmt:
   wrap: "no"
   end_of_line: lf
   extensions: [gfm, frontmatter, wikilink]
-
-context:
-  schema: https://schema.org/
-  wiki: https://example.org/wiki/
-  foaf: http://xmlns.com/foaf/0.1/
 ```
 
-JSON configs may use `"context"` or `"@context"` for prefix maps (JSON-LD compatible).
+JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-LD compatible).
 
-## Paths and vault layout
+## Vault (`vault:`)
 
-| Key          | Default                            | Purpose                                                                   |
-| ------------ | ---------------------------------- | ------------------------------------------------------------------------- |
-| `input_dirs` | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)       |
-| `asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build`                                       |
-| `exclude`    | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing |
+| Key | Default | Purpose |
+| --- | ------- | ------- |
+| `vault.input_dirs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
+| `vault.asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
+| `vault.exclude` | `[]` | Glob patterns (POSIX paths relative to config root) skipped when indexing |
+| `vault.filename_pattern` | — | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
 
-Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `base_url` and `url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
+Page URLs come from paths under `vault.input_dirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
-## Wiki and RDF
+## Graph (`graph:`)
 
-| Key                    | Default                                            | Purpose                                                                                                                          |
-| ---------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `wiki_base`            | from `context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs                                                                                              |
-| `context` / `@context` | built-in prefixes                                  | Prefix → namespace URI map for CURIEs in frontmatter and \[\[Microdata                                                           |
-| `content_predicate`    | —                                                  | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `uri_ext`              | `false`                                            | Include file extension in generated URIs when true                                                                               |
+RDF and document URI settings for graph build, `wiki query`, microdata, and SHACL.
 
-## Site output
+| Key | Default | Purpose |
+| --- | ------- | ------- |
+| `graph.wiki_base` | from `graph.context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs |
+| `graph.context` / `graph.@context` | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata |
+| `graph.content_predicate` | — | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
+| `graph.uri_ext` | `false` | Include file extension in generated URIs when true |
 
-| Key           | Default | Purpose                                                             |
-| ------------- | ------- | ------------------------------------------------------------------- |
-| `base_url`    | `/wiki` | URL prefix for built/served pages (`""` for site root)              |
-| `url_style`   | `dir`   | `dir` → `slug/index.html`; `file` → `slug.html`                     |
-| `page_layout` | —       | Path (relative to config) to the site default page layout HTML file |
+## Site (`site:`)
+
+Branding, default page layout, and routing for `wiki build` / `wiki serve`:
+
+| Key | Default | Purpose |
+| --- | ------- | ------- |
+| `site.title` | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
+| `site.layout` | — | Path (relative to config) to the site default page layout file |
+| `site.base_url` | `/wiki` | URL prefix for built/served pages (`""` for site root) |
+| `site.url_style` | `dir` | `dir` → `slug/index.html`; `file` → `slug.html` |
+
+## Link (`link:`)
+
+Settings for the `wiki link` command family (separate from `lint.link_style` severity):
+
+| Key | Default | Purpose |
+| --- | ------- | ------- |
+| `link.style` | `markdown` | Format `wiki link --apply` inserts (`markdown` or `wikilink`) |
+| `link.renames` | `{}` | Old slug → new route map for `wiki link --fix-broken` |
 
 ## Serve API
 
@@ -116,15 +148,15 @@ The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and 
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
-`sparql_service.path` must not collide with the effective `base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
+`sparql_service.path` must not collide with the effective `site.base_url` page routes or the watch endpoint. Invalid values such as `/`, `/wiki`, `/wiki/foo`, or `/wiki/__watch` are rejected when `wiki serve` starts.
 
 ## Page layout
 
-When `page_layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
+When `site.layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
 
 ### Layout strategy
 
-The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html` referenced from `page_layout`).
+The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html` referenced from `site.layout`).
 
 - The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and placeholder contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
@@ -163,8 +195,9 @@ Replace `{key}` tokens in your wiki page layout:
 | `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.      |
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
+| `{site_title}`            | escaped text | Site name from `site.title` in `wiki.yaml` (sidebar label, `<title>` suffix, search placeholder).          |
 | `{inline_css}`            | raw CSS      | \[\[Wiki_CLI                                                                                               |
-| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo.                                                                                |
+| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter is the first character of `site.title` (uppercased).             |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
 | `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                         |
@@ -232,38 +265,26 @@ The bundled default wiki page layout (`layouts/default.html` created by `wiki in
 
 If the configured template file does not exist, the built-in minimal shell is used silently — no error.
 
-CLI flags on `wiki build` and `wiki serve` can override `base_url` and `url_style` for a single run.
+CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `site.url_style` for a single run.
 
 ## Filename conventions
 
-The CLI does not hard-code kebab-case. Projects choose a convention with **`filename_pattern`**, matched against the **full filename** (including `.md`) on markdown files only.
+The CLI does not hard-code kebab-case. Projects choose a convention with **`vault.filename_pattern`**, matched against the **full filename** (including `.md`) on markdown files only.
 
 **Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_Davidson.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
 
 ```yaml
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+vault:
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 ```
 
 **Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
-## Link renames (`link_renames`)
+`wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
 
-Optional map of **old slug → new route** used by `wiki link --fix-broken` when a page was renamed but wikilinks still use the old target. Fuzzy slug matching applies only when exactly one vault route is a close match.
-
-## Link style (`link_style`)
-
-Controls how `wiki link --apply` inserts new internal links:
-
-| Value      | Inserts               | Default |
-| ---------- | --------------------- | ------- |
-| `markdown` | `[display](Route.md)` | yes     |
-| `wikilink` | `[[Route\|display]]`  |         |
-
-`wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link_style`.
-
-When `link_style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link_style: wikilink` for an Obsidian-style vault.
+When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style vault.
 
 ## Formatting (`fmt`)
 
@@ -282,10 +303,9 @@ Invalid inline keys or values fail when the config loads. Invalid TOML syntax fa
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key                | Default | What it audits                                                               |
-| ----------------------- | ------- | ---------------------------------------------------------------------------- |
-| `forbidden_layout_keys` | `error` | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead) |
-| `missing_layout_file`   | `error` | `wazoo:layout` paths that do not resolve to a readable `.html` file          |
+| Rule key              | Default | What it audits                                                      |
+| --------------------- | ------- | ------------------------------------------------------------------- |
+| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
@@ -296,14 +316,14 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | Rule key           | Default   | What it audits                                                                                                 |
 | ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
 | `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
-| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                                                            |
+| `filename_pattern` | `warning` | Full filename vs `vault.filename_pattern` regex                                                            |
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
-| `link_style`       | `warning` | Wikilinks in body prose when top-level `link_style` is `markdown`                                              |
+| `link_style`       | `warning` | Wikilinks in body prose when `link.style` is `markdown`                                              |
 
 ## This repository
 
-`docs/wiki.yaml` is the dogfood vault config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `content_predicate: schema:articleBody` for SPARQL full-text.
+`docs/wiki.yaml` is the dogfood vault config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 

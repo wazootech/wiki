@@ -169,7 +169,7 @@ def lint(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) 
 
 @main.command()
 @optional_files_argument
-@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link_style in wiki.yaml).")
+@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yaml).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
 @click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
@@ -606,7 +606,7 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 @click.option("--url-style", default=None, type=click.Choice(["file", "dir"]), help="URL style: dir or file.")
 @click.option("--wazoo", default=None, help="context.wazoo namespace URI (default https://schema.wazoo.dev/).")
 @click.option("--content-predicate", default=None, help="Optional content_predicate CURIE (e.g. schema:articleBody).")
-@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Top-level link_style in wiki.yaml (markdown or wikilink).")
+@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="link.style in wiki.yaml (markdown or wikilink).")
 def init(
     force: bool,
     init_git: bool,

@@ -17,7 +17,7 @@ class TestWikiBuild(unittest.TestCase):
             assets = root / "assets" / "items"
             wiki.mkdir()
             assets.mkdir(parents=True)
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nasset_dirs: assets\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n  asset_dirs: [assets]\n", encoding="utf-8")
             (wiki / "Item.md").write_text("# Item\n\n![label](../assets/items/label.jpg)", encoding="utf-8")
             (assets / "label.jpg").write_text("image", encoding="utf-8")
             output_dir = root / "_site"
@@ -38,7 +38,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nlint:\n  broken_links: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
@@ -56,7 +56,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("input_dirs: wiki\nlint:\n  broken_links: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
@@ -72,7 +72,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("input_dirs: wiki\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             (wiki / "index.md").write_text("# Custom Home\n\nWelcome.", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page", encoding="utf-8")
 
@@ -90,7 +90,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("input_dirs: wiki\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             (wiki / "person.yaml").write_text("type: Person\nname: Gregory Davidson\n", encoding="utf-8")
             (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
 
@@ -120,7 +120,7 @@ class TestWikiBuild(unittest.TestCase):
 {page_content}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(test_template, encoding="utf-8")
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
@@ -179,7 +179,7 @@ name: Bella Davidson
 {metadata_pane_html}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(template, encoding="utf-8")
             (wiki / "Page.md").write_text(
                 """---
@@ -213,7 +213,7 @@ about: wiki:Alice_Theory
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("input_dirs: wiki\npage_layout: nonexistent.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\nsite:\n  layout: nonexistent.html\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
@@ -221,6 +221,31 @@ about: wiki:Alice_Theory
             self.assertIn("<h1 id=\"firstHeading\">Page</h1>", html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
+
+    def test_build_site_block_drives_logo_letter(self) -> None:
+        runner = CliRunner()
+        template = """<!DOCTYPE html>
+<html><head><title>{page_title} - {site_title}</title></head>
+<body>{logo_svg}<span class="logo-text">{site_title}</span>{page_content}</body></html>"""
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text(
+                "vault:\n  input_dirs: [wiki]\nsite:\n  title: Acme Docs\n  layout: test_shell.html\n",
+                encoding="utf-8",
+            )
+            (root / "test_shell.html").write_text(template, encoding="utf-8")
+            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
+
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
+            self.assertIn(">A</text>", html)
+            self.assertIn('<span class="logo-text">Acme Docs</span>', html)
+            self.assertIn("<title>Page - Acme Docs</title>", html)
 
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent

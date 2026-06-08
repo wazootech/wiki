@@ -184,7 +184,7 @@ name: Project Atlas Record
             self.assertIn("<dt>wazoo:layout</dt>", html)
             self.assertIn('href="/wiki/Project_Atlas/"', html)
 
-    def test_legacy_template_frontmatter_does_not_select_layout(self) -> None:
+    def test_template_frontmatter_does_not_select_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -211,6 +211,8 @@ name: Project Atlas
             self.assertNotIn('id="custom-shell"', html)
             self.assertIn('id="article-top"', html)
             self.assertIn('class="layout-label">CreativeWork</div>', html)
+            self.assertIn("<dt>template</dt>", html)
+            self.assertIn("<dt>wiki:template</dt>", html)
 
     def test_render_outline_title_renders_inline_code(self) -> None:
         html = render_outline_title("`Accept`")
@@ -434,8 +436,8 @@ specialty: Diagnostics
             wiki = root / "wiki"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "input_dirs: wiki\nwiki_base: https://wiki.example.org/\n"
-                "context:\n  wiki: https://wiki.example.org/\n",
+                "vault:\n  input_dirs: [wiki]\ngraph:\n  wiki_base: https://wiki.example.org/\n"
+                "  context:\n    wiki: https://wiki.example.org/\n",
                 encoding="utf-8",
             )
             (wiki / "Farzapedia.md").write_text(

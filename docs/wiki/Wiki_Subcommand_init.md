@@ -26,19 +26,19 @@ wiki init --wiki-base https://example.org/mywiki/ --base-url /mywiki
 | --------------------- | ---------------------------------------------------------------------------------------------- |
 | `--force`             | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html` |
 | `--git`               | Run `git init` after scaffolding                                                               |
-| `--repo`              | GitHub `owner/repo`; infer `wiki_base`, `context.wiki`, and `base_url` for GitHub Pages        |
-| `--wiki-base`         | Explicit `wiki_base` URI (overrides `--repo` inference)                                        |
+| `--repo`              | GitHub `owner/repo`; infer `graph.wiki_base`, `graph.context.wiki`, and `site.base_url` for GitHub Pages |
+| `--wiki-base`         | Explicit `graph.wiki_base` URI (overrides `--repo` inference)                                  |
 | `--base-url`          | URL prefix for built/served pages (default `/wiki` or inferred from `--repo`)                  |
 | `--url-style`         | `dir` or `file` (default `dir`)                                                                |
 | `--wazoo`             | `context.wazoo` namespace URI (default `https://schema.wazoo.dev/`)                            |
-| `--content-predicate` | Optional `content_predicate` CURIE (e.g. `schema:articleBody`)                                 |
-| `--link-style`        | Default link style: `markdown` or `wikilink`                                                   |
+| `--content-predicate` | Optional `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                           |
+| `--link-style`        | Default `link.style`: `markdown` or `wikilink`                                                 |
 
 ## URL resolution
 
-When `wiki_base` is not set with `--wiki-base`, init resolves it in this order:
+When `graph.wiki_base` is not set with `--wiki-base`, init resolves it in this order:
 
-1. **`--repo`** — GitHub Pages project site: `https://{owner}.github.io/{repo}/` and `base_url: /{repo}` (accepts `owner/repo`, HTTPS, or SSH URLs).
+1. **`--repo`** — GitHub Pages project site: `https://{owner}.github.io/{repo}/` and `site.base_url: /{repo}` (accepts `owner/repo`, HTTPS, or SSH URLs).
 1. **Git remote** — If `.git` already exists or `--git` was passed, parse `git remote get-url origin` when it points at GitHub.
 1. **Interactive prompt** — **Custom base URI prefix** (default `https://wiki.example.org/`).
 
@@ -46,20 +46,20 @@ When `wiki_base` is not set with `--wiki-base`, init resolves it in this order:
 
 ## Prompts
 
-When no flag or git remote supplies `wiki_base`, init prompts once:
+When no flag or git remote supplies `graph.wiki_base`, init prompts once:
 
-1. **Custom base URI prefix** (default `https://wiki.example.org/`) → `wiki_base` and `wiki:` in `context`
+1. **Custom base URI prefix** (default `https://wiki.example.org/`) → `graph.wiki_base` and `wiki:` in `graph.context`
 
 Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `xsd` prefixes. Default `wazoo` is `https://schema.wazoo.dev/`.
 
 ## Generated config
 
-New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki init` renders from is [`src/wiki/templates/wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2) (Jinja2). Contributors edit that `.j2` file; variables include `wiki_base`, `base_url`, `url_style`, `wazoo`, and optional `content_predicate` / `link_style` via `{% if %}` blocks.
+New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki init` renders from is [`src/wiki/templates/wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2) (Jinja2). Contributors edit that `.j2` file; Jinja variables (`wiki_base`, `base_url`, `url_style`, `wazoo`, optional `content_predicate` / `link_style`) render into nested `graph:`, `site:`, and `link:` blocks via `{% if %}`.
 
-- `input_dirs: [wiki]`
-- `base_url: /wiki` (or inferred from `--repo`), `url_style: dir`
+- `vault.input_dirs: [wiki]`
+- `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`
 - `lint` rules at `warning` for filename and links
-- `page_layout: layouts/default.html` — site default page layout
+- `site.title` and `site.layout` — site name and default page layout for build/serve
 - `fmt:` — inline mdformat options for `wiki fmt` (`wrap`, `end_of_line`, `extensions`)
 
 Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, set `fmt: .mdformat.toml` and create that file with the same mdformat options as the inline `fmt` block.

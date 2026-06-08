@@ -51,8 +51,10 @@ name: Invalid Page
             (config_dir / "wiki.yaml").write_text(
                 yaml.dump(
                     {
-                        "input_dirs": ["wiki"],
-                        "filename_pattern": r"[A-Za-z0-9_()-]+\.md",
+                        "vault": {
+                            "input_dirs": ["wiki"],
+                            "filename_pattern": r"[A-Za-z0-9_()-]+\.md",
+                        },
                         "lint": {"filename_pattern": "warning"},
                     }
                 ),
@@ -79,7 +81,7 @@ name: Invalid Page
             config_dir = Path(tmpdir)
             extra_dir = config_dir / "extra"
             extra_dir.mkdir()
-            (config_dir / "wiki.yaml").write_text("input_dirs:\n  - wiki\n", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("vault:\n  input_dirs:\n    - wiki\n", encoding="utf-8")
             (extra_dir / "note.md").write_text(
                 "---\ntype: schema:WebPage\nname: Extra\n---\n",
                 encoding="utf-8",
@@ -191,7 +193,7 @@ name: Invalid Name
             wiki_dir = config_dir / "wiki"
             wiki_dir.mkdir()
             (config_dir / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": ["wiki"]}),
+                yaml.dump({"vault": {"input_dirs": ["wiki"]}}),
                 encoding="utf-8",
             )
             first = wiki_dir / "first.md"
@@ -220,7 +222,7 @@ name: Invalid Name
             wiki_dir = config_dir / "wiki"
             wiki_dir.mkdir()
             (config_dir / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": ["wiki"]}),
+                yaml.dump({"vault": {"input_dirs": ["wiki"]}}),
                 encoding="utf-8",
             )
             first = wiki_dir / "first.md"
@@ -460,15 +462,15 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("familyName: Davidson", person_content)
                 self.assertNotIn("wazoo:layout:", person_content)
 
-                # Check page_layout is configured and seeded
-                self.assertIn("page_layout: layouts/default.html", config_content)
+                # Check site layout is configured and seeded
+                self.assertIn("site:\n  title: Wiki CLI\n  layout: layouts/default.html", config_content)
                 default_layout = Path("layouts") / "default.html"
                 self.assertTrue(default_layout.is_file())
                 expected_layout = render_default_layout(
                     InitOptions(wiki_base="https://wiki.example.org/"),
                 )
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("Wiki CLI", expected_layout)
+                self.assertIn("{site_title}", expected_layout)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(wiki_base="https://wiki.example.org/"),
@@ -563,21 +565,21 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         )
         self.assertEqual(docs_template, expected)
 
-    def test_config_rejects_legacy_html_template_key(self) -> None:
+    def test_config_rejects_unknown_html_template_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("input_dirs: wiki\nhtml_template: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("vault:\n  input_dirs: [wiki]\nhtml_template: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 WikiConfig.load(config_path)
-            self.assertIn("html_template was renamed to page_layout", str(ctx.exception))
+            self.assertIn("unknown top-level keys: html_template", str(ctx.exception))
 
-    def test_config_rejects_legacy_wiki_page_layout_key(self) -> None:
+    def test_config_rejects_unknown_wiki_page_layout_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("input_dirs: wiki\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("vault:\n  input_dirs: [wiki]\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 WikiConfig.load(config_path)
-            self.assertIn("wiki_page_layout was renamed to page_layout", str(ctx.exception))
+            self.assertIn("unknown top-level keys: wiki_page_layout", str(ctx.exception))
 
     def test_cli_init_git_opt_in_runs_git_init(self) -> None:
         runner = CliRunner()
@@ -1195,9 +1197,10 @@ Hello from [[alice]].""", encoding="utf-8")
             wiki_dir.mkdir()
             raw_dir = config_dir / "raw"
             raw_dir.mkdir()
-            (config_dir / "wiki.yaml").write_text("""input_dirs:
-  - wiki
-  - raw
+            (config_dir / "wiki.yaml").write_text("""vault:
+  input_dirs:
+    - wiki
+    - raw
 """, encoding="utf-8")
             (wiki_dir / "doc.md").write_text("""---
 type: schema:WebPage
@@ -1340,7 +1343,7 @@ type: schema:WebPage
 id: wiki:doc
 name: ConfigTest
 ---""", encoding="utf-8")
-            (config_dir / "wiki.yaml").write_text("input_dirs: ../wiki", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("vault:\n  input_dirs: ../wiki\n", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),

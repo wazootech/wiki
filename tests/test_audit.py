@@ -581,21 +581,6 @@ name: Wiki CLI
             self.assertIsNotNone(res_valid)
             self.assertTrue(res_valid[0])  # Should conform
 
-    def test_check_layout_frontmatter_rejects_legacy_keys(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "page.md").write_text(
-                "---\ntype: TechArticle\ntemplate: index.html\nwiki:template: index.html\n---\n",
-                encoding="utf-8",
-            )
-            config = WikiConfig(input_dirs=[wiki], config_root=root)
-
-            issues = check_layout_frontmatter(config)
-            self.assertEqual(len(issues["forbidden"]), 2)
-            self.assertEqual(issues["missing"], [])
-
     def test_check_layout_frontmatter_requires_existing_html_file(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -608,21 +593,8 @@ name: Wiki CLI
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
             issues = check_layout_frontmatter(config)
-            self.assertEqual(issues["forbidden"], [])
-            self.assertEqual(len(issues["missing"]), 1)
-            self.assertIn("layouts/missing.html", issues["missing"][0])
-
-    def test_run_check_fails_on_forbidden_layout_keys(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "page.md").write_text("---\ntype: TechArticle\nwiki:template: index.html\n---\n", encoding="utf-8")
-            config = WikiConfig(input_dirs=[wiki], config_root=root)
-
-            results = run_check(config)
-            self.assertFalse(results["conforms"])
-            self.assertTrue(any("wiki:template" in err for err in results["errors"]))
+            self.assertEqual(len(issues), 1)
+            self.assertIn("layouts/missing.html", issues[0])
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,12 +42,11 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key                | What it audits                                                               |
-| ----------------------- | ---------------------------------------------------------------------------- |
-| `forbidden_layout_keys` | Legacy `template` / `wiki:template` frontmatter (use `wazoo:layout` instead) |
-| `missing_layout_file`   | `wazoo:layout` paths that do not resolve to a readable `.html` file          |
+| Rule key              | What it audits                                                      |
+| --------------------- | ------------------------------------------------------------------- |
+| `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
 
-Defaults: both layout rules are `error`.
+Default: `missing_layout_file` is `error`.
 
 Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
 

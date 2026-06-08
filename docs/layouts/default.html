@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title} - Wiki CLI</title>
+<title>{page_title} - {site_title}</title>
 <style>{inline_css}</style>
 </head>
 <body class="{body_class}" data-page-kind="{page_kind}">
@@ -13,7 +13,7 @@
   <div id="p-logo" role="banner">
     <a href="{base_url}/" title="Visit the main page">
       {logo_svg}
-      <span class="logo-text">Wiki CLI</span>
+      <span class="logo-text">{site_title}</span>
     </a>
   </div>
   <div class="portal" role="navigation" id="p-navigation">
@@ -50,7 +50,7 @@
   <div class="vector-navigation-search">
     <div id="p-search" role="search">
       <div class="search-container">
-        <input type="search" id="searchInput" placeholder="Search Wiki CLI" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <input type="search" id="searchInput" placeholder="Search {site_title}" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
         <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
       </div>
       <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>

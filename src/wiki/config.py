@@ -18,6 +18,15 @@ _LINK_STYLES = frozenset({"wikilink", "markdown"})
 DEFAULT_LINK_STYLE = "markdown"
 
 
+def _normalize_site_title(value: Any) -> str:
+    if value is None:
+        return DEFAULT_SITE_TITLE
+    if not isinstance(value, str):
+        raise ValueError(f"Invalid site_title: {value!r} (expected string)")
+    text = value.strip()
+    return text or DEFAULT_SITE_TITLE
+
+
 def _normalize_link_style(value: str | None) -> str:
     if value is None:
         return DEFAULT_LINK_STYLE
@@ -30,6 +39,7 @@ def _normalize_link_style(value: str | None) -> str:
 
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
+DEFAULT_SITE_TITLE = "Wiki CLI"
 VALID_URL_STYLES = {"dir", "file"}
 
 # Standard static namespaces
@@ -44,7 +54,6 @@ WAZOO = Namespace("https://wazootech.github.io/wiki-cli/vocab/")
 DEFAULT_FILENAME_PATTERN = r"[A-Za-z0-9_()-]+\.md"
 
 DEFAULT_CHECK_RULES = {
-    "forbidden_layout_keys": "error",
     "missing_layout_file": "error",
 }
 
@@ -61,28 +70,21 @@ DEFAULT_LINT_RULES = {
 ALLOWED_SEVERITIES = {"error", "warning", "off"}
 
 ALLOWED_CONFIG_KEYS = {
-    "input_dirs",
-    "asset_dirs",
-    "wiki_base",
+    "vault",
+    "graph",
+    "site",
+    "link",
     "check",
     "lint",
-    "context",
-    "@context",
-    "content_predicate",
-    "uri_ext",
-    "filename_pattern",
-    "base_url",
-    "url_style",
-    "exclude",
-    "page_layout",
-    "sparql_service",
-    "link_renames",
-    "link_style",
     "fmt",
+    "sparql_service",
 }
 
+ALLOWED_VAULT_KEYS = {"input_dirs", "asset_dirs", "exclude", "filename_pattern"}
+ALLOWED_GRAPH_KEYS = {"wiki_base", "content_predicate", "uri_ext", "context", "@context"}
+ALLOWED_LINK_KEYS = {"style", "renames"}
+
 ALLOWED_CHECK_KEYS = {
-    "forbidden_layout_keys",
     "missing_layout_file",
 }
 ALLOWED_LINT_KEYS = {
@@ -95,6 +97,9 @@ ALLOWED_LINT_KEYS = {
     "link_style",
 }
 ALLOWED_SPARQL_SERVICE_KEYS = {"enabled", "path"}
+ALLOWED_SITE_KEYS = {"title", "layout", "base_url", "url_style"}
+
+CONFIG_FILENAMES = ("wiki.yaml", "wiki.yml", "wiki.json")
 
 
 def _looks_like_regex(value: str) -> bool:
@@ -123,7 +128,7 @@ def _normalize_severity_rules(
             if block_name == "check" and key == "filename_pattern" and _looks_like_regex(str(value)):
                 raise ValueError(
                     "check.filename_pattern must be error, warning, or off; "
-                    "put the regex in top-level filename_pattern"
+                    "put the regex in vault.filename_pattern"
                 )
             raise ValueError(
                 f"Invalid {block_name}.{key} severity: {value!r} (expected error, warning, or off)"
@@ -177,22 +182,101 @@ def _parse_fmt(
     )
 
 
+def _parse_page_layout_path(layout_raw: Any, base_dir: Path) -> Path | None:
+    if not isinstance(layout_raw, str) or not layout_raw.strip():
+        return None
+    p = Path(layout_raw.strip())
+    return (p if p.is_absolute() else base_dir / p).resolve()
+
+
+def _block_dict(data: dict[str, Any], key: str) -> dict[str, Any]:
+    block = data.get(key)
+    return block if isinstance(block, dict) else {}
+
+
+def _resolve_vault_settings(data: dict[str, Any]) -> dict[str, Any]:
+    vault = _block_dict(data, "vault")
+    return {
+        "input_dirs": vault.get("input_dirs"),
+        "asset_dirs": vault.get("asset_dirs"),
+        "exclude": vault.get("exclude"),
+        "filename_pattern": vault.get("filename_pattern"),
+    }
+
+
+def _resolve_graph_settings(data: dict[str, Any]) -> dict[str, Any]:
+    graph = _block_dict(data, "graph")
+    context_data = graph.get("@context") or graph.get("context")
+    return {
+        "wiki_base": graph.get("wiki_base"),
+        "content_predicate": graph.get("content_predicate"),
+        "uri_ext": graph.get("uri_ext", False),
+        "context_data": context_data if isinstance(context_data, dict) else None,
+    }
+
+
+def _resolve_site_settings(
+    data: dict[str, Any], base_dir: Path
+) -> tuple[str, Path | None, str | None, str | None]:
+    """Resolve site title, layout, base_url, and url_style from site: block."""
+    site = _block_dict(data, "site")
+    title_raw = site.get("title")
+    layout_raw = site.get("layout")
+    base_url_raw = site.get("base_url")
+    url_style_raw = site.get("url_style")
+    return (
+        _normalize_site_title(title_raw),
+        _parse_page_layout_path(layout_raw, base_dir),
+        base_url_raw if isinstance(base_url_raw, str) else None,
+        url_style_raw if isinstance(url_style_raw, str) else None,
+    )
+
+
+def _resolve_link_settings(data: dict[str, Any]) -> dict[str, Any]:
+    link = _block_dict(data, "link")
+    return {
+        "style": link.get("style"),
+        "renames": link.get("renames"),
+    }
+
+
+def find_config_path(path: Path) -> Path | None:
+    """Return wiki config file path when path is a file or searchable directory."""
+    if path.is_file():
+        return path
+    for name in CONFIG_FILENAMES:
+        candidate = path / name
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _validate_nested_block(
+    data: dict[str, Any],
+    config_name: str,
+    block_name: str,
+    allowed_keys: set[str],
+) -> None:
+    block_data = data.get(block_name)
+    if block_data is None:
+        return
+    if not isinstance(block_data, dict):
+        raise ValueError(f"Invalid config file {config_name}: {block_name} must be a mapping")
+    unknown = _unknown_keys(block_data, allowed_keys)
+    if unknown:
+        raise ValueError(
+            f"Invalid config file {config_name}: unknown {block_name} keys: {', '.join(unknown)}"
+        )
+
+
 def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
-    if "html_template" in data:
-        raise ValueError(
-            f"Invalid config file {config_name}: html_template was renamed to page_layout"
-        )
-    if "wiki_page_layout" in data:
-        raise ValueError(
-            f"Invalid config file {config_name}: wiki_page_layout was renamed to page_layout"
-        )
-    if "serve_api" in data:
-        raise ValueError(
-            f"Invalid config file {config_name}: serve_api was renamed to sparql_service"
-        )
     unknown_top_level = _unknown_keys(data, ALLOWED_CONFIG_KEYS)
     if unknown_top_level:
         raise ValueError(f"Invalid config file {config_name}: unknown top-level keys: {', '.join(unknown_top_level)}")
+
+    _validate_nested_block(data, config_name, "vault", ALLOWED_VAULT_KEYS)
+    _validate_nested_block(data, config_name, "graph", ALLOWED_GRAPH_KEYS)
+    _validate_nested_block(data, config_name, "link", ALLOWED_LINK_KEYS)
 
     check_data = data.get("check")
     if check_data is not None:
@@ -219,6 +303,14 @@ def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
             raise ValueError(
                 f"Invalid config file {config_name}: unknown sparql_service keys: {', '.join(unknown_sparql_service)}"
             )
+
+    site_data = data.get("site")
+    if site_data is not None:
+        if not isinstance(site_data, dict):
+            raise ValueError(f"Invalid config file {config_name}: site must be a mapping")
+        unknown_site = _unknown_keys(site_data, ALLOWED_SITE_KEYS)
+        if unknown_site:
+            raise ValueError(f"Invalid config file {config_name}: unknown site keys: {', '.join(unknown_site)}")
 
 
 DEFAULT_NAMESPACES = {
@@ -279,6 +371,7 @@ class WikiConfig:
         link_renames: dict[str, str] | None = None,
         link_style: str | None = None,
         fmt: dict[str, Any] | Path | None = None,
+        site_title: str = DEFAULT_SITE_TITLE,
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -301,6 +394,7 @@ class WikiConfig:
         self.link_renames = dict(link_renames or {})
         self.link_style = _normalize_link_style(link_style)
         self.fmt = fmt
+        self.site_title = _normalize_site_title(site_title)
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -343,8 +437,11 @@ class WikiConfig:
                     if isinstance(data, dict):
                         _validate_config_keys(data, config_path.name)
 
-                        # Extract context mapping (support both "@context" and "context")
-                        context_data = data.get("@context") or data.get("context")
+                        vault_settings = _resolve_vault_settings(data)
+                        graph_settings = _resolve_graph_settings(data)
+                        link_settings = _resolve_link_settings(data)
+
+                        context_data = graph_settings["context_data"]
                         context_obj = None
                         if isinstance(context_data, dict):
                             prefixes = {}
@@ -353,18 +450,16 @@ class WikiConfig:
                                     prefixes[k] = v
                             context_obj = Context(prefixes)
 
-                        # Derive absolute reference point for system paths relative to config location
                         base_dir = config_path.parent.absolute()
 
-                        # Parse input_dirs as a list or single string
-                        input_data = _as_list(data.get("input_dirs") or ["wiki"])
+                        input_data = _as_list(vault_settings["input_dirs"] or ["wiki"])
 
-                        asset_data = data.get("asset_dirs")
+                        asset_data = vault_settings["asset_dirs"]
                         if asset_data is None:
                             asset_data = ["assets"] if (base_dir / "assets").is_dir() else []
                         asset_data = _as_list(asset_data)
 
-                        exclude_data = _as_list(data.get("exclude") or [])
+                        exclude_data = _as_list(vault_settings["exclude"] or [])
 
                         def resolve(p: Any) -> Any:
                             if not p:
@@ -372,21 +467,17 @@ class WikiConfig:
                             path_obj = Path(p)
                             return path_obj if path_obj.is_absolute() else base_dir / path_obj
 
-                        # Derive wiki_base intelligently from explicit property OR context fallback
                         context_wiki_base = None
                         if context_obj and "wiki" in context_obj.namespaces:
                             context_wiki_base = str(context_obj.namespaces["wiki"])
 
-                        uri_ext = data.get("uri_ext", False)
+                        uri_ext = graph_settings["uri_ext"]
                         if not isinstance(uri_ext, bool):
                             uri_ext = False
 
-                        # Parse page_layout as optional path to the site default layout file
-                        layout_raw = data.get("page_layout")
-                        page_layout_path: Path | None = None
-                        if isinstance(layout_raw, str) and layout_raw.strip():
-                            p = Path(layout_raw.strip())
-                            page_layout_path = (p if p.is_absolute() else base_dir / p).resolve()
+                        site_title, page_layout_path, base_url_raw, url_style_raw = _resolve_site_settings(
+                            data, base_dir
+                        )
 
                         sparql_service_data = (
                             data.get("sparql_service") if isinstance(data.get("sparql_service"), dict) else {}
@@ -396,7 +487,7 @@ class WikiConfig:
                             sparql_service_enabled = True
                         sparql_service_path = sparql_service_data.get("path", "/api/sparql")
 
-                        link_renames_raw = data.get("link_renames")
+                        link_renames_raw = link_settings["renames"]
                         link_renames: dict[str, str] = {}
                         if isinstance(link_renames_raw, dict):
                             link_renames = {
@@ -408,23 +499,26 @@ class WikiConfig:
                         return cls(
                             input_dirs=[resolve(d) for d in input_data],
                             asset_dirs=[resolve(d) for d in asset_data],
-                            wiki_base=data.get("wiki_base") or context_wiki_base or "https://wiki.example.org/",
+                            wiki_base=graph_settings["wiki_base"]
+                            or context_wiki_base
+                            or "https://wiki.example.org/",
                             check=data.get("check"),
                             lint=data.get("lint"),
                             context=context_obj,
-                            content_predicate=data.get("content_predicate"),
+                            content_predicate=graph_settings["content_predicate"],
                             uri_ext=uri_ext,
-                            filename_pattern=data.get("filename_pattern"),
-                            base_url=data.get("base_url", DEFAULT_BASE_URL),
-                            url_style=data.get("url_style") or DEFAULT_URL_STYLE,
+                            filename_pattern=vault_settings["filename_pattern"],
+                            base_url=base_url_raw if base_url_raw is not None else DEFAULT_BASE_URL,
+                            url_style=url_style_raw or DEFAULT_URL_STYLE,
                             exclude=[str(p) for p in exclude_data],
                             config_root=base_dir,
                             page_layout=page_layout_path,
                             sparql_service_enabled=sparql_service_enabled,
                             sparql_service_path=sparql_service_path,
                             link_renames=link_renames,
-                            link_style=data.get("link_style"),
+                            link_style=link_settings["style"],
                             fmt=_parse_fmt(data.get("fmt"), config_path.name, base_dir),
+                            site_title=site_title,
                         )
                     raise ValueError(f"Invalid config file {config_path.name}: top-level content must be a mapping")
                 except Exception as e:

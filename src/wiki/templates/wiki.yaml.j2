@@ -1,45 +1,49 @@
-{# wiki init scaffold — variables: wiki_base, base_url, url_style, wazoo, content_predicate, link_style #}
-# Vault paths (relative to this file). See Wiki_Configuration.md.
-input_dirs:
-  - wiki
-# asset_dirs:
-#   - assets
+{# wiki init scaffold — variables: wiki_base, base_url, url_style, site_title, wazoo, content_predicate, link_style #}
+vault:
+  input_dirs:
+    - wiki
+  # asset_dirs:
+  #   - assets
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+  # exclude:
+  #   - assets/private/**
 
-# Site and document URIs
-wiki_base: {{ wiki_base }}
-base_url: {{ base_url }}
-url_style: {{ url_style }}
-
-# Filename regex (full .md name). lint.filename_pattern controls severity.
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
-
-# Glob patterns skipped when indexing (POSIX paths relative to config root).
-# exclude:
-#   - assets/private/**
-
-# When set, markdown body text is added as a literal for full-text SPARQL.
+graph:
+  wiki_base: {{ wiki_base }}
 {% if content_predicate %}
-content_predicate: {{ content_predicate }}
+  content_predicate: {{ content_predicate }}
 {% else %}
-# content_predicate: schema:articleBody
+  # content_predicate: schema:articleBody
 {% endif %}
+  # uri_ext: false
+  context:
+    schema: https://schema.org/
+    wiki: {{ wiki_base }}
+    wazoo: {{ wazoo }}
+    foaf: http://xmlns.com/foaf/0.1/
+    dc: http://purl.org/dc/elements/1.1/
+    dcterms: http://purl.org/dc/terms/
+    sh: http://www.w3.org/ns/shacl#
+    xsd: http://www.w3.org/2001/XMLSchema#
 
-# Include file extension in generated document URIs when true (default false).
-# uri_ext: false
+site:
+  title: {{ site_title }}
+  layout: layouts/default.html
+  base_url: {{ base_url }}
+  url_style: {{ url_style }}
 
-# Internal link authoring: markdown | wikilink (default markdown).
+link:
 {% if link_style %}
-link_style: {{ link_style }}
+  style: {{ link_style }}
 {% else %}
-link_style: markdown
+  style: markdown
 {% endif %}
+  # renames:
+  #   Old_Page_Name: New_Page_Name
 
-# Integrity lane — `wiki check` (SHACL, routes, layout frontmatter).
 check:
-  forbidden_layout_keys: error
   missing_layout_file: error
 
-# Convention lane — `wiki lint` (severities: error | warning | off).
 lint:
   broken_links: warning
   filename_pattern: warning
@@ -49,19 +53,11 @@ lint:
   thematic_breaks: off
   link_style: warning
 
-# Optional slug renames for `wiki link --fix-broken`.
-# link_renames:
-#   Old_Page_Name: New_Page_Name
-
 # Optional SPARQL HTTP endpoint on `wiki serve` (opt-in).
 # sparql_service:
 #   enabled: false
 #   path: /api/sparql
 
-# Default page layout for `wiki build` / `wiki serve`.
-page_layout: layouts/default.html
-
-# Mechanical markdown formatting for `wiki fmt` (see Wiki_Subcommand_fmt.md).
 fmt:
   wrap: "no"
   end_of_line: lf
@@ -69,14 +65,3 @@ fmt:
 
 # Pointer mode (optional TOML file relative to this file):
 # fmt: .mdformat.toml
-
-# Prefix map for CURIEs in frontmatter and microdata.
-context:
-  schema: https://schema.org/
-  wiki: {{ wiki_base }}
-  wazoo: {{ wazoo }}
-  foaf: http://xmlns.com/foaf/0.1/
-  dc: http://purl.org/dc/elements/1.1/
-  dcterms: http://purl.org/dc/terms/
-  sh: http://www.w3.org/ns/shacl#
-  xsd: http://www.w3.org/2001/XMLSchema#

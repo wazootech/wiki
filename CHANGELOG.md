@@ -2,10 +2,22 @@
 
 ## Unreleased
 
+## 0.1.9 — 2026-06-08
+
 ### Added
 
-- Top-level `link_style` (`markdown` default, or `wikilink`) controls `wiki link --apply` output format
-- `lint.link_style` convention audit flags wikilinks in body prose when `link_style` is `markdown`
+- `link.style` (`markdown` default, or `wikilink`) controls `wiki link --apply` output format
+- `lint.link_style` convention audit flags wikilinks in body prose when `link.style` is `markdown`
+- `site.title` drives layout chrome (`{site_title}`) and the logo glyph on build/serve
+
+### Changed (breaking)
+
+- **Nested config blocks only:** settings live under `vault:`, `graph:`, `site:`, and `link:`; unknown top-level keys fail at load (no `wiki config migrate`)
+- Remove `check.forbidden_layout_keys`; `template` / `wiki:template` frontmatter are ordinary properties (layout selection uses `wazoo:layout` only)
+- Move `check.broken_links` to `lint.broken_links` in `wiki.yaml` (unknown `check` keys fail at load)
+- **`wiki build`** preflight runs `lint` then `check` (unless `--no-check`)
+- Split audit lanes: **`wiki check`** = integrity (SHACL, routes, collisions, layout); **`wiki lint`** = conventions including `lint.broken_links`
+- Move `filename_pattern` and `headings` severities from `check:` to `lint:` in `wiki.yaml` (old keys fail at load)
 
 ### Changed
 
@@ -13,19 +25,18 @@
 - `lint.headings` flags Setext underlined headings; vaults should use ATX `#` headings only
 - Heading auditor skips thematic `---` inside fenced code and ignores capitalized link text in headings
 
-### Changed (breaking)
-
-- Move `check.broken_links` to `lint.broken_links` in `wiki.yaml` (unknown `check` keys fail at load)
-- **`wiki build`** preflight runs `lint` then `check` (unless `--no-check`)
-- Split audit lanes: **`wiki check`** = integrity (SHACL, routes, collisions, layout); **`wiki lint`** = conventions including `lint.broken_links`
-- Move `filename_pattern` and `headings` severities from `check:` to `lint:` in `wiki.yaml` (old keys fail at load)
-
 ### Migration
 
-1. In `wiki.yaml`, move `check.broken_links` to `lint.broken_links`
-2. Move `check.filename_pattern` and `check.headings` to a `lint:` block if still present
-3. Add `\.md` to your top-level `filename_pattern` regex
-4. Run `wiki lint` then `wiki check` in CI
+1. Group former top-level keys under blocks (unknown top-level keys fail at load):
+   - `input_dirs`, `asset_dirs`, `exclude`, `filename_pattern` → `vault:`
+   - `wiki_base`, `content_predicate`, `context` / `@context`, `uri_ext` → `graph:`
+   - `site_title`, `wiki_page_layout` / `page_layout`, `base_url`, `url_style` → `site:` (`title`, `layout`, `base_url`, `url_style`)
+   - `link_renames`, `link_style` → `link:` (`renames`, `style`)
+   - `serve_api` → `sparql_service`
+2. Move `check.broken_links` to `lint.broken_links`
+3. Move `check.filename_pattern` and `check.headings` to `lint:` if still present
+4. Add `\.md` to your `vault.filename_pattern` regex
+5. Run `wiki lint` then `wiki check` in CI
 
 ## 0.1.8 — 2026-06-05
 

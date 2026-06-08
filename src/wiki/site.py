@@ -1307,6 +1307,41 @@ def build_site(
     return WikiSite(pages=pages, config=config, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
 
 
+def _logo_letter(site_title: str) -> str:
+    from .config import DEFAULT_SITE_TITLE
+
+    text = (site_title or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
+    return text[0].upper()
+
+
+def _build_logo_svg(letter: str) -> str:
+    glyph = html_module.escape(letter)
+    return f"""<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
+  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
+  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
+  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
+  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
+  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
+  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">{glyph}</text>
+</svg>"""
+
+
 def _render_html(shell: str, context: dict[str, str]) -> str:
     """Replace {placeholder} tokens in shell with values from context."""
     # page_content is rendered markdown and may document placeholder names literally.
@@ -1344,31 +1379,8 @@ def build_index_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    # Wikipedia SVG Logo
-    logo_svg = """<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
-    </linearGradient>
-    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
-    </linearGradient>
-  </defs>
-  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
-  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
-  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
-  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
-</svg>"""
+    site_title = site.config.site_title
+    logo_svg = _build_logo_svg(_logo_letter(site_title))
 
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
@@ -1376,6 +1388,7 @@ def build_index_html(
         "inline_css": INLINE_CSS,
         "base_url": base_url,
         "logo_svg": logo_svg,
+        "site_title": html_module.escape(site_title),
         "page_title": "All Pages",
         "body_class": "wiki-index",
         "page_kind": "index",
@@ -1438,31 +1451,8 @@ def build_page_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    # Wikipedia SVG Logo
-    logo_svg = """<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
-    </linearGradient>
-    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
-    </linearGradient>
-  </defs>
-  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
-  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
-  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
-  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
-</svg>"""
+    site_title = site.config.site_title
+    logo_svg = _build_logo_svg(_logo_letter(site_title))
 
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
     if page.has_frontmatter:
@@ -1484,6 +1474,7 @@ def build_page_html(
         "inline_css": INLINE_CSS,
         "base_url": base_url,
         "logo_svg": logo_svg,
+        "site_title": html_module.escape(site_title),
         "page_title": html_module.escape(page.title),
         "body_class": f"wiki-page layout-{layout_class}",
         "page_kind": "article",

@@ -8,6 +8,8 @@ from rdflib import Graph, Namespace
 
 from wiki.config import Context, WikiConfig, DEFAULT_CHECK_RULES, DEFAULT_LINT_RULES, DEFAULT_NAMESPACES
 
+MINIMAL_VAULT_YAML = "vault:\n  input_dirs: [wiki]\n"
+
 
 class TestContext(unittest.TestCase):
     def test_context_default_initialization(self) -> None:
@@ -33,8 +35,7 @@ class TestContext(unittest.TestCase):
         context = Context({"ex": "http://example.org/"})
         graph = Graph()
         context.bind_namespaces(graph)
-        
-        # Verify ex is bound
+
         namespaces = dict(graph.namespaces())
         self.assertIn("ex", namespaces)
         self.assertEqual(str(namespaces["ex"]), "http://example.org/")
@@ -62,15 +63,28 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             config = WikiConfig.load(Path(tmpdir))
             self.assertEqual(config.input_dirs, [Path("wiki")])
+            self.assertEqual(config.site_title, "Wiki CLI")
 
     def test_wikiconfig_load_yaml(self) -> None:
         """Test WikiConfig.load correctly parses wiki.yaml."""
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             yaml_content = {
-                "input_dirs": "custom_wiki",
-                "asset_dirs": ["assets", "media/photos"],
-                "exclude": ["wiki/drafts/**", "assets/private/**"],
+                "vault": {
+                    "input_dirs": "custom_wiki",
+                    "asset_dirs": ["assets", "media/photos"],
+                    "exclude": ["wiki/drafts/**", "assets/private/**"],
+                    "filename_pattern": "[A-Za-z0-9_()-]+\\.md",
+                },
+                "site": {
+                    "base_url": "/docs",
+                    "url_style": "file",
+                },
+                "graph": {
+                    "context": {
+                        "custom_pref": "http://custom-pref.org/"
+                    }
+                },
                 "check": {
                     "missing_layout_file": "error"
                 },
@@ -78,16 +92,10 @@ class TestWikiConfig(unittest.TestCase):
                     "broken_links": "error",
                     "filename_pattern": "error"
                 },
-                "filename_pattern": "[A-Za-z0-9_()-]+\\.md",
-                "base_url": "/docs",
-                "url_style": "file",
                 "sparql_service": {"enabled": False, "path": "/sparql"},
-                "context": {
-                    "custom_pref": "http://custom-pref.org/"
-                }
             }
             (base_path / "wiki.yaml").write_text(yaml.dump(yaml_content), encoding="utf-8")
-            
+
             config = WikiConfig.load(base_path)
             self.assertEqual(config.input_dirs, [base_path.absolute() / "custom_wiki"])
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
@@ -102,10 +110,60 @@ class TestWikiConfig(unittest.TestCase):
             self.assertEqual(config.sparql_service_path, "/sparql")
             self.assertIn("custom_pref", config.namespaces)
 
+    def test_wikiconfig_load_site_title(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text("site:\n  title: Acme Docs\n", encoding="utf-8")
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.site_title, "Acme Docs")
+
+    def test_wikiconfig_load_blank_site_title_falls_back(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text('site:\n  title: "   "\n', encoding="utf-8")
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.site_title, "Wiki CLI")
+
+    def test_wikiconfig_load_site_block(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "layouts").mkdir()
+            (base_path / "layouts" / "custom.html").write_text("<html></html>", encoding="utf-8")
+            (base_path / "wiki.yaml").write_text(
+                "site:\n  title: Nested Wiki\n  layout: layouts/custom.html\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.site_title, "Nested Wiki")
+            self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html").resolve())
+
+    def test_wikiconfig_rejects_unknown_flat_top_level_keys(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "input_dirs: wiki\nlink_style: markdown\nwiki_base: https://example.org/wiki/\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError) as ctx:
+                WikiConfig.load(base_path)
+            message = str(ctx.exception)
+            self.assertIn("unknown top-level keys", message)
+            self.assertIn("input_dirs", message)
+            self.assertIn("link_style", message)
+            self.assertIn("wiki_base", message)
+
+    def test_wikiconfig_rejects_unknown_site_keys(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text("site:\n  favicon: /icon.png\n", encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                WikiConfig.load(base_path)
+            self.assertIn("unknown site keys", str(ctx.exception))
+
     def test_wikiconfig_load_link_style(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text("link_style: markdown\n", encoding="utf-8")
+            (base_path / "wiki.yaml").write_text("link:\n  style: markdown\n", encoding="utf-8")
             config = WikiConfig.load(base_path)
             self.assertEqual(config.link_style, "markdown")
 
@@ -118,13 +176,15 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             json_content = {
-                "input_dirs": "json_wiki",
-                "@context": {
-                    "json_pref": "http://json-pref.org/"
-                }
+                "vault": {"input_dirs": "json_wiki"},
+                "graph": {
+                    "@context": {
+                        "json_pref": "http://json-pref.org/"
+                    }
+                },
             }
             (base_path / "wiki.json").write_text(json.dumps(json_content), encoding="utf-8")
-            
+
             config = WikiConfig.load(base_path)
             self.assertEqual(config.input_dirs, [base_path.absolute() / "json_wiki"])
             self.assertIn("json_pref", config.namespaces)
@@ -153,7 +213,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "check": {"brokenLinks": "error"}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "check": {"brokenLinks": "error"}}),
                 encoding="utf-8",
             )
 
@@ -164,29 +224,29 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "sparql_service": {"enable": True}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "sparql_service": {"enable": True}}),
                 encoding="utf-8",
             )
 
             with self.assertRaisesRegex(ValueError, "unknown sparql_service keys"):
                 WikiConfig.load(base_path)
 
-    def test_wikiconfig_rejects_renamed_serve_api_key(self) -> None:
+    def test_wikiconfig_rejects_unknown_serve_api_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "serve_api": {"enabled": True}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "serve_api": {"enabled": True}}),
                 encoding="utf-8",
             )
 
-            with self.assertRaisesRegex(ValueError, "serve_api was renamed to sparql_service"):
+            with self.assertRaisesRegex(ValueError, "unknown top-level keys: serve_api"):
                 WikiConfig.load(base_path)
 
     def test_wikiconfig_default_asset_dir_when_present(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "assets").mkdir()
-            (base_path / "wiki.yaml").write_text("input_dirs: wiki\n", encoding="utf-8")
+            (base_path / "wiki.yaml").write_text(MINIMAL_VAULT_YAML, encoding="utf-8")
 
             config = WikiConfig.load(base_path)
             self.assertEqual(config.asset_dirs, [base_path.absolute() / "assets"])
@@ -206,7 +266,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(
                 yaml.dump(
                     {
-                        "input_dirs": "wiki",
+                        "vault": {"input_dirs": "wiki"},
                         "check": {"filename_pattern": "warning", "broken_links": "warning"},
                     }
                 ),
@@ -224,7 +284,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "lint": {"broken_links": "error"}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "lint": {"broken_links": "error"}}),
                 encoding="utf-8",
             )
 
@@ -235,7 +295,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "lint": {"brokenLinks": "error"}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "lint": {"brokenLinks": "error"}}),
                 encoding="utf-8",
             )
 
@@ -265,7 +325,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(
                 yaml.dump(
                     {
-                        "input_dirs": "wiki",
+                        "vault": {"input_dirs": "wiki"},
                         "fmt": {
                             "wrap": "no",
                             "extensions": ["gfm", "frontmatter", "wikilink"],
@@ -282,7 +342,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "fmt": "custom.toml"}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "fmt": "custom.toml"}),
                 encoding="utf-8",
             )
             config = WikiConfig.load(base_path)
@@ -295,7 +355,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "fmt": absolute_fmt}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "fmt": absolute_fmt}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "fmt path must be relative"):
@@ -305,7 +365,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "fmt": True}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "fmt": True}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "fmt must be a mapping or path string"):
@@ -315,7 +375,7 @@ class TestWikiConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"input_dirs": "wiki", "fmt": {"typo_key": True}}),
+                yaml.dump({"vault": {"input_dirs": "wiki"}, "fmt": {"typo_key": True}}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "Invalid key 'typo_key'"):
@@ -327,7 +387,7 @@ class TestWikiConfig(unittest.TestCase):
             (base_path / "wiki.json").write_text(
                 json.dumps(
                     {
-                        "input_dirs": ["wiki"],
+                        "vault": {"input_dirs": ["wiki"]},
                         "fmt": {
                             "wrap": "no",
                             "extensions": ["gfm", "frontmatter", "wikilink"],
@@ -339,7 +399,6 @@ class TestWikiConfig(unittest.TestCase):
             config = WikiConfig.load(base_path)
             self.assertIsInstance(config.fmt, dict)
             self.assertEqual(config.fmt["extensions"], ["gfm", "frontmatter", "wikilink"])
-
 
 if __name__ == "__main__":
     unittest.main()

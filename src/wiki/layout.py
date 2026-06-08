@@ -8,7 +8,6 @@ from typing import Any
 from .headings import heading_slug
 
 LAYOUT_FRONTMATTER_KEY = "wazoo:layout"
-FORBIDDEN_LAYOUT_KEYS = frozenset({"template", "wiki:template"})
 
 
 def resolve_layout_path(raw: str, config_root: Path) -> Path:

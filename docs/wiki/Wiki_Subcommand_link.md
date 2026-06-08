@@ -27,7 +27,7 @@ wiki link --fix-broken --dry-run
 | Flag              | Description                                                                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `FILE...`         | Optional markdown paths; otherwise entire vault                                                                                                                     |
-| `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link_style` in [wiki.yaml](Wiki_Configuration.md) (`wikilink` or `markdown`) |
+| `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link.style` in [wiki.yaml](Wiki_Configuration.md) (`wikilink` or `markdown`) |
 | `--fix-broken`    | Repair unambiguous broken wikilinks and internal markdown page links                                                                                                |
 | `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files                                                                                                           |
 | `-c`, `--check`   | Exit 1 if opportunities or broken links remain (CI gate)                                                                                                            |
@@ -44,7 +44,7 @@ Missing-link suggestions skip:
 
 Broken-link repair (`--fix-broken`) only runs when:
 
-- The target page rename is listed in `link_renames` (see [Wiki_Configuration](Wiki_Configuration.md))
+- The target page rename is listed in `link.renames` (see [Wiki_Configuration](Wiki_Configuration.md))
 - A unique fuzzy route match exists among vault pages
 - A unique fuzzy heading fragment exists on the target page
 

@@ -1,0 +1,15 @@
+---
+description: Config load errors stay minimal — no migration hint tables or migrate shims
+alwaysApply: true
+---
+
+# Config load errors
+
+When changing `wiki.yaml` schema or rejecting invalid keys:
+
+- **Fail fast** with allowlist validation (`unknown top-level keys`, `Invalid vault keys`, etc.).
+- **Do not** add per-key rename hints in error messages (e.g. "`input_dirs` → use `vault.input_dirs`"). These tables are bloat, drift from the schema, and often suggest wrong mappings.
+- **Do not** add `wiki config migrate`, batched alias tables, or other backwards-compat loaders unless the user explicitly requests migration support.
+- **Do** document breaking moves in `CHANGELOG.md` (Migration section) and [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md).
+
+Upgrade narrative belongs in docs and release notes, not in runtime error strings.

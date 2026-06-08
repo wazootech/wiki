@@ -97,12 +97,13 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("wiki_base: https://wazootech.github.io/wiki/", rendered)
         self.assertIn("base_url: /wiki", rendered)
         self.assertIn("content_predicate: schema:articleBody", rendered)
-        self.assertIn("link_style: markdown", rendered)
+        self.assertIn("style: markdown", rendered)
+        self.assertIn("link:", rendered)
         self.assertIn("headings: off", rendered)
         self.assertIn("heading_levels: off", rendered)
         self.assertIn("duplicate_headings: off", rendered)
         self.assertIn("thematic_breaks: off", rendered)
-        self.assertIn("forbidden_layout_keys: error", rendered)
+        self.assertIn("missing_layout_file: error", rendered)
         self.assertIn("wrap: \"no\"", rendered)
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
@@ -129,18 +130,18 @@ class TestRenderWikiYaml(TestCase):
                 encoding="utf-8",
             )
             parsed = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-            self.assertEqual(parsed["wiki_base"], "https://wiki.example.org/")
-            self.assertEqual(parsed["context"]["wiki"], "https://wiki.example.org/")
+            self.assertEqual(parsed["graph"]["wiki_base"], "https://wiki.example.org/")
+            self.assertEqual(parsed["graph"]["context"]["wiki"], "https://wiki.example.org/")
             config = WikiConfig.load(config_path)
             self.assertEqual(config.wiki_base, "https://wiki.example.org/")
 
     def test_render_default_layout(self) -> None:
         rendered = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
         self.assertIn("{page_title}", rendered)
-        self.assertIn("Wiki CLI", rendered)
+        self.assertIn("{site_title}", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn('<title>{page_title} - Wiki CLI</title>', rendered)
-        self.assertIn('placeholder="Search Wiki CLI"', rendered)
+        self.assertIn('<title>{page_title} - {site_title}</title>', rendered)
+        self.assertIn('placeholder="Search {site_title}"', rendered)
 
 
 class TestResolveInitOptions(TestCase):

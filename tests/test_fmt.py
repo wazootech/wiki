@@ -205,7 +205,7 @@ class TestWikiFmt(unittest.TestCase):
             root = Path(tmpdir)
             (root / ".mdformat.toml").write_text(toml, encoding="utf-8")
             (root / "wiki.yaml").write_text(
-                "input_dirs: [wiki]\nfmt: .mdformat.toml\n",
+                "vault:\n  input_dirs: [wiki]\nfmt: .mdformat.toml\n",
                 encoding="utf-8",
             )
             file_path = root / "wiki" / "page.md"
@@ -225,7 +225,7 @@ class TestWikiFmt(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             (root / ".mdformat.toml").write_text(toml, encoding="utf-8")
-            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             file_path = root / "wiki" / "page.md"
             file_path.parent.mkdir(parents=True)
             file_path.write_text("# Title\n\nSome text  \n", encoding="utf-8")
@@ -260,7 +260,7 @@ class TestWikiFmt(unittest.TestCase):
             pointer_root.mkdir()
             (pointer_root / ".mdformat.toml").write_text(toml, encoding="utf-8")
             (pointer_root / "wiki.yaml").write_text(
-                "input_dirs: [wiki]\nfmt: .mdformat.toml\n",
+                "vault:\n  input_dirs: [wiki]\nfmt: .mdformat.toml\n",
                 encoding="utf-8",
             )
             pointer_cfg = WikiConfig.load(pointer_root)
@@ -269,7 +269,7 @@ class TestWikiFmt(unittest.TestCase):
             omit_root = root / "omit"
             omit_root.mkdir()
             (omit_root / ".mdformat.toml").write_text(toml, encoding="utf-8")
-            (omit_root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            (omit_root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             omit_cfg = WikiConfig.load(omit_root)
             omit_out = format_markdown(original, file_path, omit_cfg)
 
@@ -280,7 +280,7 @@ class TestWikiFmt(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                "input_dirs: wiki\nfmt:\n  wrap: no\n  end_of_line: lf\n"
+                "vault:\n  input_dirs: [wiki]\nfmt:\n  wrap: no\n  end_of_line: lf\n"
                 '  extensions: ["gfm", "frontmatter", "wikilink"]\n',
                 encoding="utf-8",
             )
@@ -290,7 +290,7 @@ class TestWikiFmt(unittest.TestCase):
     def test_fmt_absent_uses_wiki_cli_defaults(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
-            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             file_path = root / "page.md"
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
@@ -307,7 +307,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path = root / "page.md"
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
-            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("vault:\n  input_dirs: [wiki]\n", encoding="utf-8")
             absent_config = WikiConfig.load(root)
             empty_config = WikiConfig(config_root=root, fmt={})
             absent_out = format_markdown(original, file_path, absent_config)

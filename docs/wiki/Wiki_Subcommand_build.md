@@ -35,13 +35,13 @@ wiki build --no-check
 
 ## Output layout
 
-With `base_url: /wiki` and `url_style: dir`:
+With `site.base_url: /wiki` and `site.url_style: dir`:
 
 ```
 _site/wiki/Alice/index.html  →  /wiki/Alice/
 ```
 
-Assets from `asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
+Assets from `vault.asset_dirs` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
 
 ## Metadata view
 
@@ -49,7 +49,7 @@ Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, Tr
 
 ## Wiki page layout
 
-If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `page_layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
+If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
 

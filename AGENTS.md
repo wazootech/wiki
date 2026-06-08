@@ -10,7 +10,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 
 ### Internal links
 - **Rule:** Use standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this vault. Ensure internal links point at existing documents.
-- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link_style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
+- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
 - **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.
@@ -47,6 +47,9 @@ wiki lint --strict
 ```
 
 CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate lanes. `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
+
+### Config schema changes
+On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested — document upgrades in `CHANGELOG.md` and [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md).
 
 ### Architecture
 See [CONTEXT.md](CONTEXT.md) for domain language and [docs/wiki/Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

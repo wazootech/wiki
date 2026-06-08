@@ -1,36 +1,40 @@
-# Vault paths (relative to this file). See Wiki_Configuration.md.
-input_dirs:
-  - wiki
-# asset_dirs:
-#   - assets
+vault:
+  input_dirs:
+    - wiki
+  # asset_dirs:
+  #   - assets
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+  # exclude:
+  #   - assets/private/**
 
-# Site and document URIs
-wiki_base: https://wazootech.github.io/wiki/
-base_url: /wiki
-url_style: dir
+graph:
+  wiki_base: https://wazootech.github.io/wiki/
+  content_predicate: schema:articleBody
+  # uri_ext: false
+  context:
+    schema: https://schema.org/
+    wiki: https://wazootech.github.io/wiki/
+    wazoo: https://schema.wazoo.dev/
+    foaf: http://xmlns.com/foaf/0.1/
+    dc: http://purl.org/dc/elements/1.1/
+    dcterms: http://purl.org/dc/terms/
+    sh: http://www.w3.org/ns/shacl#
+    xsd: http://www.w3.org/2001/XMLSchema#
 
-# Filename regex (full .md name). lint.filename_pattern controls severity.
-filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+site:
+  title: Wiki CLI
+  layout: layouts/default.html
+  base_url: /wiki
+  url_style: dir
 
-# Glob patterns skipped when indexing (POSIX paths relative to config root).
-# exclude:
-#   - assets/private/**
+link:
+  style: markdown
+  # renames:
+  #   Old_Page_Name: New_Page_Name
 
-# When set, markdown body text is added as a literal for full-text SPARQL.
-content_predicate: schema:articleBody
-
-# Include file extension in generated document URIs when true (default false).
-# uri_ext: false
-
-# Internal link authoring: markdown | wikilink (default markdown).
-link_style: markdown
-
-# Integrity lane — `wiki check` (SHACL, routes, layout frontmatter).
 check:
-  forbidden_layout_keys: error
   missing_layout_file: error
 
-# Convention lane — `wiki lint` (severities: error | warning | off).
 lint:
   broken_links: warning
   filename_pattern: warning
@@ -40,19 +44,11 @@ lint:
   thematic_breaks: off
   link_style: warning
 
-# Optional slug renames for `wiki link --fix-broken`.
-# link_renames:
-#   Old_Page_Name: New_Page_Name
-
 # Optional SPARQL HTTP endpoint on `wiki serve` (opt-in).
 # sparql_service:
 #   enabled: false
 #   path: /api/sparql
 
-# Default page layout for `wiki build` / `wiki serve`.
-page_layout: layouts/default.html
-
-# Mechanical markdown formatting for `wiki fmt` (see Wiki_Subcommand_fmt.md).
 fmt:
   wrap: "no"
   end_of_line: lf
@@ -60,14 +56,3 @@ fmt:
 
 # Pointer mode (optional TOML file relative to this file):
 # fmt: .mdformat.toml
-
-# Prefix map for CURIEs in frontmatter and microdata.
-context:
-  schema: https://schema.org/
-  wiki: https://wazootech.github.io/wiki/
-  wazoo: https://schema.wazoo.dev/
-  foaf: http://xmlns.com/foaf/0.1/
-  dc: http://purl.org/dc/elements/1.1/
-  dcterms: http://purl.org/dc/terms/
-  sh: http://www.w3.org/ns/shacl#
-  xsd: http://www.w3.org/2001/XMLSchema#
