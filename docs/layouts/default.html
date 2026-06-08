@@ -248,7 +248,7 @@ function initCodeCopyButtons() {
     btn.setAttribute('aria-label', 'Copy code');
     btn.textContent = 'Copy';
     btn.addEventListener('click', () => copyPreContent(pre, btn));
-    wrapper.insertBefore(btn, pre);
+    pre.insertBefore(btn, pre.firstChild);
   });
 }
 

@@ -398,11 +398,12 @@ pre code {
 }
 
 pre[data-copy] {
+  position: relative;
   padding-top: 36px;
 }
 
 .code-block {
-  position: relative;
+  display: flow-root;
   margin-bottom: 16px;
 }
 
@@ -427,8 +428,8 @@ pre[data-copy] {
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-.code-block:hover .code-copy-btn,
-.code-block:focus-within .code-copy-btn,
+pre[data-copy]:hover .code-copy-btn,
+pre[data-copy]:focus-within .code-copy-btn,
 .code-copy-btn:focus {
   opacity: 1;
 }
