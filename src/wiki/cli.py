@@ -595,14 +595,12 @@ def init(
 
     from .init_scaffold import (
         render_default_layout,
-        render_mdformat_toml,
         render_wiki_yaml,
         resolve_init_options,
     )
 
     cwd = Path.cwd()
     config_path = cwd / "wiki.yaml"
-    mdformat_path = cwd / ".mdformat.toml"
     readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
@@ -647,8 +645,7 @@ def init(
         "# My Wiki\n\n"
         "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
         "## Workspace Layout\n\n"
-        "- `wiki.yaml` — Workspace configuration and namespace prefixes.\n"
-        "- `.mdformat.toml` — Mechanical markdown formatting for `wiki fmt`.\n"
+        "- `wiki.yaml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
         "  - `Person_Shape.md` — Validation shape for Person documents.\n"
         "  - `Ethan_Davidson.md` — An example Person document.\n\n"
@@ -703,9 +700,6 @@ def init(
 
     config_path.write_text(config_content, encoding="utf-8")
 
-    if force or not mdformat_path.exists():
-        mdformat_path.write_text(render_mdformat_toml(), encoding="utf-8")
-
     layouts_dir = cwd / "layouts"
     default_layout_path = layouts_dir / "default.html"
     layouts_dir.mkdir(parents=True, exist_ok=True)
@@ -723,7 +717,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, .mdformat.toml, README.md, wiki/ starter files, and layouts/default.html."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html."
     if init_git:
         message += " Ran git init."
     click.echo(message)
@@ -736,7 +730,7 @@ def init(
 @click.pass_obj
 def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> None:
     """Format markdown vault pages using mdformat."""
-    from .fmt_util import format_markdown
+    from .fmt_util import describe_fmt_source, format_markdown
     from .paths import iter_markdown_files
 
     if file:
@@ -747,13 +741,16 @@ def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> No
     else:
         files = iter_markdown_files(config)
 
+    if verbose and files:
+        click.echo(f"Using {describe_fmt_source(files[0], config)}.")
+
     stale_files = []
     success_count = 0
 
     for f in files:
         try:
             original = f.read_text(encoding="utf-8")
-            formatted = format_markdown(original, f)
+            formatted = format_markdown(original, f, config)
             if original != formatted:
                 stale_files.append(f)
                 if not check:

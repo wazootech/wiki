@@ -56,8 +56,8 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 | --------------------- | ---------------------------------------------------- |
 | `wiki lint --strict`  | Broken links, filename pattern, headings, link style |
 | `wiki fmt --check`    | mdformat consistency                                 |
-| `wiki render --check` | Stale inline SPARQL result blocks                  |
-| `wiki link --check`   | Remaining missing-wikilink opportunities           |
+| `wiki render --check` | Stale inline SPARQL result blocks                    |
+| `wiki link --check`   | Remaining missing-wikilink opportunities             |
 
 `wiki build` runs `wiki lint` then `wiki check` before writing output unless `--no-check`.
 

@@ -22,25 +22,25 @@ wiki init --wiki-base https://example.org/mywiki/ --base-url /mywiki
 
 ## Options
 
-| Flag | Description |
-| ---- | ----------- |
-| `--force` | Overwrite existing `wiki.yaml` or non-empty `wiki/` |
-| `--git` | Run `git init` after scaffolding |
-| `--repo` | GitHub `owner/repo`; infer `wiki_base`, `context.wiki`, and `base_url` for GitHub Pages |
-| `--wiki-base` | Explicit `wiki_base` URI (overrides `--repo` inference) |
-| `--base-url` | URL prefix for built/served pages (default `/wiki` or inferred from `--repo`) |
-| `--url-style` | `dir` or `file` (default `dir`) |
-| `--wazoo` | `context.wazoo` namespace URI (default `https://schema.wazoo.dev/`) |
-| `--content-predicate` | Optional `content_predicate` CURIE (e.g. `schema:articleBody`) |
-| `--link-style` | Default link style: `markdown` or `wikilink` |
+| Flag                  | Description                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `--force`             | Overwrite existing `wiki.yaml` or non-empty `wiki/`                                     |
+| `--git`               | Run `git init` after scaffolding                                                        |
+| `--repo`              | GitHub `owner/repo`; infer `wiki_base`, `context.wiki`, and `base_url` for GitHub Pages |
+| `--wiki-base`         | Explicit `wiki_base` URI (overrides `--repo` inference)                                 |
+| `--base-url`          | URL prefix for built/served pages (default `/wiki` or inferred from `--repo`)           |
+| `--url-style`         | `dir` or `file` (default `dir`)                                                         |
+| `--wazoo`             | `context.wazoo` namespace URI (default `https://schema.wazoo.dev/`)                     |
+| `--content-predicate` | Optional `content_predicate` CURIE (e.g. `schema:articleBody`)                          |
+| `--link-style`        | Default link style: `markdown` or `wikilink`                                            |
 
 ## URL resolution
 
 When `wiki_base` is not set with `--wiki-base`, init resolves it in this order:
 
 1. **`--repo`** — GitHub Pages project site: `https://{owner}.github.io/{repo}/` and `base_url: /{repo}` (accepts `owner/repo`, HTTPS, or SSH URLs).
-2. **Git remote** — If `.git` already exists or `--git` was passed, parse `git remote get-url origin` when it points at GitHub.
-3. **Interactive prompt** — **Custom base URI prefix** (default `https://wiki.example.org/`).
+1. **Git remote** — If `.git` already exists or `--git` was passed, parse `git remote get-url origin` when it points at GitHub.
+1. **Interactive prompt** — **Custom base URI prefix** (default `https://wiki.example.org/`).
 
 `--wiki-base` always wins over `--repo` and remote detection. `--base-url` overrides the inferred path from `--repo`.
 

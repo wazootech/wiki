@@ -1,3 +1,0 @@
-wrap = "no"
-end_of_line = "lf"
-extensions = ["gfm", "frontmatter", "wikilink"]

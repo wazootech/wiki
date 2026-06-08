@@ -103,7 +103,9 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("duplicate_headings: off", rendered)
         self.assertIn("thematic_breaks: off", rendered)
         self.assertIn("forbidden_layout_keys: error", rendered)
-        self.assertIn(".mdformat.toml", rendered)
+        self.assertIn("wrap: \"no\"", rendered)
+        self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
+        self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
 

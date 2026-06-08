@@ -148,7 +148,7 @@ def resolve_init_options(
 
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
-_MDFORMAT_TEMPLATE_NAME = "mdformat.toml"
+_MDFORMAT_TEMPLATE_NAME = "mdformat.toml.j2"
 _DEFAULT_LAYOUT_TEMPLATE = "layouts/default.html.j2"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 

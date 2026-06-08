@@ -14,11 +14,11 @@ Config files are validated strictly. Unknown keys, removed aliases, wrong nested
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                                             |
-| ---------- | ------------ | ---------- | ------------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                   |
+| Lane       | Command      | YAML block | Purpose                                                                                                                                        |
+| ---------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                            |
 | Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
-| Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                    |
+| Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                                                                                               |
 
 ### Rule placement
 
@@ -94,8 +94,8 @@ Page URLs come from paths under `input_dirs`: `wiki/Alice.md` → `/wiki/Alice/`
 
 ## Serve API
 
-| Key                 | Default       | Purpose                                               |
-| ------------------- | ------------- | ----------------------------------------------------- |
+| Key                      | Default       | Purpose                                               |
+| ------------------------ | ------------- | ----------------------------------------------------- |
 | `sparql_service.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
 | `sparql_service.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
 
@@ -275,13 +275,13 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 
 Under `lint`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                                                                         |
-| ------------------ | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                                        |
-| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                                                                                    |
-| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings                         |
-| `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                                                   |
-| `link_style`       | `warning` | Wikilinks in body prose when top-level `link_style` is `markdown`                                                                      |
+| Rule key           | Default   | What it audits                                                                                                 |
+| ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
+| `filename_pattern` | `warning` | Full filename vs top-level `filename_pattern` regex                                                            |
+| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
+| `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
+| `link_style`       | `warning` | Wikilinks in body prose when top-level `link_style` is `markdown`                                              |
 
 ## This repository
 

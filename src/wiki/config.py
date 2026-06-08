@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 import yaml
+from mdformat._conf import InvalidConfError, _validate_keys, _validate_values
 from rdflib import Namespace, RDF, RDFS, OWL
 from rdflib.namespace import XSD
 
@@ -77,6 +78,7 @@ ALLOWED_CONFIG_KEYS = {
     "sparql_service",
     "link_renames",
     "link_style",
+    "fmt",
 }
 
 ALLOWED_CHECK_KEYS = {
@@ -142,6 +144,34 @@ def normalize_lint_rules(lint: dict[str, str] | None) -> dict[str, str]:
 
 def _unknown_keys(data: dict[str, Any], allowed: set[str]) -> list[str]:
     return sorted(k for k in data if k not in allowed)
+
+
+def _parse_fmt(
+    fmt_data: Any, config_name: str, base_dir: Path
+) -> dict[str, Any] | Path | None:
+    if fmt_data is None:
+        return None
+    if isinstance(fmt_data, dict):
+        conf_label = Path(f"{config_name} fmt")
+        try:
+            _validate_keys(fmt_data, conf_label)
+            _validate_values(fmt_data, conf_label)
+        except InvalidConfError as exc:
+            raise ValueError(f"Invalid config file {config_name}: {exc}") from exc
+        return fmt_data
+    if isinstance(fmt_data, str):
+        text = fmt_data.strip()
+        if not text:
+            raise ValueError(f"Invalid config file {config_name}: fmt path must not be empty")
+        path_obj = Path(text)
+        if path_obj.is_absolute():
+            raise ValueError(
+                f"Invalid config file {config_name}: fmt path must be relative to the config file"
+            )
+        return base_dir / path_obj
+    raise ValueError(
+        f"Invalid config file {config_name}: fmt must be a mapping or path string"
+    )
 
 
 def _validate_config_keys(data: dict[str, Any], config_name: str) -> None:
@@ -245,6 +275,7 @@ class WikiConfig:
         sparql_service_path: str = "/api/sparql",
         link_renames: dict[str, str] | None = None,
         link_style: str | None = None,
+        fmt: dict[str, Any] | Path | None = None,
     ) -> None:
         self.config_root = Path(config_root) if config_root is not None else Path.cwd()
         self.input_dirs = [Path(d) for d in (input_dirs or ["wiki"])]
@@ -266,6 +297,7 @@ class WikiConfig:
         self.sparql_service_path = normalize_api_path(sparql_service_path)
         self.link_renames = dict(link_renames or {})
         self.link_style = _normalize_link_style(link_style)
+        self.fmt = fmt
 
     def relative_to_root(self, path: Path) -> str:
         """Return a config-root-relative POSIX path for glob matching."""
@@ -389,6 +421,7 @@ class WikiConfig:
                             sparql_service_path=sparql_service_path,
                             link_renames=link_renames,
                             link_style=data.get("link_style"),
+                            fmt=_parse_fmt(data.get("fmt"), config_path.name, base_dir),
                         )
                     raise ValueError(f"Invalid config file {config_path.name}: top-level content must be a mapping")
                 except Exception as e:

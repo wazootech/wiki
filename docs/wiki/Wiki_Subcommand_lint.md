@@ -31,15 +31,15 @@ wiki lint --strict
 
 ### Configurable (`lint.*` in `wiki.yaml`)
 
-| Rule key           | What it audits                                                                                       |
-| ------------------ | ---------------------------------------------------------------------------------------------------- |
-| `broken_links`     | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                        |
-| `filename_pattern` | Full filename vs top-level `filename_pattern` regex (`.md` files only)                               |
-| `headings`         | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
-| `heading_levels`   | Heading depth must increase by one level at a time (MD001-inspired)                             |
-| `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                              |
-| `thematic_breaks`  | Horizontal rules (`---`, `***`, `___`) in body prose                                                 |
-| `link_style`       | Wikilinks in body prose when top-level `link_style` is `markdown`                                    |
+| Rule key             | What it audits                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                    |
+| `filename_pattern`   | Full filename vs top-level `filename_pattern` regex (`.md` files only)                           |
+| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
+| `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
+| `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |
+| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                             |
+| `link_style`         | Wikilinks in body prose when top-level `link_style` is `markdown`                                |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
 

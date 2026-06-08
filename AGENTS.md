@@ -34,7 +34,7 @@ wiki check
 # Conventions: broken links, filename pattern, headings, link style
 wiki lint
 
-# Formatting (mdformat; .mdformat.toml)
+# Formatting (wiki.yaml fmt: or optional .mdformat.toml)
 wiki fmt --check
 
 # Verbose output

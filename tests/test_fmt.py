@@ -7,7 +7,7 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.fmt_util import format_markdown
+from wiki.fmt_util import describe_fmt_source, format_markdown
 from wiki.site import build_page_html, build_site
 
 
@@ -90,7 +90,7 @@ class TestWikiFmt(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "Query.md"
             file_path.write_text(original, encoding="utf-8")
-            formatted = format_markdown(original, file_path)
+            formatted = format_markdown(original, file_path, WikiConfig(config_root=Path(tmpdir)))
             self.assertIn("| class |", formatted)
             self.assertNotIn("| Class |", formatted)
             self.assertIn("```sparql", formatted)
@@ -113,6 +113,43 @@ class TestWikiFmt(unittest.TestCase):
             self.assertNotIn('class="firstHeading"', html)
             self.assertIn('id="shelf-layout">Shelf layout</h1>', page.html)
             self.assertIn("Body.", html)
+
+    def test_fmt_resolution_inline_beats_default_toml(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".mdformat.toml").write_text('wrap = "keep"\n', encoding="utf-8")
+            file_path = root / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(
+                config_root=root,
+                fmt={"wrap": "no", "extensions": ["gfm", "frontmatter", "wikilink"]},
+            )
+            self.assertEqual(describe_fmt_source(file_path, config), "inline fmt in wiki config")
+
+    def test_fmt_resolution_missing_pointer_falls_back_to_default_toml(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".mdformat.toml").write_text(
+                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                encoding="utf-8",
+            )
+            file_path = root / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(config_root=root, fmt=root / "missing.toml")
+            self.assertEqual(describe_fmt_source(file_path, config), ".mdformat.toml at config root")
+
+    def test_fmt_resolution_pointer_file(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            custom = root / "custom.toml"
+            custom.write_text(
+                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                encoding="utf-8",
+            )
+            file_path = root / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(config_root=root, fmt=custom)
+            self.assertEqual(describe_fmt_source(file_path, config), "fmt from custom.toml")
 
 
 if __name__ == "__main__":

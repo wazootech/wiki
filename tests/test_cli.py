@@ -411,13 +411,12 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
                 self.assertIn("Wiki CLI", expected_layout)
 
-                mdformat_content = Path(".mdformat.toml").read_text(encoding="utf-8")
-                self.assertIn('extensions = ["gfm", "frontmatter", "wikilink"]', mdformat_content)
-
                 expected_content = render_wiki_yaml(
                     InitOptions(wiki_base="https://wiki.example.org/"),
                 )
                 self.assertEqual(config_content, expected_content)
+                self.assertIn('wrap: "no"', config_content)
+                self.assertFalse(Path(".mdformat.toml").exists())
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
                 # Check --force protects existing layouts (second init)

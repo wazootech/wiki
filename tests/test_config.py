@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -257,6 +258,87 @@ class TestWikiConfig(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "Failed to load config file wiki.yaml"):
                 WikiConfig.load(base_path)
+
+    def test_wikiconfig_load_inline_fmt(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump(
+                    {
+                        "input_dirs": "wiki",
+                        "fmt": {
+                            "wrap": "no",
+                            "extensions": ["gfm", "frontmatter", "wikilink"],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertIsInstance(config.fmt, dict)
+            self.assertEqual(config.fmt["wrap"], "no")
+
+    def test_wikiconfig_load_fmt_pointer_relative(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "fmt": "custom.toml"}),
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.fmt, base_path / "custom.toml")
+
+    def test_wikiconfig_rejects_absolute_fmt_path(self) -> None:
+        absolute_fmt = (
+            "C:/etc/mdformat.toml" if os.name == "nt" else "/etc/mdformat.toml"
+        )
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "fmt": absolute_fmt}),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "fmt path must be relative"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_rejects_invalid_fmt_type(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "fmt": True}),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "fmt must be a mapping or path string"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_rejects_unknown_inline_fmt_key(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": "wiki", "fmt": {"typo_key": True}}),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "Invalid key 'typo_key'"):
+                WikiConfig.load(base_path)
+
+    def test_wikiconfig_load_inline_fmt_from_json(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.json").write_text(
+                json.dumps(
+                    {
+                        "input_dirs": ["wiki"],
+                        "fmt": {
+                            "wrap": "no",
+                            "extensions": ["gfm", "frontmatter", "wikilink"],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertIsInstance(config.fmt, dict)
+            self.assertEqual(config.fmt["extensions"], ["gfm", "frontmatter", "wikilink"])
 
 
 if __name__ == "__main__":

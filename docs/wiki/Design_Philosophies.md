@@ -14,12 +14,12 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 Four audit/format lanes (aligned with common CLI tooling):
 
-| Lane         | Command      | Config / tool                                                                                    |
-| ------------ | ------------ | ------------------------------------------------------------------------------------------------ |
-| Integrity    | `wiki check` | Always-on SHACL, routes, collisions, layout frontmatter (`check.*`) — **report only**            |
+| Lane         | Command      | Config / tool                                                                                                                                                                |
+| ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Integrity    | `wiki check` | Always-on SHACL, routes, collisions, layout frontmatter (`check.*`) — **report only**                                                                                        |
 | Convention   | `wiki lint`  | `lint.broken_links`, `lint.filename_pattern`, `lint.headings`, `lint.heading_levels`, `lint.duplicate_headings`, `lint.thematic_breaks`, `lint.link_style` — **report only** |
-| Formatting   | `wiki fmt`   | mdformat                                                                                         |
-| Link hygiene | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags                     |
+| Formatting   | `wiki fmt`   | mdformat                                                                                                                                                                     |
+| Link hygiene | `wiki link`  | Optional `link_renames`; `--apply` and `--fix-broken` require explicit flags                                                                                                 |
 
 `wiki check` answers whether the vault satisfies its **integrity contracts** (graph shapes and build/presentation invariants) — it never mutates prose. `wiki lint` answers whether content follows **vault policy** (resolvable references and authoring conventions). `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `lint` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
 

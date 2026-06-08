@@ -21,3 +21,7 @@ context:
   sh: http://www.w3.org/ns/shacl#
   xsd: http://www.w3.org/2001/XMLSchema#
 page_layout: layouts/default.html
+fmt:
+  wrap: "no"
+  end_of_line: lf
+  extensions: [gfm, frontmatter, wikilink]
