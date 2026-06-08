@@ -3,34 +3,19 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import quote
 
 from .config import WikiConfig
 from .parser import DOCUMENT_EXTENSIONS
-
+from .schemas.domain import OutputEntry, PageRoute
 
 UNSAFE_ROUTE_CHARS = set("?#%")
 
 
-@dataclass(frozen=True)
-class PageRoute:
-    source: Path
-    route: str
-
-
-@dataclass(frozen=True)
-class OutputEntry:
-    source: Path | None
-    output_path: Path
-    public_url: str
-    kind: str
-
-
 def iter_document_files(config: WikiConfig) -> list[Path]:
     doc_files: list[Path] = []
-    for input_dir in config.input_dirs:
+    for input_dir in config.vault.inputs:
         if input_dir.exists():
             for file_path in sorted(input_dir.rglob("*")):
                 if not file_path.is_file() or file_path.suffix.lower() not in DOCUMENT_EXTENSIONS:
@@ -63,7 +48,7 @@ def _resolve_vault_paths(
         resolved = path.resolve()
         vault_path = index.get(resolved)
         if vault_path is None:
-            raise ValueError(f"{path.name} is not a vault document under input_dirs (or is excluded).")
+            raise ValueError(f"{path.name} is not a vault document under inputs (or is excluded).")
         if vault_path.suffix.lower() not in allowed_suffixes:
             raise ValueError(f"{label} only supports {', '.join(sorted(allowed_suffixes))} files, got {vault_path.name}.")
         selected.append(vault_path)
@@ -159,12 +144,12 @@ def detect_output_collisions(entries: list[OutputEntry]) -> list[str]:
 
 
 def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
-    if not config.filename_pattern:
+    if not config.vault.filename_pattern:
         return None
     if md_file.suffix.lower() != ".md":
         return None
     try:
-        pattern = re.compile(config.filename_pattern)
+        pattern = re.compile(config.vault.filename_pattern)
     except re.error as exc:
         return f"Invalid filename_pattern: {exc}"
     if pattern.fullmatch(md_file.name) is None:
@@ -183,7 +168,7 @@ def validate_route_safety(config: WikiConfig) -> list[str]:
 
 
 def _relative_to_input_dir(config: WikiConfig, md_file: Path) -> Path:
-    for root in config.input_dirs:
+    for root in config.vault.inputs:
         try:
             return md_file.relative_to(root)
         except ValueError:

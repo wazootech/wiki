@@ -256,7 +256,7 @@ class TestRDFFrontmatter(unittest.TestCase):
             "@id": "wiki:gregory",
             "givenName": "Gregory"
         }
-        self.config.content_predicate = "schema:text"
+        self.config.graph.content_predicate = "schema:text"
         body_text = "Gregory is a software engineer."
         
         graph = frontmatter_to_graph(data, self.config, body=body_text)
@@ -359,8 +359,8 @@ name: Raw Agent
 Raw Body Text.
 """, encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki, imports])
-            config.content_predicate = "schema:text"
+            config = WikiConfig(vault={"inputs": [wiki, imports]})
+            config.graph.content_predicate = "schema:text"
             
             # Load graph should not crash due to bad TTLs or broken syntax, and must ingest everything
             g = load_graph(config, infer=False)
@@ -400,7 +400,7 @@ name: Good Page
             bad_ttl = wiki / "broken.ttl"
             bad_ttl.write_text("UNPARSABLE GARBAGE", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki])
+            config = WikiConfig(vault={"inputs": [wiki]})
 
             with self.assertLogs(graph_logger, level="WARNING") as log_cm:
                 g = load_graph(config, infer=False)
@@ -428,7 +428,7 @@ name: Good Page
 </div>
 </body></html>""", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
             g = load_graph(config, infer=False)
             self.assertGreater(len(g), 0)
             found = any(
@@ -449,9 +449,11 @@ name: Good Page
 </body></html>""", encoding="utf-8")
 
             config = WikiConfig(
-                input_dirs=[wiki_dir],
-                wiki_base="https://example.test/wiki/",
-                context=Context({"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"}, wiki_base="https://example.test/wiki/"),
+                vault={"inputs": [wiki_dir]},
+                graph={
+                    "wiki_base": "https://example.test/wiki/",
+                    "context": {"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"},
+                },
             )
             g = load_graph(config, infer=False)
 
@@ -466,7 +468,7 @@ name: Good Page
             (wiki_dir / "gregory.yaml").write_text("type: Person\ngivenName: Gregory\n", encoding="utf-8")
             (wiki_dir / "alice.json").write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
             g = load_graph(config, infer=False)
 
             self.assertTrue((None, None, Literal("Bob")) in g)
@@ -490,7 +492,7 @@ name: Test Page
 ---
 """, encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], uri_ext=True)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"uri_ext": True})
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/test.md")
             self.assertTrue((expected, None, None) in g)
@@ -501,7 +503,7 @@ name: Test Page
             wiki_dir = Path(tmpdir)
             (wiki_dir / "person.yaml").write_text("type: Person\ngivenName: Test\n", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], uri_ext=True)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"uri_ext": True})
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/person.yaml")
             self.assertTrue((expected, None, None) in g)

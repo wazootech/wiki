@@ -45,9 +45,9 @@ SELECT ?givenName WHERE {
                 encoding="utf-8",
             )
             config = WikiConfig(
-                input_dirs=[wiki_dir],
+                vault={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
-                wiki_base="https://wiki.example.org/",
+                graph={"wiki_base": "https://wiki.example.org/"},
             )
             graph = load_graph(config, infer=False)
 

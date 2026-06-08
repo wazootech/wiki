@@ -93,8 +93,8 @@ class WikiHandler(BaseHTTPRequestHandler):
         self._send_error(404, f"Not found: {self.path}")
 
     def _serve_asset(self, rel_path: str) -> bool:
-        """Try to serve a static asset from configured asset_dirs. Returns True if served."""
-        for asset_dir in self.config.asset_dirs:
+        """Try to serve a static asset from configured assets. Returns True if served."""
+        for asset_dir in self.config.vault.assets:
             candidate = (asset_dir / rel_path).resolve()
             try:
                 candidate.relative_to(asset_dir.resolve())
@@ -259,8 +259,8 @@ def refresh_vault(
     from .graph import load_graph
     from .render import has_sparql_blocks, render_markdown_files
 
-    resolved_base_url = config.base_url if base_url is None else base_url
-    resolved_url_style = config.url_style if url_style is None else url_style
+    resolved_base_url = config.site.base_url if base_url is None else base_url
+    resolved_url_style = config.site.url_style if url_style is None else url_style
 
     graph = load_graph(config, infer=True, reload=True)
 
@@ -287,8 +287,8 @@ def create_server(
     watch: bool = False,
 ) -> HTTPServer:
     """Build the site and return a configured HTTPServer (not yet started)."""
-    resolved_base_url = config.base_url if base_url is None else base_url
-    resolved_url_style = config.url_style if url_style is None else url_style
+    resolved_base_url = config.site.base_url if base_url is None else base_url
+    resolved_url_style = config.site.url_style if url_style is None else url_style
     _validate_sparql_service_path(config, resolved_base_url)
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     WikiHandler.site = site
@@ -297,8 +297,8 @@ def create_server(
     WikiHandler.url_style = resolved_url_style
     WikiHandler.watch_enabled = watch
     WikiHandler.build_id = 0
-    WikiHandler.sparql_service_enabled = config.sparql_service_enabled
-    WikiHandler.sparql_service_path = config.sparql_service_path
+    WikiHandler.sparql_service_enabled = config.sparql_service.enabled
+    WikiHandler.sparql_service_path = config.sparql_service.path
 
     # Load site wiki page layout if configured; silently fall back to default if file missing
     if config.page_layout is not None and config.page_layout.is_file():
@@ -308,7 +308,7 @@ def create_server(
 
     server = HTTPServer((host, port), WikiHandler)
     print(f"Wiki server ready at http://{host}:{port}/")
-    dirs_str = ", ".join(str(d) for d in config.input_dirs)
+    dirs_str = ", ".join(str(d) for d in config.vault.inputs)
     print(f"Serving {len(site.pages)} pages from {dirs_str}")
     if not site.pages:
         print("Warning: no pages found. Ensure your wiki directory has .md, .yaml, .yml, or .json files.")
@@ -324,20 +324,20 @@ class _BadSparqlRequest(Exception):
 
 def _validate_sparql_service_path(config: WikiConfig, base_url: str) -> None:
     """Validate that the configured SPARQL route does not shadow page routes."""
-    if not config.sparql_service_enabled:
+    if not config.sparql_service.enabled:
         return
 
-    api_path = config.sparql_service_path.rstrip("/") or "/"
+    api_path = config.sparql_service.path.rstrip("/") or "/"
     resolved_base = base_url.rstrip("/") if base_url else ""
     watch_path = f"{resolved_base}/__watch" if resolved_base else "/__watch"
 
     if api_path == "/":
         raise ValueError("Invalid sparql_service.path: '/' would shadow the entire server.")
     if api_path == watch_path:
-        raise ValueError(f"Invalid sparql_service.path: '{config.sparql_service_path}' collides with the watch endpoint.")
+        raise ValueError(f"Invalid sparql_service.path: '{config.sparql_service.path}' collides with the watch endpoint.")
     if resolved_base and (api_path == resolved_base or api_path.startswith(f"{resolved_base}/")):
         raise ValueError(
-            f"Invalid sparql_service.path: '{config.sparql_service_path}' collides with page routes under base_url '{resolved_base}'."
+            f"Invalid sparql_service.path: '{config.sparql_service.path}' collides with page routes under base_url '{resolved_base}'."
         )
 
 
@@ -514,8 +514,8 @@ def run_server(
     watch: bool = False,
 ) -> None:
     """Create and start the wiki HTTP server, blocking until shutdown."""
-    resolved_base_url = config.base_url if base_url is None else base_url
-    resolved_url_style = config.url_style if url_style is None else url_style
+    resolved_base_url = config.site.base_url if base_url is None else base_url
+    resolved_url_style = config.site.url_style if url_style is None else url_style
     server = create_server(
         config,
         host=host,
@@ -526,7 +526,7 @@ def run_server(
     )
 
     if watch:
-        watch_dirs = list(config.input_dirs) + [d for d in config.asset_dirs if d.exists()]
+        watch_dirs = list(config.vault.inputs) + [d for d in config.vault.assets if d.exists()]
         stop_event = threading.Event()
         mtimes = _snapshot_watch_dirs(watch_dirs)
         threading.Thread(

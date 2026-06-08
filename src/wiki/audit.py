@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
@@ -13,7 +12,7 @@ from rdflib import Graph
 import pyshacl
 from markdown_it import MarkdownIt
 
-from .assets import asset_reference_issue, audit_asset_dirs, build_asset_manifest
+from .assets import asset_reference_issue, audit_assets, build_asset_manifest
 from .config import WikiConfig
 from .headings import GitHubHeadingSlugger
 from .links import is_external_link, markdown_link_is_page, resolve_page_route, split_target, fragment_id
@@ -33,6 +32,7 @@ from .layout import (
     layout_file_is_valid,
     resolve_layout_path,
 )
+from .schemas import BrokenLink, CheckRules, LintRules
 
 logger = logging.getLogger(__name__)
 
@@ -53,19 +53,6 @@ WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
 WIKILINK_FULL_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
 MARKDOWN_LINK_FULL_REGEX = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
 FENCED_CODE_RE = re.compile(r"```[\s\S]*?```")
-
-
-@dataclass(frozen=True)
-class BrokenLink:
-    source_route: str
-    source_path: Path
-    link_kind: str
-    raw_target: str
-    issue_kind: str
-    message: str
-    match_start: int | None = None
-    match_end: int | None = None
-    full_match: str | None = None
 
 
 def format_broken_link(issue: BrokenLink) -> str:
@@ -317,7 +304,7 @@ def collect_broken_links(config: WikiConfig, file_filter: set[str] | None = None
                 )
             )
 
-    for warning in audit_asset_dirs(config):
+    for warning in audit_assets(config):
         issues.append(
             BrokenLink(
                 source_route="",
@@ -601,7 +588,7 @@ def _line_number_for_offset(content: str, offset: int) -> int:
 
 def lint_link_style(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
     """Flag Obsidian wikilinks in body prose when vault link_style is markdown."""
-    if config.link_style != "markdown":
+    if config.link.style != "markdown":
         return []
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
@@ -741,9 +728,9 @@ def _apply_issues(
     results: dict[str, Any],
     rule_key: str,
     issues: list[str],
-    rules: dict[str, str],
+    rules: CheckRules | LintRules,
 ) -> None:
-    severity = rules.get(rule_key, "warning")
+    severity = getattr(rules, rule_key, "warning")
     if severity == "off":
         return
     if severity == "error":
@@ -807,10 +794,10 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
         results["conforms"] = False
         results["errors"].extend(safety_issues)
     else:
-        owned_output_dir = Path("_site") / config.base_url.strip("/") if config.base_url else Path("_site")
+        owned_output_dir = Path("_site") / config.site.base_url.strip("/") if config.site.base_url else Path("_site")
         collision_issues = detect_output_collisions(
-            build_page_manifest(config, owned_output_dir, config.base_url, config.url_style)
-            + build_asset_manifest(config, owned_output_dir, config.base_url)
+            build_page_manifest(config, owned_output_dir, config.site.base_url, config.site.url_style)
+            + build_asset_manifest(config, owned_output_dir, config.site.base_url)
         )
         if collision_issues:
             results["conforms"] = False

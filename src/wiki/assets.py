@@ -13,7 +13,7 @@ from .paths import OutputEntry
 
 def iter_asset_files(config: WikiConfig) -> list[Path]:
     assets: list[Path] = []
-    for asset_dir in config.asset_dirs:
+    for asset_dir in config.vault.assets:
         if not asset_dir.exists() or asset_dir.is_symlink():
             continue
         for path in sorted(asset_dir.rglob("*")):
@@ -23,9 +23,9 @@ def iter_asset_files(config: WikiConfig) -> list[Path]:
     return assets
 
 
-def audit_asset_dirs(config: WikiConfig) -> list[str]:
+def audit_assets(config: WikiConfig) -> list[str]:
     warnings: list[str] = []
-    for asset_dir in config.asset_dirs:
+    for asset_dir in config.vault.assets:
         if config.is_excluded(asset_dir):
             continue
         if not asset_dir.exists():
@@ -69,7 +69,7 @@ def resolve_asset_path(config: WikiConfig, current_file: Path, target: str) -> P
     if combined.startswith("../") or combined == "..":
         return None
     candidate = (config.config_root / Path(combined)).resolve()
-    for asset_dir in config.asset_dirs:
+    for asset_dir in config.vault.assets:
         try:
             candidate.relative_to(asset_dir.resolve())
             return candidate
@@ -81,7 +81,7 @@ def resolve_asset_path(config: WikiConfig, current_file: Path, target: str) -> P
 def asset_reference_issue(config: WikiConfig, current_file: Path, target: str) -> str | None:
     asset_path = resolve_asset_path(config, current_file, target)
     if asset_path is None:
-        return f"points outside configured asset_dirs: {target}"
+        return f"points outside configured assets: {target}"
     if config.is_excluded(asset_path):
         return f"points to excluded asset: {target}"
     if asset_path.is_symlink():

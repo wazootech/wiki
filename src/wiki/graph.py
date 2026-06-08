@@ -116,10 +116,27 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         graph.add((subject, pred, Literal(str(value))))
 
 
-def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Optional[str] = None, body: Optional[str] = None, uri_ext: bool = False, file_ext: str = ".md") -> Graph:
+def _rdf_binding(ctx: Context | WikiConfig) -> tuple[Context, str | None]:
+    if isinstance(ctx, WikiConfig):
+        return ctx.context, ctx.graph.content_predicate
+    return ctx, getattr(ctx, "content_predicate", None)
+
+
+def frontmatter_to_graph(
+    data: dict[str, Any],
+    context: Context | WikiConfig,
+    file_id: Optional[str] = None,
+    body: Optional[str] = None,
+    uri_ext: bool = False,
+    file_ext: str = ".md",
+    content_predicate: str | None = None,
+) -> Graph:
     """Convert parsed frontmatter dictionary to an RDF graph."""
+    rdf_ctx, default_predicate = _rdf_binding(context)
+    if content_predicate is None:
+        content_predicate = default_predicate
     graph = Graph()
-    context.bind_namespaces(graph)
+    rdf_ctx.bind_namespaces(graph)
 
     rdf_type = data.get("@type") or data.get("type")
     if not data or not rdf_type:
@@ -130,20 +147,20 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
         if not file_id:
             return Graph()
         suffix = file_ext if uri_ext else ""
-        doc_id = f"{context.wiki_base}{file_id}{suffix}"
+        doc_id = f"{rdf_ctx.wiki_base}{file_id}{suffix}"
 
     if doc_id and ":" in doc_id:
         prefix, name = doc_id.split(":", 1)
-        if prefix in context.namespaces:
-            doc_id = str(context.namespaces[prefix][name])
+        if prefix in rdf_ctx.namespaces:
+            doc_id = str(rdf_ctx.namespaces[prefix][name])
 
     subject = URIRef(doc_id)
 
     if isinstance(rdf_type, list):
         for t in rdf_type:
-            graph.add((subject, RDF.type, resolve_type(t, context)))
+            graph.add((subject, RDF.type, resolve_type(t, rdf_ctx)))
     elif rdf_type:
-        graph.add((subject, RDF.type, resolve_type(rdf_type, context)))
+        graph.add((subject, RDF.type, resolve_type(rdf_type, rdf_ctx)))
 
     skip_keys = {"id", "type"}
     for key, value in data.items():
@@ -151,12 +168,12 @@ def frontmatter_to_graph(data: dict[str, Any], context: Context, file_id: Option
             continue
         if isinstance(value, list):
             for item in value:
-                resolve_object(key, item, graph, subject, context)
+                resolve_object(key, item, graph, subject, rdf_ctx)
         elif value:
-            resolve_object(key, value, graph, subject, context)
+            resolve_object(key, value, graph, subject, rdf_ctx)
 
-    if body and getattr(context, "content_predicate", None):
-        resolve_object(context.content_predicate, body, graph, subject, context)
+    if body and content_predicate:
+        resolve_object(content_predicate, body, graph, subject, rdf_ctx)
 
     return graph
 
@@ -303,13 +320,20 @@ def _process_document_file(graph: Graph, file_path: Path, context: WikiConfig) -
     data = document_data_from_path(file_path)
     if data:
         body = None
-        if file_path.suffix.lower() == ".md" and context.content_predicate:
+        if file_path.suffix.lower() == ".md" and context.graph.content_predicate:
             content = file_path.read_text(encoding="utf-8")
             parts = content.split("---", 2)
             if len(parts) > 2:
                 body = parts[2].strip()
         file_id = route_for_document_file(context, file_path)
-        graph += frontmatter_to_graph(data, context, file_id=file_id, body=body, uri_ext=context.uri_ext, file_ext=file_path.suffix.lower())
+        graph += frontmatter_to_graph(
+            data,
+            context,
+            file_id=file_id,
+            body=body,
+            uri_ext=context.graph.uri_ext,
+            file_ext=file_path.suffix.lower(),
+        )
 
     if file_path.suffix.lower() != ".md":
         return
@@ -350,7 +374,7 @@ def _build_graph_from_vault(context: WikiConfig) -> Graph:
 
     document_files = set(iter_document_files(context))
 
-    for input_dir in context.input_dirs:
+    for input_dir in context.vault.inputs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):

@@ -30,7 +30,7 @@ givenName: Gregory
 """, encoding="utf-8")
             
             # 1. Configure and Load
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
             
             # Disable auto inference in loader to confirm pre/post state
             graph = load_graph(config, infer=False)

@@ -1,7 +1,7 @@
 vault:
-  input_dirs:
+  inputs:
     - wiki
-  # asset_dirs:
+  # assets:
   #   - assets
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
   # exclude:

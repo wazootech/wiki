@@ -4,12 +4,21 @@ from __future__ import annotations
 
 import re
 import subprocess
-from dataclasses import asdict, dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Callable
 
 from jinja2 import Environment, PackageLoader, select_autoescape
+
+from .schemas import InitOptions
+
+__all__ = [
+    "DOCS_VAULT_INIT_OPTIONS",
+    "InitOptions",
+    "render_default_layout",
+    "render_wiki_yaml",
+    "resolve_init_options",
+]
 
 DEFAULT_WAZOO = "https://schema.wazoo.dev/"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
@@ -88,17 +97,6 @@ def detect_origin_repo(cwd: Path) -> str | None:
     except ValueError:
         return None
     return f"{owner}/{repo}"
-
-
-@dataclass
-class InitOptions:
-    wiki_base: str
-    base_url: str = DEFAULT_BASE_URL
-    url_style: str = DEFAULT_URL_STYLE
-    wazoo: str = DEFAULT_WAZOO
-    content_predicate: str | None = None
-    link_style: str | None = None
-    site_title: str = "Wiki CLI"
 
 
 # Init options for this repository's docs/ vault (parity with docs/wiki.yaml).
@@ -183,11 +181,11 @@ def _strip_scaffold_comment(text: str) -> str:
 
 def render_wiki_yaml(opts: InitOptions) -> str:
     """Render the packaged wiki.yaml.j2 scaffold into wiki.yaml content."""
-    rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**asdict(opts))
+    rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**opts.model_dump())
     return _strip_scaffold_comment(rendered)
 
 
 def render_default_layout(opts: InitOptions) -> str:
     """Render the packaged default.html.j2 page layout scaffold."""
-    rendered = _init_template_env().get_template(_DEFAULT_LAYOUT_TEMPLATE).render(**asdict(opts))
+    rendered = _init_template_env().get_template(_DEFAULT_LAYOUT_TEMPLATE).render(**opts.model_dump())
     return _strip_scaffold_comment(rendered)

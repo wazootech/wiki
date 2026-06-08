@@ -52,7 +52,7 @@ name: Invalid Page
                 yaml.dump(
                     {
                         "vault": {
-                            "input_dirs": ["wiki"],
+                            "inputs": ["wiki"],
                             "filename_pattern": r"[A-Za-z0-9_()-]+\.md",
                         },
                         "lint": {"filename_pattern": "warning"},
@@ -81,7 +81,7 @@ name: Invalid Page
             config_dir = Path(tmpdir)
             extra_dir = config_dir / "extra"
             extra_dir.mkdir()
-            (config_dir / "wiki.yaml").write_text("vault:\n  input_dirs:\n    - wiki\n", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("vault:\n  inputs:\n    - wiki\n", encoding="utf-8")
             (extra_dir / "note.md").write_text(
                 "---\ntype: schema:WebPage\nname: Extra\n---\n",
                 encoding="utf-8",
@@ -193,7 +193,7 @@ name: Invalid Name
             wiki_dir = config_dir / "wiki"
             wiki_dir.mkdir()
             (config_dir / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"input_dirs": ["wiki"]}}),
+                yaml.dump({"vault": {"inputs": ["wiki"]}}),
                 encoding="utf-8",
             )
             first = wiki_dir / "first.md"
@@ -222,7 +222,7 @@ name: Invalid Name
             wiki_dir = config_dir / "wiki"
             wiki_dir.mkdir()
             (config_dir / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"input_dirs": ["wiki"]}}),
+                yaml.dump({"vault": {"inputs": ["wiki"]}}),
                 encoding="utf-8",
             )
             first = wiki_dir / "first.md"
@@ -568,7 +568,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_config_rejects_unknown_html_template_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("vault:\n  input_dirs: [wiki]\nhtml_template: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("vault:\n  inputs: [wiki]\nhtml_template: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 WikiConfig.load(config_path)
             self.assertIn("unknown top-level keys: html_template", str(ctx.exception))
@@ -576,7 +576,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_config_rejects_unknown_wiki_page_layout_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("vault:\n  input_dirs: [wiki]\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("vault:\n  inputs: [wiki]\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 WikiConfig.load(config_path)
             self.assertIn("unknown top-level keys: wiki_page_layout", str(ctx.exception))
@@ -1198,7 +1198,7 @@ Hello from [[alice]].""", encoding="utf-8")
             raw_dir = config_dir / "raw"
             raw_dir.mkdir()
             (config_dir / "wiki.yaml").write_text("""vault:
-  input_dirs:
+  inputs:
     - wiki
     - raw
 """, encoding="utf-8")
@@ -1273,7 +1273,7 @@ Hello from server test.
             port = sock.getsockname()[1]
             sock.close()
 
-            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
                 args=(config,),
@@ -1312,7 +1312,7 @@ Custom base URL test.
             port = sock.getsockname()[1]
             sock.close()
 
-            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
                 args=(config,),
@@ -1343,7 +1343,7 @@ type: schema:WebPage
 id: wiki:doc
 name: ConfigTest
 ---""", encoding="utf-8")
-            (config_dir / "wiki.yaml").write_text("vault:\n  input_dirs: ../wiki\n", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("vault:\n  inputs: ../wiki\n", encoding="utf-8")
 
             result = runner.invoke(main, [
                 "-c", str(config_dir),
@@ -1363,7 +1363,7 @@ name: ConfigTest
             result = runner.invoke(main, ["-c", str(root), "check"])
 
             self.assertEqual(result.exit_code, 1)
-            self.assertIn("Failed to load config file wiki.yaml", result.output)
+            self.assertIn("Invalid config file wiki.yaml", result.output)
             self.assertIn("unknown top-level keys", result.output)
 
     def test_cli_link_apply_and_check(self) -> None:

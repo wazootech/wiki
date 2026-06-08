@@ -27,7 +27,7 @@ class TestGraphCache(unittest.TestCase):
         clear_all_process_graphs()
 
     def _config(self, wiki_dir: Path) -> WikiConfig:
-        return WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+        return WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
 
     def test_second_load_reuses_cached_graph(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -94,8 +94,8 @@ class TestGraphCache(unittest.TestCase):
                 "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
-            config_a = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://a.example/")
-            config_b = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir, wiki_base="https://b.example/")
+            config_a = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"wiki_base": "https://a.example/"}, config_root=wiki_dir)
+            config_b = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"wiki_base": "https://b.example/"}, config_root=wiki_dir)
 
             self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
 

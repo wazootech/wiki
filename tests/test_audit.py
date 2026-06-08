@@ -24,7 +24,7 @@ class TestChecking(unittest.TestCase):
     def test_lint_filenames_validation(self) -> None:
         """Test auditing of filenames for lowercase kebab-case naming standard."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], filename_pattern=r"[a-z0-9-]+\.md")
+            config = WikiConfig(vault={"inputs": [tmpdir], "filename_pattern": r"[a-z0-9-]+\.md"})
             
             # Create valid and invalid files
             valid_path = Path(tmpdir) / "valid-kebab-case.md"
@@ -40,7 +40,7 @@ class TestChecking(unittest.TestCase):
     def test_lint_broken_links_validation(self) -> None:
         """Test auditing of internal link structures (WikiLinks and Markdown links)."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             
             # Create one target file
             target_path = Path(tmpdir) / "target-page.md"
@@ -67,7 +67,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
     def test_audit_broken_wiki_curie_in_frontmatter(self) -> None:
         """Frontmatter wiki: CURIEs must resolve to an existing document route."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Wiki_CLI.md").write_text("---\ntype: SoftwareApplication\n---\n", encoding="utf-8")
             Path(tmpdir, "Farzapedia.md").write_text(
                 "---\ntype: TechArticle\nabout: wiki:wiki-cli\n---\n",
@@ -82,7 +82,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
     def test_wiki_curie_with_fragment_resolves_to_page_route(self) -> None:
         """wiki:Page#fragment refers to the same vault route as wiki:Page."""
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Microdata.md").write_text(
                 '---\ntype: TechArticle\n---\n<div itemid="wiki:Microdata#example"></div>\n',
                 encoding="utf-8",
@@ -91,7 +91,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
 
     def test_markdown_can_link_to_yaml_document(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
 
             yml_target = Path(tmpdir) / "yml-target.yml"
             yml_target.write_text("type: Thing\nname: YML\n", encoding="utf-8")
@@ -106,7 +106,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
 
     def test_lint_filenames_skips_yaml_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir], filename_pattern=r"[a-z0-9-]+\.md")
+            config = WikiConfig(vault={"inputs": [tmpdir], "filename_pattern": r"[a-z0-9-]+\.md"})
 
             Path(tmpdir, "Invalid_Name.yml").write_text("type: Thing\n", encoding="utf-8")
             Path(tmpdir, "Invalid_Name.yaml").write_text("type: Thing\n", encoding="utf-8")
@@ -127,7 +127,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertEqual(len(shapes), 0)
             
             # Loading from configuration with missing directories
-            config = WikiConfig(input_dirs=[Path(tmpdir) / "non-existent"])
+            config = WikiConfig(vault={"inputs": [Path(tmpdir) / "non-existent"]})
             data_graph_conf = load_graph(config, infer=False)
             shapes_conf = load_shapes(data_graph_conf)
             self.assertEqual(len(shapes_conf), 0)
@@ -154,7 +154,7 @@ schema:PersonShape
     ] .
 """
             (wiki_dir / "person-shape.ttl").write_text(shape_content, encoding="utf-8")
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
             
             # 1. No frontmatter -> check_shacl_file returns None
             no_fm_file = wiki_dir / "no-fm.md"
@@ -198,8 +198,7 @@ type: schema:WebPage
 """, encoding="utf-8")
 
             config_warning = WikiConfig(
-                input_dirs=[wiki_dir],
-                filename_pattern=r"[a-z0-9-]+\.md",
+                vault={"inputs": [wiki_dir], "filename_pattern": r"[a-z0-9-]+\.md"},
                 lint={"filename_pattern": "warning"},
             )
             res_warning = run_lint(config_warning)
@@ -208,8 +207,7 @@ type: schema:WebPage
             self.assertEqual(len(res_warning["errors"]), 0)
 
             config_error = WikiConfig(
-                input_dirs=[wiki_dir],
-                filename_pattern=r"[a-z0-9-]+\.md",
+                vault={"inputs": [wiki_dir], "filename_pattern": r"[a-z0-9-]+\.md"},
                 lint={"filename_pattern": "error"},
             )
             res_error = run_lint(config_error)
@@ -218,8 +216,7 @@ type: schema:WebPage
             self.assertEqual(len(res_error["errors"]), 1)
 
             config_off = WikiConfig(
-                input_dirs=[wiki_dir],
-                filename_pattern=r"[a-z0-9-]+\.md",
+                vault={"inputs": [wiki_dir], "filename_pattern": r"[a-z0-9-]+\.md"},
                 lint={"filename_pattern": "off"},
             )
             res_off = run_lint(config_off)
@@ -234,7 +231,7 @@ type: schema:WebPage
             (wiki_dir / "Ethan_Davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
             (wiki_dir / "ethan-davidson.md").write_text("---\ntype: schema:Person\n---\n", encoding="utf-8")
 
-            config = WikiConfig(input_dirs=[wiki_dir], filename_pattern=r"[A-Z][A-Za-z0-9_]*\.md")
+            config = WikiConfig(vault={"inputs": [wiki_dir], "filename_pattern": r"[A-Z][A-Za-z0-9_]*\.md"})
             res = run_lint(config)
 
             self.assertTrue(res["conforms"])
@@ -251,14 +248,14 @@ type: schema:WebPage
                 encoding="utf-8",
             )
 
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
             res = run_lint(config)
 
             self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
 
     def test_lint_headings_numbered_and_thematic_break(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             page = Path(tmpdir) / "Bad.md"
             page.write_text(
                 "---\ntype: TechArticle\n---\n## 1. First step\n\n---\n\nBody.\n",
@@ -272,7 +269,7 @@ type: schema:WebPage
 
     def test_lint_headings_title_case(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Related Standards Guide\n",
                 encoding="utf-8",
@@ -282,7 +279,7 @@ type: schema:WebPage
 
     def test_lint_headings_h1_title_case_not_flagged(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n# Agent Memory Filesystems\n",
                 encoding="utf-8",
@@ -292,7 +289,7 @@ type: schema:WebPage
 
     def test_lint_headings_h2_title_case_flagged(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Agent Memory Filesystems\n",
                 encoding="utf-8",
@@ -302,7 +299,7 @@ type: schema:WebPage
 
     def test_lint_headings_setext_not_warned(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\nMy Title\n=======\n\nBody.\n",
                 encoding="utf-8",
@@ -312,7 +309,7 @@ type: schema:WebPage
 
     def test_lint_headings_setext_h2_not_warned(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\nSection title\n---------\n\nBody.\n",
                 encoding="utf-8",
@@ -322,7 +319,7 @@ type: schema:WebPage
 
     def test_lint_headings_atx_does_not_warn_setext(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n# My Title\n\n## Section title\n",
                 encoding="utf-8",
@@ -332,7 +329,7 @@ type: schema:WebPage
 
     def test_lint_headings_skips_setext_inside_fenced_code(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Example.md").write_text(
                 "---\ntype: TechArticle\n---\n```markdown\nTitle\n===\n```\n",
                 encoding="utf-8",
@@ -342,7 +339,7 @@ type: schema:WebPage
 
     def test_lint_headings_skips_thematic_break_inside_fenced_code(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Example.md").write_text(
                 "---\ntype: TechArticle\n---\n```yaml\n---\nname: Example\n---\n```\n",
                 encoding="utf-8",
@@ -352,7 +349,7 @@ type: schema:WebPage
 
     def test_lint_headings_allows_proper_noun_headings(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Deploy.md").write_text(
                 "---\ntype: TechArticle\n---\n# Deploying to GitHub Pages\n",
                 encoding="utf-8",
@@ -362,7 +359,7 @@ type: schema:WebPage
 
     def test_lint_headings_ignores_capitalized_link_text_in_headings(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Compare.md").write_text(
                 "---\ntype: TechArticle\n---\n"
                 "## Comparison with [Wiki CLI](Wiki_CLI.md) and [Letta MemFS](Letta_MemFS.md)\n",
@@ -373,7 +370,7 @@ type: schema:WebPage
 
     def test_lint_heading_levels_skip(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n# A\n\n### C\n",
                 encoding="utf-8",
@@ -384,7 +381,7 @@ type: schema:WebPage
 
     def test_lint_heading_levels_ok_increment(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n# A\n\n## B\n\n### C\n",
                 encoding="utf-8",
@@ -393,7 +390,7 @@ type: schema:WebPage
 
     def test_lint_heading_levels_first_h2_ok(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Intro\n",
                 encoding="utf-8",
@@ -402,7 +399,7 @@ type: schema:WebPage
 
     def test_lint_heading_levels_skips_fenced_code(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Real\n\n```md\n# Fake\n### Also fake\n```\n",
                 encoding="utf-8",
@@ -411,7 +408,7 @@ type: schema:WebPage
 
     def test_lint_duplicate_headings_h2(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Foo\n\nBody.\n\n## Foo\n",
                 encoding="utf-8",
@@ -423,7 +420,7 @@ type: schema:WebPage
 
     def test_lint_duplicate_headings_h1_allowed(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n# Foo\n\n# Foo\n",
                 encoding="utf-8",
@@ -432,7 +429,7 @@ type: schema:WebPage
 
     def test_lint_duplicate_headings_case_insensitive(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Foo\n\n## foo\n",
                 encoding="utf-8",
@@ -442,7 +439,7 @@ type: schema:WebPage
 
     def test_lint_duplicate_headings_skips_fenced_code(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = WikiConfig(input_dirs=[tmpdir])
+            config = WikiConfig(vault={"inputs": [tmpdir]})
             Path(tmpdir, "Page.md").write_text(
                 "---\ntype: TechArticle\n---\n## Foo\n\n```\n## Foo\n```\n",
                 encoding="utf-8",
@@ -458,7 +455,7 @@ type: schema:WebPage
                 "# Guide\n\nSee [[Target]] for details.\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir))
+            config = WikiConfig(vault={"inputs": [wiki]}, config_root=Path(tmpdir))
             warnings = lint_link_style(config)
             self.assertEqual(len(warnings), 1)
             self.assertIn("Wikilink '[[Target]]'", warnings[0])
@@ -471,13 +468,13 @@ type: schema:WebPage
                 "# Guide\n\nLiteral `[[Target]]` and fenced:\n\n```\n[[Target]]\n```\n",
                 encoding="utf-8",
             )
-            markdown_config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir))
+            markdown_config = WikiConfig(vault={"inputs": [wiki]}, config_root=Path(tmpdir))
             self.assertEqual(lint_link_style(markdown_config), [])
 
             wikilink_config = WikiConfig(
-                input_dirs=[wiki],
+                vault={"inputs": [wiki]},
                 config_root=Path(tmpdir),
-                link_style="wikilink",
+                link={"style": "wikilink"},
             )
             (wiki / "Guide.md").write_text(
                 "# Guide\n\nSee [[Target]] for details.\n",
@@ -490,7 +487,7 @@ type: schema:WebPage
             wiki = Path(tmpdir) / "wiki"
             wiki.mkdir()
             (wiki / "Guide.md").write_text("# Guide\n\nSee [[Target]].\n", encoding="utf-8")
-            config = WikiConfig(input_dirs=[wiki], config_root=Path(tmpdir), lint={"link_style": "error"})
+            config = WikiConfig(vault={"inputs": [wiki]}, config_root=Path(tmpdir), lint={"link_style": "error"})
             res = run_lint(config)
             self.assertFalse(res["conforms"])
             self.assertTrue(any("Wikilink" in e for e in res["errors"]))
@@ -503,7 +500,7 @@ type: schema:WebPage
                 "---\ntype: TechArticle\n---\n## 1. Bad\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], lint={"headings": "error"})
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, lint={"headings": "error"})
             res = run_lint(config)
             self.assertFalse(res["conforms"])
             self.assertTrue(any("Numbered heading" in e for e in res["errors"]))
@@ -516,7 +513,7 @@ type: schema:WebPage
                 "---\ntype: TechArticle\n---\n# A\n\n### C\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], lint={"heading_levels": "error"})
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, lint={"heading_levels": "error"})
             res = run_lint(config)
             self.assertFalse(res["conforms"])
             self.assertTrue(any("skips level" in e for e in res["errors"]))
@@ -529,7 +526,7 @@ type: schema:WebPage
                 "---\ntype: TechArticle\n---\n## Foo\n\n## Foo\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], lint={"duplicate_headings": "error"})
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, lint={"duplicate_headings": "error"})
             res = run_lint(config)
             self.assertFalse(res["conforms"])
             self.assertTrue(any("Duplicate heading" in e for e in res["errors"]))
@@ -540,7 +537,7 @@ type: schema:WebPage
             wiki_dir = Path(tmpdir) / "wiki"
             wiki_dir.mkdir()
 
-            config = WikiConfig(input_dirs=[wiki_dir])
+            config = WikiConfig(vault={"inputs": [wiki_dir]})
 
             # Create a shape inside markdown frontmatter
             shape_file = wiki_dir / "project-shape.md"
@@ -590,7 +587,7 @@ name: Wiki CLI
                 "---\ntype: TechArticle\nwazoo:layout: layouts/missing.html\n---\n",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            config = WikiConfig(vault={"inputs": [wiki]}, config_root=root)
 
             issues = check_layout_frontmatter(config)
             self.assertEqual(len(issues), 1)

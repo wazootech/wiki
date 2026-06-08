@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Changed (breaking)
+
+- Rename `vault.input_dirs` → `vault.inputs` and `vault.asset_dirs` → `vault.assets`
+- Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
+- **Unified WikiConfig:** remove the flat runtime `WikiConfig` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.vault.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `WikiConfig.for_root()`.
+
+### Changed
+
+- Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `WikiConfig.check` and `WikiConfig.lint` are `CheckRules` / `LintRules` instances (not plain dicts)
+- `Context` (RDF prefix bindings) lives in `wiki.context`; `WikiConfig.context` is a computed property from `graph.context`
+
+### Migration
+
+1. In `vault:` rename path keys:
+   - `input_dirs` → `inputs`
+   - `asset_dirs` → `assets`
+
 ## 0.1.9 — 2026-06-08
 
 ### Added

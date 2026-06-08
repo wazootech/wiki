@@ -80,7 +80,7 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
-`serve --watch` rebuilds when files under `vault.input_dirs` and `vault.asset_dirs` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
 
 Suggested contributor loop:
 
@@ -237,7 +237,7 @@ wiki render wiki/people/*.md
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.input_dirs` or `vault.asset_dirs` change (not when CLI source code changes).
+**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.inputs` or `vault.assets` change (not when CLI source code changes).
 
 Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged vaults, but it adds `.wiki/cache/` artifacts and still invalidates on vault or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
@@ -328,7 +328,7 @@ _site/
     └── ...
 ```
 
-Page URLs are derived from the source path under `vault.input_dirs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `vault.inputs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
 `wiki build` runs `wiki check` and `wiki lint` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
@@ -336,7 +336,7 @@ Static assets can be published from configured asset directories:
 
 ```yaml
 vault:
-  asset_dirs:
+  assets:
     - assets
   exclude:
     - assets/private/**
@@ -464,7 +464,7 @@ wiki serve --watch
 python -m wiki serve --watch
 ```
 
-`--watch` polls `vault.input_dirs` and `vault.asset_dirs` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
+`--watch` polls `vault.inputs` and `vault.assets` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
 
 When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
@@ -643,8 +643,8 @@ The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.y
 ```yaml
 # wiki.yaml
 vault:
-  input_dirs: [wiki]
-  asset_dirs: [assets]
+  inputs: [wiki]
+  assets: [assets]
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 
 graph:

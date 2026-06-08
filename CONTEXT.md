@@ -6,7 +6,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Vault**: The markdown corpus the CLI loads from `vault.input_dirs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Vault**: The markdown corpus the CLI loads from `vault.inputs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
 
 **Document**: An individual Markdown page in the vault containing a metadata block. _Avoid_: Page, post, wiki page.
 
@@ -14,7 +14,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a WikiConfig. _Avoid_: Namespace list.
 
-**WikiConfig**: The central configuration managing CLI settings, directories, check/lint severities, and the Context. _Avoid_: Config, parameters, settings.
+**WikiConfig**: The central configuration object — same nested blocks as `wiki.yaml` (`vault`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.vault.inputs`, site chrome via `config.site.*`, RDF via `config.graph.*` and the `config.context` property. _Avoid_: Config, parameters, settings, flat `input_dirs` fields.
 
 **Namespaces**: The mapping of prefix keys to URI values used for RDF conversion and SPARQL queries. _Avoid_: Prefixes, prefixes list.
 
@@ -48,7 +48,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 ## Relationships
 
-- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `vault.input_dirs`
+- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `vault.inputs`
 - A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**

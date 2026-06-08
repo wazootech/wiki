@@ -34,18 +34,18 @@ def _config_fingerprint(config: WikiConfig) -> dict[str, Any]:
     }
     return {
         "wiki_base": config.wiki_base,
-        "uri_ext": config.uri_ext,
-        "content_predicate": config.content_predicate,
-        "exclude": sorted(config.exclude),
+        "uri_ext": config.graph.uri_ext,
+        "content_predicate": config.graph.content_predicate,
+        "exclude": sorted(config.vault.exclude),
         "namespaces": namespaces,
     }
 
 
 def iter_vault_files(config: WikiConfig) -> list[Path]:
-    """All non-excluded files under input_dirs that contribute to the graph."""
+    """All non-excluded files under inputs that contribute to the graph."""
     files: list[Path] = []
     cache_root = cache_dir(config).resolve()
-    for input_dir in config.input_dirs:
+    for input_dir in config.vault.inputs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):

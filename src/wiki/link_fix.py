@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import difflib
 import re
-from dataclasses import dataclass
 from pathlib import Path
 
-from .audit import BrokenLink, collect_broken_links
+from .audit import collect_broken_links
+from .schemas import BrokenLink, BrokenLinkFix
 from .config import WikiConfig
 from .headings import GitHubHeadingSlugger
 from .links import fragment_id, resolve_page_route, split_target
@@ -16,13 +16,6 @@ from .paths import iter_document_files, route_for_document_file
 WIKILINK_FULL_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
 MARKDOWN_LINK_FULL_REGEX = re.compile(r"(!?\[[^\]]*\]\()([^)]+)(\))")
 FUZZY_ROUTE_CUTOFF = 0.86
-
-
-@dataclass(frozen=True)
-class BrokenLinkFix:
-    issue: BrokenLink
-    replacement_target: str
-    description: str
 
 
 def find_broken_link_fixes(config: WikiConfig, file_filter: set[str] | None = None) -> list[BrokenLinkFix]:
@@ -176,7 +169,7 @@ def _replacement_route(
     if not page_part:
         return None
 
-    renamed = config.link_renames.get(page_part)
+    renamed = (config.link.renames or {}).get(page_part)
     if renamed and renamed in existing_routes:
         return renamed
 

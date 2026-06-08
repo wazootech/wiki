@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from io import StringIO
-from typing import Any, TypedDict
+from typing import Any
 
 from rdflib import Graph
 from rich import box
@@ -13,25 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .format_choice import FormatChoice
-
-
-class MetadataView(TypedDict):
-    id: str
-    format: str
-    mode: str
-    label: str
-    lexer: str
-
-
-METADATA_VIEWS: list[MetadataView] = [
-    {"id": "json-ld-compacted", "format": "json-ld", "mode": "compacted", "label": "JSON-LD", "lexer": "json"},
-    {"id": "turtle", "format": "turtle", "mode": "expanded", "label": "Turtle", "lexer": "turtle"},
-    {"id": "n3", "format": "n3", "mode": "expanded", "label": "N3", "lexer": "n3"},
-    {"id": "xml", "format": "xml", "mode": "expanded", "label": "RDF/XML", "lexer": "xml"},
-    {"id": "nt", "format": "nt", "mode": "expanded", "label": "NT", "lexer": "nt"},
-    {"id": "trig", "format": "trig", "mode": "expanded", "label": "TriG", "lexer": "trig"},
-    {"id": "nquads", "format": "nquads", "mode": "expanded", "label": "NQ", "lexer": "nt"},
-]
+from .schemas.metadata import METADATA_VIEWS, MetadataView
 
 # Pygments has no dedicated N3/TriG/N-Triples lexers; "nt" aliases to NestedTextLexer.
 METADATA_PYGMENTS_LEXER_ALIASES: dict[str, str] = {
@@ -40,8 +22,8 @@ METADATA_PYGMENTS_LEXER_ALIASES: dict[str, str] = {
     "nt": "turtle",
 }
 
-_METADATA_VIEW_IDS = {view["id"] for view in METADATA_VIEWS}
-_METADATA_FORMATS = {view["format"] for view in METADATA_VIEWS}
+_METADATA_VIEW_IDS = {view.id for view in METADATA_VIEWS}
+_METADATA_FORMATS = {view.format for view in METADATA_VIEWS}
 _FORMAT_ALIASES = FormatChoice.FORMAT_ALIASES
 
 
@@ -293,8 +275,8 @@ def resolve_metadata_view(fmt: str | None, mode: str | None) -> str:
     if normalized_format == "json-ld":
         return "json-ld-compacted"
     for view in METADATA_VIEWS:
-        if view["format"] == normalized_format:
-            return view["id"]
+        if view.format == normalized_format:
+            return view.id
     return "json-ld-compacted"
 
 

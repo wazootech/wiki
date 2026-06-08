@@ -5,7 +5,6 @@ from __future__ import annotations
 import html as html_module
 import json
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -18,7 +17,9 @@ from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
-from .format import METADATA_VIEWS, process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
+from .format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
+from .schemas.metadata import METADATA_VIEWS
+from .schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
@@ -34,7 +35,7 @@ PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
 def _metadata_format_css() -> str:
     rules: list[str] = []
     for view in METADATA_VIEWS:
-        view_id = view["id"]
+        view_id = view.id
         rules.append(
             f'.metadata-format-switch:has(.metadata-format-input[value="{view_id}"]:checked) '
             f".metadata-format-panel-{view_id} {{ display: block; }}"
@@ -1102,50 +1103,6 @@ def render_wiki_markdown(
     return md.render(text)
 
 
-@dataclass
-class TocItem:
-    title: str
-    slug: str
-    level: int
-
-
-@dataclass
-class InfoboxRow:
-    label: str
-    text: str
-    html: str
-
-
-@dataclass
-class VirtualPage:
-    file_slug: str
-    title: str
-    markdown: str
-    html: str
-    frontmatter: dict[str, Any]
-    layout_path: Path | None = None
-    layout_stem: str = "default"
-    wiki_ids: list[str] = field(default_factory=list)
-    outline: list[TocItem] = field(default_factory=list)
-    backlink_slugs: list[str] = field(default_factory=list)
-
-    @property
-    def full_slug(self) -> str:
-        return self.file_slug
-
-    @property
-    def has_frontmatter(self) -> bool:
-        return bool(self.frontmatter)
-
-
-@dataclass
-class WikiSite:
-    pages: list[VirtualPage]
-    config: WikiConfig | None = None
-    pages_by_route: dict[str, VirtualPage] = field(default_factory=dict)
-    routes_by_wiki_id: dict[str, str] = field(default_factory=dict)
-
-
 def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
     """Split markdown into sections at H1/H2 boundaries."""
     lines = markdown.split("\n")
@@ -1239,9 +1196,9 @@ def build_site(
         config = input_dirs
     else:
         dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-        config = WikiConfig(input_dirs=dirs_arg)
-    resolved_base_url = config.base_url if base_url is None else base_url
-    resolved_url_style = config.url_style if url_style is None else url_style
+        config = WikiConfig.for_root(Path.cwd(), vault={"inputs": [str(p) for p in dirs_arg]})
+    resolved_base_url = config.site.base_url if base_url is None else base_url
+    resolved_url_style = config.site.url_style if url_style is None else url_style
     pages: list[VirtualPage] = []
 
     doc_files = sorted(iter_document_files(config))
@@ -1379,7 +1336,7 @@ def build_index_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    site_title = site.config.site_title
+    site_title = site.config.site.title
     logo_svg = _build_logo_svg(_logo_letter(site_title))
 
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
@@ -1451,7 +1408,7 @@ def build_page_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    site_title = site.config.site_title
+    site_title = site.config.site.title
     logo_svg = _build_logo_svg(_logo_letter(site_title))
 
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
@@ -1522,7 +1479,7 @@ def _page_wiki_ids(config: WikiConfig, route: str, frontmatter: dict[str, Any]) 
             expanded = _expand_known_curie(raw_value, config)
             if expanded != raw_value:
                 values.append(expanded)
-    suffix = ".md" if config.uri_ext else ""
+    suffix = ".md" if config.graph.uri_ext else ""
     values.append(f"{config.wiki_base}{route}{suffix}")
     return list(dict.fromkeys(values))
 
@@ -1591,19 +1548,19 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
     if not page.frontmatter:
         return ""
 
-    page_config = site.config or WikiConfig(input_dirs=[])
+    page_config = site.config or WikiConfig.for_root(Path.cwd(), vault={"inputs": []})
     view_group_id = _metadata_view_dom_id(page)
     radios_and_labels: list[str] = []
     panels: list[str] = []
 
     for view in METADATA_VIEWS:
-        view_id = view["id"]
+        view_id = view.id
         input_id = f"{view_group_id}-{view_id}"
         checked = ' checked="checked"' if view_id == selected_view else ""
         radios_and_labels.append(
             f'<input class="metadata-format-input" type="radio" name="{view_group_id}" '
             f'id="{input_id}" value="{view_id}"{checked}>'
-            f'<label class="metadata-format-label" for="{input_id}">{html_module.escape(view["label"])}</label>'
+            f'<label class="metadata-format-label" for="{input_id}">{html_module.escape(view.label)}</label>'
         )
         highlighted, lexer, raw_text = _metadata_content_for_page(page, page_config, view)
         panels.append(
@@ -1630,14 +1587,14 @@ def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict
         page.frontmatter,
         page.full_slug,
         config.context,
-        view["format"],
-        mode=view["mode"],
+        view.format,
+        mode=view.mode,
     )
-    if view["format"] == "json-ld":
+    if view.format == "json-ld":
         text = json.dumps(rdf, indent=2, default=str)
     else:
         text = rdf if isinstance(rdf, str) else str(rdf)
-    return _highlight_metadata(text, view["lexer"]), view["lexer"], text
+    return _highlight_metadata(text, view.lexer), view.lexer, text
 
 
 def _metadata_view_dom_id(page: VirtualPage) -> str:

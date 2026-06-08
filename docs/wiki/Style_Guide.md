@@ -12,7 +12,7 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 
 ## File layout
 
-- Put pages under directories listed in `vault.input_dirs` (usually `wiki/`).
+- Put pages under directories listed in `vault.inputs` (usually `wiki/`).
 - **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `vault.filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).

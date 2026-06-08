@@ -8,7 +8,9 @@ description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
 
 The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
-Config files are validated strictly. Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+The in-memory **WikiConfig** model uses the same nested blocks as the file (`vault`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `WikiConfig.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `vault` and `site`. Library and test code can construct configs with `WikiConfig(vault={...}, config_root=path)` or `WikiConfig.for_root(path, vault={...})`.
+
+Config files are validated strictly through a Pydantic schema (`extra='forbid'` on every block). Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
 
 ## Config semantics
 
@@ -47,9 +49,9 @@ Relative **`--input-dir`** paths on the CLI resolve against the config file dire
 
 ```yaml
 vault:
-  input_dirs:
+  inputs:
     - wiki
-  asset_dirs:
+  assets:
     - assets
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
   exclude:
@@ -91,12 +93,12 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 | Key | Default | Purpose |
 | --- | ------- | ------- |
-| `vault.input_dirs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
-| `vault.asset_dirs` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
+| `vault.inputs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
+| `vault.assets` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
 | `vault.exclude` | `[]` | Glob patterns (POSIX paths relative to config root) skipped when indexing |
 | `vault.filename_pattern` | — | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
 
-Page URLs come from paths under `vault.input_dirs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
+Page URLs come from paths under `vault.inputs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
 ## Graph (`graph:`)
 

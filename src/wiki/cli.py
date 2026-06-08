@@ -44,7 +44,7 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--input-dir", "cli_input_dirs", multiple=True, default=None, help="Override input_dirs from wiki.yaml (.md, .yaml, .json; repeatable).")
+@click.option("--input-dir", "cli_input_dirs", multiple=True, default=None, help="Override vault.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
 @click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
 @click.pass_context
 def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path: str) -> None:
@@ -54,7 +54,7 @@ def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if cli_input_dirs:
-        config.input_dirs = [
+        config.vault.inputs = [
             Path(d) if Path(d).is_absolute() else config.config_root / d
             for d in cli_input_dirs
         ]
@@ -236,7 +236,7 @@ def link(
         sys.exit(0)
 
     for item in opportunities:
-        suggestion = format_internal_link(item.target_route, item.matched_text, config.link_style)
+        suggestion = format_internal_link(item.target_route, item.matched_text, config.link.style)
         target = f"{item.target_route} ({item.target_title})" if verbose else suggestion
         click.echo(
             f"{item.source_file}:{item.line}:{item.column}: "
@@ -430,15 +430,15 @@ def build(
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
-    if not any(d.exists() for d in config.input_dirs):
-        dirs_str = ", ".join(str(d) for d in config.input_dirs)
+    if not any(d.exists() for d in config.vault.inputs):
+        dirs_str = ", ".join(str(d) for d in config.vault.inputs)
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
-    base_url = (config.base_url if base_url is None else base_url).rstrip("/")
-    url_style = config.url_style if url_style is None else url_style
-    config.base_url = base_url
-    config.url_style = url_style
+    base_url = (config.site.base_url if base_url is None else base_url).rstrip("/")
+    url_style = config.site.url_style if url_style is None else url_style
+    config.site.base_url = base_url
+    config.site.url_style = url_style
 
     if not no_check:
         lint_results = run_lint(config)
@@ -534,7 +534,7 @@ def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rd
 
         converted_list = []
         for file_path in selected:
-            data = document_data_from_path(file_path, content_predicate=context.content_predicate)
+            data = document_data_from_path(file_path, content_predicate=context.graph.content_predicate)
             if data is None:
                 click.echo(f"No valid document metadata found in {file_path.name}", err=True)
                 sys.exit(1)
@@ -549,7 +549,7 @@ def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rd
     else:
         converted_list = []
         for file_path in iter_document_files(context):
-            data = document_data_from_path(file_path, content_predicate=context.content_predicate)
+            data = document_data_from_path(file_path, content_predicate=context.graph.content_predicate)
             if data:
                 processed_rdf = process_rdf_format(
                     data, route_for_document_file(context, file_path), context, rdf_format, mode=mode
@@ -590,10 +590,10 @@ def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rd
 def serve(config: Context, host: str, port: int, base_url: str | None, url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
-    resolved_base_url = (config.base_url if base_url is None else base_url).rstrip("/")
-    resolved_url_style = config.url_style if url_style is None else url_style
-    config.base_url = resolved_base_url
-    config.url_style = resolved_url_style
+    resolved_base_url = (config.site.base_url if base_url is None else base_url).rstrip("/")
+    resolved_url_style = config.site.url_style if url_style is None else url_style
+    config.site.base_url = resolved_base_url
+    config.site.url_style = resolved_url_style
     run_server(config, host=host, port=port, base_url=resolved_base_url, url_style=resolved_url_style, watch=watch)
 
 

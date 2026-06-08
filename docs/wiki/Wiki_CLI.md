@@ -64,7 +64,7 @@ wiki -c docs/wiki.yaml check
 
 ### `--input-dir PATH` (repeatable)
 
-Override or extend `vault.input_dirs` from config for a single invocation. Relative paths resolve against the config file directory. Useful for one-off queries against a subdirectory.
+Override or extend `vault.inputs` from config for a single invocation. Relative paths resolve against the config file directory. Useful for one-off queries against a subdirectory.
 
 Example:
 

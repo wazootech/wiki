@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from .audit import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, _markdown_body
+from .schemas import LinkOpportunity
 from .config import WikiConfig
 from .parser import document_data_from_path
 from .links import format_internal_link
@@ -16,17 +16,6 @@ MIN_ALIAS_LENGTH = 4
 
 FENCED_CODE_RE = re.compile(r"```[\s\S]*?```")
 INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
-
-
-@dataclass(frozen=True)
-class LinkOpportunity:
-    source_route: str
-    source_file: str
-    line: int
-    column: int
-    matched_text: str
-    target_route: str
-    target_title: str
 
 
 def find_link_opportunities(
@@ -217,7 +206,7 @@ def apply_link_opportunities(
             link = format_internal_link(
                 opportunity.target_route,
                 opportunity.matched_text,
-                config.link_style,
+                config.link.style,
             )
             lines[line_index] = (
                 line_content[:column_index]

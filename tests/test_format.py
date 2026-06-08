@@ -45,7 +45,7 @@ class MetadataViewHelpersTest(unittest.TestCase):
         self.assertEqual(resolve_metadata_view("ttl", "expanded"), "turtle")
 
     def test_metadata_views_cover_export_formats(self) -> None:
-        formats = {view["format"] for view in METADATA_VIEWS}
+        formats = {view.format for view in METADATA_VIEWS}
         self.assertIn("json-ld", formats)
         self.assertIn("turtle", formats)
         self.assertIn("xml", formats)
@@ -74,7 +74,7 @@ familyName: Smith
 ---""",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             result = graph.query(
                 "SELECT ?givenName ?familyName WHERE { ?s <https://schema.org/givenName> ?givenName ; "
@@ -97,7 +97,7 @@ familyName: Smith
 ---""",
                 encoding="utf-8",
             )
-            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             output = run_query(
                 graph,
@@ -110,7 +110,7 @@ familyName: Smith
     def test_pretty_table_format_empty_results(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            config = WikiConfig(input_dirs=[wiki_dir], config_root=wiki_dir)
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             result = graph.query("SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }")
             self.assertEqual(pretty_table_format(result), "(no results)")
