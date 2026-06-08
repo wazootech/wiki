@@ -12,46 +12,40 @@ In this vault, SHACL is used to enforce structure via the [Wiki_CLI](Wiki_CLI.md
 
 ## Defining custom SHACL shapes (validation)
 
-SHACL (Shapes Constraint Language) files are stored in your configured `shapes/` directory. They validate that your page frontmatter is structurally correct.
+SHACL shapes load from the vault graph. Add a dedicated `shapes/` tree to [Wiki_Configuration](Wiki_Configuration.md) `input_dirs` so shape documents stay separate from prose pages:
 
-To create a custom constraint for a class (e.g., a `Project` class):
-
-1. Create a file named `shapes/project-shape.ttl`.
-1. Define a `sh:NodeShape` that targets your class and specifies property constraints:
-
-```turtle
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix schema: <https://schema.org/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix wiki: <https://wazootech.github.io/wiki/wiki/> .
-
-schema:ProjectShape a sh:NodeShape ;
-  sh:targetClass schema:Project ;
-  
-  # Required properties
-  sh:property [
-    sh:path schema:name ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    sh:datatype xsd:string ;
-    sh:message "Project must have exactly one name string." ;
-  ] ;
-  
-  sh:property [
-    sh:path schema:startDate ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    sh:datatype xsd:date ;
-    sh:message "Project must have a startDate in YYYY-MM-DD format." ;
-  ] .
+```yaml
+input_dirs:
+  - wiki
+  - shapes
 ```
 
-When you run `wiki check`, any page with `type: Project` is automatically validated against these constraints!
+Markdown and RDF files under `shapes/` compile into the same vault graph as wiki articles; `wiki check` extracts `sh:NodeShape` triples and runs PySHACL against every document. This repository keeps shapes alongside articles under `wiki/` instead ([Software_Shape](Software_Shape.md)); both layouts work.
 
-## Page layouts vs SHACL
+To constrain a class (for example `schema:Project`), create `shapes/Project_Shape.md` using a [Style_Guide](Style_Guide.md) Wikipedia-style filename and frontmatter like [Software_Shape](Software_Shape.md):
 
-Per-page HTML layouts use `wazoo:layout` with a file path. That key is presentation metadata for the builder and is not exported into the RDF graph, so SHACL cannot constrain it. Use `wiki check` to validate layout file paths and reject legacy `template` / `wiki:template` keys. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
+```yaml
+---
+type: sh:NodeShape
+rdfs:label: Project Shape
+sh:targetClass: schema:Project
+sh:property:
+  - sh:path: schema:name
+    sh:minCount: 1
+    sh:maxCount: 1
+    sh:datatype: xsd:string
+    sh:message: Project must have exactly one name string.
+  - sh:path: schema:startDate
+    sh:minCount: 1
+    sh:maxCount: 1
+    sh:datatype: xsd:date
+    sh:message: Project must have a startDate in YYYY-MM-DD format.
+---
+```
+
+When you run `wiki check`, any page with `type: Project` is automatically validated against these constraints.
+
+Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is listed in `input_dirs`; markdown frontmatter is the default authoring style in this vault.
 
 ## Future work: ShEx
 

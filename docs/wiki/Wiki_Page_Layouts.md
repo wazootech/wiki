@@ -34,7 +34,7 @@ familyName: Davidson
 
 When `wazoo:layout` is omitted, the page uses `page_layout`. Layout files must exist and end in `.html`; `wiki check` reports missing `wazoo:layout` paths as errors.
 
-`wazoo:layout` is hidden from the infobox and is not exported to RDF. Legacy `template` and `wiki:template` keys are rejected by `wiki check`.
+`wazoo:layout` is ordinary frontmatter: it appears in the RDF graph, infobox, and metadata pane like other properties.
 
 ## Placeholders
 

@@ -181,6 +181,7 @@ name: Project Atlas Record
             self.assertEqual(page.layout_stem, "project")
             self.assertIn('id="custom-shell"', html)
             self.assertIn('class="infobox page-meta"', html)
+            self.assertIn("<dt>wazoo:layout</dt>", html)
             self.assertIn('href="/wiki/Project_Atlas/"', html)
 
     def test_legacy_template_frontmatter_does_not_select_layout(self) -> None:

@@ -361,15 +361,14 @@ url: https://gregorydavidson.com
 
 When `wazoo:layout` is omitted, the page uses the site `page_layout`. Layout files use the same `{placeholder}` contract (`{infobox_html}`, `{page_content}`, `{layout_class}`, and so on).
 
-Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, `type`, and `wazoo:layout` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
+Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, and `type` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
 In the built site:
 
 - `wiki:Bella_Davidson` links to the `Bella_Davidson` page when that page exists
 - `https://gregorydavidson.com` renders as an external link
-- `wazoo:layout` is presentation metadata only (not exported to RDF)
 
-`wiki check` errors on legacy `template` / `wiki:template` keys and on missing `wazoo:layout` files.
+`wiki check` errors on missing `wazoo:layout` files.
 
 #### Metadata pane (RDF views)
 

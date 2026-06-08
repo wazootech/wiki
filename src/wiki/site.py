@@ -934,7 +934,7 @@ DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
 </body>
 </html>"""
 
-METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type", "wazoo:layout"}
+METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type"}
 
 
 def slugify_segment(text: str) -> str:

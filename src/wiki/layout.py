@@ -9,7 +9,6 @@ from .headings import heading_slug
 
 LAYOUT_FRONTMATTER_KEY = "wazoo:layout"
 FORBIDDEN_LAYOUT_KEYS = frozenset({"template", "wiki:template"})
-PRESENTATION_FRONTMATTER_KEYS = frozenset({LAYOUT_FRONTMATTER_KEY})
 
 
 def resolve_layout_path(raw: str, config_root: Path) -> Path:
