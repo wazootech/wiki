@@ -75,4 +75,4 @@ ORDER BY ?class
 
 ## References
 
-- [SPARQL 1.2 Query Language](https://www.w3.org/TR/sparql12-query/)
+- [SPARQL 1.1 Query Language](https://www.w3.org/TR/sparql11-query/): Query language for RDF graphs.
