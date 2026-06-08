@@ -99,6 +99,8 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("content_predicate: schema:articleBody", rendered)
         self.assertIn("link_style: markdown", rendered)
         self.assertIn("headings: off", rendered)
+        self.assertIn("heading_levels: off", rendered)
+        self.assertIn("duplicate_headings: off", rendered)
         self.assertIn("thematic_breaks: off", rendered)
         self.assertIn("forbidden_layout_keys: error", rendered)
         self.assertIn(".mdformat.toml", rendered)

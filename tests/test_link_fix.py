@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.audit import audit_broken_links, collect_broken_links
+from wiki.audit import lint_broken_links, collect_broken_links
 from wiki.config import WikiConfig
 from wiki.link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
 
@@ -21,7 +21,7 @@ class TestLinkFix(unittest.TestCase):
 
             apply_broken_link_fixes(config, fixes, dry_run=False)
             self.assertIn("[[target-page]]", source.read_text(encoding="utf-8"))
-            self.assertEqual(audit_broken_links(config), [])
+            self.assertEqual(lint_broken_links(config), [])
 
     def test_link_renames_take_precedence(self) -> None:
         with TemporaryDirectory() as tmpdir:

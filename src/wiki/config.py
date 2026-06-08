@@ -51,6 +51,8 @@ DEFAULT_LINT_RULES = {
     "broken_links": "warning",
     "filename_pattern": "warning",
     "headings": "off",
+    "heading_levels": "off",
+    "duplicate_headings": "off",
     "thematic_breaks": "off",
     "link_style": "warning",
 }
@@ -81,7 +83,15 @@ ALLOWED_CHECK_KEYS = {
     "forbidden_layout_keys",
     "missing_layout_file",
 }
-ALLOWED_LINT_KEYS = {"broken_links", "filename_pattern", "headings", "thematic_breaks", "link_style"}
+ALLOWED_LINT_KEYS = {
+    "broken_links",
+    "filename_pattern",
+    "headings",
+    "heading_levels",
+    "duplicate_headings",
+    "thematic_breaks",
+    "link_style",
+}
 ALLOWED_SPARQL_SERVICE_KEYS = {"enabled", "path"}
 
 

@@ -17,7 +17,7 @@ Three audit lanes map to three commands:
 | Lane       | Command      | YAML block | Purpose                                                             |
 | ---------- | ------------ | ---------- | ------------------------------------------------------------------- |
 | Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                   |
-| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
+| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
 | Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                    |
 
 ### Rule placement

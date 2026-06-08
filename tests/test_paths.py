@@ -14,7 +14,7 @@ from wiki.paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from wiki.audit import audit_broken_links
+from wiki.audit import lint_broken_links
 from wiki.assets import build_asset_manifest, iter_asset_files
 
 
@@ -143,7 +143,7 @@ class TestWikiPaths(unittest.TestCase):
             (games / "Pokemon_Diamond.md").write_text("# Pokemon\n\n## Release History", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            self.assertEqual(audit_broken_links(config), [])
+            self.assertEqual(lint_broken_links(config), [])
 
     def test_internal_links_report_missing_heading_fragment(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -154,7 +154,7 @@ class TestWikiPaths(unittest.TestCase):
             (wiki / "B.md").write_text("# B\n\n## Present", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], config_root=root)
 
-            issues = audit_broken_links(config)
+            issues = lint_broken_links(config)
             self.assertEqual(len(issues), 1)
             self.assertIn("missing heading '#missing'", issues[0])
 
@@ -199,7 +199,7 @@ class TestWikiPaths(unittest.TestCase):
             )
             config = WikiConfig(input_dirs=[wiki], asset_dirs=[root / "assets"], config_root=root)
 
-            self.assertEqual(audit_broken_links(config), [])
+            self.assertEqual(lint_broken_links(config), [])
 
     def test_missing_asset_link_is_reported(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -211,7 +211,7 @@ class TestWikiPaths(unittest.TestCase):
             (wiki / "Item.md").write_text("# Item\n\n[manual](../assets/missing.pdf)", encoding="utf-8")
             config = WikiConfig(input_dirs=[wiki], asset_dirs=[assets], config_root=root)
 
-            issues = audit_broken_links(config)
+            issues = lint_broken_links(config)
             self.assertEqual(len(issues), 1)
             self.assertIn("missing asset", issues[0])
 

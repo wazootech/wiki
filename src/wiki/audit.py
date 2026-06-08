@@ -5,11 +5,13 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import unquote
 from rdflib import Graph
 import pyshacl
+from markdown_it import MarkdownIt
 
 from .assets import asset_reference_issue, audit_asset_dirs, build_asset_manifest
 from .config import WikiConfig
@@ -166,8 +168,8 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
     return conforms, results_text
 
 
-def audit_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit filenames in the wiki directory against the optional filename_pattern.
+def lint_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint filenames in the wiki directory against the optional filename_pattern.
 
     If file_filter is set, only check files whose stem is in the set.
 
@@ -331,8 +333,8 @@ def collect_broken_links(config: WikiConfig, file_filter: set[str] | None = None
     return issues
 
 
-def audit_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
+def lint_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
 
     If file_filter is set, only check files whose route is in the set.
 
@@ -443,8 +445,8 @@ def _title_case_words_after_first(text: str) -> list[str]:
     ]
 
 
-def audit_thematic_breaks(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit horizontal rules (thematic breaks) in markdown body text."""
+def lint_thematic_breaks(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint horizontal rules (thematic breaks) in markdown body text."""
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
         route = route_for_document_file(config, file_path)
@@ -492,8 +494,82 @@ def audit_thematic_breaks(config: WikiConfig, file_filter: set[str] | None = Non
     return warnings
 
 
-def audit_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
-    """Audit editorial heading style (H2+ sentence case, no numbering).
+@lru_cache(maxsize=1)
+def _lint_markdown_parser() -> MarkdownIt:
+    return MarkdownIt("gfm-like", {"linkify": False})
+
+
+def _parse_body_headings(body: str) -> list[tuple[int, int, str]]:
+    """Return (line_no, level, raw_text) from heading_open + inline tokens."""
+    tokens = _lint_markdown_parser().parse(body)
+    headings: list[tuple[int, int, str]] = []
+    for index, token in enumerate(tokens):
+        if token.type != "heading_open":
+            continue
+        level = int(token.tag[1:])
+        line_no = token.map[0] + 1 if token.map else 0
+        text = ""
+        if index + 1 < len(tokens) and tokens[index + 1].type == "inline":
+            text = tokens[index + 1].content
+        headings.append((line_no, level, text))
+    return headings
+
+
+def _normalize_heading_for_duplicate(text: str) -> str:
+    plain = _heading_plain_text(text)
+    plain = re.sub(r"`([^`\n]+)`", r"\1", plain)
+    return " ".join(plain.strip().casefold().split())
+
+
+def lint_heading_levels(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint heading depth increments (markdownlint MD001-inspired).
+
+    Each heading must be at most one level deeper than the previous heading.
+    """
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = route_for_document_file(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        body = _markdown_body(file_path.read_text(encoding="utf-8"))
+        previous_level = 0
+        for line_no, level, _text in _parse_body_headings(body):
+            if previous_level > 0 and level > previous_level + 1:
+                warnings.append(
+                    f"In {file_path.name}:{line_no}: Heading h{level} skips level h{previous_level + 1}; "
+                    "increase depth by one at a time."
+                )
+            previous_level = level
+    return warnings
+
+
+def lint_duplicate_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint duplicate H2+ heading text in one document (markdownlint MD024-inspired)."""
+    warnings: list[str] = []
+    for file_path in iter_markdown_files(config):
+        route = route_for_document_file(config, file_path)
+        if file_filter is not None and route not in file_filter:
+            continue
+        body = _markdown_body(file_path.read_text(encoding="utf-8"))
+        seen: dict[str, int] = {}
+        for line_no, level, text in _parse_body_headings(body):
+            if level <= 1:
+                continue
+            key = _normalize_heading_for_duplicate(text)
+            if not key:
+                continue
+            if key in seen:
+                warnings.append(
+                    f"In {file_path.name}:{line_no}: Duplicate heading h{level} {text!r} "
+                    f"(first at line {seen[key]})."
+                )
+            else:
+                seen[key] = line_no
+    return warnings
+
+
+def lint_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+    """Lint editorial heading style (H2+ sentence case, no numbering).
 
     ATX heading syntax is enforced by ``wiki fmt`` (mdformat); Setext headings
     are converted there rather than reported here.
@@ -524,7 +600,7 @@ def _line_number_for_offset(content: str, offset: int) -> int:
     return content[:offset].count("\n") + 1
 
 
-def audit_link_style(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_link_style(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
     """Flag Obsidian wikilinks in body prose when vault link_style is markdown."""
     if config.link_style != "markdown":
         return []
@@ -683,7 +759,7 @@ def _empty_results() -> dict[str, Any]:
     return {"conforms": True, "errors": [], "warnings": []}
 
 
-def audit_layout_frontmatter(
+def check_layout_frontmatter(
     config: WikiConfig,
     file_filter: set[str] | None = None,
 ) -> dict[str, list[str]]:
@@ -748,7 +824,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
             results["conforms"] = False
             results["errors"].extend(collision_issues)
 
-    layout_issues = audit_layout_frontmatter(config, file_filter=file_filter)
+    layout_issues = check_layout_frontmatter(config, file_filter=file_filter)
     _apply_issues(results, "forbidden_layout_keys", layout_issues["forbidden"], config.check)
     _apply_issues(results, "missing_layout_file", layout_issues["missing"], config.check)
 
@@ -756,7 +832,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
 
 
 def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run convention audits: broken links, filename pattern, heading style, and link style."""
+    """Run lint rules: broken links, filename pattern, heading style, and link style."""
     results = _empty_results()
 
     safety_issues = validate_route_safety(config)
@@ -765,19 +841,25 @@ def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[st
         results["errors"].extend(safety_issues)
         return results
 
-    link_issues = audit_broken_links(config, file_filter=file_filter)
+    link_issues = lint_broken_links(config, file_filter=file_filter)
     _apply_issues(results, "broken_links", link_issues, config.lint)
 
-    filename_issues = audit_filenames(config, file_filter=file_filter)
+    filename_issues = lint_filenames(config, file_filter=file_filter)
     _apply_issues(results, "filename_pattern", filename_issues, config.lint)
 
-    heading_issues = audit_headings(config, file_filter=file_filter)
+    heading_issues = lint_headings(config, file_filter=file_filter)
     _apply_issues(results, "headings", heading_issues, config.lint)
 
-    thematic_break_issues = audit_thematic_breaks(config, file_filter=file_filter)
+    heading_level_issues = lint_heading_levels(config, file_filter=file_filter)
+    _apply_issues(results, "heading_levels", heading_level_issues, config.lint)
+
+    duplicate_heading_issues = lint_duplicate_headings(config, file_filter=file_filter)
+    _apply_issues(results, "duplicate_headings", duplicate_heading_issues, config.lint)
+
+    thematic_break_issues = lint_thematic_breaks(config, file_filter=file_filter)
     _apply_issues(results, "thematic_breaks", thematic_break_issues, config.lint)
 
-    link_style_issues = audit_link_style(config, file_filter=file_filter)
+    link_style_issues = lint_link_style(config, file_filter=file_filter)
     _apply_issues(results, "link_style", link_style_issues, config.lint)
 
     return results

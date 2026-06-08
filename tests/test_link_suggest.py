@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.audit import audit_broken_links
+from wiki.audit import lint_broken_links
 from wiki.config import WikiConfig
 from wiki.link_suggest import apply_link_opportunities, find_link_opportunities
 
@@ -98,7 +98,7 @@ class TestLinkSuggest(unittest.TestCase):
             self.assertEqual(changed, [guide])
             self.assertIn("[Wiki CLI](Wiki_CLI.md)", guide.read_text(encoding="utf-8"))
             self.assertEqual(find_link_opportunities(config), [])
-            self.assertEqual(audit_broken_links(config), [])
+            self.assertEqual(lint_broken_links(config), [])
 
     def test_apply_respects_frontmatter(self) -> None:
         with TemporaryDirectory() as tmpdir:
