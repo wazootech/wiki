@@ -151,6 +151,56 @@ class TestWikiFmt(unittest.TestCase):
             config = WikiConfig(config_root=root, fmt=custom)
             self.assertEqual(describe_fmt_source(file_path, config), "fmt from custom.toml")
 
+    def test_fmt_invalid_toml_at_pointer_raises(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            bad = root / "bad.toml"
+            bad.write_text('wrap = "no"\n[broken\n', encoding="utf-8")
+            file_path = root / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(config_root=root, fmt=bad)
+            with self.assertRaisesRegex(ValueError, "Invalid TOML syntax"):
+                format_markdown("# Title\n", file_path, config)
+
+    def test_fmt_invalid_toml_at_default_raises(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".mdformat.toml").write_text("[broken\n", encoding="utf-8")
+            file_path = root / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(config_root=root)
+            with self.assertRaisesRegex(ValueError, "Invalid TOML syntax"):
+                format_markdown("# Title\n", file_path, config)
+
+    def test_fmt_resolution_upward_walk(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            nested = wiki / "sub"
+            nested.mkdir(parents=True)
+            toml_path = wiki / ".mdformat.toml"
+            toml_path.write_text(
+                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                encoding="utf-8",
+            )
+            file_path = nested / "page.md"
+            file_path.write_text("# Title\n", encoding="utf-8")
+            config = WikiConfig(config_root=root, input_dirs=[wiki])
+            source = describe_fmt_source(file_path, config)
+            self.assertIn(".mdformat.toml", source)
+            self.assertIn("wiki", source.replace("\\", "/"))
+
+    def test_fmt_empty_inline_merges_defaults(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file_path = root / "page.md"
+            original = "# Title\n\nSome text  \n"
+            file_path.write_text(original, encoding="utf-8")
+            config = WikiConfig(config_root=root, fmt={})
+            formatted = format_markdown(original, file_path, config)
+            self.assertNotIn("Some text  \n", formatted)
+            self.assertEqual(describe_fmt_source(file_path, config), "inline fmt in wiki config")
+
 
 if __name__ == "__main__":
     unittest.main()

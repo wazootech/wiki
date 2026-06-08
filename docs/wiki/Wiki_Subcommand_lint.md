@@ -53,12 +53,12 @@ Route safety errors (spaces, unsafe URL characters) abort lint with errors befor
 
 ## Related CI commands
 
-| Command               | Purpose                                 |
-| --------------------- | --------------------------------------- |
-| `wiki fmt --check`    | mdformat consistency (`.mdformat.toml`) |
-| `wiki lint --strict`  | Conventions (`lint:` in yaml)           |
-| `wiki check --strict` | SHACL, route safety, layout frontmatter |
-| `wiki render --check` | Stale inline SPARQL result blocks       |
+| Command               | Purpose                                                       |
+| --------------------- | ------------------------------------------------------------- |
+| `wiki fmt --check`    | mdformat consistency (`fmt:` in wiki config or fallback TOML) |
+| `wiki lint --strict`  | Conventions (`lint:` in yaml)                                 |
+| `wiki check --strict` | SHACL, route safety, layout frontmatter                       |
+| `wiki render --check` | Stale inline SPARQL result blocks                             |
 
 Run in that order in CI: `fmt`, then `lint`, then `check` — so mechanical fixes land before conventions and integrity checks.
 

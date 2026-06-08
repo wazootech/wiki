@@ -18,11 +18,11 @@ Three audit lanes map to three commands:
 | ---------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                            |
 | Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus top-level regex) |
-| Formatting | `wiki fmt`   | —          | `.mdformat.toml` at vault root (not `wiki.yaml`)                                                                                               |
+| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                            |
 
 ### Rule placement
 
-Mechanical markdown (lists, tables, ATX syntax, line endings) belongs in **`.mdformat.toml`** and **`wiki fmt`** — not in `wiki.yaml`. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style_Guide](Style_Guide.md) for the full matrix.
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style_Guide](Style_Guide.md) for the full matrix.
 
 - Top-level **`filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
@@ -56,6 +56,11 @@ link_renames:
 
 # Optional: format for wiki link --apply (markdown | wikilink; default markdown)
 link_style: markdown
+
+fmt:
+  wrap: "no"
+  end_of_line: lf
+  extensions: [gfm, frontmatter, wikilink]
 
 context:
   schema: https://schema.org/
@@ -260,6 +265,19 @@ Controls how `wiki link --apply` inserts new internal links:
 
 When `link_style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link_style: wikilink` for an Obsidian-style vault.
 
+## Formatting (`fmt`)
+
+Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed — not both:
+
+| Shape          | Example               | When to use                                 |
+| -------------- | --------------------- | ------------------------------------------- |
+| Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
+| Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
+
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then mdformat defaults. See [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+
+Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
+
 ## Integrity checks (`check`)
 
 Under `check`, each rule is `error`, `warning`, or `off`:
@@ -285,7 +303,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and stricter `lint.headings` / `lint.thematic_breaks` warnings than the `wiki init` defaults.
+`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, inline `fmt` for `wiki fmt`, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and stricter `lint.headings` / `lint.thematic_breaks` warnings than the `wiki init` defaults.
 
 ## Related
 

@@ -178,7 +178,7 @@ def render_wiki_yaml(opts: InitOptions) -> str:
 
 
 def render_mdformat_toml() -> str:
-    """Return the packaged .mdformat.toml scaffold for `wiki fmt`."""
+    """Return packaged mdformat.toml.j2 content for pointer-mode fmt (not written by init)."""
     return _init_template_env().get_template(_MDFORMAT_TEMPLATE_NAME).render()
 
 

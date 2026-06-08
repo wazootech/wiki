@@ -32,7 +32,7 @@ Configure `filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to m
 
 **Enforcers:**
 
-- **ATX heading syntax** — `wiki fmt` / `.mdformat.toml` (Setext headings are converted to ATX; run `fmt --check` in CI).
+- **ATX heading syntax** — `wiki fmt` / `fmt:` in `wiki.yaml` (optional `.mdformat.toml` fallback; Setext headings are converted to ATX; run `fmt --check` in CI).
 - **Sentence-case H2+, no numbering** — `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`). Use `wiki lint --strict` in CI only after enabling the rules you want enforced as errors.
 - **Heading depth increments, duplicate H2+ sections** — `lint.heading_levels` and `lint.duplicate_headings` (off by default; opt in when you want structural outline checks).
 
