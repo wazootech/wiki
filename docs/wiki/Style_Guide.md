@@ -91,7 +91,7 @@ When writing \`
 
 ## SHACL shapes
 
-Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software_Shape](Software_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki_Subcommand_check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
+Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software_Application_Shape](Software_Application_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki_Subcommand_check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
 
 ## Internal links
 

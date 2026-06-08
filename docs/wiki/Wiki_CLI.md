@@ -132,4 +132,4 @@ Similar **agent memory filesystem** approaches include [Supermemory_SMFS](Superm
 ## Background
 
 - [Semantic_Web](Semantic_Web.md) — RDF, Turtle, OWL, and related formats
-- [Software_Shape](Software_Shape.md) — SHACL shape for `SoftwareApplication` pages (including this one)
+- [Software_Application_Shape](Software_Application_Shape.md) — SHACL shape for `SoftwareApplication` pages (including this one)
