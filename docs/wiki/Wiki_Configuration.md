@@ -190,8 +190,8 @@ The wiki builder generates these selectors in the rendered page content:
 
 | Selector                    | Where                                                       |
 | --------------------------- | ----------------------------------------------------------- |
-| `#article-top`              | Read-view `<article>` anchor; TOC “(Top)” links here.       |
-| `#firstHeading`             | Talk / Source / Metadata pane `<h1>` titles (not read).     |
+| `#article-top`              | Read-view `<article>` wrapper around rendered markdown body. |
+| `#firstHeading`             | Read-view page title `<h1>`; also Talk / Source / Metadata pane headings. TOC “(Top)” links here. |
 | `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.      |
 | `article`                   | Wrapper around the rendered markdown body (`#article-top`). |
 | `.layout-label`             | Uppercase type or custom-layout badge in read view.         |

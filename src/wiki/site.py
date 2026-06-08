@@ -1547,7 +1547,7 @@ def _expand_known_curie(value: str, config: WikiConfig) -> str:
 def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
-    items = '<li class="toclevel-0 l2"><a href="#article-top">(Top)</a></li>\n'
+    items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
     for item in page.outline:
         title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
         items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'
@@ -1565,7 +1565,7 @@ def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
 def _build_sidebar_contents_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
-    items = '<li class="toclevel-0 l2"><a href="#article-top">(Top)</a></li>\n'
+    items = '<li class="toclevel-0 l2"><a href="#firstHeading">(Top)</a></li>\n'
     for item in page.outline:
         title_html = render_outline_title(item.title, base_url, url_style, page.full_slug)
         items += f'<li class="toclevel-{item.level - 1} l{item.level}"><a href="#{item.slug}">{title_html}</a></li>\n'

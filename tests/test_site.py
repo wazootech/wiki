@@ -56,7 +56,7 @@ class TestWikiSite(unittest.TestCase):
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
             self.assertIn('class="toc"', html)
             self.assertIn('href="#early-life"', html)
-            self.assertIn('href="#article-top"', html)
+            self.assertIn('href="#firstHeading"', html)
 
     def test_title_falls_back_to_humanized_route(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -453,6 +453,25 @@ specialty: Diagnostics
             self.assertNotIn("infobox page-meta", html)
             self.assertNotIn("Backlinks", html)
             self.assertNotIn("On this page", html)
+
+    def test_default_layout_read_view_includes_first_heading(self) -> None:
+        seed_template = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Wiki_CLI.md").write_text(
+                "---\ntype: schema:SoftwareApplication\nname: Wiki CLI\n---\n\n"
+                "# Wiki CLI\n\nLead paragraph.\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            html = build_page_html(page, site, page_layout=seed_template)
+            self.assertIn('<h1 class="firstHeading" id="firstHeading">Wiki CLI</h1>', html)
+            self.assertNotIn("<h1", page.html)
+            self.assertIn("Lead paragraph.", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
         seed_template = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
