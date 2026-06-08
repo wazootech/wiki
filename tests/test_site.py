@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import WikiConfig
+from wiki.format import METADATA_VIEWS
 from wiki.init_scaffold import InitOptions, render_default_layout
 from wiki.site import (
     DEFAULT_MINIMAL_PAGE_LAYOUT,
@@ -333,6 +334,22 @@ specialty: Diagnostics
             self.assertIn('&quot;@context&quot;', html)
             self.assertIn('schema:Person', html)
             self.assertIn('schema:givenName', html)
+
+            for view in METADATA_VIEWS:
+                panel_marker = f'<div class="metadata-format-panel metadata-format-panel-{view["id"]}">'
+                panel_start = html.index(panel_marker)
+                panel_end = html.index("</div>", panel_start)
+                panel_html = html[panel_start:panel_end]
+                self.assertIn(
+                    "<span",
+                    panel_html,
+                    msg=f"metadata panel {view['id']} should be syntax-highlighted",
+                )
+                self.assertIn(
+                    f'class="language-{view["lexer"]}"',
+                    panel_html,
+                    msg=f"metadata panel {view['id']} should keep language-{view['lexer']} class",
+                )
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(

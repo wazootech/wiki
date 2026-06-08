@@ -18,7 +18,7 @@ from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .config import DEFAULT_URL_STYLE, WikiConfig
-from .format import METADATA_VIEWS, process_rdf_format, resolve_metadata_view
+from .format import METADATA_VIEWS, process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
 from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
@@ -1654,7 +1654,7 @@ def _metadata_view_dom_id(page: VirtualPage) -> str:
 
 def _highlight_metadata(value: str, lexer_name: str) -> str:
     try:
-        lexer = get_lexer_by_name(lexer_name)
+        lexer = get_lexer_by_name(resolve_metadata_pygments_lexer(lexer_name))
     except ClassNotFound:
         return html_module.escape(value)
     return highlight(value, lexer, PYGMENTS_FORMATTER)

@@ -13,6 +13,7 @@ from wiki.format import (
     normalize_metadata_format,
     normalize_metadata_mode,
     pretty_table_format,
+    resolve_metadata_pygments_lexer,
     resolve_metadata_view,
     run_query,
 )
@@ -49,6 +50,16 @@ class MetadataViewHelpersTest(unittest.TestCase):
         self.assertIn("turtle", formats)
         self.assertIn("xml", formats)
         self.assertIn("nquads", formats)
+
+    def test_resolve_metadata_pygments_lexer_aliases_missing_rdf_lexers(self) -> None:
+        self.assertEqual(resolve_metadata_pygments_lexer("n3"), "turtle")
+        self.assertEqual(resolve_metadata_pygments_lexer("trig"), "turtle")
+        self.assertEqual(resolve_metadata_pygments_lexer("nt"), "turtle")
+
+    def test_resolve_metadata_pygments_lexer_passthrough(self) -> None:
+        self.assertEqual(resolve_metadata_pygments_lexer("turtle"), "turtle")
+        self.assertEqual(resolve_metadata_pygments_lexer("xml"), "xml")
+        self.assertEqual(resolve_metadata_pygments_lexer("json"), "json")
 
 
 class MarkdownFormatTest(unittest.TestCase):

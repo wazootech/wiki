@@ -33,6 +33,13 @@ METADATA_VIEWS: list[MetadataView] = [
     {"id": "nquads", "format": "nquads", "mode": "expanded", "label": "NQ", "lexer": "nt"},
 ]
 
+# Pygments has no dedicated N3/TriG/N-Triples lexers; "nt" aliases to NestedTextLexer.
+METADATA_PYGMENTS_LEXER_ALIASES: dict[str, str] = {
+    "n3": "turtle",
+    "trig": "turtle",
+    "nt": "turtle",
+}
+
 _METADATA_VIEW_IDS = {view["id"] for view in METADATA_VIEWS}
 _METADATA_FORMATS = {view["format"] for view in METADATA_VIEWS}
 _FORMAT_ALIASES = FormatChoice.FORMAT_ALIASES
@@ -254,6 +261,11 @@ def is_sparql_update(query: str) -> bool:
     """Return True when *query* looks like a SPARQL Update operation."""
     text = _strip_sparql_prelude(query)
     return _SPARQL_UPDATE_RE.search(text) is not None
+
+
+def resolve_metadata_pygments_lexer(lexer: str) -> str:
+    """Map metadata view lexer names to Pygments lexer aliases that exist."""
+    return METADATA_PYGMENTS_LEXER_ALIASES.get(lexer, lexer)
 
 
 def normalize_metadata_mode(mode: str | None) -> str:
