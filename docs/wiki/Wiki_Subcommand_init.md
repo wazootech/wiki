@@ -22,17 +22,17 @@ wiki init --wiki-base https://example.org/mywiki/ --base-url /mywiki
 
 ## Options
 
-| Flag                  | Description                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| `--force`             | Overwrite existing `wiki.yaml` or non-empty `wiki/`                                     |
-| `--git`               | Run `git init` after scaffolding                                                        |
-| `--repo`              | GitHub `owner/repo`; infer `wiki_base`, `context.wiki`, and `base_url` for GitHub Pages |
-| `--wiki-base`         | Explicit `wiki_base` URI (overrides `--repo` inference)                                 |
-| `--base-url`          | URL prefix for built/served pages (default `/wiki` or inferred from `--repo`)           |
-| `--url-style`         | `dir` or `file` (default `dir`)                                                         |
-| `--wazoo`             | `context.wazoo` namespace URI (default `https://schema.wazoo.dev/`)                     |
-| `--content-predicate` | Optional `content_predicate` CURIE (e.g. `schema:articleBody`)                          |
-| `--link-style`        | Default link style: `markdown` or `wikilink`                                            |
+| Flag                  | Description                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `--force`             | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html` |
+| `--git`               | Run `git init` after scaffolding                                                               |
+| `--repo`              | GitHub `owner/repo`; infer `wiki_base`, `context.wiki`, and `base_url` for GitHub Pages        |
+| `--wiki-base`         | Explicit `wiki_base` URI (overrides `--repo` inference)                                        |
+| `--base-url`          | URL prefix for built/served pages (default `/wiki` or inferred from `--repo`)                  |
+| `--url-style`         | `dir` or `file` (default `dir`)                                                                |
+| `--wazoo`             | `context.wazoo` namespace URI (default `https://schema.wazoo.dev/`)                            |
+| `--content-predicate` | Optional `content_predicate` CURIE (e.g. `schema:articleBody`)                                 |
+| `--link-style`        | Default link style: `markdown` or `wikilink`                                                   |
 
 ## URL resolution
 

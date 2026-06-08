@@ -30,7 +30,7 @@ wiki build --no-check
 | `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
 | `--reload`        | off         | Rebuild graph when using `--render`                                     |
 | `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
-| `--no-check`      | off         | Skip pre-build integrity and lint (`check` + `lint`)                    |
+| `--no-check`      | off         | Skip pre-build `lint` then `check` preflight                            |
 | `-v`, `--verbose` | off         | List output paths                                                       |
 
 ## Output layout
@@ -55,7 +55,7 @@ If the configured template file is missing, the fallback shell is used silently.
 
 ## Checks and collisions
 
-By default, integrity (`wiki check`) and convention (`wiki lint`) preflight must pass before the output directory is wiped and rebuilt. Output path collisions abort the build with errors.
+By default, convention (`wiki lint`) then integrity (`wiki check`) preflight must pass before the output directory is wiped and rebuilt. Output path collisions abort the build with errors.
 
 ## Related
 

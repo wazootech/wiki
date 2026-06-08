@@ -51,9 +51,8 @@ It never auto-creates pages or deletes links. Asset links, metadata CURIEs, and 
 
 ## Why not check or lint?
 
-- **`wiki lint`** is the convention lane — it **reports** broken links via `lint.broken_links` but does not edit files. Repair is `wiki link --fix-broken`, not `wiki lint`.
+- **`wiki lint`** is the convention lane — broken links, filename pattern, heading style, and link style. It reports but does not edit files; repair is `wiki link --fix-broken`. Missing wikilinks are optional enrichment, not a lint violation.
 - **`wiki check`** is the integrity lane — SHACL, routes, collisions, layout frontmatter. It does not scan prose for broken links.
-- **`wiki lint`** is the convention lane — filename patterns and heading style. Missing wikilinks are optional graph enrichment, not a lint violation; plain text is valid markdown.
 - **`wiki link`** requires explicit `--apply` or `--fix-broken` because suggestions are heuristic and repairs are conservative by design.
 - See [Design_Philosophies](Design_Philosophies.md#check-lint-fmt-and-link) for the full lane model.
 

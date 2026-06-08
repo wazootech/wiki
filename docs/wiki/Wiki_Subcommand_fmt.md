@@ -40,10 +40,10 @@ Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for examp
 `wiki fmt` stops at the **first** source below. Inline `fmt` always wins — it never merges with a `.mdformat.toml` on disk.
 
 1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses wiki-cli defaults)
-2. **Pointer** — TOML at the relative path in `fmt:`
-3. **Vault TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
-4. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
-5. **Defaults** — wiki-cli fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
+1. **Pointer** — TOML at the relative path in `fmt:`
+1. **Vault TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
+1. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
+1. **Defaults** — wiki-cli fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
 
 `wiki fmt -v` prints which step matched (for example `Using inline fmt in wiki config.`).
 
@@ -51,7 +51,7 @@ Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for examp
 | --------------------- | ------------- | ------------------------------------------------ |
 | Mechanical markdown   | `wiki fmt`    | `fmt:` in `wiki.yaml` (inline or path)           |
 | Editorial conventions | `wiki lint`   | `wiki.yaml` → `lint:`                            |
-| Link integrity        | `wiki check`  | `wiki.yaml` → `check:`                           |
+| Link integrity        | `wiki lint`   | `wiki.yaml` → `lint:`                            |
 | Dynamic SPARQL tables | `wiki render` | (query-driven; blocks are left untouched by fmt) |
 
 Recommended CI order: `fmt --check` → `lint --strict` → `check --strict` → `render --check`.

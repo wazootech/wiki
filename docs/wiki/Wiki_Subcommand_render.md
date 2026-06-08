@@ -31,8 +31,8 @@ wiki render --cache
 
 | Flag              | Description                                                              |
 | ----------------- | ------------------------------------------------------------------------ |
-| `FILE`            | Single `.md` file only                                                   |
-| `--glob`          | Repeatable; limit to matching paths                                      |
+| `FILE`            | Optional single `.md` file                                               |
+| `--glob`          | Repeatable; limit to matching paths (combines with `FILE` when both set) |
 | `--check`         | Dry-run; exit 1 if any block is stale                                    |
 | `--no-inference`  | Skip OWL-RL                                                              |
 | `--reload`        | Rebuild graph before rendering                                           |

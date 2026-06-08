@@ -29,11 +29,15 @@ wiki check --strict
 
 ## What is checked
 
+### Full vault (default)
+
+`wiki check` with no `FILE` argument runs every check below.
+
 ### Always errors (not configurable)
 
 - **SHACL** — shapes from vault frontmatter (`sh:NodeShape`, etc.) on the full RDF graph
 - **Route safety** — unsafe path segments (spaces, reserved characters, and similar)
-- **Output collisions** — two vault sources mapping to the same built URL
+- **Output collisions** — two vault sources mapping to the same built URL (against default `_site` layout)
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
@@ -48,7 +52,9 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 
 ### Single-file mode
 
-`wiki check path/to/Page.md` runs per-file SHACL for that route. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on that page require `wiki lint path/to/Page.md`.
+`wiki check path/to/Page.md` runs **SHACL only** for that route. Route safety, output collisions, and layout frontmatter rules are **full-vault only**. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on that page require `wiki lint path/to/Page.md`.
+
+`--strict` applies only when warnings exist; single-file mode does not emit warnings today.
 
 ### Related CI commands
 

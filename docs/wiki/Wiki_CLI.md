@@ -50,7 +50,7 @@ See [Getting_Started](Getting_Started.md) for a full walkthrough.
 
 ## Global Options
 
-These options apply to all subcommands on the root `wiki` group:
+These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`). `init` and `upgrade` do not load `wiki.yaml`.
 
 ### `-c, --config PATH`
 

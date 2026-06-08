@@ -22,7 +22,7 @@ from .paths import iter_document_files
 
 
 @click.group()
-@click.option("--input-dir", "cli_input_dirs", multiple=True, default=None, help="Directory containing wiki markdown files or RDF data files (repeatable).")
+@click.option("--input-dir", "cli_input_dirs", multiple=True, default=None, help="Override input_dirs from wiki.yaml (.md, .yaml, .json; repeatable).")
 @click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
 @click.pass_context
 def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path: str) -> None:
@@ -79,7 +79,7 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Run integrity checks: SHACL validation, route safety, and layout frontmatter."""
+    """Integrity checks: SHACL, routes, collisions, layout (FILE: SHACL only)."""
     if file:
         res = check_shacl_file(file, config, verbose=verbose)
         conforms = True
@@ -122,7 +122,7 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Run convention audits: broken links, filename pattern, and heading style."""
+    """Convention audits: links, filenames, headings, and link style."""
     from .paths import route_for_document_file
 
     file_filter = None
@@ -152,11 +152,11 @@ def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> 
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--apply", is_flag=True, help="Insert suggested wikilinks into vault files.")
+@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link_style in wiki.yaml).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
 @click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
-@click.option("-v", "--verbose", is_flag=True, help="Include target page titles in output.")
+@click.option("-v", "--verbose", is_flag=True, help="Show target titles in suggestions; list changed files when applying.")
 @click.pass_obj
 def link(
     config: Context,
@@ -167,7 +167,7 @@ def link(
     check: bool,
     verbose: bool,
 ) -> None:
-    """Suggest or repair wikilinks for vault pages."""
+    """Suggest or repair internal links for vault pages."""
     from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
     from .link_suggest import apply_link_opportunities, find_link_opportunities
     from .links import format_internal_link
@@ -236,7 +236,7 @@ def link(
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
-@click.option("--pretty", is_flag=True, help="Render SELECT results as a Rich table (terminal only).")
+@click.option("--pretty", is_flag=True, help="Rich table for SELECT results (stdout only; not with -o or --jq).")
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
 def query(
@@ -251,7 +251,7 @@ def query(
     pretty: bool,
     verbose: bool,
 ) -> None:
-    """Run a SPARQL SELECT or CONSTRUCT query."""
+    """Run SPARQL SELECT or CONSTRUCT (query argument or stdin)."""
     if query_args:
         sparql_query = " ".join(query_args)
     elif not sys.stdin.isatty():
@@ -308,7 +308,7 @@ def query(
 
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--glob", "glob_filters", multiple=True, help="Render only markdown files matching this glob. Repeatable.")
+@click.option("--glob", "glob_filters", multiple=True, help="Limit to paths matching this glob (repeatable; combines with FILE).")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
@@ -375,10 +375,10 @@ def render(
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
 @click.option("--url-style", type=click.Choice(["file", "dir"]), default=None,
               help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
-@click.option("--render", is_flag=True, help="Run SPARQL dynamic block rendering on markdown files before building.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph before rendering SPARQL blocks.")
-@click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
-@click.option("--no-check", is_flag=True, help="Skip configurable wiki checks before building.")
+@click.option("--render", is_flag=True, help="Render inline SPARQL blocks before building.")
+@click.option("--reload", is_flag=True, help="Rebuild graph before --render (no effect without --render).")
+@click.option("--cache", "disk_cache", is_flag=True, help="Persist graph under .wiki/cache when using --render.")
+@click.option("--no-check", is_flag=True, help="Skip lint and check preflight before building.")
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
 def build(
@@ -500,7 +500,7 @@ def build(
 @click.option("--mode", type=click.Choice(["expanded", "compacted"], case_sensitive=False), default="expanded", show_default=True, help="Serialization mode for formats that support compaction.")
 @click.pass_obj
 def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_format: str, mode: str) -> None:
-    """Compile and export wiki documents in a supported RDF format."""
+    """Export document frontmatter as RDF or JSON-LD."""
     result_payload: Any = None
 
     if file:
@@ -556,7 +556,7 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
               help="URL prefix for wiki pages. Empty string for root-level URLs.")
 @click.option("--style", "url_style", default=None,
               type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir). Defaults to url_style in config.")
-@click.option("--watch", is_flag=True, help="Watch vault files; rebuild graph, SPARQL blocks, and site on change.")
+@click.option("--watch", is_flag=True, help="Watch vault; rebuild graph, SPARQL blocks, site, and reload browser.")
 @click.pass_obj
 def serve(config: Context, host: str, port: int, base_url: str | None, url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
@@ -569,7 +569,7 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 
 
 @main.command()
-@click.option("--force", is_flag=True, help="Overwrite existing scaffold files if present.")
+@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer wiki_base and base_url for GitHub Pages.")
 @click.option("--wiki-base", default=None, help="Explicit wiki_base URI (overrides --repo inference).")
@@ -577,7 +577,7 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 @click.option("--url-style", default=None, type=click.Choice(["file", "dir"]), help="URL style: dir or file.")
 @click.option("--wazoo", default=None, help="context.wazoo namespace URI (default https://schema.wazoo.dev/).")
 @click.option("--content-predicate", default=None, help="Optional content_predicate CURIE (e.g. schema:articleBody).")
-@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Default link style for wiki link --apply.")
+@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Top-level link_style in wiki.yaml (markdown or wikilink).")
 def init(
     force: bool,
     init_git: bool,
@@ -726,7 +726,7 @@ def init(
 @main.command()
 @click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
 @click.option("--check", is_flag=True, help="Check formatting without writing files back. Exits with code 1 if any files would change.")
-@click.option("-v", "--verbose", is_flag=True, help="Print names of formatted files.")
+@click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
 def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> None:
     """Format markdown vault pages using mdformat."""
