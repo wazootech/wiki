@@ -188,26 +188,26 @@ The metadata pane uses the same RDF serialization path as `wiki export` (compact
 
 The wiki builder generates these selectors in the rendered page content:
 
-| Selector                    | Where                                                       |
-| --------------------------- | ----------------------------------------------------------- |
-| `#article-top`              | Read-view `<article>` wrapper around rendered markdown body. |
+| Selector                    | Where                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `#article-top`              | Read-view `<article>` wrapper around rendered markdown body.                                      |
 | `#firstHeading`             | Read-view page title `<h1>`; also Talk / Source / Metadata pane headings. TOC “(Top)” links here. |
-| `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.      |
-| `article`                   | Wrapper around the rendered markdown body (`#article-top`). |
-| `.layout-label`             | Uppercase type or custom-layout badge in read view.         |
-| `.toc` / `#toc`             | Table of contents container.                                |
-| `#catlinks` / `.catlinks`   | Category links box.                                         |
-| `.backlinks` / `#backlinks` | Backlinks section.                                          |
-| `.catlinks-label`           | Categories heading label.                                   |
-| `.catlinks-list`            | Categories `<ul>`.                                          |
-| `.infobox`                  | Typed frontmatter property table.                           |
-| `.page-meta`                | Infobox class (used for styling).                           |
-| `.template-SLUG`            | Per-template class on infobox (e.g. `template-person`).     |
-| `toclevel-N` / `lN`         | TOC list item classes for heading level N.                  |
-| `.wikilink`                 | Internal wiki page links.                                   |
-| `pre[data-copy]`            | Block code with raw source for clipboard copy.              |
-| `.code-block`               | Wrapper injected around copyable pre blocks.                |
-| `.code-copy-btn`            | Copy button shown on code-block hover/focus.                |
+| `#siteSub`                  | Subtitle under Talk / Source / Metadata pane headings.                                            |
+| `article`                   | Wrapper around the rendered markdown body (`#article-top`).                                       |
+| `.layout-label`             | Uppercase type or custom-layout badge in read view.                                               |
+| `.toc` / `#toc`             | Table of contents container.                                                                      |
+| `#catlinks` / `.catlinks`   | Category links box.                                                                               |
+| `.backlinks` / `#backlinks` | Backlinks section.                                                                                |
+| `.catlinks-label`           | Categories heading label.                                                                         |
+| `.catlinks-list`            | Categories `<ul>`.                                                                                |
+| `.infobox`                  | Typed frontmatter property table.                                                                 |
+| `.page-meta`                | Infobox class (used for styling).                                                                 |
+| `.template-SLUG`            | Per-template class on infobox (e.g. `template-person`).                                           |
+| `toclevel-N` / `lN`         | TOC list item classes for heading level N.                                                        |
+| `.wikilink`                 | Internal wiki page links.                                                                         |
+| `pre[data-copy]`            | Block code with raw source for clipboard copy.                                                    |
+| `.code-block`               | Wrapper injected around copyable pre blocks.                                                      |
+| `.code-copy-btn`            | Copy button shown on code-block hover/focus.                                                      |
 
 ### JavaScript hooks
 

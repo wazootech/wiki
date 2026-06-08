@@ -72,7 +72,7 @@ Tracked in [wazootech/wiki#49](https://github.com/wazootech/wiki/issues/49).
 - **Targeting**: SHACL uses `sh:targetClass` in the shapes graph; ShEx needs shape maps or conventions (e.g. shape name = class IRI) that authors must learn separately.
 - **No concrete requirement yet**: Until a vault or integration needs ShEx, SHACL covers validation.
 
-If implemented, the likely shape is **one engine per class** (never SHACL and ShEx on the same `targetClass`), with a wiki shape-page convention such as `type: wiki:ShExShape`, `targetClass`, and a fenced ` ```shex` block.
+If implemented, the likely shape is **one engine per class** (never SHACL and ShEx on the same `targetClass`), with a wiki shape-page convention such as `type: wiki:ShExShape`, `targetClass`, and a fenced ````  ```shex ```` block.
 
 ## References
 
