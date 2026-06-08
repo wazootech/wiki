@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 from pathlib import Path
 import re
 from typing import Any
@@ -12,7 +11,7 @@ from markdown_it import MarkdownIt
 
 from .format import run_query
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
-from .paths import iter_markdown_files, page_routes, route_for_document_file
+from .paths import iter_markdown_files, page_routes, select_markdown_paths
 
 # Matches SPARQL wrapper comments, fenced query, rendered table, and end comment.
 SPARQL_BLOCK_REGEX = re.compile(
@@ -35,11 +34,13 @@ def has_sparql_blocks(md_file: Path) -> bool:
 def select_markdown_files_for_render(
     context: Any,
     *,
-    file_filter: Path | None = None,
-    glob_filters: tuple[str, ...] = (),
+    explicit_files: tuple[Path, ...] = (),
 ) -> list[Path]:
     """Choose markdown files to process for SPARQL rendering."""
-    candidates = _select_markdown_files(context, file_filter=file_filter, glob_filters=glob_filters)
+    if explicit_files:
+        candidates = select_markdown_paths(context, explicit_files)
+    else:
+        candidates = iter_markdown_files(context)
     return [md_file for md_file in candidates if has_sparql_blocks(md_file)]
 
 
@@ -84,8 +85,7 @@ def render_markdown_files(
     context: Any,
     graph: Any,
     dry_run: bool = False,
-    file_filter: Path | None = None,
-    glob_filters: tuple[str, ...] = (),
+    explicit_files: tuple[Path, ...] = (),
 ) -> tuple[int, int, list[str]]:
     """Iterate over markdown files, parse and replace dynamic SPARQL sections inline.
 
@@ -94,11 +94,7 @@ def render_markdown_files(
     success_count = 0
     error_count = 0
     stale_files: list[str] = []
-    markdown_files = select_markdown_files_for_render(
-        context,
-        file_filter=file_filter,
-        glob_filters=glob_filters,
-    )
+    markdown_files = select_markdown_files_for_render(context, explicit_files=explicit_files)
 
     known_slugs = {pr.route for pr in page_routes(context)}
 
@@ -144,34 +140,6 @@ def render_markdown_files(
         error_count += file_errors
 
     return (success_count, error_count, stale_files)
-
-
-def _select_markdown_files(context: Any, file_filter: Path | None, glob_filters: tuple[str, ...]) -> list[Path]:
-    markdown_files = iter_markdown_files(context)
-    if file_filter is None and not glob_filters:
-        return markdown_files
-
-    normalized_file = file_filter.resolve() if file_filter is not None else None
-    selected: list[Path] = []
-    for md_file in markdown_files:
-        if normalized_file is not None and md_file.resolve() == normalized_file:
-            selected.append(md_file)
-            continue
-        if glob_filters and _matches_any_glob(context, md_file, glob_filters):
-            selected.append(md_file)
-    return selected
-
-
-def _matches_any_glob(context: Any, md_file: Path, glob_filters: tuple[str, ...]) -> bool:
-    route = route_for_document_file(context, md_file)
-    candidates = {
-        md_file.name,
-        md_file.as_posix(),
-        context.relative_to_root(md_file),
-        route,
-        f"{route}.md" if route else "index.md",
-    }
-    return any(fnmatch.fnmatchcase(candidate, pattern) for pattern in glob_filters for candidate in candidates)
 
 
 def render_markdown(text: str) -> str:

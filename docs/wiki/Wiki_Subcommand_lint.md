@@ -15,17 +15,18 @@ Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](De
 ```bash
 wiki lint
 wiki lint wiki/Some_Page.md
+wiki lint wiki/A.md wiki/B.md
 wiki lint -v
 wiki lint --strict
 ```
 
 ## Options
 
-| Flag              | Description                       |
-| ----------------- | --------------------------------- |
-| `FILE`            | Optional single markdown document |
-| `-v`, `--verbose` | Print warnings                    |
-| `--strict`        | Treat warnings as errors (exit 1) |
+| Flag              | Description                                     |
+| ----------------- | ----------------------------------------------- |
+| `FILE...`         | Optional markdown paths; otherwise entire vault |
+| `-v`, `--verbose` | Print warnings                                  |
+| `--strict`        | Treat warnings as errors (exit 1)               |
 
 ## What is linted
 

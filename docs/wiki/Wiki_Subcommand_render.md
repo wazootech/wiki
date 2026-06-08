@@ -19,7 +19,8 @@ Silent on success by default. See [Design_Philosophies](Design_Philosophies.md).
 ```bash
 wiki render
 wiki render wiki/Report.md
-wiki render --glob "wiki/people/*.md"
+wiki render wiki/people/alpha.md wiki/projects/beta.md
+wiki render wiki/people/*.md
 wiki render -v
 wiki render --check
 wiki render --no-inference
@@ -29,15 +30,14 @@ wiki render --cache
 
 ## Options
 
-| Flag              | Description                                                              |
-| ----------------- | ------------------------------------------------------------------------ |
-| `FILE`            | Optional single `.md` file                                               |
-| `--glob`          | Repeatable; limit to matching paths (combines with `FILE` when both set) |
-| `--check`         | Dry-run; exit 1 if any block is stale                                    |
-| `--no-inference`  | Skip OWL-RL                                                              |
-| `--reload`        | Rebuild graph before rendering                                           |
-| `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes |
-| `-v`, `--verbose` | Print update counts                                                      |
+| Flag              | Description                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `FILE...`         | Optional `.md` paths; otherwise entire vault (shell globs expand to multiple FILE args) |
+| `--check`         | Dry-run; exit 1 if any block is stale                                                   |
+| `--no-inference`  | Skip OWL-RL                                                                             |
+| `--reload`        | Rebuild graph before rendering                                                          |
+| `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes                |
+| `-v`, `--verbose` | Print update counts                                                                     |
 
 ## Block format
 

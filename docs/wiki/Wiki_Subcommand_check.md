@@ -15,17 +15,18 @@ Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](De
 ```bash
 wiki check
 wiki check wiki/Some_Page.md
+wiki check wiki/A.md wiki/B.md
 wiki check -v
 wiki check --strict
 ```
 
 ## Options
 
-| Flag              | Description                                      |
-| ----------------- | ------------------------------------------------ |
-| `FILE`            | Optional single document; otherwise entire vault |
-| `-v`, `--verbose` | Print warnings                                   |
-| `--strict`        | Treat warnings as errors (exit 1)                |
+| Flag              | Description                                                                   |
+| ----------------- | ----------------------------------------------------------------------------- |
+| `FILE...`         | Optional documents; otherwise entire vault (scoped mode: SHACL per file only) |
+| `-v`, `--verbose` | Print warnings                                                                |
+| `--strict`        | Treat warnings as errors (exit 1)                                             |
 
 ## What is checked
 
@@ -50,11 +51,11 @@ Defaults: both layout rules are `error`.
 
 Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
 
-### Single-file mode
+### Scoped mode (one or more FILE args)
 
-`wiki check path/to/Page.md` runs **SHACL only** for that route. Route safety, output collisions, and layout frontmatter rules are **full-vault only**. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on that page require `wiki lint path/to/Page.md`.
+`wiki check path/to/Page.md` (or multiple paths) runs **SHACL only** per file. Route safety, output collisions, and layout frontmatter rules are **full-vault only**. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on those pages require `wiki lint` with the same paths.
 
-`--strict` applies only when warnings exist; single-file mode does not emit warnings today.
+`--strict` applies only when warnings exist; scoped mode does not emit warnings today.
 
 ### Related CI commands
 

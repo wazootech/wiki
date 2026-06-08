@@ -11,7 +11,7 @@ from urllib.error import URLError
 
 from click.testing import CliRunner
 
-from wiki.cli import main
+from wiki.cli import FILE_COMMANDS, main
 from wiki.config import WikiConfig
 from wiki.init_scaffold import InitOptions, render_default_layout, render_wiki_yaml
 
@@ -174,6 +174,65 @@ name: Invalid Name
 """, encoding="utf-8")
             result_invalid = runner.invoke(main, ["--input-dir", str(wiki_dir), "check", str(invalid_file), "--strict"])
             self.assertEqual(result_invalid.exit_code, 1)
+
+    def test_file_argument_accepts_multiple_paths(self) -> None:
+        """FILE positionals on check/lint/link/render/export/fmt use nargs=-1."""
+        for name in FILE_COMMANDS:
+            with self.subTest(command=name):
+                param = next(p for p in main.commands[name].params if p.name == "files")
+                self.assertEqual(param.nargs, -1)
+                self.assertFalse(param.required)
+
+    def test_cli_accepts_multiple_file_arguments(self) -> None:
+        """Multiple FILE paths scope lint and fmt to those documents."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            (config_dir / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": ["wiki"]}),
+                encoding="utf-8",
+            )
+            first = wiki_dir / "first.md"
+            second = wiki_dir / "second.md"
+            frontmatter = "---\ntype: schema:WebPage\nname: Page\n---\n"
+            first.write_text(frontmatter, encoding="utf-8")
+            second.write_text(frontmatter + "\n# First\n", encoding="utf-8")
+
+            result_lint = runner.invoke(
+                main,
+                ["-c", str(config_dir), "lint", str(first), str(second)],
+            )
+            self.assertEqual(result_lint.exit_code, 0)
+
+            result_fmt = runner.invoke(
+                main,
+                ["-c", str(config_dir), "fmt", "--check", str(first), str(second)],
+            )
+            self.assertEqual(result_fmt.exit_code, 0)
+
+    def test_cli_check_multiple_files_shacl_only(self) -> None:
+        """Multiple FILE paths on check run per-file SHACL without full-vault checks."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            (config_dir / "wiki.yaml").write_text(
+                yaml.dump({"input_dirs": ["wiki"]}),
+                encoding="utf-8",
+            )
+            first = wiki_dir / "first.md"
+            second = wiki_dir / "second.md"
+            first.write_text("---\ntype: schema:WebPage\nname: First\n---\n", encoding="utf-8")
+            second.write_text("---\ntype: schema:WebPage\nname: Second\n---\n", encoding="utf-8")
+
+            result = runner.invoke(
+                main,
+                ["-c", str(config_dir), "check", str(first), str(second)],
+            )
+            self.assertEqual(result.exit_code, 0)
 
     def test_cli_query_formats(self) -> None:
         """Test that wiki query executes successfully with various output formats."""
@@ -566,7 +625,7 @@ SELECT ?givenName WHERE {{ ?s <https://schema.org/givenName> ?givenName }}
             self.assertIn("Alpha", alpha.read_text(encoding="utf-8"))
             self.assertNotRegex(beta.read_text(encoding="utf-8"), r"\| givenName\s+\|")
 
-    def test_cli_render_glob_scope(self) -> None:
+    def test_cli_render_multiple_file_scope(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
@@ -589,7 +648,10 @@ SELECT ?givenName WHERE {{ ?s <https://schema.org/givenName> ?givenName }}
             person.write_text(source.format(name="Alpha"), encoding="utf-8")
             project.write_text(source.format(name="Beta"), encoding="utf-8")
 
-            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", "--glob", "people/*.md", "--no-inference"])
+            result = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "render", str(person), "--no-inference"],
+            )
             self.assertEqual(result.exit_code, 0)
 
             self.assertRegex(person.read_text(encoding="utf-8"), r"\| givenName\s+\|")
@@ -604,7 +666,7 @@ SELECT ?givenName WHERE {{ ?s <https://schema.org/givenName> ?givenName }}
 
             result = runner.invoke(main, ["--input-dir", str(wiki_dir), "render", str(record), "--no-inference"])
             self.assertEqual(result.exit_code, 1)
-            self.assertIn("render only supports markdown files", result.output)
+            self.assertIn("only supports .md files", result.output)
 
     def test_cli_render_second_invocation_reports_no_updates_when_current(self) -> None:
         runner = CliRunner()
@@ -728,6 +790,29 @@ givenName: Gregory
             no_fm_file.write_text("Hello", encoding="utf-8")
             result_fail = runner.invoke(main, ["--input-dir", str(wiki_dir), "export", str(no_fm_file)])
             self.assertEqual(result_fail.exit_code, 1)
+
+            second = wiki_dir / "alice.md"
+            second.write_text("""---
+type: Person
+givenName: Alice
+---
+""", encoding="utf-8")
+            result_multi = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "export", str(valid_file), str(second)],
+            )
+            self.assertEqual(result_multi.exit_code, 0)
+            data_multi = json.loads(result_multi.output)
+            self.assertEqual(len(data_multi), 2)
+            names = {entry["rdf"]["givenName"] for entry in data_multi}
+            self.assertEqual(names, {"Gregory", "Alice"})
+
+            result_raw_multi = runner.invoke(
+                main,
+                ["--input-dir", str(wiki_dir), "export", "-f", "turtle", str(valid_file), str(second)],
+            )
+            self.assertEqual(result_raw_multi.exit_code, 1)
+            self.assertIn("single FILE", result_raw_multi.output)
 
     def test_cli_export_supports_yaml_and_json_documents(self) -> None:
         runner = CliRunner()

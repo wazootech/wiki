@@ -13,6 +13,7 @@ Suggest **missing wikilinks** for plain-text mentions of other vault pages, or *
 ```bash
 wiki link
 wiki link wiki/Some_Page.md
+wiki link wiki/A.md wiki/B.md
 wiki link -v
 wiki link --check
 wiki link --dry-run --apply
@@ -25,7 +26,7 @@ wiki link --fix-broken --dry-run
 
 | Flag              | Description                                                                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FILE`            | Optional single markdown document; otherwise entire vault                                                                                                           |
+| `FILE...`         | Optional markdown paths; otherwise entire vault                                                                                                                     |
 | `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link_style` in [wiki.yaml](Wiki_Configuration.md) (`wikilink` or `markdown`) |
 | `--fix-broken`    | Repair unambiguous broken wikilinks and internal markdown page links                                                                                                |
 | `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files                                                                                                           |

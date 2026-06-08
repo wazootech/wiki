@@ -44,6 +44,52 @@ def iter_markdown_files(config: WikiConfig) -> list[Path]:
     return [file_path for file_path in iter_document_files(config) if file_path.suffix.lower() == ".md"]
 
 
+def _vault_document_index(config: WikiConfig) -> dict[Path, Path]:
+    return {file_path.resolve(): file_path for file_path in iter_document_files(config)}
+
+
+def _resolve_vault_paths(
+    config: WikiConfig,
+    paths: tuple[Path, ...],
+    *,
+    allowed_suffixes: set[str],
+    label: str,
+) -> list[Path]:
+    if not paths:
+        return []
+    index = _vault_document_index(config)
+    selected: list[Path] = []
+    for path in paths:
+        resolved = path.resolve()
+        vault_path = index.get(resolved)
+        if vault_path is None:
+            raise ValueError(f"{path.name} is not a vault document under input_dirs (or is excluded).")
+        if vault_path.suffix.lower() not in allowed_suffixes:
+            raise ValueError(f"{label} only supports {', '.join(sorted(allowed_suffixes))} files, got {vault_path.name}.")
+        selected.append(vault_path)
+    return selected
+
+
+def select_document_paths(config: WikiConfig, paths: tuple[Path, ...]) -> list[Path]:
+    """Resolve explicit CLI paths to vault documents (.md, .yaml, .json), preserving order."""
+    return _resolve_vault_paths(
+        config,
+        paths,
+        allowed_suffixes=set(DOCUMENT_EXTENSIONS),
+        label="export",
+    )
+
+
+def select_markdown_paths(config: WikiConfig, paths: tuple[Path, ...]) -> list[Path]:
+    """Resolve explicit CLI paths to vault markdown files, preserving order."""
+    return _resolve_vault_paths(config, paths, allowed_suffixes={".md"}, label="command")
+
+
+def routes_from_markdown_files(config: WikiConfig, paths: tuple[Path, ...]) -> set[str]:
+    """Build route filter set from explicit markdown paths."""
+    return {route_for_document_file(config, path) for path in select_markdown_paths(config, paths)}
+
+
 def route_for_document_file(config: WikiConfig, file_path: Path) -> str:
     rel = _relative_to_input_dir(config, file_path).with_suffix("").as_posix()
     parts = [part for part in rel.split("/") if part]

@@ -18,7 +18,29 @@ from .graph import load_graph, graph_stats
 from .audit import check_shacl_file, merge_results, run_check, run_lint
 from .jqfilter import resolve_path
 from .format_choice import FormatChoice
-from .paths import iter_document_files
+from .paths import (
+    iter_document_files,
+    iter_markdown_files,
+    route_for_document_file,
+    routes_from_markdown_files,
+    select_document_paths,
+    select_markdown_paths,
+)
+
+FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
+
+
+def optional_files_argument(f):
+    """Decorator: zero or more FILE positionals (``nargs=-1``).
+
+    Handlers receive ``files: tuple[Path, ...]``. Omit FILE for whole-vault mode.
+    """
+    return click.argument(
+        "files",
+        nargs=-1,
+        required=False,
+        type=click.Path(exists=True, path_type=Path),
+    )(f)
 
 
 @click.group()
@@ -74,26 +96,27 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@optional_files_argument
 @click.option("-v", "--verbose", is_flag=True, help="Show integrity audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
-    """Integrity checks: SHACL, routes, collisions, layout (FILE: SHACL only)."""
-    if file:
-        res = check_shacl_file(file, config, verbose=verbose)
+def check(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
+    """Integrity checks: SHACL, routes, collisions, layout (FILE...: SHACL only)."""
+    if files:
         conforms = True
-        errors = []
-        warnings = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
-        if res is None:
-            errors.append(f"No valid document metadata found in {file.name}")
-            conforms = False
-        else:
-            shacl_conforms, shacl_text = res
-            if not shacl_conforms:
+        for file in files:
+            res = check_shacl_file(file, config, verbose=verbose)
+            if res is None:
+                errors.append(f"No valid document metadata found in {file.name}")
                 conforms = False
-                errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
+            else:
+                shacl_conforms, shacl_text = res
+                if not shacl_conforms:
+                    conforms = False
+                    errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
 
         if strict and warnings:
             errors.extend(warnings)
@@ -117,24 +140,18 @@ def check(config: Context, file: Optional[Path], verbose: bool, strict: bool) ->
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@optional_files_argument
 @click.option("-v", "--verbose", is_flag=True, help="Show convention audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> None:
+def lint(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Convention audits: links, filenames, headings, and link style."""
-    from .paths import route_for_document_file
-
     file_filter = None
-    if file:
-        if file.suffix.lower() != ".md":
-            click.echo(f"Error: lint only supports markdown files, got {file.name}.", err=True)
-            sys.exit(1)
+    if files:
         try:
-            file_filter = {route_for_document_file(config, file)}
+            file_filter = routes_from_markdown_files(config, files)
         except ValueError as exc:
-            click.echo(f"Error: {exc}", err=True)
-            sys.exit(1)
+            raise click.ClickException(str(exc)) from exc
 
     results = run_lint(config, file_filter=file_filter)
 
@@ -151,7 +168,7 @@ def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> 
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@optional_files_argument
 @click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link_style in wiki.yaml).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
@@ -160,7 +177,7 @@ def lint(config: Context, file: Optional[Path], verbose: bool, strict: bool) -> 
 @click.pass_obj
 def link(
     config: Context,
-    file: Optional[Path],
+    files: tuple[Path, ...],
     apply: bool,
     fix_broken: bool,
     dry_run: bool,
@@ -171,13 +188,13 @@ def link(
     from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
     from .link_suggest import apply_link_opportunities, find_link_opportunities
     from .links import format_internal_link
-    from .paths import route_for_document_file
 
     file_filter = None
-    if file:
-        if file.suffix.lower() != ".md":
-            raise click.ClickException(f"link only supports markdown files, got {file.name}.")
-        file_filter = {route_for_document_file(config, file)}
+    if files:
+        try:
+            file_filter = routes_from_markdown_files(config, files)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
 
     if fix_broken:
         fixes = find_broken_link_fixes(config, file_filter=file_filter)
@@ -307,8 +324,7 @@ def query(
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
-@click.option("--glob", "glob_filters", multiple=True, help="Limit to paths matching this glob (repeatable; combines with FILE).")
+@optional_files_argument
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
@@ -317,8 +333,7 @@ def query(
 @click.pass_obj
 def render(
     context: Context,
-    file: Optional[Path],
-    glob_filters: tuple[str, ...],
+    files: tuple[Path, ...],
     no_inference: bool,
     reload: bool,
     disk_cache: bool,
@@ -326,9 +341,11 @@ def render(
     verbose: bool,
 ) -> None:
     """Render inline SPARQL blocks in markdown files."""
-    if file is not None and file.suffix.lower() != ".md":
-        click.echo(f"Error: render only supports markdown files, got {file.name}.", err=True)
-        sys.exit(1)
+    if files:
+        try:
+            select_markdown_paths(context, files)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
 
     graph = load_graph(
         context,
@@ -340,8 +357,7 @@ def render(
         context,
         graph,
         dry_run=check,
-        file_filter=file,
-        glob_filters=glob_filters,
+        explicit_files=files,
     )
     if disk_cache and not check and success_count > 0:
         load_graph(
@@ -494,30 +510,44 @@ def build(
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@optional_files_argument
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="File to write serialized RDF output.")
 @click.option("-f", "--format", "rdf_format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="Output format for RDF export.")
 @click.option("--mode", type=click.Choice(["expanded", "compacted"], case_sensitive=False), default="expanded", show_default=True, help="Serialization mode for formats that support compaction.")
 @click.pass_obj
-def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_format: str, mode: str) -> None:
+def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rdf_format: str, mode: str) -> None:
     """Export document frontmatter as RDF or JSON-LD."""
     result_payload: Any = None
+    _raw_formats = {"turtle", "xml", "n3", "nt", "trig", "nquads"}
 
-    if file:
-        data = document_data_from_path(file, content_predicate=context.content_predicate)
-        if data is None:
-            click.echo(f"No valid document metadata found in {file.name}", err=True)
+    if files:
+        if len(files) > 1 and rdf_format in _raw_formats:
+            click.echo(
+                "Error: raw RDF export formats require a single FILE or whole-vault export (omit FILE).",
+                err=True,
+            )
             sys.exit(1)
+        try:
+            selected = select_document_paths(context, files)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
 
-        processed_rdf = process_rdf_format(data, file.stem, context, rdf_format, mode=mode)
-        result_payload = {
-            "name": file.name,
-            "rdf": processed_rdf,
-        }
+        converted_list = []
+        for file_path in selected:
+            data = document_data_from_path(file_path, content_predicate=context.content_predicate)
+            if data is None:
+                click.echo(f"No valid document metadata found in {file_path.name}", err=True)
+                sys.exit(1)
+            processed_rdf = process_rdf_format(
+                data, route_for_document_file(context, file_path), context, rdf_format, mode=mode
+            )
+            converted_list.append({
+                "name": file_path.name,
+                "rdf": processed_rdf,
+            })
+        result_payload = converted_list[0] if len(converted_list) == 1 else converted_list
     else:
         converted_list = []
-        from .paths import route_for_document_file
-
         for file_path in iter_document_files(context):
             data = document_data_from_path(file_path, content_predicate=context.content_predicate)
             if data:
@@ -531,7 +561,6 @@ def export(context: Context, file: Optional[Path], output: Optional[Path], rdf_f
         result_payload = converted_list
 
     # Standard serialization formats (non-JSON wrappers) get raw RDF output
-    _raw_formats = {"turtle", "xml", "n3", "nt", "trig", "nquads"}
     if rdf_format in _raw_formats and not isinstance(result_payload, list):
         output_str = result_payload["rdf"] if isinstance(result_payload["rdf"], str) else json.dumps(result_payload["rdf"], indent=2, default=str)
         if output:
@@ -724,30 +753,29 @@ def init(
 
 
 @main.command()
-@click.argument("file", required=False, type=click.Path(exists=True, path_type=Path))
+@optional_files_argument
 @click.option("--check", is_flag=True, help="Check formatting without writing files back. Exits with code 1 if any files would change.")
 @click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
-def fmt(config: Context, file: Optional[Path], check: bool, verbose: bool) -> None:
+def fmt(config: Context, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
     """Format markdown vault pages using mdformat."""
     from .fmt_util import describe_fmt_source, format_markdown
-    from .paths import iter_markdown_files
 
-    if file:
-        if file.suffix.lower() != ".md":
-            click.echo(f"Error: fmt only supports markdown files, got {file.name}.", err=True)
-            sys.exit(1)
-        files = [file]
+    if files:
+        try:
+            target_files = select_markdown_paths(config, files)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
     else:
-        files = iter_markdown_files(config)
+        target_files = iter_markdown_files(config)
 
-    if verbose and files:
-        click.echo(f"Using {describe_fmt_source(files[0], config)}.")
+    if verbose and target_files:
+        click.echo(f"Using {describe_fmt_source(target_files[0], config)}.")
 
     stale_files = []
     success_count = 0
 
-    for f in files:
+    for f in target_files:
         try:
             original = f.read_text(encoding="utf-8")
             formatted = format_markdown(original, f, config)

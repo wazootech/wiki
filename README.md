@@ -207,7 +207,7 @@ wiki query --pretty "SELECT ?property ?value WHERE {
 ### `render`
 Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
 
-Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL block in scope against that same graph (all markdown files with blocks, or a single file / glob when scoped).
+Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL block in scope against that same graph (all markdown files with blocks, or only the FILE paths you pass).
 
 ```bash
 # Render all SPARQL blocks in the vault
@@ -228,8 +228,8 @@ wiki render --check
 # Render a single file during an edit loop
 wiki render wiki/people/Gregory_Davidson.md
 
-# Render only matching markdown files
-wiki render --glob "wiki/people/*.md"
+# Render specific markdown files (shell glob expands to multiple FILE args)
+wiki render wiki/people/*.md
 
 # Skip OWL-RL during editing when queries use asserted triples only
 wiki render --no-inference

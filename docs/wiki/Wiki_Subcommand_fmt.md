@@ -75,7 +75,7 @@ wiki --config docs fmt -v
 
 | Flag              | Description                                                               |
 | ----------------- | ------------------------------------------------------------------------- |
-| `FILE`            | Optional single document; otherwise entire vault                          |
+| `FILE...`         | Optional markdown paths; otherwise entire vault                           |
 | `--check`         | Check formatting without modifying files; exits 1 if formatting is needed |
 | `-v`, `--verbose` | Print fmt config source and formatted files                               |
 

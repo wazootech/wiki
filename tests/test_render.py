@@ -51,14 +51,14 @@ SELECT ?givenName WHERE {
             )
             graph = load_graph(config, infer=False)
 
-            render_markdown_files(config, graph, file_filter=page)
+            render_markdown_files(config, graph, explicit_files=(page,))
             rendered = page.read_text(encoding="utf-8")
 
             self.assertIn("  ?s <https://schema.org/givenName> ?givenName .", rendered)
             self.assertRegex(rendered, r"\| givenName\s+\|")
             self.assertIn("Alice", rendered)
 
-            _, _, stale = render_markdown_files(config, graph, dry_run=True, file_filter=page)
+            _, _, stale = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
             self.assertEqual(stale, [])
 
 

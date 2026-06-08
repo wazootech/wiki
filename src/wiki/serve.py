@@ -273,7 +273,7 @@ def refresh_vault(
         else:
             for path in sorted(changed_paths):
                 if path.suffix.lower() == ".md" and path.is_file() and has_sparql_blocks(path):
-                    render_markdown_files(config, graph, file_filter=path)
+                    render_markdown_files(config, graph, explicit_files=(path,))
 
     return build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
 
