@@ -53,6 +53,27 @@ When you run `wiki check`, any page with `type: Project` is automatically valida
 
 Per-page HTML layouts use `wazoo:layout` with a file path. That key is presentation metadata for the builder and is not exported into the RDF graph, so SHACL cannot constrain it. Use `wiki check` to validate layout file paths and reject legacy `template` / `wiki:template` keys. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
 
+## Future work: ShEx
+
+[ShEx](https://shexspec.github.io/shex/) (Shape Expressions) is an alternative schema language for validating RDF graphs. wiki-cli **does not** support ShEx today; validation is SHACL-only via `type: sh:NodeShape` shape pages and `wiki check`.
+
+Tracked in [wazootech/wiki#49](https://github.com/wazootech/wiki/issues/49).
+
+### Reasons to add it later
+
+- Some authors prefer **ShExC text** in markdown over nested YAML that compiles to SHACL triples.
+- **Same data graph** — ShEx validators (e.g. PyShEx) can run on the rdflib graphs `load_graph()` already builds; full-vault and per-file checks are feasible.
+- **Interop** with tooling that publishes or consumes ShEx without a SHACL conversion step.
+
+### Reasons we are deferring
+
+- **RDF-first fit**: SHACL shapes are triples in the vault graph; ShEx schemas are usually separate text (ShExC), not the same authoring model as frontmatter → RDF.
+- **Dual-engine cost**: Two validators, a shape registry, conflict rules, CLI output, tests, and docs — significant surface area for optional author choice.
+- **Targeting**: SHACL uses `sh:targetClass` in the shapes graph; ShEx needs shape maps or conventions (e.g. shape name = class IRI) that authors must learn separately.
+- **No concrete requirement yet**: Until a vault or integration needs ShEx, SHACL covers validation.
+
+If implemented, the likely shape is **one engine per class** (never SHACL and ShEx on the same `targetClass`), with a wiki shape-page convention such as `type: wiki:ShExShape`, `targetClass`, and a fenced ` ```shex` block.
+
 ## References
 
 - [SHACL — Shapes Constraint Language](https://www.w3.org/TR/shacl/)
