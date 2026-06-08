@@ -27,4 +27,5 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 ## References
 
-- [RDF 1.2 Concepts and Abstract Data Model](https://www.w3.org/TR/rdf12-concepts/)
+- [RDF 1.1 Primer](https://www.w3.org/TR/rdf11-primer/): A primer on RDF 1.1.
+- [RDF 1.1 Concepts and Abstract Data Model](https://www.w3.org/TR/rdf11-concepts/): Concepts and abstract data model for RDF 1.1.
