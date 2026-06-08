@@ -62,7 +62,7 @@ New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki ini
 - `page_layout: layouts/default.html` — site default page layout
 - `fmt:` — inline mdformat options for `wiki fmt` (`wrap`, `end_of_line`, `extensions`)
 
-Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, set `fmt: .mdformat.toml` and copy from the packaged [`mdformat.toml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/mdformat.toml.j2) template.
+Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, set `fmt: .mdformat.toml` and create that file with the same mdformat options as the inline `fmt` block.
 
 ## Generated files
 

@@ -23,7 +23,7 @@ fmt:
 
 Keys and values follow [mdformat configuration](https://mdformat.readthedocs.io/en/stable/users/configuration_file.html). Unknown keys fail at config load; invalid values fail at load or when `wiki fmt` reads TOML.
 
-An empty mapping (`fmt: {}`) is valid and merges mdformat built-in defaults with wiki-cli’s default extensions (`gfm`, `frontmatter`, `wikilink`).
+An empty mapping (`fmt: {}`) is valid and resolves to the same **wiki-cli fmt defaults** as omitting `fmt` when no TOML file applies (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`).
 
 ### Pointer mode (optional TOML file)
 
@@ -33,19 +33,19 @@ Instead of an inline mapping, set `fmt` to a **relative path** from the config f
 fmt: .mdformat.toml
 ```
 
-Copy the packaged reference template from [`src/wiki/templates/mdformat.toml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/mdformat.toml.j2) or call `render_mdformat_toml()` in tests. Absolute paths are rejected at config load.
+Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for example `wrap = "no"`, `end_of_line = "lf"`, `extensions = ["gfm", "frontmatter", "wikilink"]`). Absolute paths are rejected at config load.
 
 ### Resolution order
 
-For each file, `wiki fmt` picks the first source that applies:
+`wiki fmt` stops at the **first** source below. Inline `fmt` always wins — it never merges with a `.mdformat.toml` on disk.
 
-1. Inline `fmt` mapping in the loaded wiki config
-1. TOML file at `config_root / fmt` when `fmt` is a path string and the file exists
-1. `config_root/.mdformat.toml` when present
-1. Nearest `.mdformat.toml` found by walking up from the markdown file’s directory (mdformat default)
-1. mdformat built-in defaults plus wiki-cli default extensions
+1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses wiki-cli defaults)
+2. **Pointer** — TOML at the relative path in `fmt:`
+3. **Vault TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
+4. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
+5. **Defaults** — wiki-cli fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
 
-Use `wiki fmt -v` to print which source was used (for example `Using inline fmt in wiki config.`).
+`wiki fmt -v` prints which step matched (for example `Using inline fmt in wiki config.`).
 
 | Concern               | Command       | Config                                           |
 | --------------------- | ------------- | ------------------------------------------------ |

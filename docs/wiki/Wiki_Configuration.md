@@ -274,7 +274,7 @@ Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed —
 | Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
 | Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then mdformat defaults. See [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **wiki-cli fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`). See [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
 
 Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
 
@@ -303,7 +303,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` drives the documentation vault and GitHub Pages deploy. It sets `content_predicate: schema:articleBody` so page bodies participate in SPARQL when needed, inline `fmt` for `wiki fmt`, `lint.broken_links: warning`, `link_style: markdown` with `lint.link_style: warning`, and stricter `lint.headings` / `lint.thematic_breaks` warnings than the `wiki init` defaults.
+`docs/wiki.yaml` is the dogfood vault config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 

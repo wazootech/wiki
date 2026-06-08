@@ -10,6 +10,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from wiki.config import WikiConfig
+from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.init_scaffold import (
     DEFAULT_WAZOO,
     InitOptions,
@@ -19,7 +20,6 @@ from wiki.init_scaffold import (
     normalize_wiki_base,
     parse_github_repo,
     render_default_layout,
-    render_mdformat_toml,
     render_wiki_yaml,
     resolve_init_options,
 )
@@ -109,17 +109,17 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
 
+    def test_rendered_fmt_matches_default_fmt_opts(self) -> None:
+        rendered = render_wiki_yaml(InitOptions(wiki_base="https://wiki.example.org/"))
+        parsed = yaml.safe_load(rendered)
+        self.assertEqual(parsed["fmt"], DEFAULT_FMT_OPTS)
+
     def test_omits_optional_fields_when_unset(self) -> None:
         rendered = render_wiki_yaml(
             InitOptions(wiki_base="https://wiki.example.org/"),
         )
         self.assertIn("# content_predicate: schema:articleBody", rendered)
         self.assertNotIn("\ncontent_predicate:", rendered)
-
-    def test_render_mdformat_toml(self) -> None:
-        rendered = render_mdformat_toml()
-        self.assertIn('extensions = ["gfm", "frontmatter", "wikilink"]', rendered)
-        self.assertIn('wrap = "no"', rendered)
 
     def test_rendered_yaml_parses_and_loads(self) -> None:
         with TemporaryDirectory() as tmpdir:

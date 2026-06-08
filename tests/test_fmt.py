@@ -7,7 +7,12 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import WikiConfig
-from wiki.fmt_util import describe_fmt_source, format_markdown
+from wiki.fmt_util import (
+    DEFAULT_FMT_OPTS,
+    _resolve_fmt_toml_opts,
+    describe_fmt_source,
+    format_markdown,
+)
 from wiki.site import build_page_html, build_site
 
 
@@ -190,16 +195,125 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn(".mdformat.toml", source)
             self.assertIn("wiki", source.replace("\\", "/"))
 
+    def test_fmt_pointer_mode_uses_mdformat_toml(self) -> None:
+        toml = (
+            'wrap = "no"\n'
+            'end_of_line = "lf"\n'
+            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+        )
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".mdformat.toml").write_text(toml, encoding="utf-8")
+            (root / "wiki.yaml").write_text(
+                "input_dirs: [wiki]\nfmt: .mdformat.toml\n",
+                encoding="utf-8",
+            )
+            file_path = root / "wiki" / "page.md"
+            file_path.parent.mkdir(parents=True)
+            file_path.write_text("# Title\n\nSome text  \n", encoding="utf-8")
+            config = WikiConfig.load(root)
+            self.assertEqual(describe_fmt_source(file_path, config), "fmt from .mdformat.toml")
+            formatted = format_markdown(file_path.read_text(encoding="utf-8"), file_path, config)
+            self.assertNotIn("Some text  \n", formatted)
+
+    def test_fmt_omit_key_uses_default_mdformat_toml(self) -> None:
+        toml = (
+            'wrap = "no"\n'
+            'end_of_line = "lf"\n'
+            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+        )
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / ".mdformat.toml").write_text(toml, encoding="utf-8")
+            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            file_path = root / "wiki" / "page.md"
+            file_path.parent.mkdir(parents=True)
+            file_path.write_text("# Title\n\nSome text  \n", encoding="utf-8")
+            config = WikiConfig.load(root)
+            self.assertEqual(describe_fmt_source(file_path, config), ".mdformat.toml at config root")
+            formatted = format_markdown(file_path.read_text(encoding="utf-8"), file_path, config)
+            self.assertNotIn("Some text  \n", formatted)
+
+    def test_fmt_inline_pointer_and_omit_match(self) -> None:
+        toml = (
+            'wrap = "no"\n'
+            'end_of_line = "lf"\n'
+            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+        )
+        original = "# Title\n\nSome text  \n"
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file_path = root / "page.md"
+            file_path.write_text(original, encoding="utf-8")
+
+            inline_cfg = WikiConfig(
+                config_root=root,
+                fmt={
+                    "wrap": "no",
+                    "end_of_line": "lf",
+                    "extensions": ["gfm", "frontmatter", "wikilink"],
+                },
+            )
+            inline_out = format_markdown(original, file_path, inline_cfg)
+
+            pointer_root = root / "pointer"
+            pointer_root.mkdir()
+            (pointer_root / ".mdformat.toml").write_text(toml, encoding="utf-8")
+            (pointer_root / "wiki.yaml").write_text(
+                "input_dirs: [wiki]\nfmt: .mdformat.toml\n",
+                encoding="utf-8",
+            )
+            pointer_cfg = WikiConfig.load(pointer_root)
+            pointer_out = format_markdown(original, file_path, pointer_cfg)
+
+            omit_root = root / "omit"
+            omit_root.mkdir()
+            (omit_root / ".mdformat.toml").write_text(toml, encoding="utf-8")
+            (omit_root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            omit_cfg = WikiConfig.load(omit_root)
+            omit_out = format_markdown(original, file_path, omit_cfg)
+
+            self.assertEqual(inline_out, pointer_out)
+            self.assertEqual(inline_out, omit_out)
+
+    def test_fmt_yaml_no_wrap_normalizes_to_string(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "input_dirs: wiki\nfmt:\n  wrap: no\n  end_of_line: lf\n"
+                '  extensions: ["gfm", "frontmatter", "wikilink"]\n',
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.fmt["wrap"], "no")
+
+    def test_fmt_absent_uses_wiki_cli_defaults(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            file_path = root / "page.md"
+            original = "# Title\n\nSome text  \n"
+            file_path.write_text(original, encoding="utf-8")
+            config = WikiConfig.load(root)
+            self.assertEqual(describe_fmt_source(file_path, config), "wiki-cli fmt defaults")
+            formatted = format_markdown(original, file_path, config)
+            self.assertNotIn("Some text  \n", formatted)
+            opts, _ = _resolve_fmt_toml_opts(file_path, config)
+            self.assertEqual(opts.get("wrap"), "no")
+
     def test_fmt_empty_inline_merges_defaults(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             file_path = root / "page.md"
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
-            config = WikiConfig(config_root=root, fmt={})
-            formatted = format_markdown(original, file_path, config)
-            self.assertNotIn("Some text  \n", formatted)
-            self.assertEqual(describe_fmt_source(file_path, config), "inline fmt in wiki config")
+            (root / "wiki.yaml").write_text("input_dirs: [wiki]\n", encoding="utf-8")
+            absent_config = WikiConfig.load(root)
+            empty_config = WikiConfig(config_root=root, fmt={})
+            absent_out = format_markdown(original, file_path, absent_config)
+            empty_out = format_markdown(original, file_path, empty_config)
+            self.assertEqual(absent_out, empty_out)
+            self.assertEqual(describe_fmt_source(file_path, empty_config), "inline fmt in wiki config")
 
 
 if __name__ == "__main__":

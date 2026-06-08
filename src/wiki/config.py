@@ -152,6 +152,9 @@ def _parse_fmt(
     if fmt_data is None:
         return None
     if isinstance(fmt_data, dict):
+        fmt_data = dict(fmt_data)
+        if fmt_data.get("wrap") is False:
+            fmt_data["wrap"] = "no"
         conf_label = Path(f"{config_name} fmt")
         try:
             _validate_keys(fmt_data, conf_label)

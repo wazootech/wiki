@@ -101,6 +101,17 @@ class InitOptions:
     site_title: str = "Wiki CLI"
 
 
+# Init options for this repository's docs/ vault (parity with docs/wiki.yaml).
+DOCS_VAULT_INIT_OPTIONS = InitOptions(
+    wiki_base="https://wazootech.github.io/wiki/",
+    base_url="/wiki",
+    url_style=DEFAULT_URL_STYLE,
+    wazoo=DEFAULT_WAZOO,
+    content_predicate="schema:articleBody",
+    link_style="markdown",
+)
+
+
 def resolve_init_options(
     *,
     repo: str | None,
@@ -148,7 +159,6 @@ def resolve_init_options(
 
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
-_MDFORMAT_TEMPLATE_NAME = "mdformat.toml.j2"
 _DEFAULT_LAYOUT_TEMPLATE = "layouts/default.html.j2"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
@@ -175,11 +185,6 @@ def render_wiki_yaml(opts: InitOptions) -> str:
     """Render the packaged wiki.yaml.j2 scaffold into wiki.yaml content."""
     rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**asdict(opts))
     return _strip_scaffold_comment(rendered)
-
-
-def render_mdformat_toml() -> str:
-    """Return packaged mdformat.toml.j2 content for pointer-mode fmt (not written by init)."""
-    return _init_template_env().get_template(_MDFORMAT_TEMPLATE_NAME).render()
 
 
 def render_default_layout(opts: InitOptions) -> str:

@@ -15,6 +15,12 @@ from .config import WikiConfig
 
 DEFAULT_FMT_EXTENSIONS = ("wikilink", "frontmatter", "gfm")
 
+DEFAULT_FMT_OPTS: dict[str, Any] = {
+    "wrap": "no",
+    "end_of_line": "lf",
+    "extensions": ["gfm", "frontmatter", "wikilink"],
+}
+
 SPARQL_REGION_RE = re.compile(
     r"<!--\s*sparql:start\s*-->.*?<!--\s*sparql:end\s*-->",
     re.DOTALL | re.IGNORECASE,
@@ -55,6 +61,8 @@ def _load_toml_opts(path: Path) -> dict[str, Any]:
 
 def _resolve_fmt_toml_opts(file_path: Path, config: WikiConfig) -> tuple[dict[str, Any], str]:
     if isinstance(config.fmt, dict):
+        if not config.fmt:
+            return dict(DEFAULT_FMT_OPTS), "inline fmt in wiki config"
         return config.fmt, "inline fmt in wiki config"
 
     root = config.config_root
@@ -71,7 +79,7 @@ def _resolve_fmt_toml_opts(file_path: Path, config: WikiConfig) -> tuple[dict[st
     if conf_path is not None:
         return dict(toml_opts), str(conf_path)
 
-    return {}, "mdformat defaults"
+    return dict(DEFAULT_FMT_OPTS), "wiki-cli fmt defaults"
 
 
 def describe_fmt_source(file_path: Path, config: WikiConfig) -> str:

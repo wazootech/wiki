@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 from wiki.cli import main
-from wiki.init_scaffold import InitOptions, render_default_layout
+from wiki.init_scaffold import DOCS_VAULT_INIT_OPTIONS, InitOptions, render_default_layout, render_wiki_yaml
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -227,9 +227,9 @@ about: wiki:Alice_Theory
         docs_html = repo_root / "docs" / "layouts" / "default.html"
         expected = render_default_layout(
             InitOptions(
-                wiki_base="https://wazootech.github.io/wiki/",
-                base_url="/wiki",
-                url_style="dir",
+                wiki_base=DOCS_VAULT_INIT_OPTIONS.wiki_base,
+                base_url=DOCS_VAULT_INIT_OPTIONS.base_url,
+                url_style=DOCS_VAULT_INIT_OPTIONS.url_style,
                 site_title="Wiki CLI",
             )
         )
@@ -238,6 +238,17 @@ about: wiki:Alice_Theory
             docs_html.read_text(encoding="utf-8"),
             expected,
             "docs/layouts/default.html must match render_default_layout for this repo's wiki.yaml",
+        )
+
+    def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        docs_yaml = repo_root / "docs" / "wiki.yaml"
+        expected = render_wiki_yaml(DOCS_VAULT_INIT_OPTIONS)
+        self.assertTrue(docs_yaml.is_file(), f"docs/wiki.yaml not found at {docs_yaml}")
+        self.assertEqual(
+            docs_yaml.read_text(encoding="utf-8"),
+            expected,
+            "docs/wiki.yaml must match render_wiki_yaml(DOCS_VAULT_INIT_OPTIONS)",
         )
 
 
