@@ -1370,7 +1370,7 @@ def build_index_html(
   <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">W</text>
 </svg>"""
 
-    page_content = f"<ul>\n{links_html}</ul>"
+    page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
     context = {
         "inline_css": INLINE_CSS,
@@ -1384,6 +1384,7 @@ def build_index_html(
         "current_slug_json": json.dumps(""),
         "page_content": page_content,
         "layout_label": "",
+        "type_label": "",
         "layout_class": "index",
         "infobox_html": "",
         "toc_html": "",

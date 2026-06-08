@@ -385,7 +385,7 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(site)
             self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", html)
-            self.assertIn("<ul>", html)
+            self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
             self.assertNotIn("<style>", html)
             self.assertNotIn("infobox page-meta", html)
@@ -557,6 +557,35 @@ specialty: Diagnostics
             file_index = build_index_html(file_site, base_url="/wiki", url_style=file_config.url_style)
             self.assertIn('href="/wiki/alice.html"', file_index)
             self.assertIn('href="/wiki/bob.html"', file_index)
+
+    def test_build_index_html_substitutes_empty_type_label(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Alice.md").write_text("# Alice\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            html = build_index_html(site, page_layout=_FULL_TEST_TEMPLATE)
+            self.assertNotIn("{type_label}", html)
+            self.assertNotIn('class="layout-label"', html)
+
+    def test_build_index_html_emits_pages_list_with_categories(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Person_A.md").write_text("---\ntype: Person\n---\n# Person A\n", encoding="utf-8")
+            (wiki / "Plain.md").write_text("# Plain\n", encoding="utf-8")
+            config = WikiConfig(input_dirs=[wiki], config_root=root)
+            site = build_site(config)
+            html = build_index_html(site, page_layout=_FULL_TEST_TEMPLATE)
+            article_start = html.index('<article id="article-top">')
+            article_end = html.index("</article>", article_start)
+            article = html[article_start:article_end]
+            self.assertIn('<ul class="pages-list">', article)
+            self.assertIn('data-categories="Person"', article)
+            self.assertIn('data-categories=""', article)
 
 
 if __name__ == "__main__":
