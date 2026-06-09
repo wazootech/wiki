@@ -1,0 +1,28 @@
+{
+  "name": "wazootech-wiki",
+  "version": "0.1.11",
+  "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
+  "homepage": "https://github.com/wazootech/wiki",
+  "bugs": "https://github.com/wazootech/wiki/issues",
+  "license": "MIT",
+  "bin": {
+    "wiki": "npm/bin/wiki.js"
+  },
+  "scripts": {
+    "postinstall": "node npm/setup.js",
+    "preuninstall": "node npm/uninstall.js",
+    "setup": "node npm/setup.js"
+  },
+  "files": [
+    "npm/",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
