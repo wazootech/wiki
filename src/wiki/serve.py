@@ -9,6 +9,7 @@ import re
 import sys
 import threading
 import time
+from dataclasses import dataclass
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -30,27 +31,35 @@ from .site import (
 
 
 
-class WikiHandler(BaseHTTPRequestHandler):
-    site: WikiSite = None  # type: ignore[assignment]
-    config: Config = None  # type: ignore[assignment]
-    base_url: str = "/wiki"
-    url_style: str = "dir"
-    watch_enabled: bool = False
-    build_id: int = 0
-    page_layout: str | None = None
-    sparql_service_enabled: bool = True
-    sparql_service_path: str = "/api/sparql"
+@dataclass
+class _ServerState:
+    site: WikiSite
+    config: Config
+    base_url: str
+    url_style: str
+    watch_enabled: bool
+    build_id: int
+    page_layout: str | None
+    sparql_service_enabled: bool
+    sparql_service_path: str
 
+
+def _server_state(server: HTTPServer) -> _ServerState:
+    return server.state  # type: ignore[attr-defined]
+
+
+class WikiHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
-        base = self.base_url
+        state = _server_state(self.server)
+        base = state.base_url
         parsed_url = urlsplit(self.path)
         parsed = parsed_url.path
         query_params = parse_qs(parsed_url.query, keep_blank_values=True)
-        if parsed.rstrip("/") == self.sparql_service_path.rstrip("/"):
+        if parsed.rstrip("/") == state.sparql_service_path.rstrip("/"):
             self._handle_sparql_request("GET", parsed_url.query)
             return
         if parsed.rstrip("/") == f"{base}/__watch":
-            self._send_json({"build": self.build_id})
+            self._send_json({"build": state.build_id})
             return
         manifest_path = f"{base}/manifest.webmanifest" if base else "/manifest.webmanifest"
         if parsed == manifest_path:
@@ -61,9 +70,9 @@ class WikiHandler(BaseHTTPRequestHandler):
         parsed = parsed.rstrip("/")
 
         if parsed == "" or parsed == "/index":
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, page_layout=self.page_layout))
+            self._send_html(build_index_html(state.site, base_url=base, url_style=state.url_style, page_layout=state.page_layout))
         elif parsed == base:
-            self._send_html(build_index_html(self.site, base_url=base, url_style=self.url_style, page_layout=self.page_layout))
+            self._send_html(build_index_html(state.site, base_url=base, url_style=state.url_style, page_layout=state.page_layout))
         elif parsed.startswith(base + "/"):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
@@ -73,10 +82,10 @@ class WikiHandler(BaseHTTPRequestHandler):
                 self._send_html(
                     build_page_html(
                         target,
-                        self.site,
+                        state.site,
                         base_url=base,
-                        url_style=self.url_style,
-                        page_layout=self.page_layout,
+                        url_style=state.url_style,
+                        page_layout=state.page_layout,
                         metadata_mode=metadata_mode,
                         metadata_format=metadata_format,
                     )
@@ -92,14 +101,15 @@ class WikiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed_url = urlsplit(self.path)
-        if parsed_url.path.rstrip("/") == self.sparql_service_path.rstrip("/"):
+        if parsed_url.path.rstrip("/") == _server_state(self.server).sparql_service_path.rstrip("/"):
             self._handle_sparql_request("POST", parsed_url.query)
             return
         self._send_error(404, f"Not found: {self.path}")
 
     def _serve_asset(self, rel_path: str) -> bool:
         """Try to serve a static asset from configured assets. Returns True if served."""
-        for asset_dir in self.config.vault.assets:
+        config = _server_state(self.server).config
+        for asset_dir in config.vault.assets:
             candidate = (asset_dir / rel_path).resolve()
             try:
                 candidate.relative_to(asset_dir.resolve())
@@ -119,19 +129,21 @@ class WikiHandler(BaseHTTPRequestHandler):
         return False
 
     def _find_page(self, slug: str) -> VirtualPage | None:
-        for page in self.site.pages:
+        site = _server_state(self.server).site
+        for page in site.pages:
             if page.full_slug == slug:
                 return page
-        for page in self.site.pages:
+        for page in site.pages:
             if page.file_slug == slug and not page.section_slug:
                 return page
-        for page in self.site.pages:
+        for page in site.pages:
             if page.file_slug == slug:
                 return page
         return None
 
     def _send_html(self, html: str) -> None:
-        if self.watch_enabled:
+        state = _server_state(self.server)
+        if state.watch_enabled:
             html = html.replace(
                 "</body>",
                 (
@@ -140,7 +152,7 @@ class WikiHandler(BaseHTTPRequestHandler):
                     "  var last=null;\n"
                     "  async function poll(){\n"
                     "    try{\n"
-                    f"      var res=await fetch('{self.base_url}/__watch',{{cache:'no-store'}});\n"
+                    f"      var res=await fetch('{state.base_url}/__watch',{{cache:'no-store'}});\n"
                     "      if(!res.ok) throw new Error('watch');\n"
                     "      var data=await res.json();\n"
                     "      if(last===null){last=data.build;}\n"
@@ -169,7 +181,7 @@ class WikiHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _send_manifest(self) -> None:
-        body = (serialize_web_manifest(self.config) + "\n").encode("utf-8")
+        body = (serialize_web_manifest(_server_state(self.server).config) + "\n").encode("utf-8")
         self._send_bytes(200, body, "application/manifest+json")
 
     def _send_bytes(self, code: int, body: bytes, content_type: str) -> None:
@@ -201,16 +213,18 @@ class WikiHandler(BaseHTTPRequestHandler):
         sys.stderr.write(f"[{self.log_date_time_string()}] {fmt % args}\n")
 
     def _sparql_endpoint_url(self) -> str:
+        state = _server_state(self.server)
         host = self.headers.get("Host")
         if not host:
             server_host, server_port = self.server.server_address[:2]
             host = f"{server_host}:{server_port}"
-        path = self.sparql_service_path if self.sparql_service_path.startswith("/") else f"/{self.sparql_service_path}"
+        path = state.sparql_service_path if state.sparql_service_path.startswith("/") else f"/{state.sparql_service_path}"
         return f"http://{host}{path}"
 
     def _handle_sparql_service_description(self) -> None:
+        state = _server_state(self.server)
         try:
-            graph = load_graph(self.config, infer=True, reload=False)
+            graph = load_graph(state.config, infer=True, reload=False)
             triple_count = len(graph)
         except Exception:
             triple_count = None
@@ -226,7 +240,8 @@ class WikiHandler(BaseHTTPRequestHandler):
         self._send_bytes(200, body, content_type)
 
     def _handle_sparql_request(self, method: str, raw_query_string: str) -> None:
-        if not self.sparql_service_enabled:
+        state = _server_state(self.server)
+        if not state.sparql_service_enabled:
             self._send_error(404, "SPARQL endpoint is disabled.")
             return
 
@@ -245,8 +260,8 @@ class WikiHandler(BaseHTTPRequestHandler):
             if query_form not in {"SELECT", "ASK", "CONSTRUCT", "DESCRIBE"}:
                 self._send_error(405, f"Unsupported SPARQL query form: {query_form}")
                 return
-            graph = load_graph(self.config, infer=infer, reload=reload_graph)
-            result = run_query(graph, sparql_query, output_format=output_format, base_iri=self.config.base_iri)
+            graph = load_graph(state.config, infer=infer, reload=reload_graph)
+            result = run_query(graph, sparql_query, output_format=output_format, base_iri=state.config.base_iri)
             body = result.encode("utf-8") if isinstance(result, str) else result
             self._send_bytes(200, body, _response_content_type(query_form, output_format))
         except _BadSparqlRequest as exc:
@@ -300,22 +315,27 @@ def create_server(
     resolved_url_style = config.site.url_style if url_style is None else url_style
     _validate_sparql_service_path(config, resolved_base_url)
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
-    WikiHandler.site = site
-    WikiHandler.config = config
-    WikiHandler.base_url = resolved_base_url
-    WikiHandler.url_style = resolved_url_style
-    WikiHandler.watch_enabled = watch
-    WikiHandler.build_id = 0
-    WikiHandler.sparql_service_enabled = config.sparql_service.enabled
-    WikiHandler.sparql_service_path = config.sparql_service.path
-
     # Load site wiki page layout if configured; silently fall back to default if file missing
+    page_layout: str | None
     if config.page_layout is not None and config.page_layout.is_file():
-        WikiHandler.page_layout = config.page_layout.read_text(encoding="utf-8")
+        page_layout = config.page_layout.read_text(encoding="utf-8")
     else:
-        WikiHandler.page_layout = None
+        page_layout = None
+
+    server_state = _ServerState(
+        site=site,
+        config=config,
+        base_url=resolved_base_url,
+        url_style=resolved_url_style,
+        watch_enabled=watch,
+        build_id=0,
+        page_layout=page_layout,
+        sparql_service_enabled=config.sparql_service.enabled,
+        sparql_service_path=config.sparql_service.path,
+    )
 
     server = HTTPServer((host, port), WikiHandler)
+    server.state = server_state  # type: ignore[attr-defined]
     print(f"Wiki server ready at http://{host}:{port}/")
     dirs_str = ", ".join(str(d) for d in config.vault.inputs)
     print(f"Serving {len(site.pages)} pages from {dirs_str}")
@@ -482,6 +502,7 @@ def _watch_for_changes(
     base_url: str,
     url_style: str,
     mtimes: dict[str, float],
+    server: HTTPServer,
     stop_event: threading.Event,
     poll_interval: float = 0.5,
     snapshot_func: Any | None = None,
@@ -501,13 +522,14 @@ def _watch_for_changes(
                     if current_mtimes.get(k) != new.get(k)
                 }
                 current_mtimes = new
-                WikiHandler.site = refresh_vault(
+                state = _server_state(server)
+                state.site = refresh_vault(
                     config,
                     changed_paths=changed,
                     base_url=base_url,
                     url_style=url_style,
                 )
-                WikiHandler.build_id += 1
+                state.build_id += 1
         except Exception:
             if stop_event.is_set():
                 return
@@ -546,6 +568,7 @@ def run_server(
                 "base_url": resolved_base_url,
                 "url_style": resolved_url_style,
                 "mtimes": mtimes,
+                "server": server,
                 "stop_event": stop_event,
             },
             daemon=True,

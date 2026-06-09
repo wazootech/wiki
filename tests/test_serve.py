@@ -5,6 +5,7 @@ from __future__ import annotations
 import socket
 import threading
 import unittest
+from io import BytesIO
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -16,7 +17,14 @@ from click.testing import CliRunner
 
 from wiki.cli import main
 from wiki.config import Config
-from wiki.serve import build_site, create_server, refresh_vault, run_server, _watch_for_changes, WikiHandler
+from wiki.serve import (
+    _parse_sparql_http_request,
+    _watch_for_changes,
+    build_site,
+    create_server,
+    refresh_vault,
+    run_server,
+)
 
 
 def _free_port() -> int:
@@ -410,6 +418,33 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         self.assertIn(f"<http://127.0.0.1:{port}/api/sparql>", body)
         self.assertIn("sd:SPARQL11Query", body)
 
+    def test_parse_sparql_http_request_handles_get_and_post(self) -> None:
+        class Headers(dict):
+            def get(self, key: str, default: str = "") -> str:
+                return super().get(key, default)
+
+        query, output_format, infer, reload_graph = _parse_sparql_http_request(
+            "GET",
+            "query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D&inference=false&reload=true",
+            Headers({"Accept": "application/sparql-results+json"}),
+            BytesIO(b""),
+        )
+        self.assertTrue(query.startswith("SELECT"))
+        self.assertEqual(output_format, "json")
+        self.assertFalse(infer)
+        self.assertTrue(reload_graph)
+
+        query, output_format, infer, reload_graph = _parse_sparql_http_request(
+            "POST",
+            "",
+            Headers({"Content-Type": "application/sparql-query", "Content-Length": "41", "Accept": "text/turtle"}),
+            BytesIO(b"CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"),
+        )
+        self.assertTrue(query.startswith("CONSTRUCT"))
+        self.assertEqual(output_format, "turtle")
+        self.assertTrue(infer)
+        self.assertFalse(reload_graph)
+
     def test_sparql_endpoint_get_service_description_rdf_xml(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
         config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
@@ -648,8 +683,12 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         third = {str(page): 3.0}
         snapshots = iter([second, third, third])
         stop_event = threading.Event()
-        WikiHandler.build_id = 0
-        WikiHandler.site = None
+
+        class FakeServer:
+            def __init__(self) -> None:
+                self.state = type("State", (), {"build_id": 0, "site": None})()
+
+        server = FakeServer()
 
         def fake_snapshot(_: list[Path]) -> dict[str, float]:
             state = next(snapshots)
@@ -665,14 +704,15 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 base_url="/wiki",
                 url_style="dir",
                 mtimes=initial,
+                server=server,
                 stop_event=stop_event,
                 poll_interval=0,
                 snapshot_func=fake_snapshot,
             )
 
         self.assertEqual(refresh_mock.call_count, 2)
-        self.assertEqual(WikiHandler.build_id, 2)
-        self.assertIs(WikiHandler.site, refreshed_sites[-1])
+        self.assertEqual(server.state.build_id, 2)
+        self.assertIs(server.state.site, refreshed_sites[-1])
 
     def test_run_server_shutdowns_on_keyboard_interrupt(self) -> None:
         class FakeServer:
@@ -697,6 +737,32 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
         self.assertTrue(fake_server.shutdown_called)
         self.assertTrue(fake_server.server_close_called)
+
+    def test_serve_does_not_mutate_loaded_config_site_overrides(self) -> None:
+        runner = CliRunner()
+        config = Config(vault={"inputs": [self.wiki_dir]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=self.wiki_dir)
+
+        with patch("wiki.cli.Config.load", return_value=config), patch("wiki.serve.run_server") as run_server_mock:
+            result = runner.invoke(
+                main,
+                [
+                    "--config",
+                    str(self.wiki_dir),
+                    "serve",
+                    "--site-base-url",
+                    "/custom",
+                    "--site-url-style",
+                    "file",
+                ],
+            )
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertEqual(config.site.base_url, "/wiki")
+        self.assertEqual(config.site.url_style, "dir")
+        run_server_mock.assert_called_once()
+        runtime_config = run_server_mock.call_args[0][0]
+        self.assertEqual(runtime_config.site.base_url, "/custom")
+        self.assertEqual(runtime_config.site.url_style, "file")
 
 
 if __name__ == "__main__":
