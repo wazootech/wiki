@@ -1,4 +1,4 @@
-"""Tests for wiki init scaffold helpers."""
+﻿"""Tests for wiki init scaffold helpers."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.schemas.wiki_config import normalize_base_iri
 from wiki.init_scaffold import (
@@ -132,7 +132,7 @@ class TestRenderWikiYaml(TestCase):
             parsed = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             self.assertNotIn("wiki_base", parsed["graph"])
             self.assertEqual(parsed["graph"]["context"]["wiki"], "https://wiki.example.org/")
-            config = WikiConfig.load(config_path)
+            config = Config.load(config_path)
             self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
     def test_render_default_layout(self) -> None:

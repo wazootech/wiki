@@ -1,9 +1,9 @@
-import unittest
+﻿import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from rdflib import URIRef, RDF, RDFS, Namespace
 
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.infer import apply_inference
 from wiki.graph import load_graph
 
@@ -30,7 +30,7 @@ givenName: Gregory
 """, encoding="utf-8")
             
             # 1. Configure and Load
-            config = WikiConfig(vault={"inputs": [wiki_dir]})
+            config = Config(vault={"inputs": [wiki_dir]})
             
             # Disable auto inference in loader to confirm pre/post state
             graph = load_graph(config, infer=False)

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import threading
 import time
 import unittest
@@ -12,7 +12,7 @@ from urllib.error import URLError
 from click.testing import CliRunner
 
 from wiki.cli import FILE_COMMANDS, main
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.init_scaffold import InitOptions, render_default_layout, render_wiki_yaml
 
 
@@ -573,7 +573,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
             config_path = Path(tmpdir) / "wiki.yaml"
             config_path.write_text("vault:\n  inputs: [wiki]\nhtml_template: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
-                WikiConfig.load(config_path)
+                Config.load(config_path)
             self.assertIn("unknown top-level keys: html_template", str(ctx.exception))
 
     def test_config_rejects_unknown_wiki_page_layout_key(self) -> None:
@@ -581,7 +581,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
             config_path = Path(tmpdir) / "wiki.yaml"
             config_path.write_text("vault:\n  inputs: [wiki]\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
-                WikiConfig.load(config_path)
+                Config.load(config_path)
             self.assertIn("unknown top-level keys: wiki_page_layout", str(ctx.exception))
 
     def test_cli_init_git_opt_in_runs_git_init(self) -> None:
@@ -1256,7 +1256,7 @@ ex:foo ex:bar "from-import-dir" .
     def test_server_serve_real_request(self) -> None:
         """Test wiki serve with real --host/--port via HTTP request."""
         import socket
-        from wiki.config import WikiConfig
+        from wiki.config import Config
         from wiki.serve import run_server
 
         with TemporaryDirectory() as tmpdir:
@@ -1276,7 +1276,7 @@ Hello from server test.
             port = sock.getsockname()[1]
             sock.close()
 
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
                 args=(config,),
@@ -1297,7 +1297,7 @@ Hello from server test.
     def test_server_serve_custom_base_url(self) -> None:
         """Test wiki serve with custom --site-base-url."""
         import socket
-        from wiki.config import WikiConfig
+        from wiki.config import Config
         from wiki.serve import run_server
 
         with TemporaryDirectory() as tmpdir:
@@ -1315,7 +1315,7 @@ Custom base URL test.
             port = sock.getsockname()[1]
             sock.close()
 
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             server_thread = threading.Thread(
                 target=run_server,
                 args=(config,),

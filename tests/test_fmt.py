@@ -1,4 +1,4 @@
-import unittest
+﻿import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -6,7 +6,7 @@ import mdformat
 from click.testing import CliRunner
 
 from wiki.cli import main
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.fmt_util import (
     DEFAULT_FMT_OPTS,
     _resolve_fmt_toml_opts,
@@ -95,7 +95,7 @@ class TestWikiFmt(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "Query.md"
             file_path.write_text(original, encoding="utf-8")
-            formatted = format_markdown(original, file_path, WikiConfig(config_root=Path(tmpdir)))
+            formatted = format_markdown(original, file_path, Config(config_root=Path(tmpdir)))
             self.assertIn("| class |", formatted)
             self.assertNotIn("| Class |", formatted)
             self.assertIn("```sparql", formatted)
@@ -110,7 +110,7 @@ class TestWikiFmt(unittest.TestCase):
                 "---\ntype: TechArticle\nname: Catalog page\n---\n\n# Shelf layout\n\nBody.",
                 encoding="utf-8",
             )
-            config = WikiConfig(vault={"inputs": [wiki]}, config_root=root)
+            config = Config(vault={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, page_layout=seed_template)
@@ -125,7 +125,7 @@ class TestWikiFmt(unittest.TestCase):
             (root / ".mdformat.toml").write_text('wrap = "keep"\n', encoding="utf-8")
             file_path = root / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(
+            config = Config(
                 config_root=root,
                 fmt={"wrap": "no", "extensions": ["gfm", "frontmatter", "wikilink"]},
             )
@@ -140,7 +140,7 @@ class TestWikiFmt(unittest.TestCase):
             )
             file_path = root / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(config_root=root, fmt=root / "missing.toml")
+            config = Config(config_root=root, fmt=root / "missing.toml")
             self.assertEqual(describe_fmt_source(file_path, config), ".mdformat.toml at config root")
 
     def test_fmt_resolution_pointer_file(self) -> None:
@@ -153,7 +153,7 @@ class TestWikiFmt(unittest.TestCase):
             )
             file_path = root / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(config_root=root, fmt=custom)
+            config = Config(config_root=root, fmt=custom)
             self.assertEqual(describe_fmt_source(file_path, config), "fmt from custom.toml")
 
     def test_fmt_invalid_toml_at_pointer_raises(self) -> None:
@@ -163,7 +163,7 @@ class TestWikiFmt(unittest.TestCase):
             bad.write_text('wrap = "no"\n[broken\n', encoding="utf-8")
             file_path = root / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(config_root=root, fmt=bad)
+            config = Config(config_root=root, fmt=bad)
             with self.assertRaisesRegex(ValueError, "Invalid TOML syntax"):
                 format_markdown("# Title\n", file_path, config)
 
@@ -173,7 +173,7 @@ class TestWikiFmt(unittest.TestCase):
             (root / ".mdformat.toml").write_text("[broken\n", encoding="utf-8")
             file_path = root / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(config_root=root)
+            config = Config(config_root=root)
             with self.assertRaisesRegex(ValueError, "Invalid TOML syntax"):
                 format_markdown("# Title\n", file_path, config)
 
@@ -190,7 +190,7 @@ class TestWikiFmt(unittest.TestCase):
             )
             file_path = nested / "page.md"
             file_path.write_text("# Title\n", encoding="utf-8")
-            config = WikiConfig(config_root=root, vault={"inputs": [wiki]})
+            config = Config(config_root=root, vault={"inputs": [wiki]})
             source = describe_fmt_source(file_path, config)
             self.assertIn(".mdformat.toml", source)
             self.assertIn("wiki", source.replace("\\", "/"))
@@ -211,7 +211,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path = root / "wiki" / "page.md"
             file_path.parent.mkdir(parents=True)
             file_path.write_text("# Title\n\nSome text  \n", encoding="utf-8")
-            config = WikiConfig.load(root)
+            config = Config.load(root)
             self.assertEqual(describe_fmt_source(file_path, config), "fmt from .mdformat.toml")
             formatted = format_markdown(file_path.read_text(encoding="utf-8"), file_path, config)
             self.assertNotIn("Some text  \n", formatted)
@@ -229,7 +229,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path = root / "wiki" / "page.md"
             file_path.parent.mkdir(parents=True)
             file_path.write_text("# Title\n\nSome text  \n", encoding="utf-8")
-            config = WikiConfig.load(root)
+            config = Config.load(root)
             self.assertEqual(describe_fmt_source(file_path, config), ".mdformat.toml at config root")
             formatted = format_markdown(file_path.read_text(encoding="utf-8"), file_path, config)
             self.assertNotIn("Some text  \n", formatted)
@@ -246,7 +246,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path = root / "page.md"
             file_path.write_text(original, encoding="utf-8")
 
-            inline_cfg = WikiConfig(
+            inline_cfg = Config(
                 config_root=root,
                 fmt={
                     "wrap": "no",
@@ -263,14 +263,14 @@ class TestWikiFmt(unittest.TestCase):
                 "vault:\n  inputs: [wiki]\nfmt: .mdformat.toml\n",
                 encoding="utf-8",
             )
-            pointer_cfg = WikiConfig.load(pointer_root)
+            pointer_cfg = Config.load(pointer_root)
             pointer_out = format_markdown(original, file_path, pointer_cfg)
 
             omit_root = root / "omit"
             omit_root.mkdir()
             (omit_root / ".mdformat.toml").write_text(toml, encoding="utf-8")
             (omit_root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
-            omit_cfg = WikiConfig.load(omit_root)
+            omit_cfg = Config.load(omit_root)
             omit_out = format_markdown(original, file_path, omit_cfg)
 
             self.assertEqual(inline_out, pointer_out)
@@ -284,7 +284,7 @@ class TestWikiFmt(unittest.TestCase):
                 '  extensions: ["gfm", "frontmatter", "wikilink"]\n',
                 encoding="utf-8",
             )
-            config = WikiConfig.load(base_path)
+            config = Config.load(base_path)
             self.assertEqual(config.fmt.options["wrap"], "no")
 
     def test_fmt_absent_uses_wiki_cli_defaults(self) -> None:
@@ -294,7 +294,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path = root / "page.md"
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
-            config = WikiConfig.load(root)
+            config = Config.load(root)
             self.assertEqual(describe_fmt_source(file_path, config), "wiki-cli fmt defaults")
             formatted = format_markdown(original, file_path, config)
             self.assertNotIn("Some text  \n", formatted)
@@ -308,8 +308,8 @@ class TestWikiFmt(unittest.TestCase):
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
             (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
-            absent_config = WikiConfig.load(root)
-            empty_config = WikiConfig(config_root=root, fmt={})
+            absent_config = Config.load(root)
+            empty_config = Config(config_root=root, fmt={})
             absent_out = format_markdown(original, file_path, absent_config)
             empty_out = format_markdown(original, file_path, empty_config)
             self.assertEqual(absent_out, empty_out)

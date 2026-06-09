@@ -1,4 +1,4 @@
-"""Detect plain-text page mentions that could be wikilinks."""
+﻿"""Detect plain-text page mentions that could be wikilinks."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from .audit import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, _markdown_body
 from .schemas import LinkOpportunity
-from .config import WikiConfig
+from .config import Config
 from .parser import document_data_from_path
 from .links import format_internal_link
 from .paths import iter_markdown_files, route_for_document_file
@@ -19,7 +19,7 @@ INLINE_CODE_RE = re.compile(r"`[^`\n]+`")
 
 
 def find_link_opportunities(
-    config: WikiConfig,
+    config: Config,
     file_filter: set[str] | None = None,
     *,
     min_alias_length: int = MIN_ALIAS_LENGTH,
@@ -166,7 +166,7 @@ def _split_frontmatter(content: str) -> tuple[str, str]:
 
 
 def apply_link_opportunities(
-    config: WikiConfig,
+    config: Config,
     opportunities: list[LinkOpportunity],
     *,
     dry_run: bool = False,

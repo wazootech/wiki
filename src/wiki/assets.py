@@ -1,4 +1,4 @@
-"""Static asset discovery, validation, and manifest helpers."""
+﻿"""Static asset discovery, validation, and manifest helpers."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ import posixpath
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote, unquote, urlsplit
 
-from .config import WikiConfig
+from .config import Config
 from .links import is_external_link, split_target
 from .paths import OutputEntry
 
 
-def iter_asset_files(config: WikiConfig) -> list[Path]:
+def iter_asset_files(config: Config) -> list[Path]:
     assets: list[Path] = []
     for asset_dir in config.vault.assets:
         if not asset_dir.exists() or asset_dir.is_symlink():
@@ -23,7 +23,7 @@ def iter_asset_files(config: WikiConfig) -> list[Path]:
     return assets
 
 
-def audit_assets(config: WikiConfig) -> list[str]:
+def audit_assets(config: Config) -> list[str]:
     warnings: list[str] = []
     for asset_dir in config.vault.assets:
         if config.is_excluded(asset_dir):
@@ -40,7 +40,7 @@ def audit_assets(config: WikiConfig) -> list[str]:
     return warnings
 
 
-def build_asset_manifest(config: WikiConfig, owned_output_dir: Path, base_url: str) -> list[OutputEntry]:
+def build_asset_manifest(config: Config, owned_output_dir: Path, base_url: str) -> list[OutputEntry]:
     entries: list[OutputEntry] = []
     base = base_url.rstrip("/") if base_url else ""
     for asset in iter_asset_files(config):
@@ -53,7 +53,7 @@ def build_asset_manifest(config: WikiConfig, owned_output_dir: Path, base_url: s
     return entries
 
 
-def resolve_asset_path(config: WikiConfig, current_file: Path, target: str) -> Path | None:
+def resolve_asset_path(config: Config, current_file: Path, target: str) -> Path | None:
     if is_external_link(target):
         return None
     page_part, _ = split_target(target)
@@ -78,7 +78,7 @@ def resolve_asset_path(config: WikiConfig, current_file: Path, target: str) -> P
     return None
 
 
-def asset_reference_issue(config: WikiConfig, current_file: Path, target: str) -> str | None:
+def asset_reference_issue(config: Config, current_file: Path, target: str) -> str | None:
     asset_path = resolve_asset_path(config, current_file, target)
     if asset_path is None:
         return f"points outside configured assets: {target}"

@@ -1,4 +1,4 @@
-"""Site-building logic for compiling raw Markdown wikis into HTML virtual structures."""
+﻿"""Site-building logic for compiling raw Markdown wikis into HTML virtual structures."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
-from .config import DEFAULT_URL_STYLE, WikiConfig
+from .config import DEFAULT_URL_STYLE, Config
 from .format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
 from .schemas.metadata import METADATA_VIEWS
 from .schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
@@ -1187,16 +1187,16 @@ def extract_outline(markdown: str) -> list[TocItem]:
 
 
 def build_site(
-    input_dirs: WikiConfig | list[Path] | Path,
+    input_dirs: Config | list[Path] | Path,
     base_url: str | None = None,
     url_style: str | None = None,
 ) -> WikiSite:
     """Build in-memory representation of the wiki site."""
-    if isinstance(input_dirs, WikiConfig):
+    if isinstance(input_dirs, Config):
         config = input_dirs
     else:
         dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-        config = WikiConfig.for_root(Path.cwd(), vault={"inputs": [str(p) for p in dirs_arg]})
+        config = Config.for_root(Path.cwd(), vault={"inputs": [str(p) for p in dirs_arg]})
     resolved_base_url = config.site.base_url if base_url is None else base_url
     resolved_url_style = config.site.url_style if url_style is None else url_style
     pages: list[VirtualPage] = []
@@ -1469,7 +1469,7 @@ def _parse_page_layout(frontmatter: dict[str, Any], config_root: Path) -> tuple[
     return parse_layout_from_frontmatter(frontmatter, config_root)
 
 
-def _page_wiki_ids(config: WikiConfig, route: str, frontmatter: dict[str, Any]) -> list[str]:
+def _page_wiki_ids(config: Config, route: str, frontmatter: dict[str, Any]) -> list[str]:
     values: list[str] = []
     for key in ("@id", "id"):
         raw = frontmatter.get(key)
@@ -1484,7 +1484,7 @@ def _page_wiki_ids(config: WikiConfig, route: str, frontmatter: dict[str, Any]) 
     return list(dict.fromkeys(values))
 
 
-def _expand_known_curie(value: str, config: WikiConfig) -> str:
+def _expand_known_curie(value: str, config: Config) -> str:
     if ":" not in value or is_external_link(value) or value.lower().startswith("urn:"):
         return value
     prefix, local = value.split(":", 1)
@@ -1548,7 +1548,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
     if not page.frontmatter:
         return ""
 
-    page_config = site.config or WikiConfig.for_root(Path.cwd(), vault={"inputs": []})
+    page_config = site.config or Config.for_root(Path.cwd(), vault={"inputs": []})
     view_group_id = _metadata_view_dom_id(page)
     radios_and_labels: list[str] = []
     panels: list[str] = []
@@ -1582,7 +1582,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
 </section>"""
 
 
-def _metadata_content_for_page(page: VirtualPage, config: WikiConfig, view: dict[str, str]) -> tuple[str, str, str]:
+def _metadata_content_for_page(page: VirtualPage, config: Config, view: dict[str, str]) -> tuple[str, str, str]:
     rdf = process_rdf_format(
         page.frontmatter,
         page.full_slug,

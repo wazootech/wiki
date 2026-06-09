@@ -1,4 +1,4 @@
-"""SHACL checking logic using pyshacl against loaded constraint shapes and custom style/hygiene audits."""
+﻿"""SHACL checking logic using pyshacl against loaded constraint shapes and custom style/hygiene audits."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import pyshacl
 from markdown_it import MarkdownIt
 
 from .assets import asset_reference_issue, audit_assets, build_asset_manifest
-from .config import WikiConfig
+from .config import Config
 from .headings import GitHubHeadingSlugger
 from .links import is_external_link, markdown_link_is_page, resolve_page_route, split_target, fragment_id
 from .paths import (
@@ -114,7 +114,7 @@ def load_shapes(data_graph: Graph) -> Graph:
     return shapes_graph
 
 
-def check_shacl_file(file_path: Path, context: WikiConfig, verbose: bool = False) -> Optional[tuple[bool, str]]:
+def check_shacl_file(file_path: Path, context: Config, verbose: bool = False) -> Optional[tuple[bool, str]]:
     """Validate a single document file's metadata against loaded shapes.
 
     Returns None if no document metadata is found, otherwise returns (conforms, results_text).
@@ -136,7 +136,7 @@ def check_shacl_file(file_path: Path, context: WikiConfig, verbose: bool = False
     return conforms, results_text
 
 
-def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, str]:
+def check_shacl_all(context: Config, verbose: bool = False) -> tuple[bool, str]:
     """Validate the unified graph against SHACL shapes extracted from that same graph."""
     data_graph = load_graph(context, infer=True)
     shapes_graph = load_shapes(data_graph)
@@ -154,7 +154,7 @@ def check_shacl_all(context: WikiConfig, verbose: bool = False) -> tuple[bool, s
     return conforms, results_text
 
 
-def lint_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_filenames(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint filenames in the wiki directory against the optional filename_pattern.
 
     If file_filter is set, only check files whose stem is in the set.
@@ -172,7 +172,7 @@ def lint_filenames(config: WikiConfig, file_filter: set[str] | None = None) -> l
     return warnings
 
 
-def collect_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[BrokenLink]:
+def collect_broken_links(config: Config, file_filter: set[str] | None = None) -> list[BrokenLink]:
     """Collect structured broken-link issues for wikilinks, markdown links, assets, and wiki: CURIEs."""
     issues: list[BrokenLink] = []
 
@@ -319,7 +319,7 @@ def collect_broken_links(config: WikiConfig, file_filter: set[str] | None = None
     return issues
 
 
-def lint_broken_links(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_broken_links(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
 
     If file_filter is set, only check files whose route is in the set.
@@ -431,7 +431,7 @@ def _title_case_words_after_first(text: str) -> list[str]:
     ]
 
 
-def lint_thematic_breaks(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_thematic_breaks(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint horizontal rules (thematic breaks) in markdown body text."""
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
@@ -507,7 +507,7 @@ def _normalize_heading_for_duplicate(text: str) -> str:
     return " ".join(plain.strip().casefold().split())
 
 
-def lint_heading_levels(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_heading_levels(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint heading depth increments (markdownlint MD001-inspired).
 
     Each heading must be at most one level deeper than the previous heading.
@@ -529,7 +529,7 @@ def lint_heading_levels(config: WikiConfig, file_filter: set[str] | None = None)
     return warnings
 
 
-def lint_duplicate_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_duplicate_headings(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint duplicate H2+ heading text in one document (markdownlint MD024-inspired)."""
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
@@ -554,7 +554,7 @@ def lint_duplicate_headings(config: WikiConfig, file_filter: set[str] | None = N
     return warnings
 
 
-def lint_headings(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_headings(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Lint editorial heading style (H2+ sentence case, no numbering).
 
     ATX heading syntax is enforced by ``wiki fmt`` (mdformat); Setext headings
@@ -586,7 +586,7 @@ def _line_number_for_offset(content: str, offset: int) -> int:
     return content[:offset].count("\n") + 1
 
 
-def lint_link_style(config: WikiConfig, file_filter: set[str] | None = None) -> list[str]:
+def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list[str]:
     """Flag Obsidian wikilinks in body prose when vault link_style is markdown."""
     if config.link.style != "markdown":
         return []
@@ -746,7 +746,7 @@ def _empty_results() -> dict[str, Any]:
 
 
 def check_layout_frontmatter(
-    config: WikiConfig,
+    config: Config,
     file_filter: set[str] | None = None,
 ) -> list[str]:
     """Check that wazoo:layout paths resolve to readable HTML files."""
@@ -776,7 +776,7 @@ def check_layout_frontmatter(
     return missing
 
 
-def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
+def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, Any]:
     """Run integrity checks: SHACL, route safety, collisions, and layout frontmatter."""
     results = _empty_results()
 
@@ -809,7 +809,7 @@ def run_check(config: WikiConfig, file_filter: set[str] | None = None) -> dict[s
     return results
 
 
-def run_lint(config: WikiConfig, file_filter: set[str] | None = None) -> dict[str, Any]:
+def run_lint(config: Config, file_filter: set[str] | None = None) -> dict[str, Any]:
     """Run lint rules: broken links, filename pattern, heading style, and link style."""
     results = _empty_results()
 

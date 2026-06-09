@@ -1,14 +1,10 @@
----
-type: TechArticle
-headline: wiki init
-description: Scaffold wiki.yaml and starter wiki pages interactively.
----
+## ﻿--- type: TechArticle headline: wiki init description: Scaffold wiki.yaml and starter wiki pages interactively.
 
 # `wiki init`
 
 Create a new workspace in the **current directory**: `wiki.yaml`, `README.md`, `layouts/`, and starter files under `wiki/`.
 
-Does not use loaded WikiConfig; safe to run before a config exists.
+Does not use loaded Config; safe to run before a config exists.
 
 ## Usage
 

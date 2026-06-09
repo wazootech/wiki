@@ -1,4 +1,4 @@
-"""Tests for vault fingerprinting and in-process graph cache."""
+﻿"""Tests for vault fingerprinting and in-process graph cache."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki import graph as graph_module
 from wiki.graph import load_graph, graph_stats
 from wiki.graph_cache import (
@@ -26,8 +26,8 @@ class TestGraphCache(unittest.TestCase):
     def tearDown(self) -> None:
         clear_all_process_graphs()
 
-    def _config(self, wiki_dir: Path) -> WikiConfig:
-        return WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+    def _config(self, wiki_dir: Path) -> Config:
+        return Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
 
     def test_second_load_reuses_cached_graph(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -94,8 +94,8 @@ class TestGraphCache(unittest.TestCase):
                 "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
-            config_a = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://a.example/"}, config_root=wiki_dir)
-            config_b = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://b.example/"}, config_root=wiki_dir)
+            config_a = Config(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://a.example/"}, config_root=wiki_dir)
+            config_b = Config(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://b.example/"}, config_root=wiki_dir)
 
             self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
 

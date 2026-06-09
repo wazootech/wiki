@@ -1,4 +1,4 @@
-"""Central WikiConfig and Context managing CLI settings, paths, check rules, and namespace bindings."""
+﻿"""Central Config and Context managing CLI settings, paths, check rules, and namespace bindings."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .context import (
     WIKI,
     XSD,
 )
-from .schemas import CheckConfig, LintConfig, WikiConfig
+from .schemas import CheckConfig, LintConfig, Config
 from .schemas.wiki_config import (
     CONFIG_FILENAMES,
     DEFAULT_BASE_URL,
@@ -47,7 +47,7 @@ __all__ = [
     "DEFAULT_SITE_TITLE",
     "DEFAULT_URL_STYLE",
     "VALID_URL_STYLES",
-    "WikiConfig",
+    "Config",
     "find_config_path",
     "format_config_validation_error",
     "normalize_api_path",

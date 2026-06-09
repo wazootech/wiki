@@ -1,4 +1,4 @@
-"""Local HTTP server for browsing the wiki as HTML -- no external web frameworks."""
+﻿"""Local HTTP server for browsing the wiki as HTML -- no external web frameworks."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 from typing import Any, Optional
 
-from .config import WikiConfig
+from .config import Config
 from .format import detect_query_form, is_sparql_update, normalize_metadata_format, normalize_metadata_mode, run_query
 from .graph import load_graph
 from .sparql_service import build_service_description_graph, serialize_service_description
@@ -31,7 +31,7 @@ from .site import (
 
 class WikiHandler(BaseHTTPRequestHandler):
     site: WikiSite = None  # type: ignore[assignment]
-    config: WikiConfig = None  # type: ignore[assignment]
+    config: Config = None  # type: ignore[assignment]
     base_url: str = "/wiki"
     url_style: str = "dir"
     watch_enabled: bool = False
@@ -249,7 +249,7 @@ class WikiHandler(BaseHTTPRequestHandler):
 
 
 def refresh_vault(
-    config: WikiConfig,
+    config: Config,
     *,
     changed_paths: set[Path] | None = None,
     base_url: str | None = None,
@@ -279,7 +279,7 @@ def refresh_vault(
 
 
 def create_server(
-    config: WikiConfig,
+    config: Config,
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str | None = None,
@@ -322,7 +322,7 @@ class _BadSparqlRequest(Exception):
         self.message = message
 
 
-def _validate_sparql_service_path(config: WikiConfig, base_url: str) -> None:
+def _validate_sparql_service_path(config: Config, base_url: str) -> None:
     """Validate that the configured SPARQL route does not shadow page routes."""
     if not config.sparql_service.enabled:
         return
@@ -467,7 +467,7 @@ def _snapshot_watch_dirs(watch_dirs: list[Path]) -> dict[str, float]:
 
 
 def _watch_for_changes(
-    config: WikiConfig,
+    config: Config,
     *,
     watch_dirs: list[Path],
     base_url: str,
@@ -506,7 +506,7 @@ def _watch_for_changes(
 
 
 def run_server(
-    config: WikiConfig,
+    config: Config,
     host: str = "127.0.0.1",
     port: int = 8080,
     base_url: str | None = None,

@@ -1,4 +1,4 @@
-"""RDF Lib graph loading, frontmatter-to-triple conversion, and blank node resolution."""
+﻿"""RDF Lib graph loading, frontmatter-to-triple conversion, and blank node resolution."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from rdflib.namespace import XSD
 from rdflib.parser import InputSource, Parser, StringInputSource
 from rdflib.plugin import register
 
-from .config import Context, WikiConfig
+from .config import Context, Config
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file
 
@@ -116,8 +116,8 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         graph.add((subject, pred, Literal(str(value))))
 
 
-def _rdf_binding(ctx: Context | WikiConfig) -> tuple[Context, str | None]:
-    if isinstance(ctx, WikiConfig):
+def _rdf_binding(ctx: Context | Config) -> tuple[Context, str | None]:
+    if isinstance(ctx, Config):
         return ctx.context, ctx.graph.content_predicate
     return ctx, getattr(ctx, "content_predicate", None)
 
@@ -144,13 +144,13 @@ def _is_shacl_shape_document(fm_types: list[Any]) -> bool:
     return False
 
 
-def _effective_types(data: dict[str, Any], context: Context | WikiConfig) -> list[Any]:
+def _effective_types(data: dict[str, Any], context: Context | Config) -> list[Any]:
     """Merge frontmatter type with graph.implicit_types per implicit_types_policy."""
     fm_types = _normalize_type_list(data.get("@type") or data.get("type"))
 
     implicit_types: list[str] = []
     policy = "fallback"
-    if isinstance(context, WikiConfig):
+    if isinstance(context, Config):
         implicit_types = list(context.graph.implicit_types)
         policy = context.graph.implicit_types_policy
 
@@ -177,7 +177,7 @@ def _effective_types(data: dict[str, Any], context: Context | WikiConfig) -> lis
 
 def frontmatter_to_graph(
     data: dict[str, Any],
-    context: Context | WikiConfig,
+    context: Context | Config,
     file_id: Optional[str] = None,
     body: Optional[str] = None,
     include_file_extension: bool = False,
@@ -365,7 +365,7 @@ def _is_absolute_iri(value: str) -> bool:
 register("microdata", Parser, "wiki.graph", "MicrodataParser")
 
 
-def _process_document_file(graph: Graph, file_path: Path, context: WikiConfig) -> None:
+def _process_document_file(graph: Graph, file_path: Path, context: Config) -> None:
     """Parse a supported wiki document into the graph."""
     data = document_data_from_path(file_path)
     if data:
@@ -417,7 +417,7 @@ _EXT_FORMAT_MAP = {
 }
 
 
-def _build_graph_from_vault(context: WikiConfig) -> Graph:
+def _build_graph_from_vault(context: Config) -> Graph:
     """Load asserted triples from all vault sources without OWL-RL inference."""
     graph = Graph()
     context.bind_namespaces(graph)
@@ -444,7 +444,7 @@ def _build_graph_from_vault(context: WikiConfig) -> Graph:
 
 
 def load_graph(
-    context: WikiConfig,
+    context: Config,
     infer: bool = True,
     *,
     use_cache: bool = True,

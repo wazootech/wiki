@@ -1,4 +1,4 @@
-"""Site build models for virtual pages and table of contents."""
+﻿"""Site build models for virtual pages and table of contents."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .wiki_config import WikiConfig
+from .wiki_config import Config
 
 
 class TocItem(BaseModel):
@@ -53,6 +53,6 @@ class WikiSite(BaseModel):
     model_config = ConfigDict(extra="ignore", arbitrary_types_allowed=True)
 
     pages: list[VirtualPage]
-    config: WikiConfig | None = None
+    config: Config | None = None
     pages_by_route: dict[str, VirtualPage] = Field(default_factory=dict)
     routes_by_wiki_id: dict[str, str] = Field(default_factory=dict)

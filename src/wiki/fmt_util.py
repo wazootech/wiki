@@ -1,4 +1,4 @@
-"""Markdown formatting helpers for wiki fmt (mdformat config + SPARQL shields)."""
+﻿"""Markdown formatting helpers for wiki fmt (mdformat config + SPARQL shields)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import mdformat
 from mdformat._conf import DEFAULT_OPTS, InvalidConfError, read_toml_opts, _validate_keys, _validate_values
 import mdformat.plugins
 
-from .config import WikiConfig
+from .config import Config
 
 DEFAULT_FMT_EXTENSIONS = ("wikilink", "frontmatter", "gfm")
 
@@ -59,7 +59,7 @@ def _load_toml_opts(path: Path) -> dict[str, Any]:
     return dict(toml_opts)
 
 
-def _resolve_fmt_toml_opts(file_path: Path, config: WikiConfig) -> tuple[dict[str, Any], str]:
+def _resolve_fmt_toml_opts(file_path: Path, config: Config) -> tuple[dict[str, Any], str]:
     if config.fmt is not None and config.fmt.options is not None:
         if not config.fmt.options:
             return dict(DEFAULT_FMT_OPTS), "inline fmt in wiki config"
@@ -82,14 +82,14 @@ def _resolve_fmt_toml_opts(file_path: Path, config: WikiConfig) -> tuple[dict[st
     return dict(DEFAULT_FMT_OPTS), "wiki-cli fmt defaults"
 
 
-def describe_fmt_source(file_path: Path, config: WikiConfig) -> str:
+def describe_fmt_source(file_path: Path, config: Config) -> str:
     """Human-readable description of which fmt config source would be used."""
     _, source = _resolve_fmt_toml_opts(file_path, config)
     return source
 
 
 def _mdformat_options(
-    file_path: Path, config: WikiConfig
+    file_path: Path, config: Config
 ) -> tuple[dict[str, Any], tuple[str, ...]]:
     toml_opts, _ = _resolve_fmt_toml_opts(file_path, config)
     opts: dict[str, Any] = {**DEFAULT_OPTS, **toml_opts}
@@ -98,7 +98,7 @@ def _mdformat_options(
     return opts, tuple(opts["extensions"])
 
 
-def format_markdown(original: str, file_path: Path, config: WikiConfig) -> str:
+def format_markdown(original: str, file_path: Path, config: Config) -> str:
     """Format markdown, honoring wiki fmt config and preserving SPARQL render blocks."""
     shielded, blocks = _shield_sparql_blocks(original)
     opts, extensions = _mdformat_options(file_path, config)

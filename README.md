@@ -1,4 +1,4 @@
-# Wiki CLI (`wazootech-wiki`)
+﻿# Wiki CLI (`wazootech-wiki`)
 
 [![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
@@ -636,7 +636,7 @@ SELECT ?doc ?content WHERE {
 }
 ```
 
-## Workspace configuration (`WikiConfig`)
+## Workspace configuration (`Config`)
 
 The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `vault`, `graph`, `site`, and `link` blocks (see [Wiki_Configuration](docs/wiki/Wiki_Configuration.md)).
 

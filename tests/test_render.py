@@ -1,4 +1,4 @@
-"""Tests for inline SPARQL block rendering."""
+﻿"""Tests for inline SPARQL block rendering."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.graph import load_graph
 from wiki.render import _sparql_table_matches, render_markdown_files
 
@@ -44,7 +44,7 @@ SELECT ?givenName WHERE {
 """,
                 encoding="utf-8",
             )
-            config = WikiConfig(
+            config = Config(
                 vault={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
                 graph={"context": {"wiki": "https://wiki.example.org/"}},

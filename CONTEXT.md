@@ -1,4 +1,4 @@
-# Wiki CLI (`wazootech-wiki`)
+﻿# Wiki CLI (`wazootech-wiki`)
 
 A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 
@@ -12,9 +12,11 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 **Frontmatter**: A YAML or JSON metadata block at the top of a Document, mapping to a JSON-LD compliant representation. _Avoid_: Metadata, header.
 
-**Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a WikiConfig. _Avoid_: Namespace list.
+**Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a Config. _Avoid_: Namespace list.
 
-**WikiConfig**: The central configuration object — same nested blocks as `wiki.yaml` (`vault`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.vault.inputs`, site chrome via `config.site.*`, RDF via `config.graph.*` and the `config.context` property. _Avoid_: Config, parameters, settings, flat `input_dirs` fields.
+**Config**: The root configuration object loaded from `wiki.yaml` — same nested blocks as the file (`vault`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.vault.inputs`, site chrome via `config.site.*`, RDF via `config.graph.*` and the `config.context` property. Import as `from wiki.config import Config`. _Avoid_: parameters, settings, flat `input_dirs` fields.
+
+**WikiConfig**: Reserved name for a future top-level `wiki:` yaml section (`{section}Config` pattern). Not loaded today. _Avoid_: Using this name for the root loader (use **Config**).
 
 **Namespaces**: The mapping of prefix keys to URI values used for RDF conversion and SPARQL queries. _Avoid_: Prefixes, prefixes list.
 
@@ -51,7 +53,7 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 - A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `vault.inputs`
 - A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
-- The **CLI** manages, validates, and queries the **Wiki** using the **WikiConfig** which contains the **Context** and **Namespaces**
+- The **CLI** manages, validates, and queries the **Wiki** using **Config**, which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
 - **Checking** runs integrity checks on the **Vault** via `wiki check`; **Linting** runs convention audits via `wiki lint`; **Link hygiene** is optional via `wiki link`; stale SPARQL blocks use `wiki render --check`

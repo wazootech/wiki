@@ -1,4 +1,4 @@
-"""Conservative auto-repair for broken internal wiki links."""
+﻿"""Conservative auto-repair for broken internal wiki links."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .audit import collect_broken_links
 from .schemas import BrokenLink, BrokenLinkFix
-from .config import WikiConfig
+from .config import Config
 from .headings import GitHubHeadingSlugger
 from .links import fragment_id, resolve_page_route, split_target
 from .paths import iter_document_files, route_for_document_file
@@ -18,7 +18,7 @@ MARKDOWN_LINK_FULL_REGEX = re.compile(r"(!?\[[^\]]*\]\()([^)]+)(\))")
 FUZZY_ROUTE_CUTOFF = 0.86
 
 
-def find_broken_link_fixes(config: WikiConfig, file_filter: set[str] | None = None) -> list[BrokenLinkFix]:
+def find_broken_link_fixes(config: Config, file_filter: set[str] | None = None) -> list[BrokenLinkFix]:
     """Return only unambiguous broken-link repairs."""
     existing_routes = {
         route_for_document_file(config, file_path) for file_path in iter_document_files(config)
@@ -47,7 +47,7 @@ def find_broken_link_fixes(config: WikiConfig, file_filter: set[str] | None = No
 
 
 def apply_broken_link_fixes(
-    config: WikiConfig,
+    config: Config,
     fixes: list[BrokenLinkFix],
     *,
     dry_run: bool = False,
@@ -84,7 +84,7 @@ def apply_broken_link_fixes(
 
 
 def remaining_broken_links(
-    config: WikiConfig,
+    config: Config,
     file_filter: set[str] | None = None,
     *,
     fixes: list[BrokenLinkFix] | None = None,
@@ -105,7 +105,7 @@ def remaining_broken_links(
     ]
 
 
-def _heading_ids_by_route(config: WikiConfig) -> dict[str, set[str]]:
+def _heading_ids_by_route(config: Config) -> dict[str, set[str]]:
     heading_ids: dict[str, set[str]] = {}
     slugger = GitHubHeadingSlugger()
     for file_path in iter_document_files(config):
@@ -125,7 +125,7 @@ def _heading_ids_by_route(config: WikiConfig) -> dict[str, set[str]]:
 
 
 def _suggest_replacement(
-    config: WikiConfig,
+    config: Config,
     issue: BrokenLink,
     existing_routes: set[str],
     heading_ids_by_route: dict[str, set[str]],
@@ -161,7 +161,7 @@ def _suggest_replacement(
 
 
 def _replacement_route(
-    config: WikiConfig,
+    config: Config,
     source_route: str,
     page_part: str,
     existing_routes: set[str],

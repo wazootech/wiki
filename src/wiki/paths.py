@@ -1,4 +1,4 @@
-"""Path, route, URL, and output-manifest helpers for wiki pages."""
+﻿"""Path, route, URL, and output-manifest helpers for wiki pages."""
 
 from __future__ import annotations
 
@@ -6,14 +6,14 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
-from .config import WikiConfig
+from .config import Config
 from .parser import DOCUMENT_EXTENSIONS
 from .schemas.domain import OutputEntry, PageRoute
 
 UNSAFE_ROUTE_CHARS = set("?#%")
 
 
-def iter_document_files(config: WikiConfig) -> list[Path]:
+def iter_document_files(config: Config) -> list[Path]:
     doc_files: list[Path] = []
     for input_dir in config.vault.inputs:
         if input_dir.exists():
@@ -25,16 +25,16 @@ def iter_document_files(config: WikiConfig) -> list[Path]:
     return doc_files
 
 
-def iter_markdown_files(config: WikiConfig) -> list[Path]:
+def iter_markdown_files(config: Config) -> list[Path]:
     return [file_path for file_path in iter_document_files(config) if file_path.suffix.lower() == ".md"]
 
 
-def _vault_document_index(config: WikiConfig) -> dict[Path, Path]:
+def _vault_document_index(config: Config) -> dict[Path, Path]:
     return {file_path.resolve(): file_path for file_path in iter_document_files(config)}
 
 
 def _resolve_vault_paths(
-    config: WikiConfig,
+    config: Config,
     paths: tuple[Path, ...],
     *,
     allowed_suffixes: set[str],
@@ -55,7 +55,7 @@ def _resolve_vault_paths(
     return selected
 
 
-def select_document_paths(config: WikiConfig, paths: tuple[Path, ...]) -> list[Path]:
+def select_document_paths(config: Config, paths: tuple[Path, ...]) -> list[Path]:
     """Resolve explicit CLI paths to vault documents (.md, .yaml, .json), preserving order."""
     return _resolve_vault_paths(
         config,
@@ -65,17 +65,17 @@ def select_document_paths(config: WikiConfig, paths: tuple[Path, ...]) -> list[P
     )
 
 
-def select_markdown_paths(config: WikiConfig, paths: tuple[Path, ...]) -> list[Path]:
+def select_markdown_paths(config: Config, paths: tuple[Path, ...]) -> list[Path]:
     """Resolve explicit CLI paths to vault markdown files, preserving order."""
     return _resolve_vault_paths(config, paths, allowed_suffixes={".md"}, label="command")
 
 
-def routes_from_markdown_files(config: WikiConfig, paths: tuple[Path, ...]) -> set[str]:
+def routes_from_markdown_files(config: Config, paths: tuple[Path, ...]) -> set[str]:
     """Build route filter set from explicit markdown paths."""
     return {route_for_document_file(config, path) for path in select_markdown_paths(config, paths)}
 
 
-def route_for_document_file(config: WikiConfig, file_path: Path) -> str:
+def route_for_document_file(config: Config, file_path: Path) -> str:
     rel = _relative_to_input_dir(config, file_path).with_suffix("").as_posix()
     parts = [part for part in rel.split("/") if part]
     if parts and parts[-1] == "index":
@@ -84,7 +84,7 @@ def route_for_document_file(config: WikiConfig, file_path: Path) -> str:
     return "/".join(parts)
 
 
-def page_routes(config: WikiConfig) -> list[PageRoute]:
+def page_routes(config: Config) -> list[PageRoute]:
     return [PageRoute(source=file_path, route=route_for_document_file(config, file_path)) for file_path in iter_document_files(config)]
 
 
@@ -111,7 +111,7 @@ def page_output_path(owned_output_dir: Path, route: str, url_style: str) -> Path
     return owned_output_dir.joinpath(*route.split("/"), "index.html")
 
 
-def build_page_manifest(config: WikiConfig, owned_output_dir: Path, base_url: str, url_style: str) -> list[OutputEntry]:
+def build_page_manifest(config: Config, owned_output_dir: Path, base_url: str, url_style: str) -> list[OutputEntry]:
     return [
         OutputEntry(
             source=route.source,
@@ -143,7 +143,7 @@ def detect_output_collisions(entries: list[OutputEntry]) -> list[str]:
     return issues
 
 
-def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
+def validate_filename_pattern(config: Config, md_file: Path) -> str | None:
     if not config.vault.filename_pattern:
         return None
     if md_file.suffix.lower() != ".md":
@@ -157,7 +157,7 @@ def validate_filename_pattern(config: WikiConfig, md_file: Path) -> str | None:
     return None
 
 
-def validate_route_safety(config: WikiConfig) -> list[str]:
+def validate_route_safety(config: Config) -> list[str]:
     issues: list[str] = []
     for file_path in iter_document_files(config):
         try:
@@ -167,7 +167,7 @@ def validate_route_safety(config: WikiConfig) -> list[str]:
     return issues
 
 
-def _relative_to_input_dir(config: WikiConfig, md_file: Path) -> Path:
+def _relative_to_input_dir(config: Config, md_file: Path) -> Path:
     for root in config.vault.inputs:
         try:
             return md_file.relative_to(root)

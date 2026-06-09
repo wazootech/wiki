@@ -1,4 +1,4 @@
-"""Unified WikiConfig model matching wiki.yaml nested block structure."""
+﻿"""Unified Config model matching wiki.yaml nested block structure."""
 
 from __future__ import annotations
 
@@ -363,7 +363,7 @@ class SparqlServiceConfig(BaseModel):
         return value
 
 
-class WikiConfig(BaseModel):
+class Config(BaseModel):
     """Wiki configuration: nested yaml blocks plus loader-injected config_root."""
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
@@ -477,15 +477,15 @@ class WikiConfig(BaseModel):
         return any(fnmatch.fnmatchcase(rel, pattern) for pattern in self.vault.exclude)
 
     @classmethod
-    def for_root(cls, root: Path | str, **overrides: Any) -> WikiConfig:
-        """Construct a resolved WikiConfig for tests and programmatic use."""
+    def for_root(cls, root: Path | str, **overrides: Any) -> Config:
+        """Construct a resolved Config for tests and programmatic use."""
         data: dict[str, Any] = dict(overrides)
         data["config_root"] = Path(root)
         return cls.model_validate(data)
 
     @classmethod
-    def load(cls, path: Path = Path("."), *, config_name: str = "") -> WikiConfig:
-        """Load WikiConfig from an explicit file path or search standard names in a directory."""
+    def load(cls, path: Path = Path("."), *, config_name: str = "") -> Config:
+        """Load Config from an explicit file path or search standard names in a directory."""
         if path.is_file():
             potential_paths = [path]
         else:

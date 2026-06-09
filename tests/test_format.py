@@ -1,4 +1,4 @@
-"""Tests for RDF serialization and metadata view helpers."""
+﻿"""Tests for RDF serialization and metadata view helpers."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.config import WikiConfig
+from wiki.config import Config
 from wiki.format import (
     METADATA_VIEWS,
     markdown_format,
@@ -74,7 +74,7 @@ familyName: Smith
 ---""",
                 encoding="utf-8",
             )
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             result = graph.query(
                 "SELECT ?givenName ?familyName WHERE { ?s <https://schema.org/givenName> ?givenName ; "
@@ -97,7 +97,7 @@ familyName: Smith
 ---""",
                 encoding="utf-8",
             )
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             output = run_query(
                 graph,
@@ -110,7 +110,7 @@ familyName: Smith
     def test_pretty_table_format_empty_results(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
             graph = load_graph(config, infer=False)
             result = graph.query("SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }")
             self.assertEqual(pretty_table_format(result), "(no results)")

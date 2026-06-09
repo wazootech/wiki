@@ -1,14 +1,10 @@
----
-type: TechArticle
-headline: Wiki configuration
-description: Reference for wiki.yaml, wiki.yml, and wiki.json (WikiConfig).
----
+## ﻿--- type: TechArticle headline: Wiki configuration description: Reference for wiki.yaml, wiki.yml, and wiki.json (Config).
 
 # Wiki configuration
 
-The CLI loads **WikiConfig** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
+The CLI loads **Config** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
-The in-memory **WikiConfig** model uses the same nested blocks as the file (`vault`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `WikiConfig.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `vault` and `site`. Library and test code can construct configs with `WikiConfig(vault={...}, config_root=path)` or `WikiConfig.for_root(path, vault={...})`.
+The in-memory **Config** model uses the same nested blocks as the file (`vault`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `Config.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `vault` and `site`. Library and test code can construct configs with `Config(vault={...}, config_root=path)` or `Config.for_root(path, vault={...})`.
 
 Config files are validated strictly through a Pydantic schema (`extra='forbid'` on every block). Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
 
@@ -302,7 +298,7 @@ Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward 
 
 Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
 
-In library code, loaded `WikiConfig.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`); yaml shapes above are unchanged.
+In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`); yaml shapes above are unchanged.
 
 ## Integrity checks (`check`)
 

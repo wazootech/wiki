@@ -1,4 +1,4 @@
-"""Click CLI entrypoint defining subcommands and option handling."""
+﻿"""Click CLI entrypoint defining subcommands and option handling."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Optional
 import click
 
-from .config import WikiConfig as Context
+from .config import Config as Context
 from .format import run_query, process_rdf_format
 from .render import render_markdown_files
 from .parser import document_data_from_path
