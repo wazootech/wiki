@@ -927,6 +927,8 @@ DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="{theme_color}">
+<meta name="msapplication-TileColor" content="{theme_color}">
 <title>{page_title}</title>
 </head>
 <body>
@@ -1271,17 +1273,53 @@ def _logo_letter(site_title: str) -> str:
     return text[0].upper()
 
 
-def _build_logo_svg(letter: str) -> str:
+_DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
+DEFAULT_THEME_COLOR = _DEFAULT_LOGO_THEME[0]
+
+
+def resolved_site_theme_color(theme_color: str | None) -> str:
+    return theme_color or DEFAULT_THEME_COLOR
+
+
+def _parse_hex_color(value: str) -> tuple[int, int, int]:
+    normalized = value.lstrip("#")
+    if len(normalized) == 3:
+        normalized = "".join(ch * 2 for ch in normalized)
+    r = int(normalized[0:2], 16)
+    g = int(normalized[2:4], 16)
+    b = int(normalized[4:6], 16)
+    return r, g, b
+
+
+def _format_hex_color(r: int, g: int, b: int) -> str:
+    return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
+
+
+def _logo_theme_colors(theme_color: str | None) -> tuple[str, str, str]:
+    if theme_color is None:
+        return _DEFAULT_LOGO_THEME
+    r, g, b = _parse_hex_color(theme_color)
+    dark = _format_hex_color(int(r * 0.55), int(g * 0.55), int(b * 0.55))
+    light = _format_hex_color(
+        min(255, int(r + (255 - r) * 0.55)),
+        min(255, int(g + (255 - g) * 0.55)),
+        min(255, int(b + (255 - b) * 0.55)),
+    )
+    return theme_color, dark, light
+
+
+def _build_logo_svg(letter: str, theme_color: str | None = None) -> str:
     glyph = html_module.escape(letter)
+    globe_start, globe_end, grid_accent = _logo_theme_colors(theme_color)
     return f"""<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+      <stop offset="0%" stop-color="{globe_start}" />
+      <stop offset="100%" stop-color="{globe_end}" />
     </linearGradient>
     <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="{grid_accent}" stop-opacity="0.3" />
     </linearGradient>
   </defs>
   <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
@@ -1337,7 +1375,8 @@ def build_index_html(
     pages_json = json.dumps(pages_data, default=str)
 
     site_title = site.config.site.title
-    logo_svg = _build_logo_svg(_logo_letter(site_title))
+    theme_color = resolved_site_theme_color(site.config.site.theme_color)
+    logo_svg = _build_logo_svg(_logo_letter(site_title), site.config.site.theme_color)
 
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
@@ -1345,6 +1384,7 @@ def build_index_html(
         "inline_css": INLINE_CSS,
         "base_url": base_url,
         "logo_svg": logo_svg,
+        "theme_color": theme_color,
         "site_title": html_module.escape(site_title),
         "page_title": "All Pages",
         "body_class": "wiki-index",
@@ -1409,7 +1449,8 @@ def build_page_html(
     pages_json = json.dumps(pages_data, default=str)
 
     site_title = site.config.site.title
-    logo_svg = _build_logo_svg(_logo_letter(site_title))
+    theme_color = resolved_site_theme_color(site.config.site.theme_color)
+    logo_svg = _build_logo_svg(_logo_letter(site_title), site.config.site.theme_color)
 
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
     if page.has_frontmatter:
@@ -1431,6 +1472,7 @@ def build_page_html(
         "inline_css": INLINE_CSS,
         "base_url": base_url,
         "logo_svg": logo_svg,
+        "theme_color": theme_color,
         "site_title": html_module.escape(site_title),
         "page_title": html_module.escape(page.title),
         "body_class": f"wiki-page layout-{layout_class}",

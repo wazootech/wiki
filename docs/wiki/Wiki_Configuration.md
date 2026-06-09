@@ -114,10 +114,11 @@ Branding, default page layout, and routing for `wiki build` / `wiki serve`:
 
 | Key              | Default    | Purpose                                                           |
 | ---------------- | ---------- | ----------------------------------------------------------------- |
-| `site.title`     | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
-| `site.layout`    | —          | Path (relative to config) to the site default page layout file    |
-| `site.base_url`  | `/wiki`    | URL prefix for built/served pages (`""` for site root)            |
-| `site.url_style` | `dir`      | `dir` → `slug/index.html`; `file` → `slug.html`                   |
+| `site.title`       | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
+| `site.theme_color` | —          | Optional `#RGB` / `#RRGGBB` hex for the sidebar globe logo and `theme-color` / `msapplication-TileColor` meta tags (default `#3b82f6`) |
+| `site.layout`      | —          | Path (relative to config) to the site default page layout file    |
+| `site.base_url`    | `/wiki`    | URL prefix for built/served pages (`""` for site root)            |
+| `site.url_style`   | `dir`      | `dir` → `slug/index.html`; `file` → `slug.html`                   |
 
 ## Link (`link:`)
 
@@ -195,8 +196,9 @@ Replace `{key}` tokens in your wiki page layout:
 | `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
 | `{site_title}`            | escaped text | Site name from `site.title` in `wiki.yaml` (sidebar label, `<title>` suffix, search placeholder).          |
-| `{inline_css}`            | raw CSS      | \[\[Wiki_CLI                                                                                               |
-| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter is the first character of `site.title` (uppercased).             |
+| `{theme_color}`           | text string  | Resolved hex color from `site.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags). |
+| `{inline_css}`            | raw CSS      | Bundled Wikipedia-style page CSS injected into `<style>`.                                                  |
+| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter from `site.title`; globe gradient from `site.theme_color` when set. |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
 | `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                         |

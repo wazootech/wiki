@@ -4,6 +4,7 @@
 
 ### Added
 
+- `site.theme_color` — optional `#RGB` / `#RRGGBB` hex color for the sidebar globe logo SVG gradient and `theme-color` / `msapplication-TileColor` meta tags (defaults to `#3b82f6`)
 - `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
 
 ### Changed (breaking)

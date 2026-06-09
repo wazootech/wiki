@@ -589,6 +589,65 @@ specialty: Diagnostics
             self.assertIn('data-categories="Person"', article)
             self.assertIn('data-categories=""', article)
 
+    def test_build_logo_svg_uses_site_theme_color(self) -> None:
+        from wiki.site import _build_logo_svg
+
+        default = _build_logo_svg("W")
+        themed = _build_logo_svg("W", "#6366f1")
+        self.assertIn('stop-color="#3b82f6"', default)
+        self.assertIn('stop-color="#6366f1"', themed)
+        self.assertNotIn('stop-color="#3b82f6"', themed)
+
+    def test_build_index_html_logo_reflects_config_theme_color(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(
+                vault={"inputs": [wiki]},
+                site={"theme_color": "#6366f1"},
+                config_root=root,
+            )
+            site = build_site(config)
+            html = build_index_html(site, page_layout="{logo_svg}")
+            self.assertIn('stop-color="#6366f1"', html)
+
+    def test_build_index_html_emits_theme_color_meta_tags(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(vault={"inputs": [wiki]}, config_root=root)
+            site = build_site(config)
+            html = build_index_html(
+                site,
+                page_layout=(
+                    '<meta name="theme-color" content="{theme_color}">'
+                    '<meta name="msapplication-TileColor" content="{theme_color}">'
+                ),
+            )
+            self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
+            self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(
+                vault={"inputs": [wiki]},
+                site={"theme_color": "#6366f1"},
+                config_root=root,
+            )
+            site = build_site(config)
+            html = build_index_html(
+                site,
+                page_layout='<meta name="theme-color" content="{theme_color}">',
+            )
+            self.assertIn('<meta name="theme-color" content="#6366f1">', html)
+
 
 if __name__ == "__main__":
     unittest.main()

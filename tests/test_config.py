@@ -51,6 +51,7 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(config.graph.include_file_extension)
         self.assertEqual(config.site.base_url, "/wiki")
         self.assertEqual(config.site.url_style, "dir")
+        self.assertIsNone(config.site.theme_color)
         self.assertIsNone(config.vault.filename_pattern)
         self.assertEqual(config.check, DEFAULT_CHECK_CONFIG)
         self.assertEqual(config.lint, DEFAULT_LINT_CONFIG)
@@ -137,6 +138,26 @@ class TestConfig(unittest.TestCase):
             config = Config.load(base_path)
             self.assertEqual(config.site.title, "Nested Wiki")
             self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html").resolve())
+
+    def test_Config_load_site_theme_color(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "site:\n  theme_color: '#f00'\n",
+                encoding="utf-8",
+            )
+            config = Config.load(base_path)
+            self.assertEqual(config.site.theme_color, "#ff0000")
+
+    def test_Config_rejects_invalid_site_theme_color(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "site:\n  theme_color: blue\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                Config.load(base_path)
 
     def test_Config_rejects_unknown_flat_top_level_keys(self) -> None:
         with TemporaryDirectory() as tmpdir:

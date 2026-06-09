@@ -5,6 +5,7 @@ from __future__ import annotations
 import fnmatch
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Self
 
@@ -33,6 +34,7 @@ DEFAULT_URL_STYLE = "dir"
 DEFAULT_SITE_TITLE = "Wiki CLI"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 VALID_URL_STYLES = {"dir", "file"}
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 
 def normalize_base_iri(value: str) -> str:
@@ -319,6 +321,19 @@ class GraphConfig(BaseModel):
         return normalized
 
 
+def normalize_theme_color(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"expected #RGB or #RRGGBB hex color, got {value!r}")
+    normalized = value.strip()
+    if not _HEX_COLOR_RE.match(normalized):
+        raise ValueError(f"expected #RGB or #RRGGBB hex color, got {value!r}")
+    if len(normalized) == 4:
+        normalized = "#" + "".join(ch * 2 for ch in normalized[1:])
+    return normalized.lower()
+
+
 class SiteConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -326,6 +341,14 @@ class SiteConfig(BaseModel):
     layout: str | Path | None = None
     base_url: str | None = None
     url_style: str | None = None
+    theme_color: str | None = None
+
+    @field_validator("theme_color", mode="before")
+    @classmethod
+    def _validate_theme_color(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        return normalize_theme_color(str(value))
 
 
 class LinkConfig(BaseModel):
