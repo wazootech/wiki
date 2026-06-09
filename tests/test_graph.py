@@ -295,7 +295,7 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
         ctx = config.context
         data = {"headline": "Untitled"}
         g = frontmatter_to_graph(data, config, file_id="untitled")
-        subj = URIRef(f"{ctx.wiki_base}untitled")
+        subj = URIRef(f"{ctx.base_iri}untitled")
         self.assertIn((subj, RDF.type, ctx.namespaces["schema"]["TechArticle"]), g)
 
     def test_implicit_types_fallback_preserves_explicit_type(self) -> None:
@@ -343,6 +343,19 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
         types = list(g.objects(subj, RDF.type))
         self.assertEqual(len(types), 1)
         self.assertIn(ctx.namespaces["sh"]["NodeShape"], types)
+
+    def test_base_iri_override_differs_from_context_wiki(self) -> None:
+        config = WikiConfig(
+            graph={
+                "context": {"wiki": "https://example.test/wiki/"},
+                "base_iri": "https://example.test/docs/",
+            }
+        )
+        ctx = config.context
+        data = {"@type": "WebPage", "headline": "Page"}
+        g = frontmatter_to_graph(data, config, file_id="page")
+        subj = URIRef("https://example.test/docs/page")
+        self.assertIn((subj, RDF.type, ctx.namespaces["schema"]["WebPage"]), g)
 
     def test_multi_type_and_implicit_id_mapping(self) -> None:
         """Test multi-type arrays in frontmatter and implicit ID mapping fallback in loading sequence."""
@@ -505,7 +518,7 @@ name: Good Page
             config = WikiConfig(
                 vault={"inputs": [wiki_dir]},
                 graph={
-                    "wiki_base": "https://example.test/wiki/",
+                    "context": {"wiki": "https://example.test/wiki/"},
                     "context": {"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"},
                 },
             )

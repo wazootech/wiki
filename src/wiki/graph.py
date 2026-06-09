@@ -200,7 +200,7 @@ def frontmatter_to_graph(
         if not file_id:
             return Graph()
         suffix = file_ext if include_file_extension else ""
-        doc_id = f"{rdf_ctx.wiki_base}{file_id}{suffix}"
+        doc_id = f"{rdf_ctx.base_iri}{file_id}{suffix}"
 
     if doc_id and ":" in doc_id:
         prefix, name = doc_id.split(":", 1)

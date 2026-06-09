@@ -6,7 +6,8 @@ from tempfile import TemporaryDirectory
 import yaml
 from rdflib import Graph, Namespace
 
-from wiki.config import Context, WikiConfig, DEFAULT_CHECK_RULES, DEFAULT_LINT_RULES, DEFAULT_NAMESPACES
+from wiki.config import Context, WikiConfig, DEFAULT_CHECK_CONFIG, DEFAULT_LINT_CONFIG, DEFAULT_NAMESPACES
+from wiki.schemas import FmtConfig
 
 MINIMAL_VAULT_YAML = "vault:\n  inputs: [wiki]\n"
 
@@ -51,8 +52,8 @@ class TestWikiConfig(unittest.TestCase):
         self.assertEqual(config.site.base_url, "/wiki")
         self.assertEqual(config.site.url_style, "dir")
         self.assertIsNone(config.vault.filename_pattern)
-        self.assertEqual(config.check, DEFAULT_CHECK_RULES)
-        self.assertEqual(config.lint, DEFAULT_LINT_RULES)
+        self.assertEqual(config.check, DEFAULT_CHECK_CONFIG)
+        self.assertEqual(config.lint, DEFAULT_LINT_CONFIG)
         self.assertIsNotNone(config.context)
         self.assertFalse(config.sparql_service.enabled)
         self.assertEqual(config.sparql_service.path, "/api/sparql")
@@ -194,6 +195,25 @@ class TestWikiConfig(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             WikiConfig(graph={"implicit_types_policy": "replace"})
+
+    def test_wikiconfig_base_iri_defaults_to_context_wiki(self) -> None:
+        config = WikiConfig(graph={"context": {"wiki": "https://example.org/wiki/"}})
+        self.assertEqual(config.base_iri, "https://example.org/wiki/")
+
+    def test_wikiconfig_base_iri_override(self) -> None:
+        config = WikiConfig(
+            graph={
+                "context": {"wiki": "https://example.org/wiki/"},
+                "base_iri": "https://example.org/docs/",
+            }
+        )
+        self.assertEqual(config.base_iri, "https://example.org/docs/")
+
+    def test_wikiconfig_rejects_graph_wiki_base_key(self) -> None:
+        from pydantic import ValidationError
+
+        with self.assertRaises(ValidationError):
+            WikiConfig(graph={"wiki_base": "https://example.org/wiki/"})
 
     def test_wikiconfig_load_json(self) -> None:
         """Test WikiConfig.load correctly parses wiki.json."""
@@ -365,8 +385,8 @@ class TestWikiConfig(unittest.TestCase):
                 encoding="utf-8",
             )
             config = WikiConfig.load(base_path)
-            self.assertIsInstance(config.fmt, dict)
-            self.assertEqual(config.fmt["wrap"], "no")
+            self.assertIsInstance(config.fmt, FmtConfig)
+            self.assertEqual(config.fmt.options["wrap"], "no")
 
     def test_wikiconfig_load_fmt_pointer_relative(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -376,7 +396,9 @@ class TestWikiConfig(unittest.TestCase):
                 encoding="utf-8",
             )
             config = WikiConfig.load(base_path)
-            self.assertEqual(config.fmt, base_path / "custom.toml")
+            self.assertIsInstance(config.fmt, FmtConfig)
+            self.assertEqual(config.fmt.toml, base_path / "custom.toml")
+            self.assertIsNone(config.fmt.options)
 
     def test_wikiconfig_rejects_absolute_fmt_path(self) -> None:
         absolute_fmt = (
@@ -427,8 +449,8 @@ class TestWikiConfig(unittest.TestCase):
                 encoding="utf-8",
             )
             config = WikiConfig.load(base_path)
-            self.assertIsInstance(config.fmt, dict)
-            self.assertEqual(config.fmt["extensions"], ["gfm", "frontmatter", "wikilink"])
+            self.assertIsInstance(config.fmt, FmtConfig)
+            self.assertEqual(config.fmt.options["extensions"], ["gfm", "frontmatter", "wikilink"])
 
 if __name__ == "__main__":
     unittest.main()

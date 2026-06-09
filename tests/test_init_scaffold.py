@@ -11,12 +11,12 @@ from unittest.mock import patch
 
 from wiki.config import WikiConfig
 from wiki.fmt_util import DEFAULT_FMT_OPTS
+from wiki.schemas.wiki_config import normalize_base_iri
 from wiki.init_scaffold import (
     InitOptions,
     detect_origin_repo,
     infer_github_pages_urls,
     normalize_base_url,
-    normalize_wiki_base,
     parse_github_repo,
     render_default_layout,
     render_wiki_yaml,
@@ -47,19 +47,19 @@ class TestParseGithubRepo(TestCase):
 
 class TestInferGithubPagesUrls(TestCase):
     def test_project_site(self) -> None:
-        wiki_base, base_url = infer_github_pages_urls("wazootech", "wiki")
-        self.assertEqual(wiki_base, "https://wazootech.github.io/wiki/")
+        context_wiki, base_url = infer_github_pages_urls("wazootech", "wiki")
+        self.assertEqual(context_wiki, "https://wazootech.github.io/wiki/")
         self.assertEqual(base_url, "/wiki")
 
     def test_hyphenated_repo(self) -> None:
-        wiki_base, base_url = infer_github_pages_urls("wazootech", "wiki-cli")
-        self.assertEqual(wiki_base, "https://wazootech.github.io/wiki-cli/")
+        context_wiki, base_url = infer_github_pages_urls("wazootech", "wiki-cli")
+        self.assertEqual(context_wiki, "https://wazootech.github.io/wiki-cli/")
         self.assertEqual(base_url, "/wiki-cli")
 
 
 class TestNormalize(TestCase):
-    def test_wiki_base_trailing_slash(self) -> None:
-        self.assertEqual(normalize_wiki_base("https://example.org/wiki"), "https://example.org/wiki/")
+    def test_base_iri_trailing_slash(self) -> None:
+        self.assertEqual(normalize_base_iri("https://example.org/wiki"), "https://example.org/wiki/")
 
     def test_base_url_leading_slash(self) -> None:
         self.assertEqual(normalize_base_url("wiki"), "/wiki")
@@ -85,14 +85,15 @@ class TestRenderWikiYaml(TestCase):
     def test_renders_optional_fields(self) -> None:
         rendered = render_wiki_yaml(
             InitOptions(
-                wiki_base="https://wazootech.github.io/wiki/",
+                wiki_iri="https://wazootech.github.io/wiki/",
                 base_url="/wiki",
                 url_style="dir",
                 content_predicate="schema:articleBody",
                 link_style="markdown",
             ),
         )
-        self.assertIn("wiki_base: https://wazootech.github.io/wiki/", rendered)
+        self.assertIn("wiki: https://wazootech.github.io/wiki/", rendered)
+        self.assertNotIn("wiki_base:", rendered)
         self.assertIn("wazoo: https://schema.wazoo.dev/", rendered)
         self.assertIn("base_url: /wiki", rendered)
         self.assertIn("content_predicate: schema:articleBody", rendered)
@@ -110,13 +111,13 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("__", rendered)
 
     def test_rendered_fmt_matches_default_fmt_opts(self) -> None:
-        rendered = render_wiki_yaml(InitOptions(wiki_base="https://wiki.example.org/"))
+        rendered = render_wiki_yaml(InitOptions(wiki_iri="https://wiki.example.org/"))
         parsed = yaml.safe_load(rendered)
         self.assertEqual(parsed["fmt"], DEFAULT_FMT_OPTS)
 
     def test_omits_optional_fields_when_unset(self) -> None:
         rendered = render_wiki_yaml(
-            InitOptions(wiki_base="https://wiki.example.org/"),
+            InitOptions(wiki_iri="https://wiki.example.org/"),
         )
         self.assertIn("# content_predicate: schema:articleBody", rendered)
         self.assertNotIn("\ncontent_predicate:", rendered)
@@ -125,17 +126,17 @@ class TestRenderWikiYaml(TestCase):
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
             config_path.write_text(
-                render_wiki_yaml(InitOptions(wiki_base="https://wiki.example.org/")),
+                render_wiki_yaml(InitOptions(wiki_iri="https://wiki.example.org/")),
                 encoding="utf-8",
             )
             parsed = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-            self.assertEqual(parsed["graph"]["wiki_base"], "https://wiki.example.org/")
+            self.assertNotIn("wiki_base", parsed["graph"])
             self.assertEqual(parsed["graph"]["context"]["wiki"], "https://wiki.example.org/")
             config = WikiConfig.load(config_path)
-            self.assertEqual(config.wiki_base, "https://wiki.example.org/")
+            self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
     def test_render_default_layout(self) -> None:
-        rendered = render_default_layout(InitOptions(wiki_base="https://wiki.example.org/"))
+        rendered = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
         self.assertIn("{page_title}", rendered)
         self.assertIn("{site_title}", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
@@ -147,31 +148,31 @@ class TestResolveInitOptions(TestCase):
     def test_repo_flag_skips_prompt(self) -> None:
         opts = resolve_init_options(
             repo="wazootech/wiki",
-            wiki_base=None,
+            context_wiki=None,
             base_url=None,
             url_style=None,
             content_predicate=None,
             link_style=None,
             cwd=Path("."),
             init_git=False,
-            prompt_wiki_base=lambda _: self.fail("prompt should not run"),
+            prompt_context_wiki=lambda _: self.fail("prompt should not run"),
         )
-        self.assertEqual(opts.wiki_base, "https://wazootech.github.io/wiki/")
+        self.assertEqual(opts.wiki_iri, "https://wazootech.github.io/wiki/")
         self.assertEqual(opts.base_url, "/wiki")
 
-    def test_wiki_base_overrides_repo(self) -> None:
+    def test_context_wiki_overrides_repo(self) -> None:
         opts = resolve_init_options(
             repo="wazootech/wiki",
-            wiki_base="https://example.org/custom/",
+            context_wiki="https://example.org/custom/",
             base_url="/custom",
             url_style=None,
             content_predicate=None,
             link_style=None,
             cwd=Path("."),
             init_git=False,
-            prompt_wiki_base=lambda _: self.fail("prompt should not run"),
+            prompt_context_wiki=lambda _: self.fail("prompt should not run"),
         )
-        self.assertEqual(opts.wiki_base, "https://example.org/custom/")
+        self.assertEqual(opts.wiki_iri, "https://example.org/custom/")
         self.assertEqual(opts.base_url, "/custom")
 
     @patch("wiki.init_scaffold.detect_origin_repo", return_value="wazootech/wiki")
@@ -180,13 +181,13 @@ class TestResolveInitOptions(TestCase):
             (Path(tmpdir) / ".git").mkdir()
             opts = resolve_init_options(
                 repo=None,
-                wiki_base=None,
+                context_wiki=None,
                 base_url=None,
                 url_style=None,
                 content_predicate=None,
                 link_style=None,
                 cwd=Path(tmpdir),
                 init_git=False,
-                prompt_wiki_base=lambda _: self.fail("prompt should not run"),
+                prompt_context_wiki=lambda _: self.fail("prompt should not run"),
             )
-        self.assertEqual(opts.wiki_base, "https://wazootech.github.io/wiki/")
+        self.assertEqual(opts.wiki_iri, "https://wazootech.github.io/wiki/")

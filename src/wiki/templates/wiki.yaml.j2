@@ -1,4 +1,4 @@
-{# wiki init scaffold — variables: wiki_base, base_url, url_style, site_title, content_predicate, link_style #}
+{# wiki init scaffold — variables: wiki_iri, base_url, url_style, site_title, content_predicate, link_style #}
 vault:
   inputs:
     - wiki
@@ -9,7 +9,6 @@ vault:
   #   - assets/private/**
 
 graph:
-  wiki_base: {{ wiki_base }}
 {% if content_predicate %}
   content_predicate: {{ content_predicate }}
 {% else %}
@@ -18,9 +17,10 @@ graph:
   # include_file_extension: false
   # implicit_types: [schema:TechArticle]
   # implicit_types_policy: fallback
+  # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
   context:
     schema: https://schema.org/
-    wiki: {{ wiki_base }}
+    wiki: {{ wiki_iri }}
     wazoo: https://schema.wazoo.dev/
     foaf: http://xmlns.com/foaf/0.1/
     dc: http://purl.org/dc/elements/1.1/

@@ -11,6 +11,7 @@ from typing import Callable
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from .schemas import InitOptions
+from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
     "DOCS_VAULT_INIT_OPTIONS",
@@ -20,7 +21,6 @@ __all__ = [
     "resolve_init_options",
 ]
 
-DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
 
@@ -33,11 +33,6 @@ _GITHUB_SSH_RE = re.compile(
     re.IGNORECASE,
 )
 _OWNER_REPO_RE = re.compile(r"^(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$")
-
-
-def normalize_wiki_base(value: str) -> str:
-    """Ensure wiki_base ends with a trailing slash."""
-    return str(value).rstrip("/") + "/"
 
 
 def normalize_base_url(value: str) -> str:
@@ -68,10 +63,10 @@ def parse_github_repo(value: str) -> tuple[str, str]:
 
 
 def infer_github_pages_urls(owner: str, repo: str) -> tuple[str, str]:
-    """Return (wiki_base, base_url) for a GitHub Pages project site."""
-    wiki_base = normalize_wiki_base(f"https://{owner}.github.io/{repo}")
+    """Return (context.wiki IRI, base_url) for a GitHub Pages project site."""
+    context_wiki = normalize_base_iri(f"https://{owner}.github.io/{repo}")
     base_url = normalize_base_url(f"/{repo}")
-    return wiki_base, base_url
+    return context_wiki, base_url
 
 
 def detect_origin_repo(cwd: Path) -> str | None:
@@ -100,7 +95,7 @@ def detect_origin_repo(cwd: Path) -> str | None:
 
 # Init options for this repository's docs/ vault (parity with docs/wiki.yaml).
 DOCS_VAULT_INIT_OPTIONS = InitOptions(
-    wiki_base="https://wazootech.github.io/wiki/",
+    wiki_iri="https://wazootech.github.io/wiki/",
     base_url="/wiki",
     url_style=DEFAULT_URL_STYLE,
     content_predicate="schema:articleBody",
@@ -111,31 +106,31 @@ DOCS_VAULT_INIT_OPTIONS = InitOptions(
 def resolve_init_options(
     *,
     repo: str | None,
-    wiki_base: str | None,
+    context_wiki: str | None,
     base_url: str | None,
     url_style: str | None,
     content_predicate: str | None,
     link_style: str | None,
     cwd: Path,
     init_git: bool,
-    prompt_wiki_base: Callable[[str], str],
+    prompt_context_wiki: Callable[[str], str],
 ) -> InitOptions:
     """Resolve init config from CLI flags, git remote, or interactive prompt."""
-    inferred_wiki_base: str | None = None
+    inferred_context_wiki: str | None = None
     inferred_base_url: str | None = None
 
     repo_slug = repo
     if repo_slug is None and (init_git or (cwd / ".git").exists()):
         repo_slug = detect_origin_repo(cwd)
 
-    if wiki_base is None and repo_slug is not None:
+    if context_wiki is None and repo_slug is not None:
         owner, repo_name = parse_github_repo(repo_slug)
-        inferred_wiki_base, inferred_base_url = infer_github_pages_urls(owner, repo_name)
+        inferred_context_wiki, inferred_base_url = infer_github_pages_urls(owner, repo_name)
 
-    resolved_wiki_base = wiki_base or inferred_wiki_base
-    if resolved_wiki_base is None:
-        resolved_wiki_base = prompt_wiki_base(DEFAULT_WIKI_BASE)
-    resolved_wiki_base = normalize_wiki_base(resolved_wiki_base)
+    resolved_context_wiki = context_wiki or inferred_context_wiki
+    if resolved_context_wiki is None:
+        resolved_context_wiki = prompt_context_wiki(DEFAULT_WIKI_BASE)
+    resolved_context_wiki = normalize_base_iri(resolved_context_wiki)
 
     resolved_base_url = base_url or inferred_base_url or DEFAULT_BASE_URL
     resolved_base_url = normalize_base_url(resolved_base_url)
@@ -143,7 +138,7 @@ def resolve_init_options(
     resolved_url_style = url_style or DEFAULT_URL_STYLE
 
     return InitOptions(
-        wiki_base=resolved_wiki_base,
+        wiki_iri=resolved_context_wiki,
         base_url=resolved_base_url,
         url_style=resolved_url_style,
         content_predicate=content_predicate,

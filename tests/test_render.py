@@ -47,7 +47,7 @@ SELECT ?givenName WHERE {
             config = WikiConfig(
                 vault={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
-                graph={"wiki_base": "https://wiki.example.org/"},
+                graph={"context": {"wiki": "https://wiki.example.org/"}},
             )
             graph = load_graph(config, infer=False)
 

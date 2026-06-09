@@ -16,11 +16,11 @@ Config files are validated strictly through a Pydantic schema (`extra='forbid'` 
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                                                                                                                        |
-| ---------- | ------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                            |
+| Lane       | Command      | YAML block | Purpose                                                                                                                                                       |
+| ---------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                                           |
 | Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus `vault.filename_pattern` regex) |
-| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                            |
+| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                                           |
 
 ### Rule placement
 
@@ -34,16 +34,16 @@ Relative **`--vault-inputs`** paths on the CLI resolve against the config file d
 
 ## Top-level blocks
 
-| Block | Purpose |
-| ----- | ------- |
-| `vault:` | Content paths, indexing excludes, filename regex |
-| `graph:` | RDF document URIs, namespace prefixes, SPARQL body literals |
-| `site:` | Built/served HTML chrome and URL routing |
-| `link:` | `wiki link` authoring format and rename repair map |
-| `check:` | Integrity severities (`wiki check`) |
-| `lint:` | Convention severities (`wiki lint`) |
-| `fmt:` | mdformat options (`wiki fmt`) |
-| `sparql_service:` | Optional SPARQL HTTP endpoint on `wiki serve` |
+| Block             | Purpose                                                     |
+| ----------------- | ----------------------------------------------------------- |
+| `vault:`          | Content paths, indexing excludes, filename regex            |
+| `graph:`          | RDF document URIs, namespace prefixes, SPARQL body literals |
+| `site:`           | Built/served HTML chrome and URL routing                    |
+| `link:`           | `wiki link` authoring format and rename repair map          |
+| `check:`          | Integrity severities (`wiki check`)                         |
+| `lint:`           | Convention severities (`wiki lint`)                         |
+| `fmt:`            | mdformat options (`wiki fmt`)                               |
+| `sparql_service:` | Optional SPARQL HTTP endpoint on `wiki serve`               |
 
 ## Example
 
@@ -58,7 +58,6 @@ vault:
     - assets/private/**
 
 graph:
-  wiki_base: https://example.org/wiki/
   content_predicate: schema:articleBody
   context:
     schema: https://schema.org/
@@ -91,12 +90,12 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 ## Vault (`vault:`)
 
-| Key | Default | Purpose |
-| --- | ------- | ------- |
-| `vault.inputs` | `["wiki"]` | Markdown and data files to load (relative to config file directory) |
-| `vault.assets` | `["assets"]` if that folder exists | Static files copied on `wiki build` |
-| `vault.exclude` | `[]` | Glob patterns (POSIX paths relative to config root) skipped when indexing |
-| `vault.filename_pattern` | — | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
+| Key                      | Default                            | Purpose                                                                                    |
+| ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `vault.inputs`           | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)                        |
+| `vault.assets`           | `["assets"]` if that folder exists | Static files copied on `wiki build`                                                        |
+| `vault.exclude`          | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing                  |
+| `vault.filename_pattern` | —                                  | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
 
 Page URLs come from paths under `vault.inputs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
@@ -104,34 +103,34 @@ Page URLs come from paths under `vault.inputs`: `wiki/Alice.md` → `/wiki/Alice
 
 RDF and document URI settings for graph build, `wiki query`, microdata, and SHACL.
 
-| Key | Default | Purpose |
-| --- | ------- | ------- |
-| `graph.wiki_base` | from `graph.context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs |
-| `graph.context` / `graph.@context` | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata |
-| `graph.content_predicate` | — | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `graph.include_file_extension` | `false` | Include file extension in generated URIs when true |
-| `graph.implicit_types` | `[]` | CURIE list applied when a document has no `type` / `@type`, or merged per policy when it does |
-| `graph.implicit_types_policy` | `fallback` | `fallback` — use `implicit_types` only when frontmatter has no type; `append` — union frontmatter types with `implicit_types` (deduped by resolved URI). SHACL shape documents (`sh:NodeShape`, `sh:PropertyShape`) skip append |
+| Key                                | Default           | Purpose                                                                                                                                                                                                                         |
+| ---------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `graph.base_iri`                   | —                 | Optional override for auto-generated document IRIs; when unset, uses `graph.context.wiki`, then `https://wiki.example.org/`                                                                                                     |
+| `graph.context` / `graph.@context` | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata                                                                                                                                                              |
+| `graph.content_predicate`          | —                 | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL                                                                                                |
+| `graph.include_file_extension`     | `false`           | Include file extension in generated URIs when true                                                                                                                                                                              |
+| `graph.implicit_types`             | `[]`              | CURIE list applied when a document has no `type` / `@type`, or merged per policy when it does                                                                                                                                   |
+| `graph.implicit_types_policy`      | `fallback`        | `fallback` — use `implicit_types` only when frontmatter has no type; `append` — union frontmatter types with `implicit_types` (deduped by resolved URI). SHACL shape documents (`sh:NodeShape`, `sh:PropertyShape`) skip append |
 
 ## Site (`site:`)
 
 Branding, default page layout, and routing for `wiki build` / `wiki serve`:
 
-| Key | Default | Purpose |
-| --- | ------- | ------- |
-| `site.title` | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
-| `site.layout` | — | Path (relative to config) to the site default page layout file |
-| `site.base_url` | `/wiki` | URL prefix for built/served pages (`""` for site root) |
-| `site.url_style` | `dir` | `dir` → `slug/index.html`; `file` → `slug.html` |
+| Key              | Default    | Purpose                                                           |
+| ---------------- | ---------- | ----------------------------------------------------------------- |
+| `site.title`     | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
+| `site.layout`    | —          | Path (relative to config) to the site default page layout file    |
+| `site.base_url`  | `/wiki`    | URL prefix for built/served pages (`""` for site root)            |
+| `site.url_style` | `dir`      | `dir` → `slug/index.html`; `file` → `slug.html`                   |
 
 ## Link (`link:`)
 
 Settings for the `wiki link` command family (separate from `lint.link_style` severity):
 
-| Key | Default | Purpose |
-| --- | ------- | ------- |
-| `link.style` | `markdown` | Format `wiki link --apply` inserts (`markdown` or `wikilink`) |
-| `link.renames` | `{}` | Old slug → new route map for `wiki link --fix-broken` |
+| Key            | Default    | Purpose                                                       |
+| -------------- | ---------- | ------------------------------------------------------------- |
+| `link.style`   | `markdown` | Format `wiki link --apply` inserts (`markdown` or `wikilink`) |
+| `link.renames` | `{}`       | Old slug → new route map for `wiki link --fix-broken`         |
 
 ## Serve API
 
@@ -303,6 +302,8 @@ Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward 
 
 Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
 
+In library code, loaded `WikiConfig.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`); yaml shapes above are unchanged.
+
 ## Integrity checks (`check`)
 
 Under `check`, each rule is `error`, `warning`, or `off`:
@@ -320,10 +321,10 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | Rule key           | Default   | What it audits                                                                                                 |
 | ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
 | `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
-| `filename_pattern` | `warning` | Full filename vs `vault.filename_pattern` regex                                                            |
+| `filename_pattern` | `warning` | Full filename vs `vault.filename_pattern` regex                                                                |
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
-| `link_style`       | `warning` | Wikilinks in body prose when `link.style` is `markdown`                                              |
+| `link_style`       | `warning` | Wikilinks in body prose when `link.style` is `markdown`                                                        |
 
 ## This repository
 

@@ -252,7 +252,7 @@ about: wiki:Alice_Theory
         docs_html = repo_root / "docs" / "layouts" / "default.html"
         expected = render_default_layout(
             InitOptions(
-                wiki_base=DOCS_VAULT_INIT_OPTIONS.wiki_base,
+                wiki_iri=DOCS_VAULT_INIT_OPTIONS.wiki_iri,
                 base_url=DOCS_VAULT_INIT_OPTIONS.base_url,
                 url_style=DOCS_VAULT_INIT_OPTIONS.url_style,
                 site_title="Wiki CLI",

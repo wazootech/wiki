@@ -1,4 +1,4 @@
-"""Check and lint severity rule models."""
+"""Check and lint config models."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def coerce_severity(value: object) -> Severity:
     raise ValueError(f"expected error, warning, or off, got {value!r}")
 
 
-class CheckRules(BaseModel):
+class CheckConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     missing_layout_file: Annotated[Severity, Field(default="error")] = "error"
@@ -30,7 +30,7 @@ class CheckRules(BaseModel):
         return coerce_severity(value)
 
 
-class LintRules(BaseModel):
+class LintConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     broken_links: Annotated[Severity, Field(default="warning")] = "warning"

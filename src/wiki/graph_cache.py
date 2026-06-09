@@ -33,7 +33,9 @@ def _config_fingerprint(config: WikiConfig) -> dict[str, Any]:
         for prefix, ns in sorted(config.context.namespaces.items(), key=lambda item: item[0])
     }
     return {
-        "wiki_base": config.wiki_base,
+        "base_iri": config.base_iri,
+        "graph_base_iri": config.graph.base_iri,
+        "context_wiki": (config.graph.context or {}).get("wiki"),
         "include_file_extension": config.graph.include_file_extension,
         "content_predicate": config.graph.content_predicate,
         "implicit_types": config.graph.implicit_types,

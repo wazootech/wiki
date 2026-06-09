@@ -8,16 +8,20 @@
 
 ### Changed (breaking)
 
+- Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
+- Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
 - Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
 
-- **CLI flags** align with `wiki.yaml` block paths: `--vault-inputs` (was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-wiki-base` (was `--wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
+- **CLI flags** align with `wiki.yaml` block paths: `--vault-inputs` (was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
 - Rename `vault.input_dirs` → `vault.inputs` and `vault.asset_dirs` → `vault.assets`
 - Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
 - **Unified WikiConfig:** remove the flat runtime `WikiConfig` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.vault.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `WikiConfig.for_root()`.
+- Rename exported schema types: `VaultBlock` → `VaultConfig`, `GraphBlock` → `GraphConfig`, `SiteBlock` → `SiteConfig`, `LinkBlock` → `LinkConfig`, `SparqlServiceBlock` → `SparqlServiceConfig`, `CheckRules` → `CheckConfig`, `LintRules` → `LintConfig`; add `FmtConfig` for `WikiConfig.fmt` (`.options` for inline mdformat keys, `.toml` for resolved TOML path)
+- Rename `DEFAULT_CHECK_RULES` / `DEFAULT_LINT_RULES` → `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG`
 
 ### Changed
 
-- Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `WikiConfig.check` and `WikiConfig.lint` are `CheckRules` / `LintRules` instances (not plain dicts)
+- Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `WikiConfig.check` and `WikiConfig.lint` are `CheckConfig` / `LintConfig` instances (not plain dicts)
 - `Context` (RDF prefix bindings) lives in `wiki.context`; `WikiConfig.context` is a computed property from `graph.context`
 
 ### Migration
@@ -29,6 +33,8 @@
    - `uri_ext` → `include_file_extension`
    - `default_types` → `implicit_types`
    - `default_types_policy` → `implicit_types_policy`
+   - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when document IRIs must differ from the `wiki:` namespace)
+3. Programmatic imports: use `*Config` type names from `wiki.schemas` (`VaultConfig`, `CheckConfig`, `FmtConfig`, etc.) and `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `WikiConfig.fmt` is `FmtConfig | None` with `.options` / `.toml` instead of `dict | Path | None`
 
 ## 0.1.9 — 2026-06-08
 

@@ -11,7 +11,7 @@ _VALID_URL_STYLES = frozenset({"dir", "file"})
 class InitOptions(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    wiki_base: str
+    wiki_iri: str
     base_url: str = "/wiki"
     url_style: str = "dir"
     content_predicate: str | None = None

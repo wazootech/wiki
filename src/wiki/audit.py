@@ -32,7 +32,7 @@ from .layout import (
     layout_file_is_valid,
     resolve_layout_path,
 )
-from .schemas import BrokenLink, CheckRules, LintRules
+from .schemas import BrokenLink, CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
 
@@ -728,7 +728,7 @@ def _apply_issues(
     results: dict[str, Any],
     rule_key: str,
     issues: list[str],
-    rules: CheckRules | LintRules,
+    rules: CheckConfig | LintConfig,
 ) -> None:
     severity = getattr(rules, rule_key, "warning")
     if severity == "off":

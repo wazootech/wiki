@@ -22,16 +22,16 @@ wiki build --no-check
 
 ## Options
 
-| Flag              | Default     | Description                                                             |
-| ----------------- | ----------- | ----------------------------------------------------------------------- |
-| `--output-dir`    | `_site`     | Site root on disk                                                       |
-| `--site-base-url` | from config | Override `site.base_url` (`/wiki`, `/my-wiki`, or `''`)                 |
-| `--site-url-style`| from config | Override `site.url_style`: `dir` or `file`                              |
-| `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
-| `--reload`        | off         | Rebuild graph when using `--render`                                     |
-| `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
-| `--no-check`      | off         | Skip pre-build `lint` then `check` preflight                            |
-| `-v`, `--verbose` | off         | List output paths                                                       |
+| Flag               | Default     | Description                                                             |
+| ------------------ | ----------- | ----------------------------------------------------------------------- |
+| `--output-dir`     | `_site`     | Site root on disk                                                       |
+| `--site-base-url`  | from config | Override `site.base_url` (`/wiki`, `/my-wiki`, or `''`)                 |
+| `--site-url-style` | from config | Override `site.url_style`: `dir` or `file`                              |
+| `--render`         | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
+| `--reload`         | off         | Rebuild graph when using `--render`                                     |
+| `--cache`          | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
+| `--no-check`       | off         | Skip pre-build `lint` then `check` preflight                            |
+| `-v`, `--verbose`  | off         | List output paths                                                       |
 
 ## Output layout
 

@@ -648,7 +648,6 @@ vault:
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 
 graph:
-  wiki_base: https://book.etok.me/wiki/
   content_predicate: schema:articleBody
   context:
     schema: https://schema.org/

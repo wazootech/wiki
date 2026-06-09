@@ -285,7 +285,7 @@ class TestWikiFmt(unittest.TestCase):
                 encoding="utf-8",
             )
             config = WikiConfig.load(base_path)
-            self.assertEqual(config.fmt["wrap"], "no")
+            self.assertEqual(config.fmt.options["wrap"], "no")
 
     def test_fmt_absent_uses_wiki_cli_defaults(self) -> None:
         with TemporaryDirectory() as tmpdir:

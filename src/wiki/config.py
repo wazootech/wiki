@@ -17,7 +17,7 @@ from .context import (
     WIKI,
     XSD,
 )
-from .schemas import CheckRules, LintRules, WikiConfig
+from .schemas import CheckConfig, LintConfig, WikiConfig
 from .schemas.wiki_config import (
     CONFIG_FILENAMES,
     DEFAULT_BASE_URL,
@@ -32,16 +32,16 @@ from .schemas.wiki_config import (
 )
 
 DEFAULT_FILENAME_PATTERN = r"[A-Za-z0-9_()-]+\.md"
-DEFAULT_CHECK_RULES = CheckRules()
-DEFAULT_LINT_RULES = LintRules()
+DEFAULT_CHECK_CONFIG = CheckConfig()
+DEFAULT_LINT_CONFIG = LintConfig()
 
 __all__ = [
     "CONFIG_FILENAMES",
     "Context",
     "DEFAULT_BASE_URL",
-    "DEFAULT_CHECK_RULES",
+    "DEFAULT_CHECK_CONFIG",
     "DEFAULT_FILENAME_PATTERN",
-    "DEFAULT_LINT_RULES",
+    "DEFAULT_LINT_CONFIG",
     "DEFAULT_LINK_STYLE",
     "DEFAULT_NAMESPACES",
     "DEFAULT_SITE_TITLE",

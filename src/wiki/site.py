@@ -1480,7 +1480,7 @@ def _page_wiki_ids(config: WikiConfig, route: str, frontmatter: dict[str, Any]) 
             if expanded != raw_value:
                 values.append(expanded)
     suffix = ".md" if config.graph.include_file_extension else ""
-    values.append(f"{config.wiki_base}{route}{suffix}")
+    values.append(f"{config.base_iri}{route}{suffix}")
     return list(dict.fromkeys(values))
 
 

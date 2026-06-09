@@ -38,7 +38,7 @@ Configure `vault.filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md
 
 ## Frontmatter
 
-Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `graph.context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem relative to `graph.wiki_base`) — no explicit `id:` is needed.
+Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `graph.context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem under `graph.context.wiki`, or `graph.base_iri` when set) — no explicit `id:` is needed.
 
 Example person page:
 

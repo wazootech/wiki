@@ -111,7 +111,7 @@ def render_markdown_files(
                     graph,
                     query,
                     output_format="markdown",
-                    wiki_base=context.wiki_base,
+                    base_iri=context.base_iri,
                     known_slugs=known_slugs,
                 )
                 existing_table = match.group("table")

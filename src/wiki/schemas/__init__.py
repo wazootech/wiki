@@ -3,36 +3,38 @@
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import InitOptions
 from .metadata import METADATA_VIEWS, MetadataView
-from .rules import CheckRules, LintRules, Severity, coerce_severity
+from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .wiki_config import (
-    GraphBlock,
-    LinkBlock,
-    SiteBlock,
-    SparqlServiceBlock,
-    VaultBlock,
+    FmtConfig,
+    GraphConfig,
+    LinkConfig,
+    SiteConfig,
+    SparqlServiceConfig,
+    VaultConfig,
     WikiConfig,
 )
 
 __all__ = [
     "BrokenLink",
     "BrokenLinkFix",
-    "CheckRules",
-    "GraphBlock",
+    "CheckConfig",
+    "FmtConfig",
+    "GraphConfig",
     "InfoboxRow",
     "InitOptions",
-    "LinkBlock",
+    "LinkConfig",
     "LinkOpportunity",
-    "LintRules",
+    "LintConfig",
     "METADATA_VIEWS",
     "MetadataView",
     "OutputEntry",
     "PageRoute",
     "Severity",
-    "SiteBlock",
-    "SparqlServiceBlock",
+    "SiteConfig",
+    "SparqlServiceConfig",
     "TocItem",
-    "VaultBlock",
+    "VaultConfig",
     "VirtualPage",
     "WikiConfig",
     "WikiSite",

@@ -442,7 +442,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 
                 # Check wiki.yaml exists
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("wiki_base: https://wiki.example.org/", config_content)
+                self.assertIn("wiki: https://wiki.example.org/", config_content)
+                self.assertNotIn("wiki_base:", config_content)
                 self.assertIn("sh: http://www.w3.org/ns/shacl#", config_content)
 
                 # Check README.md exists and contains commands
@@ -467,13 +468,13 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 default_layout = Path("layouts") / "default.html"
                 self.assertTrue(default_layout.is_file())
                 expected_layout = render_default_layout(
-                    InitOptions(wiki_base="https://wiki.example.org/"),
+                    InitOptions(wiki_iri="https://wiki.example.org/"),
                 )
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
                 self.assertIn("{site_title}", expected_layout)
 
                 expected_content = render_wiki_yaml(
-                    InitOptions(wiki_base="https://wiki.example.org/"),
+                    InitOptions(wiki_iri="https://wiki.example.org/"),
                 )
                 self.assertEqual(config_content, expected_content)
                 self.assertIn('wrap: "no"', config_content)
@@ -504,12 +505,13 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 )
                 self.assertEqual(result.exit_code, 0)
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("wiki_base: https://wazootech.github.io/wiki/", config_content)
+                self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
+                self.assertNotIn("wiki_base:", config_content)
                 self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
-    def test_cli_init_wiki_base_overrides_repo(self) -> None:
+    def test_cli_init_context_wiki_overrides_repo(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
@@ -520,7 +522,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                         "--force",
                         "--repo",
                         "wazootech/wiki",
-                        "--graph-wiki-base",
+                        "--graph-context-wiki",
                         "https://example.org/custom/",
                         "--site-base-url",
                         "/custom",
@@ -529,7 +531,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 )
                 self.assertEqual(result.exit_code, 0)
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("wiki_base: https://example.org/custom/", config_content)
+                self.assertIn("wiki: https://example.org/custom/", config_content)
                 self.assertIn("wiki: https://example.org/custom/", config_content)
                 self.assertIn("base_url: /custom", config_content)
 
@@ -542,7 +544,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 result = runner.invoke(main, ["init", "--force"], catch_exceptions=False)
                 self.assertEqual(result.exit_code, 0)
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("wiki_base: https://wazootech.github.io/wiki/", config_content)
+                self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
+                self.assertNotIn("wiki_base:", config_content)
                 self.assertIn("base_url: /wiki", config_content)
 
     def test_cli_init_invalid_repo_exits(self) -> None:
@@ -557,7 +560,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
         expected = render_default_layout(
             InitOptions(
-                wiki_base="https://wazootech.github.io/wiki/",
+                wiki_iri="https://wazootech.github.io/wiki/",
                 base_url="/wiki",
                 url_style="dir",
                 site_title="Wiki CLI",
@@ -588,7 +591,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 with patch("shutil.which", return_value="git"), patch("subprocess.run") as run_mock:
                     result = runner.invoke(
                         main,
-                        ["init", "--force", "--git", "--graph-wiki-base", "https://wiki.example.org/"],
+                        ["init", "--force", "--git", "--graph-context-wiki", "https://wiki.example.org/"],
                         catch_exceptions=False,
                     )
 

@@ -237,7 +237,7 @@ class WikiHandler(BaseHTTPRequestHandler):
                 self._send_error(405, f"Unsupported SPARQL query form: {query_form}")
                 return
             graph = load_graph(self.config, infer=infer, reload=reload_graph)
-            result = run_query(graph, sparql_query, output_format=output_format, wiki_base=self.config.wiki_base)
+            result = run_query(graph, sparql_query, output_format=output_format, base_iri=self.config.base_iri)
             body = result.encode("utf-8") if isinstance(result, str) else result
             self._send_bytes(200, body, _response_content_type(query_form, output_format))
         except _BadSparqlRequest as exc:

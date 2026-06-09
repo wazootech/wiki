@@ -22,7 +22,7 @@ from pydantic import (
 )
 
 from ..context import Context
-from .rules import CheckRules, LintRules
+from .rules import CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,11 @@ DEFAULT_URL_STYLE = "dir"
 DEFAULT_SITE_TITLE = "Wiki CLI"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 VALID_URL_STYLES = {"dir", "file"}
+
+
+def normalize_base_iri(value: str) -> str:
+    """Ensure a document base IRI ends with a trailing slash."""
+    return str(value).rstrip("/") + "/"
 IMPLICIT_TYPES_POLICIES = frozenset({"fallback", "append"})
 IMPLICIT_TYPES_POLICY = "fallback"
 
@@ -156,45 +161,54 @@ def format_config_validation_error(config_name: str, exc: ValidationError) -> Va
     return ValueError(f"Invalid config file {config_name}: {exc}")
 
 
-def _parse_fmt(
-    fmt_data: Any, config_name: str, base_dir: Path
-) -> dict[str, Any] | Path | None:
-    if fmt_data is None:
-        return None
-    if isinstance(fmt_data, dict):
-        fmt_data = dict(fmt_data)
-        if fmt_data.get("wrap") is False:
-            fmt_data["wrap"] = "no"
-        conf_label = Path(f"{config_name} fmt")
-        try:
-            _validate_keys(fmt_data, conf_label)
-            _validate_values(fmt_data, conf_label)
-        except InvalidConfError as exc:
-            raise ValueError(f"Invalid config file {config_name}: {exc}") from exc
-        return fmt_data
-    if isinstance(fmt_data, str):
-        text = fmt_data.strip()
-        if not text:
-            raise ValueError(f"Invalid config file {config_name}: fmt path must not be empty")
-        path_obj = Path(text)
-        if path_obj.is_absolute():
-            raise ValueError(
-                f"Invalid config file {config_name}: fmt path must be relative to the config file"
-            )
-        return base_dir / path_obj
-    if isinstance(fmt_data, Path):
-        if fmt_data.is_absolute():
+class FmtConfig(BaseModel):
+    """Resolved fmt: inline mdformat options or a path to a TOML file."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    options: dict[str, Any] | None = None
+    toml: Path | None = None
+
+    @classmethod
+    def parse_raw(cls, fmt_data: Any, config_name: str, base_dir: Path) -> FmtConfig | None:
+        if fmt_data is None:
+            return None
+        if isinstance(fmt_data, FmtConfig):
+            return fmt_data
+        if isinstance(fmt_data, dict):
+            options = dict(fmt_data)
+            if options.get("wrap") is False:
+                options["wrap"] = "no"
+            conf_label = Path(f"{config_name} fmt")
             try:
-                fmt_data.relative_to(base_dir)
-            except ValueError as exc:
+                _validate_keys(options, conf_label)
+                _validate_values(options, conf_label)
+            except InvalidConfError as exc:
+                raise ValueError(f"Invalid config file {config_name}: {exc}") from exc
+            return cls(options=options)
+        if isinstance(fmt_data, str):
+            text = fmt_data.strip()
+            if not text:
+                raise ValueError(f"Invalid config file {config_name}: fmt path must not be empty")
+            path_obj = Path(text)
+            if path_obj.is_absolute():
                 raise ValueError(
                     f"Invalid config file {config_name}: fmt path must be relative to the config file"
-                ) from exc
-            return fmt_data
-        return base_dir / fmt_data
-    raise ValueError(
-        f"Invalid config file {config_name}: fmt must be a mapping or path string"
-    )
+                )
+            return cls(toml=base_dir / path_obj)
+        if isinstance(fmt_data, Path):
+            if fmt_data.is_absolute():
+                try:
+                    fmt_data.relative_to(base_dir)
+                except ValueError as exc:
+                    raise ValueError(
+                        f"Invalid config file {config_name}: fmt path must be relative to the config file"
+                    ) from exc
+                return cls(toml=fmt_data)
+            return cls(toml=base_dir / fmt_data)
+        raise ValueError(
+            f"Invalid config file {config_name}: fmt must be a mapping or path string"
+        )
 
 
 def _resolve_path(value: str | Path, base_dir: Path) -> Path:
@@ -239,7 +253,7 @@ def find_config_path(path: Path) -> Path | None:
     return None
 
 
-class VaultBlock(BaseModel):
+class VaultConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     inputs: list[Path] = Field(default_factory=lambda: [Path("wiki")])
@@ -267,10 +281,10 @@ class VaultBlock(BaseModel):
         return _coerce_str_or_list(value)
 
 
-class GraphBlock(BaseModel):
+class GraphConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    wiki_base: str | None = None
+    base_iri: str | None = None
     content_predicate: str | None = None
     include_file_extension: bool = False
     implicit_types: list[str] = Field(default_factory=list)
@@ -279,6 +293,13 @@ class GraphBlock(BaseModel):
         default=None,
         validation_alias=AliasChoices("context", "@context"),
     )
+
+    @field_validator("base_iri", mode="before")
+    @classmethod
+    def _validate_base_iri(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        return normalize_base_iri(str(value))
 
     @field_validator("implicit_types", mode="before")
     @classmethod
@@ -298,7 +319,7 @@ class GraphBlock(BaseModel):
         return normalized
 
 
-class SiteBlock(BaseModel):
+class SiteConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str | None = None
@@ -307,7 +328,7 @@ class SiteBlock(BaseModel):
     url_style: str | None = None
 
 
-class LinkBlock(BaseModel):
+class LinkConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     style: str = DEFAULT_LINK_STYLE
@@ -326,7 +347,7 @@ class LinkBlock(BaseModel):
         return normalized
 
 
-class SparqlServiceBlock(BaseModel):
+class SparqlServiceConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     enabled: bool = False
@@ -347,14 +368,14 @@ class WikiConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
-    vault: VaultBlock = Field(default_factory=VaultBlock)
-    graph: GraphBlock = Field(default_factory=GraphBlock)
-    site: SiteBlock = Field(default_factory=SiteBlock)
-    link: LinkBlock = Field(default_factory=LinkBlock)
-    check: CheckRules = Field(default_factory=CheckRules)
-    lint: LintRules = Field(default_factory=LintRules)
-    fmt: dict[str, Any] | Path | None = None
-    sparql_service: SparqlServiceBlock = Field(default_factory=SparqlServiceBlock)
+    vault: VaultConfig = Field(default_factory=VaultConfig)
+    graph: GraphConfig = Field(default_factory=GraphConfig)
+    site: SiteConfig = Field(default_factory=SiteConfig)
+    link: LinkConfig = Field(default_factory=LinkConfig)
+    check: CheckConfig = Field(default_factory=CheckConfig)
+    lint: LintConfig = Field(default_factory=LintConfig)
+    fmt: FmtConfig | dict[str, Any] | str | Path | None = None
+    sparql_service: SparqlServiceConfig = Field(default_factory=SparqlServiceConfig)
     config_root: Path = Field(default_factory=Path.cwd)
 
     @field_validator("fmt", mode="before")
@@ -390,13 +411,9 @@ class WikiConfig(BaseModel):
         url_style = normalize_url_style(self.site.url_style)
         layout = _parse_page_layout_path(self.site.layout, base_dir)
 
-        graph_wiki_base = self.graph.wiki_base
-        if graph_wiki_base is None and self.graph.context and "wiki" in self.graph.context:
-            graph_wiki_base = self.graph.context["wiki"]
-
         sparql_path = normalize_api_path(self.sparql_service.path)
 
-        fmt = _parse_fmt(self.fmt, config_name, base_dir)
+        fmt = FmtConfig.parse_raw(self.fmt, config_name, base_dir)
 
         object.__setattr__(self, "vault", self.vault.model_copy(update={
             "inputs": inputs,
@@ -409,9 +426,6 @@ class WikiConfig(BaseModel):
             "url_style": url_style,
             "layout": layout,
         }))
-        object.__setattr__(self, "graph", self.graph.model_copy(update={
-            "wiki_base": graph_wiki_base,
-        }))
         object.__setattr__(self, "sparql_service", self.sparql_service.model_copy(update={
             "path": sparql_path,
         }))
@@ -419,11 +433,11 @@ class WikiConfig(BaseModel):
         return self
 
     @property
-    def wiki_base(self) -> str:
-        if self.graph.wiki_base:
-            return self.graph.wiki_base
+    def base_iri(self) -> str:
+        if self.graph.base_iri:
+            return self.graph.base_iri
         if self.graph.context and "wiki" in self.graph.context:
-            return self.graph.context["wiki"]
+            return normalize_base_iri(self.graph.context["wiki"])
         return DEFAULT_WIKI_BASE
 
     @property
@@ -442,7 +456,7 @@ class WikiConfig(BaseModel):
             prefixes = {
                 k: v for k, v in self.graph.context.items() if not k.startswith("@") and isinstance(v, str)
             }
-        return Context(prefixes, wiki_base=self.wiki_base)
+        return Context(prefixes, base_iri=self.base_iri)
 
     @property
     def namespaces(self) -> dict[str, Any]:

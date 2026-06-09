@@ -36,10 +36,10 @@ class Context:
     def __init__(
         self,
         namespaces: dict[str, Any] | None = None,
-        wiki_base: str = "https://wiki.example.org/",
+        base_iri: str = "https://wiki.example.org/",
     ) -> None:
         self.namespaces = DEFAULT_NAMESPACES.copy()
-        self.wiki_base = wiki_base
+        self.base_iri = base_iri
         if namespaces is not None:
             for prefix, uri in namespaces.items():
                 if isinstance(uri, str):

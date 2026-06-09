@@ -60,14 +60,14 @@ def _load_toml_opts(path: Path) -> dict[str, Any]:
 
 
 def _resolve_fmt_toml_opts(file_path: Path, config: WikiConfig) -> tuple[dict[str, Any], str]:
-    if isinstance(config.fmt, dict):
-        if not config.fmt:
+    if config.fmt is not None and config.fmt.options is not None:
+        if not config.fmt.options:
             return dict(DEFAULT_FMT_OPTS), "inline fmt in wiki config"
-        return config.fmt, "inline fmt in wiki config"
+        return config.fmt.options, "inline fmt in wiki config"
 
     root = config.config_root
-    if isinstance(config.fmt, Path):
-        pointed = config.fmt
+    if config.fmt is not None and config.fmt.toml is not None:
+        pointed = config.fmt.toml
         if pointed.is_file():
             return _load_toml_opts(pointed), f"fmt from {pointed.relative_to(root).as_posix()}"
 

@@ -94,8 +94,8 @@ class TestGraphCache(unittest.TestCase):
                 "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
-            config_a = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"wiki_base": "https://a.example/"}, config_root=wiki_dir)
-            config_b = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"wiki_base": "https://b.example/"}, config_root=wiki_dir)
+            config_a = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://a.example/"}, config_root=wiki_dir)
+            config_b = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://b.example/"}, config_root=wiki_dir)
 
             self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
 

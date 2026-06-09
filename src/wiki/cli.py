@@ -306,7 +306,7 @@ def query(
             graph,
             sparql_query,
             output_format=output_format,
-            wiki_base=context.wiki_base,
+            base_iri=context.base_iri,
             pretty=pretty,
         )
         if output:
@@ -600,8 +600,8 @@ def serve(config: Context, host: str, port: int, site_base_url: str | None, site
 @main.command()
 @click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
-@click.option("--repo", default=None, help="GitHub owner/repo; infer wiki_base and base_url for GitHub Pages.")
-@click.option("--graph-wiki-base", "graph_wiki_base", default=None, help="Override graph.wiki_base (overrides --repo inference).")
+@click.option("--repo", default=None, help="GitHub owner/repo; infer graph.context.wiki and site.base_url for GitHub Pages.")
+@click.option("--graph-context-wiki", "graph_context_wiki", default=None, help="Override graph.context.wiki (overrides --repo inference).")
 @click.option("--site-base-url", "site_base_url", default=None, help="Override site.base_url (default /wiki or inferred from --repo).")
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
@@ -610,7 +610,7 @@ def init(
     force: bool,
     init_git: bool,
     repo: str | None,
-    graph_wiki_base: str | None,
+    graph_context_wiki: str | None,
     site_base_url: str | None,
     site_url_style: str | None,
     graph_content_predicate: str | None,
@@ -650,19 +650,19 @@ def init(
             click.echo(f"Error: {exc}", err=True)
             sys.exit(1)
 
-    def prompt_wiki_base(default: str) -> str:
-        return str(click.prompt("Custom base URI prefix", default=default))
+    def prompt_context_wiki(default: str) -> str:
+        return str(click.prompt("Custom wiki namespace IRI (graph.context.wiki)", default=default))
 
     init_options = resolve_init_options(
         repo=repo,
-        wiki_base=graph_wiki_base,
+        context_wiki=graph_context_wiki,
         base_url=site_base_url,
         url_style=site_url_style,
         content_predicate=graph_content_predicate,
         link_style=link_style,
         cwd=cwd,
         init_git=init_git,
-        prompt_wiki_base=prompt_wiki_base,
+        prompt_context_wiki=prompt_context_wiki,
     )
     config_content = render_wiki_yaml(init_options)
 
