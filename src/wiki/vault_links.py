@@ -10,6 +10,7 @@ from urllib.parse import unquote
 
 from .assets import asset_reference_issue, audit_assets
 from .config import Config
+from .headings import parse_headings
 from .document import (
     MARKDOWN_LINK_FULL_REGEX,
     WIKILINK_FULL_REGEX,
@@ -18,17 +19,16 @@ from .document import (
     split_frontmatter_text,
     strip_inline_code,
 )
+from .links import fragment_id, is_external_link, markdown_link_is_page, resolve_page_route, split_target
+from .parser import document_data_from_path
+from .paths import iter_document_files, route_for_document_file
+from .schemas import BrokenLink
 
 # Microdata attributes that may hold wiki: CURIE entity references.
 MICRODATA_WIKI_CURIE_ATTR = re.compile(
     r'(?:itemid|href|src)\s*=\s*["\'](wiki:[^"\']+)["\']',
     re.IGNORECASE,
 )
-from .headings import GitHubHeadingSlugger
-from .links import fragment_id, is_external_link, markdown_link_is_page, resolve_page_route, split_target
-from .parser import document_data_from_path
-from .paths import iter_document_files, route_for_document_file
-from .schemas import BrokenLink
 
 WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
 
@@ -254,10 +254,9 @@ def _index_page_links(
 
 
 def _heading_ids(markdown: str) -> set[str]:
-    slugger = GitHubHeadingSlugger()
     ids: set[str] = set()
-    for match in re.finditer(r"^(#{1,6})\s+(.+)$", markdown, flags=re.MULTILINE):
-        ids.add(slugger.slug(match.group(2).strip()))
+    for heading in parse_headings(markdown):
+        ids.add(heading.slug)
     return ids
 
 

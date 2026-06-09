@@ -4,6 +4,18 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass
+from functools import lru_cache
+
+from markdown_it import MarkdownIt
+
+
+@dataclass(frozen=True)
+class Heading:
+    line_no: int
+    level: int
+    text: str
+    slug: str
 
 
 class GitHubHeadingSlugger:
@@ -22,3 +34,26 @@ class GitHubHeadingSlugger:
 
 def heading_slug(title: str) -> str:
     return GitHubHeadingSlugger().slug(title)
+
+
+@lru_cache(maxsize=1)
+def _heading_parser() -> MarkdownIt:
+    return MarkdownIt("gfm-like", {"linkify": False})
+
+
+def parse_headings(markdown: str) -> list[Heading]:
+    tokens = _heading_parser().parse(markdown)
+    slugger = GitHubHeadingSlugger()
+    headings: list[Heading] = []
+
+    for index, token in enumerate(tokens):
+        if token.type != "heading_open":
+            continue
+        level = int(token.tag[1:])
+        line_no = token.map[0] + 1 if token.map else 0
+        text = ""
+        if index + 1 < len(tokens) and tokens[index + 1].type == "inline":
+            text = tokens[index + 1].content
+        headings.append(Heading(line_no=line_no, level=level, text=text, slug=slugger.slug(text)))
+
+    return headings

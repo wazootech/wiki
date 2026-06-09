@@ -17,10 +17,10 @@ from pygments.util import ClassNotFound
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from ..config import DEFAULT_URL_STYLE, Config
+from ..headings import GitHubHeadingSlugger, heading_slug, parse_headings
 from ..format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
 from ..schemas.metadata import METADATA_VIEWS
 from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
-from ..headings import GitHubHeadingSlugger, heading_slug
 from ..links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from ..paths import iter_document_files, page_url, route_for_document_file
 from ..parser import split_document_body
@@ -273,9 +273,9 @@ def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
 
 
 def extract_title(markdown: str, fallback: str) -> str:
-    for m in HEADING_RE.finditer(markdown):
-        if len(m.group(1)) == 1:
-            return m.group(2).strip()
+    for heading in parse_headings(markdown):
+        if heading.level == 1:
+            return heading.text.strip()
     return humanize_route(fallback)
 
 
@@ -318,13 +318,9 @@ def humanize_route(route: str) -> str:
 
 def extract_outline(markdown: str) -> list[TocItem]:
     outline: list[TocItem] = []
-    slugger = GitHubHeadingSlugger()
-    for m in HEADING_RE.finditer(markdown):
-        level = len(m.group(1))
-        title = m.group(2).strip()
-        slug = slugger.slug(title)
-        if 2 <= level <= 6:
-            outline.append(TocItem(title=title, slug=slug, level=level))
+    for heading in parse_headings(markdown):
+        if 2 <= heading.level <= 6:
+            outline.append(TocItem(title=heading.text.strip(), slug=heading.slug, level=heading.level))
     return outline
 
 

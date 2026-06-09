@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import logging
 import re
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 from rdflib import Graph
 import pyshacl
-from markdown_it import MarkdownIt
 
 from .assets import build_asset_manifest
 from .config import Config
+from .headings import parse_headings
 from .paths import (
     build_page_manifest,
     build_site_manifest_entry,
@@ -290,27 +289,6 @@ def lint_thematic_breaks(config: Config, file_filter: set[str] | None = None) ->
     return warnings
 
 
-@lru_cache(maxsize=1)
-def _lint_markdown_parser() -> MarkdownIt:
-    return MarkdownIt("gfm-like", {"linkify": False})
-
-
-def _parse_body_headings(body: str) -> list[tuple[int, int, str]]:
-    """Return (line_no, level, raw_text) from heading_open + inline tokens."""
-    tokens = _lint_markdown_parser().parse(body)
-    headings: list[tuple[int, int, str]] = []
-    for index, token in enumerate(tokens):
-        if token.type != "heading_open":
-            continue
-        level = int(token.tag[1:])
-        line_no = token.map[0] + 1 if token.map else 0
-        text = ""
-        if index + 1 < len(tokens) and tokens[index + 1].type == "inline":
-            text = tokens[index + 1].content
-        headings.append((line_no, level, text))
-    return headings
-
-
 def _normalize_heading_for_duplicate(text: str) -> str:
     plain = _heading_plain_text(text)
     plain = re.sub(r"`([^`\n]+)`", r"\1", plain)
@@ -329,7 +307,9 @@ def lint_heading_levels(config: Config, file_filter: set[str] | None = None) -> 
             continue
         body = markdown_body(file_path.read_text(encoding="utf-8"))
         previous_level = 0
-        for line_no, level, _text in _parse_body_headings(body):
+        for heading in parse_headings(body):
+            line_no = heading.line_no
+            level = heading.level
             if previous_level > 0 and level > previous_level + 1:
                 warnings.append(
                     f"In {file_path.name}:{line_no}: Heading h{level} skips level h{previous_level + 1}; "
@@ -348,7 +328,10 @@ def lint_duplicate_headings(config: Config, file_filter: set[str] | None = None)
             continue
         body = markdown_body(file_path.read_text(encoding="utf-8"))
         seen: dict[str, int] = {}
-        for line_no, level, text in _parse_body_headings(body):
+        for heading in parse_headings(body):
+            line_no = heading.line_no
+            level = heading.level
+            text = heading.text
             if level <= 1:
                 continue
             key = _normalize_heading_for_duplicate(text)
@@ -377,14 +360,15 @@ def lint_headings(config: Config, file_filter: set[str] | None = None) -> list[s
             continue
         content = file_path.read_text(encoding="utf-8")
         body = markdown_body(content)
-        for match in HEADING_LINE_RE.finditer(body):
-            level, text = match.group(1), match.group(2).strip()
+        for heading in parse_headings(body):
+            level = "#" * heading.level
+            text = heading.text.strip()
             if NUMBERED_HEADING_RE.match(text):
                 warnings.append(
                     f"In {file_path.name}: Numbered heading {level} {text!r}; use unnumbered headings."
                 )
                 continue
-            if len(level) > 1 and len(_title_case_words_after_first(text)) >= 2:
+            if heading.level > 1 and len(_title_case_words_after_first(text)) >= 2:
                 warnings.append(
                     f"In {file_path.name}: H2+ heading {level} {text!r} looks like title case; "
                     "use sentence case (capitalize only the first word and proper nouns)."
