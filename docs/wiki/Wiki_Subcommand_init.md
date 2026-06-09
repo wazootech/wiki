@@ -59,7 +59,7 @@ New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki ini
 - Commented `graph.base_iri` example (uncomment only when document IRIs must differ from `context.wiki`)
 - `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`
 - `lint` rules at `warning` for filename and links
-- `site.title` and `site.layout` — site name and default page layout for build/serve
+- `site.manifest.name` and `site.layout` — site name and default page layout for build/serve
 - `fmt:` — inline mdformat options for `wiki fmt` (`wrap`, `end_of_line`, `extensions`)
 
 Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, set `fmt: .mdformat.toml` and create that file with the same mdformat options as the inline `fmt` block.

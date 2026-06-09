@@ -4,11 +4,12 @@
 
 ### Added
 
-- `site.theme_color` — optional `#RGB` / `#RRGGBB` hex color for the sidebar globe logo SVG gradient and `theme-color` / `msapplication-TileColor` meta tags (defaults to `#3b82f6`)
+- `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`, `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives layout chrome, `{manifest_json}` / `{manifest_url}` placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
 - `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
 
 ### Changed (breaking)
 
+- Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
 - Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
 - Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
 - Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
@@ -38,6 +39,9 @@
    - `default_types_policy` → `implicit_types_policy`
    - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when document IRIs must differ from the `wiki:` namespace)
 3. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`VaultConfig`, `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
+4. In `site:` move branding into `manifest:`:
+   - `title` → `manifest.name`
+   - `theme_color` → `manifest.theme_color`
 
 ## 0.1.9 — 2026-06-08
 

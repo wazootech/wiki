@@ -613,7 +613,7 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(
                 vault={"inputs": [wiki]},
-                site={"theme_color": "#6366f1"},
+                site={"manifest": {"theme_color": "#6366f1"}},
                 config_root=root,
             )
             site = build_site(config)
@@ -645,7 +645,7 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(
                 vault={"inputs": [wiki]},
-                site={"theme_color": "#6366f1"},
+                site={"manifest": {"theme_color": "#6366f1"}},
                 config_root=root,
             )
             site = build_site(config)
@@ -654,6 +654,47 @@ specialty: Diagnostics
                 page_layout='<meta name="theme-color" content="{theme_color}">',
             )
             self.assertIn('<meta name="theme-color" content="#6366f1">', html)
+
+    def test_build_web_manifest_uses_manifest_fields(self) -> None:
+        from wiki.site import build_web_manifest
+
+        config = Config(
+            site={
+                "manifest": {
+                    "name": "Acme Docs",
+                    "short_name": "Acme",
+                    "theme_color": "#6366f1",
+                    "display": "standalone",
+                },
+                "base_url": "/wiki",
+            },
+        )
+        doc = build_web_manifest(config)
+        self.assertEqual(doc["name"], "Acme Docs")
+        self.assertEqual(doc["short_name"], "Acme")
+        self.assertEqual(doc["theme_color"], "#6366f1")
+        self.assertEqual(doc["display"], "standalone")
+        self.assertEqual(doc["start_url"], "/wiki/")
+
+    def test_build_index_html_includes_manifest_placeholders(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(
+                vault={"inputs": [wiki]},
+                site={"manifest": {"name": "Acme Docs", "theme_color": "#6366f1"}},
+                config_root=root,
+            )
+            site = build_site(config)
+            html = build_index_html(
+                site,
+                page_layout='{manifest_url}|{manifest_json}',
+            )
+            self.assertIn("/wiki/manifest.webmanifest", html)
+            self.assertIn('"name":"Acme Docs"', html)
+            self.assertIn('"theme_color":"#6366f1"', html)
 
 
 if __name__ == "__main__":

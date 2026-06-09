@@ -1,18 +1,27 @@
+
+# Vault paths, assets, and filename policy (wiki check / wiki lint).
 vault:
+  # Markdown and data directories to index (relative to this file).
   inputs:
     - wiki
+  # Static files for custom CSS, logos, favicons (copied on wiki build).
   # assets:
   #   - assets
+  # Full-filename regex for markdown files (lint.filename_pattern severity).
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+  # Glob patterns skipped when indexing (POSIX paths relative to config root).
   # exclude:
   #   - assets/private/**
 
+# RDF document URIs, prefixes, and graph build settings.
 graph:
+  # Predicate for full-text body literals in SPARQL (for example schema:articleBody).
   content_predicate: schema:articleBody
   # include_file_extension: false
   # implicit_types: [schema:TechArticle]
   # implicit_types_policy: fallback
   # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
+  # CURIE prefix map for frontmatter and microdata.
   context:
     schema: https://schema.org/
     wiki: https://wazootech.github.io/wiki/
@@ -23,37 +32,67 @@ graph:
     sh: http://www.w3.org/ns/shacl#
     xsd: http://www.w3.org/2001/XMLSchema#
 
+# Page layout, URL routing, and Web App Manifest branding.
 site:
-  title: Wiki CLI
+  manifest:
+    # Site name in layout chrome and manifest.webmanifest.
+    name: Wiki CLI
+    # theme_color: "#6366f1"
+    # icons:
+    #   - src: assets/icon-192.png
+    #     sizes: "192x192"
+    #     type: image/png
+    #   - src: assets/icon-512.png
+    #     sizes: "512x512"
+    #     type: image/png
+  # Default page layout HTML with {placeholder} tokens.
   layout: layouts/default.html
+  # URL prefix for built and served pages.
   base_url: /wiki
+  # dir → slug/index.html; file → slug.html
   url_style: dir
 
+# wiki link command output format and rename repair map.
 link:
+  # wikilink or markdown (wiki link --apply).
   style: markdown
   # renames:
   #   Old_Page_Name: New_Page_Name
 
+# Integrity severities (wiki check): SHACL, routes, layout files.
 check:
+  # Error when wazoo:layout points at a missing .html file.
   missing_layout_file: error
 
+# Convention severities (wiki lint): links, filenames, headings.
 lint:
+  # Wikilinks, markdown links, fragments, assets, wiki: CURIEs.
   broken_links: warning
+  # Vault filename_pattern regex (see vault.filename_pattern).
   filename_pattern: warning
+  # ATX headings, sentence-case H2+, numbered headings.
   headings: off
+  # Heading level gaps (for example H1 then H3).
   heading_levels: off
+  # Duplicate heading text on one page.
   duplicate_headings: off
+  # Horizontal rules used as thematic breaks in body prose.
   thematic_breaks: off
+  # Obsidian wikilinks in body when link.style is markdown.
   link_style: warning
 
-# Optional SPARQL HTTP endpoint on `wiki serve` (opt-in).
+# Optional SPARQL HTTP endpoint on wiki serve (opt-in).
 # sparql_service:
 #   enabled: false
 #   path: /api/sparql
 
+# Markdown formatting options (wiki fmt); inline mapping or TOML path.
 fmt:
+  # Line wrap width (no disables wrapping).
   wrap: "no"
+  # Line ending style (lf or crlf).
   end_of_line: lf
+  # mdformat extensions enabled for vault markdown.
   extensions: [gfm, frontmatter, wikilink]
 
 # Pointer mode (optional TOML file relative to this file):
