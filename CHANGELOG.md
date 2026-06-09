@@ -4,6 +4,7 @@
 
 ### Changed (breaking)
 
+- **CLI flags** align with `wiki.yaml` block paths: `--vault-inputs` (was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-wiki-base` (was `--wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
 - Rename `vault.input_dirs` → `vault.inputs` and `vault.asset_dirs` → `vault.assets`
 - Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
 - **Unified WikiConfig:** remove the flat runtime `WikiConfig` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.vault.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `WikiConfig.for_root()`.

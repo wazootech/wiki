@@ -267,16 +267,16 @@ Generate a static HTML site from your wiki markdown files for deployment to GitH
 wiki build
 
 # Build with explicit .html URLs instead
-wiki build --url-style file
+wiki build --site-url-style file
 
 # Build to a custom directory with verbose output
 wiki build --output-dir docs -v
 
 # Build for a project site under /my-wiki/
-wiki build --base-url /my-wiki --output-dir _site
+wiki build --site-base-url /my-wiki --output-dir _site
 
 # Build with pages at root level (no prefix)
-wiki build --base-url '' --output-dir docs
+wiki build --site-base-url '' --output-dir docs
 
 # Automatically update all dynamic SPARQL blocks in source files before building
 wiki build --render
@@ -291,14 +291,14 @@ wiki build --render --cache
 wiki build --no-check
 ```
 
-The `--url-style` flag controls how pages are written to disk and linked:
+The `--site-url-style` flag controls how pages are written to disk and linked:
 
 - `dir` (default): `_site/wiki/alice/index.html` on disk, clean `/wiki/alice/` in links
 - `file`: `_site/wiki/alice.html` on disk, `.html` in generated links
 
-The `--base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{PageStem}/`. Set it to an empty string for root-level URLs. GitHub Pages paths are case-sensitive.
+The `--site-base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{PageStem}/`. Set it to an empty string for root-level URLs. GitHub Pages paths are case-sensitive.
 
-Output structure (default `--base-url /wiki` + `--url-style dir`):
+Output structure (default `--site-base-url /wiki` + `--site-url-style dir`):
 ```
 _site/
 └── wiki/
@@ -309,7 +309,7 @@ _site/
         └── index.html              # Page at /wiki/Pokemon_Diamond_(copy_1)/
 ```
 
-With `--url-style file`:
+With `--site-url-style file`:
 ```
 _site/
 └── wiki/
@@ -318,7 +318,7 @@ _site/
     └── Pokemon_Diamond_(copy_1).html
 ```
 
-With `--base-url /my-wiki` + `--url-style dir`:
+With `--site-base-url /my-wiki` + `--site-url-style dir`:
 ```
 _site/
 └── my-wiki/
@@ -433,7 +433,7 @@ jobs:
         run: uv run wiki -c docs/wiki.yaml lint --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki
+        run: uv run wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -513,7 +513,7 @@ These flags can be used on any subcommand:
 | Option | Description |
 |---|---|
 | `-c, --config <path>` | Path to `wiki.yaml` config file or directory containing one (default: `.`) |
-| `--input-dir <path>` | Directory containing wiki markdown files or RDF data files (can be repeated) |
+| `--vault-inputs <path>` | Override `vault.inputs` for this invocation (can be repeated) |
 
 ### Printing and piping
 Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.

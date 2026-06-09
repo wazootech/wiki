@@ -20,7 +20,6 @@ __all__ = [
     "resolve_init_options",
 ]
 
-DEFAULT_WAZOO = "https://schema.wazoo.dev/"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
@@ -104,7 +103,6 @@ DOCS_VAULT_INIT_OPTIONS = InitOptions(
     wiki_base="https://wazootech.github.io/wiki/",
     base_url="/wiki",
     url_style=DEFAULT_URL_STYLE,
-    wazoo=DEFAULT_WAZOO,
     content_predicate="schema:articleBody",
     link_style="markdown",
 )
@@ -116,7 +114,6 @@ def resolve_init_options(
     wiki_base: str | None,
     base_url: str | None,
     url_style: str | None,
-    wazoo: str | None,
     content_predicate: str | None,
     link_style: str | None,
     cwd: Path,
@@ -143,14 +140,12 @@ def resolve_init_options(
     resolved_base_url = base_url or inferred_base_url or DEFAULT_BASE_URL
     resolved_base_url = normalize_base_url(resolved_base_url)
 
-    resolved_wazoo = normalize_wiki_base(wazoo or DEFAULT_WAZOO)
     resolved_url_style = url_style or DEFAULT_URL_STYLE
 
     return InitOptions(
         wiki_base=resolved_wiki_base,
         base_url=resolved_base_url,
         url_style=resolved_url_style,
-        wazoo=resolved_wazoo,
         content_predicate=content_predicate,
         link_style=link_style,
     )

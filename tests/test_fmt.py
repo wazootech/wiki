@@ -48,7 +48,7 @@ class TestWikiFmt(unittest.TestCase):
                 encoding="utf-8"
             )
 
-            result = runner.invoke(main, ["--input-dir", str(wiki_dir), "fmt", "-v"])
+            result = runner.invoke(main, ["--vault-inputs", str(wiki_dir), "fmt", "-v"])
             self.assertEqual(result.exit_code, 0)
             self.assertIn("Formatted unformatted.md", result.output)
 
@@ -68,7 +68,7 @@ class TestWikiFmt(unittest.TestCase):
             )
 
             # 1. Run with --check: should fail since it's not formatted
-            result_stale = runner.invoke(main, ["--input-dir", str(wiki_dir), "fmt", "--check", "-v"])
+            result_stale = runner.invoke(main, ["--vault-inputs", str(wiki_dir), "fmt", "--check", "-v"])
             self.assertEqual(result_stale.exit_code, 1)
             self.assertIn("Error: The following files are not correctly formatted:", result_stale.output)
             self.assertIn("unformatted.md", result_stale.output)
@@ -77,10 +77,10 @@ class TestWikiFmt(unittest.TestCase):
             self.assertEqual(file_path.read_text(encoding="utf-8"), "---\ntype: schema:WebPage\nname: Test\n---\n\n# Header\n\nSome text  \n")
 
             # 2. Run without --check to format it
-            runner.invoke(main, ["--input-dir", str(wiki_dir), "fmt"])
+            runner.invoke(main, ["--vault-inputs", str(wiki_dir), "fmt"])
 
             # 3. Run with --check again: should succeed
-            result_clean = runner.invoke(main, ["--input-dir", str(wiki_dir), "fmt", "--check", "-v"])
+            result_clean = runner.invoke(main, ["--vault-inputs", str(wiki_dir), "fmt", "--check", "-v"])
             self.assertEqual(result_clean.exit_code, 0)
             self.assertIn("All files are correctly formatted.", result_clean.output)
 

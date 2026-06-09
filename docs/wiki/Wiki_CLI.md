@@ -62,14 +62,14 @@ Example:
 wiki -c docs/wiki.yaml check
 ```
 
-### `--input-dir PATH` (repeatable)
+### `--vault-inputs PATH` (repeatable)
 
 Override or extend `vault.inputs` from config for a single invocation. Relative paths resolve against the config file directory. Useful for one-off queries against a subdirectory.
 
 Example:
 
 ```bash
-wiki --input-dir ./wiki --input-dir ./imported query "SELECT * WHERE { ?s ?p ?o } LIMIT 5"
+wiki --vault-inputs ./wiki --vault-inputs ./imported query "SELECT * WHERE { ?s ?p ?o } LIMIT 5"
 ```
 
 ## Command reference
@@ -107,7 +107,7 @@ ORDER BY ?command
 
 <!-- sparql:end -->
 
-Global flags: `-c`, `--input-dir`.
+Global flags: `-c`, `--vault-inputs`.
 
 ## Publishing
 

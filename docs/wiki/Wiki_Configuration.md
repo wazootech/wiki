@@ -30,7 +30,7 @@ Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
 - Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
 
-Relative **`--input-dir`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
+Relative **`--vault-inputs`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
 
 ## Top-level blocks
 
@@ -329,7 +329,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## Related
 
-- [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--input-dir` global options
+- [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--vault-inputs` global options
 - [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity checks
 - [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention audits
 - [Style_Guide](Style_Guide.md) — shapes and frontmatter

@@ -12,9 +12,9 @@ Compile markdown and data files into static HTML with wikilinks, backlinks, tabl
 
 ```bash
 wiki build
-wiki build --output-dir _site --base-url /wiki -v
-wiki build --url-style file
-wiki build --base-url ''
+wiki build --output-dir _site --site-base-url /wiki -v
+wiki build --site-url-style file
+wiki build --site-base-url ''
 wiki build --render --reload
 wiki build --render --cache
 wiki build --no-check
@@ -25,8 +25,8 @@ wiki build --no-check
 | Flag              | Default     | Description                                                             |
 | ----------------- | ----------- | ----------------------------------------------------------------------- |
 | `--output-dir`    | `_site`     | Site root on disk                                                       |
-| `--base-url`      | from config | URL prefix (`/wiki`, `/my-wiki`, or `''`)                               |
-| `--url-style`     | from config | `dir` or `file`                                                         |
+| `--site-base-url` | from config | Override `site.base_url` (`/wiki`, `/my-wiki`, or `''`)                 |
+| `--site-url-style`| from config | Override `site.url_style`: `dir` or `file`                              |
 | `--render`        | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
 | `--reload`        | off         | Rebuild graph when using `--render`                                     |
 | `--cache`         | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |

@@ -14,7 +14,6 @@ class InitOptions(BaseModel):
     wiki_base: str
     base_url: str = "/wiki"
     url_style: str = "dir"
-    wazoo: str = "https://schema.wazoo.dev/"
     content_predicate: str | None = None
     link_style: str | None = None
     site_title: str = "Wiki CLI"

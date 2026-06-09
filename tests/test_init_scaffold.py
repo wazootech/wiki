@@ -12,7 +12,6 @@ from unittest.mock import patch
 from wiki.config import WikiConfig
 from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.init_scaffold import (
-    DEFAULT_WAZOO,
     InitOptions,
     detect_origin_repo,
     infer_github_pages_urls,
@@ -89,12 +88,12 @@ class TestRenderWikiYaml(TestCase):
                 wiki_base="https://wazootech.github.io/wiki/",
                 base_url="/wiki",
                 url_style="dir",
-                wazoo=DEFAULT_WAZOO,
                 content_predicate="schema:articleBody",
                 link_style="markdown",
             ),
         )
         self.assertIn("wiki_base: https://wazootech.github.io/wiki/", rendered)
+        self.assertIn("wazoo: https://schema.wazoo.dev/", rendered)
         self.assertIn("base_url: /wiki", rendered)
         self.assertIn("content_predicate: schema:articleBody", rendered)
         self.assertIn("style: markdown", rendered)
@@ -151,7 +150,6 @@ class TestResolveInitOptions(TestCase):
             wiki_base=None,
             base_url=None,
             url_style=None,
-            wazoo=None,
             content_predicate=None,
             link_style=None,
             cwd=Path("."),
@@ -167,7 +165,6 @@ class TestResolveInitOptions(TestCase):
             wiki_base="https://example.org/custom/",
             base_url="/custom",
             url_style=None,
-            wazoo=None,
             content_predicate=None,
             link_style=None,
             cwd=Path("."),
@@ -186,7 +183,6 @@ class TestResolveInitOptions(TestCase):
                 wiki_base=None,
                 base_url=None,
                 url_style=None,
-                wazoo=None,
                 content_predicate=None,
                 link_style=None,
                 cwd=Path(tmpdir),

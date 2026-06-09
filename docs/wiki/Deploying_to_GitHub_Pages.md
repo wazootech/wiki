@@ -12,7 +12,7 @@ This repository publishes `docs/wiki/` using `docs/wiki.yaml`. The workflow live
 
 1. `uv sync` — install dependencies
 1. `wiki -c docs/wiki.yaml check --strict -v` — SHACL + hygiene
-1. `wiki -c docs/wiki.yaml build --output-dir _site --base-url /wiki` — static HTML
+1. `wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki` — static HTML
 1. Upload `_site/wiki` as the Pages artifact
 1. `deploy-pages` — publish
 
@@ -30,7 +30,7 @@ wiki -c docs/wiki.yaml serve
 For your own vault, copy the workflow and change:
 
 - `-c` path to your config
-- `--base-url` to match your Pages path (`/wiki`, `/my-wiki`, or `''` for root)
+- `--site-base-url` to match your Pages path (`/wiki`, `/my-wiki`, or `''` for root)
 - `path` in `upload-pages-artifact` to the directory that contains your built `index.html`
 
 See [Wiki_Subcommand_build](Wiki_Subcommand_build.md) for `site.url_style`, `vault.assets`, and collision checks.

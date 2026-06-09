@@ -338,14 +338,14 @@ class TestServe(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertIn("--host", result.output)
         self.assertIn("--port", result.output)
-        self.assertIn("--base-url", result.output)
+        self.assertIn("--site-base-url", result.output)
 
     def test_serve_cli_defaults(self) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["serve", "--help"])
         self.assertIn("[default: 8080]", result.output)
         self.assertIn("[default: 127.0.0.1]", result.output)
-        self.assertIn("--base-url", result.output)
+        self.assertIn("--site-base-url", result.output)
 
     def test_refresh_vault_renders_sparql_and_builds_site(self) -> None:
         source = """---

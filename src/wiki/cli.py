@@ -44,19 +44,19 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--input-dir", "cli_input_dirs", multiple=True, default=None, help="Override vault.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
+@click.option("--vault-inputs", "vault_inputs", multiple=True, default=None, help="Override vault.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
 @click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
 @click.pass_context
-def main(ctx: click.Context, cli_input_dirs: tuple[str, ...] | None, config_path: str) -> None:
+def main(ctx: click.Context, vault_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
         config = Context.load(Path(config_path))
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    if cli_input_dirs:
+    if vault_inputs:
         config.vault.inputs = [
             Path(d) if Path(d).is_absolute() else config.config_root / d
-            for d in cli_input_dirs
+            for d in vault_inputs
         ]
 
     ctx.obj = config
@@ -387,10 +387,10 @@ def render(
 @main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
-@click.option("--base-url", default=None,
-              help="URL prefix for wiki pages. Empty string for root-level URLs.")
-@click.option("--url-style", type=click.Choice(["file", "dir"]), default=None,
-              help="File naming: <slug>.html (file) or <slug>/index.html (dir).")
+@click.option("--site-base-url", "site_base_url", default=None,
+              help="Override site.base_url. Empty string for root-level URLs.")
+@click.option("--site-url-style", "site_url_style", type=click.Choice(["file", "dir"]), default=None,
+              help="Override site.url_style: <slug>.html (file) or <slug>/index.html (dir).")
 @click.option("--render", is_flag=True, help="Render inline SPARQL blocks before building.")
 @click.option("--reload", is_flag=True, help="Rebuild graph before --render (no effect without --render).")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist graph under .wiki/cache when using --render.")
@@ -400,8 +400,8 @@ def render(
 def build(
     config: Context,
     output_dir: Path,
-    base_url: str | None,
-    url_style: str | None,
+    site_base_url: str | None,
+    site_url_style: str | None,
     render: bool,
     reload: bool,
     disk_cache: bool,
@@ -435,8 +435,8 @@ def build(
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
-    base_url = (config.site.base_url if base_url is None else base_url).rstrip("/")
-    url_style = config.site.url_style if url_style is None else url_style
+    base_url = (config.site.base_url if site_base_url is None else site_base_url).rstrip("/")
+    url_style = config.site.url_style if site_url_style is None else site_url_style
     config.site.base_url = base_url
     config.site.url_style = url_style
 
@@ -581,17 +581,17 @@ def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rd
 @main.command()
 @click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind the server to.")
 @click.option("--port", default=8080, type=int, show_default=True, help="Port to serve on.")
-@click.option("--base-url", default=None,
-              help="URL prefix for wiki pages. Empty string for root-level URLs.")
-@click.option("--style", "url_style", default=None,
-              type=click.Choice(["file", "dir"]), help="URL style: <slug>.html (file) or <slug>/ (dir). Defaults to url_style in config.")
+@click.option("--site-base-url", "site_base_url", default=None,
+              help="Override site.base_url. Empty string for root-level URLs.")
+@click.option("--site-url-style", "site_url_style", default=None,
+              type=click.Choice(["file", "dir"]), help="Override site.url_style: <slug>.html (file) or <slug>/ (dir).")
 @click.option("--watch", is_flag=True, help="Watch vault; rebuild graph, SPARQL blocks, site, and reload browser.")
 @click.pass_obj
-def serve(config: Context, host: str, port: int, base_url: str | None, url_style: str | None, watch: bool) -> None:
+def serve(config: Context, host: str, port: int, site_base_url: str | None, site_url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
-    resolved_base_url = (config.site.base_url if base_url is None else base_url).rstrip("/")
-    resolved_url_style = config.site.url_style if url_style is None else url_style
+    resolved_base_url = (config.site.base_url if site_base_url is None else site_base_url).rstrip("/")
+    resolved_url_style = config.site.url_style if site_url_style is None else site_url_style
     config.site.base_url = resolved_base_url
     config.site.url_style = resolved_url_style
     run_server(config, host=host, port=port, base_url=resolved_base_url, url_style=resolved_url_style, watch=watch)
@@ -601,21 +601,19 @@ def serve(config: Context, host: str, port: int, base_url: str | None, url_style
 @click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer wiki_base and base_url for GitHub Pages.")
-@click.option("--wiki-base", default=None, help="Explicit wiki_base URI (overrides --repo inference).")
-@click.option("--base-url", default=None, help="URL prefix for built/served pages (default /wiki or inferred from --repo).")
-@click.option("--url-style", default=None, type=click.Choice(["file", "dir"]), help="URL style: dir or file.")
-@click.option("--wazoo", default=None, help="context.wazoo namespace URI (default https://schema.wazoo.dev/).")
-@click.option("--content-predicate", default=None, help="Optional content_predicate CURIE (e.g. schema:articleBody).")
-@click.option("--link-style", default=None, type=click.Choice(["markdown", "wikilink"]), help="link.style in wiki.yaml (markdown or wikilink).")
+@click.option("--graph-wiki-base", "graph_wiki_base", default=None, help="Override graph.wiki_base (overrides --repo inference).")
+@click.option("--site-base-url", "site_base_url", default=None, help="Override site.base_url (default /wiki or inferred from --repo).")
+@click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
+@click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
+@click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Override link.style: markdown or wikilink.")
 def init(
     force: bool,
     init_git: bool,
     repo: str | None,
-    wiki_base: str | None,
-    base_url: str | None,
-    url_style: str | None,
-    wazoo: str | None,
-    content_predicate: str | None,
+    graph_wiki_base: str | None,
+    site_base_url: str | None,
+    site_url_style: str | None,
+    graph_content_predicate: str | None,
     link_style: str | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
@@ -657,11 +655,10 @@ def init(
 
     init_options = resolve_init_options(
         repo=repo,
-        wiki_base=wiki_base,
-        base_url=base_url,
-        url_style=url_style,
-        wazoo=wazoo,
-        content_predicate=content_predicate,
+        wiki_base=graph_wiki_base,
+        base_url=site_base_url,
+        url_style=site_url_style,
+        content_predicate=graph_content_predicate,
         link_style=link_style,
         cwd=cwd,
         init_git=init_git,
