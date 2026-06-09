@@ -66,7 +66,7 @@ Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, s
 
 ## Generated files
 
-- `layouts/default.html` — rendered from packaged [`default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layouts/default.html.j2) (same Jinja2 scaffold pattern as `wiki.yaml.j2`); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
+- `layouts/default.html` — rendered from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2) (same Jinja2 scaffold pattern as `wiki.yaml.j2`); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

@@ -197,7 +197,7 @@ Replace `{key}` tokens in your wiki page layout:
 | `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
 | `{site_title}`            | escaped text | Site name from `site.title` in `wiki.yaml` (sidebar label, `<title>` suffix, search placeholder).          |
 | `{theme_color}`           | text string  | Resolved hex color from `site.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags). |
-| `{inline_css}`            | raw CSS      | Bundled Wikipedia-style page CSS injected into `<style>`.                                                  |
+| `{inline_css}`            | raw CSS      | Bundled default page CSS from `layout_default.css.j2` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize presentation via layout HTML or linked assets (see [Custom CSS](#custom-css)). |
 | `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter from `site.title`; globe gradient from `site.theme_color` when set. |
 | `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
 | `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
@@ -215,6 +215,17 @@ Replace `{key}` tokens in your wiki page layout:
 | `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                              |
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
+
+### Custom CSS
+
+The bundled stylesheet injected as `{inline_css}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
+
+1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{inline_css}` with your own CSS (you lose the bundled defaults unless you copy them).
+2. **Link vault assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+
+`site.theme_color` only affects the sidebar globe SVG gradient and `theme-color` / TileColor meta tags; accent colors inside `{inline_css}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
+
+See also [Wiki_Page_Layouts](Wiki_Page_Layouts.md) for the layout file contract and placeholder list.
 
 The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
 

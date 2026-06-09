@@ -147,7 +147,7 @@ def resolve_init_options(
 
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
-_DEFAULT_LAYOUT_TEMPLATE = "layouts/default.html.j2"
+_DEFAULT_LAYOUT_TEMPLATE = "layout_default.html.j2"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -176,6 +176,6 @@ def render_wiki_yaml(opts: InitOptions) -> str:
 
 
 def render_default_layout(opts: InitOptions) -> str:
-    """Render the packaged default.html.j2 page layout scaffold."""
+    """Render the packaged layout_default.html.j2 page layout scaffold."""
     rendered = _init_template_env().get_template(_DEFAULT_LAYOUT_TEMPLATE).render(**opts.model_dump())
     return _strip_scaffold_comment(rendered)

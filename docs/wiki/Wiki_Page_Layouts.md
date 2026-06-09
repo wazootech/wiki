@@ -20,7 +20,7 @@ site:
   layout: layouts/default.html
 ```
 
-`wiki init` seeds `layouts/default.html` from the packaged default layout.
+`wiki init` seeds `layouts/default.html` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `vault.assets`; see [Wiki_Configuration](Wiki_Configuration.md#custom-css).
 
 ## `wazoo:layout`
 

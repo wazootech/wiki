@@ -23,6 +23,7 @@
 
 ### Changed
 
+- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css.j2` (vault path `layouts/default.html` unchanged); default page CSS moved out of `site.py` into the template bundle
 - Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `Config.check` and `Config.lint` are `CheckConfig` / `LintConfig` instances (not plain dicts)
 - `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a computed property from `graph.context`
 

@@ -30,7 +30,7 @@ wikilink = "wiki.mdformat_wikilink"
 [tool.setuptools]
 packages = ["wiki"]
 package-dir = {"" = "src"}
-package-data = {"wiki" = ["templates/*", "templates/layouts/*"]}
+package-data = {"wiki" = ["templates/*"]}
 
 [tool.uv]
 package = true

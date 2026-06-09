@@ -589,6 +589,13 @@ specialty: Diagnostics
             self.assertIn('data-categories="Person"', article)
             self.assertIn('data-categories=""', article)
 
+    def test_inline_css_loads_packaged_layout_default_css(self) -> None:
+        from wiki.site import INLINE_CSS
+
+        self.assertIn("#mw-navigation", INLINE_CSS)
+        self.assertIn(".metadata-format-switch", INLINE_CSS)
+        self.assertIn(".highlight", INLINE_CSS)
+
     def test_build_logo_svg_uses_site_theme_color(self) -> None:
         from wiki.site import _build_logo_svg
 
