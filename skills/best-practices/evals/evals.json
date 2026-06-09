@@ -1,0 +1,41 @@
+{
+  "skill_name": "best-practices",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit the docs vault before I open a PR",
+      "expected_output": "Runs strict pipeline on docs/wiki.yaml via audit.sh or equivalent commands; produces scorecard with pass/fail per stage (fmt, lint, check, render).",
+      "files": [],
+      "expectations": [
+        "Output mentions fmt, lint, check, and render",
+        "Uses -c docs/wiki.yaml or equivalent config path",
+        "Produces a structured pass/fail report",
+        "Does not modify vault files"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I changed docs/wiki/Deploying_to_GitHub_Pages.md — anything I should verify?",
+      "expected_output": "Scoped audit on the changed file plus deploy alignment notes (-c, --site-base-url, upload-pages-artifact path).",
+      "files": [],
+      "expectations": [
+        "Runs lint or check scoped to the changed file or full vault",
+        "Mentions deploy alignment (site-base-url or artifact path)",
+        "Uses -c with discovered wiki.yaml",
+        "Does not modify vault files without explicit request"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "My wiki lint is failing on broken links in wiki/Foo.md",
+      "expected_output": "Single-file lint --strict with broken link output cited; distinguishes lint reporting from wiki link --fix-broken repair.",
+      "files": [],
+      "expectations": [
+        "Runs wiki lint --strict on the target file",
+        "Cites or summarizes lint output for broken links",
+        "Mentions wiki link --fix-broken as optional repair, separate from lint",
+        "Does not auto-edit files"
+      ]
+    }
+  ]
+}
