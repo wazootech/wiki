@@ -422,6 +422,78 @@ def resolved_site_theme_color(theme_color: str | None) -> str:
     return theme_color or DEFAULT_THEME_COLOR
 
 
+def _manifest_start_url(config: Config) -> str:
+    manifest = config.site.manifest
+    if manifest.start_url:
+        return manifest.start_url
+    base_url = config.site.base_url or ""
+    return f"{base_url}/" if base_url else "/"
+
+
+def _manifest_icon_src(src: str, base_url: str) -> str:
+    if "://" in src:
+        return src
+    normalized = src.lstrip("/")
+    return f"{base_url}/{normalized}" if base_url else f"/{normalized}"
+
+
+def build_web_manifest(config: Config) -> dict[str, Any]:
+    """Canonical Web App Manifest object for embed and file output."""
+    manifest = config.site.manifest
+    base_url = config.site.base_url or ""
+    doc: dict[str, Any] = {"name": manifest.name}
+
+    if manifest.short_name:
+        doc["short_name"] = manifest.short_name
+    if manifest.description:
+        doc["description"] = manifest.description
+    if manifest.theme_color:
+        doc["theme_color"] = manifest.theme_color
+    if manifest.background_color:
+        doc["background_color"] = manifest.background_color
+    if manifest.display:
+        doc["display"] = manifest.display
+
+    doc["start_url"] = _manifest_start_url(config)
+
+    if manifest.icons:
+        icons: list[dict[str, str]] = []
+        for icon in manifest.icons:
+            entry: dict[str, str] = {"src": _manifest_icon_src(icon.src, base_url)}
+            if icon.sizes:
+                entry["sizes"] = icon.sizes
+            if icon.type:
+                entry["type"] = icon.type
+            if icon.purpose:
+                entry["purpose"] = icon.purpose
+            icons.append(entry)
+        doc["icons"] = icons
+
+    return doc
+
+
+def serialize_web_manifest(config: Config) -> str:
+    return json.dumps(build_web_manifest(config), separators=(",", ":"), ensure_ascii=False)
+
+
+def _manifest_url(base_url: str) -> str:
+    return f"{base_url}/manifest.webmanifest" if base_url else "/manifest.webmanifest"
+
+
+def _site_chrome_context(site: WikiSite, base_url: str) -> dict[str, str]:
+    manifest = site.config.site.manifest
+    site_title = manifest.name
+    theme_color = resolved_site_theme_color(manifest.theme_color)
+    logo_svg = _build_logo_svg(_logo_letter(site_title), manifest.theme_color)
+    return {
+        "logo_svg": logo_svg,
+        "theme_color": theme_color,
+        "site_title": html_module.escape(site_title),
+        "manifest_json": serialize_web_manifest(site.config),
+        "manifest_url": _manifest_url(base_url),
+    }
+
+
 def _parse_hex_color(value: str) -> tuple[int, int, int]:
     normalized = value.lstrip("#")
     if len(normalized) == 3:
@@ -515,18 +587,12 @@ def build_index_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    site_title = site.config.site.title
-    theme_color = resolved_site_theme_color(site.config.site.theme_color)
-    logo_svg = _build_logo_svg(_logo_letter(site_title), site.config.site.theme_color)
-
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
     context = {
         "inline_css": INLINE_CSS,
         "base_url": base_url,
-        "logo_svg": logo_svg,
-        "theme_color": theme_color,
-        "site_title": html_module.escape(site_title),
+        **_site_chrome_context(site, base_url),
         "page_title": "All Pages",
         "body_class": "wiki-index",
         "page_kind": "index",
@@ -589,10 +655,6 @@ def build_page_html(
     pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
     pages_json = json.dumps(pages_data, default=str)
 
-    site_title = site.config.site.title
-    theme_color = resolved_site_theme_color(site.config.site.theme_color)
-    logo_svg = _build_logo_svg(_logo_letter(site_title), site.config.site.theme_color)
-
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
     if page.has_frontmatter:
         metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
@@ -612,9 +674,7 @@ def build_page_html(
     context = {
         "inline_css": INLINE_CSS,
         "base_url": base_url,
-        "logo_svg": logo_svg,
-        "theme_color": theme_color,
-        "site_title": html_module.escape(site_title),
+        **_site_chrome_context(site, base_url),
         "page_title": html_module.escape(page.title),
         "body_class": f"wiki-page layout-{layout_class}",
         "page_kind": "article",

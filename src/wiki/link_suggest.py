@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from .audit import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, _markdown_body
+from .document import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, markdown_body, split_frontmatter_text
 from .schemas import LinkOpportunity
 from .config import Config
 from .parser import document_data_from_path
@@ -32,7 +32,7 @@ def find_link_opportunities(
             continue
         data = document_data_from_path(file_path) or {}
         content = file_path.read_text(encoding="utf-8")
-        body = _markdown_body(content)
+        body = markdown_body(content)
         title = data.get("name") if isinstance(data.get("name"), str) else None
         if not title:
             title = extract_title(body, route)
@@ -58,7 +58,7 @@ def find_link_opportunities(
         source_route = route_for_document_file(config, file_path)
         if file_filter is not None and source_route not in file_filter:
             continue
-        body = _markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(file_path.read_text(encoding="utf-8"))
         protected = _protected_spans(body)
         claimed: list[tuple[int, int]] = []
 
@@ -157,14 +157,6 @@ def _line_column(text: str, index: int) -> tuple[int, int]:
     return line, column
 
 
-def _split_frontmatter(content: str) -> tuple[str, str]:
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) > 2:
-            return f"---{parts[1]}---", parts[2]
-    return "", content
-
-
 def apply_link_opportunities(
     config: Config,
     opportunities: list[LinkOpportunity],
@@ -190,7 +182,8 @@ def apply_link_opportunities(
         if file_path is None:
             continue
 
-        prefix, body = _split_frontmatter(file_path.read_text(encoding="utf-8"))
+        split = split_frontmatter_text(file_path.read_text(encoding="utf-8"))
+        prefix, body = split.prefix, split.body
         lines = body.splitlines(keepends=True)
         for opportunity in sorted(route_opportunities, key=lambda item: (item.line, item.column), reverse=True):
             line_index = opportunity.line - 1

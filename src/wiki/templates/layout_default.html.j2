@@ -1,4 +1,4 @@
-{# wiki init scaffold — runtime placeholders: site_title, logo_svg, theme_color (filled by wiki build/serve) #}
+{# wiki init scaffold — runtime placeholders: site_title, logo_svg, theme_color, manifest_url (filled by wiki build/serve) #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="{theme_color}">
 <meta name="msapplication-TileColor" content="{theme_color}">
+<link rel="manifest" href="{manifest_url}">
 <title>{page_title} - {site_title}</title>
 <style>{inline_css}</style>
 </head>

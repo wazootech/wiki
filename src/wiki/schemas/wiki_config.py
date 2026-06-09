@@ -334,21 +334,57 @@ def normalize_theme_color(value: str | None) -> str | None:
     return normalized.lower()
 
 
-class SiteConfig(BaseModel):
+_MANIFEST_DISPLAY_MODES = frozenset({"fullscreen", "standalone", "minimal-ui", "browser"})
+
+
+class ManifestIconConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str | None = None
-    layout: str | Path | None = None
-    base_url: str | None = None
-    url_style: str | None = None
-    theme_color: str | None = None
+    src: str
+    sizes: str | None = None
+    type: str | None = None
+    purpose: str | None = None
 
-    @field_validator("theme_color", mode="before")
+
+class SiteManifestConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = None
+    short_name: str | None = None
+    description: str | None = None
+    theme_color: str | None = None
+    background_color: str | None = None
+    start_url: str | None = None
+    display: str | None = None
+    icons: list[ManifestIconConfig] | None = None
+
+    @field_validator("theme_color", "background_color", mode="before")
     @classmethod
-    def _validate_theme_color(cls, value: object) -> str | None:
+    def _validate_manifest_colors(cls, value: object) -> str | None:
         if value is None:
             return None
         return normalize_theme_color(str(value))
+
+    @field_validator("display", mode="before")
+    @classmethod
+    def _validate_display(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError(f"expected display mode string, got {value!r}")
+        normalized = value.strip().lower()
+        if normalized not in _MANIFEST_DISPLAY_MODES:
+            raise ValueError(f"expected fullscreen, standalone, minimal-ui, or browser, got {value!r}")
+        return normalized
+
+
+class SiteConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    manifest: SiteManifestConfig = Field(default_factory=SiteManifestConfig)
+    layout: str | Path | None = None
+    base_url: str | None = None
+    url_style: str | None = None
 
 
 class LinkConfig(BaseModel):
@@ -429,7 +465,7 @@ class Config(BaseModel):
 
         exclude = [str(p).replace("\\", "/") for p in self.vault.exclude]
 
-        site_title = (self.site.title or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
+        manifest_name = (self.site.manifest.name or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
         base_url = (self.site.base_url if self.site.base_url is not None else DEFAULT_BASE_URL).rstrip("/")
         url_style = normalize_url_style(self.site.url_style)
         layout = _parse_page_layout_path(self.site.layout, base_dir)
@@ -444,7 +480,7 @@ class Config(BaseModel):
             "exclude": exclude,
         }))
         object.__setattr__(self, "site", self.site.model_copy(update={
-            "title": site_title,
+            "manifest": self.site.manifest.model_copy(update={"name": manifest_name}),
             "base_url": base_url,
             "url_style": url_style,
             "layout": layout,

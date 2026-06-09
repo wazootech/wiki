@@ -464,7 +464,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertNotIn("wazoo:layout:", person_content)
 
                 # Check site layout is configured and seeded
-                self.assertIn("site:\n  title: Wiki CLI\n  layout: layouts/default.html", config_content)
+                self.assertIn("name: Wiki CLI", config_content)
+                self.assertIn("layout: layouts/default.html", config_content)
                 default_layout = Path("layouts") / "default.html"
                 self.assertTrue(default_layout.is_file())
                 expected_layout = render_default_layout(

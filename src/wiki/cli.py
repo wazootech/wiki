@@ -458,9 +458,14 @@ def build(
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
-    from .paths import build_page_manifest, detect_output_collisions
+    from .paths import build_page_manifest, build_site_manifest_entry, detect_output_collisions
+    from .site import serialize_web_manifest
 
-    manifest = build_page_manifest(config, page_output_dir, base_url, url_style) + build_asset_manifest(config, page_output_dir, base_url)
+    manifest = (
+        build_page_manifest(config, page_output_dir, base_url, url_style)
+        + [build_site_manifest_entry(page_output_dir, base_url)]
+        + build_asset_manifest(config, page_output_dir, base_url)
+    )
     collision_issues = detect_output_collisions(manifest)
     if collision_issues:
         _print_check_messages(collision_issues, [], verbose=True)
@@ -469,6 +474,12 @@ def build(
     if page_output_dir.exists():
         shutil.rmtree(page_output_dir)
     page_output_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_path = page_output_dir / "manifest.webmanifest"
+    manifest_path.write_text(serialize_web_manifest(config) + "\n", encoding="utf-8")
+    if verbose:
+        rel = manifest_path.relative_to(output_dir)
+        click.echo(f"  {rel}")
 
     has_root_index = any(page.full_slug == "" for page in site.pages)
     if not has_root_index:

@@ -1,6 +1,8 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki check` (integrity) and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
+
+This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use **`-c docs/wiki.yaml`** on wiki commands here so local runs match CI.
 
 ## Vault rules
 
@@ -21,38 +23,40 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 ### Markdown flavor
 Use Markdown links for all internal and external URLs.
 
+### Formatting (`wiki fmt`)
+- **Rule:** After editing any vault page under `docs/wiki/` (including reference docs such as [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
+- **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki_Subcommand_lint.md](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
+
 ---
 
 ## Developer notes
 
 ### Running validations
-Before submitting commits, format the vault and verify your changes against the active schema and guidelines:
+Before submitting commits, format the vault and verify against the active schema and guidelines. In this repo, mirror CI:
+
 ```bash
-# Formatting (wiki.yaml fmt: or optional .mdformat.toml) — apply locally before commit
-wiki fmt
+# 1. Format (apply, then verify)
+wiki -c docs/wiki.yaml fmt
+wiki -c docs/wiki.yaml fmt --check
 
-# Integrity: SHACL, route safety, layout frontmatter
-wiki check
+# 2. Conventions: broken links, filename pattern, headings, link style
+wiki -c docs/wiki.yaml lint --strict
 
-# Conventions: broken links, filename pattern, headings, link style
-wiki lint
+# 3. Integrity: SHACL, route safety, layout frontmatter
+wiki -c docs/wiki.yaml check --strict
 
-# Formatting check (CI gate; run after wiki fmt)
-wiki fmt --check
+# 4. Stale inline SPARQL result blocks
+wiki -c docs/wiki.yaml render --check
 
 # Verbose output
-wiki check -v
-wiki lint -v
-
-# CI: elevate warnings to errors
-wiki check --strict
-wiki lint --strict
+wiki -c docs/wiki.yaml check -v
+wiki -c docs/wiki.yaml lint -v
 ```
 
-CI also runs `wiki fmt --check` (formatting) and `wiki render --check` (stale SPARQL blocks); those are separate lanes. `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
+`wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
 
 ### Config schema changes
-On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested — document upgrades in `CHANGELOG.md` and [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md).
+On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested — document upgrades in `CHANGELOG.md` and [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md). **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
 
 ### Architecture
 See [CONTEXT.md](CONTEXT.md) for domain language and [docs/wiki/Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

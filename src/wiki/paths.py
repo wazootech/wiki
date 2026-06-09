@@ -123,6 +123,16 @@ def build_page_manifest(config: Config, owned_output_dir: Path, base_url: str, u
     ]
 
 
+def build_site_manifest_entry(owned_output_dir: Path, base_url: str) -> OutputEntry:
+    public_url = f"{base_url}/manifest.webmanifest" if base_url else "/manifest.webmanifest"
+    return OutputEntry(
+        source=None,
+        output_path=owned_output_dir / "manifest.webmanifest",
+        public_url=public_url,
+        kind="manifest",
+    )
+
+
 def detect_output_collisions(entries: list[OutputEntry]) -> list[str]:
     issues: list[str] = []
     seen_paths: dict[str, OutputEntry] = {}

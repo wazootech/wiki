@@ -233,7 +233,7 @@ about: wiki:Alice_Theory
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "vault:\n  inputs: [wiki]\nsite:\n  title: Acme Docs\n  layout: test_shell.html\n",
+                "vault:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html\n",
                 encoding="utf-8",
             )
             (root / "test_shell.html").write_text(template, encoding="utf-8")
@@ -264,6 +264,26 @@ about: wiki:Alice_Theory
             expected,
             "docs/layouts/default.html must match render_default_layout for this repo's wiki.yaml",
         )
+
+    def test_build_writes_manifest_webmanifest(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            output_dir = root / "_site"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text(
+                "vault:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n",
+                encoding="utf-8",
+            )
+            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
+            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
+            self.assertEqual(result.exit_code, 0, result.output)
+            manifest_path = output_dir / "wiki" / "manifest.webmanifest"
+            self.assertTrue(manifest_path.is_file())
+            body = manifest_path.read_text(encoding="utf-8")
+            self.assertIn('"name":"Acme Docs"', body)
+            self.assertIn('"start_url":"/wiki/"', body)
 
     def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
