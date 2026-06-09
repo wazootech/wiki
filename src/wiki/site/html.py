@@ -1,4 +1,4 @@
-﻿"""Site-building logic for compiling raw Markdown wikis into HTML virtual structures."""
+"""HTML shell assembly, manifests, and page chrome."""
 
 from __future__ import annotations
 
@@ -9,392 +9,32 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from markdown_it import MarkdownIt
 from pygments import highlight
-from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
-from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
-from .config import DEFAULT_URL_STYLE, Config
-from .format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
-from .schemas.metadata import METADATA_VIEWS
-from .schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
-from .headings import GitHubHeadingSlugger, heading_slug
-from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
-from .paths import iter_document_files, page_url, route_for_document_file
-from .parser import split_document_body
-from .vault_links import LinkIndex
-
-HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
-PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
-PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
-
-
-def _metadata_format_css() -> str:
-    rules: list[str] = []
-    for view in METADATA_VIEWS:
-        view_id = view.id
-        rules.append(
-            f'.metadata-format-switch:has(.metadata-format-input[value="{view_id}"]:checked) '
-            f".metadata-format-panel-{view_id} {{ display: block; }}"
-        )
-        rules.append(
-            f'.metadata-format-input[value="{view_id}"]:checked + .metadata-format-label '
-            "{ background: #36c; color: #fff; border-color: #36c; }"
-        )
-    return "\n".join(rules)
-
-
-def _load_layout_default_css() -> str:
-    from importlib.resources import files
-
-    return files("wiki.templates").joinpath("layout_default.css.j2").read_text(
-        encoding="utf-8"
-    )
-
-
-INLINE_CSS = (
-    _load_layout_default_css().strip()
-    + "\n\n"
-    + _metadata_format_css()
-    + "\n\n"
-    + PYGMENTS_CSS
+from ..config import DEFAULT_URL_STYLE, Config
+from ..format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
+from ..links import is_external_link, resolve_page_route
+from ..paths import page_url
+from ..schemas.metadata import METADATA_VIEWS
+from ..schemas.site import InfoboxRow, VirtualPage, WikiSite
+from .backlinks import build_backlinks_html
+from .build import expand_known_curie
+from .markdown import (
+    DEFAULT_MINIMAL_PAGE_LAYOUT,
+    INLINE_CSS,
+    METADATA_HIDDEN_FIELDS,
+    PYGMENTS_FORMATTER,
+    _get_page_categories,
+    humanize_route,
+    page_href,
+    render_copyable_pre,
+    render_outline_title,
 )
 
-DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="{theme_color}">
-<meta name="msapplication-TileColor" content="{theme_color}">
-<title>{page_title}</title>
-</head>
-<body>
-<h1 id="firstHeading">{page_title}</h1>
-{page_content}
-</body>
-</html>"""
-
-METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type"}
-
-
-def slugify_segment(text: str) -> str:
-    """Slugify a single path segment (no slashes)."""
-    return heading_slug(text)
-
-
-def slugify_path(text: str) -> str:
-    """Slugify a potentially nested slug like 'people/Gregory Davidson' -> 'people/gregory-house'."""
-    return "/".join(heading_slug(part) for part in text.split("/"))
-
-
-def _url(base_url: str, slug: str, style: str) -> str:
-    return page_url(base_url, slug, style)
-
-
-def _get_page_categories(page: VirtualPage) -> list[str]:
-    cats = []
-    if page.layout_stem and page.layout_stem != "default":
-        cats.append(page.layout_stem)
-    
-    raw_types = page.frontmatter.get("@type") or page.frontmatter.get("type")
-    if raw_types:
-        values = raw_types if isinstance(raw_types, list) else [raw_types]
-        for val in values:
-            if isinstance(val, str):
-                val_clean = val.split(":", 1)[-1] if ":" in val else val
-                cats.append(val_clean)
-                
-    seen = set()
-    unique_cats = []
-    for c in cats:
-        c_clean = c.strip()
-        if c_clean and c_clean.lower() not in seen:
-            seen.add(c_clean.lower())
-            unique_cats.append(c_clean)
-    return unique_cats
-
-
-def render_copyable_pre(
-    raw_text: str,
-    code_inner_html: str,
-    *,
-    pre_class: str = "",
-    code_class: str = "",
-) -> str:
-    """Render a pre/code block with data-copy for progressive clipboard enhancement."""
-    copy_attr = html_module.escape(raw_text, quote=True)
-    pre_class_attr = f' class="{pre_class}"' if pre_class else ""
-    code_class_attr = f' class="{code_class}"' if code_class else ""
-    return (
-        f'<pre data-copy="{copy_attr}"{pre_class_attr}>'
-        f"<code{code_class_attr}>{code_inner_html}</code></pre>\n"
-    )
-
-
-def _register_wiki_inline_render_rules(
-    md: MarkdownIt,
-    base_url: str,
-    url_style: str,
-    current_route: str,
-    *,
-    toc_mode: bool = False,
-) -> None:
-    md.use(wikilink_plugin)
-
-    if toc_mode:
-
-        def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-            token = tokens[idx]
-            return f'<span class="wikilink">{html_module.escape(token.content)}</span>'
-
-        def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-            return '<span class="toc-inline-link">'
-
-        def _link_close_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-            return "</span>"
-
-        md.add_render_rule("wikilink", _wikilink_renderer)
-        md.add_render_rule("link_open", _link_open_renderer)
-        md.add_render_rule("link_close", _link_close_renderer)
-        return
-
-    def _wikilink_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        href = token.attrs.get("href", "")
-        content = token.content
-        resolved = resolve_page_href(current_route, href, base_url, url_style)
-        if resolved is None:
-            return html_module.escape(f"[[{href}|{content}]]" if content != href else f"[[{href}]]")
-        return f'<a class="wikilink" href="{html_module.escape(resolved)}">{html_module.escape(content)}</a>'
-
-    def _link_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        href = token.attrGet("href") or ""
-        if href and not is_external_link(href) and markdown_link_is_page(href):
-            resolved = resolve_page_href(current_route, href, base_url, url_style)
-            if resolved is not None:
-                token.attrSet("href", resolved)
-        return self.renderToken(tokens, idx, options, env)
-
-    md.add_render_rule("wikilink", _wikilink_renderer)
-    md.add_render_rule("link_open", _link_open_renderer)
-
-
-def render_outline_title(
-    title: str,
-    base_url: str = "/wiki",
-    url_style: str = DEFAULT_URL_STYLE,
-    current_route: str = "",
-) -> str:
-    """Render heading inline markdown for TOC labels without nested section links."""
-    md = MarkdownIt("gfm-like", {"linkify": False})
-    _register_wiki_inline_render_rules(md, base_url, url_style, current_route, toc_mode=True)
-    return md.renderInline(title).strip()
-
-
-def render_wiki_markdown(
-    text: str,
-    base_url: str = "/wiki",
-    url_style: str = DEFAULT_URL_STYLE,
-    current_route: str = "",
-) -> str:
-    md = MarkdownIt("gfm-like", {"linkify": False})
-    _register_wiki_inline_render_rules(md, base_url, url_style, current_route)
-    heading_slugger = GitHubHeadingSlugger()
-
-    def _fence_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        info = (token.info or "").strip().split(maxsplit=1)
-        language = info[0] if info else ""
-        escaped_language = html_module.escape(language)
-        escaped_code = html_module.escape(token.content)
-        if not language:
-            return render_copyable_pre(token.content, escaped_code)
-
-        try:
-            lexer = get_lexer_by_name(language)
-        except ClassNotFound:
-            return render_copyable_pre(
-                token.content,
-                escaped_code,
-                code_class=f"language-{escaped_language}",
-            )
-
-        highlighted = highlight(token.content, lexer, PYGMENTS_FORMATTER)
-        return render_copyable_pre(
-            token.content,
-            highlighted,
-            pre_class="highlight",
-            code_class=f"language-{escaped_language}",
-        )
-
-    md.add_render_rule("fence", _fence_renderer)
-
-    def _heading_open_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        token = tokens[idx]
-        title = ""
-        if idx + 1 < len(tokens) and getattr(tokens[idx + 1], "type", "") == "inline":
-            title = tokens[idx + 1].content
-        token.attrSet("id", heading_slugger.slug(title))
-        return self.renderToken(tokens, idx, options, env)
-
-    md.add_render_rule("heading_open", _heading_open_renderer)
-    return md.render(text)
-
-
-def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:
-    """Split markdown into sections at H1/H2 boundaries."""
-    lines = markdown.split("\n")
-    sections: list[tuple[int, str, str]] = []
-    start = 0
-    current_level = 0
-    current_title: str | None = None
-
-    for i, line in enumerate(lines):
-        m = HEADING_RE.match(line)
-        if m:
-            level = len(m.group(1))
-            if level in (1, 2):
-                if current_title is not None:
-                    sections.append((current_level, current_title, "\n".join(lines[start:i])))
-                current_level = level
-                current_title = m.group(2).strip()
-                start = i
-
-    if current_title is not None:
-        sections.append((current_level, current_title, "\n".join(lines[start:])))
-    elif not sections and markdown.strip():
-        sections.append((1, "", markdown))
-
-    return sections
-
-
-def extract_title(markdown: str, fallback: str) -> str:
-    for m in HEADING_RE.finditer(markdown):
-        if len(m.group(1)) == 1:
-            return m.group(2).strip()
-    return humanize_route(fallback)
-
-
-def _normalize_title(text: str) -> str:
-    return " ".join(text.strip().casefold().split())
-
-
-def _heading_text_for_title_match(text: str) -> str:
-    """Normalize heading text for duplicate-title detection (unwrap inline code)."""
-    plain = re.sub(r"`([^`\n]+)`", r"\1", text.strip())
-    return _normalize_title(plain)
-
-
-def strip_leading_title_heading(markdown: str, title: str) -> str:
-    """Remove a leading # heading when it duplicates the page title."""
-    if not _normalize_title(title):
-        return markdown
-    lines = markdown.split("\n")
-    index = 0
-    while index < len(lines) and not lines[index].strip():
-        index += 1
-    if index >= len(lines):
-        return markdown
-    match = HEADING_RE.match(lines[index])
-    if match is None or len(match.group(1)) != 1:
-        return markdown
-    heading = match.group(2).strip()
-    if _heading_text_for_title_match(heading) != _normalize_title(title):
-        return markdown
-    index += 1
-    while index < len(lines) and not lines[index].strip():
-        index += 1
-    return "\n".join(lines[index:])
-
-
-def humanize_route(route: str) -> str:
-    stem = route.split("/")[-1] if route else "Index"
-    return stem.replace("_", " ").replace("-", " ").strip() or "Index"
-
-
-def extract_outline(markdown: str) -> list[TocItem]:
-    outline: list[TocItem] = []
-    slugger = GitHubHeadingSlugger()
-    for m in HEADING_RE.finditer(markdown):
-        level = len(m.group(1))
-        title = m.group(2).strip()
-        slug = slugger.slug(title)
-        if 2 <= level <= 6:
-            outline.append(TocItem(title=title, slug=slug, level=level))
-    return outline
-
-
-def build_site(
-    input_dirs: Config | list[Path] | Path,
-    base_url: str | None = None,
-    url_style: str | None = None,
-) -> WikiSite:
-    """Build in-memory representation of the wiki site."""
-    if isinstance(input_dirs, Config):
-        config = input_dirs
-    else:
-        dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-        config = Config.for_root(Path.cwd(), vault={"inputs": [str(p) for p in dirs_arg]})
-    resolved_base_url = config.site.base_url if base_url is None else base_url
-    resolved_url_style = config.site.url_style if url_style is None else url_style
-    pages: list[VirtualPage] = []
-
-    doc_files = sorted(iter_document_files(config))
-
-    def file_slug(file_path: Path) -> str:
-        return route_for_document_file(config, file_path)
-
-    link_index = LinkIndex.from_config(config)
-
-    for file_path in doc_files:
-        fm_data, body = split_document_body(file_path)
-        frontmatter = fm_data if fm_data is not None else {}
-
-        doc_slug = file_slug(file_path)
-        h1_title = (
-            frontmatter.get("headline")
-            or frontmatter.get("name")
-            or extract_title(body, doc_slug)
-        )
-        h1_toc = extract_outline(body)
-        wiki_ids = _page_wiki_ids(config, doc_slug, frontmatter)
-        layout_path, layout_stem = _parse_page_layout(frontmatter, config.config_root)
-
-        display_body = strip_leading_title_heading(body, h1_title)
-        h1_html = render_wiki_markdown(
-            display_body,
-            base_url=resolved_base_url,
-            url_style=resolved_url_style,
-            current_route=doc_slug,
-        )
-        pages.append(VirtualPage(
-            file_slug=doc_slug,
-            title=h1_title,
-            markdown=body,
-            html=h1_html,
-            frontmatter=frontmatter,
-            layout_path=layout_path,
-            layout_stem=layout_stem,
-            wiki_ids=wiki_ids,
-            outline=h1_toc,
-            backlink_slugs=link_index.backlinks_to(doc_slug),
-        ))
-
-    pages_by_route = {page.file_slug: page for page in pages}
-    routes_by_wiki_id: dict[str, str] = {}
-    for page in pages:
-        for wiki_id in page.wiki_ids:
-            routes_by_wiki_id[wiki_id] = page.file_slug
-
-    return WikiSite(pages=pages, config=config, pages_by_route=pages_by_route, routes_by_wiki_id=routes_by_wiki_id)
-
-
 def _logo_letter(site_title: str) -> str:
-    from .config import DEFAULT_SITE_TITLE
+    from ..config import DEFAULT_SITE_TITLE
 
     text = (site_title or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
     return text[0].upper()
@@ -566,7 +206,7 @@ def build_index_html(
             seen_files.add(page.file_slug)
             cats = _get_page_categories(page)
             cats_attr = ",".join(cats)
-            links_html += f'<li data-categories="{html_module.escape(cats_attr)}"><a href="{_url(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
+            links_html += f'<li data-categories="{html_module.escape(cats_attr)}"><a href="{page_href(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
 
     # All Pages JSON for search and random redirect
     import json
@@ -617,7 +257,7 @@ def build_page_html(
     selected_view = resolve_metadata_view(metadata_format, metadata_mode)
     toc_html = _build_toc_html(page, base_url, url_style)
     sidebar_contents_html = _build_sidebar_contents_html(page, base_url, url_style)
-    bl_html = _build_backlinks_html(page, site, base_url, url_style)
+    bl_html = build_backlinks_html(page, site, base_url, url_style)
     infobox_html = _build_infobox_html(page, site, base_url, url_style)
     
     # Categories
@@ -692,37 +332,6 @@ def _page_shell(page: VirtualPage, default_shell: str | None) -> str:
     return DEFAULT_MINIMAL_PAGE_LAYOUT if default_shell is None else default_shell
 
 
-def _parse_page_layout(frontmatter: dict[str, Any], config_root: Path) -> tuple[Path | None, str]:
-    from .layout import parse_layout_from_frontmatter
-
-    return parse_layout_from_frontmatter(frontmatter, config_root)
-
-
-def _page_wiki_ids(config: Config, route: str, frontmatter: dict[str, Any]) -> list[str]:
-    values: list[str] = []
-    for key in ("@id", "id"):
-        raw = frontmatter.get(key)
-        if isinstance(raw, str) and raw.strip():
-            raw_value = raw.strip()
-            values.append(raw_value)
-            expanded = _expand_known_curie(raw_value, config)
-            if expanded != raw_value:
-                values.append(expanded)
-    suffix = ".md" if config.graph.include_file_extension else ""
-    values.append(f"{config.base_iri}{route}{suffix}")
-    return list(dict.fromkeys(values))
-
-
-def _expand_known_curie(value: str, config: Config) -> str:
-    if ":" not in value or is_external_link(value) or value.lower().startswith("urn:"):
-        return value
-    prefix, local = value.split(":", 1)
-    namespace = config.context.namespaces.get(prefix)
-    if namespace is None:
-        return value
-    return f"{namespace}{local}"
-
-
 def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
     if not page.outline:
         return ""
@@ -754,23 +363,6 @@ def _build_sidebar_contents_html(page: VirtualPage, base_url: str, url_style: st
 {items}
     </ul>
   </div>"""
-
-
-def _build_backlinks_html(page: VirtualPage, site: WikiSite, base_url: str, url_style: str) -> str:
-    if not page.backlink_slugs:
-        return ""
-    items = ""
-    for bl in page.backlink_slugs:
-        target = site.pages_by_route.get(bl)
-        title = target.title if target is not None else bl.replace("-", " ").title()
-        route = target.full_slug if target is not None else bl
-        items += f'<li><a href="{_url(base_url, route, url_style)}">{html_module.escape(title)}</a></li>\n'
-    return f"""<section class="page-meta">
-<h2>Backlinks</h2>
-<ul class="backlinks-list">
-{items}
-</ul>
-</section>"""
 
 
 def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view: str) -> str:
@@ -947,7 +539,7 @@ def _metadata_link_candidates(target: str, site: WikiSite) -> list[str]:
     keys = [candidate]
     config = site.config
     if config is not None:
-        expanded = _expand_known_curie(candidate, config)
+        expanded = expand_known_curie(candidate, config)
         if expanded not in keys:
             keys.append(expanded)
     if ":" in candidate and not is_external_link(candidate):
@@ -968,25 +560,25 @@ def _metadata_value_href(target: str, page: VirtualPage, site: WikiSite, base_ur
         direct_route = site.routes_by_wiki_id.get(key)
         if direct_route is not None:
             target_page = site.pages_by_route.get(direct_route)
-            return _url(base_url, direct_route, url_style), False, target_page
+            return page_href(base_url, direct_route, url_style), False, target_page
 
-    if candidate.startswith(page_url(base_url, "", url_style).rstrip("/")):
+    if candidate.startswith(page_href(base_url, "", url_style).rstrip("/")):
         return candidate, False, None
 
     for key in _metadata_link_candidates(candidate, site):
         if key.startswith(page.full_slug):
             target_page = site.pages_by_route.get(key)
             if target_page is not None:
-                return _url(base_url, key, url_style), False, target_page
+                return page_href(base_url, key, url_style), False, target_page
 
         route = resolve_page_route(page.full_slug, key)
         if route is not None and route in site.pages_by_route:
             target_page = site.pages_by_route.get(route)
-            return _url(base_url, route, url_style), False, target_page
+            return page_href(base_url, route, url_style), False, target_page
 
         if key in site.pages_by_route:
             target_page = site.pages_by_route.get(key)
-            return _url(base_url, key, url_style), False, target_page
+            return page_href(base_url, key, url_style), False, target_page
 
     return None, False, None
 
