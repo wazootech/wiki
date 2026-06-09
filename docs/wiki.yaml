@@ -12,7 +12,7 @@ graph:
   # include_file_extension: false
   # implicit_types: [schema:TechArticle]
   # implicit_types_policy: fallback
-  # base_iri: https://example.org/docs/  # optional override; defaults to self.context.wiki
+  # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
   context:
     schema: https://schema.org/
     wiki: https://wazootech.github.io/wiki/
@@ -25,7 +25,6 @@ graph:
 
 site:
   title: Wiki CLI
-  # theme_color: "#6366f1"  # optional; default globe logo is blue
   layout: layouts/default.html
   base_url: /wiki
   url_style: dir
