@@ -46,3 +46,6 @@ _site-test/
 
 # Wiki CLI graph and render caches (legacy on-disk layout)
 .wiki/
+
+# Agent skill eval workspaces (skill-creator iteration output; not shipped)
+skills/*-workspace/
