@@ -24,10 +24,9 @@ from .headings import GitHubHeadingSlugger, heading_slug
 from .links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from .paths import iter_document_files, page_url, route_for_document_file
 from .parser import split_document_body
+from .vault_links import LinkIndex
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
-WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
-
 PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
 PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
 
@@ -349,20 +348,7 @@ def build_site(
     def file_slug(file_path: Path) -> str:
         return route_for_document_file(config, file_path)
 
-    backlink_index: dict[str, list[str]] = {}
-    for file_path in doc_files:
-        if file_path.suffix.lower() != ".md":
-            continue
-        content = file_path.read_text(encoding="utf-8")
-        source_slug = file_slug(file_path)
-        for match in WIKILINK_RE.finditer(content):
-            target = resolve_page_route(source_slug, match.group(1).strip())
-            if target is None:
-                continue
-            if target not in backlink_index:
-                backlink_index[target] = []
-            if source_slug not in backlink_index[target]:
-                backlink_index[target].append(source_slug)
+    link_index = LinkIndex.from_config(config)
 
     for file_path in doc_files:
         fm_data, body = split_document_body(file_path)
@@ -395,7 +381,7 @@ def build_site(
             layout_stem=layout_stem,
             wiki_ids=wiki_ids,
             outline=h1_toc,
-            backlink_slugs=backlink_index.get(doc_slug, []),
+            backlink_slugs=link_index.backlinks_to(doc_slug),
         ))
 
     pages_by_route = {page.file_slug: page for page in pages}
