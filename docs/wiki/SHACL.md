@@ -48,6 +48,14 @@ When you run `wiki check`, any page with `type: Project` is automatically valida
 
 Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is listed in `vault.inputs`; markdown frontmatter is the default authoring style in this vault.
 
+## Related
+
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — PySHACL validation
+- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — prose and link conventions (separate from shapes)
+- [Style_Guide](Style_Guide.md) — shape authoring and filenames
+- [Software_Application_Shape](Software_Application_Shape.md) — example `sh:NodeShape`
+- [Wiki_Configuration](Wiki_Configuration.md) — `vault.inputs` and shapes layout
+
 ## References
 
 - [SHACL — Shapes Constraint Language](https://www.w3.org/TR/shacl/)

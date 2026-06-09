@@ -27,6 +27,9 @@ This vault uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) vaults 
 ## Related
 
 - [Obsidian](Obsidian.md)
+- [Getting_Started](Getting_Started.md)
 - [Style_Guide](Style_Guide.md)
 - [Wiki_Subcommand_check](Wiki_Subcommand_check.md)
+- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)
 - [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) — preview with `--watch`

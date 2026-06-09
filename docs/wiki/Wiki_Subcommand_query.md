@@ -47,7 +47,12 @@ wiki query --pretty "SELECT ?property ?value WHERE {
 
 See [Graph_Cache](Graph_Cache.md) — one graph per process unless `--reload`, plus optional cross-process warm-start via `--cache`.
 
+## HTTP endpoint
+
+The same query engine backs an optional read-only SPARQL HTTP route when `sparql_service.enabled` is on in `wiki.yaml`. Configure keys and path collision rules in [Wiki_Configuration](Wiki_Configuration.md#serve-api); request forms and `Accept` negotiation in [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+
 ## Related
 
 - [SPARQL](SPARQL.md)
 - [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint)

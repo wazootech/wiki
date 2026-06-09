@@ -38,7 +38,7 @@ wiki init --git
 ## Daily workflow
 
 ```bash
-# Validate integrity (SHACL + broken links; silent on success)
+# Validate integrity (SHACL, routes, layout; silent on success)
 wiki check
 
 # Validate conventions (filename pattern, headings, link style)
@@ -78,6 +78,13 @@ See [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 ## Next steps
 
+- [Wiki_CLI](Wiki_CLI.md) — command reference home
 - [Wiki_Configuration](Wiki_Configuration.md) — tune `vault`, `graph`, `site`, `link`, and check severities
 - [Style_Guide](Style_Guide.md) — document types, shapes, and wikilinks
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — validation and CI checks
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity validation and CI checks
+- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention audits (broken links, filenames, headings)
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc SPARQL from the terminal
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — refresh inline SPARQL tables
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) — local preview and optional SPARQL endpoint
+- [Wiki_Subcommand_build](Wiki_Subcommand_build.md) — static HTML for deployment
+- [Graph_Cache](Graph_Cache.md) — graph reuse and `--cache`

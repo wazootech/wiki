@@ -163,5 +163,7 @@ For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve
 
 - [SHACL](SHACL.md) — shapes language background
 - [SPARQL](SPARQL.md) — query language background
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — inline SPARQL tables
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md) — dump frontmatter as RDF
 - [Design_Philosophies](Design_Philosophies.md) — CLI output conventions (not vault prose)

@@ -23,7 +23,7 @@ OWL-RL expansion runs when inference is enabled (default for most commands; use 
 
 ## Long-lived workflows
 
-`wiki serve --watch` keeps one process alive. On file changes it rebuilds the graph, re-runs SPARQL rendering, and reloads the browser.
+[Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) with `--watch` keeps one process alive. On file changes it rebuilds the graph, re-runs SPARQL rendering, and reloads the browser.
 
 ## Tradeoffs
 
@@ -45,3 +45,4 @@ wiki query "..."              # same graph as a prior render in one script if yo
 
 - [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
 - [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) — long-lived preview and optional [SPARQL endpoint](Wiki_Subcommand_serve.md#sparql-endpoint)

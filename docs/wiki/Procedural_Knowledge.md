@@ -11,7 +11,16 @@ description: Knowing how — workflows, rules, and executable processes rather t
 In a semantic [Personal_Knowledge](Personal_Knowledge.md) vault, procedural knowledge often lives in tooling rather than prose alone:
 
 - [SHACL](SHACL.md) shapes that enforce how pages must be written
-- [SPARQL](SPARQL.md) blocks and `wiki render` that refresh tables from the graph
+- [SPARQL](SPARQL.md) blocks and [Wiki_Subcommand_render](Wiki_Subcommand_render.md) that refresh tables from the graph
 - [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_render](Wiki_Subcommand_render.md) pipelines that automate hygiene and synthesis
 
 An [LLM Wiki](LLM_Wiki.md) pairs declarative frontmatter (facts in the graph) with this procedural layer so notes stay structured and self-updating.
+
+## Related
+
+- [Declarative_Knowledge](Declarative_Knowledge.md)
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
+- [Wiki_Subcommand_check](Wiki_Subcommand_check.md)
+- [SHACL](SHACL.md)
+- [SPARQL](SPARQL.md)

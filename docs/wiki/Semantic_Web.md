@@ -25,6 +25,11 @@ To enable this, the Semantic Web stack relies on a group of technologies, includ
 
 By adding semantic metadata to content, search engines and agents can perform reasoning and fetch precise data across disparate databases.
 
+## Related
+
+- [LLM_Wiki](LLM_Wiki.md) — applied pattern in this repository
+- [Wiki_CLI](Wiki_CLI.md) — vault tooling built on this stack
+
 ## References
 
 - [Semantic Web — W3C](https://www.w3.org/standards/semanticweb/)

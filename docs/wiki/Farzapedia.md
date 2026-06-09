@@ -28,4 +28,13 @@ Farzapedia champions four crucial properties of modern knowledge engineering:
 
 ## Dynamic querying in this vault
 
-The [Wiki_CLI](Wiki_CLI.md) is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful SPARQL queries and use command-line pipelines to synthesize indexes on the fly—fulfilling the dream of a queryable, self-updating mind map.
+The [Wiki_CLI](Wiki_CLI.md) is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful [SPARQL](SPARQL.md) queries with [Wiki_Subcommand_query](Wiki_Subcommand_query.md) and refresh live indexes with [Wiki_Subcommand_render](Wiki_Subcommand_render.md)—fulfilling the dream of a queryable, self-updating mind map.
+
+## Related
+
+- [LLM_Wiki](LLM_Wiki.md)
+- [Wiki_CLI](Wiki_CLI.md)
+- [SPARQL](SPARQL.md)
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
+- [Getting_Started](Getting_Started.md)

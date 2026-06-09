@@ -26,15 +26,18 @@ Use Markdown links for all internal and external URLs.
 ## Developer notes
 
 ### Running validations
-Before submitting commits, verify your changes against the active schema and guidelines:
+Before submitting commits, format the vault and verify your changes against the active schema and guidelines:
 ```bash
+# Formatting (wiki.yaml fmt: or optional .mdformat.toml) — apply locally before commit
+wiki fmt
+
 # Integrity: SHACL, route safety, layout frontmatter
 wiki check
 
 # Conventions: broken links, filename pattern, headings, link style
 wiki lint
 
-# Formatting (wiki.yaml fmt: or optional .mdformat.toml)
+# Formatting check (CI gate; run after wiki fmt)
 wiki fmt --check
 
 # Verbose output

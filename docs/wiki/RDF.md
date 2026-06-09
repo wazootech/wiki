@@ -25,6 +25,10 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 - [OWL](OWL.md): Ontology vocabulary and reasoning on top of RDF.
 - [SHACL](SHACL.md): A language for validating RDF graphs.
 
+## In this vault
+
+The [Wiki CLI](Wiki_CLI.md) compiles markdown frontmatter into an RDF graph. Dump serializations with [Wiki_Subcommand_export](Wiki_Subcommand_export.md) or inspect triples per page in the build/serve metadata view ([Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#metadata-view)).
+
 ## References
 
 - [RDF 1.1 Primer](https://www.w3.org/TR/rdf11-primer/): A primer on RDF 1.1.

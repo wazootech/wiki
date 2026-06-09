@@ -45,5 +45,8 @@ See [Style_Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper 
 
 ## Related
 
+- [SPARQL](SPARQL.md)
+- [Style_Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block format
 - [Graph_Cache](Graph_Cache.md)
 - [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
+- [Wiki_Subcommand_build](Wiki_Subcommand_build.md) — `wiki build --render`

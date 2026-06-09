@@ -40,6 +40,13 @@ The reasoning engine automatically infers and adds the following facts to your g
 
 - The page is also a `schema:CreativeWork`.
 
+## Related
+
+- [Graph_Cache](Graph_Cache.md) — inference defaults and graph reuse
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — `--no-inference`
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `inference=` query parameter
+- [RDF](RDF.md)
+
 ## References
 
 - [OWL 2 Web Ontology Language — Document Overview](https://www.w3.org/TR/owl2-overview/)

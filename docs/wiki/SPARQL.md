@@ -8,7 +8,7 @@ description: Standard query language and protocol for RDF.
 
 **SPARQL** (Recursive acronym for SPARQL Protocol and RDF Query Language) is an [RDF](RDF.md) query language—that is, a semantic query language for databases—able to retrieve and manipulate data stored in RDF format.
 
-It is utilized within the [Wiki_CLI](Wiki_CLI.md) `render` pipeline to populate tables based on inline graph queries.
+In the [Wiki CLI](Wiki_CLI.md), SPARQL powers [Wiki_Subcommand_query](Wiki_Subcommand_query.md), inline tables refreshed by [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and (when enabled) a read-only HTTP endpoint on [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
 
 ## Common prefixes
 
@@ -72,6 +72,13 @@ ORDER BY ?class
 | https://schema.org/TechArticle         |
 
 <!-- sparql:end -->
+
+## Related
+
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc queries from the terminal
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — refresh inline SPARQL result tables in markdown
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
+- [Style_Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block conventions
 
 ## References
 

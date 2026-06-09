@@ -38,4 +38,13 @@ This [Wiki_CLI](Wiki_CLI.md) repository is built directly on the principles of t
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 
-1. **Procedural Automation**: Using subcommands like `wiki check` to validate shapes, and `wiki render` to execute SPARQL queries dynamically, compiling the graph's intelligence back into static Markdown.
+1. **Procedural Automation**: Using subcommands like [Wiki_Subcommand_check](Wiki_Subcommand_check.md) to validate shapes, and [Wiki_Subcommand_render](Wiki_Subcommand_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
+
+## Related
+
+- [Wiki_CLI](Wiki_CLI.md)
+- [Declarative_Knowledge](Declarative_Knowledge.md)
+- [Procedural_Knowledge](Procedural_Knowledge.md)
+- [Farzapedia](Farzapedia.md)
+- [Getting_Started](Getting_Started.md)
+- [SPARQL](SPARQL.md)

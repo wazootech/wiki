@@ -22,7 +22,7 @@ wiki --help
 - **Fmt** — mdformat for markdown ([Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [Graph_Cache](Graph_Cache.md))
 - **Render** — live tables from inline SPARQL ([Wiki_Subcommand_render](Wiki_Subcommand_render.md))
-- **Build / serve** — static site and local preview ([Wiki_Subcommand_build](Wiki_Subcommand_build.md), [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md))
+- **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki_Subcommand_build](Wiki_Subcommand_build.md), [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 - **Export** — JSON-LD and RDF serializations ([Wiki_Subcommand_export](Wiki_Subcommand_export.md))
 - **Init** — scaffold `wiki.yaml` ([Wiki_Subcommand_init](Wiki_Subcommand_init.md))
 - **Upgrade** — PyPI updates ([Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md))
@@ -97,12 +97,11 @@ ORDER BY ?command
 | [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and layout frontmatter.                     |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                                                 |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation.                         |
-| [Wiki_Subcommand_init](Wiki_Subcommand_init.md)       | Scaffold wiki.yaml and starter wiki pages interactively.                                       |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links.                        |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for broken links, filename patterns, heading style, and internal link style. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                                        |
 | [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                                          |
-| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview.                                                       |
+| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                |
 | [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki.                                             |
 
 <!-- sparql:end -->

@@ -37,7 +37,7 @@ To format page margins and headers before sending directly to a connected printe
 # Print a document
 cat wiki/Getting_Started.md | pr -h "Getting Started" | lp
 
-# Print SPARQL query results
+# Print SPARQL query results ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | pr -h "Wiki People" | lp
 ```
 
@@ -49,7 +49,7 @@ To stream content directly to your default Windows printer:
 # Print a document
 Get-Content wiki/Getting_Started.md | Out-Printer
 
-# Print SPARQL query results
+# Print SPARQL query results ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | Out-Printer
 ```
 
@@ -60,3 +60,7 @@ Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options
 ## Userland over platform lock-in
 
 Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation.
+
+## Related
+
+- [Wiki_CLI](Wiki_CLI.md)

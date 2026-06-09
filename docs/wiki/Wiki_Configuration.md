@@ -112,13 +112,13 @@ RDF and document URI settings for graph build, `wiki query`, microdata, and SHAC
 
 Branding, default page layout, and routing for `wiki build` / `wiki serve`:
 
-| Key              | Default    | Purpose                                                           |
-| ---------------- | ---------- | ----------------------------------------------------------------- |
-| `site.title`       | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph |
+| Key                | Default    | Purpose                                                                                                                                |
+| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `site.title`       | `Wiki CLI` | Site name in layout chrome; first character drives the logo glyph                                                                      |
 | `site.theme_color` | —          | Optional `#RGB` / `#RRGGBB` hex for the sidebar globe logo and `theme-color` / `msapplication-TileColor` meta tags (default `#3b82f6`) |
-| `site.layout`      | —          | Path (relative to config) to the site default page layout file    |
-| `site.base_url`    | `/wiki`    | URL prefix for built/served pages (`""` for site root)            |
-| `site.url_style`   | `dir`      | `dir` → `slug/index.html`; `file` → `slug.html`                   |
+| `site.layout`      | —          | Path (relative to config) to the site default page layout file                                                                         |
+| `site.base_url`    | `/wiki`    | URL prefix for built/served pages (`""` for site root)                                                                                 |
+| `site.url_style`   | `dir`      | `dir` → `slug/index.html`; `file` → `slug.html`                                                                                        |
 
 ## Link (`link:`)
 
@@ -144,7 +144,7 @@ sparql_service:
   path: /api/sparql
 ```
 
-The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`.
+The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`. HTTP request forms, supported query types, and `Accept` negotiation are documented in [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
@@ -187,32 +187,32 @@ No CSS, JavaScript, infobox, table of contents, backlinks, or categories are inc
 
 Replace `{key}` tokens in your wiki page layout:
 
-| Placeholder               | Type         | Description                                                                                                |
-| ------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
-| `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                            |
-| `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown. |
-| `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                      |
-| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.      |
-| `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                     |
-| `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                       |
-| `{site_title}`            | escaped text | Site name from `site.title` in `wiki.yaml` (sidebar label, `<title>` suffix, search placeholder).          |
-| `{theme_color}`           | text string  | Resolved hex color from `site.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags). |
+| Placeholder               | Type         | Description                                                                                                                                                                                                                      |
+| ------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                                                                                                                                                  |
+| `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown.                                                                                                                       |
+| `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                                                                                                                                            |
+| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.                                                                                                                            |
+| `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                                                                                                                                           |
+| `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                                                                                                                                             |
+| `{site_title}`            | escaped text | Site name from `site.title` in `wiki.yaml` (sidebar label, `<title>` suffix, search placeholder).                                                                                                                                |
+| `{theme_color}`           | text string  | Resolved hex color from `site.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags).                                                                                                                     |
 | `{inline_css}`            | raw CSS      | Bundled default page CSS from `layout_default.css.j2` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize presentation via layout HTML or linked assets (see [Custom CSS](#custom-css)). |
-| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter from `site.title`; globe gradient from `site.theme_color` when set. |
-| `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                    |
-| `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                |
-| `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                         |
-| `{type_label}`            | raw HTML     | Schema type badge from frontmatter `type` / `@type` (empty when unset). Read view only.                    |
-| `{layout_class}`          | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                    |
-| `{infobox_html}`          | raw HTML     | Typed frontmatter property table (empty for index).                                                        |
-| `{toc_html}`              | raw HTML     | Table of contents `<div>` with heading links (empty if no headings).                                       |
-| `{backlinks_html}`        | raw HTML     | Backlinks section (empty if none).                                                                         |
-| `{categories_html}`       | raw HTML     | Category links `<div>` (empty if none).                                                                    |
-| `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                 |
-| `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                             |
-| `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                             |
-| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata" `<li>` (empty if no frontmatter).                                                       |
-| `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                              |
+| `{logo_svg}`              | raw SVG      | Wikipedia-style globe logo; center letter from `site.title`; globe gradient from `site.theme_color` when set.                                                                                                                    |
+| `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                                                                                                                                          |
+| `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                                                                                                                                      |
+| `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                                                                                                                                               |
+| `{type_label}`            | raw HTML     | Schema type badge from frontmatter `type` / `@type` (empty when unset). Read view only.                                                                                                                                          |
+| `{layout_class}`          | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                                                                                                                                          |
+| `{infobox_html}`          | raw HTML     | Typed frontmatter property table (empty for index).                                                                                                                                                                              |
+| `{toc_html}`              | raw HTML     | Table of contents `<div>` with heading links (empty if no headings).                                                                                                                                                             |
+| `{backlinks_html}`        | raw HTML     | Backlinks section (empty if none).                                                                                                                                                                                               |
+| `{categories_html}`       | raw HTML     | Category links `<div>` (empty if none).                                                                                                                                                                                          |
+| `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                                                                                                                                       |
+| `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                                                                                                                                                   |
+| `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                                                                                                                                                   |
+| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata" `<li>` (empty if no frontmatter).                                                                                                                                                                             |
+| `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                                                                                                                                                    |
 
 Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
 
@@ -221,7 +221,7 @@ Unknown `{placeholders}` are left untouched in the output. This lets you use lit
 The bundled stylesheet injected as `{inline_css}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
 
 1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{inline_css}` with your own CSS (you lose the bundled defaults unless you copy them).
-2. **Link vault assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+1. **Link vault assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
 
 `site.theme_color` only affects the sidebar globe SVG gradient and `theme-color` / TileColor meta tags; accent colors inside `{inline_css}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
 
@@ -344,4 +344,8 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 - [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--vault-inputs` global options
 - [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity checks
 - [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention audits
+- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
+- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — inline SPARQL tables
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `#serve-api` config block
+- [Graph_Cache](Graph_Cache.md) — `--cache` and graph reuse
 - [Style_Guide](Style_Guide.md) — shapes and frontmatter

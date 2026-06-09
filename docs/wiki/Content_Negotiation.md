@@ -37,6 +37,21 @@ Identifies what compression algorithms (gzip, deflate, br) the client understand
 
 In a [Semantic_Web](Semantic_Web.md) compliant system, URIs identifying real-world resources should behave intelligently. When a human navigates to the URI, the server employs content negotiation to render the [HTML](HTML.md) page. When a crawler or reasoning agent requests the exact same URI, the server can provide the machine-readable, structured data, like [RDF](RDF.md) or [JSON](JSON_LD.md).
 
+## In this vault
+
+The [Wiki CLI](Wiki_CLI.md) applies content negotiation in two places:
+
+- **Page metadata view** on [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
+- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint))
+
+## Related
+
+- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
+- [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
+- [RDF](RDF.md)
+- [JSON_LD](JSON_LD.md)
+- [Turtle](Turtle.md)
+
 ## References
 
 - [RFC 7231 — Content Negotiation](https://www.rfc-editor.org/rfc/rfc7231#section-5.3.2)
