@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Optional
 import click
 
-from .config import Config as Context
+from .config import Config
 from .format import run_query, process_rdf_format
 from .render import render_markdown_files
 from .parser import document_data_from_path
@@ -26,6 +26,7 @@ from .paths import (
     select_document_paths,
     select_markdown_paths,
 )
+from .runtime import resolve_runtime_config
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
 
@@ -50,7 +51,7 @@ def optional_files_argument(f):
 def main(ctx: click.Context, vault_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
-        config = Context.load(Path(config_path))
+        config = Config.load(Path(config_path))
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if vault_inputs:
@@ -100,7 +101,7 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 @click.option("-v", "--verbose", is_flag=True, help="Show integrity audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def check(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
+def check(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Integrity checks: SHACL, routes, collisions, layout (FILE...: SHACL only)."""
     if files:
         conforms = True
@@ -144,7 +145,7 @@ def check(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool)
 @click.option("-v", "--verbose", is_flag=True, help="Show convention audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def lint(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
+def lint(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Convention audits: links, filenames, headings, and link style."""
     file_filter = None
     if files:
@@ -176,7 +177,7 @@ def lint(config: Context, files: tuple[Path, ...], verbose: bool, strict: bool) 
 @click.option("-v", "--verbose", is_flag=True, help="Show target titles in suggestions; list changed files when applying.")
 @click.pass_obj
 def link(
-    config: Context,
+    config: Config,
     files: tuple[Path, ...],
     apply: bool,
     fix_broken: bool,
@@ -257,7 +258,7 @@ def link(
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
 def query(
-    context: Context,
+    context: Config,
     query_args: tuple[str, ...],
     output_format: str,
     output: Optional[Path],
@@ -332,7 +333,7 @@ def query(
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
 @click.pass_obj
 def render(
-    context: Context,
+    context: Config,
     files: tuple[Path, ...],
     no_inference: bool,
     reload: bool,
@@ -398,7 +399,7 @@ def render(
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
 def build(
-    config: Context,
+    config: Config,
     output_dir: Path,
     site_base_url: str | None,
     site_url_style: str | None,
@@ -412,17 +413,19 @@ def build(
     from .assets import build_asset_manifest
     from .site import build_site, build_index_html, build_page_html
 
+    runtime_config = resolve_runtime_config(config, base_url=site_base_url, url_style=site_url_style)
+
     if render:
         graph = load_graph(
-            config,
+            runtime_config,
             infer=True,
             reload=reload,
             disk_cache=disk_cache,
         )
-        success, errors, stale = render_markdown_files(config, graph)
+        success, errors, stale = render_markdown_files(runtime_config, graph)
         if disk_cache and success > 0:
             load_graph(
-                config,
+                runtime_config,
                 infer=True,
                 reload=True,
                 disk_cache=True,
@@ -430,41 +433,38 @@ def build(
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
-    if not any(d.exists() for d in config.vault.inputs):
-        dirs_str = ", ".join(str(d) for d in config.vault.inputs)
+    if not any(d.exists() for d in runtime_config.vault.inputs):
+        dirs_str = ", ".join(str(d) for d in runtime_config.vault.inputs)
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
-    base_url = (config.site.base_url if site_base_url is None else site_base_url).rstrip("/")
-    url_style = config.site.url_style if site_url_style is None else site_url_style
-    config.site.base_url = base_url
-    config.site.url_style = url_style
-
     if not no_check:
-        lint_results = run_lint(config)
-        check_results = run_check(config)
+        lint_results = run_lint(runtime_config)
+        check_results = run_check(runtime_config)
         results = merge_results(lint_results, check_results)
         _print_check_messages(results["errors"], results["warnings"], verbose)
         if results["errors"] or not results["conforms"]:
             sys.exit(1)
 
-    site = build_site(config, base_url=base_url, url_style=url_style)
+    base_url = runtime_config.site.base_url or ""
+    url_style = runtime_config.site.url_style or "dir"
+    site = build_site(runtime_config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
     # Load site wiki page layout if configured; silently fall back to default if file missing
     page_layout_str: str | None = None
-    if config.page_layout is not None and config.page_layout.is_file():
-        page_layout_str = config.page_layout.read_text(encoding="utf-8")
+    if runtime_config.page_layout is not None and runtime_config.page_layout.is_file():
+        page_layout_str = runtime_config.page_layout.read_text(encoding="utf-8")
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
-    from .paths import build_page_manifest, build_site_manifest_entry, detect_output_collisions
+    from .paths import build_page_manifest, build_site_manifest_entry, detect_output_collisions, page_output_path
     from .site import serialize_web_manifest
 
     manifest = (
-        build_page_manifest(config, page_output_dir, base_url, url_style)
+        build_page_manifest(runtime_config, page_output_dir, base_url, url_style)
         + [build_site_manifest_entry(page_output_dir, base_url)]
-        + build_asset_manifest(config, page_output_dir, base_url)
+        + build_asset_manifest(runtime_config, page_output_dir, base_url)
     )
     collision_issues = detect_output_collisions(manifest)
     if collision_issues:
@@ -476,7 +476,7 @@ def build(
     page_output_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_path = page_output_dir / "manifest.webmanifest"
-    manifest_path.write_text(serialize_web_manifest(config) + "\n", encoding="utf-8")
+    manifest_path.write_text(serialize_web_manifest(runtime_config) + "\n", encoding="utf-8")
     if verbose:
         rel = manifest_path.relative_to(output_dir)
         click.echo(f"  {rel}")
@@ -490,18 +490,8 @@ def build(
             click.echo(f"  {rel / 'index.html'}")
 
     for page in site.pages:
-        if url_style == "dir":
-            p = page_output_dir / page.full_slug
-            p.mkdir(parents=True, exist_ok=True)
-            file_path = p / "index.html"
-        else:
-            parts = page.full_slug.split("/")
-            if len(parts) == 1:
-                file_path = page_output_dir / f"{parts[0]}.html"
-            else:
-                section_dir = page_output_dir.joinpath(*parts[:-1])
-                section_dir.mkdir(parents=True, exist_ok=True)
-                file_path = section_dir / f"{parts[-1]}.html"
+        file_path = page_output_path(page_output_dir, page.full_slug, url_style)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style, page_layout=page_layout_str), encoding="utf-8")
         if verbose:
             rel_path = file_path.relative_to(output_dir)
@@ -526,7 +516,7 @@ def build(
 @click.option("-f", "--format", "rdf_format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="Output format for RDF export.")
 @click.option("--mode", type=click.Choice(["expanded", "compacted"], case_sensitive=False), default="expanded", show_default=True, help="Serialization mode for formats that support compaction.")
 @click.pass_obj
-def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rdf_format: str, mode: str) -> None:
+def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf_format: str, mode: str) -> None:
     """Export document frontmatter as RDF or JSON-LD."""
     result_payload: Any = None
     _raw_formats = {"turtle", "xml", "n3", "nt", "trig", "nquads"}
@@ -598,14 +588,11 @@ def export(context: Context, files: tuple[Path, ...], output: Optional[Path], rd
               type=click.Choice(["file", "dir"]), help="Override site.url_style: <slug>.html (file) or <slug>/ (dir).")
 @click.option("--watch", is_flag=True, help="Watch vault; rebuild graph, SPARQL blocks, site, and reload browser.")
 @click.pass_obj
-def serve(config: Context, host: str, port: int, site_base_url: str | None, site_url_style: str | None, watch: bool) -> None:
+def serve(config: Config, host: str, port: int, site_base_url: str | None, site_url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
     from .serve import run_server
-    resolved_base_url = (config.site.base_url if site_base_url is None else site_base_url).rstrip("/")
-    resolved_url_style = config.site.url_style if site_url_style is None else site_url_style
-    config.site.base_url = resolved_base_url
-    config.site.url_style = resolved_url_style
-    run_server(config, host=host, port=port, base_url=resolved_base_url, url_style=resolved_url_style, watch=watch)
+    runtime_config = resolve_runtime_config(config, base_url=site_base_url, url_style=site_url_style)
+    run_server(runtime_config, host=host, port=port, watch=watch)
 
 
 @main.command()
@@ -765,7 +752,7 @@ def init(
 @click.option("--check", is_flag=True, help="Check formatting without writing files back. Exits with code 1 if any files would change.")
 @click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
-def fmt(config: Context, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
+def fmt(config: Config, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
     """Format markdown vault pages using mdformat."""
     from .fmt_util import describe_fmt_source, format_markdown
 

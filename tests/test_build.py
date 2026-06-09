@@ -1,10 +1,13 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.config import Config
+from wiki.paths import page_output_path
 from wiki.init_scaffold import DOCS_VAULT_INIT_OPTIONS, InitOptions, render_default_layout, render_wiki_yaml
 
 
@@ -99,6 +102,76 @@ class TestWikiBuild(unittest.TestCase):
             self.assertEqual(result.exit_code, 0, result.output)
             self.assertTrue((output_dir / "wiki" / "person" / "index.html").exists())
             self.assertTrue((output_dir / "wiki" / "place" / "index.html").exists())
+
+    def test_build_uses_canonical_page_output_paths(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
+            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
+
+            for url_style in ("dir", "file"):
+                with self.subTest(url_style=url_style):
+                    output_dir = root / f"_site_{url_style}"
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--config",
+                            str(root),
+                            "build",
+                            "--output-dir",
+                            str(output_dir),
+                            "--site-url-style",
+                            url_style,
+                            "--no-check",
+                        ],
+                    )
+
+                    self.assertEqual(result.exit_code, 0, result.output)
+                    expected_path = page_output_path(output_dir / "wiki", "Page", url_style)
+                    self.assertTrue(expected_path.exists())
+                    self.assertIn("Content.", expected_path.read_text(encoding="utf-8"))
+
+    def test_build_does_not_mutate_loaded_config_site_overrides(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
+            config = Config(vault={"inputs": [wiki]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=root)
+
+            with patch("wiki.cli.Config.load", return_value=config), patch(
+                "wiki.cli.run_lint",
+                return_value={"conforms": True, "errors": [], "warnings": []},
+            ) as run_lint_mock, patch(
+                "wiki.cli.run_check",
+                return_value={"conforms": True, "errors": [], "warnings": []},
+            ) as run_check_mock:
+                result = runner.invoke(
+                    main,
+                    [
+                        "--config",
+                        str(root),
+                        "build",
+                        "--output-dir",
+                        str(root / "_site"),
+                        "--site-base-url",
+                        "/custom",
+                        "--site-url-style",
+                        "file",
+                    ],
+                )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(config.site.base_url, "/wiki")
+            self.assertEqual(config.site.url_style, "dir")
+            self.assertEqual(run_lint_mock.call_args[0][0].site.base_url, "/custom")
+            self.assertEqual(run_lint_mock.call_args[0][0].site.url_style, "file")
+            self.assertEqual(run_check_mock.call_args[0][0].site.base_url, "/custom")
+            self.assertEqual(run_check_mock.call_args[0][0].site.url_style, "file")
 
     def test_build_renders_infobox_links_for_typed_pages(self) -> None:
         runner = CliRunner()
