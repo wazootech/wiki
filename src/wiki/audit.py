@@ -1,4 +1,4 @@
-﻿"""SHACL checking logic using pyshacl against loaded constraint shapes and custom style/hygiene audits."""
+"""SHACL checking logic using pyshacl against loaded constraint shapes and custom style/hygiene audits."""
 
 from __future__ import annotations
 
@@ -32,6 +32,16 @@ from .layout import (
     LAYOUT_FRONTMATTER_KEY,
     layout_file_is_valid,
     resolve_layout_path,
+)
+from .document import (
+    MARKDOWN_LINK_FULL_REGEX,
+    WIKILINK_FULL_REGEX,
+    body_code_spans,
+    markdown_body,
+    protected_inline_code_spans,
+    span_overlaps,
+    split_frontmatter_text,
+    strip_inline_code,
 )
 from .schemas import BrokenLink, CheckConfig, LintConfig
 
@@ -196,13 +206,14 @@ def collect_broken_links(config: Config, file_filter: set[str] | None = None) ->
 
             if file_path.suffix.lower() == ".md":
                 content = file_path.read_text(encoding="utf-8")
-                prefix, body = _split_frontmatter(content)
-                body_offset = len(prefix)
-                protected = _protected_inline_code_spans(body)
+                split = split_frontmatter_text(content)
+                body = split.body
+                body_offset = len(split.prefix)
+                protected = protected_inline_code_spans(body)
 
                 for match in WIKILINK_FULL_REGEX.finditer(body):
                     start, end = match.span()
-                    if _span_overlaps(start, end, protected):
+                    if span_overlaps(start, end, protected):
                         continue
                     link_target = match.group(1).strip()
                     issue = _page_target_issue(
@@ -229,7 +240,7 @@ def collect_broken_links(config: Config, file_filter: set[str] | None = None) ->
 
                 for match in MARKDOWN_LINK_FULL_REGEX.finditer(body):
                     start, end = match.span()
-                    if _span_overlaps(start, end, protected):
+                    if span_overlaps(start, end, protected):
                         continue
                     target = unquote(match.group(2).split("?")[0])
                     if is_external_link(target):
@@ -273,7 +284,7 @@ def collect_broken_links(config: Config, file_filter: set[str] | None = None) ->
                                 )
                             )
 
-                link_scan = _strip_inline_code(body)
+                link_scan = strip_inline_code(body)
                 for curie in MICRODATA_WIKI_CURIE_ATTR.findall(link_scan):
                     _append_wiki_curie_issue(issues, existing_files, file_slug, file_path, curie, "Microdata reference")
 
@@ -339,40 +350,13 @@ MARKDOWN_LINK_IN_HEADING_RE = re.compile(r"!?\[[^\]]*\]\([^)]*\)")
 SETEXT_ATX_HINT = "use ATX headings (# ...) so title, TOC, and fragment links work."
 
 
-def _markdown_body(content: str) -> str:
-    _, body = _split_frontmatter(content)
-    return body
 
 
-def _split_frontmatter(content: str) -> tuple[str, str]:
-    if content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) > 2:
-            return f"---{parts[1]}---", parts[2]
-    return "", content
 
-
-def _protected_inline_code_spans(markdown: str) -> list[tuple[int, int]]:
-    spans: list[tuple[int, int]] = []
-    for match in re.finditer(r"`[^`\n]*`", markdown):
-        spans.append(match.span())
-    return spans
-
-
-def _span_overlaps(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
+def span_overlaps(start: int, end: int, spans: list[tuple[int, int]]) -> bool:
     return any(start < span_end and end > span_start for span_start, span_end in spans)
 
 
-def _strip_inline_code(markdown: str) -> str:
-    """Remove inline code spans so literal `[[...]]` in prose is not treated as wikilinks."""
-    return re.sub(r"`[^`\n]*`", "", markdown)
-
-
-def _body_code_spans(body: str) -> list[tuple[int, int]]:
-    spans = _protected_inline_code_spans(body)
-    for match in FENCED_CODE_RE.finditer(body):
-        spans.append(match.span())
-    return spans
 
 
 def _heading_plain_text(text: str) -> str:
@@ -440,8 +424,8 @@ def lint_thematic_breaks(config: Config, file_filter: set[str] | None = None) ->
         if file_filter is not None and route not in file_filter:
             continue
         content = file_path.read_text(encoding="utf-8")
-        body = _markdown_body(content)
-        protected = _body_code_spans(body)
+        body = markdown_body(content)
+        protected = body_code_spans(body)
         lines = body.splitlines()
         offset = 0
         prev_line: str | None = None
@@ -451,10 +435,10 @@ def lint_thematic_breaks(config: Config, file_filter: set[str] | None = None) ->
             line_start = offset
             line_end = offset + len(line)
             stripped = line.strip()
-            in_code = _span_overlaps(line_start, line_end, protected)
+            in_code = span_overlaps(line_start, line_end, protected)
             prev_in_code = (
                 prev_line is not None
-                and _span_overlaps(prev_line_start, prev_line_end, protected)
+                and span_overlaps(prev_line_start, prev_line_end, protected)
             )
             is_setext = False
             if (
@@ -518,7 +502,7 @@ def lint_heading_levels(config: Config, file_filter: set[str] | None = None) -> 
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        body = _markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(file_path.read_text(encoding="utf-8"))
         previous_level = 0
         for line_no, level, _text in _parse_body_headings(body):
             if previous_level > 0 and level > previous_level + 1:
@@ -537,7 +521,7 @@ def lint_duplicate_headings(config: Config, file_filter: set[str] | None = None)
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        body = _markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(file_path.read_text(encoding="utf-8"))
         seen: dict[str, int] = {}
         for line_no, level, text in _parse_body_headings(body):
             if level <= 1:
@@ -567,7 +551,7 @@ def lint_headings(config: Config, file_filter: set[str] | None = None) -> list[s
         if file_filter is not None and route not in file_filter:
             continue
         content = file_path.read_text(encoding="utf-8")
-        body = _markdown_body(content)
+        body = markdown_body(content)
         for match in HEADING_LINE_RE.finditer(body):
             level, text = match.group(1), match.group(2).strip()
             if NUMBERED_HEADING_RE.match(text):
@@ -597,12 +581,12 @@ def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list
         if file_filter is not None and route not in file_filter:
             continue
         content = file_path.read_text(encoding="utf-8")
-        prefix, body = _split_frontmatter(content)
-        body_offset = len(prefix)
-        protected = _body_code_spans(body)
-        for match in WIKILINK_FULL_REGEX.finditer(body):
+        split = split_frontmatter_text(content)
+        body_offset = len(split.prefix)
+        protected = body_code_spans(split.body)
+        for match in WIKILINK_FULL_REGEX.finditer(split.body):
             start, end = match.span()
-            if _span_overlaps(start, end, protected):
+            if span_overlaps(start, end, protected):
                 continue
             line_no = _line_number_for_offset(content, body_offset + start)
             warnings.append(

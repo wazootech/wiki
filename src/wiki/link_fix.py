@@ -7,13 +7,13 @@ import re
 from pathlib import Path
 
 from .audit import collect_broken_links
+from .document import WIKILINK_FULL_REGEX, split_frontmatter_text
 from .schemas import BrokenLink, BrokenLinkFix
 from .config import Config
 from .headings import GitHubHeadingSlugger
 from .links import fragment_id, resolve_page_route, split_target
 from .paths import iter_document_files, route_for_document_file
 
-WIKILINK_FULL_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]*))?\]\]")
 MARKDOWN_LINK_FULL_REGEX = re.compile(r"(!?\[[^\]]*\]\()([^)]+)(\))")
 FUZZY_ROUTE_CUTOFF = 0.86
 
@@ -112,11 +112,7 @@ def _heading_ids_by_route(config: Config) -> dict[str, set[str]]:
         if file_path.suffix.lower() != ".md":
             continue
         route = route_for_document_file(config, file_path)
-        body = file_path.read_text(encoding="utf-8")
-        if body.startswith("---"):
-            parts = body.split("---", 2)
-            if len(parts) > 2:
-                body = parts[2]
+        body = split_frontmatter_text(file_path.read_text(encoding="utf-8")).body
         ids: set[str] = set()
         for match in re.finditer(r"^(#{1,6})\s+(.+)$", body, flags=re.MULTILINE):
             ids.add(slugger.slug(match.group(2).strip()))

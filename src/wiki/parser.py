@@ -108,13 +108,12 @@ def split_frontmatter_body(content: str) -> tuple[Optional[dict[str, Any]], str]
     Returns (None, content) if no valid frontmatter is found.
     The body is the markdown text after the closing --- (or the full content if no frontmatter).
     """
-    data = parse_frontmatter(content)
-    if data is None:
-        return None, content
+    from .document import split_frontmatter_text
 
-    parts = content.split("---", 2)
-    body = parts[2].strip() if len(parts) > 2 else ""
-    return data, body
+    split = split_frontmatter_text(content)
+    if split.data is None:
+        return None, content
+    return split.data, split.body.strip()
 
 
 def split_document_body(path: Path) -> tuple[Optional[dict[str, Any]], str]:
