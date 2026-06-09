@@ -1,12 +1,13 @@
 ﻿# Wiki CLI (`wazootech-wiki`)
 
 [![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
+[![npm version](https://img.shields.io/npm/v/wazootech-wiki)](https://www.npmjs.com/package/wazootech-wiki)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An elegant, pure, and idiomatic Python command-line interface for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
 
-Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). PyPI package: `wazootech-wiki`. CLI command: `wiki`.
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
 Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (use GitHub’s “Use this template” button).
 
@@ -44,6 +45,21 @@ python -m wiki --help
 ```
 
 Multiple `wiki.exe` shims can coexist across Python installs. If PATH is preferring a stale launcher, run `python -m wiki upgrade -y` with the intended Python environment and remove or refresh the older `wiki.exe`.
+
+### From npm
+
+```bash
+npm install -g wazootech-wiki
+```
+
+This installs the `wiki` command globally via npm. The npm package automatically creates a private Python virtual environment and installs the matching PyPI version of `wazootech-wiki` as the engine. Python 3.12 or newer is required.
+
+Zero-install (no install required):
+
+```bash
+npx wazootech-wiki --help
+uvx wazootech-wiki --help
+```
 
 ### From within this repo (editable)
 

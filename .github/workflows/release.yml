@@ -1,4 +1,4 @@
-name: Release (PyPI)
+name: Release (PyPI + npm)
 
 on:
   push:
@@ -28,19 +28,25 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install dependencies
         run: uv sync
 
       - name: Install build tooling
         run: python -m pip install -U build twine
 
-      - name: Verify tag matches pyproject version
+      - name: Verify tag matches pyproject and package.json versions
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          python -c "import tomllib, pathlib; v=tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8')).get('project',{}).get('version'); print(v); assert v, 'missing version'"
           TAG="${GITHUB_REF_NAME#v}"
-          PYPROJECT="$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
-          test "$TAG" = "$PYPROJECT"
+          PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
+          NPM_VER=$(node -e "console.log(require('./package.json').version)")
+          test "$TAG" = "$PY_VER" || { echo "::error::tag $TAG != pyproject $PY_VER"; exit 1; }
+          test "$TAG" = "$NPM_VER" || { echo "::error::tag $TAG != package.json $NPM_VER"; exit 1; }
 
       - name: Build
         run: python -m build
@@ -52,3 +58,13 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
+      - name: Verify npm can pack
+        run: npm pack --dry-run
+
+      - name: Publish to npm (trusted publishing / OIDC)
+        run: npm publish --provenance
+
+      - name: Verify npm publish
+        run: |
+          npm view wazootech-wiki@$(node -e "console.log(require('./package.json').version)") version
