@@ -56,6 +56,7 @@ Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `x
 New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki init` renders from is [`src/wiki/templates/wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2) (Jinja2). Contributors edit that `.j2` file; Jinja variables (`wiki_base`, `base_url`, `url_style`, optional `content_predicate` / `link_style`) render into nested `graph:`, `site:`, and `link:` blocks via `{% if %}`.
 
 - `vault.inputs: [wiki]`
+- Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply vault-wide default `rdf:type` CURIEs)
 - `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`
 - `lint` rules at `warning` for filename and links
 - `site.title` and `site.layout` — site name and default page layout for build/serve

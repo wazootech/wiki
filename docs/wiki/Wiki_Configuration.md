@@ -109,7 +109,9 @@ RDF and document URI settings for graph build, `wiki query`, microdata, and SHAC
 | `graph.wiki_base` | from `graph.context.wiki` or `https://wiki.example.org/` | Base URI for generated document IDs |
 | `graph.context` / `graph.@context` | built-in prefixes | Prefix → namespace URI map for CURIEs in frontmatter and microdata |
 | `graph.content_predicate` | — | When set (for example `schema:articleBody`), markdown body text is added as a literal on each document node for full-text SPARQL |
-| `graph.uri_ext` | `false` | Include file extension in generated URIs when true |
+| `graph.include_file_extension` | `false` | Include file extension in generated URIs when true |
+| `graph.implicit_types` | `[]` | CURIE list applied when a document has no `type` / `@type`, or merged per policy when it does |
+| `graph.implicit_types_policy` | `fallback` | `fallback` — use `implicit_types` only when frontmatter has no type; `append` — union frontmatter types with `implicit_types` (deduped by resolved URI). SHACL shape documents (`sh:NodeShape`, `sh:PropertyShape`) skip append |
 
 ## Site (`site:`)
 

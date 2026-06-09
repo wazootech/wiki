@@ -15,7 +15,9 @@ graph:
 {% else %}
   # content_predicate: schema:articleBody
 {% endif %}
-  # uri_ext: false
+  # include_file_extension: false
+  # implicit_types: [schema:TechArticle]
+  # implicit_types_policy: fallback
   context:
     schema: https://schema.org/
     wiki: {{ wiki_base }}

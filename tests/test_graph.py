@@ -279,8 +279,8 @@ class TestRDFFrontmatter(unittest.TestCase):
         g_file = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc")
         self.assertTrue((URIRef(f"{base}doc"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file)
         
-        # Missing @id, with file_id and uri_ext=True -> uses file_id with .md
-        g_file_ext = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc", uri_ext=True)
+        # Missing @id, with file_id and include_file_extension=True -> uses file_id with .md
+        g_file_ext = frontmatter_to_graph({"@type": "WebPage"}, self.config, file_id="doc", include_file_extension=True)
         self.assertTrue((URIRef(f"{base}doc.md"), RDF.type, self.context.namespaces["schema"]["WebPage"]) in g_file_ext)
         
         # Missing @id, no file_id -> Empty graph (no Person special-case fallback anymore)
@@ -290,6 +290,60 @@ class TestRDFFrontmatter(unittest.TestCase):
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
+    def test_implicit_types_fallback_for_untyped_page(self) -> None:
+        config = WikiConfig(graph={"implicit_types": ["TechArticle"]})
+        ctx = config.context
+        data = {"headline": "Untitled"}
+        g = frontmatter_to_graph(data, config, file_id="untitled")
+        subj = URIRef(f"{ctx.wiki_base}untitled")
+        self.assertIn((subj, RDF.type, ctx.namespaces["schema"]["TechArticle"]), g)
+
+    def test_implicit_types_fallback_preserves_explicit_type(self) -> None:
+        config = WikiConfig(graph={"implicit_types": ["TechArticle"]})
+        ctx = config.context
+        data = {"@type": "Person", "@id": "wiki:alice", "givenName": "Alice"}
+        g = frontmatter_to_graph(data, config)
+        subj = URIRef(ctx.namespaces["wiki"]["alice"])
+        types = list(g.objects(subj, RDF.type))
+        self.assertEqual(len(types), 1)
+        self.assertIn(ctx.namespaces["schema"]["Person"], types)
+
+    def test_implicit_types_append_unions_and_dedupes(self) -> None:
+        config = WikiConfig(
+            graph={
+                "implicit_types": ["TechArticle", "CreativeWork"],
+                "implicit_types_policy": "append",
+            }
+        )
+        ctx = config.context
+        data = {"@type": ["TechArticle", "Person"], "@id": "wiki:doc", "headline": "Doc"}
+        g = frontmatter_to_graph(data, config)
+        subj = URIRef(ctx.namespaces["wiki"]["doc"])
+        types = set(g.objects(subj, RDF.type))
+        self.assertEqual(
+            types,
+            {
+                ctx.namespaces["schema"]["TechArticle"],
+                ctx.namespaces["schema"]["Person"],
+                ctx.namespaces["schema"]["CreativeWork"],
+            },
+        )
+
+    def test_implicit_types_append_skips_shacl_shapes(self) -> None:
+        config = WikiConfig(
+            graph={
+                "implicit_types": ["TechArticle"],
+                "implicit_types_policy": "append",
+            }
+        )
+        ctx = config.context
+        data = {"@type": "sh:NodeShape", "@id": "wiki:person-shape", "rdfs:label": "Person"}
+        g = frontmatter_to_graph(data, config)
+        subj = URIRef(ctx.namespaces["wiki"]["person-shape"])
+        types = list(g.objects(subj, RDF.type))
+        self.assertEqual(len(types), 1)
+        self.assertIn(ctx.namespaces["sh"]["NodeShape"], types)
+
     def test_multi_type_and_implicit_id_mapping(self) -> None:
         """Test multi-type arrays in frontmatter and implicit ID mapping fallback in loading sequence."""
         config = WikiConfig()
@@ -482,8 +536,8 @@ name: Good Page
             self.assertTrue((gregory_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((alice_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
 
-    def test_uri_ext_config_appends_md(self) -> None:
-        """Test that uri_ext=True produces .md in auto-generated page URIs."""
+    def test_include_file_extension_config_appends_md(self) -> None:
+        """Test that include_file_extension=True produces .md in auto-generated page URIs."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "test.md").write_text("""---
@@ -492,18 +546,18 @@ name: Test Page
 ---
 """, encoding="utf-8")
 
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"uri_ext": True})
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"include_file_extension": True})
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/test.md")
             self.assertTrue((expected, None, None) in g)
 
-    def test_uri_ext_uses_source_file_extension(self) -> None:
-        """Test that uri_ext=True uses the actual file extension for data documents."""
+    def test_include_file_extension_uses_source_file_extension(self) -> None:
+        """Test that include_file_extension=True uses the actual file extension for data documents."""
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             (wiki_dir / "person.yaml").write_text("type: Person\ngivenName: Test\n", encoding="utf-8")
 
-            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"uri_ext": True})
+            config = WikiConfig(vault={"inputs": [wiki_dir]}, graph={"include_file_extension": True})
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/person.yaml")
             self.assertTrue((expected, None, None) in g)

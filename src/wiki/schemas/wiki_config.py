@@ -33,6 +33,8 @@ DEFAULT_URL_STYLE = "dir"
 DEFAULT_SITE_TITLE = "Wiki CLI"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 VALID_URL_STYLES = {"dir", "file"}
+IMPLICIT_TYPES_POLICIES = frozenset({"fallback", "append"})
+IMPLICIT_TYPES_POLICY = "fallback"
 
 CONFIG_FILENAMES = ("wiki.yaml", "wiki.yml", "wiki.json")
 
@@ -270,11 +272,30 @@ class GraphBlock(BaseModel):
 
     wiki_base: str | None = None
     content_predicate: str | None = None
-    uri_ext: bool = False
+    include_file_extension: bool = False
+    implicit_types: list[str] = Field(default_factory=list)
+    implicit_types_policy: str = IMPLICIT_TYPES_POLICY
     context: dict[str, str] | None = Field(
         default=None,
         validation_alias=AliasChoices("context", "@context"),
     )
+
+    @field_validator("implicit_types", mode="before")
+    @classmethod
+    def _validate_implicit_types(cls, value: object) -> list[str]:
+        if value is None:
+            return []
+        return _coerce_str_or_list(value)
+
+    @field_validator("implicit_types_policy", mode="before")
+    @classmethod
+    def _validate_implicit_types_policy(cls, value: object) -> str:
+        if value is None:
+            return IMPLICIT_TYPES_POLICY
+        normalized = str(value).strip().lower()
+        if normalized not in IMPLICIT_TYPES_POLICIES:
+            raise ValueError(f"expected fallback or append, got {value!r}")
+        return normalized
 
 
 class SiteBlock(BaseModel):

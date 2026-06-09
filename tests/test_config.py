@@ -47,7 +47,7 @@ class TestWikiConfig(unittest.TestCase):
         config = WikiConfig()
         self.assertEqual(config.vault.inputs, [config.config_root.absolute() / "wiki"])
         self.assertEqual(config.vault.assets, [])
-        self.assertFalse(config.graph.uri_ext)
+        self.assertFalse(config.graph.include_file_extension)
         self.assertEqual(config.site.base_url, "/wiki")
         self.assertEqual(config.site.url_style, "dir")
         self.assertIsNone(config.vault.filename_pattern)
@@ -172,6 +172,28 @@ class TestWikiConfig(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             WikiConfig(link={"style": "obsidian"})
+
+    def test_wikiconfig_implicit_types_defaults(self) -> None:
+        config = WikiConfig()
+        self.assertEqual(config.graph.implicit_types, [])
+        self.assertEqual(config.graph.implicit_types_policy, "fallback")
+
+    def test_wikiconfig_load_implicit_types(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "graph:\n  implicit_types: [schema:TechArticle]\n  implicit_types_policy: append\n",
+                encoding="utf-8",
+            )
+            config = WikiConfig.load(base_path)
+            self.assertEqual(config.graph.implicit_types, ["schema:TechArticle"])
+            self.assertEqual(config.graph.implicit_types_policy, "append")
+
+    def test_wikiconfig_rejects_invalid_implicit_types_policy(self) -> None:
+        from pydantic import ValidationError
+
+        with self.assertRaises(ValidationError):
+            WikiConfig(graph={"implicit_types_policy": "replace"})
 
     def test_wikiconfig_load_json(self) -> None:
         """Test WikiConfig.load correctly parses wiki.json."""

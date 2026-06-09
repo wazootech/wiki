@@ -122,12 +122,65 @@ def _rdf_binding(ctx: Context | WikiConfig) -> tuple[Context, str | None]:
     return ctx, getattr(ctx, "content_predicate", None)
 
 
+def _normalize_type_list(raw: Any) -> list[Any]:
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return list(raw)
+    return [raw]
+
+
+def _is_shacl_shape_document(fm_types: list[Any]) -> bool:
+    for item in fm_types:
+        if not isinstance(item, str):
+            continue
+        normalized = item.strip()
+        if normalized in {"sh:NodeShape", "sh:PropertyShape", "NodeShape", "PropertyShape"}:
+            return True
+        if ":" in normalized:
+            prefix, local = normalized.split(":", 1)
+            if prefix == "sh" and local in {"NodeShape", "PropertyShape"}:
+                return True
+    return False
+
+
+def _effective_types(data: dict[str, Any], context: Context | WikiConfig) -> list[Any]:
+    """Merge frontmatter type with graph.implicit_types per implicit_types_policy."""
+    fm_types = _normalize_type_list(data.get("@type") or data.get("type"))
+
+    implicit_types: list[str] = []
+    policy = "fallback"
+    if isinstance(context, WikiConfig):
+        implicit_types = list(context.graph.implicit_types)
+        policy = context.graph.implicit_types_policy
+
+    if not implicit_types:
+        return fm_types
+    if not fm_types:
+        return list(implicit_types)
+    if policy == "fallback":
+        return fm_types
+    if _is_shacl_shape_document(fm_types):
+        return fm_types
+
+    rdf_ctx = context if isinstance(context, Context) else context.context
+    seen: set[str] = set()
+    merged: list[Any] = []
+    for item in fm_types + implicit_types:
+        resolved = str(resolve_type(item, rdf_ctx))
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        merged.append(item)
+    return merged
+
+
 def frontmatter_to_graph(
     data: dict[str, Any],
     context: Context | WikiConfig,
     file_id: Optional[str] = None,
     body: Optional[str] = None,
-    uri_ext: bool = False,
+    include_file_extension: bool = False,
     file_ext: str = ".md",
     content_predicate: str | None = None,
 ) -> Graph:
@@ -138,15 +191,15 @@ def frontmatter_to_graph(
     graph = Graph()
     rdf_ctx.bind_namespaces(graph)
 
-    rdf_type = data.get("@type") or data.get("type")
-    if not data or not rdf_type:
+    effective_types = _effective_types(data, context)
+    if not data or not effective_types:
         return graph
 
     doc_id = data.get("@id") or data.get("id")
     if not doc_id:
         if not file_id:
             return Graph()
-        suffix = file_ext if uri_ext else ""
+        suffix = file_ext if include_file_extension else ""
         doc_id = f"{rdf_ctx.wiki_base}{file_id}{suffix}"
 
     if doc_id and ":" in doc_id:
@@ -156,13 +209,10 @@ def frontmatter_to_graph(
 
     subject = URIRef(doc_id)
 
-    if isinstance(rdf_type, list):
-        for t in rdf_type:
-            graph.add((subject, RDF.type, resolve_type(t, rdf_ctx)))
-    elif rdf_type:
-        graph.add((subject, RDF.type, resolve_type(rdf_type, rdf_ctx)))
+    for t in effective_types:
+        graph.add((subject, RDF.type, resolve_type(t, rdf_ctx)))
 
-    skip_keys = {"id", "type"}
+    skip_keys = {"id", "type", "@type"}
     for key, value in data.items():
         if key.startswith("@") or key in skip_keys:
             continue
@@ -331,7 +381,7 @@ def _process_document_file(graph: Graph, file_path: Path, context: WikiConfig) -
             context,
             file_id=file_id,
             body=body,
-            uri_ext=context.graph.uri_ext,
+            include_file_extension=context.graph.include_file_extension,
             file_ext=file_path.suffix.lower(),
         )
 

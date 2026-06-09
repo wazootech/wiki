@@ -62,5 +62,5 @@ A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of ma
 
 ## Example dialogue
 
-> **Dev:** "Does a **Document** always have to contain a **Frontmatter** block?"
-> **Domain expert:** "Yes, a **Document** without **Frontmatter** is ignored by the **CLI** because it cannot be loaded into the RDF graph."
+> **Dev:** "Does a **Document** always need `type` in **Frontmatter**?"
+> **Domain expert:** "Without `graph.implicit_types`, a document with no `type` / `@type` produces no RDF triples and is invisible to SPARQL and SHACL. With `graph.implicit_types` configured, untyped documents inherit those CURIEs at graph build time; explicit types still win when `implicit_types_policy` is `fallback`."

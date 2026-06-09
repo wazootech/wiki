@@ -52,6 +52,8 @@ familyName: Smith
 
 Unprefixed frontmatter keys resolve to **schema.org** by default (for example `label` → `schema:label`). Use an explicit prefix for other vocabularies (`rdfs:`, `sh:`, `owl:`, …).
 
+You may omit `type` when `graph.implicit_types` is set in `wiki.yaml` (see [Wiki_Configuration](Wiki_Configuration.md)); the CLI applies those CURIEs at graph build time. Explicit `type` in frontmatter always wins under `implicit_types_policy: fallback`.
+
 Example TechArticle page:
 
 ```yaml

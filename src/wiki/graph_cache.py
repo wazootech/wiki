@@ -34,8 +34,10 @@ def _config_fingerprint(config: WikiConfig) -> dict[str, Any]:
     }
     return {
         "wiki_base": config.wiki_base,
-        "uri_ext": config.graph.uri_ext,
+        "include_file_extension": config.graph.include_file_extension,
         "content_predicate": config.graph.content_predicate,
+        "implicit_types": config.graph.implicit_types,
+        "implicit_types_policy": config.graph.implicit_types_policy,
         "exclude": sorted(config.vault.exclude),
         "namespaces": namespaces,
     }

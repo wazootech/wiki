@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
+
 ### Changed (breaking)
+
+- Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
 
 - **CLI flags** align with `wiki.yaml` block paths: `--vault-inputs` (was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-wiki-base` (was `--wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
 - Rename `vault.input_dirs` → `vault.inputs` and `vault.asset_dirs` → `vault.assets`
@@ -19,6 +25,10 @@
 1. In `vault:` rename path keys:
    - `input_dirs` → `inputs`
    - `asset_dirs` → `assets`
+2. In `graph:` rename keys:
+   - `uri_ext` → `include_file_extension`
+   - `default_types` → `implicit_types`
+   - `default_types_policy` → `implicit_types_policy`
 
 ## 0.1.9 — 2026-06-08
 
