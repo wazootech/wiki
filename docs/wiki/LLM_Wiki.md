@@ -12,7 +12,7 @@ An **LLM Wiki** is a modern design pattern for [Personal_Knowledge](Personal_Kno
 
 This replaces fleeting AI chats and unstructured RAG databases with a persistent, compounding core of intelligence.
 
-The **LLM Wiki** is a modern design pattern for [personal knowledge](Personal_Knowledge.md) management (PKM) popularized by **Andrej Karpathy** in early April 2026. It represents a paradigm shift from traditional **[Retrieval-Augmented Generation](Retrieval_Augmented_Generation.md) (RAG)**—where an AI searches through unstructured files on the fly—to a **compiled, persistent, and compounding knowledge base**.
+The **LLM Wiki** is a modern design pattern for [personal knowledge](Personal_Knowledge.md) management (PKM) popularized by **[Andrej Karpathy](https://x.com/karpathy/status/2039805659525644595)** in early April 2026. It represents a paradigm shift from traditional **[Retrieval-Augmented Generation](Retrieval_Augmented_Generation.md) (RAG)**—where an AI searches through unstructured files on the fly—to a **compiled, persistent, and compounding knowledge base**.
 
 ## Karpathy's viral analogy
 
@@ -39,6 +39,10 @@ This [Wiki_CLI](Wiki_CLI.md) repository is built directly on the principles of t
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 
 1. **Procedural Automation**: Using subcommands like [Wiki_Subcommand_check](Wiki_Subcommand_check.md) to validate shapes, and [Wiki_Subcommand_render](Wiki_Subcommand_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
+
+## References
+
+- [Andrej Karpathy on X: LLM Knowledge Bases](https://x.com/karpathy/status/2039805659525644595) — April 2026 thread on raw ingest, LLM compilation into markdown wikis, Obsidian as IDE, and incremental Q&A without RAG.
 
 ## Related
 
