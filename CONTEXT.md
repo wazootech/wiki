@@ -1,6 +1,14 @@
 ﻿# Wiki CLI (`wazootech-wiki`)
 
-A clean, pure, idiomatic Python CLI for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
+Semantic knowledge **toolchain** for Markdown vaults: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Product_Positioning.md](docs/wiki/Product_Positioning.md) for public boundaries.
+
+## Architecture decision: Python core
+
+Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI as the source of truth** for parsing, validation, inference, querying, and export. Do not plan a full TypeScript rewrite of the engine.
+
+- **Why Python** — `rdflib`, `pyshacl`, and `owlrl` compose a single coherent RDF/SHACL/OWL pipeline aligned with this repo’s core job.
+- **TypeScript at the edges only** — the npm package is a thin delivery wrapper (private venv + matching PyPI engine), not a second implementation.
+- **Revisit a rewrite only if** — a concrete npm-only distribution requirement, a web-first product that dominates the roadmap, or maintenance pain in Python that outweighs the RDF ecosystem advantage.
 
 ## Language
 

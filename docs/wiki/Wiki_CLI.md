@@ -7,7 +7,7 @@ description: Command-line interface for querying, validating, and publishing sem
 
 # Wiki CLI
 
-This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)), the command-line tool for the [LLM Wiki](LLM_Wiki.md) pattern. It turns a folder of markdown files with semantic frontmatter into an RDF graph you can validate with [SHACL](SHACL.md), query with [SPARQL](SPARQL.md), and publish as static HTML.
+This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown vaults — validate with [SHACL](SHACL.md), infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles vaults into RDF; it is not a note app or primary editor. See [Product_Positioning](Product_Positioning.md) for boundaries and interop with [Obsidian](Obsidian_Integration.md) and [LLM Wiki](LLM_Wiki.md) workflows.
 
 ```bash
 pip install wazootech-wiki
@@ -42,6 +42,7 @@ See [Getting_Started](Getting_Started.md) for a full walkthrough.
 
 ## Start here
 
+- [Product_Positioning](Product_Positioning.md) — toolchain vs authoring surface, what wiki is and is not
 - [Getting_Started](Getting_Started.md) — install, `wiki init`, first `check` and `serve`
 - [Wiki_Configuration](Wiki_Configuration.md) — `wiki.yaml` options
 - [Style_Guide](Style_Guide.md) — frontmatter, shapes, internal links, SPARQL blocks

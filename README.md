@@ -1,26 +1,71 @@
-﻿# Wiki CLI (`wazootech-wiki`)
+# Wiki CLI (`wazootech-wiki`)
 
 [![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
 [![npm version](https://img.shields.io/npm/v/wazootech-wiki)](https://www.npmjs.com/package/wazootech-wiki)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-An elegant, pure, and idiomatic Python command-line interface for managing a semantic knowledge base of markdown documents with SHACL validation and SPARQL reasoning.
+**Wiki CLI** is the semantic knowledge **toolchain** for Markdown vaults: validate structure, infer over RDF, query with SPARQL, and publish static sites or serializations. It is a vault **compiler** � not a note app, editor, CMS, or auth layer. Keep writing in Obsidian, an LLM wiki workflow, or any Markdown editor; `wiki` is the machine layer that makes that content trustworthy, queryable, and publishable.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template repo: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (use GitHub’s “Use this template” button).
+Starter template: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (GitHub **Use this template**).
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph authoring [Authoring surface]
+    Obsidian[Obsidian]
+    LLMwiki[LLM wiki / agents]
+    Editor[Any Markdown editor]
+  end
+  subgraph toolchain [Wiki CLI semantic layer]
+    Check[check / lint / fmt]
+    Graph[RDF graph + SHACL + OWL-RL]
+    Query[query / render / export]
+    Publish[build / serve]
+  end
+  subgraph output [Outputs]
+    Site[Static HTML]
+    RDF[JSON-LD / Turtle]
+    SPARQL[Read-only SPARQL endpoint]
+  end
+  authoring -->|"Markdown vault"| toolchain
+  toolchain --> output
+```
+
+Humans and agents author Markdown; `wiki` compiles the vault into an RDF graph, runs integrity and convention checks, answers SPARQL, and emits HTML or RDF serializations.
+
+## Works with Obsidian and LLM wikis
+
+Wiki CLI is **interop-first**: a sidecar semantic layer that watches or ingests an existing vault without owning the editor.
+
+- **Obsidian** � run `wiki check`, `wiki render`, or `wiki serve` from your vault root via Shell Commands. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
+- **LLM wikis** � agents compile unstructured notes into linked Markdown; `wiki` validates and queries that codebase. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
+- **Adoption path** � `wiki init` ? `wiki check` ? `wiki serve` (add `lint`, `query`, and `build` as you need them).
+
+Canonical positioning: [Product positioning](docs/wiki/Product_Positioning.md) in the docs vault.
 
 ## Key features
-- **Modern Packaging**: Configured cleanly with standard `pyproject.toml` optimized for `uv` or `pip`.
-- **Pure Python CLI**: Comprehensive command suite — [`check`](#check), [`lint`](#lint), [`link`](#link), [`fmt`](#fmt), [`query`](#query), [`render`](#render), [`build`](#build), [`serve`](#serve), [`export`](#export), [`init`](#init).
-- **Pretty terminal queries**: Render SPARQL SELECT results as Rich tables with `wiki query --pretty`.
-- **Flexible Frontmatter Parsing**: Supports YAML and JSON frontmatter blocks with standard triple-dash `---` boundaries.
-- **RDF Context Support**: Supports JSON-LD `@context` style namespace, prefix mappings, and settings.
-- **Deductive Reasoning**: Full OWL-RL deductive reasoning expansion powered by `owlrl`.
-- **SHACL Validation**: Rich conformance testing of markdown files against loaded shapes powered by `pyshacl` with JSON and text reporting.
-- **Dynamic SPARQL Rendering**: Scan and execute embedded SPARQL query blocks in markdown files, injecting updated results back into the documents inline.
-- **Typed HTML Rendering**: Build typed pages with optional per-page HTML layouts via `wazoo:layout`, sidebar infoboxes with clickable wiki and external links, and a no-JavaScript metadata pane (JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads).
+
+Three beats, one toolchain:
+
+| Beat | Commands | What you get |
+|------|----------|--------------|
+| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL integrity, vault conventions, mechanical Markdown layout |
+| **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | OWL-RL inference, inline SPARQL tables, JSON-LD and RDF serializations |
+| **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata pane, local preview, optional read-only SPARQL endpoint, wikilink hygiene |
+
+Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich tables in the terminal; YAML/JSON frontmatter and HTML microdata map into the same RDF graph; per-page layouts via `wazoo:layout`.
+
+## Ecosystem templates
+
+| Template | Purpose |
+|----------|---------|
+| [wiki-example](https://github.com/wazootech/wiki-example) | Starter vault � use GitHub **Use this template** |
+| [wiki-sparql-sandbox](https://github.com/wazootech/wiki-sparql-sandbox) ([Pages demo](https://wazootech.github.io/wiki-sparql-sandbox/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
+| Next.js viewer ([#15](https://github.com/wazootech/wiki/issues/15)), Obsidian + Quartz ([#16](https://github.com/wazootech/wiki/issues/16)), Mintlify/Holocron ([#31](https://github.com/wazootech/wiki/issues/31)) | Planned template repos � not in this release |
 
 ## Installation
 
@@ -96,7 +141,7 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
-`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` � restart the server after editing CLI code (even when using `python -m wiki`).
 
 Suggested contributor loop:
 
@@ -166,7 +211,7 @@ link:
   style: markdown
 ```
 
-**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
+**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional � only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
 
 ### `link`
 Suggest missing wikilinks for plain-text page mentions, or repair unambiguous broken internal links. Report-only by default.
@@ -211,7 +256,7 @@ wiki query --pretty "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; 
 
 #### Inspect one document in the terminal
 
-Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout — use [`serve`](#serve) for full page preview.
+Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout � use [`serve`](#serve) for full page preview.
 
 ```bash
 # Pretty-print all triples for a subject
@@ -317,31 +362,31 @@ The `--site-base-url` flag controls the URL prefix for wiki pages. Default is `/
 Output structure (default `--site-base-url /wiki` + `--site-url-style dir`):
 ```
 _site/
-└── wiki/
-    ├── index.html                  # Wiki index at /wiki/
-    ├── Alice/
-    │   └── index.html              # Page at /wiki/Alice/
-    └── Pokemon_Diamond_(copy_1)/
-        └── index.html              # Page at /wiki/Pokemon_Diamond_(copy_1)/
++-- wiki/
+    +-- index.html                  # Wiki index at /wiki/
+    +-- Alice/
+    �   +-- index.html              # Page at /wiki/Alice/
+    +-- Pokemon_Diamond_(copy_1)/
+        +-- index.html              # Page at /wiki/Pokemon_Diamond_(copy_1)/
 ```
 
 With `--site-url-style file`:
 ```
 _site/
-└── wiki/
-    ├── index.html                  # Wiki index at /wiki/
-    ├── Alice.html                  # Page at /wiki/Alice.html
-    └── Pokemon_Diamond_(copy_1).html
++-- wiki/
+    +-- index.html                  # Wiki index at /wiki/
+    +-- Alice.html                  # Page at /wiki/Alice.html
+    +-- Pokemon_Diamond_(copy_1).html
 ```
 
 With `--site-base-url /my-wiki` + `--site-url-style dir`:
 ```
 _site/
-└── my-wiki/
-    ├── index.html                  # Wiki index at /my-wiki/
-    ├── alice/
-    │   └── index.html              # Page at /my-wiki/alice/
-    └── ...
++-- my-wiki/
+    +-- index.html                  # Wiki index at /my-wiki/
+    +-- alice/
+    �   +-- index.html              # Page at /my-wiki/alice/
+    +-- ...
 ```
 
 Page URLs are derived from the source path under `vault.inputs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
@@ -364,9 +409,9 @@ Asset directories are relative to the config file and copied under the base URL 
 
 The HTML builder distinguishes three concepts:
 
-- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
-- **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
-- **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
+- **Site page layout** � `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
+- **Per-page layout** � optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
+- **Wiki article** � any markdown route (for example `wiki/Page_Layouts.md`)
 
 Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `site.layout` (relative to the directory containing `wiki.yaml`):
 
@@ -689,6 +734,6 @@ sparql_service:
 
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
-*   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
+*   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) � Glossary and Domain Model mapping.
 
 
