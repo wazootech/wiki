@@ -1,4 +1,4 @@
-# Wiki CLI (`wazootech-wiki`)
+# Wiki CLI
 
 [![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
 [![npm version](https://img.shields.io/npm/v/wazootech-wiki)](https://www.npmjs.com/package/wazootech-wiki)
