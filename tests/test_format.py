@@ -13,6 +13,7 @@ from wiki.format import (
     normalize_metadata_format,
     normalize_metadata_mode,
     pretty_table_format,
+    process_rdf_format,
     resolve_metadata_pygments_lexer,
     resolve_metadata_view,
     run_query,
@@ -83,6 +84,34 @@ familyName: Smith
             output = markdown_format(result)
             self.assertIn("| givenName | familyName |", output)
             self.assertNotIn("| Givenname |", output)
+
+
+class CompactJsonLdContextTest(unittest.TestCase):
+    def test_compacted_json_ld_context_includes_only_used_prefixes(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+            frontmatter = {
+                "type": "TechArticle",
+                "headline": "wiki query",
+                "description": "Run SPARQL SELECT or CONSTRUCT against the vault graph.",
+            }
+            compacted = process_rdf_format(
+                frontmatter,
+                "Wiki_Subcommand_query",
+                config.context,
+                "json-ld",
+                mode="compacted",
+            )
+            self.assertIsInstance(compacted, dict)
+            context = compacted["@context"]
+            self.assertIn("schema", context)
+            self.assertIn("wiki", context)
+            self.assertNotIn("dc", context)
+            self.assertNotIn("foaf", context)
+            self.assertNotIn("owl", context)
+            self.assertNotIn("sh", context)
+            self.assertNotIn("wazoo", context)
 
 
 class PrettyTableFormatTest(unittest.TestCase):

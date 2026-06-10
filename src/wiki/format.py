@@ -280,6 +280,51 @@ def resolve_metadata_view(fmt: str | None, mode: str | None) -> str:
     return "json-ld-compacted"
 
 
+_JSONLD_CONTEXT_SPECIAL_KEYS = frozenset({"@vocab", "@base", "@language", "@version", "@protected"})
+_JSONLD_QNAME_PREFIX_RE = re.compile(r"^([A-Za-z_][\w.-]*):([^:]+)$")
+
+
+def _collect_jsonld_prefixes(value: Any, prefixes: set[str]) -> None:
+    """Collect CURIE prefixes used in a compacted JSON-LD value tree."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key == "@context":
+                continue
+            match = _JSONLD_QNAME_PREFIX_RE.match(key)
+            if match:
+                prefixes.add(match.group(1))
+            _collect_jsonld_prefixes(item, prefixes)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_jsonld_prefixes(item, prefixes)
+    elif isinstance(value, str):
+        match = _JSONLD_QNAME_PREFIX_RE.match(value)
+        if match:
+            prefixes.add(match.group(1))
+
+
+def _prune_jsonld_context(document: dict[str, Any]) -> dict[str, Any]:
+    """Drop unused namespace bindings from a compacted JSON-LD @context."""
+    context = document.get("@context")
+    if not isinstance(context, dict):
+        return document
+
+    used_prefixes: set[str] = set()
+    for key, value in document.items():
+        if key == "@context":
+            continue
+        _collect_jsonld_prefixes({key: value}, used_prefixes)
+
+    pruned_context = {
+        prefix: uri
+        for prefix, uri in context.items()
+        if prefix in used_prefixes or prefix in _JSONLD_CONTEXT_SPECIAL_KEYS
+    }
+    if pruned_context == context:
+        return document
+    return {**document, "@context": pruned_context}
+
+
 def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded", context: Any = None) -> Any:
     """Serialize an RDF graph in the requested format and display mode."""
     normalized_mode = normalize_metadata_mode(mode)
@@ -297,7 +342,10 @@ def serialize_rdf_graph(graph: Graph, output_format: str, mode: str = "expanded"
                 kwargs["context"] = context_data
                 kwargs["auto_compact"] = True
         serialized = graph.serialize(format="json-ld", **kwargs)
-        return json.loads(serialized)
+        document = json.loads(serialized)
+        if normalized_mode == "compacted" and isinstance(document, dict) and "@context" in document:
+            document = _prune_jsonld_context(document)
+        return document
 
     if output_format == "nquads":
         return _serialize_nquads_graph(graph)
