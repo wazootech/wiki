@@ -28,8 +28,8 @@ wiki = "wiki.__main__:main"
 wikilink = "wiki.mdformat_wikilink"
 
 [tool.setuptools]
-packages = ["wiki"]
 package-dir = {"" = "src"}
+packages = {find = {where = ["src"], include = ["wiki*"]}}
 package-data = {"wiki" = ["templates/*"]}
 
 [tool.uv]
