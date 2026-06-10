@@ -1,6 +1,6 @@
 {
   "name": "wazootech-wiki",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
   "homepage": "https://github.com/wazootech/wiki",
   "bugs": "https://github.com/wazootech/wiki/issues",

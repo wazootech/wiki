@@ -1,5 +1,21 @@
 ﻿# Changelog
 
+## 0.1.13 — 2026-06-10
+
+### Added
+
+- `install-wiki` and `create-wiki` agent skills under `skills/` — install the CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
+
+### Fixed
+
+- setuptools package discovery includes `wiki.schemas`, `wiki.site`, and `wiki.mdit_py_plugins` subpackages
+- Default page layout spacing and copy-button click dead band
+- Compacted JSON-LD output prunes `@context` to prefixes used in the document
+
+### Changed
+
+- Release workflow uses Node 24 for npm OIDC trusted publishing
+
 ## 0.1.11 — 2026-06-09
 
 ### Added
