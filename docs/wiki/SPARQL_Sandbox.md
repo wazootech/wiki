@@ -11,5 +11,5 @@ The **[wiki-sparql-sandbox](https://github.com/wazootech/wiki-sparql-sandbox)** 
 ## Related
 
 - [SPARQL](SPARQL.md)
-- [Product_Positioning](Product_Positioning.md)
+- [Wiki_CLI](Wiki_CLI.md)
 - [Wiki_Subcommand_export](Wiki_Subcommand_export.md)

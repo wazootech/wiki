@@ -1,6 +1,6 @@
 ﻿# Wiki CLI (`wazootech-wiki`)
 
-Semantic knowledge **toolchain** for Markdown vaults: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Product_Positioning.md](docs/wiki/Product_Positioning.md) for public boundaries.
+Semantic knowledge **toolchain** for Markdown vaults: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Wiki_CLI.md](docs/wiki/Wiki_CLI.md) for scope, boundaries, and command reference.
 
 ## Architecture decision: Python core
 
