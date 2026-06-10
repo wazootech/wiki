@@ -43,7 +43,7 @@ Wiki CLI is **interop-first**: a sidecar semantic layer that watches or ingests 
 
 - **Obsidian** — run `wiki check`, `wiki render`, or `wiki serve` from your vault root via Shell Commands. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
 - **LLM wikis** — agents compile unstructured notes into linked Markdown; `wiki` validates and queries that codebase. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
-- **Adoption path** — `wiki init` ? `wiki check` ? `wiki serve` (add `lint`, `query`, and `build` as you need them).
+- **Adoption path** — `wiki init` → `wiki check` → `wiki serve` (add `lint`, `query`, and `build` as you need them).
 
 Canonical docs home: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs vault.
 
