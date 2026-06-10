@@ -269,7 +269,7 @@ a:hover {
   font-size: 2.2em;
   font-weight: 600;
   color: #000000;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
   line-height: 1.25;
 }
 
@@ -281,6 +281,19 @@ a:hover {
 }
 
 /* Article content layout styling */
+#article-top h1 {
+  font-family: inherit;
+  font-size: 1.35em;
+  font-weight: 600;
+  margin: 0 0 16px;
+  line-height: 1.3;
+  border: none;
+}
+
+#article-top h2:first-of-type {
+  margin-top: 24px;
+}
+
 h2 {
   font-family: 'Playfair Display', 'Linux Libertine', Georgia, serif;
   font-size: 1.5em;
@@ -299,7 +312,8 @@ h3 {
 }
 
 p {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  line-height: 1.65;
   color: #202122;
   font-size: 0.95em;
 }
@@ -311,7 +325,7 @@ ul, ol {
 }
 
 li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .vector-tabs {
@@ -326,7 +340,8 @@ li {
 pre {
   background: #1e1e2e;
   color: #cdd6f4;
-  padding: 16px;
+  padding: 18px 20px;
+  line-height: 1.5;
   border-radius: 6px;
   overflow-x: auto;
   margin-bottom: 16px;
@@ -348,12 +363,8 @@ pre code {
   color: inherit;
 }
 
-pre[data-copy] {
-  position: relative;
-  padding-top: 36px;
-}
-
 .code-block {
+  position: relative;
   display: flow-root;
   margin-bottom: 16px;
 }
@@ -364,8 +375,8 @@ pre[data-copy] {
 
 .code-copy-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 1;
   background-color: rgba(248, 249, 250, 0.92);
   color: #202122;
@@ -379,8 +390,8 @@ pre[data-copy] {
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-pre[data-copy]:hover .code-copy-btn,
-pre[data-copy]:focus-within .code-copy-btn,
+.code-block:hover .code-copy-btn,
+.code-block:focus-within .code-copy-btn,
 .code-copy-btn:focus {
   opacity: 1;
 }
@@ -394,6 +405,12 @@ pre[data-copy]:focus-within .code-copy-btn,
   color: #fff !important;
   border-color: #28a745 !important;
   opacity: 1 !important;
+}
+
+hr {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid #a2a9b1;
 }
 
 blockquote {
@@ -483,7 +500,7 @@ th {
   background: #f8f9fa;
   border: 1px solid #a2a9b1;
   border-radius: 4px;
-  padding: 4px;
+  padding: 12px;
   clear: none;
   font-size: 0.85em;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -506,13 +523,14 @@ th {
   display: grid;
   grid-template-columns: 110px 1fr;
   gap: 8px 12px;
+  padding: 0 4px;
 }
 
 .infobox dt {
   font-weight: 600;
   color: #54595d;
   border-bottom: 1px solid #eaecf0;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -521,7 +539,7 @@ th {
   margin: 0;
   min-width: 0;
   border-bottom: 1px solid #eaecf0;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   color: #202122;
   overflow-wrap: anywhere;
 }
@@ -821,7 +839,7 @@ textarea.wiki-textarea:focus {
 /* Template Label badge */
 .layout-label {
   display: inline-block;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   padding: 2px 6px;
   border-radius: 4px;
   background: #e0f2fe;

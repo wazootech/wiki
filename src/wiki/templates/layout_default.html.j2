@@ -252,7 +252,7 @@ function initCodeCopyButtons() {
     btn.setAttribute('aria-label', 'Copy code');
     btn.textContent = 'Copy';
     btn.addEventListener('click', () => copyPreContent(pre, btn));
-    pre.insertBefore(btn, pre.firstChild);
+    wrapper.appendChild(btn);
   });
 }
 
