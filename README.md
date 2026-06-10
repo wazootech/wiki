@@ -5,7 +5,7 @@
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Wiki CLI** is the semantic knowledge **toolchain** for Markdown vaults: validate structure, infer over RDF, query with SPARQL, and publish static sites or serializations. It is a vault **compiler** — not a note app, editor, CMS, or auth layer. Keep writing in Obsidian, an LLM wiki workflow, or any Markdown editor; `wiki` is the machine layer that makes that content trustworthy, queryable, and publishable.
+**Wiki CLI** is the semantic knowledge **toolchain** for Markdown vaults: validate structure, infer over RDF, query with SPARQL, and publish static sites or serializations. It is a vault **compiler** â€” not a note app, editor, CMS, or auth layer. Keep writing in Obsidian, an LLM wiki workflow, or any Markdown editor; `wiki` is the machine layer that makes that content trustworthy, queryable, and publishable.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
@@ -41,9 +41,9 @@ Humans and agents author Markdown; `wiki` compiles the vault into an RDF graph, 
 
 Wiki CLI is **interop-first**: a sidecar semantic layer that watches or ingests an existing vault without owning the editor.
 
-- **Obsidian** — run `wiki check`, `wiki render`, or `wiki serve` from your vault root via Shell Commands. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
-- **LLM wikis** — agents compile unstructured notes into linked Markdown; `wiki` validates and queries that codebase. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
-- **Adoption path** — `wiki init` ? `wiki check` ? `wiki serve` (add `lint`, `query`, and `build` as you need them).
+- **Obsidian** â€” run `wiki check`, `wiki render`, or `wiki serve` from your vault root via Shell Commands. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
+- **LLM wikis** â€” agents compile unstructured notes into linked Markdown; `wiki` validates and queries that codebase. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
+- **Adoption path** â€” `wiki init` ? `wiki check` ? `wiki serve` (add `lint`, `query`, and `build` as you need them).
 
 Canonical positioning: [Product positioning](docs/wiki/Product_Positioning.md) in the docs vault.
 
@@ -63,9 +63,9 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 | Template | Purpose |
 |----------|---------|
-| [wiki-example](https://github.com/wazootech/wiki-example) | Starter vault — use GitHub **Use this template** |
+| [wiki-example](https://github.com/wazootech/wiki-example) | Starter vault â€” use GitHub **Use this template** |
 | [wiki-sparql-sandbox](https://github.com/wazootech/wiki-sparql-sandbox) ([Pages demo](https://wazootech.github.io/wiki-sparql-sandbox/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
-| Next.js viewer ([#15](https://github.com/wazootech/wiki/issues/15)), Obsidian + Quartz ([#16](https://github.com/wazootech/wiki/issues/16)), Mintlify/Holocron ([#31](https://github.com/wazootech/wiki/issues/31)) | Planned template repos — not in this release |
+| Next.js viewer ([#15](https://github.com/wazootech/wiki/issues/15)), Obsidian + Quartz ([#16](https://github.com/wazootech/wiki/issues/16)), Mintlify/Holocron ([#31](https://github.com/wazootech/wiki/issues/31)) | Planned template repos â€” not in this release |
 
 ## Installation
 
@@ -141,7 +141,7 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
-`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` â€” restart the server after editing CLI code (even when using `python -m wiki`).
 
 Suggested contributor loop:
 
@@ -211,7 +211,7 @@ link:
   style: markdown
 ```
 
-**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
+**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional â€” only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
 
 ### `link`
 Suggest missing wikilinks for plain-text page mentions, or repair unambiguous broken internal links. Report-only by default.
@@ -256,7 +256,7 @@ wiki query --pretty "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; 
 
 #### Inspect one document in the terminal
 
-Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout — use [`serve`](#serve) for full page preview.
+Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout â€” use [`serve`](#serve) for full page preview.
 
 ```bash
 # Pretty-print all triples for a subject
@@ -365,7 +365,7 @@ _site/
 +-- wiki/
     +-- index.html                  # Wiki index at /wiki/
     +-- Alice/
-    ¦   +-- index.html              # Page at /wiki/Alice/
+    Â¦   +-- index.html              # Page at /wiki/Alice/
     +-- Pokemon_Diamond_(copy_1)/
         +-- index.html              # Page at /wiki/Pokemon_Diamond_(copy_1)/
 ```
@@ -385,7 +385,7 @@ _site/
 +-- my-wiki/
     +-- index.html                  # Wiki index at /my-wiki/
     +-- alice/
-    ¦   +-- index.html              # Page at /my-wiki/alice/
+    Â¦   +-- index.html              # Page at /my-wiki/alice/
     +-- ...
 ```
 
@@ -409,9 +409,9 @@ Asset directories are relative to the config file and copied under the base URL 
 
 The HTML builder distinguishes three concepts:
 
-- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
-- **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
-- **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
+- **Site page layout** â€” `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html`)
+- **Per-page layout** â€” optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
+- **Wiki article** â€” any markdown route (for example `wiki/Page_Layouts.md`)
 
 Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `site.layout` (relative to the directory containing `wiki.yaml`):
 
@@ -734,6 +734,6 @@ sparql_service:
 
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
-*   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
+*   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) â€” Glossary and Domain Model mapping.
 
 
