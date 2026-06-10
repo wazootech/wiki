@@ -59,7 +59,7 @@ Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options
 
 ## Userland over platform lock-in
 
-Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation.
+Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation. Template repos and editor integrations stay at the edges; core scope is the semantic layer — see [Wiki_CLI](Wiki_CLI.md#toolchain-vs-authoring-surface).
 
 ## Related
 
