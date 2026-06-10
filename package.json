@@ -2,6 +2,10 @@
   "name": "wazootech-wiki",
   "version": "0.1.13",
   "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wazootech/wiki.git"
+  },
   "homepage": "https://github.com/wazootech/wiki",
   "bugs": "https://github.com/wazootech/wiki/issues",
   "license": "MIT",
