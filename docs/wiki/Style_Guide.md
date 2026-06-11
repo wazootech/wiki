@@ -6,7 +6,7 @@ description: Canonical rules for vault filenames, links, prose, frontmatter, sha
 
 # Style guide
 
-This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) vault. [Wiki_Subcommand_check](Wiki_Subcommand_check.md) and [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) vault. [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
 In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose here—link here instead.
 
@@ -18,7 +18,7 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
 
-Configure `vault.filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
+Configure `vault.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
 
 **Enforcer:** `lint.filename_pattern` (warning by default).
 
@@ -38,7 +38,7 @@ Configure `vault.filename_pattern` in [Wiki_Configuration](Wiki_Configuration.md
 
 ## Frontmatter
 
-Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `graph.context` in [Wiki_Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem under `graph.context.wiki`, or `graph.base_iri` when set) — no explicit `id:` is needed.
+Documents start with YAML or JSON between `---` delimiters. Nested keys become RDF blank nodes; CURIEs expand using `graph.context` in [Wiki Configuration](Wiki_Configuration.md). The document's RDF subject is inferred from the file path (case-preserved stem under `graph.context.wiki`, or `graph.base_iri` when set) — no explicit `id:` is needed.
 
 Example person page:
 
@@ -52,7 +52,7 @@ familyName: Smith
 
 Unprefixed frontmatter keys resolve to **schema.org** by default (for example `label` → `schema:label`). Use an explicit prefix for other vocabularies (`rdfs:`, `sh:`, `owl:`, …).
 
-You may omit `type` when `graph.implicit_types` is set in `wiki.yaml` (see [Wiki_Configuration](Wiki_Configuration.md)); the CLI applies those CURIEs at graph build time. Explicit `type` in frontmatter always wins under `implicit_types_policy: fallback`.
+You may omit `type` when `graph.implicit_types` is set in `wiki.yaml` (see [Wiki Configuration](Wiki_Configuration.md)); the CLI applies those CURIEs at graph build time. Explicit `type` in frontmatter always wins under `implicit_types_policy: fallback`.
 
 Example TechArticle page:
 
@@ -93,13 +93,18 @@ When writing \`
 
 ## SHACL shapes
 
-Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software_Application_Shape](Software_Application_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki_Subcommand_check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
+Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki Subcommand check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
 
 ## Internal links
 
 Link to other vault pages with standard Markdown links. Use the page stem (filename without `.md`, case preserved), for example `Page_Name.md` or `Display text` pointing at `Page_Name.md`.
 
 GFM relative links to `.md` files are also accepted and resolve to the same routes.
+
+To maintain compatibility with Wikipedia-style filenames and avoid routing ambiguities:
+- **Use underscores in link targets:** When linking to files with underscores in their names, preserve the underscores in the link path (e.g., `[Opal Security](Opal_Security.md)`). Do not replace them with spaces or percent-encoding (`Opal%20Security.md`).
+- **Use spaces in display text:** Always use spaces instead of underscores in the visible display text of the link (e.g., write `[Opal Security](Opal_Security.md)`, not `[Opal_Security](Opal_Security.md)` or `[Opal_Security.md](Opal_Security.md)`).
+- **Avoid spaces in paths:** The parser and linters enforce that paths do not contain spaces.
 
 Prefer canonical relative Markdown links in source; they read cleanly in prose and render consistently.
 
@@ -109,7 +114,7 @@ All internal links must resolve to existing documents in the wiki.
 
 Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in vault prose.
 
-Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
+Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page_Name.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
 
 ## References (external standards)
 
@@ -149,7 +154,7 @@ ORDER BY ?class
 
 <!-- sparql:end -->
 
-Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki_Subcommand_render](Wiki_Subcommand_render.md) and [Graph_Cache](Graph_Cache.md).
+Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki Subcommand render](Wiki_Subcommand_render.md) and [Graph Cache](Graph_Cache.md).
 
 ## HTML [microdata](Microdata.md)
 
@@ -157,13 +162,13 @@ The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and ad
 
 ## Page layouts (HTML)
 
-For [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yaml`. See [Wiki_Page_Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
+For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yaml`. See [Wiki Page Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
 
 ## Related
 
 - [SHACL](SHACL.md) — shapes language background
 - [SPARQL](SPARQL.md) — query language background
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
-- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — inline SPARQL tables
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md) — dump frontmatter as RDF
-- [Design_Philosophies](Design_Philosophies.md) — CLI output conventions (not vault prose)
+- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
+- [Wiki Subcommand render](Wiki_Subcommand_render.md) — inline SPARQL tables
+- [Wiki Subcommand export](Wiki_Subcommand_export.md) — dump frontmatter as RDF
+- [Design Philosophies](Design_Philosophies.md) — CLI output conventions (not vault prose)

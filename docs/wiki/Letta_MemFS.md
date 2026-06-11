@@ -6,7 +6,7 @@ description: Git-backed markdown memory for Letta Code agents with a special sys
 
 # Letta MemFS
 
-**MemFS** (memory filesystem), also called a **context repository** in Letta marketing, is [Letta Code](https://docs.letta.com/letta-code/)’s git-backed memory system. An agent’s long-term state lives as a tree of markdown files in a local Git repository—human-readable, diffable, and versioned—instead of opaque memory blocks or a proprietary vector store alone. It is one variant of the broader [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md) pattern and addresses the same agent-memory problem as the [LLM_Wiki](LLM_Wiki.md) pattern and [Supermemory_SMFS](Supermemory_SMFS.md), but optimizes for **deterministic, personalized coding agents** with clear always-on vs on-demand context.
+**MemFS** (memory filesystem), also called a **context repository** in Letta marketing, is [Letta Code](https://docs.letta.com/letta-code/)’s git-backed memory system. An agent’s long-term state lives as a tree of markdown files in a local Git repository—human-readable, diffable, and versioned—instead of opaque memory blocks or a proprietary vector store alone. It is one variant of the broader [Agent Memory Filesystems](Agent_Memory_Filesystems.md) pattern and addresses the same agent-memory problem as the [LLM Wiki](LLM_Wiki.md) pattern and [Supermemory SMFS](Supermemory_SMFS.md), but optimizes for **deterministic, personalized coding agents** with clear always-on vs on-demand context.
 
 Official reference: [MemFS | Letta Docs](https://docs.letta.com/letta-code/memfs). Overview: [Letta Code memory](https://docs.letta.com/letta-code/memory/). Announcement: [Context repositories blog](https://www.letta.com/blog/context-repositories).
 
@@ -39,11 +39,11 @@ description: Coding preferences learned during /init
 - **Agent-driven hierarchy** — Unlike SMFS’s heavier background graph updates, MemFS relies on the agent (and you, in an editor) to curate structure over time.
 - **Human-in-the-loop** — Open the memory folder in VS Code or Cursor and edit markdown directly; Git history provides audit and rollback.
 
-## Comparison with [Wiki CLI](Wiki_CLI.md) and [Supermemory_SMFS](Supermemory_SMFS.md)
+## Comparison with [Wiki CLI](Wiki_CLI.md) and [Supermemory SMFS](Supermemory_SMFS.md)
 
-Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [Wiki CLI](Wiki_CLI.md) when you want a **shared, schema-checked wiki** with [Second_Brain](Second_Brain.md)-style linking and [semantic web](Semantic_Web.md) tooling independent of a single agent runtime.
+Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [Wiki CLI](Wiki_CLI.md) when you want a **shared, schema-checked wiki** with [Second Brain](Second_Brain.md)-style linking and [semantic web](Semantic_Web.md) tooling independent of a single agent runtime.
 
-For the full cross-tool comparison, see [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
+For the full cross-tool comparison, see [Agent Memory Filesystems](Agent_Memory_Filesystems.md).
 
 ## Sources
 

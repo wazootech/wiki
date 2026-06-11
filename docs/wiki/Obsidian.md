@@ -10,4 +10,4 @@ description: A powerful and extensible knowledge base that works on top of a loc
 
 ## Integration
 
-For details on running the [Wiki CLI](Wiki_CLI.md) directly from Obsidian, see [Obsidian_Integration](Obsidian_Integration.md).
+For details on running the [Wiki CLI](Wiki_CLI.md) directly from Obsidian, see [Obsidian Integration](Obsidian_Integration.md).

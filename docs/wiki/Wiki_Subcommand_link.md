@@ -44,7 +44,7 @@ Missing-link suggestions skip:
 
 Broken-link repair (`--fix-broken`) only runs when:
 
-- The target page rename is listed in `link.renames` (see [Wiki_Configuration](Wiki_Configuration.md))
+- The target page rename is listed in `link.renames` (see [Wiki Configuration](Wiki_Configuration.md))
 - A unique fuzzy route match exists among vault pages
 - A unique fuzzy heading fragment exists on the target page
 
@@ -55,11 +55,11 @@ It never auto-creates pages or deletes links. Asset links, metadata CURIEs, and 
 - **`wiki lint`** is the convention lane — broken links, filename pattern, heading style, and link style. It reports but does not edit files; repair is `wiki link --fix-broken`. Missing wikilinks are optional enrichment, not a lint violation.
 - **`wiki check`** is the integrity lane — SHACL, routes, collisions, layout frontmatter. It does not scan prose for broken links.
 - **`wiki link`** requires explicit `--apply` or `--fix-broken` because suggestions are heuristic and repairs are conservative by design.
-- See [Design_Philosophies](Design_Philosophies.md#check-lint-fmt-and-link) for the full lane model.
+- See [Design Philosophies](Design_Philosophies.md#check-lint-fmt-and-link) for the full lane model.
 
 ## Related
 
-- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention lane (`lint.broken_links`)
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity lane (SHACL, routes, layout)
-- [Style_Guide](Style_Guide.md) — internal link conventions
-- [Wiki_CLI](Wiki_CLI.md)
+- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention lane (`lint.broken_links`)
+- [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity lane (SHACL, routes, layout)
+- [Style Guide](Style_Guide.md) — internal link conventions
+- [Wiki CLI](Wiki_CLI.md)

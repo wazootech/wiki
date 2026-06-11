@@ -8,7 +8,7 @@ description: Integrity checks — SHACL validation, route safety, and layout fro
 
 Run **integrity** checks on the vault: strict **SHACL** validation, route safety, output collisions, and layout frontmatter contracts.
 
-Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](Design_Philosophies.md).
+Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
 ## Usage
 
@@ -48,7 +48,7 @@ wiki check --strict
 
 Default: `missing_layout_file` is `error`.
 
-Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md).
+Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki Subcommand lint](Wiki_Subcommand_lint.md).
 
 ### Scoped mode (one or more FILE args)
 
@@ -69,6 +69,6 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 
 ## Related
 
-- [Wiki_Configuration](Wiki_Configuration.md) — `check.*` severities
-- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention lane
-- [Style_Guide](Style_Guide.md)
+- [Wiki Configuration](Wiki_Configuration.md) — `check.*` severities
+- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention lane
+- [Style Guide](Style_Guide.md)

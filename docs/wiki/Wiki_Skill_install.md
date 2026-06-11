@@ -16,7 +16,7 @@ Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install
 npx skills add wazootech/wiki@wiki-install -g -y
 ```
 
-`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki_Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
 
 ## When to use it
 
@@ -37,7 +37,7 @@ This skill **only** installs and verifies the CLI. It does not suggest `wiki ini
 
 ## Related
 
-- [Getting_Started](Getting_Started.md) — install and daily commands for humans
-- [Wiki_Skill_create](Wiki_Skill_create.md) — scaffold a workspace (requires CLI on PATH)
-- [Wiki_Skills](Wiki_Skills.md) — all agent skills
-- [Procedural_Knowledge](Procedural_Knowledge.md)
+- [Getting Started](Getting_Started.md) — install and daily commands for humans
+- [Wiki Skill create](Wiki_Skill_create.md) — scaffold a workspace (requires CLI on PATH)
+- [Wiki Skills](Wiki_Skills.md) — all agent skills
+- [Procedural Knowledge](Procedural_Knowledge.md)

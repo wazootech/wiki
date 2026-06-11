@@ -46,4 +46,4 @@ python -m pip install --upgrade wazootech-wiki
 
 ## Related
 
-- [Getting_Started](Getting_Started.md)
+- [Getting Started](Getting_Started.md)

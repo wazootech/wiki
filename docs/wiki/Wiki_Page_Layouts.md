@@ -8,7 +8,7 @@ description: Wiki page layout files for build and serve output.
 
 Wiki CLI builds each article into HTML using a **page layout** file with `{placeholder}` tokens. Two levels apply:
 
-1. **Site default** — `site.layout` in [Wiki_Configuration](Wiki_Configuration.md) (usually `layouts/default.html`)
+1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (usually `layouts/default.html`)
 1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file
 
 ## `site.layout`
@@ -20,7 +20,7 @@ site:
   layout: layouts/default.html
 ```
 
-`wiki init` seeds `layouts/default.html` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `vault.assets`; see [Wiki_Configuration](Wiki_Configuration.md#custom-css).
+`wiki init` seeds `layouts/default.html` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `vault.assets`; see [Wiki Configuration](Wiki_Configuration.md#custom-css).
 
 ## `wazoo:layout`
 
@@ -39,10 +39,10 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 ## Placeholders
 
-Layout HTML files use the tokens documented in [Wiki_Configuration](Wiki_Configuration.md#page-layout), including `{layout_class}`, `{layout_label}`, `{infobox_html}`, and `{page_content}`. Custom logos and favicons are layout plus `vault.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
+Layout HTML files use the tokens documented in [Wiki Configuration](Wiki_Configuration.md#page-layout), including `{layout_class}`, `{layout_label}`, `{infobox_html}`, and `{page_content}`. Custom logos and favicons are layout plus `vault.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 
 ## Related
 
-- [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [Style_Guide](Style_Guide.md)
+- [Wiki Subcommand build](Wiki_Subcommand_build.md)
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md)
+- [Style Guide](Style_Guide.md)

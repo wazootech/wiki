@@ -25,13 +25,13 @@ wiki lint
 wiki serve
 ```
 
-See [Getting_Started](Getting_Started.md) for a full walkthrough.
+See [Getting Started](Getting_Started.md) for a full walkthrough.
 
 ## What wiki is
 
 - The **compiler / validator / query engine** for Markdown knowledge bases with semantic frontmatter
 - An **OOTB wiki builder** — links, navigation, SHACL checks, SPARQL, and static HTML from a folder of `.md` files
-- A **sidecar memory layer** — ingest or watch an existing vault without owning the editor
+- A **memory layer** — ingest or watch an existing vault without owning the editor
 - **Interop-first** — works alongside [Obsidian](Obsidian_Integration.md), [LLM Wiki](LLM_Wiki.md) setups, and any Markdown editor
 
 Adoption path: `wiki init` → `wiki check` → `wiki serve`, then add `lint`, `query`, `render`, and `build` as the vault matures.
@@ -44,6 +44,13 @@ Adoption path: `wiki init` → `wiki check` → `wiki serve`, then add `lint`, `
 - An **auth layer** — local-first CLI and static publish; see deferred scope in [ecosystem templates](#ecosystem-templates) below
 
 Humans and agents keep writing where they already write. `wiki` makes that content **trustworthy** (SHACL + conventions), **searchable** (SPARQL + OWL-RL), and **publishable** (static HTML, JSON-LD, Turtle, optional read-only SPARQL over `wiki serve`).
+
+## Memory layer and ingestion
+
+Rather than owning your editor or data store, the Wiki CLI functions as a **read-only memory layer** over your vault. It parses, indexes, and queries the Markdown documents on your filesystem without mutating them or locking you into a proprietary format.
+
+- **Ingestion:** The CLI reads YAML/JSON frontmatter and HTML microdata from your files, compiling them into an in-memory RDF graph that can be queried with SPARQL or verified against SHACL shapes.
+- **Watching:** Running `wiki serve --watch` instructs the CLI to watch the vault directory. Any edits you make in your preferred editor are immediately processed, updating the graph in the background and keeping your preview server synchronized.
 
 ## Toolchain vs authoring surface
 
@@ -59,7 +66,7 @@ This separation is intentional: the strongest differentiator is the **machine la
 
 ### Obsidian
 
-Run `wiki` against the folder that contains `wiki.yaml`. Use Shell Commands for on-save `wiki check`, hotkey `wiki render`, or `wiki serve --watch` for preview. Details: [Obsidian integration](Obsidian_Integration.md).
+Run `wiki` against the folder that contains `wiki.yaml`. Use Shell Commands for on-save `wiki check`, hotkey `wiki render`, or `wiki serve --watch` for preview. Details: [Obsidian integration](Obsidian_Integration.md) and [Dataview integration](Dataview_Integration.md).
 
 ### LLM wikis
 
@@ -67,7 +74,7 @@ Treat the vault as a compounding codebase agents maintain over time. Structured 
 
 ### Plain Markdown
 
-No Obsidian or agent stack required. `wiki init` scaffolds a vault; conventions are documented in [Style_Guide](Style_Guide.md).
+No Obsidian or agent stack required. `wiki init` scaffolds a vault; conventions are documented in [Style Guide](Style_Guide.md).
 
 ## Three beats of the CLI
 
@@ -89,28 +96,28 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 ## Features
 
-- **Check** — SHACL integrity, route safety, layout frontmatter ([Wiki_Subcommand_check](Wiki_Subcommand_check.md))
-- **Lint** — broken links, filename pattern, and heading conventions ([Wiki_Subcommand_lint](Wiki_Subcommand_lint.md))
-- **Link** — suggest missing wikilinks and repair broken internal links ([Wiki_Subcommand_link](Wiki_Subcommand_link.md))
-- **Fmt** — mdformat for markdown ([Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md))
-- **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [Graph_Cache](Graph_Cache.md))
-- **Render** — live tables from inline SPARQL ([Wiki_Subcommand_render](Wiki_Subcommand_render.md))
-- **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki_Subcommand_build](Wiki_Subcommand_build.md), [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint))
-- **Export** — JSON-LD and RDF serializations ([Wiki_Subcommand_export](Wiki_Subcommand_export.md))
-- **Init** — scaffold `wiki.yaml` ([Wiki_Subcommand_init](Wiki_Subcommand_init.md))
-- **Upgrade** — PyPI updates ([Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md))
+- **Check** — SHACL integrity, route safety, layout frontmatter ([Wiki Subcommand check](Wiki_Subcommand_check.md))
+- **Lint** — broken links, filename pattern, and heading conventions ([Wiki Subcommand lint](Wiki_Subcommand_lint.md))
+- **Link** — suggest missing wikilinks and repair broken internal links ([Wiki Subcommand link](Wiki_Subcommand_link.md))
+- **Fmt** — mdformat for markdown ([Wiki Subcommand fmt](Wiki_Subcommand_fmt.md))
+- **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki Subcommand query](Wiki_Subcommand_query.md), [Graph Cache](Graph_Cache.md))
+- **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
+- **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki Subcommand build](Wiki_Subcommand_build.md), [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
+- **Export** — JSON-LD and RDF serializations ([Wiki Subcommand export](Wiki_Subcommand_export.md))
+- **Init** — scaffold `wiki.yaml` ([Wiki Subcommand init](Wiki_Subcommand_init.md))
+- **Upgrade** — PyPI updates ([Wiki Subcommand upgrade](Wiki_Subcommand_upgrade.md))
 
 ## Agent skills
 
-Procedural knowledge for coding agents: [Wiki_Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-best-practices` in the repository).
+Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-best-practices` in the repository).
 
 ## Start here
 
-- [Getting_Started](Getting_Started.md) — install, `wiki init`, first `check` and `serve`
-- [Wiki_Configuration](Wiki_Configuration.md) — `wiki.yaml` options
-- [Style_Guide](Style_Guide.md) — frontmatter, shapes, internal links, SPARQL blocks
-- [Graph_Cache](Graph_Cache.md) — in-process RDF graph reuse
-- [Design_Philosophies](Design_Philosophies.md) — silence is golden, pipes, flat commands
+- [Getting Started](Getting_Started.md) — install, `wiki init`, first `check` and `serve`
+- [Wiki Configuration](Wiki_Configuration.md) — `wiki.yaml` options
+- [Style Guide](Style_Guide.md) — frontmatter, shapes, internal links, SPARQL blocks
+- [Graph Cache](Graph_Cache.md) — in-process RDF graph reuse
+- [Design Philosophies](Design_Philosophies.md) — silence is golden, pipes, flat commands
 
 ## Global Options
 
@@ -155,18 +162,18 @@ SELECT ?command ?description WHERE {
 ORDER BY ?command
 ```
 
-| Command                                               | Description                                                                                    |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [Wiki_Subcommand_build](Wiki_Subcommand_build.md)     | Generate a static HTML site from the vault.                                                    |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md)     | Integrity checks — SHACL validation, route safety, and layout frontmatter.                     |
-| [Wiki_Subcommand_export](Wiki_Subcommand_export.md)   | Export document frontmatter as RDF or JSON-LD.                                                 |
-| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md)         | Format markdown vault pages using mdformat with wikilink preservation.                         |
-| [Wiki_Subcommand_link](Wiki_Subcommand_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links.                        |
-| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md)       | Convention audits for broken links, filename patterns, heading style, and internal link style. |
-| [Wiki_Subcommand_query](Wiki_Subcommand_query.md)     | Run SPARQL SELECT or CONSTRUCT against the vault graph.                                        |
-| [Wiki_Subcommand_render](Wiki_Subcommand_render.md)   | Update inline SPARQL result tables in markdown files.                                          |
-| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)     | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                |
-| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki.                                             |
+| command | description |
+| --- | --- |
+| [Wiki_Subcommand_build](Wiki_Subcommand_build.md) | Generate a static HTML site from the vault. |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, route safety, and layout frontmatter. |
+| [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
+| [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown vault pages using mdformat with wikilink preservation. |
+| [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
+| [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
+| [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the vault graph. |
+| [Wiki_Subcommand_render](Wiki_Subcommand_render.md) | Update inline SPARQL result tables in markdown files. |
+| [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint. |
+| [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki. |
 
 <!-- sparql:end -->
 
@@ -174,18 +181,18 @@ Global flags: `-c`, `--vault-inputs`.
 
 ## Publishing
 
-- [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md) — CI workflow for this site
-- [Obsidian_Integration](Obsidian_Integration.md) — Shell Commands plugin workflows
+- [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) — CI workflow for this site
+- [Obsidian Integration](Obsidian_Integration.md) — Shell Commands plugin workflows
 
 ## Design
 
-The CLI follows a flat, scriptable surface and [Design_Philosophies](Design_Philosophies.md) (silent success, composable stdout).
+The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout).
 
 ## Pattern context
 
-This repository implements the [LLM_Wiki](LLM_Wiki.md) pattern for [Personal_Knowledge](Personal_Knowledge.md) vaults. Examples in the wild include [Farzapedia](Farzapedia.md) and coverage from Andrej Karpathy.
+This repository implements the [LLM Wiki](LLM_Wiki.md) pattern for [Personal Knowledge](Personal_Knowledge.md) vaults. Examples in the wild include [Farzapedia](Farzapedia.md) and coverage from Andrej Karpathy.
 
-Similar **agent memory filesystem** approaches include [Supermemory_SMFS](Supermemory_SMFS.md), [Letta_MemFS](Letta_MemFS.md), and [Agent_Memory_Filesystems](Agent_Memory_Filesystems.md).
+Similar **agent memory filesystem** approaches include [Supermemory SMFS](Supermemory_SMFS.md), [Letta MemFS](Letta_MemFS.md), and [Agent Memory Filesystems](Agent_Memory_Filesystems.md).
 
 ## Repository
 
@@ -194,5 +201,5 @@ Similar **agent memory filesystem** approaches include [Supermemory_SMFS](Superm
 
 ## Background
 
-- [Semantic_Web](Semantic_Web.md) — RDF, Turtle, OWL, and related formats
-- [Software_Application_Shape](Software_Application_Shape.md) — SHACL shape for `SoftwareApplication` pages (including this page)
+- [Semantic Web](Semantic_Web.md) — RDF, Turtle, OWL, and related formats
+- [Software Application Shape](Software_Application_Shape.md) — SHACL shape for `SoftwareApplication` pages (including this page)

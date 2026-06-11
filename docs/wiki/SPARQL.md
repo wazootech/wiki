@@ -8,7 +8,7 @@ description: Standard query language and protocol for RDF.
 
 **SPARQL** (Recursive acronym for SPARQL Protocol and RDF Query Language) is an [RDF](RDF.md) query language—that is, a semantic query language for databases—able to retrieve and manipulate data stored in RDF format.
 
-In the [Wiki CLI](Wiki_CLI.md), SPARQL powers [Wiki_Subcommand_query](Wiki_Subcommand_query.md), inline tables refreshed by [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and (when enabled) a read-only HTTP endpoint on [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+In the [Wiki CLI](Wiki_CLI.md), SPARQL powers [Wiki Subcommand query](Wiki_Subcommand_query.md), inline tables refreshed by [Wiki Subcommand render](Wiki_Subcommand_render.md), and (when enabled) a read-only HTTP endpoint on [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
 
 ## Common prefixes
 
@@ -22,7 +22,7 @@ The [Wiki CLI](Wiki_CLI.md) automatically binds your namespace prefixes dynamica
 
 ### Simple SELECT query
 
-Extracts specific properties from your notes. For people, prefer `schema:givenName` and `schema:familyName` (see [Style_Guide](Style_Guide.md)):
+Extracts specific properties from your notes. For people, prefer `schema:givenName` and `schema:familyName` (see [Style Guide](Style_Guide.md)):
 
 ```sparql
 PREFIX schema: <https://schema.org/>
@@ -75,11 +75,11 @@ ORDER BY ?class
 
 ## Related
 
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc queries from the terminal
-- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — refresh inline SPARQL result tables in markdown
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
-- [SPARQL_Sandbox](SPARQL_Sandbox.md) — external YASGUI template repo
-- [Style_Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block conventions
+- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc queries from the terminal
+- [Wiki Subcommand render](Wiki_Subcommand_render.md) — refresh inline SPARQL result tables in markdown
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
+- [SPARQL Sandbox](SPARQL_Sandbox.md) — external YASGUI template repo
+- [Style Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block conventions
 
 ## References
 

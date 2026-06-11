@@ -12,7 +12,7 @@ Find \`
 
 `regions in markdown, run the embedded query against the vault graph, and rewrite the table (or`(no results)\`) in place.
 
-Silent on success by default. See [Design_Philosophies](Design_Philosophies.md).
+Silent on success by default. See [Design Philosophies](Design_Philosophies.md).
 
 ## Usage
 
@@ -41,12 +41,12 @@ wiki render --cache
 
 ## Block format
 
-See [Style_Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper and fenced `sparql` code block.
+See [Style Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper and fenced `sparql` code block.
 
 ## Related
 
 - [SPARQL](SPARQL.md)
-- [Style_Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block format
-- [Graph_Cache](Graph_Cache.md)
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
-- [Wiki_Subcommand_build](Wiki_Subcommand_build.md) — `wiki build --render`
+- [Style Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block format
+- [Graph Cache](Graph_Cache.md)
+- [Wiki Subcommand query](Wiki_Subcommand_query.md)
+- [Wiki Subcommand build](Wiki_Subcommand_build.md) — `wiki build --render`

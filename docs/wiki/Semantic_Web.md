@@ -11,13 +11,13 @@ The **Semantic Web** is an extension of the World Wide Web through standards set
 To enable this, the Semantic Web stack relies on a group of technologies, including:
 
 - [RDF](RDF.md)
-- [RDF_XML](RDF_XML.md)
+- [RDF XML](RDF_XML.md)
 - [Turtle](Turtle.md)
-- [JSON_LD](JSON_LD.md)
+- [JSON LD](JSON_LD.md)
 - [Notation3](Notation3.md)
-- [N_Triples](N_Triples.md)
+- [N Triples](N_Triples.md)
 - [TriG](TriG.md)
-- [N_Quads](N_Quads.md)
+- [N Quads](N_Quads.md)
 - [XML](XML.md)
 - [SPARQL](SPARQL.md)
 - [OWL](OWL.md)
@@ -27,8 +27,8 @@ By adding semantic metadata to content, search engines and agents can perform re
 
 ## Related
 
-- [LLM_Wiki](LLM_Wiki.md) — applied pattern in this repository
-- [Wiki_CLI](Wiki_CLI.md) — vault tooling built on this stack
+- [LLM Wiki](LLM_Wiki.md) — applied pattern in this repository
+- [Wiki CLI](Wiki_CLI.md) — vault tooling built on this stack
 
 ## References
 

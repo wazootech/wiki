@@ -32,10 +32,10 @@ Use `wiki export -f trig` when you want RDF serialized as TriG. Built pages also
 
 - [RDF](RDF.md)
 - [Turtle](Turtle.md)
-- [N_Triples](N_Triples.md)
-- [N_Quads](N_Quads.md)
+- [N Triples](N_Triples.md)
+- [N Quads](N_Quads.md)
 - [Notation3](Notation3.md)
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+- [Wiki Subcommand export](Wiki_Subcommand_export.md)
 
 ## References
 

@@ -32,7 +32,7 @@ Default URL with config `site.base_url: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
 ## SPARQL endpoint
 
-When `sparql_service.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `sparql_service.path` (default `/api/sparql`). See [Wiki_Configuration](Wiki_Configuration.md#serve-api) for config keys, opt-in defaults, and path collision rules.
+When `sparql_service.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `sparql_service.path` (default `/api/sparql`). See [Wiki Configuration](Wiki_Configuration.md#serve-api) for config keys, opt-in defaults, and path collision rules.
 
 A bare `GET` on that path (no query string) returns a [SPARQL 1.1 Service Description](https://www.w3.org/TR/sparql11-service-description/) document (OWL-RL as the default entailment profile, supported result formats, default dataset triple count when available). Content negotiation applies: `text/turtle`, `application/rdf+xml`, or `application/n-triples`.
 
@@ -83,23 +83,23 @@ Wiki-specific query parameters (GET query string, or form body on `application/x
 - `inference=true|false` — OWL-RL inference (default `true`; mirrors `wiki query` unless `--no-inference`)
 - `reload=true|false` — rebuild the in-memory graph before executing (default `false`)
 
-The endpoint reuses the same query engine as [Wiki_Subcommand_query](Wiki_Subcommand_query.md).
+The endpoint reuses the same query engine as [Wiki Subcommand query](Wiki_Subcommand_query.md).
 
 For safety, the endpoint is **disabled by default**. Its path is validated at startup and rejected if it would shadow page routes or the `__watch` endpoint.
 
 ## Wiki page layout
 
-The same `site.layout` from [Wiki_Configuration](Wiki_Configuration.md#page-layout) applies to the dev server.
+The same `site.layout` from [Wiki Configuration](Wiki_Configuration.md#page-layout) applies to the dev server.
 
 ## Metadata view
 
-The live page metadata panel supports RDF formats without JavaScript: compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. A compact **Format** chip row selects the view. Set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). See [Content_Negotiation](Content_Negotiation.md) for the HTTP `Accept` model.
+The live page metadata panel supports RDF formats without JavaScript: compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. A compact **Format** chip row selects the view. Set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). See [Content Negotiation](Content_Negotiation.md) for the HTTP `Accept` model.
 
 ## Related
 
-- [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md)
+- [Wiki Subcommand build](Wiki_Subcommand_build.md)
+- [Wiki Subcommand query](Wiki_Subcommand_query.md)
 - [SPARQL](SPARQL.md)
-- [Graph_Cache](Graph_Cache.md)
-- [Wiki_Configuration](Wiki_Configuration.md#serve-api)
-- [Content_Negotiation](Content_Negotiation.md)
+- [Graph Cache](Graph_Cache.md)
+- [Wiki Configuration](Wiki_Configuration.md#serve-api)
+- [Content Negotiation](Content_Negotiation.md)

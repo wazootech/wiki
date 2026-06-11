@@ -8,11 +8,11 @@ description: Shapes Constraint Language for validating RDF graphs.
 
 The **Shapes Constraint Language (SHACL)** is a W3C recommendation for validating [RDF](RDF.md) graphs against a set of conditions. These conditions are provided as shapes and other constructs expressed in the form of an RDF graph itself.
 
-In this vault, SHACL is used to enforce structure via the [Wiki_CLI](Wiki_CLI.md) validation engine.
+In this vault, SHACL is used to enforce structure via the [Wiki CLI](Wiki_CLI.md) validation engine.
 
 ## Defining custom SHACL shapes (validation)
 
-SHACL shapes load from the vault graph. Add a dedicated `shapes/` tree to [Wiki_Configuration](Wiki_Configuration.md) `vault.inputs` so shape documents stay separate from prose pages:
+SHACL shapes load from the vault graph. Add a dedicated `shapes/` tree to [Wiki Configuration](Wiki_Configuration.md) `vault.inputs` so shape documents stay separate from prose pages:
 
 ```yaml
 vault:
@@ -21,9 +21,9 @@ vault:
     - shapes
 ```
 
-Markdown and RDF files under `shapes/` compile into the same vault graph as wiki articles; `wiki check` extracts `sh:NodeShape` triples and runs PySHACL against every document. This repository keeps shapes alongside articles under `wiki/` instead ([Software_Application_Shape](Software_Application_Shape.md)); both layouts work.
+Markdown and RDF files under `shapes/` compile into the same vault graph as wiki articles; `wiki check` extracts `sh:NodeShape` triples and runs PySHACL against every document. This repository keeps shapes alongside articles under `wiki/` instead ([Software Application Shape](Software_Application_Shape.md)); both layouts work.
 
-To constrain a class (for example `schema:Project`), create `shapes/Project_Shape.md` using a [Style_Guide](Style_Guide.md) Wikipedia-style filename and frontmatter like [Software_Application_Shape](Software_Application_Shape.md):
+To constrain a class (for example `schema:Project`), create `shapes/Project_Shape.md` using a [Style Guide](Style_Guide.md) Wikipedia-style filename and frontmatter like [Software Application Shape](Software_Application_Shape.md):
 
 ```yaml
 ---
@@ -50,11 +50,11 @@ Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is liste
 
 ## Related
 
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — PySHACL validation
-- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — prose and link conventions (separate from shapes)
-- [Style_Guide](Style_Guide.md) — shape authoring and filenames
-- [Software_Application_Shape](Software_Application_Shape.md) — example `sh:NodeShape`
-- [Wiki_Configuration](Wiki_Configuration.md) — `vault.inputs` and shapes layout
+- [Wiki Subcommand check](Wiki_Subcommand_check.md) — PySHACL validation
+- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — prose and link conventions (separate from shapes)
+- [Style Guide](Style_Guide.md) — shape authoring and filenames
+- [Software Application Shape](Software_Application_Shape.md) — example `sh:NodeShape`
+- [Wiki Configuration](Wiki_Configuration.md) — `vault.inputs` and shapes layout
 
 ## References
 

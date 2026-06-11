@@ -6,45 +6,27 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-**Wiki CLI** is the semantic knowledge **toolchain** for Markdown vaults: validate structure, infer over RDF, query with SPARQL, and publish static sites or serializations. It is a vault **compiler** — not a note app, editor, CMS, or auth layer. Keep writing in Obsidian, an LLM wiki workflow, or any Markdown editor; `wiki` is the machine layer that makes that content trustworthy, queryable, and publishable.
+**Wiki CLI** is a command-line toolchain and compiler for Markdown vaults. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
 Starter template: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (GitHub **Use this template**).
 
-## Architecture
 
-```mermaid
-flowchart LR
-  subgraph authoring [Authoring surface]
-    Obsidian[Obsidian]
-    LLMwiki[LLM wiki / agents]
-    Editor[Any Markdown editor]
-  end
-  subgraph toolchain [Wiki CLI semantic layer]
-    Check[check / lint / fmt]
-    Graph[RDF graph + SHACL + OWL-RL]
-    Query[query / render / export]
-    Publish[build / serve]
-  end
-  subgraph output [Outputs]
-    Site[Static HTML]
-    RDF[JSON-LD / Turtle]
-    SPARQL[Read-only SPARQL endpoint]
-  end
-  authoring -->|"Markdown vault"| toolchain
-  toolchain --> output
-```
+## Use cases and integrations
 
-Humans and agents author Markdown; `wiki` compiles the vault into an RDF graph, runs integrity and convention checks, answers SPARQL, and emits HTML or RDF serializations.
+Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside your existing vault without owning the editor.
 
-## Works with Obsidian and LLM wikis
-
-Wiki CLI is **interop-first**: a sidecar semantic layer that watches or ingests an existing vault without owning the editor.
-
-- **Obsidian** — run `wiki check`, `wiki render`, or `wiki serve` from your vault root via Shell Commands. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
-- **LLM wikis** — agents compile unstructured notes into linked Markdown; `wiki` validates and queries that codebase. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
+- **Obsidian & PKM** — Validate links and run queries inside your personal vault. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
+- **Static Documentation & Wikis** — Auto-generate styled HTML documentation pages, tables of contents, and sidebar infoboxes for publishing to GitHub Pages or static hosts.
+- **LLM Vaults & Agent Memory** — Validate and query machine-generated Markdown databases. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
 - **Adoption path** — `wiki init` → `wiki check` → `wiki serve` (add `lint`, `query`, and `build` as you need them).
+
+### Distinguishing Wiki CLI from Farzapedia
+
+While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory vault optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
+- **Farzapedia** is a specific *content vault* containing diary entries, notes, and messages.
+- **Wiki CLI** is a *utility* for *any* vault. It compiles Markdown files, enforces structure (SHACL), queries data (SPARQL), and builds static websites.
 
 Canonical docs home: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs vault.
 
@@ -700,7 +682,7 @@ SELECT ?doc ?content WHERE {
 
 ## Workspace configuration (`Config`)
 
-The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `vault`, `graph`, `site`, and `link` blocks (see [Wiki_Configuration](docs/wiki/Wiki_Configuration.md)).
+The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `vault`, `graph`, `site`, and `link` blocks (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
 
 ```yaml
 # wiki.yaml

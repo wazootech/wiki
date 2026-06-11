@@ -33,9 +33,9 @@ For your own vault, copy the workflow and change:
 - `--site-base-url` to match your Pages path (`/wiki`, `/my-wiki`, or `''` for root)
 - `path` in `upload-pages-artifact` to the directory that contains your built `index.html`
 
-See [Wiki_Subcommand_build](Wiki_Subcommand_build.md) for `site.url_style`, `vault.assets`, and collision checks.
+See [Wiki Subcommand build](Wiki_Subcommand_build.md) for `site.url_style`, `vault.assets`, and collision checks.
 
 ## Related
 
-- [Getting_Started](Getting_Started.md)
-- [Wiki_Configuration](Wiki_Configuration.md)
+- [Getting Started](Getting_Started.md)
+- [Wiki Configuration](Wiki_Configuration.md)

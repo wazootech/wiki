@@ -10,7 +10,7 @@ description: Pattern where an LLM retrieves external chunks at query time instea
 
 RAG is flexible for ad hoc document sets but can feel opaque: similarity search does not guarantee explicit structure, stable cross-links, or inspectable memory. The [LLM Wiki](LLM_Wiki.md) pattern popularized by Andrej Karpathy argues for **compiling** sources into a persistent, interlinked markdown wiki that agents maintain and traverse—exemplified by [Farzapedia](Farzapedia.md).
 
-Both approaches support [Personal_Knowledge](Personal_Knowledge.md) workflows; many practitioners combine compiled wikis with targeted retrieval when corpora grow very large.
+Both approaches support [Personal Knowledge](Personal_Knowledge.md) workflows; many practitioners combine compiled wikis with targeted retrieval when corpora grow very large.
 
 ## GraphRAG
 

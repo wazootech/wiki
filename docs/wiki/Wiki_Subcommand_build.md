@@ -27,7 +27,7 @@ wiki build --no-check
 | `--output-dir`     | `_site`     | Site root on disk                                                       |
 | `--site-base-url`  | from config | Override `site.base_url` (`/wiki`, `/my-wiki`, or `''`)                 |
 | `--site-url-style` | from config | Override `site.url_style`: `dir` or `file`                              |
-| `--render`         | off         | Run [Wiki_Subcommand_render](Wiki_Subcommand_render.md) before building |
+| `--render`         | off         | Run [Wiki Subcommand render](Wiki_Subcommand_render.md) before building |
 | `--reload`         | off         | Rebuild graph when using `--render`                                     |
 | `--cache`          | off         | Persist a warm graph under `.wiki/cache/` when using `--render`         |
 | `--no-check`       | off         | Skip pre-build `lint` then `check` preflight                            |
@@ -41,7 +41,7 @@ With `site.base_url: /wiki` and `site.url_style: dir`:
 _site/wiki/Alice/index.html  →  /wiki/Alice/
 ```
 
-Assets from `vault.assets` copy under the same prefix. See [Wiki_Configuration](Wiki_Configuration.md).
+Assets from `vault.assets` copy under the same prefix. See [Wiki Configuration](Wiki_Configuration.md).
 
 ## Metadata view
 
@@ -49,7 +49,7 @@ Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, Tr
 
 ## Wiki page layout
 
-If your [Wiki_Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
+If your [Wiki Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
 
 If the configured template file is missing, the fallback shell is used silently.
 
@@ -59,6 +59,6 @@ By default, convention (`wiki lint`) then integrity (`wiki check`) preflight mus
 
 ## Related
 
-- [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md)
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [Wiki_Configuration](Wiki_Configuration.md#page-layout)
+- [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md)
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md)
+- [Wiki Configuration](Wiki_Configuration.md#page-layout)

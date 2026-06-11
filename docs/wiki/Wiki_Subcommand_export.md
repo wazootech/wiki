@@ -39,12 +39,12 @@ Raw RDF formats (`turtle`, etc.) on a **single** FILE write plain serialization 
 ## Related
 
 - [RDF](RDF.md)
-- [RDF_XML](RDF_XML.md)
+- [RDF XML](RDF_XML.md)
 - [Turtle](Turtle.md)
-- [JSON_LD](JSON_LD.md)
+- [JSON LD](JSON_LD.md)
 - [Notation3](Notation3.md)
-- [N_Triples](N_Triples.md)
+- [N Triples](N_Triples.md)
 - [TriG](TriG.md)
-- [N_Quads](N_Quads.md)
+- [N Quads](N_Quads.md)
 - [XML](XML.md)
-- [Style_Guide](Style_Guide.md)
+- [Style Guide](Style_Guide.md)

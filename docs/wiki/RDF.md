@@ -6,7 +6,7 @@ description: Resource Description Framework, a standard for data interchange on 
 
 # RDF
 
-The **Resource Description Framework (RDF)** is a standard model for data interchange on the Web. It is the foundational data structure of the [Semantic_Web](Semantic_Web.md).
+The **Resource Description Framework (RDF)** is a standard model for data interchange on the Web. It is the foundational data structure of the [Semantic Web](Semantic_Web.md).
 
 RDF facilitates data merging even if the underlying schemas differ, and it specifically supports the evolution of schemas over time without requiring all the data consumers to be changed.
 
@@ -14,20 +14,20 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 ## Related standards
 
-- [RDF_XML](RDF_XML.md): The XML-based W3C serialization for RDF.
+- [RDF XML](RDF_XML.md): The XML-based W3C serialization for RDF.
 - [Turtle](Turtle.md): A compact, human-friendly serialization syntax for RDF.
-- [JSON_LD](JSON_LD.md): A lightweight Linked Data format that uses JSON.
+- [JSON LD](JSON_LD.md): A lightweight Linked Data format that uses JSON.
 - [Notation3](Notation3.md): A readable superset of Turtle, with rules and quoted graphs.
-- [N_Triples](N_Triples.md): A minimal line-oriented serialization with one triple per line.
+- [N Triples](N_Triples.md): A minimal line-oriented serialization with one triple per line.
 - [TriG](TriG.md): Turtle syntax extended with named graph blocks.
-- [N_Quads](N_Quads.md): N-Triples extended with an optional graph term per line.
+- [N Quads](N_Quads.md): N-Triples extended with an optional graph term per line.
 - [SPARQL](SPARQL.md): The query language for RDF graphs.
 - [OWL](OWL.md): Ontology vocabulary and reasoning on top of RDF.
 - [SHACL](SHACL.md): A language for validating RDF graphs.
 
 ## In this vault
 
-The [Wiki CLI](Wiki_CLI.md) compiles markdown frontmatter into an RDF graph. Dump serializations with [Wiki_Subcommand_export](Wiki_Subcommand_export.md) or inspect triples per page in the build/serve metadata view ([Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#metadata-view)).
+The [Wiki CLI](Wiki_CLI.md) compiles markdown frontmatter into an RDF graph. Dump serializations with [Wiki Subcommand export](Wiki_Subcommand_export.md) or inspect triples per page in the build/serve metadata view ([Wiki Subcommand serve](Wiki_Subcommand_serve.md#metadata-view)).
 
 ## References
 

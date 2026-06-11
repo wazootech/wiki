@@ -14,10 +14,10 @@ N3 is much more expressive than Turtle; it provides syntax for RDF itself but al
 
 - [RDF](RDF.md)
 - [Turtle](Turtle.md)
-- [N_Triples](N_Triples.md)
+- [N Triples](N_Triples.md)
 - [TriG](TriG.md)
-- [RDF_XML](RDF_XML.md)
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+- [RDF XML](RDF_XML.md)
+- [Wiki Subcommand export](Wiki_Subcommand_export.md)
 
 ## References
 

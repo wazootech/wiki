@@ -31,9 +31,9 @@ Use `wiki export -f nt` when you want RDF serialized as N-Triples. Built pages a
 - [RDF](RDF.md)
 - [Turtle](Turtle.md)
 - [TriG](TriG.md)
-- [N_Quads](N_Quads.md)
-- [JSON_LD](JSON_LD.md)
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+- [N Quads](N_Quads.md)
+- [JSON LD](JSON_LD.md)
+- [Wiki Subcommand export](Wiki_Subcommand_export.md)
 
 ## References
 

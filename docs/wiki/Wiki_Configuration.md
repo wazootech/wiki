@@ -20,7 +20,7 @@ Three audit lanes map to three commands:
 
 ### Rule placement
 
-Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style_Guide](Style_Guide.md) for the full matrix.
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
 - **`vault.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
@@ -158,7 +158,7 @@ sparql_service:
   path: /api/sparql
 ```
 
-The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`. HTTP request forms, supported query types, and `Accept` negotiation are documented in [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use through `wiki serve`. HTTP request forms, supported query types, and `Accept` negotiation are documented in [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
@@ -166,7 +166,7 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 ## Page layout
 
-When `site.layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki_Page_Layouts](Wiki_Page_Layouts.md).
+When `site.layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md).
 
 ### Layout strategy
 
@@ -282,7 +282,7 @@ site:
 
 Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
 
-See also [Wiki_Page_Layouts](Wiki_Page_Layouts.md) for the layout file contract and placeholder list.
+See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for the layout file contract and placeholder list.
 
 The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
 
@@ -364,7 +364,7 @@ Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed —
 | Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
 | Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **wiki-cli fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`). See [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **wiki-cli fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
 
 Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
 
@@ -398,11 +398,11 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## Related
 
-- [Wiki_CLI](Wiki_CLI.md#global-options) — `-c` and `--vault-inputs` global options
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity checks
-- [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) — convention audits
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
-- [Wiki_Subcommand_render](Wiki_Subcommand_render.md) — inline SPARQL tables
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `#serve-api` config block
-- [Graph_Cache](Graph_Cache.md) — `--cache` and graph reuse
-- [Style_Guide](Style_Guide.md) — shapes and frontmatter
+- [Wiki CLI](Wiki_CLI.md#global-options) — `-c` and `--vault-inputs` global options
+- [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity checks
+- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits
+- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
+- [Wiki Subcommand render](Wiki_Subcommand_render.md) — inline SPARQL tables
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `#serve-api` config block
+- [Graph Cache](Graph_Cache.md) — `--cache` and graph reuse
+- [Style Guide](Style_Guide.md) — shapes and frontmatter

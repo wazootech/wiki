@@ -39,7 +39,7 @@ When `--graph-context-wiki` is not passed, init resolves `graph.context.wiki` in
 
 `--graph-context-wiki` always wins over `--repo` and remote detection. `--site-base-url` overrides the inferred path from `--repo`.
 
-Document subject IRIs default to `graph.context.wiki`. Set optional `graph.base_iri` in `wiki.yaml` when auto-generated document IRIs must differ from the `wiki:` namespace (see [Wiki_Configuration](Wiki_Configuration.md)).
+Document subject IRIs default to `graph.context.wiki`. Set optional `graph.base_iri` in `wiki.yaml` when auto-generated document IRIs must differ from the `wiki:` namespace (see [Wiki Configuration](Wiki_Configuration.md)).
 
 ## Prompts
 
@@ -66,7 +66,7 @@ Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, s
 
 ## Generated files
 
-- `layouts/default.html` — rendered from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2) (same Jinja2 scaffold pattern as `wiki.yaml.j2`); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
+- `layouts/default.html` — rendered from packaged [`layout default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2) (same Jinja2 scaffold pattern as `wiki.yaml.j2`); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example
@@ -75,5 +75,5 @@ By default `wiki init` does **not** create a Git repository. Use `--git` if you 
 
 ## Related
 
-- [Getting_Started](Getting_Started.md)
-- [Wiki_Configuration](Wiki_Configuration.md)
+- [Getting Started](Getting_Started.md)
+- [Wiki Configuration](Wiki_Configuration.md)

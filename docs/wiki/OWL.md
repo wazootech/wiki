@@ -10,7 +10,7 @@ The **Web Ontology Language (OWL)** is a family of knowledge representation lang
 
 OWL adds more vocabulary for describing properties and classes than basic RDF schema, including relations between classes (e.g. disjointness), cardinality (e.g. "exactly one"), equality, richer typing of properties, characteristics of properties (e.g. symmetry), and enumerated classes.
 
-In this vault, OWL is used by the reasoning engine in the [Wiki_CLI](Wiki_CLI.md) to perform deductive expansion of your graph (e.g., using OWL-RL rules).
+In this vault, OWL is used by the reasoning engine in the [Wiki CLI](Wiki_CLI.md) to perform deductive expansion of your graph (e.g., using OWL-RL rules).
 
 ## Defining custom RDFS/OWL axioms
 
@@ -42,9 +42,9 @@ The reasoning engine automatically infers and adds the following facts to your g
 
 ## Related
 
-- [Graph_Cache](Graph_Cache.md) — inference defaults and graph reuse
-- [Wiki_Subcommand_query](Wiki_Subcommand_query.md) — `--no-inference`
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `inference=` query parameter
+- [Graph Cache](Graph_Cache.md) — inference defaults and graph reuse
+- [Wiki Subcommand query](Wiki_Subcommand_query.md) — `--no-inference`
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `inference=` query parameter
 - [RDF](RDF.md)
 
 ## References

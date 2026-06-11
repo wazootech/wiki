@@ -81,6 +81,6 @@ wiki --config docs fmt -v
 
 ## Related
 
-- [Style_Guide.md](Style_Guide.md)
-- [Wiki_CLI.md](Wiki_CLI.md)
-- [Wiki_Configuration.md](Wiki_Configuration.md)
+- [Style Guide.md](Style_Guide.md)
+- [Wiki CLI.md](Wiki_CLI.md)
+- [Wiki Configuration.md](Wiki_Configuration.md)

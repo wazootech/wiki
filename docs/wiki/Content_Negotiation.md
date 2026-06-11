@@ -17,12 +17,12 @@ Clients supply preferences via explicit HTTP headers, which the server audits to
 Defines the media types that the client is willing to receive.
 
 - `Accept: text/html` (Requesting visual website)
-- `Accept: application/ld+json` (Requesting machine-readable [JSON_LD](JSON_LD.md))
+- `Accept: application/ld+json` (Requesting machine-readable [JSON LD](JSON_LD.md))
 - `Accept: text/turtle` (Requesting standard triples via [Turtle](Turtle.md))
 - `Accept: text/n3` (Requesting verbose RDF via [Notation3](Notation3.md))
-- `Accept: application/n-triples` (Requesting line-oriented triples via [N_Triples](N_Triples.md))
+- `Accept: application/n-triples` (Requesting line-oriented triples via [N Triples](N_Triples.md))
 - `Accept: application/trig` (Requesting named-graph RDF via [TriG](TriG.md))
-- `Accept: application/n-quads` (Requesting line-oriented quads via [N_Quads](N_Quads.md))
+- `Accept: application/n-quads` (Requesting line-oriented quads via [N Quads](N_Quads.md))
 - `Accept: text/csv` (Requesting tabular data via [CSV](CSV.md))
 
 ### `Accept-Language`
@@ -35,21 +35,21 @@ Identifies what compression algorithms (gzip, deflate, br) the client understand
 
 ## Importance in the [semantic web](Semantic_Web.md)
 
-In a [Semantic_Web](Semantic_Web.md) compliant system, URIs identifying real-world resources should behave intelligently. When a human navigates to the URI, the server employs content negotiation to render the [HTML](HTML.md) page. When a crawler or reasoning agent requests the exact same URI, the server can provide the machine-readable, structured data, like [RDF](RDF.md) or [JSON](JSON_LD.md).
+In a [Semantic Web](Semantic_Web.md) compliant system, URIs identifying real-world resources should behave intelligently. When a human navigates to the URI, the server employs content negotiation to render the [HTML](HTML.md) page. When a crawler or reasoning agent requests the exact same URI, the server can provide the machine-readable, structured data, like [RDF](RDF.md) or [JSON](JSON_LD.md).
 
 ## In this vault
 
 The [Wiki CLI](Wiki_CLI.md) applies content negotiation in two places:
 
-- **Page metadata view** on [Wiki_Subcommand_build](Wiki_Subcommand_build.md) and [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
-- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint))
+- **Page metadata view** on [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
+- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 
 ## Related
 
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md)
-- [Wiki_Subcommand_build](Wiki_Subcommand_build.md)
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md)
+- [Wiki Subcommand build](Wiki_Subcommand_build.md)
 - [RDF](RDF.md)
-- [JSON_LD](JSON_LD.md)
+- [JSON LD](JSON_LD.md)
 - [Turtle](Turtle.md)
 
 ## References

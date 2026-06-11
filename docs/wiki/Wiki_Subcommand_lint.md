@@ -8,7 +8,7 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 Run **convention** audits on the vault: broken links, filename pattern, heading style, and internal link style.
 
-Exits **0 silently** on success unless `-v` is set. See [Design_Philosophies](Design_Philosophies.md).
+Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
 ## Usage
 
@@ -44,7 +44,7 @@ wiki lint --strict
 
 Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
 
-`wiki lint` reports broken links only — it does not repair them. Use [Wiki_Subcommand_link](Wiki_Subcommand_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
+`wiki lint` reports broken links only — it does not repair them. Use [Wiki Subcommand link](Wiki_Subcommand_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
 
 Route safety errors (spaces, unsafe URL characters) abort lint with errors before convention rules run.
 
@@ -67,6 +67,6 @@ Run in that order in CI: `fmt`, then `lint`, then `check` — so mechanical fixe
 
 ## Related
 
-- [Wiki_Configuration](Wiki_Configuration.md) — `lint.*` severities and config semantics
-- [Wiki_Subcommand_check](Wiki_Subcommand_check.md) — integrity lane
-- [Style_Guide](Style_Guide.md)
+- [Wiki Configuration](Wiki_Configuration.md) — `lint.*` severities and config semantics
+- [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity lane
+- [Style Guide](Style_Guide.md)

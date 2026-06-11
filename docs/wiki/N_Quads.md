@@ -6,7 +6,7 @@ description: Line-oriented RDF serialization with an optional graph term per lin
 
 # N-Quads
 
-**N-Quads** extends [N_Triples](N_Triples.md) with an optional fourth term naming the graph that contains each triple. Each line expresses one RDF quad: subject, predicate, object, and optionally graph.
+**N-Quads** extends [N Triples](N_Triples.md) with an optional fourth term naming the graph that contains each triple. Each line expresses one RDF quad: subject, predicate, object, and optionally graph.
 
 N-Quads is the line-oriented counterpart to [TriG](TriG.md). Where TriG groups triples into `GRAPH` blocks, N-Quads repeats the graph name on every line—making it easy to stream, append, and diff multi-graph datasets.
 
@@ -26,11 +26,11 @@ Use `wiki export -f nquads` when you want RDF serialized as N-Quads. Built pages
 ## Related
 
 - [RDF](RDF.md)
-- [N_Triples](N_Triples.md)
+- [N Triples](N_Triples.md)
 - [TriG](TriG.md)
 - [Turtle](Turtle.md)
-- [JSON_LD](JSON_LD.md)
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+- [JSON LD](JSON_LD.md)
+- [Wiki Subcommand export](Wiki_Subcommand_export.md)
 
 ## References
 

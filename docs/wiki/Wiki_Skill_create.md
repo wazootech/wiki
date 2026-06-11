@@ -16,7 +16,7 @@ Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/S
 npx skills add wazootech/wiki@wiki-create -g -y
 ```
 
-`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki_Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
 
 ## When to use it
 
@@ -35,7 +35,7 @@ Run `wiki --help` first. If it fails, state that the Wiki CLI must be on PATH, o
 | No `wiki.yaml`      | Phase A: `wiki init` with explicit flags, then Phase B: preferences wizard |
 | `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                    |
 
-Gather init flags before running (see [Wiki_Subcommand_init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--git`, `--link-style`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
+Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--git`, `--link-style`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
 
 After approved edits to markdown or config, run `wiki fmt` on changed paths.
 
@@ -45,9 +45,9 @@ This skill **only** scaffolds or customizes a workspace. It does not install the
 
 ## Related
 
-- [Wiki_Subcommand_init](Wiki_Subcommand_init.md) — all `wiki init` flags
-- [Wiki_Configuration](Wiki_Configuration.md) — `wiki.yaml` semantics
-- [Getting_Started](Getting_Started.md) — daily workflow after scaffold
-- [Wiki_Skill_install](Wiki_Skill_install.md) — install CLI when missing
-- [Wiki_Skills](Wiki_Skills.md)
-- [Procedural_Knowledge](Procedural_Knowledge.md)
+- [Wiki Subcommand init](Wiki_Subcommand_init.md) — all `wiki init` flags
+- [Wiki Configuration](Wiki_Configuration.md) — `wiki.yaml` semantics
+- [Getting Started](Getting_Started.md) — daily workflow after scaffold
+- [Wiki Skill install](Wiki_Skill_install.md) — install CLI when missing
+- [Wiki Skills](Wiki_Skills.md)
+- [Procedural Knowledge](Procedural_Knowledge.md)

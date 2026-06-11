@@ -8,7 +8,7 @@ description: XML-based W3C serialization for RDF graphs.
 
 **RDF/XML** is a W3C-standard XML serialization of [RDF](RDF.md). It is designed primarily for **machine-to-machine interchange**, not for hand authoring. The underlying data model is still RDF triples; RDF/XML is just one concrete syntax for writing them down.
 
-Compared with [Turtle](Turtle.md) or [JSON_LD](JSON_LD.md), RDF/XML is usually more verbose and less pleasant for humans to edit directly, but it remains important for compatibility with older semantic-web tools and XML-oriented systems.
+Compared with [Turtle](Turtle.md) or [JSON LD](JSON_LD.md), RDF/XML is usually more verbose and less pleasant for humans to edit directly, but it remains important for compatibility with older semantic-web tools and XML-oriented systems.
 
 ## Hello world
 
@@ -38,8 +38,8 @@ Use `wiki export -f xml` when you want RDF serialized in RDF/XML form.
 - [RDF](RDF.md)
 - [XML](XML.md)
 - [Turtle](Turtle.md)
-- [JSON_LD](JSON_LD.md)
-- [Wiki_Subcommand_export](Wiki_Subcommand_export.md)
+- [JSON LD](JSON_LD.md)
+- [Wiki Subcommand export](Wiki_Subcommand_export.md)
 
 ## References
 

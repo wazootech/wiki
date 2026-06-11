@@ -35,7 +35,7 @@ wiki query "..." --cache
 
 ## Inspect one document
 
-Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples in the terminal. Markdown body and typed infobox layout are not reproduced — use [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) for full page preview.
+Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples in the terminal. Markdown body and typed infobox layout are not reproduced — use [Wiki Subcommand serve](Wiki_Subcommand_serve.md) for full page preview.
 
 ```bash
 wiki query --pretty "SELECT ?property ?value WHERE {
@@ -45,14 +45,14 @@ wiki query --pretty "SELECT ?property ?value WHERE {
 
 ## Graph reuse
 
-See [Graph_Cache](Graph_Cache.md) — one graph per process unless `--reload`, plus optional cross-process warm-start via `--cache`.
+See [Graph Cache](Graph_Cache.md) — one graph per process unless `--reload`, plus optional cross-process warm-start via `--cache`.
 
 ## HTTP endpoint
 
-The same query engine backs an optional read-only SPARQL HTTP route when `sparql_service.enabled` is on in `wiki.yaml`. Configure keys and path collision rules in [Wiki_Configuration](Wiki_Configuration.md#serve-api); request forms and `Accept` negotiation in [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+The same query engine backs an optional read-only SPARQL HTTP route when `sparql_service.enabled` is on in `wiki.yaml`. Configure keys and path collision rules in [Wiki Configuration](Wiki_Configuration.md#serve-api); request forms and `Accept` negotiation in [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
 
 ## Related
 
 - [SPARQL](SPARQL.md)
-- [Wiki_Subcommand_render](Wiki_Subcommand_render.md)
-- [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md#sparql-endpoint)
+- [Wiki Subcommand render](Wiki_Subcommand_render.md)
+- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint)

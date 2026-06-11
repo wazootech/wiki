@@ -8,7 +8,7 @@ description: A persistent knowledge codebase for AI-assisted knowledge managemen
 
 # LLM Wiki
 
-An **LLM Wiki** is a modern design pattern for [Personal_Knowledge](Personal_Knowledge.md) (PKM). It treats a user's [personal knowledge](Personal_Knowledge.md) repository as a clean, interlinked, machine-readable "codebase" that growing AI agents can operate on over time.
+An **LLM Wiki** is a modern design pattern for [Personal Knowledge](Personal_Knowledge.md) (PKM). It treats a user's [personal knowledge](Personal_Knowledge.md) repository as a clean, interlinked, machine-readable "codebase" that growing AI agents can operate on over time.
 
 This replaces fleeting AI chats and unstructured RAG databases with a persistent, compounding core of intelligence.
 
@@ -34,11 +34,11 @@ Developer **Farza** (founder of buildspace) created [Farzapedia](Farzapedia.md) 
 
 ## Integrating the LLM Wiki in this vault
 
-This [Wiki_CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
+This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 
-1. **Procedural Automation**: Using subcommands like [Wiki_Subcommand_check](Wiki_Subcommand_check.md) to validate shapes, and [Wiki_Subcommand_render](Wiki_Subcommand_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
+1. **Procedural Automation**: Using subcommands like [Wiki Subcommand check](Wiki_Subcommand_check.md) to validate shapes, and [Wiki Subcommand render](Wiki_Subcommand_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
 
 ## References
 
@@ -46,9 +46,9 @@ This [Wiki_CLI](Wiki_CLI.md) repository is built directly on the principles of t
 
 ## Related
 
-- [Wiki_CLI](Wiki_CLI.md)
-- [Declarative_Knowledge](Declarative_Knowledge.md)
-- [Procedural_Knowledge](Procedural_Knowledge.md)
+- [Wiki CLI](Wiki_CLI.md)
+- [Declarative Knowledge](Declarative_Knowledge.md)
+- [Procedural Knowledge](Procedural_Knowledge.md)
 - [Farzapedia](Farzapedia.md)
-- [Getting_Started](Getting_Started.md)
+- [Getting Started](Getting_Started.md)
 - [SPARQL](SPARQL.md)

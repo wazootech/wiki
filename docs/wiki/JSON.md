@@ -14,7 +14,7 @@ description: JavaScript Object Notation, a standard data interchange format.
 - **Machine Readable**: Easy for machines to parse and generate.
 - **Derived from JavaScript**: Based on a subset of the JavaScript programming language, but completely language-independent.
 
-In the semantic stack, it is utilized as the basis for [JSON_LD](JSON_LD.md), allowing traditional JSON schemas to become part of a globally linked graph.
+In the semantic stack, it is utilized as the basis for [JSON LD](JSON_LD.md), allowing traditional JSON schemas to become part of a globally linked graph.
 
 ## References
 

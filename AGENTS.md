@@ -1,6 +1,6 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style_Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style Guide](docs/wiki/Style_Guide.md).
 
 This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use **`-c docs/wiki.yaml`** on wiki commands here so local runs match CI.
 
@@ -12,7 +12,7 @@ This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use 
 
 ### Internal links
 - **Rule:** Use standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this vault. Ensure internal links point at existing documents.
-- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design_Philosophies](docs/wiki/Design_Philosophies.md)).
+- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
 - **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.
@@ -24,8 +24,8 @@ This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use 
 Use Markdown links for all internal and external URLs.
 
 ### Formatting (`wiki fmt`)
-- **Rule:** After editing any vault page under `docs/wiki/` (including reference docs such as [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
-- **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki_Subcommand_lint.md](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
+- **Rule:** After editing any vault page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
+- **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki Subcommand lint](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
 
 ---
 
@@ -56,7 +56,7 @@ wiki -c docs/wiki.yaml lint -v
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
 
 ### Config schema changes
-On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested — document upgrades in `CHANGELOG.md` and [Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md). **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
+On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested; document upgrades in `CHANGELOG.md` and [Wiki Configuration](docs/wiki/Wiki_Configuration.md). **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
 
 ### Architecture
-See [CONTEXT.md](CONTEXT.md) for domain language and [docs/wiki/Wiki_Configuration.md](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).
+See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

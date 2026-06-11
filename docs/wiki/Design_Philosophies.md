@@ -8,7 +8,7 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 ## Silence is golden
 
-[Wiki_Subcommand_check](Wiki_Subcommand_check.md), [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md), [Wiki_Subcommand_render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
+[Wiki Subcommand check](Wiki_Subcommand_check.md), [Wiki Subcommand lint](Wiki_Subcommand_lint.md), [Wiki Subcommand render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
 
 ## Check, lint, fmt, and link
 
@@ -37,7 +37,7 @@ To format page margins and headers before sending directly to a connected printe
 # Print a document
 cat wiki/Getting_Started.md | pr -h "Getting Started" | lp
 
-# Print SPARQL query results ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
+# Print SPARQL query results ([Wiki Subcommand query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | pr -h "Wiki People" | lp
 ```
 
@@ -49,18 +49,18 @@ To stream content directly to your default Windows printer:
 # Print a document
 Get-Content wiki/Getting_Started.md | Out-Printer
 
-# Print SPARQL query results ([Wiki_Subcommand_query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
+# Print SPARQL query results ([Wiki Subcommand query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | Out-Printer
 ```
 
 ## Flat command surface
 
-Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options [Wiki_CLI](Wiki_CLI.md#global-options) apply everywhere.
+Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options [Wiki CLI](Wiki_CLI.md#global-options) apply everywhere.
 
 ## Userland over platform lock-in
 
-Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation. Template repos and editor integrations stay at the edges; core scope is the semantic layer — see [Wiki_CLI](Wiki_CLI.md#toolchain-vs-authoring-surface).
+Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). The wiki tool focuses on graph construction, validation, and site generation. Template repos and editor integrations stay at the edges; core scope is the semantic layer — see [Wiki CLI](Wiki_CLI.md#toolchain-vs-authoring-surface).
 
 ## Related
 
-- [Wiki_CLI](Wiki_CLI.md)
+- [Wiki CLI](Wiki_CLI.md)
