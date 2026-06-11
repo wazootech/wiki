@@ -8,7 +8,15 @@ description: Scaffold a Wiki CLI workspace with wiki init and a light preference
 
 The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for site name, first page, and light `wiki.yaml` tweaks.
 
-Canonical skill file: `skills/wiki-create/SKILL.md` in the [wiki-cli](https://github.com/wazootech/wiki) repository. Requires **`wiki` on PATH** before any init or file edits.
+Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Requires **`wiki` on PATH** before any init or file edits.
+
+## Install
+
+```bash
+npx skills add wazootech/wiki@wiki-create -g -y
+```
+
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki_Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
 
 ## When to use it
 

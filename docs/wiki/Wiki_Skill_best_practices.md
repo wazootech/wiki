@@ -8,7 +8,15 @@ description: Audit a vault with fmt, lint, check, and render in CI order.
 
 The **wiki-best-practices** skill audits a Wiki CLI vault for CI-ready hygiene: run `fmt --check`, `lint --strict`, `check --strict`, and `render --check` in order, interpret `wiki.yaml`, and spot-check [Style_Guide](Style_Guide.md) conventions.
 
-Canonical skill file: `skills/wiki-best-practices/SKILL.md` in the [wiki-cli](https://github.com/wazootech/wiki) repository. Includes `skills/wiki-best-practices/scripts/audit.sh` for the strict pipeline.
+Canonical skill file: [`skills/wiki-best-practices/SKILL.md`](../../skills/wiki-best-practices/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Includes [`skills/wiki-best-practices/scripts/audit.sh`](../../skills/wiki-best-practices/scripts/audit.sh) for the strict pipeline.
+
+## Install
+
+```bash
+npx skills add wazootech/wiki@wiki-best-practices -g -y
+```
+
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki_Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
 
 ## When to use it
 

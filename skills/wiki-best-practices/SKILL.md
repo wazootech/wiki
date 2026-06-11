@@ -2,7 +2,7 @@
 name: wiki-best-practices
 description: >-
   Audit a Wiki CLI vault and wiki.yaml for CI-ready hygiene — run fmt, lint, check,
-  and render validators, interpret config semantics, and spot-check Style_Guide
+  and render validators, interpret config semantics, and spot-check idiomatic
   conventions. Use whenever the user asks for a vault audit, wiki best practices,
   pre-commit or CI validation, check/lint failures, broken links, wiki.yaml review,
   or preparing vault changes before a PR — even if they do not say "skill".

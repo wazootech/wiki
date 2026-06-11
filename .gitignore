@@ -49,3 +49,7 @@ _site-test/
 
 # Agent skill eval workspaces (skill-creator iteration output; not shipped)
 skills/*-workspace/
+
+# skills CLI install artifacts (canonical skills live under skills/)
+.agents/
+skills-lock.json

@@ -10,6 +10,26 @@ description: Procedural knowledge for coding agents — install, scaffold, and a
 
 Onboarding skills are **independent modules** with no required order. Each completes its job and stops without telling the user to invoke another skill.
 
+## Install via skills.sh
+
+Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills) (`npx skills`). Source repository: [wazootech/wiki](https://github.com/wazootech/wiki). Browse the ecosystem at [skills.sh](https://skills.sh/). Install works from GitHub as soon as the repo is public; leaderboard and search listing on skills.sh may follow separately.
+
+```bash
+# All wiki-cli skills (global)
+npx skills add wazootech/wiki --skill '*' -g -y
+
+# List skills without installing
+npx skills add wazootech/wiki --list
+```
+
+Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install into the current project only (`.agents/skills/`). `-y` skips confirmation prompts.
+
+| Skill               | Install                                                   | Reference                                                 |
+| ------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
+| wiki-install        | `npx skills add wazootech/wiki@wiki-install -g -y`        | [Wiki_Skill_install](Wiki_Skill_install.md)               |
+| wiki-create         | `npx skills add wazootech/wiki@wiki-create -g -y`         | [Wiki_Skill_create](Wiki_Skill_create.md)                 |
+| wiki-best-practices | `npx skills add wazootech/wiki@wiki-best-practices -g -y` | [Wiki_Skill_best_practices](Wiki_Skill_best_practices.md) |
+
 ## Onboarding
 
 | Skill        | Vault reference                             | Purpose                                            |
