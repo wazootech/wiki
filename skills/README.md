@@ -1,5 +1,7 @@
 # Wiki CLI agent skills
 
+[![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
+
 Agent skills for [Wiki CLI](https://github.com/wazootech/wiki). They live under `skills/` and are **not** vault content — do not add this folder to `vault.inputs`.
 
 ## Onboarding (independent modules)

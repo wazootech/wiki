@@ -12,7 +12,15 @@ Onboarding skills are **independent modules** with no required order. Each compl
 
 ## Install via skills.sh
 
-Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills) (`npx skills`). Source repository: [wazootech/wiki](https://github.com/wazootech/wiki). Browse the ecosystem at [skills.sh](https://skills.sh/). Install works from GitHub as soon as the repo is public; leaderboard and search listing on skills.sh may follow separately.
+[![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
+
+Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills) (`npx skills`). Source repository: [wazootech/wiki](https://github.com/wazootech/wiki). Browse the ecosystem at [skills.sh](https://skills.sh/). Install works from GitHub as soon as the repo is public. Leaderboard and search on skills.sh are driven by anonymous install telemetry from `npx skills add` — there is no separate index request.
+
+### Badge for your README
+
+```markdown
+[![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
+```
 
 ```bash
 # All wiki-cli skills (global)

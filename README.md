@@ -4,6 +4,7 @@
 [![npm version](https://img.shields.io/npm/v/wazootech-wiki)](https://www.npmjs.com/package/wazootech-wiki)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
 **Wiki CLI** is the semantic knowledge **toolchain** for Markdown vaults: validate structure, infer over RDF, query with SPARQL, and publish static sites or serializations. It is a vault **compiler** — not a note app, editor, CMS, or auth layer. Keep writing in Obsidian, an LLM wiki workflow, or any Markdown editor; `wiki` is the machine layer that makes that content trustworthy, queryable, and publishable.
 
