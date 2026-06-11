@@ -1,5 +1,5 @@
 ---
-name: install-wiki
+name: wiki-install
 description: >-
   Install and verify the Wiki CLI (wazootech-wiki on PyPI). Use when the user needs
   to install wiki, wiki is not found on PATH, pip or PyPI setup, or the CLI is
@@ -64,7 +64,3 @@ After install (user-run or agent-run with approval), run `wiki --help` again.
 - Suggest `wiki init`, creating a workspace, or daily workflow commands as a required next step.
 - Auto-run `pip install` without user approval.
 - Duplicate full vault or configuration documentation.
-
-## Related docs
-
-- [Getting_Started.md](../../docs/wiki/Getting_Started.md) — install and daily commands (for the user’s reference, not as a “next step” from this skill)

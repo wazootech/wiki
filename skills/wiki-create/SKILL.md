@@ -1,5 +1,5 @@
 ---
-name: create-wiki
+name: wiki-create
 description: >-
   Scaffold a Wiki CLI workspace with wiki init, then walk through site name, first
   page, and light preferences. Use when the user wants a new wiki, wiki init,
@@ -42,7 +42,7 @@ If it fails:
 1. Say that **creating a wiki requires the Wiki CLI on PATH**.
 2. Optional one-liner: PyPI package name is **`wazootech-wiki`** (not a full install tutorial).
 3. **Do not** run `wiki init`, write scaffold files, or paste a step-by-step pip guide.
-4. **Do not** say “use install-wiki” or reference any skill path.
+4. **Do not** say “use wiki-install” or reference any skill path.
 5. **Stop.**
 
 ## Workflow (CLI present)
@@ -94,7 +94,7 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 | ----- | ------ |
 | Site display name | Edit `site.manifest.name` in `wiki.yaml` |
 | First page | Replace or rename `wiki/Ethan_Davidson.md`, or add the user’s page |
-| Lint strictness | Only if user asks — explain `lint.headings` etc. in `wiki.yaml` |
+| Lint strictness | Only if user asks — see [references/wiki-yaml-preferences.md](references/wiki-yaml-preferences.md) |
 
 **Only edit files with explicit user approval.** After markdown or config edits, run `wiki fmt` on changed paths when a config exists.
 
@@ -105,11 +105,11 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`
 - `README.md`
 
-See [Wiki_Subcommand_init.md](../../docs/wiki/Wiki_Subcommand_init.md) for full detail.
+See [references/init-options.md](references/init-options.md) for full flag detail.
 
 ## Clean exit
 
-Summarize: workspace path, init flags used, wizard edits (if any). You may mention [Getting_Started.md](../../docs/wiki/Getting_Started.md) for daily commands (`check`, `lint`, `serve`) — not as a required next step.
+Summarize: workspace path, init flags used, wizard edits (if any). Do not suggest daily commands (`check`, `lint`, `serve`) unless the user asks.
 
 **Do not** run `wiki check`, `wiki lint`, or `wiki serve` unless the user asks.
 
@@ -122,8 +122,7 @@ Summarize: workspace path, init flags used, wizard edits (if any). You may menti
 | `--git` fails | Report error; init may have completed without git |
 | Interactive prompt during init | Re-run with explicit flags — avoid bare `wiki init` in agent sessions |
 
-## Related docs
+## References
 
-- [references/init-options.md](references/init-options.md) — `wiki init` flags
-- [Wiki_Configuration.md](../../docs/wiki/Wiki_Configuration.md) — `wiki.yaml` semantics
-- [Getting_Started.md](../../docs/wiki/Getting_Started.md) — install and daily workflow
+- [references/init-options.md](references/init-options.md) — `wiki init` flags and generated layout
+- [references/wiki-yaml-preferences.md](references/wiki-yaml-preferences.md) — wizard `wiki.yaml` edits

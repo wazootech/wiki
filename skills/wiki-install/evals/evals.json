@@ -1,16 +1,16 @@
 {
-  "skill_name": "install-wiki",
+  "skill_name": "wiki-install",
   "evals": [
     {
       "id": 1,
       "prompt": "I want to use wiki but don't have it installed",
-      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help; ready message without suggesting create-wiki or scaffolding.",
+      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help; ready message without suggesting wiki-create or scaffolding.",
       "files": [],
       "expectations": [
         "Mentions pip install wazootech-wiki or equivalent install path",
         "Runs or instructs verification with wiki --help",
         "Ends with installed and ready to go or equivalent success message when CLI works",
-        "Does not mention create-wiki or wiki init as a next step",
+        "Does not mention wiki-create or wiki init as a next step",
         "Does not run wiki init"
       ]
     },
@@ -22,7 +22,7 @@
       "expectations": [
         "Runs wiki --help or wiki --version",
         "If CLI works, message is ready-to-go style without next-step suggestions",
-        "Does not mention create-wiki",
+        "Does not mention wiki-create",
         "Does not suggest scaffolding a vault"
       ]
     }

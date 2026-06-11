@@ -1,5 +1,5 @@
 ---
-name: best-practices
+name: wiki-best-practices
 description: >-
   Audit a Wiki CLI vault and wiki.yaml for CI-ready hygiene — run fmt, lint, check,
   and render validators, interpret config semantics, and spot-check Style_Guide
@@ -19,7 +19,7 @@ Skills live outside `vault.inputs` — they are agent procedural knowledge, not 
 From the repo root (directory containing `wiki.yaml`):
 
 ```bash
-bash skills/best-practices/scripts/audit.sh -c path/to/wiki.yaml
+bash skills/wiki-best-practices/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
 The script prefers `wiki` on PATH when it supports `fmt`; otherwise falls back to `uv run wiki` or `python -m wiki` (use the latter in this repo if a global PyPI install is stale).
@@ -61,7 +61,7 @@ Regex belongs in `vault.filename_pattern`, not under `check:`. Unknown keys shou
 
 ### 4. Deploy alignment (custom wikis)
 
-When auditing deploy-related pages or CI, cross-check workflow paths against [Deploying_to_GitHub_Pages.md](docs/wiki/Deploying_to_GitHub_Pages.md):
+When auditing deploy-related pages or CI, cross-check workflow paths ([references/deploy-alignment.md](references/deploy-alignment.md)):
 
 - `-c` points at the correct `wiki.yaml`
 - `--site-base-url` matches the Pages path (`/wiki`, `/my-wiki`, or `''` for root)
@@ -69,7 +69,7 @@ When auditing deploy-related pages or CI, cross-check workflow paths against [De
 
 ### 5. Manual spot-check
 
-When `lint.*` rules are `off`, still note violations. Canonical rules: vault `Style_Guide.md`; CLI mapping: repo `AGENTS.md`.
+When `lint.*` rules are `off`, still note violations. Use the spot-check table below.
 
 | Area | Best practice |
 | ---- | ------------- |
@@ -118,8 +118,6 @@ Never edit vault files unless the user asks. Suggest:
 
 Prioritize check failures and strict lint errors before style nits.
 
-## Related docs
+## References
 
-- `docs/wiki/Style_Guide.md` — canonical authoring rules
-- `docs/wiki/Wiki_Configuration.md` — `check` vs `lint` vs `fmt`
-- `docs/wiki/Design_Philosophies.md` — why link repair is separate from lint
+- [references/deploy-alignment.md](references/deploy-alignment.md) — GitHub Pages and CI path checks

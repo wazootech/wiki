@@ -4,7 +4,7 @@
 
 ### Added
 
-- `install-wiki` and `create-wiki` agent skills under `skills/` — install the CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
+- `wiki-install` and `wiki-create` agent skills under `skills/` — install the CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
 
 ### Fixed
 

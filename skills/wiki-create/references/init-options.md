@@ -1,6 +1,6 @@
 # `wiki init` options
 
-Condensed from [Wiki_Subcommand_init.md](../../../docs/wiki/Wiki_Subcommand_init.md). Use non-interactive flags in agent sessions so `wiki init` does not block on stdin.
+Use non-interactive flags in agent sessions so `wiki init` does not block on stdin.
 
 ## Usage
 

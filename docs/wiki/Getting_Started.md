@@ -76,6 +76,10 @@ wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki
 
 See [Deploying_to_GitHub_Pages](Deploying_to_GitHub_Pages.md) for the GitHub Actions workflow.
 
+## Agent skills
+
+Coding agents can use repository skills documented in [Wiki_Skills](Wiki_Skills.md): [Wiki_Skill_install](Wiki_Skill_install.md), [Wiki_Skill_create](Wiki_Skill_create.md), and [Wiki_Skill_best_practices](Wiki_Skill_best_practices.md).
+
 ## Next steps
 
 - [Wiki_CLI](Wiki_CLI.md) — command reference home

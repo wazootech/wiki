@@ -100,6 +100,10 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 - **Init** — scaffold `wiki.yaml` ([Wiki_Subcommand_init](Wiki_Subcommand_init.md))
 - **Upgrade** — PyPI updates ([Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md))
 
+## Agent skills
+
+Procedural knowledge for coding agents: [Wiki_Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-best-practices` in the repository).
+
 ## Start here
 
 - [Getting_Started](Getting_Started.md) — install, `wiki init`, first `check` and `serve`

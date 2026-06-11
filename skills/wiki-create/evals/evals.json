@@ -1,5 +1,5 @@
 {
-  "skill_name": "create-wiki",
+  "skill_name": "wiki-create",
   "evals": [
     {
       "id": 1,
@@ -27,12 +27,12 @@
     {
       "id": 3,
       "prompt": "Create a wiki for me",
-      "expected_output": "When CLI missing: states CLI requirement, optional wazootech-wiki one-liner, stops without naming install-wiki or running init.",
+      "expected_output": "When CLI missing: states CLI requirement, optional wazootech-wiki one-liner, stops without naming wiki-install or running init.",
       "files": [],
       "expectations": [
         "States that Wiki CLI on PATH is required when CLI is missing",
         "Does not run wiki init when CLI is missing",
-        "Does not say install-wiki or reference skills/install-wiki path",
+        "Does not say wiki-install or reference skills/wiki-install path",
         "Does not paste a full step-by-step pip install guide"
       ]
     },
