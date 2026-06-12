@@ -1,7 +1,7 @@
 ---
 type: TechArticle
 headline: Wiki CLI agent skills
-description: Procedural knowledge for coding agents — install, scaffold, and audit wikis.
+description: Procedural knowledge for coding agents — install, scaffold, improve, and deploy wikis.
 ---
 
 # Wiki CLI agent skills
@@ -42,12 +42,12 @@ npx skills add wazootech/wiki --skill '*' -g -y
 
 Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
 
-| Skill               | Install                                                   | Reference                                                 |
-| ------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| wiki-install        | `npx skills add wazootech/wiki@wiki-install -g -y`        | [Wiki Skill install](Wiki_Skill_install.md)               |
-| wiki-create         | `npx skills add wazootech/wiki@wiki-create -g -y`         | [Wiki Skill create](Wiki_Skill_create.md)                 |
-| wiki-best-practices | `npx skills add wazootech/wiki@wiki-best-practices -g -y` | [Wiki Skill best practices](Wiki_Skill_best_practices.md) |
-| wiki-deploy         | `npx skills add wazootech/wiki@wiki-deploy -g -y`         | [Wiki Skill deploy](Wiki_Skill_deploy.md)                 |
+| Skill        | Install                                            | Reference                                   |
+| ------------ | -------------------------------------------------- | ------------------------------------------- |
+| wiki-install | `npx skills add wazootech/wiki@wiki-install -g -y` | [Wiki Skill install](Wiki_Skill_install.md) |
+| wiki-create  | `npx skills add wazootech/wiki@wiki-create -g -y`  | [Wiki Skill create](Wiki_Skill_create.md)   |
+| wiki-improve | `npx skills add wazootech/wiki@wiki-improve -g -y` | [Wiki Skill improve](Wiki_Skill_improve.md) |
+| wiki-deploy  | `npx skills add wazootech/wiki@wiki-deploy -g -y`  | [Wiki Skill deploy](Wiki_Skill_deploy.md)   |
 
 ## Onboarding
 
@@ -56,11 +56,11 @@ Project-local copies under `.agents/skills/` do not update automatically. Avoid 
 | wiki-install | [Wiki Skill install](Wiki_Skill_install.md) | Install and verify `wazootech-wiki` on PATH        |
 | wiki-create  | [Wiki Skill create](Wiki_Skill_create.md)   | `wiki init` plus preferences wizard (CLI required) |
 
-## Wiki hygiene
+## Improve
 
-| Skill               | Wiki reference                                            | Purpose                           |
-| ------------------- | --------------------------------------------------------- | --------------------------------- |
-| wiki-best-practices | [Wiki Skill best practices](Wiki_Skill_best_practices.md) | fmt → lint → check → render audit |
+| Skill        | Wiki reference                              | Purpose                                                |
+| ------------ | ------------------------------------------- | ------------------------------------------------------ |
+| wiki-improve | [Wiki Skill improve](Wiki_Skill_improve.md) | fmt → lint → check → render survey and findings report |
 
 ## Deploy
 
@@ -74,8 +74,8 @@ Project-local copies under `.agents/skills/` do not update automatically. Avoid 
 skills/
   wiki-install/SKILL.md
   wiki-create/SKILL.md
-  wiki-best-practices/SKILL.md
-  wiki-best-practices/scripts/audit.sh
+  wiki-improve/SKILL.md
+  wiki-improve/scripts/audit.sh
   wiki-deploy/SKILL.md
   wiki-deploy/references/workflow-template-uv.yml
   wiki-deploy/references/workflow-template-pip.yml

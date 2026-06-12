@@ -49,6 +49,6 @@ This skill **only** sets up deployment. It does not scaffold wikis, install the 
 
 - [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) — human-oriented walkthrough
 - [Wiki Subcommand build](Wiki_Subcommand_build.md) — `site.base_url`, output layout
-- [Wiki Skill best practices](Wiki_Skill_best_practices.md) — audit deploy alignment in existing CI
+- [Wiki Skill improve](Wiki_Skill_improve.md) — audit deploy alignment in existing CI
 - [Wiki Skills](Wiki_Skills.md)
 - [Procedural Knowledge](Procedural_Knowledge.md)

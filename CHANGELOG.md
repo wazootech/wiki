@@ -34,7 +34,6 @@
 ### Changed
 
 - `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
-- `wiki-best-practices` skill — portable audit script paths, deploy audit red flags, modularity boundary with wiki-deploy
 - `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS
 - `wiki-deploy` skill — forbid `uv pip install` without venv on standalone repos; eval for CI “No virtual environment found” footgun; embed uv/pip workflow templates wholesale (no install hybridization)
 - [Getting Started](docs/wiki/Getting_Started.md) and [Wiki Skills](docs/wiki/Wiki_Skills.md) — refresh agent skills after wiki-cli upgrades; avoid committing stale `.agents/skills/`
@@ -47,6 +46,7 @@
 
 ### Changed (breaking)
 
+- `wiki-best-practices` agent skill renamed to `wiki-improve` — reinstall with `npx skills add wazootech/wiki@wiki-improve -g -y`; improve-style advisor framing and prioritized findings report; `audit.sh` pipeline unchanged
 - Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
 - Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
 - Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
@@ -67,6 +67,8 @@
 - `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a computed property from `graph.context`
 
 ### Migration
+
+- Agent skill `wiki-best-practices` → `wiki-improve`: `npx skills add wazootech/wiki@wiki-improve -g -y` (remove stale `wiki-best-practices` from `~/.agents/skills/` or project `.agents/skills/` if present). Wiki doc page renamed to [Wiki Skill improve](docs/wiki/Wiki_Skill_improve.md).
 
 1. In `wiki:` rename path keys:
    - `input_dirs` → `inputs`

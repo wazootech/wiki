@@ -1,26 +1,26 @@
 ---
 type: TechArticle
-headline: wiki-best-practices agent skill
-description: Audit a wiki with fmt, lint, check, and render in CI order.
+headline: wiki-improve agent skill
+description: Survey a wiki with fmt, lint, check, and render; produce a prioritized findings report.
 ---
 
-# wiki-best-practices agent skill
+# wiki-improve agent skill
 
-The **wiki-best-practices** skill audits a Wiki CLI wiki for CI-ready hygiene: run `fmt --check`, `lint --strict`, `check --strict`, and `render --check` in order, interpret `wiki.yaml`, and spot-check [Style Guide](Style_Guide.md) conventions.
+The **wiki-improve** skill surveys a Wiki CLI wiki as a read-only advisor: run `fmt --check`, `lint --strict`, `check --strict`, and `render --check` in order, interpret `wiki.yaml`, spot-check [Style Guide](Style_Guide.md) conventions, and deliver a prioritized findings report with evidence.
 
-Canonical skill file: [`skills/wiki-best-practices/SKILL.md`](../../skills/wiki-best-practices/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Includes [`skills/wiki-best-practices/scripts/audit.sh`](../../skills/wiki-best-practices/scripts/audit.sh) for the strict pipeline.
+Canonical skill file: [`skills/wiki-improve/SKILL.md`](../../skills/wiki-improve/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Includes [`skills/wiki-improve/scripts/audit.sh`](../../skills/wiki-improve/scripts/audit.sh) for the strict pipeline.
 
 ## Install
 
 ```bash
-npx skills add wazootech/wiki@wiki-best-practices -g -y
+npx skills add wazootech/wiki@wiki-improve -g -y
 ```
 
 `-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
 
 ## When to use it
 
-- Wiki audit before a PR
+- Wiki audit or improve pass before a PR
 - `check` or `lint` failures, broken links, or `wiki.yaml` review
 - Deploy alignment with [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) (setup: [Wiki Skill deploy](Wiki_Skill_deploy.md))
 
@@ -29,7 +29,7 @@ npx skills add wazootech/wiki@wiki-best-practices -g -y
 From a directory containing `wiki.yaml`:
 
 ```bash
-bash skills/wiki-best-practices/scripts/audit.sh -c path/to/wiki.yaml
+bash skills/wiki-improve/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
 In this repository: `-c docs/wiki.yaml`. Append wiki file paths to scope fmt, lint, and check to changed pages.
