@@ -92,6 +92,28 @@ npx wazootech-wiki --help
 uvx wazootech-wiki --help
 ```
 
+### Standalone binary (no Python required)
+
+Pre-built executables ship on [GitHub Releases](https://github.com/wazootech/wiki/releases) for Linux (x64), macOS (arm64 and x64), and Windows (x64). Each release includes a `SHA256SUMS` file.
+
+```bash
+# Linux / macOS — verify checksum, then extract
+sha256sum -c SHA256SUMS
+tar -xzf wazootech-wiki-VERSION-linux-x64.tar.gz
+./wiki --help
+```
+
+```powershell
+# Windows — verify checksum, then extract
+Get-FileHash wazootech-wiki-VERSION-windows-x64.zip -Algorithm SHA256
+Expand-Archive wazootech-wiki-VERSION-windows-x64.zip -DestinationPath .
+.\wiki.exe --help
+```
+
+Add the directory containing `wiki` (or `wiki.exe`) to your `PATH`, or invoke it by full path. Standalone builds do not use `pip`; run `wiki upgrade` to see download instructions when a newer release is available.
+
+On macOS, Gatekeeper may block unsigned binaries until you allow them in System Settings or run `xattr -d com.apple.quarantine ./wiki` after verifying the checksum.
+
 ### From within this repo (editable)
 
 ```bash

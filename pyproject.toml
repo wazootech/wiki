@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "wazootech-wiki"
 version = "0.1.13"
@@ -31,6 +35,9 @@ wikilink = "wiki.mdformat_wikilink"
 package-dir = {"" = "src"}
 packages = {find = {where = ["src"], include = ["wiki*"]}}
 package-data = {"wiki" = ["templates/*"]}
+
+[dependency-groups]
+standalone = ["pyinstaller>=6.0"]
 
 [tool.uv]
 package = true

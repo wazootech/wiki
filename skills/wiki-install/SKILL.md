@@ -34,14 +34,20 @@ Exit.
 
 ### 2. Install (CLI missing)
 
-Tell the user the CLI was not found. Give the standard install block:
+Tell the user the CLI was not found. Offer install paths in this order unless the user prefers otherwise:
+
+**PyPI (requires Python 3.12+):**
 
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
 
+**Standalone binary (no Python):** download the archive for their OS from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify `SHA256SUMS`, extract, and run `./wiki --help` (or `wiki.exe` on Windows).
+
 You may offer to run `pip install wazootech-wiki` **only if the user explicitly approves** (network and environment vary).
+
+If `wiki upgrade --yes` reports a standalone-binary message (`pip upgrade is not available`), point them to GitHub Releases instead of pip.
 
 **Contributors in the wiki-cli repository** may instead use:
 

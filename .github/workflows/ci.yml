@@ -72,7 +72,9 @@ jobs:
       run: |
         PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
         NPM_VER=$(node -e "console.log(require('./package.json').version)")
+        INIT_VER=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/wiki/__init__.py').read()).group(1))")
         test "$PY_VER" = "$NPM_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER package.json=$NPM_VER"; exit 1; }
+        test "$PY_VER" = "$INIT_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER __init__.py=$INIT_VER"; exit 1; }
 
     - name: Syntax check JS files
       run: |

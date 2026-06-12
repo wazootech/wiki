@@ -1,19 +1,62 @@
-name: Release (PyPI)
+name: Release
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      skip_pypi:
+        description: Skip PyPI publish
+        type: boolean
+        default: false
+      skip_npm:
+        description: Skip npm publish
+        type: boolean
+        default: false
+      skip_binaries:
+        description: Skip standalone binaries and GitHub Release upload
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
-  publish-pypi:
+  verify:
+    name: Verify release versions
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.versions.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Verify pyproject, package.json, and __init__.py versions
+        id: versions
+        run: |
+          PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
+          NPM_VER=$(node -e "console.log(require('./package.json').version)")
+          INIT_VER=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/wiki/__init__.py').read()).group(1))")
+          echo "version=$PY_VER" >> "$GITHUB_OUTPUT"
+          test "$PY_VER" = "$NPM_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER package.json=$NPM_VER"; exit 1; }
+          test "$PY_VER" = "$INIT_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER __init__.py=$INIT_VER"; exit 1; }
+
+      - name: Verify tag matches version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PY_VER="${{ steps.versions.outputs.version }}"
+          test "$TAG" = "$PY_VER" || { echo "::error::tag $TAG != pyproject $PY_VER"; exit 1; }
+
+  publish-pypi:
+    name: Publish PyPI
+    needs: verify
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+      || (github.event_name == 'workflow_dispatch' && !inputs.skip_pypi)
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,13 +77,6 @@ jobs:
       - name: Install build tooling
         run: python -m pip install -U build twine
 
-      - name: Verify tag matches pyproject version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
-          test "$TAG" = "$PY_VER" || { echo "::error::tag $TAG != pyproject $PY_VER"; exit 1; }
-
       - name: Build
         run: python -m build
 
@@ -51,3 +87,117 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
+  publish-npm:
+    name: Publish npm
+    needs: verify
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+      || (github.event_name == 'workflow_dispatch' && !inputs.skip_npm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify npm can pack
+        run: npm pack --dry-run
+
+      - name: Publish to npm (trusted publishing / OIDC)
+        run: npm publish --provenance --access public
+
+      - name: Verify npm publish
+        run: |
+          npm view wazootech-wiki@${{ needs.verify.outputs.version }} version
+
+  build-standalone:
+    name: Build standalone (${{ matrix.slug }})
+    needs: verify
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+      || (github.event_name == 'workflow_dispatch' && !inputs.skip_binaries)
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            slug: linux-x64
+            smoke_check: true
+          - runner: windows-latest
+            slug: windows-x64
+            smoke_check: false
+          - runner: macos-14
+            slug: macos-arm64
+            smoke_check: false
+          - runner: macos-15-intel
+            slug: macos-x64
+            smoke_check: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install PyInstaller
+        run: uv pip install pyinstaller
+
+      - name: Build standalone archive
+        run: |
+          if [ "${{ matrix.smoke_check }}" = "true" ]; then
+            uv run python scripts/build-standalone.py --smoke-check
+          else
+            uv run python scripts/build-standalone.py
+          fi
+        shell: bash
+
+      - name: Upload standalone artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: standalone-${{ matrix.slug }}
+          path: dist/standalone/*
+          if-no-files-found: error
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [verify, build-standalone]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download standalone artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: standalone-*
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd release-assets
+          sha256sum wazootech-wiki-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release-assets/wazootech-wiki-*
+            release-assets/SHA256SUMS

@@ -17,7 +17,13 @@ from urllib.request import urlopen
 import click
 
 PYPI_JSON_URL = "https://pypi.org/pypi/wazootech-wiki/json"
+GITHUB_RELEASES_URL = "https://github.com/wazootech/wiki/releases/latest"
 PACKAGE_NAME = "wazootech-wiki"
+
+
+def is_frozen_install() -> bool:
+    """True when running from a PyInstaller (or similar) standalone binary."""
+    return bool(getattr(sys, "frozen", False))
 
 
 def get_current_version() -> str | None:
@@ -98,8 +104,19 @@ def _parse_version(v: str) -> tuple[int, ...]:
     return tuple(result)
 
 
+def frozen_upgrade_message() -> str:
+    return (
+        "This is a standalone wiki binary; pip upgrade is not available.\n"
+        f"Download the latest release for your platform from {GITHUB_RELEASES_URL}\n"
+        "Verify SHA256SUMS, replace the binary, and ensure it is on your PATH."
+    )
+
+
 def perform_upgrade(verbose: bool) -> None:
     """Run 'pip install --upgrade wazootech-wiki' in a subprocess."""
+    if is_frozen_install():
+        raise click.ClickException(frozen_upgrade_message())
+
     cmd = [sys.executable, "-m", "pip", "install", "--upgrade", PACKAGE_NAME]
     if verbose:
         click.echo(f"Running: {' '.join(cmd)}")
