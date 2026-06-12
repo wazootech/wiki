@@ -90,8 +90,8 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 | Template                                                                                                                                                                                                      | Purpose                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [wiki-example](https://github.com/wazootech/wiki-example)                                                                                                                                                     | Starter vault                                                                    |
-| [wiki-sparql-sandbox](https://github.com/wazootech/wiki-sparql-sandbox)                                                                                                                                       | YASGUI + sample vault or live endpoint — see [SPARQL Sandbox](SPARQL_Sandbox.md) |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)                                                                                                                                           | Starter vault                                                                    |
+| [sparql-service-template](https://github.com/wazootech/sparql-service-template)                                                                                                                               | YASGUI + sample vault or live endpoint — see [SPARQL Sandbox](SPARQL_Sandbox.md) |
 | [#15](https://github.com/wazootech/wiki/issues/15) Next.js viewer, [#16](https://github.com/wazootech/wiki/issues/16) Obsidian + Quartz, [#31](https://github.com/wazootech/wiki/issues/31) Mintlify/Holocron | Planned — separate template initiatives, not core CLI scope                      |
 
 ## Features
@@ -197,7 +197,7 @@ Similar **agent memory filesystem** approaches include [Supermemory SMFS](Superm
 ## Repository
 
 - Source and issues: [github.com/wazootech/wiki](https://github.com/wazootech/wiki)
-- Starter template: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example)
+- Starter template: [github.com/wazootech/llm-wiki-template](https://github.com/wazootech/llm-wiki-template)
 
 ## Background
 

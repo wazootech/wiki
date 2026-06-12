@@ -1,4 +1,4 @@
-﻿import json
+import json
 import threading
 import time
 import unittest
@@ -469,13 +469,13 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 default_layout = Path("layouts") / "default.html"
                 self.assertTrue(default_layout.is_file())
                 expected_layout = render_default_layout(
-                    InitOptions(wiki_iri="https://wiki.example.org/"),
+                    InitOptions(graph_context_wiki="https://wiki.example.org/"),
                 )
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("{site_title}", expected_layout)
+                self.assertIn("{site_manifest_name}", expected_layout)
 
                 expected_content = render_wiki_yaml(
-                    InitOptions(wiki_iri="https://wiki.example.org/"),
+                    InitOptions(graph_context_wiki="https://wiki.example.org/"),
                 )
                 self.assertEqual(config_content, expected_content)
                 self.assertIn('wrap: "no"', config_content)
@@ -561,10 +561,10 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
         expected = render_default_layout(
             InitOptions(
-                wiki_iri="https://wazootech.github.io/wiki/",
-                base_url="/wiki",
-                url_style="dir",
-                site_title="Wiki CLI",
+                graph_context_wiki="https://wazootech.github.io/wiki/",
+                site_base_url="/wiki",
+                site_url_style="dir",
+                site_manifest_name="Wiki CLI",
             )
         )
         self.assertEqual(docs_template, expected)

@@ -1,4 +1,4 @@
-﻿"""Click CLI entrypoint defining subcommands and option handling."""
+"""Click CLI entrypoint defining subcommands and option handling."""
 
 from __future__ import annotations
 
@@ -604,6 +604,13 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Override link.style: markdown or wikilink.")
+@click.option("--site-manifest-name", "site_manifest_name", default="Wiki CLI", help="Override site.manifest.name (default 'Wiki CLI').")
+@click.option("--vault-inputs", "vault_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
+@click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
+@click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
+@click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
+@click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["override", "fallback"]), default=None, help="Strategy when applying graph.implicit_types.")
+@click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
 def init(
     force: bool,
     init_git: bool,
@@ -613,6 +620,13 @@ def init(
     site_url_style: str | None,
     graph_content_predicate: str | None,
     link_style: str | None,
+    site_manifest_name: str,
+    vault_inputs: tuple[str, ...],
+    graph_base_iri: str | None,
+    site_manifest_theme_color: str | None,
+    graph_implicit_types: tuple[str, ...],
+    graph_implicit_types_policy: str | None,
+    graph_include_file_extension: bool | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
     import shutil
@@ -653,14 +667,21 @@ def init(
 
     init_options = resolve_init_options(
         repo=repo,
-        context_wiki=graph_context_wiki,
-        base_url=site_base_url,
-        url_style=site_url_style,
-        content_predicate=graph_content_predicate,
+        graph_context_wiki=graph_context_wiki,
+        site_base_url=site_base_url,
+        site_url_style=site_url_style,
+        graph_content_predicate=graph_content_predicate,
         link_style=link_style,
         cwd=cwd,
         init_git=init_git,
         prompt_context_wiki=prompt_context_wiki,
+        site_manifest_name=site_manifest_name,
+        vault_inputs=list(vault_inputs) if vault_inputs else None,
+        graph_base_iri=graph_base_iri,
+        site_manifest_theme_color=site_manifest_theme_color,
+        graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
+        graph_implicit_types_policy=graph_implicit_types_policy,
+        graph_include_file_extension=graph_include_file_extension,
     )
     config_content = render_wiki_yaml(init_options)
 

@@ -298,8 +298,8 @@ about: wiki:Alice_Theory
     def test_build_site_block_drives_logo_letter(self) -> None:
         runner = CliRunner()
         template = """<!DOCTYPE html>
-<html><head><title>{page_title} - {site_title}</title></head>
-<body>{logo_svg}<span class="logo-text">{site_title}</span>{page_content}</body></html>"""
+<html><head><title>{page_title} - {site_manifest_name}</title></head>
+<body>{logo_svg}<span class="logo-text">{site_manifest_name}</span>{page_content}</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -325,10 +325,10 @@ about: wiki:Alice_Theory
         docs_html = repo_root / "docs" / "layouts" / "default.html"
         expected = render_default_layout(
             InitOptions(
-                wiki_iri=DOCS_VAULT_INIT_OPTIONS.wiki_iri,
-                base_url=DOCS_VAULT_INIT_OPTIONS.base_url,
-                url_style=DOCS_VAULT_INIT_OPTIONS.url_style,
-                site_title="Wiki CLI",
+                graph_context_wiki=DOCS_VAULT_INIT_OPTIONS.graph_context_wiki,
+                site_base_url=DOCS_VAULT_INIT_OPTIONS.site_base_url,
+                site_url_style=DOCS_VAULT_INIT_OPTIONS.site_url_style,
+                site_manifest_name="Wiki CLI",
             )
         )
         self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html not found at {docs_html}")

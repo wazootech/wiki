@@ -10,7 +10,7 @@
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template: [github.com/wazootech/wiki-example](https://github.com/wazootech/wiki-example) (GitHub **Use this template**).
+Starter template: [github.com/wazootech/llm-wiki-template](https://github.com/wazootech/llm-wiki-template) (GitHub **Use this template**).
 
 
 ## Use cases and integrations
@@ -46,8 +46,8 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 | Template | Purpose |
 |----------|---------|
-| [wiki-example](https://github.com/wazootech/wiki-example) | Starter vault — use GitHub **Use this template** |
-| [wiki-sparql-sandbox](https://github.com/wazootech/wiki-sparql-sandbox) ([Pages demo](https://wazootech.github.io/wiki-sparql-sandbox/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template) | Starter vault — use GitHub **Use this template** |
+| [sparql-service-template](https://github.com/wazootech/sparql-service-template) ([Pages demo](https://wazootech.github.io/sparql-service-template/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
 | Next.js viewer ([#15](https://github.com/wazootech/wiki/issues/15)), Obsidian + Quartz ([#16](https://github.com/wazootech/wiki/issues/16)), Mintlify/Holocron ([#31](https://github.com/wazootech/wiki/issues/31)) | Planned template repos — not in this release |
 
 ## Installation

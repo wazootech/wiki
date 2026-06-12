@@ -1,10 +1,16 @@
-{# wiki init scaffold — variables: wiki_iri, base_url, url_style, site_title, content_predicate, link_style #}
+{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_manifest_name, graph_content_predicate, link_style, vault_inputs, graph_base_iri, site_manifest_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
 
 # Vault paths, assets, and filename policy (wiki check / wiki lint).
 vault:
   # Markdown and data directories to index (relative to this file).
   inputs:
+{% if vault_inputs %}
+{% for inp in vault_inputs %}
+    - {{ inp }}
+{% endfor %}
+{% else %}
     - wiki
+{% endif %}
   # Static files for custom CSS, logos, favicons (copied on wiki build).
   # assets:
   #   - assets
@@ -16,20 +22,39 @@ vault:
 
 # RDF document URIs, prefixes, and graph build settings.
 graph:
-{% if content_predicate %}
+{% if graph_content_predicate %}
   # Predicate for full-text body literals in SPARQL (for example schema:articleBody).
-  content_predicate: {{ content_predicate }}
+  content_predicate: {{ graph_content_predicate }}
 {% else %}
   # content_predicate: schema:articleBody
 {% endif %}
+{% if graph_include_file_extension is not none %}
+  include_file_extension: {{ 'true' if graph_include_file_extension else 'false' }}
+{% else %}
   # include_file_extension: false
+{% endif %}
+{% if graph_implicit_types %}
+  implicit_types:
+{% for t in graph_implicit_types %}
+    - {{ t }}
+{% endfor %}
+{% else %}
   # implicit_types: [schema:TechArticle]
+{% endif %}
+{% if graph_implicit_types_policy %}
+  implicit_types_policy: {{ graph_implicit_types_policy }}
+{% else %}
   # implicit_types_policy: fallback
+{% endif %}
+{% if graph_base_iri %}
+  base_iri: {{ graph_base_iri }}
+{% else %}
   # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
+{% endif %}
   # CURIE prefix map for frontmatter and microdata.
   context:
     schema: https://schema.org/
-    wiki: {{ wiki_iri }}
+    wiki: {{ graph_context_wiki }}
     wazoo: https://schema.wazoo.dev/
     foaf: http://xmlns.com/foaf/0.1/
     dc: http://purl.org/dc/elements/1.1/
@@ -41,8 +66,12 @@ graph:
 site:
   manifest:
     # Site name in layout chrome and manifest.webmanifest.
-    name: {{ site_title }}
+    name: {{ site_manifest_name }}
+{% if site_manifest_theme_color %}
+    theme_color: "{{ site_manifest_theme_color }}"
+{% else %}
     # theme_color: "#6366f1"
+{% endif %}
     # icons:
     #   - src: assets/icon-192.png
     #     sizes: "192x192"
@@ -53,9 +82,9 @@ site:
   # Default page layout HTML with {placeholder} tokens.
   layout: layouts/default.html
   # URL prefix for built and served pages.
-  base_url: {{ base_url }}
+  base_url: {{ site_base_url }}
   # dir → slug/index.html; file → slug.html
-  url_style: {{ url_style }}
+  url_style: {{ site_url_style }}
 
 # wiki link command output format and rename repair map.
 link:

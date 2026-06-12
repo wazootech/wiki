@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -238,7 +238,7 @@ name: Project Atlas
             config = Config(vault={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            page_layout_shell = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+            page_layout_shell = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
             html = build_page_html(page, site, page_layout=page_layout_shell)
 
             self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
@@ -288,7 +288,7 @@ name: Project Atlas
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
     def test_seed_template_includes_code_copy_initialization(self) -> None:
-        seed_template = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
         self.assertIn("initCodeCopyButtons", seed_template)
         self.assertIn("pre[data-copy]", seed_template)
         self.assertIn("copyPreContent", seed_template)
@@ -313,7 +313,7 @@ specialty: Diagnostics
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
-            page_layout_shell = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+            page_layout_shell = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
             html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=page_layout_shell)
 
             self.assertIn("Metadata</a>", html)
@@ -475,7 +475,7 @@ specialty: Diagnostics
             self.assertNotIn("On this page", html)
 
     def test_default_layout_read_view_includes_first_heading(self) -> None:
-        seed_template = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -494,7 +494,7 @@ specialty: Diagnostics
             self.assertIn("Lead paragraph.", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
-        seed_template = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -631,8 +631,8 @@ specialty: Diagnostics
             html = build_index_html(
                 site,
                 page_layout=(
-                    '<meta name="theme-color" content="{theme_color}">'
-                    '<meta name="msapplication-TileColor" content="{theme_color}">'
+                    '<meta name="theme-color" content="{site_manifest_theme_color}">'
+                    '<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">'
                 ),
             )
             self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
@@ -651,7 +651,7 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(
                 site,
-                page_layout='<meta name="theme-color" content="{theme_color}">',
+                page_layout='<meta name="theme-color" content="{site_manifest_theme_color}">',
             )
             self.assertIn('<meta name="theme-color" content="#6366f1">', html)
 
@@ -690,7 +690,7 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(
                 site,
-                page_layout='{manifest_url}|{manifest_json}',
+                page_layout='{site_manifest_url}|{manifest_json}',
             )
             self.assertIn("/wiki/manifest.webmanifest", html)
             self.assertIn('"name":"Acme Docs"', html)

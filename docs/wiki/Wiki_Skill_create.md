@@ -35,7 +35,7 @@ Run `wiki --help` first. If it fails, state that the Wiki CLI must be on PATH, o
 | No `wiki.yaml`      | Phase A: `wiki init` with explicit flags, then Phase B: preferences wizard |
 | `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                    |
 
-Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--git`, `--link-style`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
+Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-manifest-name`, `--vault-inputs`, `--graph-base-iri`, `--site-manifest-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
 
 After approved edits to markdown or config, run `wiki fmt` on changed paths.
 

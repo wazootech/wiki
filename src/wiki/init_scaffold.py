@@ -95,10 +95,10 @@ def detect_origin_repo(cwd: Path) -> str | None:
 
 # Init options for this repository's docs/ vault (parity with docs/wiki.yaml).
 DOCS_VAULT_INIT_OPTIONS = InitOptions(
-    wiki_iri="https://wazootech.github.io/wiki/",
-    base_url="/wiki",
-    url_style=DEFAULT_URL_STYLE,
-    content_predicate="schema:articleBody",
+    graph_context_wiki="https://wazootech.github.io/wiki/",
+    site_base_url="/wiki",
+    site_url_style=DEFAULT_URL_STYLE,
+    graph_content_predicate="schema:articleBody",
     link_style="markdown",
 )
 
@@ -106,14 +106,21 @@ DOCS_VAULT_INIT_OPTIONS = InitOptions(
 def resolve_init_options(
     *,
     repo: str | None,
-    context_wiki: str | None,
-    base_url: str | None,
-    url_style: str | None,
-    content_predicate: str | None,
+    graph_context_wiki: str | None,
+    site_base_url: str | None,
+    site_url_style: str | None,
+    graph_content_predicate: str | None,
     link_style: str | None,
     cwd: Path,
     init_git: bool,
     prompt_context_wiki: Callable[[str], str],
+    site_manifest_name: str = "Wiki CLI",
+    vault_inputs: list[str] | None = None,
+    graph_base_iri: str | None = None,
+    site_manifest_theme_color: str | None = None,
+    graph_implicit_types: list[str] | None = None,
+    graph_implicit_types_policy: str | None = None,
+    graph_include_file_extension: bool | None = None,
 ) -> InitOptions:
     """Resolve init config from CLI flags, git remote, or interactive prompt."""
     inferred_context_wiki: str | None = None
@@ -123,26 +130,33 @@ def resolve_init_options(
     if repo_slug is None and (init_git or (cwd / ".git").exists()):
         repo_slug = detect_origin_repo(cwd)
 
-    if context_wiki is None and repo_slug is not None:
+    if graph_context_wiki is None and repo_slug is not None:
         owner, repo_name = parse_github_repo(repo_slug)
         inferred_context_wiki, inferred_base_url = infer_github_pages_urls(owner, repo_name)
 
-    resolved_context_wiki = context_wiki or inferred_context_wiki
+    resolved_context_wiki = graph_context_wiki or inferred_context_wiki
     if resolved_context_wiki is None:
         resolved_context_wiki = prompt_context_wiki(DEFAULT_WIKI_BASE)
     resolved_context_wiki = normalize_base_iri(resolved_context_wiki)
 
-    resolved_base_url = base_url or inferred_base_url or DEFAULT_BASE_URL
+    resolved_base_url = site_base_url or inferred_base_url or DEFAULT_BASE_URL
     resolved_base_url = normalize_base_url(resolved_base_url)
 
-    resolved_url_style = url_style or DEFAULT_URL_STYLE
+    resolved_url_style = site_url_style or DEFAULT_URL_STYLE
 
     return InitOptions(
-        wiki_iri=resolved_context_wiki,
-        base_url=resolved_base_url,
-        url_style=resolved_url_style,
-        content_predicate=content_predicate,
+        graph_context_wiki=resolved_context_wiki,
+        site_base_url=resolved_base_url,
+        site_url_style=resolved_url_style,
+        graph_content_predicate=graph_content_predicate,
         link_style=link_style,
+        site_manifest_name=site_manifest_name,
+        vault_inputs=vault_inputs,
+        graph_base_iri=graph_base_iri,
+        site_manifest_theme_color=site_manifest_theme_color,
+        graph_implicit_types=graph_implicit_types,
+        graph_implicit_types_policy=graph_implicit_types_policy,
+        graph_include_file_extension=graph_include_file_extension,
     )
 
 

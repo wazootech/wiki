@@ -113,10 +113,10 @@ def _site_chrome_context(site: WikiSite, base_url: str) -> dict[str, str]:
     logo_svg = _build_logo_svg(_logo_letter(site_title), manifest.theme_color)
     return {
         "logo_svg": logo_svg,
-        "theme_color": theme_color,
-        "site_title": html_module.escape(site_title),
+        "site_manifest_theme_color": theme_color,
+        "site_manifest_name": html_module.escape(site_title),
         "manifest_json": serialize_web_manifest(site.config),
-        "manifest_url": _manifest_url(base_url),
+        "site_manifest_url": _manifest_url(base_url),
     }
 
 
@@ -217,12 +217,12 @@ def build_index_html(
 
     context = {
         "inline_css": INLINE_CSS,
-        "base_url": base_url,
+        "site_base_url": base_url,
         **_site_chrome_context(site, base_url),
         "page_title": "All Pages",
         "body_class": "wiki-index",
         "page_kind": "index",
-        "url_style": url_style,
+        "site_url_style": url_style,
         "all_pages_json": pages_json,
         "current_slug_json": json.dumps(""),
         "page_content": page_content,
@@ -299,12 +299,12 @@ def build_page_html(
 
     context = {
         "inline_css": INLINE_CSS,
-        "base_url": base_url,
+        "site_base_url": base_url,
         **_site_chrome_context(site, base_url),
         "page_title": html_module.escape(page.title),
         "body_class": f"wiki-page layout-{layout_class}",
         "page_kind": "article",
-        "url_style": url_style,
+        "site_url_style": url_style,
         "all_pages_json": pages_json,
         "current_slug_json": json.dumps(page.full_slug),
         "page_content": page.html,
