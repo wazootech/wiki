@@ -48,7 +48,10 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 |----------|---------|
 | [llm-wiki-template](https://github.com/wazootech/llm-wiki-template) | Starter vault — use GitHub **Use this template** |
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template) ([Pages demo](https://wazootech.github.io/sparql-service-template/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
-| Next.js viewer ([#15](https://github.com/wazootech/wiki/issues/15)), Obsidian + Quartz ([#16](https://github.com/wazootech/wiki/issues/16)), Mintlify/Holocron ([#31](https://github.com/wazootech/wiki/issues/31)) | Planned template repos — not in this release |
+| [nextjs-template](https://github.com/wazootech/nextjs-template) | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
+| [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16)) |
+| [mintlify-template](https://github.com/wazootech/mintlify-template) | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31)) |
+
 
 ## Installation
 

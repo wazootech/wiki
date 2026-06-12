@@ -88,11 +88,13 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 ## Ecosystem templates
 
-| Template                                                                                                                                                                                                      | Purpose                                                                          |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)                                                                                                                                           | Starter vault                                                                    |
-| [sparql-service-template](https://github.com/wazootech/sparql-service-template)                                                                                                                               | YASGUI + sample vault or live endpoint — see [SPARQL Sandbox](SPARQL_Sandbox.md) |
-| [#15](https://github.com/wazootech/wiki/issues/15) Next.js viewer, [#16](https://github.com/wazootech/wiki/issues/16) Obsidian + Quartz, [#31](https://github.com/wazootech/wiki/issues/31) Mintlify/Holocron | Planned — separate template initiatives, not core CLI scope                      |
+| Template                                                                          | Purpose                                                                                       |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)               | Starter vault                                                                                 |
+| [sparql-service-template](https://github.com/wazootech/sparql-service-template)   | YASGUI + sample vault or live endpoint — see [SPARQL Sandbox](SPARQL_Sandbox.md)              |
+| [nextjs-template](https://github.com/wazootech/nextjs-template)                   | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
+| [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16))                      |
+| [mintlify-template](https://github.com/wazootech/mintlify-template)               | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31))                 |
 
 ## Features
 
