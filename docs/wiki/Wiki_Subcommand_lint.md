@@ -40,7 +40,7 @@ wiki lint --strict
 | `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
 | `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |
 | `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                             |
-| `link_style`         | Wikilinks in body prose when `link.style` is `markdown`                                          |
+| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `markdown`                  |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
 

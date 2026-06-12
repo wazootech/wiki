@@ -113,7 +113,7 @@ All internal links must resolve to existing documents in the wiki.
 
 Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in wiki prose.
 
-Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page_Name.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
+Standard Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page_Name.md)` links. Set `link.style: obsidian` to insert `[[Page|display]]` instead. `wiki lint` reports Obsidian wikilinks in body prose via `lint.link_style` (warning by default).
 
 ## References (external standards)
 

@@ -37,6 +37,7 @@
 ### Changed
 
 - `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
+- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Changed (breaking)
 
@@ -73,6 +74,7 @@
 4. In `site:` move branding into `manifest:`:
    - `title` → `manifest.name`
    - `theme_color` → `manifest.theme_color`
+5. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
 
 ## 0.1.9 — 2026-06-08
 

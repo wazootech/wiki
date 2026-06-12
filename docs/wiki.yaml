@@ -54,7 +54,7 @@ site:
 
 # wiki link command output format and rename repair map.
 link:
-  # wikilink or markdown (wiki link --apply).
+  # standard Markdown or Obsidian (wiki link --apply).
   style: markdown
   # renames:
   #   Old_Page_Name: New_Page_Name

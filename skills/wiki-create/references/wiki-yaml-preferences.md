@@ -19,7 +19,7 @@ Maps to layout chrome and `manifest.webmanifest`.
 | `lint.headings` | `off`, `warning`, `error` | Sentence-case H2+ and numbered headings |
 | `lint.filename_pattern` | severity | Wikipedia-style filenames |
 | `lint.broken_links` | severity | Unresolved internal links |
-| `lint.link_style` | severity | Wikilinks in body when `link.style: markdown` |
+| `lint.link_style` | severity | Obsidian wikilinks in body when `link.style: markdown` |
 
 Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config load.
 

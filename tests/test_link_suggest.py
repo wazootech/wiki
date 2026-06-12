@@ -119,7 +119,7 @@ class TestLinkSuggest(unittest.TestCase):
             self.assertTrue(content.startswith("---\ntype: TechArticle\n---\n\n"))
             self.assertIn("[Wiki CLI](Wiki_CLI.md)", content)
 
-    def test_apply_uses_wikilinks_when_link_style_configured(self) -> None:
+    def test_apply_uses_obsidian_links_when_link_style_configured(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -130,7 +130,7 @@ class TestLinkSuggest(unittest.TestCase):
                 "# Getting started\n\nRead the Wiki CLI guide before you begin.\n",
                 encoding="utf-8",
             )
-            config = Config(wiki={"inputs": [wiki]}, link={"style": "wikilink"}, config_root=root)
+            config = Config(wiki={"inputs": [wiki]}, link={"style": "obsidian"}, config_root=root)
 
             opportunities = find_link_opportunities(config)
             apply_link_opportunities(config, opportunities, dry_run=False)

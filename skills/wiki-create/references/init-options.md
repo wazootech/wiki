@@ -23,7 +23,7 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--site-base-url` | Override `site.base_url` (default `/wiki` or inferred from `--repo`) |
 | `--site-url-style` | `dir` or `file` (default `dir`) |
 | `--graph-content-predicate` | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`) |
-| `--link-style` | `markdown` or `wikilink` |
+| `--link-style` | Standard Markdown (`markdown`, default) or Obsidian wikilinks (`obsidian`) |
 | `--site-manifest-name` | Override `site.manifest.name` (default `Wiki CLI`) |
 | `--wiki-inputs` | Default markdown directories relative to config root (repeatable; default `wiki`) |
 | `--graph-base-iri` | Override `graph.base_iri` when document IRIs differ from `graph.context.wiki` |

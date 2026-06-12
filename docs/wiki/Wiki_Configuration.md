@@ -140,7 +140,7 @@ Settings for the `wiki link` command family (separate from `lint.link_style` sev
 
 | Key            | Default    | Purpose                                                       |
 | -------------- | ---------- | ------------------------------------------------------------- |
-| `link.style`   | `markdown` | Format `wiki link --apply` inserts (`markdown` or `wikilink`) |
+| `link.style`   | `markdown` | Format `wiki link --apply` inserts: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`) |
 | `link.renames` | `{}`       | Old slug → new route map for `wiki link --fix-broken`         |
 
 ## Serve API
@@ -353,7 +353,7 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
 
-When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style wiki.
+When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks (`[[Page]]`) in body prose. Set `lint.link_style: off` to allow wikilinks while keeping Markdown as the apply format, or set `link.style: obsidian` for an Obsidian-style wiki.
 
 ## Formatting (`fmt`)
 
@@ -390,7 +390,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | `filename_pattern` | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
-| `link_style`       | `warning` | Wikilinks in body prose when `link.style` is `markdown`                                                        |
+| `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `markdown`                                  |
 
 ## This repository
 

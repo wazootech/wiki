@@ -64,7 +64,7 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 | GitHub Pages | User publishes to `{owner}.github.io/{repo}` | `--repo owner/repo` |
 | Custom namespace | No GitHub / custom site | `--graph-context-wiki https://…/` and optional `--site-base-url` |
 | Git repository | User wants `git init` now | `--git` (requires `git` on PATH) |
-| Link style | Obsidian-style wikilinks vs markdown | `--link-style wikilink` (default: omit → markdown) |
+| Link style | Obsidian wikilinks vs standard Markdown | `--link-style obsidian` (default: omit → `markdown`) |
 | Site display name | Custom display title | `--site-manifest-name "My Title"` |
 | Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
 | Theme color | Manifest theme color | `--site-manifest-theme-color "#3b82f6"` |

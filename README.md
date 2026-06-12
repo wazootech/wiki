@@ -234,7 +234,7 @@ wiki link --apply
 wiki link --fix-broken
 ```
 
-`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link.style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags wikilinks in body prose when `link.style` is `markdown`. Optional `link.renames` maps old slugs to new routes for renames.
+`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link.style` in `wiki.yaml` (`markdown` inserts `[text](Page.md)`; `obsidian` inserts `[[Page|text]]`). `lint.link_style` flags Obsidian wikilinks in body prose when `link.style` is `markdown`. Optional `link.renames` maps old slugs to new routes for renames.
 
 ### `query`
 Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.

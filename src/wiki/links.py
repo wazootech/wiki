@@ -80,4 +80,6 @@ def format_internal_link(target_route: str, display: str, style: str = "markdown
     """Format an internal wiki link for insertion or CLI suggestions."""
     if style == "markdown":
         return f"[{display}]({markdown_link_target(target_route)})"
-    return f"[[{target_route}|{display}]]"
+    if style == "obsidian":
+        return f"[[{target_route}|{display}]]"
+    raise ValueError(f"expected markdown or obsidian, got {style!r}")
