@@ -11,7 +11,15 @@ from unittest.mock import MagicMock, patch
 from click.testing import CliRunner
 
 from wiki.cli import main
-from wiki.upgrade import _parse_version, check_version, get_current_version, get_latest_version, get_windows_path_mismatch_warning
+from wiki.upgrade import (
+    _parse_version,
+    check_version,
+    frozen_upgrade_message,
+    get_current_version,
+    get_latest_version,
+    get_windows_path_mismatch_warning,
+    is_frozen_install,
+)
 
 
 PYPI_RESPONSE_LATEST = {
@@ -142,6 +150,23 @@ class TestUpgradeCLI(unittest.TestCase):
         result = runner.invoke(main, ["upgrade", "--check"])
         self.assertEqual(result.exit_code, 1)
         self.assertIn("cannot determine current version", result.output)
+
+    @patch("wiki.upgrade.is_frozen_install", return_value=True)
+    @patch("wiki.upgrade.version", return_value="0.1.4")
+    def test_upgrade_frozen_install(self, mock_version: MagicMock, mock_frozen: MagicMock) -> None:
+        runner = CliRunner()
+        mock_urlopen = self._mock_pypi("1.0.0")
+        with patch("wiki.upgrade.urlopen", mock_urlopen):
+            result = runner.invoke(main, ["upgrade", "--yes"])
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("standalone wiki binary", result.output)
+        self.assertIn("github.com/wazootech/wiki/releases", result.output)
+
+    def test_frozen_upgrade_message(self) -> None:
+        self.assertIn("SHA256SUMS", frozen_upgrade_message())
+
+    def test_is_frozen_install_default_false(self) -> None:
+        self.assertFalse(is_frozen_install())
 
     @patch("wiki.upgrade.version", return_value="0.1.4")
     def test_upgrade_with_yes(self, mock_version: MagicMock) -> None:

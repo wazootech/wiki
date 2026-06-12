@@ -25,6 +25,15 @@
 
 ## Unreleased
 
+### Added
+
+- Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
+- Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
+
+### Changed
+
+- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
+
 ### Changed (breaking)
 
 - Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
