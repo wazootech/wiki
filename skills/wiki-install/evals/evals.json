@@ -4,11 +4,12 @@
     {
       "id": 1,
       "prompt": "I want to use wiki but don't have it installed",
-      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help; ready message without suggesting wiki-create or scaffolding.",
+      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help and fmt capability; ready message without suggesting wiki-create or scaffolding.",
       "files": [],
       "expectations": [
         "Mentions pip install wazootech-wiki or equivalent install path",
         "Runs or instructs verification with wiki --help",
+        "Mentions fmt capability probe or wiki fmt --help",
         "Ends with installed and ready to go or equivalent success message when CLI works",
         "Does not mention wiki-create or wiki init as a next step",
         "Does not run wiki init"
@@ -17,13 +18,26 @@
     {
       "id": 2,
       "prompt": "Check if wiki CLI is installed",
-      "expected_output": "Runs wiki --help; if success, confirms installed and ready only — no follow-on suggestions.",
+      "expected_output": "Runs wiki --help and fmt capability probe; if success, confirms installed and ready only — no follow-on suggestions.",
       "files": [],
       "expectations": [
         "Runs wiki --help or wiki --version",
+        "Mentions fmt capability probe or wiki fmt --help",
         "If CLI works, message is ready-to-go style without next-step suggestions",
         "Does not mention wiki-create",
         "Does not suggest scaffolding a wiki"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "wiki --help works but wiki fmt says unknown command — fix my install",
+      "expected_output": "Diagnose stale or wrong wiki on PATH; recommend upgrade/reinstall wazootech-wiki; must not say ready-to-go until capability passes.",
+      "files": [],
+      "expectations": [
+        "Mentions stale or outdated wiki or wrong wiki on PATH",
+        "Recommends pip install --upgrade wazootech-wiki or wiki upgrade",
+        "Does not say installed and ready to go",
+        "Does not suggest wiki init or scaffolding"
       ]
     }
   ]

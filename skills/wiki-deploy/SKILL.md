@@ -54,14 +54,16 @@ Recommend `_site/` in `.gitignore` when build output is not already ignored.
 
 ## Resolve wiki command
 
-Prefer `wiki` on PATH. In the **wiki-cli repository checkout** only, if global `wiki` is missing or stale:
+Prefer `wiki` on PATH when `wiki fmt --help` succeeds (or `fmt` appears in `wiki --help`).
+
+In the **wiki-cli repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
 
 ```bash
 uv run wiki --help
 python -m wiki --help
 ```
 
-Use the command that works for all steps below (`wiki`, `uv run wiki`, or `python -m wiki`).
+Use the command that passes both `--help` and the `fmt` capability probe for all steps below (`wiki`, `uv run wiki`, or `python -m wiki`). If neither PATH nor checkout fallbacks work, stop and recommend upgrading **`wazootech-wiki`** (one-liner only — do not name other skills).
 
 ## Prerequisite gate
 
@@ -69,9 +71,10 @@ Before editing workflows or config:
 
 ```bash
 wiki --help
+wiki fmt --help
 ```
 
-If it fails, say **deployment requires the Wiki CLI on PATH** (PyPI: **`wazootech-wiki`**) and **stop**.
+If either fails, say **deployment requires a current Wiki CLI on PATH** (PyPI: **`wazootech-wiki`**) and **stop**.
 
 Locate `wiki.yaml` (repo root or ask the user). If absent, say a wiki workspace is required and **stop**.
 

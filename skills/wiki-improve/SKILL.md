@@ -28,7 +28,7 @@ bash skills/wiki-improve/scripts/audit.sh -c path/to/wiki.yaml
 # vendored: bash .agents/skills/wiki-improve/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
-Prefers `wiki` on PATH; else `uv run wiki` or `python -m wiki` (stale global install in this repo). Append file paths after `-c` to scope fmt, lint, and check. In **this repo**: `-c docs/wiki.yaml`.
+Prefers `wiki` on PATH when `wiki fmt --help` succeeds. In the **wiki-cli checkout**, if PATH `wiki` is stale (`--help` works but `fmt` fails), use `uv run wiki` or `python -m wiki`. Else stop and recommend upgrading **`wazootech-wiki`** (one-liner; do not name other skills). Append file paths after `-c` to scope fmt, lint, and check. In **this repo**: `-c docs/wiki.yaml`.
 
 [`scripts/audit.sh`](scripts/audit.sh) runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`. Stop on first failure; paste relevant CLI output.
 
@@ -45,6 +45,8 @@ Regex belongs in `wiki.filename_pattern`, not under `check:`.
 ### 1. Recon
 
 Read `wiki.yaml` (`wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`). Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
+
+If any CLI command fails loading `wiki.yaml` (unknown keys, allowlist errors): report as a **`config`** finding with the full error text; point to CHANGELOG Migration and wiki [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). Do not suggest runtime rename hints or `config migrate` shims.
 
 ### 2. Audit
 

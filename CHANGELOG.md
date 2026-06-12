@@ -33,6 +33,7 @@
 
 ### Changed
 
+- Agent skills — restore `wiki-improve/scripts/audit.sh` (was empty in rename commit); `wiki-install` capability probe (`wiki fmt --help`) catches stale PATH installs; `wiki-create` default-on post-init `check --strict` with opt-out; stale-CLI handling aligned across create/deploy/improve; eval updates
 - `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
 - `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS
 - `wiki-deploy` skill — forbid `uv pip install` without venv on standalone repos; eval for CI “No virtual environment found” footgun; embed uv/pip workflow templates wholesale (no install hybridization)

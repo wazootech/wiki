@@ -20,14 +20,16 @@ This skill **only** scaffolds or customizes a workspace. When done, summarize an
 
 ## Resolve wiki command
 
-Prefer `wiki` on PATH. In the **wiki-cli repository checkout** only, if global `wiki` is missing or stale:
+Prefer `wiki` on PATH when `wiki fmt --help` succeeds (or `fmt` appears in `wiki --help`).
+
+In the **wiki-cli repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
 
 ```bash
 uv run wiki --help
 python -m wiki --help
 ```
 
-Use the command that works for all steps below (`wiki`, `uv run wiki`, or `python -m wiki`).
+Use the command that passes both `--help` and the `fmt` capability probe for all steps below (`wiki`, `uv run wiki`, or `python -m wiki`). If neither PATH nor checkout fallbacks work, stop and recommend upgrading **`wazootech-wiki`** (one-liner only — do not name other skills).
 
 ## Prerequisite gate
 
@@ -35,12 +37,13 @@ Before init or file edits, verify the CLI:
 
 ```bash
 wiki --help
+wiki fmt --help
 ```
 
-If it fails:
+If either fails:
 
-1. Say that **creating a wiki requires the Wiki CLI on PATH**.
-2. Optional one-liner: PyPI package name is **`wazootech-wiki`** (not a full install tutorial).
+1. Say that **creating a wiki requires a current Wiki CLI on PATH** (package **`wazootech-wiki`**).
+2. If `--help` passes but `fmt` fails, note stale or shadowed `wiki` — upgrade/reinstall before init.
 3. **Do not** run `wiki init`, write scaffold files, or paste a step-by-step pip guide.
 4. **Do not** say “use wiki-install” or reference any skill path.
 5. **Stop.**
@@ -107,6 +110,14 @@ wiki init --repo owner/repo --git
 
 Capture stdout/stderr.
 
+### Post-init smoke (new scaffold only)
+
+After Phase A succeeds, **default:** run `wiki check --strict` with the resolved wiki command (same `-c` / cwd as init).
+
+- **Opt-out:** skip when the user explicitly declines in the same turn (e.g. “skip check”, “just init”).
+- **On failure:** report CLI output; do not auto-fix; include in exit summary.
+- **Wizard-only mode:** do not run this step.
+
 ### Phase B — Preferences wizard
 
 Gather **before init** when it affects flags (`--repo`, `--link-style`). **After init** for file edits:
@@ -135,11 +146,11 @@ With user approval, recommend:
 
 ## Clean exit
 
-Summarize: workspace path, init flags used, wizard edits (if any). Do not suggest daily commands (`check`, `lint`, `serve`) unless the user asks.
+Summarize: workspace path, init flags used, post-init `check --strict` result (if run), wizard edits (if any). Do not suggest `lint` or `serve` unless the user asks.
 
 For GitHub Pages CI, the **wiki-deploy** skill is a separate step when they are ready — it is not part of scaffolding.
 
-**Do not** run `wiki check`, `wiki lint`, or `wiki serve` unless the user asks.
+**Do not** run `wiki lint` or `wiki serve` unsolicited. **`wiki check --strict` after new init is the one default exception** (unless the user opts out).
 
 ## Troubleshooting
 

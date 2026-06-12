@@ -4,24 +4,26 @@
     {
       "id": 1,
       "prompt": "I want a new wiki in ~/projects/my-notes for GitHub Pages at me/my-notes",
-      "expected_output": "wiki init with --repo me/my-notes; preferences wizard for site name and first page; no check/lint/serve unless asked.",
+      "expected_output": "wiki init with --repo me/my-notes; post-init check --strict; preferences wizard; no lint/serve unless asked.",
       "files": [],
       "expectations": [
         "Uses wiki init with --repo or equivalent non-interactive flags",
+        "Runs or plans wiki check --strict after init",
         "Asks about or applies site manifest name or first page in wizard",
-        "Does not run wiki check, wiki lint, or wiki serve unsolicited",
+        "Does not run wiki lint or wiki serve unsolicited",
         "Does not include a full pip install tutorial"
       ]
     },
     {
       "id": 2,
       "prompt": "Scaffold a wiki in an empty directory",
-      "expected_output": "Init with explicit flags; at least one wizard question; fmt only if edits approved.",
+      "expected_output": "Init with explicit flags; post-init check --strict; at least one wizard question; fmt only if edits approved.",
       "files": [],
       "expectations": [
         "Runs or plans wiki init with non-interactive flags",
+        "Runs or plans wiki check --strict after init",
         "Includes preferences wizard after init",
-        "Does not run check/lint/serve pipeline unsolicited"
+        "Does not run lint/serve pipeline unsolicited"
       ]
     },
     {
@@ -45,6 +47,17 @@
         "Skips wiki init or does not use --force without explicit user request",
         "Focuses on site name, first page, or preferences wizard",
         "Does not run check/lint/serve unsolicited"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Scaffold a wiki in an empty directory, skip validation",
+      "expected_output": "Init with explicit flags; no check --strict when user opts out; wizard may follow.",
+      "files": [],
+      "expectations": [
+        "Runs or plans wiki init with non-interactive flags",
+        "Does not run wiki check --strict after init",
+        "Honors user opt-out of validation"
       ]
     }
   ]

@@ -8,7 +8,7 @@ description: Scaffold a Wiki CLI workspace with wiki init and a light preference
 
 The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for site name, first page, and light `wiki.yaml` tweaks.
 
-Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Requires **`wiki` on PATH** before any init or file edits.
+Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Requires a **current** Wiki CLI (`wiki fmt --help` must work) before any init or file edits.
 
 ## Install
 
@@ -26,14 +26,16 @@ npx skills add wazootech/wiki@wiki-create -g -y
 
 ## Prerequisite
 
-Run `wiki --help` first. If it fails, state that the Wiki CLI must be on PATH, optionally name PyPI package **`wazootech-wiki`**, and **stop** — do not run `wiki init` or name other skills.
+Run `wiki --help` and `wiki fmt --help`. If either fails, state that a current Wiki CLI is required (PyPI package **`wazootech-wiki`**), and **stop** — do not run `wiki init` or name other skills.
 
 ## Workflow summary
 
-| Mode                | Action                                                                     |
-| ------------------- | -------------------------------------------------------------------------- |
-| No `wiki.yaml`      | Phase A: `wiki init` with explicit flags, then Phase B: preferences wizard |
-| `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                    |
+| Mode                | Action                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| No `wiki.yaml`      | Phase A: `wiki init` with explicit flags → post-init `check --strict` → Phase B: wizard     |
+| `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                                     |
+
+Post-init `check --strict` runs by default after new init; the user may opt out in the same turn (e.g. “skip check”).
 
 Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-manifest-name`, `--wiki-inputs`, `--graph-base-iri`, `--site-manifest-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
 
@@ -41,7 +43,7 @@ After approved edits to markdown or config, run `wiki fmt` on changed paths.
 
 ## Modularity
 
-This skill **only** scaffolds or customizes a workspace. It does not install the CLI, run `check` / `lint` / `serve` unsolicited, or suggest other skills.
+This skill **only** scaffolds or customizes a workspace. It does not install the CLI, run `lint` / `serve` unsolicited, or suggest other skills. **`check --strict` after new init is the one default exception.**
 
 ## Related
 

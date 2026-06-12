@@ -37,6 +37,19 @@
         "Mentions wiki link --fix-broken as optional repair, separate from lint",
         "Does not auto-edit files"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Audit my wiki — wiki check fails with unknown top-level keys in wiki.yaml",
+      "expected_output": "Config load error cited as config finding; points to CHANGELOG Migration; no config migrate or rename hints in error strings.",
+      "files": [],
+      "expectations": [
+        "Reports config load or unknown key error with evidence",
+        "Categories finding as config or mentions wiki.yaml schema",
+        "Mentions CHANGELOG or Migration for upgrades",
+        "Does not suggest config migrate or per-key rename hints",
+        "Does not modify wiki files"
+      ]
     }
   ]
 }

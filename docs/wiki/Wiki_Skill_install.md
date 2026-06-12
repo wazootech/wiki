@@ -6,7 +6,7 @@ description: Install and verify the Wiki CLI on PATH for agents and contributors
 
 # wiki-install agent skill
 
-The **wiki-install** skill is procedural knowledge for coding agents: detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help`, and exit with a ready-to-go message.
+The **wiki-install** skill is procedural knowledge for coding agents: detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help` and a **`fmt` capability probe**, and exit with a ready-to-go message.
 
 Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Skills live under `skills/` and are **not** wiki content — do not add that folder to `wiki.inputs`.
 
@@ -23,13 +23,16 @@ npx skills add wazootech/wiki@wiki-install -g -y
 - The user needs the CLI but `wiki` is not found
 - Pip or PyPI setup for `wazootech-wiki`
 - Verify an existing install before other work
+- `wiki --help` works but subcommands like `fmt` are missing (stale install)
 
 ## What it does
 
-1. Run `wiki --help`. If it succeeds, confirm **Wiki CLI is installed and ready to go** and stop.
-1. If missing, give `pip install wazootech-wiki` (run install only with explicit user approval).
-1. Contributors in the wiki-cli checkout may use `uv pip install -e .` and `uv run wiki --help` instead.
-1. Re-verify after install; report errors if verification still fails.
+1. Run `wiki --help`, then `wiki fmt --help` (capability probe).
+2. If both pass, confirm **Wiki CLI is installed and ready to go** and stop.
+3. If missing, give `pip install wazootech-wiki` (run install only with explicit user approval).
+4. If `--help` passes but `fmt` fails, recommend upgrade/reinstall — do not say ready-to-go.
+5. Contributors in the wiki-cli checkout may use `uv pip install -e .` and `uv run wiki --help` instead.
+6. Re-verify after install; report errors if verification still fails.
 
 ## Modularity
 
