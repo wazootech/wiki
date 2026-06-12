@@ -1,4 +1,8 @@
-## ﻿--- type: TechArticle headline: wiki init description: Scaffold wiki.yaml and starter wiki pages interactively.
+---
+type: TechArticle
+headline: wiki init
+description: Scaffold wiki.yaml and starter wiki pages interactively.
+---
 
 # `wiki init`
 
