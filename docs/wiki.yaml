@@ -1,6 +1,6 @@
 
-# Vault paths, assets, and filename policy (wiki check / wiki lint).
-vault:
+# Wiki paths, assets, and filename policy (wiki check / wiki lint).
+wiki:
   # Markdown and data directories to index (relative to this file).
   inputs:
     - wiki
@@ -68,7 +68,7 @@ check:
 lint:
   # Wikilinks, markdown links, fragments, assets, wiki: CURIEs.
   broken_links: warning
-  # Wiki filename_pattern regex (see vault.filename_pattern).
+  # Wiki filename_pattern regex (see wiki.filename_pattern).
   filename_pattern: warning
   # ATX headings, sentence-case H2+, numbered headings.
   headings: off

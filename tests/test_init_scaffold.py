@@ -200,7 +200,7 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_content_predicate": ("graph", "content_predicate"),
     "link_style": ("link", "style"),
     "site_manifest_name": ("site", "manifest", "name"),
-    "vault_inputs": ("vault", "inputs"),
+    "wiki_inputs": ("wiki", "inputs"),
     "graph_base_iri": ("graph", "base_iri"),
     "site_manifest_theme_color": ("site", "manifest", "theme_color"),
     "graph_implicit_types": ("graph", "implicit_types"),

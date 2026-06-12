@@ -14,7 +14,7 @@ from .schemas import InitOptions
 from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
-    "DOCS_VAULT_INIT_OPTIONS",
+    "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
     "render_default_layout",
     "render_wiki_yaml",
@@ -93,8 +93,8 @@ def detect_origin_repo(cwd: Path) -> str | None:
     return f"{owner}/{repo}"
 
 
-# Init options for this repository's docs/ vault (parity with docs/wiki.yaml).
-DOCS_VAULT_INIT_OPTIONS = InitOptions(
+# Init options for this repository's docs/ wiki (parity with docs/wiki.yaml).
+DOCS_WIKI_INIT_OPTIONS = InitOptions(
     graph_context_wiki="https://wazootech.github.io/wiki/",
     site_base_url="/wiki",
     site_url_style=DEFAULT_URL_STYLE,
@@ -115,7 +115,7 @@ def resolve_init_options(
     init_git: bool,
     prompt_context_wiki: Callable[[str], str],
     site_manifest_name: str = "Wiki CLI",
-    vault_inputs: list[str] | None = None,
+    wiki_inputs: list[str] | None = None,
     graph_base_iri: str | None = None,
     site_manifest_theme_color: str | None = None,
     graph_implicit_types: list[str] | None = None,
@@ -151,7 +151,7 @@ def resolve_init_options(
         graph_content_predicate=graph_content_predicate,
         link_style=link_style,
         site_manifest_name=site_manifest_name,
-        vault_inputs=vault_inputs,
+        wiki_inputs=wiki_inputs,
         graph_base_iri=graph_base_iri,
         site_manifest_theme_color=site_manifest_theme_color,
         graph_implicit_types=graph_implicit_types,

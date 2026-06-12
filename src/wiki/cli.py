@@ -45,19 +45,19 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--vault-inputs", "vault_inputs", multiple=True, default=None, help="Override vault.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
+@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
 @click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
 @click.pass_context
-def main(ctx: click.Context, vault_inputs: tuple[str, ...] | None, config_path: str) -> None:
+def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
         config = Config.load(Path(config_path))
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    if vault_inputs:
-        config.vault.inputs = [
+    if wiki_inputs:
+        config.wiki.inputs = [
             Path(d) if Path(d).is_absolute() else config.config_root / d
-            for d in vault_inputs
+            for d in wiki_inputs
         ]
 
     ctx.obj = config
@@ -433,8 +433,8 @@ def build(
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
-    if not any(d.exists() for d in runtime_config.vault.inputs):
-        dirs_str = ", ".join(str(d) for d in runtime_config.vault.inputs)
+    if not any(d.exists() for d in runtime_config.wiki.inputs):
+        dirs_str = ", ".join(str(d) for d in runtime_config.wiki.inputs)
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
@@ -605,7 +605,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Override link.style: markdown or wikilink.")
 @click.option("--site-manifest-name", "site_manifest_name", default="Wiki CLI", help="Override site.manifest.name (default 'Wiki CLI').")
-@click.option("--vault-inputs", "vault_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
+@click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
 @click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
@@ -621,7 +621,7 @@ def init(
     graph_content_predicate: str | None,
     link_style: str | None,
     site_manifest_name: str,
-    vault_inputs: tuple[str, ...],
+    wiki_inputs: tuple[str, ...],
     graph_base_iri: str | None,
     site_manifest_theme_color: str | None,
     graph_implicit_types: tuple[str, ...],
@@ -676,7 +676,7 @@ def init(
         init_git=init_git,
         prompt_context_wiki=prompt_context_wiki,
         site_manifest_name=site_manifest_name,
-        vault_inputs=list(vault_inputs) if vault_inputs else None,
+        wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         graph_base_iri=graph_base_iri,
         site_manifest_theme_color=site_manifest_theme_color,
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,

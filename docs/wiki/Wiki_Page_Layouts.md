@@ -20,7 +20,7 @@ site:
   layout: layouts/default.html
 ```
 
-`wiki init` seeds `layouts/default.html` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `vault.assets`; see [Wiki Configuration](Wiki_Configuration.md#custom-css).
+`wiki init` seeds `layouts/default.html` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `wiki.assets`; see [Wiki Configuration](Wiki_Configuration.md#custom-css).
 
 ## `wazoo:layout`
 
@@ -39,7 +39,7 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 ## Placeholders
 
-Layout HTML files use the tokens documented in [Wiki Configuration](Wiki_Configuration.md#page-layout), including `{layout_class}`, `{layout_label}`, `{infobox_html}`, and `{page_content}`. Custom logos and favicons are layout plus `vault.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
+Layout HTML files use the tokens documented in [Wiki Configuration](Wiki_Configuration.md#page-layout), including `{layout_class}`, `{layout_label}`, `{infobox_html}`, and `{page_content}`. Custom logos and favicons are layout plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 
 ## Related
 

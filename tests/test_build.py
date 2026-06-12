@@ -8,7 +8,7 @@ from click.testing import CliRunner
 from wiki.cli import main
 from wiki.config import Config
 from wiki.paths import page_output_path
-from wiki.init_scaffold import DOCS_VAULT_INIT_OPTIONS, InitOptions, render_default_layout, render_wiki_yaml
+from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, render_default_layout, render_wiki_yaml
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestWikiBuild(unittest.TestCase):
             assets = root / "assets" / "items"
             wiki.mkdir()
             assets.mkdir(parents=True)
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n  assets: [assets]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n  assets: [assets]\n", encoding="utf-8")
             (wiki / "Item.md").write_text("# Item\n\n![label](../assets/items/label.jpg)", encoding="utf-8")
             (assets / "label.jpg").write_text("image", encoding="utf-8")
             output_dir = root / "_site"
@@ -41,7 +41,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
@@ -59,7 +59,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki.mkdir()
             owned.mkdir(parents=True)
             (owned / "old.html").write_text("old", encoding="utf-8")
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nlint:\n  broken_links: error\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\n[[Missing]]", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
@@ -75,7 +75,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n", encoding="utf-8")
             (wiki / "index.md").write_text("# Custom Home\n\nWelcome.", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page", encoding="utf-8")
 
@@ -93,7 +93,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n", encoding="utf-8")
             (wiki / "person.yaml").write_text("type: Person\nname: Gregory Davidson\n", encoding="utf-8")
             (wiki / "place.yml").write_text("type: Place\nname: Princeton\n", encoding="utf-8")
 
@@ -109,7 +109,7 @@ class TestWikiBuild(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
 
             for url_style in ("dir", "file"):
@@ -141,7 +141,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             wiki.mkdir()
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
-            config = Config(vault={"inputs": [wiki]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=root)
+            config = Config(wiki={"inputs": [wiki]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=root)
 
             with patch("wiki.cli.Config.load", return_value=config), patch(
                 "wiki.cli.run_lint",
@@ -193,7 +193,7 @@ class TestWikiBuild(unittest.TestCase):
 {page_content}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(test_template, encoding="utf-8")
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
@@ -252,7 +252,7 @@ name: Bella Davidson
 {metadata_pane_html}
 </body>
 </html>"""
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
             (root / "test_shell.html").write_text(template, encoding="utf-8")
             (wiki / "Page.md").write_text(
                 """---
@@ -286,7 +286,7 @@ about: wiki:Alice_Theory
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("vault:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html\n", encoding="utf-8")
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
@@ -306,7 +306,7 @@ about: wiki:Alice_Theory
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "vault:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html\n",
+                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html\n",
                 encoding="utf-8",
             )
             (root / "test_shell.html").write_text(template, encoding="utf-8")
@@ -325,9 +325,9 @@ about: wiki:Alice_Theory
         docs_html = repo_root / "docs" / "layouts" / "default.html"
         expected = render_default_layout(
             InitOptions(
-                graph_context_wiki=DOCS_VAULT_INIT_OPTIONS.graph_context_wiki,
-                site_base_url=DOCS_VAULT_INIT_OPTIONS.site_base_url,
-                site_url_style=DOCS_VAULT_INIT_OPTIONS.site_url_style,
+                graph_context_wiki=DOCS_WIKI_INIT_OPTIONS.graph_context_wiki,
+                site_base_url=DOCS_WIKI_INIT_OPTIONS.site_base_url,
+                site_url_style=DOCS_WIKI_INIT_OPTIONS.site_url_style,
                 site_manifest_name="Wiki CLI",
             )
         )
@@ -346,7 +346,7 @@ about: wiki:Alice_Theory
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "vault:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n",
+                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n",
                 encoding="utf-8",
             )
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
@@ -361,12 +361,12 @@ about: wiki:Alice_Theory
     def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
         docs_yaml = repo_root / "docs" / "wiki.yaml"
-        expected = render_wiki_yaml(DOCS_VAULT_INIT_OPTIONS)
+        expected = render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)
         self.assertTrue(docs_yaml.is_file(), f"docs/wiki.yaml not found at {docs_yaml}")
         self.assertEqual(
             docs_yaml.read_text(encoding="utf-8"),
             expected,
-            "docs/wiki.yaml must match render_wiki_yaml(DOCS_VAULT_INIT_OPTIONS)",
+            "docs/wiki.yaml must match render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)",
         )
 
 

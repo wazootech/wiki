@@ -10,7 +10,7 @@ description: JavaScript Object Notation for Linked Data.
 
 It is a standard derived from [JSON](JSON.md) that provides a way to serialize [RDF](RDF.md) in JSON format.
 
-The [Wiki CLI](Wiki_CLI.md) can compile vault contents into JSON-LD using [Wiki Subcommand export](Wiki_Subcommand_export.md).
+The [Wiki CLI](Wiki_CLI.md) can compile wiki contents into JSON-LD using [Wiki Subcommand export](Wiki_Subcommand_export.md).
 
 ## Related
 

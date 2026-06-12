@@ -17,7 +17,7 @@ class InitOptions(BaseModel):
     graph_content_predicate: str | None = None
     link_style: str | None = None
     site_manifest_name: str = "Wiki CLI"
-    vault_inputs: list[str] | None = None
+    wiki_inputs: list[str] | None = None
     graph_base_iri: str | None = None
     site_manifest_theme_color: str | None = None
     graph_implicit_types: list[str] | None = None

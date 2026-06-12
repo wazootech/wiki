@@ -41,7 +41,7 @@ With `site.base_url: /wiki` and `site.url_style: dir`:
 _site/wiki/Alice/index.html  →  /wiki/Alice/
 ```
 
-Assets from `vault.assets` copy under the same prefix. See [Wiki Configuration](Wiki_Configuration.md).
+Assets from `wiki.assets` copy under the same prefix. See [Wiki Configuration](Wiki_Configuration.md).
 
 ## Metadata view
 

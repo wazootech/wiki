@@ -53,7 +53,7 @@ class TestHeadings(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            config = Config(vault={"inputs": [wiki_dir]})
+            config = Config(wiki={"inputs": [wiki_dir]})
             warnings = lint_heading_levels(config)
 
             self.assertEqual(len(warnings), 1)

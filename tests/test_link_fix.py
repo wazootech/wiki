@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -10,7 +10,7 @@ from wiki.link_fix import apply_broken_link_fixes, find_broken_link_fixes, remai
 class TestLinkFix(unittest.TestCase):
     def test_fixes_typo_slug_with_unique_fuzzy_match(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = Config(vault={"inputs": [tmpdir]})
+            config = Config(wiki={"inputs": [tmpdir]})
             (Path(tmpdir) / "target-page.md").write_text("content", encoding="utf-8")
             source = Path(tmpdir) / "source-page.md"
             source.write_text("See [[target-pag]] for details.\n", encoding="utf-8")
@@ -26,7 +26,7 @@ class TestLinkFix(unittest.TestCase):
     def test_link_renames_take_precedence(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config = Config(
-                vault={"inputs": [tmpdir]},
+                wiki={"inputs": [tmpdir]},
                 link={"renames": {"Old_Name": "New_Name"}},
             )
             (Path(tmpdir) / "New_Name.md").write_text("content", encoding="utf-8")
@@ -39,7 +39,7 @@ class TestLinkFix(unittest.TestCase):
 
     def test_skips_ambiguous_fuzzy_matches(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = Config(vault={"inputs": [tmpdir]})
+            config = Config(wiki={"inputs": [tmpdir]})
             (Path(tmpdir) / "ab-page.md").write_text("a", encoding="utf-8")
             (Path(tmpdir) / "ac-page.md").write_text("b", encoding="utf-8")
             Path(tmpdir, "source-page.md").write_text("See [[a-page]].\n", encoding="utf-8")
@@ -48,7 +48,7 @@ class TestLinkFix(unittest.TestCase):
 
     def test_remaining_broken_links_after_virtual_fix(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            config = Config(vault={"inputs": [tmpdir]})
+            config = Config(wiki={"inputs": [tmpdir]})
             (Path(tmpdir) / "target-page.md").write_text("content", encoding="utf-8")
             Path(tmpdir, "source-page.md").write_text(
                 "Broken [[target-pag]] and [[missing-page]].\n",

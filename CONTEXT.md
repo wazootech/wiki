@@ -14,7 +14,7 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Vault** (or **Wiki corpus**): The markdown corpus the CLI loads from `vault.inputs` (paths relative to the config file, usually beside `wiki.yaml`). It is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Wiki** (or **Wiki corpus**): The markdown corpus the CLI loads from `wiki.inputs` (paths relative to the config file, usually beside `wiki.yaml`). It is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
 
 **Document**: An individual Markdown page in the wiki containing a metadata block. _Avoid_: Page, post, wiki page.
 
@@ -22,7 +22,7 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a Config. _Avoid_: Namespace list.
 
-**Config**: The root configuration object loaded from `wiki.yaml` — same nested blocks as the file (`vault`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.vault.inputs`, site chrome via `config.site.*`, RDF via `config.graph.*` and the `config.context` property. Import as `from wiki.config import Config`. _Avoid_: parameters, settings, flat `input_dirs` fields.
+**Config**: The root configuration object loaded from `wiki.yaml` — same nested blocks as the file (`wiki`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.wiki.inputs`, site chrome via `config.site.*`, RDF via `config.graph.*` and the `config.context` property. Import as `from wiki.config import Config`. _Avoid_: parameters, settings, flat `input_dirs` fields.
 
 **WikiConfig**: Reserved name for a future top-level `wiki:` yaml section (`{section}Config` pattern). Not loaded today. _Avoid_: Using this name for the root loader (use **Config**).
 
@@ -58,8 +58,8 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 ## Relationships
 
-- A **Vault** (the wiki corpus) is the filesystem corpus of **Documents** (and related assets) listed by `vault.inputs`
-- A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
+- A **Wiki** (the wiki corpus) is the filesystem corpus of **Documents** (and related assets) listed by `wiki.inputs`
+- A **Wiki** is composed of the **Documents** in a **Wiki**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using **Config**, which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**

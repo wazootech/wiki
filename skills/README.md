@@ -2,7 +2,7 @@
 
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-Agent skills for [Wiki CLI](https://github.com/wazootech/wiki). They live under `skills/` and are **not** wiki content — do not add this folder to `vault.inputs`.
+Agent skills for [Wiki CLI](https://github.com/wazootech/wiki). They live under `skills/` and are **not** wiki content — do not add this folder to `wiki.inputs`.
 
 ## Onboarding (independent modules)
 

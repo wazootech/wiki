@@ -35,7 +35,7 @@ wiki lint --strict
 | Rule key             | What it audits                                                                                   |
 | -------------------- | ------------------------------------------------------------------------------------------------ |
 | `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                    |
-| `filename_pattern`   | Full filename vs `vault.filename_pattern` regex (`.md` files only)                               |
+| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                |
 | `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
 | `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
 | `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |

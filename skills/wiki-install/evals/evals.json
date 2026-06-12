@@ -23,7 +23,7 @@
         "Runs wiki --help or wiki --version",
         "If CLI works, message is ready-to-go style without next-step suggestions",
         "Does not mention wiki-create",
-        "Does not suggest scaffolding a vault"
+        "Does not suggest scaffolding a wiki"
       ]
     }
   ]

@@ -3,7 +3,7 @@ name: wiki-create
 description: >-
   Scaffold a Wiki CLI workspace with wiki init, then walk through site name, first
   page, and light preferences. Use when the user wants a new wiki, wiki init,
-  bootstrap semantic markdown, get started with a new vault, or customize an
+  bootstrap semantic markdown, get started with a new wiki, or customize an
   existing scaffold — even if they do not say "skill". Requires the wiki command
   on PATH.
 ---
@@ -12,7 +12,7 @@ description: >-
 
 Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) workspace: `wiki init` plus a short preferences wizard. Requires **`wiki` on PATH** (PyPI package `wazootech-wiki`).
 
-Skills under `skills/` are agent procedural knowledge — not vault pages and not indexed by `wiki`.
+Skills under `skills/` are agent procedural knowledge — not wiki pages and not indexed by `wiki`.
 
 ## Modularity
 
@@ -66,7 +66,7 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 | Git repository | User wants `git init` now | `--git` (requires `git` on PATH) |
 | Link style | Obsidian-style wikilinks vs markdown | `--link-style wikilink` (default: omit → markdown) |
 | Site display name | Custom display title | `--site-manifest-name "My Title"` |
-| Inputs directory | Custom markdown folder | `--vault-inputs myfolder` |
+| Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
 | Theme color | Manifest theme color | `--site-manifest-theme-color "#3b82f6"` |
 
 If the user has no preference for namespace and no `--repo`, pass:
@@ -103,7 +103,7 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 
 ### What init creates
 
-- `wiki.yaml` — vault, graph, site, lint, fmt defaults
+- `wiki.yaml` — wiki, graph, site, lint, fmt defaults
 - `layouts/default.html`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`
 - `README.md`

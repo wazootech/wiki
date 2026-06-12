@@ -1,4 +1,4 @@
-﻿"""Unified Config model matching wiki.yaml nested block structure."""
+"""Unified Config model matching wiki.yaml nested block structure."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ IMPLICIT_TYPES_POLICY = "fallback"
 CONFIG_FILENAMES = ("wiki.yaml", "wiki.yml", "wiki.json")
 
 _BLOCK_LABELS = {
-    "vault": "vault",
+    "wiki": "wiki",
     "graph": "graph",
     "site": "site",
     "link": "link",
@@ -90,7 +90,7 @@ def _severity_error(block_name: str, field: str, bad: object) -> ValueError:
     if block_name == "check" and field == "filename_pattern" and _looks_like_regex(str(bad)):
         return ValueError(
             "check.filename_pattern must be error, warning, or off; "
-            "put the regex in vault.filename_pattern"
+            "put the regex in wiki.filename_pattern"
         )
     return ValueError(
         f"Invalid {block_name}.{field} severity: {bad!r} (expected error, warning, or off)"
@@ -255,7 +255,7 @@ def find_config_path(path: Path) -> Path | None:
     return None
 
 
-class VaultConfig(BaseModel):
+class WikiConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     inputs: list[Path] = Field(default_factory=lambda: [Path("wiki")])
@@ -427,7 +427,7 @@ class Config(BaseModel):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
-    vault: VaultConfig = Field(default_factory=VaultConfig)
+    wiki: WikiConfig = Field(default_factory=WikiConfig)
     graph: GraphConfig = Field(default_factory=GraphConfig)
     site: SiteConfig = Field(default_factory=SiteConfig)
     link: LinkConfig = Field(default_factory=LinkConfig)
@@ -456,14 +456,14 @@ class Config(BaseModel):
         def resolve_list(paths: list[Path]) -> list[Path]:
             return [_resolve_path(p, base_dir) for p in paths]
 
-        inputs = resolve_list(self.vault.inputs)
-        if self.vault.assets is None:
+        inputs = resolve_list(self.wiki.inputs)
+        if self.wiki.assets is None:
             assets_raw = [Path("assets")] if (base_dir / "assets").is_dir() else []
         else:
-            assets_raw = list(self.vault.assets)
+            assets_raw = list(self.wiki.assets)
         assets = resolve_list(assets_raw)
 
-        exclude = [str(p).replace("\\", "/") for p in self.vault.exclude]
+        exclude = [str(p).replace("\\", "/") for p in self.wiki.exclude]
 
         manifest_name = (self.site.manifest.name or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
         base_url = (self.site.base_url if self.site.base_url is not None else DEFAULT_BASE_URL).rstrip("/")
@@ -474,7 +474,7 @@ class Config(BaseModel):
 
         fmt = FmtConfig.parse_raw(self.fmt, config_name, base_dir)
 
-        object.__setattr__(self, "vault", self.vault.model_copy(update={
+        object.__setattr__(self, "wiki", self.wiki.model_copy(update={
             "inputs": inputs,
             "assets": assets,
             "exclude": exclude,
@@ -533,7 +533,7 @@ class Config(BaseModel):
 
     def is_excluded(self, path: Path) -> bool:
         rel = self.relative_to_root(path)
-        return any(fnmatch.fnmatchcase(rel, pattern) for pattern in self.vault.exclude)
+        return any(fnmatch.fnmatchcase(rel, pattern) for pattern in self.wiki.exclude)
 
     @classmethod
     def for_root(cls, root: Path | str, **overrides: Any) -> Config:

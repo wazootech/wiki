@@ -1,4 +1,4 @@
-﻿"""Local HTTP server for browsing the wiki as HTML -- no external web frameworks."""
+"""Local HTTP server for browsing the wiki as HTML -- no external web frameworks."""
 
 from __future__ import annotations
 
@@ -109,7 +109,7 @@ class WikiHandler(BaseHTTPRequestHandler):
     def _serve_asset(self, rel_path: str) -> bool:
         """Try to serve a static asset from configured assets. Returns True if served."""
         config = _server_state(self.server).config
-        for asset_dir in config.vault.assets:
+        for asset_dir in config.wiki.assets:
             candidate = (asset_dir / rel_path).resolve()
             try:
                 candidate.relative_to(asset_dir.resolve())
@@ -272,7 +272,7 @@ class WikiHandler(BaseHTTPRequestHandler):
             self._send_error(422, f"Query Execution Error: {exc}")
 
 
-def refresh_vault(
+def refresh_wiki(
     config: Config,
     *,
     changed_paths: set[Path] | None = None,
@@ -337,7 +337,7 @@ def create_server(
     server = HTTPServer((host, port), WikiHandler)
     server.state = server_state  # type: ignore[attr-defined]
     print(f"Wiki server ready at http://{host}:{port}/")
-    dirs_str = ", ".join(str(d) for d in config.vault.inputs)
+    dirs_str = ", ".join(str(d) for d in config.wiki.inputs)
     print(f"Serving {len(site.pages)} pages from {dirs_str}")
     if not site.pages:
         print("Warning: no pages found. Ensure your wiki directory has .md, .yaml, .yml, or .json files.")
@@ -523,7 +523,7 @@ def _watch_for_changes(
                 }
                 current_mtimes = new
                 state = _server_state(server)
-                state.site = refresh_vault(
+                state.site = refresh_wiki(
                     config,
                     changed_paths=changed,
                     base_url=base_url,
@@ -557,7 +557,7 @@ def run_server(
     )
 
     if watch:
-        watch_dirs = list(config.vault.inputs) + [d for d in config.vault.assets if d.exists()]
+        watch_dirs = list(config.wiki.inputs) + [d for d in config.wiki.assets if d.exists()]
         stop_event = threading.Event()
         mtimes = _snapshot_watch_dirs(watch_dirs)
         threading.Thread(

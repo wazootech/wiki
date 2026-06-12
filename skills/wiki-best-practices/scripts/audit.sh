@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wiki CLI vault audit — strict CI pipeline (fmt → lint → check → render).
+# Wiki CLI wiki audit — strict CI pipeline (fmt → lint → check → render).
 # Optionally runs wiki link --check when wired in .github/workflows/.
 set -euo pipefail
 
@@ -7,7 +7,7 @@ usage() {
   cat <<'EOF'
 Usage: audit.sh -c <wiki.yaml> [FILE...]
 
-Run strict vault validators in CI order:
+Run strict wiki validators in CI order:
   fmt --check → lint --strict → check --strict → render --check
   (+ wiki link --check when present in .github/workflows/)
 
@@ -15,7 +15,7 @@ Options:
   -c PATH   Path to wiki.yaml (required)
   -h        Show this help
 
-Remaining arguments are optional vault file paths passed to fmt, lint, and check.
+Remaining arguments are optional wiki file paths passed to fmt, lint, and check.
 EOF
 }
 

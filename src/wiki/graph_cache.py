@@ -1,7 +1,7 @@
-﻿"""Vault fingerprinting and graph caches.
+"""Wiki fingerprinting and graph caches.
 
-Build the vault graph once per process and reuse it for every SPARQL query and
-render in that process, so OWL-RL expansion and vault parsing are not repeated
+Build the wiki graph once per process and reuse it for every SPARQL query and
+render in that process, so OWL-RL expansion and wiki parsing are not repeated
 for each block or CLI subcommand. Optional disk warm-start can persist a graph
 between one-shot CLI invocations.
 """
@@ -18,7 +18,7 @@ from rdflib import Graph
 from . import __version__
 from .config import Config
 
-# In-process graph cache: (vault_fingerprint, infer) -> Graph
+# In-process graph cache: (wiki_fingerprint, infer) -> Graph
 _process_graph_cache: dict[tuple[str, bool], Graph] = {}
 
 
@@ -40,16 +40,16 @@ def _config_fingerprint(config: Config) -> dict[str, Any]:
         "content_predicate": config.graph.content_predicate,
         "implicit_types": config.graph.implicit_types,
         "implicit_types_policy": config.graph.implicit_types_policy,
-        "exclude": sorted(config.vault.exclude),
+        "exclude": sorted(config.wiki.exclude),
         "namespaces": namespaces,
     }
 
 
-def iter_vault_files(config: Config) -> list[Path]:
+def iter_wiki_files(config: Config) -> list[Path]:
     """All non-excluded files under inputs that contribute to the graph."""
     files: list[Path] = []
     cache_root = cache_dir(config).resolve()
-    for input_dir in config.vault.inputs:
+    for input_dir in config.wiki.inputs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):
@@ -64,10 +64,10 @@ def iter_vault_files(config: Config) -> list[Path]:
     return files
 
 
-def vault_manifest(config: Config) -> dict[str, Any]:
-    """Build a stable manifest describing vault inputs (without infer flag)."""
+def wiki_manifest(config: Config) -> dict[str, Any]:
+    """Build a stable manifest describing wiki inputs (without infer flag)."""
     entries = []
-    for file_path in iter_vault_files(config):
+    for file_path in iter_wiki_files(config):
         stat = file_path.stat()
         entries.append(
             {
@@ -83,14 +83,14 @@ def vault_manifest(config: Config) -> dict[str, Any]:
     }
 
 
-def vault_fingerprint(config: Config) -> str:
-    """SHA-256 hex digest of the vault manifest."""
-    payload = json.dumps(vault_manifest(config), sort_keys=True, separators=(",", ":"))
+def wiki_fingerprint(config: Config) -> str:
+    """SHA-256 hex digest of the wiki manifest."""
+    payload = json.dumps(wiki_manifest(config), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _cache_key(config: Config, infer: bool) -> tuple[str, bool]:
-    return (vault_fingerprint(config), infer)
+    return (wiki_fingerprint(config), infer)
 
 
 def _disk_cache_prefix(infer: bool) -> str:
@@ -98,18 +98,18 @@ def _disk_cache_prefix(infer: bool) -> str:
 
 
 def disk_cache_path(config: Config, infer: bool) -> Path:
-    """Path to the persisted graph for the current vault fingerprint."""
-    fp = vault_fingerprint(config)
+    """Path to the persisted graph for the current wiki fingerprint."""
+    fp = wiki_fingerprint(config)
     return cache_dir(config) / f"{_disk_cache_prefix(infer)}-{fp}.nt"
 
 
 def get_process_graph(config: Config, infer: bool) -> Graph | None:
-    """Return the in-memory graph for this vault fingerprint and infer mode, if loaded."""
+    """Return the in-memory graph for this wiki fingerprint and infer mode, if loaded."""
     return _process_graph_cache.get(_cache_key(config, infer))
 
 
 def get_disk_graph(config: Config, infer: bool) -> Graph | None:
-    """Return a persisted graph for this vault fingerprint and infer mode, if present."""
+    """Return a persisted graph for this wiki fingerprint and infer mode, if present."""
     cache_path = disk_cache_path(config, infer)
     if not cache_path.exists():
         return None
@@ -127,7 +127,7 @@ def get_disk_graph(config: Config, infer: bool) -> Graph | None:
 
 def set_process_graph(config: Config, infer: bool, graph: Graph) -> None:
     """Store a graph in the in-process cache, dropping stale entries for the same infer mode."""
-    fp = vault_fingerprint(config)
+    fp = wiki_fingerprint(config)
     stale_keys = [key for key in _process_graph_cache if key[1] == infer and key[0] != fp]
     for key in stale_keys:
         del _process_graph_cache[key]
@@ -149,12 +149,12 @@ def set_disk_graph(config: Config, infer: bool, graph: Graph) -> None:
 
 
 def clear_process_graph(config: Config, infer: bool) -> None:
-    """Drop the in-process graph entry for the current vault fingerprint."""
+    """Drop the in-process graph entry for the current wiki fingerprint."""
     _process_graph_cache.pop(_cache_key(config, infer), None)
 
 
 def clear_disk_graph(config: Config, infer: bool) -> None:
-    """Drop the persisted graph entry for the current vault fingerprint."""
+    """Drop the persisted graph entry for the current wiki fingerprint."""
     try:
         disk_cache_path(config, infer).unlink()
     except OSError:

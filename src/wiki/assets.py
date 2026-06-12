@@ -1,4 +1,4 @@
-﻿"""Static asset discovery, validation, and manifest helpers."""
+"""Static asset discovery, validation, and manifest helpers."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .paths import OutputEntry
 
 def iter_asset_files(config: Config) -> list[Path]:
     assets: list[Path] = []
-    for asset_dir in config.vault.assets:
+    for asset_dir in config.wiki.assets:
         if not asset_dir.exists() or asset_dir.is_symlink():
             continue
         for path in sorted(asset_dir.rglob("*")):
@@ -25,7 +25,7 @@ def iter_asset_files(config: Config) -> list[Path]:
 
 def audit_assets(config: Config) -> list[str]:
     warnings: list[str] = []
-    for asset_dir in config.vault.assets:
+    for asset_dir in config.wiki.assets:
         if config.is_excluded(asset_dir):
             continue
         if not asset_dir.exists():
@@ -69,7 +69,7 @@ def resolve_asset_path(config: Config, current_file: Path, target: str) -> Path 
     if combined.startswith("../") or combined == "..":
         return None
     candidate = (config.config_root / Path(combined)).resolve()
-    for asset_dir in config.vault.assets:
+    for asset_dir in config.wiki.assets:
         try:
             candidate.relative_to(asset_dir.resolve())
             return candidate

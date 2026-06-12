@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from rdflib import URIRef, RDF, RDFS, Namespace
@@ -30,7 +30,7 @@ givenName: Gregory
 """, encoding="utf-8")
             
             # 1. Configure and Load
-            config = Config(vault={"inputs": [wiki_dir]})
+            config = Config(wiki={"inputs": [wiki_dir]})
             
             # Disable auto inference in loader to confirm pre/post state
             graph = load_graph(config, infer=False)

@@ -127,7 +127,7 @@ wiki -c docs/wiki.yaml lint
 python -m wiki -c docs/wiki.yaml serve --watch
 ```
 
-`serve --watch` rebuilds when files under `vault.inputs` and `vault.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `wiki.inputs` and `wiki.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
 
 Suggested contributor loop:
 
@@ -183,10 +183,10 @@ wiki lint -v
 wiki lint --strict
 ```
 
-Use `vault.filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
+Use `wiki.filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
 
 ```yaml
-vault:
+wiki:
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 lint:
   broken_links: warning
@@ -284,7 +284,7 @@ wiki render wiki/people/*.md
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the wiki graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the wiki fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.inputs` or `vault.assets` change (not when CLI source code changes).
+**Graph cache:** By default, the wiki graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the wiki fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `wiki.inputs` or `wiki.assets` change (not when CLI source code changes).
 
 Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged wikis, but it adds `.wiki/cache/` artifacts and still invalidates on wiki or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
@@ -375,14 +375,14 @@ _site/
     +-- ...
 ```
 
-Page URLs are derived from the source path under `vault.inputs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `wiki.inputs`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
 
 `wiki build` runs `wiki check` and `wiki lint` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
 
 Static assets can be published from configured asset directories:
 
 ```yaml
-vault:
+wiki:
   assets:
     - assets
   exclude:
@@ -511,7 +511,7 @@ wiki serve --watch
 python -m wiki serve --watch
 ```
 
-`--watch` polls `vault.inputs` and `vault.assets` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
+`--watch` polls `wiki.inputs` and `wiki.assets` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
 
 When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
@@ -560,7 +560,7 @@ These flags can be used on any subcommand:
 | Option | Description |
 |---|---|
 | `-c, --config <path>` | Path to `wiki.yaml` config file or directory containing one (default: `.`) |
-| `--vault-inputs <path>` | Override `vault.inputs` for this invocation (can be repeated) |
+| `--wiki-inputs <path>` | Override `wiki.inputs` for this invocation (can be repeated) |
 
 ### Printing and piping
 Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.
@@ -685,11 +685,11 @@ SELECT ?doc ?content WHERE {
 
 ## Workspace configuration (`Config`)
 
-The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `vault`, `graph`, `site`, and `link` blocks (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
+The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `wiki`, `graph`, `site`, and `link` blocks (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
 
 ```yaml
 # wiki.yaml
-vault:
+wiki:
   inputs: [wiki]
   assets: [assets]
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"

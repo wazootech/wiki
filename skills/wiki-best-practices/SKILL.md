@@ -1,18 +1,18 @@
 ---
 name: wiki-best-practices
 description: >-
-  Audit a Wiki CLI vault and wiki.yaml for CI-ready hygiene — run fmt, lint, check,
+  Audit a Wiki CLI wiki and wiki.yaml for CI-ready hygiene — run fmt, lint, check,
   and render validators, interpret config semantics, and spot-check idiomatic
-  conventions. Use whenever the user asks for a vault audit, wiki best practices,
+  conventions. Use whenever the user asks for a wiki audit, wiki best practices,
   pre-commit or CI validation, check/lint failures, broken links, wiki.yaml review,
-  or preparing vault changes before a PR — even if they do not say "skill".
+  or preparing wiki changes before a PR — even if they do not say "skill".
 ---
 
 # Wiki CLI best practices
 
-Audit a [Wiki CLI](https://github.com/wazootech/wiki) vault. Run tools and cite output; do not guess.
+Audit a [Wiki CLI](https://github.com/wazootech/wiki) wiki. Run tools and cite output; do not guess.
 
-Skills live outside `vault.inputs` — they are agent procedural knowledge, not published wiki pages.
+Skills live outside `wiki.inputs` — they are agent procedural knowledge, not published wiki pages.
 
 ## Quick start
 
@@ -40,8 +40,8 @@ wiki -c path/to/wiki.yaml render --check
 
 ### 1. Locate scope
 
-- Find `wiki.yaml` and read `vault.inputs`, `lint:`, `check:`, `link.style`, `vault.filename_pattern`.
-- Skills under `skills/` are not vault documents — do not index or build them.
+- Find `wiki.yaml` and read `wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`.
+- Skills under `skills/` are not wiki documents — do not index or build them.
 
 ### 2. Run the audit script
 
@@ -57,7 +57,7 @@ Stop on first failure; report which stage failed and paste relevant CLI output.
 | `lint:` | `wiki lint` | Conventions — links, filenames, headings |
 | `check:` | `wiki check` | Integrity — SHACL, routes, layouts |
 
-Regex belongs in `vault.filename_pattern`, not under `check:`. Unknown keys should fail at load — do not suggest runtime migration shims.
+Regex belongs in `wiki.filename_pattern`, not under `check:`. Unknown keys should fail at load — do not suggest runtime migration shims.
 
 ### 4. Deploy alignment (custom wikis)
 
@@ -82,7 +82,7 @@ When `lint.*` rules are `off`, still note violations. Use the spot-check table b
 
 ### 6. Fixes (explicit mutation only)
 
-Never edit vault files unless the user asks. Suggest:
+Never edit wiki files unless the user asks. Suggest:
 
 - `wiki fmt` — apply formatting
 - `wiki link --fix-broken` — repair unambiguous broken internal links (separate from lint reporting)
@@ -93,7 +93,7 @@ Never edit vault files unless the user asks. Suggest:
 ## Report template
 
 ```markdown
-## Wiki vault audit — <vault or path>
+## Wiki wiki audit — <wiki or path>
 
 **Config:** <wiki.yaml path>
 **Date:** <ISO date>

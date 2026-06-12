@@ -33,7 +33,7 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                           |
 | `--link-style`                   | Override `link.style`: `markdown` or `wikilink`                                                |
 | `--site-manifest-name`           | Override `site.manifest.name` (default `Wiki CLI`)                                             |
-| `--vault-inputs`                 | Override `vault.inputs` list (can be specified multiple times, default `[wiki]`)               |
+| `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                |
 | `--graph-base-iri`               | Override `graph.base_iri` URI                                                                  |
 | `--site-manifest-theme-color`    | Override `site.manifest.theme_color` (e.g. `#3b82f6`)                                          |
 | `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                              |
@@ -64,7 +64,7 @@ Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `x
 
 New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki init` renders from is [`src/wiki/templates/wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2) (Jinja2). Contributors edit that `.j2` file; Jinja variables (such as `graph_context_wiki`, `site_base_url`, `site_url_style`, `graph_content_predicate`, `link_style`, and other parameters mapped from Click CLI flags) render into nested `graph:`, `site:`, and `link:` blocks via `{% if %}`.
 
-- `vault.inputs: [wiki]`
+- `wiki.inputs: [wiki]`
 - `graph.context.wiki` — default namespace for `wiki:` CURIEs and auto-generated document IRIs
 - Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply wiki-wide default `rdf:type` CURIEs)
 - Commented `graph.base_iri` example (uncomment only when document IRIs must differ from `context.wiki`)

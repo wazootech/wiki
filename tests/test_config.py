@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import unittest
 from pathlib import Path
@@ -9,7 +9,7 @@ from rdflib import Graph, Namespace
 from wiki.config import Context, Config, DEFAULT_CHECK_CONFIG, DEFAULT_LINT_CONFIG, DEFAULT_NAMESPACES
 from wiki.schemas import FmtConfig
 
-MINIMAL_VAULT_YAML = "vault:\n  inputs: [wiki]\n"
+MINIMAL_WIKI_YAML = "wiki:\n  inputs: [wiki]\n"
 
 
 class TestContext(unittest.TestCase):
@@ -46,14 +46,14 @@ class TestConfig(unittest.TestCase):
     def test_Config_default_init(self) -> None:
         """Test Config has proper defaults."""
         config = Config()
-        self.assertEqual(config.vault.inputs, [config.config_root.absolute() / "wiki"])
-        self.assertEqual(config.vault.assets, [])
+        self.assertEqual(config.wiki.inputs, [config.config_root.absolute() / "wiki"])
+        self.assertEqual(config.wiki.assets, [])
         self.assertFalse(config.graph.include_file_extension)
         self.assertEqual(config.site.base_url, "/wiki")
         self.assertEqual(config.site.url_style, "dir")
         self.assertIsNone(config.site.manifest.theme_color)
         self.assertEqual(config.site.manifest.name, "Wiki CLI")
-        self.assertIsNone(config.vault.filename_pattern)
+        self.assertIsNone(config.wiki.filename_pattern)
         self.assertEqual(config.check, DEFAULT_CHECK_CONFIG)
         self.assertEqual(config.lint, DEFAULT_LINT_CONFIG)
         self.assertIsNotNone(config.context)
@@ -65,7 +65,7 @@ class TestConfig(unittest.TestCase):
         """Test Config.load falls back to defaults when no files exist."""
         with TemporaryDirectory() as tmpdir:
             config = Config.load(Path(tmpdir))
-            self.assertEqual(config.vault.inputs, [config.config_root.absolute() / "wiki"])
+            self.assertEqual(config.wiki.inputs, [config.config_root.absolute() / "wiki"])
             self.assertEqual(config.site.manifest.name, "Wiki CLI")
 
     def test_Config_load_yaml(self) -> None:
@@ -73,7 +73,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             yaml_content = {
-                "vault": {
+                "wiki": {
                     "inputs": "custom_wiki",
                     "assets": ["assets", "media/photos"],
                     "exclude": ["wiki/drafts/**", "assets/private/**"],
@@ -100,13 +100,13 @@ class TestConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(yaml.dump(yaml_content), encoding="utf-8")
 
             config = Config.load(base_path)
-            self.assertEqual(config.vault.inputs, [base_path.absolute() / "custom_wiki"])
-            self.assertEqual(config.vault.assets, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
-            self.assertEqual(config.vault.exclude, ["wiki/drafts/**", "assets/private/**"])
+            self.assertEqual(config.wiki.inputs, [base_path.absolute() / "custom_wiki"])
+            self.assertEqual(config.wiki.assets, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
+            self.assertEqual(config.wiki.exclude, ["wiki/drafts/**", "assets/private/**"])
             self.assertEqual(config.check.missing_layout_file, "error")
             self.assertEqual(config.lint.broken_links, "error")
             self.assertEqual(config.lint.filename_pattern, "error")
-            self.assertEqual(config.vault.filename_pattern, "[A-Za-z0-9_()-]+\\.md")
+            self.assertEqual(config.wiki.filename_pattern, "[A-Za-z0-9_()-]+\\.md")
             self.assertEqual(config.site.base_url, "/docs")
             self.assertEqual(config.site.url_style, "file")
             self.assertFalse(config.sparql_service.enabled)
@@ -262,7 +262,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             json_content = {
-                "vault": {"inputs": "json_wiki"},
+                "wiki": {"inputs": "json_wiki"},
                 "graph": {
                     "@context": {
                         "json_pref": "http://json-pref.org/"
@@ -272,7 +272,7 @@ class TestConfig(unittest.TestCase):
             (base_path / "wiki.json").write_text(json.dumps(json_content), encoding="utf-8")
 
             config = Config.load(base_path)
-            self.assertEqual(config.vault.inputs, [base_path.absolute() / "json_wiki"])
+            self.assertEqual(config.wiki.inputs, [base_path.absolute() / "json_wiki"])
             self.assertIn("json_pref", config.namespaces)
 
     def test_Config_load_camel_case_top_level_keys_raise_error(self) -> None:
@@ -299,7 +299,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "check": {"brokenLinks": "error"}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "check": {"brokenLinks": "error"}}),
                 encoding="utf-8",
             )
 
@@ -310,7 +310,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "sparql_service": {"enable": True}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "sparql_service": {"enable": True}}),
                 encoding="utf-8",
             )
 
@@ -321,7 +321,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "serve_api": {"enabled": True}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "serve_api": {"enabled": True}}),
                 encoding="utf-8",
             )
 
@@ -332,15 +332,15 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "assets").mkdir()
-            (base_path / "wiki.yaml").write_text(MINIMAL_VAULT_YAML, encoding="utf-8")
+            (base_path / "wiki.yaml").write_text(MINIMAL_WIKI_YAML, encoding="utf-8")
 
             config = Config.load(base_path)
-            self.assertEqual(config.vault.assets, [base_path.absolute() / "assets"])
+            self.assertEqual(config.wiki.assets, [base_path.absolute() / "assets"])
 
     def test_Config_exclude_matches_config_root_relative_paths(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir).absolute()
-            config = Config(config_root=base_path, vault={"exclude": ["wiki/drafts/**", "**/.env*"]})
+            config = Config(config_root=base_path, wiki={"exclude": ["wiki/drafts/**", "**/.env*"]})
 
             self.assertTrue(config.is_excluded(base_path / "wiki" / "drafts" / "note.md"))
             self.assertTrue(config.is_excluded(base_path / "assets" / ".env.local"))
@@ -352,7 +352,7 @@ class TestConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(
                 yaml.dump(
                     {
-                        "vault": {"inputs": "wiki"},
+                        "wiki": {"inputs": "wiki"},
                         "check": {"filename_pattern": "warning", "broken_links": "warning"},
                     }
                 ),
@@ -372,7 +372,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "lint": {"broken_links": "error"}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "lint": {"broken_links": "error"}}),
                 encoding="utf-8",
             )
 
@@ -383,7 +383,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "lint": {"brokenLinks": "error"}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "lint": {"brokenLinks": "error"}}),
                 encoding="utf-8",
             )
 
@@ -417,7 +417,7 @@ class TestConfig(unittest.TestCase):
             (base_path / "wiki.yaml").write_text(
                 yaml.dump(
                     {
-                        "vault": {"inputs": "wiki"},
+                        "wiki": {"inputs": "wiki"},
                         "fmt": {
                             "wrap": "no",
                             "extensions": ["gfm", "frontmatter", "wikilink"],
@@ -434,7 +434,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "fmt": "custom.toml"}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "fmt": "custom.toml"}),
                 encoding="utf-8",
             )
             config = Config.load(base_path)
@@ -449,7 +449,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "fmt": absolute_fmt}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "fmt": absolute_fmt}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "fmt path must be relative"):
@@ -459,7 +459,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "fmt": True}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "fmt": True}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "fmt must be a mapping or path string"):
@@ -469,7 +469,7 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                yaml.dump({"vault": {"inputs": "wiki"}, "fmt": {"typo_key": True}}),
+                yaml.dump({"wiki": {"inputs": "wiki"}, "fmt": {"typo_key": True}}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "Invalid key 'typo_key'"):
@@ -481,7 +481,7 @@ class TestConfig(unittest.TestCase):
             (base_path / "wiki.json").write_text(
                 json.dumps(
                     {
-                        "vault": {"inputs": ["wiki"]},
+                        "wiki": {"inputs": ["wiki"]},
                         "fmt": {
                             "wrap": "no",
                             "extensions": ["gfm", "frontmatter", "wikilink"],

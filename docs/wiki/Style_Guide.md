@@ -12,13 +12,13 @@ In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/
 
 ## File layout
 
-- Put pages under directories listed in `vault.inputs` (usually `wiki/`).
-- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `vault.filename_pattern`.
+- Put pages under directories listed in `wiki.inputs` (usually `wiki/`).
+- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `wiki.filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
 
-Configure `vault.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md) to match your wiki's naming convention. This documentation wiki uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
+Configure `wiki.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md) to match your wiki's naming convention. This documentation wiki uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
 
 **Enforcer:** `lint.filename_pattern` (warning by default).
 
