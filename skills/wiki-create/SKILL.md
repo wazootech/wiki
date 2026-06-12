@@ -57,7 +57,7 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 ### Phase A — Init
 
 1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory** (`wiki.yaml`, `README.md`, `wiki/`, `layouts/`).
-2. **Init options** — Gather flags before running (see [references/init-options.md](references/init-options.md)):
+2. **Init options** — Run `wiki init --help` (same resolved `wiki` command as above) and map the user’s answers to flags from the output. Prefer flags over bare `wiki init` — stdin prompts block agents.
 
 | Topic | When to ask | Flag |
 | ----- | ----------- | ---- |
@@ -79,13 +79,15 @@ If the user has no preference for namespace and no `--repo`, pass:
 
 `--graph-context-wiki https://wiki.example.org/`
 
+**URL resolution** (when `--graph-context-wiki` is omitted): `--graph-context-wiki` from flags always wins; else `--repo` or git `origin` when GitHub; else an interactive prompt (avoid in agent runs).
+
 3. **Preflight** — Without `--force`, init fails if any exist:
 
 - `wiki.yaml`
 - `README.md`
 - non-empty `wiki/`
 
-If blocked, ask: different directory, or `wiki init --force` (overwrites scaffold files).
+If blocked by an existing `README.md` (common in repos initialized with a GitHub template), recover by: use an empty directory, temporarily rename/remove `README.md`, or `wiki init --force` with user consent (overwrites scaffold files including `README.md`).
 
 4. **Run** — Example:
 
@@ -114,7 +116,12 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`
 - `README.md`
 
-See [references/init-options.md](references/init-options.md) for full flag detail.
+## Post-init hygiene
+
+With user approval, recommend:
+
+- Add `_site/` to `.gitignore` (build output should not be committed)
+- Do not commit `.agents/skills/` or other agent skill bundles unless the user explicitly wants them vendored in the repo
 
 ## Clean exit
 
@@ -133,5 +140,4 @@ Summarize: workspace path, init flags used, wizard edits (if any). Do not sugges
 
 ## References
 
-- [references/init-options.md](references/init-options.md) — `wiki init` flags and generated layout
 - [references/wiki-yaml-preferences.md](references/wiki-yaml-preferences.md) — wizard `wiki.yaml` edits
