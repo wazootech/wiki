@@ -54,8 +54,8 @@ Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install int
 
 ## Deploy
 
-| Skill       | Wiki reference                          | Purpose                                      |
-| ----------- | --------------------------------------- | -------------------------------------------- |
+| Skill       | Wiki reference                            | Purpose                                      |
+| ----------- | ----------------------------------------- | -------------------------------------------- |
 | wiki-deploy | [Wiki Skill deploy](Wiki_Skill_deploy.md) | GitHub Pages workflow and artifact alignment |
 
 ## Repository layout
