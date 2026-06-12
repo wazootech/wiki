@@ -65,6 +65,9 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 | Custom namespace | No GitHub / custom site | `--graph-context-wiki https://…/` and optional `--site-base-url` |
 | Git repository | User wants `git init` now | `--git` (requires `git` on PATH) |
 | Link style | Obsidian-style wikilinks vs markdown | `--link-style wikilink` (default: omit → markdown) |
+| Site display name | Custom display title | `--site-manifest-name "My Title"` |
+| Inputs directory | Custom markdown folder | `--vault-inputs myfolder` |
+| Theme color | Manifest theme color | `--site-manifest-theme-color "#3b82f6"` |
 
 If the user has no preference for namespace and no `--repo`, pass:
 

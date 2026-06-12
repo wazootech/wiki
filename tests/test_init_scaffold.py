@@ -1,4 +1,4 @@
-﻿"""Tests for wiki init scaffold helpers."""
+"""Tests for wiki init scaffold helpers."""
 
 from __future__ import annotations
 
@@ -85,10 +85,10 @@ class TestRenderWikiYaml(TestCase):
     def test_renders_optional_fields(self) -> None:
         rendered = render_wiki_yaml(
             InitOptions(
-                wiki_iri="https://wazootech.github.io/wiki/",
-                base_url="/wiki",
-                url_style="dir",
-                content_predicate="schema:articleBody",
+                graph_context_wiki="https://wazootech.github.io/wiki/",
+                site_base_url="/wiki",
+                site_url_style="dir",
+                graph_content_predicate="schema:articleBody",
                 link_style="markdown",
             ),
         )
@@ -111,13 +111,13 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("__", rendered)
 
     def test_rendered_fmt_matches_default_fmt_opts(self) -> None:
-        rendered = render_wiki_yaml(InitOptions(wiki_iri="https://wiki.example.org/"))
+        rendered = render_wiki_yaml(InitOptions(graph_context_wiki="https://wiki.example.org/"))
         parsed = yaml.safe_load(rendered)
         self.assertEqual(parsed["fmt"], DEFAULT_FMT_OPTS)
 
     def test_omits_optional_fields_when_unset(self) -> None:
         rendered = render_wiki_yaml(
-            InitOptions(wiki_iri="https://wiki.example.org/"),
+            InitOptions(graph_context_wiki="https://wiki.example.org/"),
         )
         self.assertIn("# content_predicate: schema:articleBody", rendered)
         self.assertNotIn("\ncontent_predicate:", rendered)
@@ -126,7 +126,7 @@ class TestRenderWikiYaml(TestCase):
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
             config_path.write_text(
-                render_wiki_yaml(InitOptions(wiki_iri="https://wiki.example.org/")),
+                render_wiki_yaml(InitOptions(graph_context_wiki="https://wiki.example.org/")),
                 encoding="utf-8",
             )
             parsed = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -136,44 +136,44 @@ class TestRenderWikiYaml(TestCase):
             self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
     def test_render_default_layout(self) -> None:
-        rendered = render_default_layout(InitOptions(wiki_iri="https://wiki.example.org/"))
+        rendered = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
         self.assertIn("{page_title}", rendered)
-        self.assertIn("{site_title}", rendered)
+        self.assertIn("{site_manifest_name}", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn('<title>{page_title} - {site_title}</title>', rendered)
-        self.assertIn('placeholder="Search {site_title}"', rendered)
+        self.assertIn('<title>{page_title} - {site_manifest_name}</title>', rendered)
+        self.assertIn('placeholder="Search {site_manifest_name}"', rendered)
 
 
 class TestResolveInitOptions(TestCase):
     def test_repo_flag_skips_prompt(self) -> None:
         opts = resolve_init_options(
             repo="wazootech/wiki",
-            context_wiki=None,
-            base_url=None,
-            url_style=None,
-            content_predicate=None,
+            graph_context_wiki=None,
+            site_base_url=None,
+            site_url_style=None,
+            graph_content_predicate=None,
             link_style=None,
             cwd=Path("."),
             init_git=False,
             prompt_context_wiki=lambda _: self.fail("prompt should not run"),
         )
-        self.assertEqual(opts.wiki_iri, "https://wazootech.github.io/wiki/")
-        self.assertEqual(opts.base_url, "/wiki")
+        self.assertEqual(opts.graph_context_wiki, "https://wazootech.github.io/wiki/")
+        self.assertEqual(opts.site_base_url, "/wiki")
 
     def test_context_wiki_overrides_repo(self) -> None:
         opts = resolve_init_options(
             repo="wazootech/wiki",
-            context_wiki="https://example.org/custom/",
-            base_url="/custom",
-            url_style=None,
-            content_predicate=None,
+            graph_context_wiki="https://example.org/custom/",
+            site_base_url="/custom",
+            site_url_style=None,
+            graph_content_predicate=None,
             link_style=None,
             cwd=Path("."),
             init_git=False,
             prompt_context_wiki=lambda _: self.fail("prompt should not run"),
         )
-        self.assertEqual(opts.wiki_iri, "https://example.org/custom/")
-        self.assertEqual(opts.base_url, "/custom")
+        self.assertEqual(opts.graph_context_wiki, "https://example.org/custom/")
+        self.assertEqual(opts.site_base_url, "/custom")
 
     @patch("wiki.init_scaffold.detect_origin_repo", return_value="wazootech/wiki")
     def test_detects_git_remote_when_git_present(self, _detect_mock) -> None:
@@ -181,13 +181,81 @@ class TestResolveInitOptions(TestCase):
             (Path(tmpdir) / ".git").mkdir()
             opts = resolve_init_options(
                 repo=None,
-                context_wiki=None,
-                base_url=None,
-                url_style=None,
-                content_predicate=None,
+                graph_context_wiki=None,
+                site_base_url=None,
+                site_url_style=None,
+                graph_content_predicate=None,
                 link_style=None,
                 cwd=Path(tmpdir),
                 init_git=False,
                 prompt_context_wiki=lambda _: self.fail("prompt should not run"),
             )
-        self.assertEqual(opts.wiki_iri, "https://wazootech.github.io/wiki/")
+        self.assertEqual(opts.graph_context_wiki, "https://wazootech.github.io/wiki/")
+
+
+INIT_OPTIONS_TO_CONFIG_PATH = {
+    "graph_context_wiki": ("graph", "context", "wiki"),
+    "site_base_url": ("site", "base_url"),
+    "site_url_style": ("site", "url_style"),
+    "graph_content_predicate": ("graph", "content_predicate"),
+    "link_style": ("link", "style"),
+    "site_manifest_name": ("site", "manifest", "name"),
+    "vault_inputs": ("vault", "inputs"),
+    "graph_base_iri": ("graph", "base_iri"),
+    "site_manifest_theme_color": ("site", "manifest", "theme_color"),
+    "graph_implicit_types": ("graph", "implicit_types"),
+    "graph_implicit_types_policy": ("graph", "implicit_types_policy"),
+    "graph_include_file_extension": ("graph", "include_file_extension"),
+}
+
+
+class TestInitLockstep(TestCase):
+    def test_init_options_fields_match_cli_options(self) -> None:
+        """Ensure every field in InitOptions has a matching --kebab-case Click CLI option."""
+        from wiki.cli import init as init_cmd
+        cli_option_names = {opt.opts[0] for opt in init_cmd.params if opt.opts}
+        for field in InitOptions.model_fields.keys():
+            expected_opt = "--" + field.replace("_", "-")
+            # We allow options with both / and without / (e.g. --graph-include-file-extension/--no-graph-include-file-extension)
+            # Click splits these but let's check prefix or inclusion
+            found = False
+            for opt_name in cli_option_names:
+                if opt_name.startswith(expected_opt):
+                    found = True
+                    break
+            self.assertTrue(
+                found,
+                f"InitOptions field '{field}' is missing a matching CLI option '{expected_opt}' in click 'init' command."
+            )
+
+    def test_init_options_map_to_valid_config_paths(self) -> None:
+        """Ensure every InitOptions field maps to a valid Pydantic model path on Config."""
+        from typing import get_args, get_origin, Union
+        from pydantic import BaseModel
+        for field, path in INIT_OPTIONS_TO_CONFIG_PATH.items():
+            self.assertIn(field, InitOptions.model_fields, f"Mapped field '{field}' is not in InitOptions.")
+            
+            current_model = Config
+            for part in path:
+                if hasattr(current_model, "model_fields"):
+                    self.assertIn(part, current_model.model_fields, f"Path part '{part}' for field '{field}' is not a valid field in {current_model.__name__}.")
+                    field_info = current_model.model_fields[part]
+                    annotation = field_info.annotation
+                    
+                    origin = get_origin(annotation)
+                    if origin is Union:
+                        next_model = None
+                        for arg in get_args(annotation):
+                            if isinstance(arg, type) and issubclass(arg, BaseModel):
+                                next_model = arg
+                                break
+                        current_model = next_model
+                    elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                        current_model = annotation
+                    else:
+                        current_model = None
+                else:
+                    break
+        
+        for field in InitOptions.model_fields:
+            self.assertIn(field, INIT_OPTIONS_TO_CONFIG_PATH, f"InitOptions field '{field}' is not mapped in INIT_OPTIONS_TO_CONFIG_PATH.")

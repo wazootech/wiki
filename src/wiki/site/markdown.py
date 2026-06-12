@@ -1,4 +1,4 @@
-﻿"""Markdown rendering and document extraction for site building."""
+"""Markdown rendering and document extraction for site building."""
 
 from __future__ import annotations
 
@@ -67,8 +67,8 @@ DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="{theme_color}">
-<meta name="msapplication-TileColor" content="{theme_color}">
+<meta name="theme-color" content="{site_manifest_theme_color}">
+<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">
 <title>{page_title}</title>
 </head>
 <body>

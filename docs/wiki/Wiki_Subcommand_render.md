@@ -6,11 +6,7 @@ description: Update inline SPARQL result tables in markdown files.
 
 # `wiki render`
 
-Find \`
-
-<!-- sparql:start -->` … `<!-- sparql:end -->
-
-`regions in markdown, run the embedded query against the vault graph, and rewrite the table (or`(no results)\`) in place.
+Find `&lt;!-- sparql:start --&gt;` ... `&lt;!-- sparql:end --&gt;` regions in markdown, run the embedded query against the vault graph, and rewrite the table (or `(no results)`) in place.
 
 Silent on success by default. See [Design Philosophies](Design_Philosophies.md).
 
