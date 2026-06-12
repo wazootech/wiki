@@ -138,10 +138,10 @@ Branding and PWA metadata use the [Web App Manifest](https://www.w3.org/TR/appma
 
 Settings for the `wiki link` command family (separate from `lint.link_style` severity):
 
-| Key            | Default    | Purpose                                                       |
-| -------------- | ---------- | ------------------------------------------------------------- |
+| Key            | Default    | Purpose                                                                                               |
+| -------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
 | `link.style`   | `markdown` | Format `wiki link --apply` inserts: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`) |
-| `link.renames` | `{}`       | Old slug → new route map for `wiki link --fix-broken`         |
+| `link.renames` | `{}`       | Old slug → new route map for `wiki link --fix-broken`                                                 |
 
 ## Serve API
 
