@@ -91,7 +91,7 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 | Template                                                                          | Purpose                                                                                       |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)               | Starter vault                                                                                 |
-| [sparql-service-template](https://github.com/wazootech/sparql-service-template)   | YASGUI + sample vault or live endpoint — see [SPARQL Sandbox](SPARQL_Sandbox.md)              |
+| [sparql-service-template](https://github.com/wazootech/sparql-service-template)   | YASGUI + sample vault or live endpoint for exploring vault RDF                                |
 | [nextjs-template](https://github.com/wazootech/nextjs-template)                   | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16))                      |
 | [mintlify-template](https://github.com/wazootech/mintlify-template)               | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31))                 |
@@ -170,6 +170,7 @@ ORDER BY ?command
 | [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, route safety, and layout frontmatter. |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown vault pages using mdformat with wikilink preservation. |
+| [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yaml and starter wiki pages interactively. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the vault graph. |
