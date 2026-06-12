@@ -17,6 +17,7 @@ When **auditing** deploy-related CI or Pages setup for a custom wiki:
 - Instructions to use “Deploy from a branch” alongside `upload-pages-artifact` / `deploy-pages`
 - `uv sync` in CI without `pyproject.toml` / `uv.lock`
 - `astral-sh/setup-uv` + `uv pip install` on standalone repos (no `uv venv` / `--system`) — use pip install instead
+- Hybrid install: `setup-uv` present but `uv sync` replaced with `uv pip install` — copy the full pip or uv template instead
 
 Canonical reference: [deploy-pages.yml](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml).
 

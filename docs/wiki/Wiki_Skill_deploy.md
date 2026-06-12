@@ -10,10 +10,10 @@ The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.ba
 
 Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository.
 
-Workflow assets (mirror `.github/workflows/deploy-pages.yml`):
+Workflow assets (mirror `.github/workflows/deploy-pages.yml` — embed one template in full, substitute `CONFIG_PATH`, `SITE_BASE_URL`, and `ARTIFACT_PATH` only):
 
-- `skills/wiki-deploy/references/workflow-template-uv.yml` — uv monorepo
-- `skills/wiki-deploy/references/workflow-template-pip.yml` — pip standalone
+- `skills/wiki-deploy/references/workflow-template-uv.yml` — uv monorepo (`pyproject.toml` + `uv.lock`)
+- `skills/wiki-deploy/references/workflow-template-pip.yml` — pip standalone (same job shape as dogfood workflow)
 - `skills/wiki-deploy/references/alignment-checklist.md`
 
 ## Install

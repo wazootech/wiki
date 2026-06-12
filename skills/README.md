@@ -17,7 +17,7 @@ Typical human flow: **install** → **create** → **deploy** → **audit** — 
 
 - Missing CLI while creating a wiki → `wiki-create` states the blocker and stops; the user chooses how to install.
 - After install → `wiki-install` confirms ready; it does not suggest scaffolding.
-- **wiki-deploy** mirrors [`.github/workflows/deploy-pages.yml`](../.github/workflows/deploy-pages.yml) — do not commit `_site/`, use GitHub Actions as the Pages source, and upload `_site/<base>` not bare `_site` when `site.base_url` is set.
+- **wiki-deploy** mirrors [`.github/workflows/deploy-pages.yml`](../.github/workflows/deploy-pages.yml) via uv and pip templates — embed one template wholesale (substitute paths only); do not commit `_site/`, use GitHub Actions as the Pages source, and upload `_site/<base>` not bare `_site` when `site.base_url` is set.
 
 ## Wiki hygiene
 

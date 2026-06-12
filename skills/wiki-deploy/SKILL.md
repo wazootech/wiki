@@ -19,7 +19,7 @@ This skill **only** sets up GitHub Pages deployment (workflow + config alignment
 
 ## Canonical workflow reference
 
-The **working** deploy workflow in the wiki-cli repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). When the user says “like wiki-cli” or pastes that workflow, **adapt paths only** — same permissions, action versions, and step order.
+The **working** deploy workflow in the wiki-cli repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
 
 | Step | Dogfood value | Why |
 | ---- | ------------- | --- |
@@ -30,7 +30,12 @@ The **working** deploy workflow in the wiki-cli repository is [`.github/workflow
 | Artifact | `path: "_site/wiki"` | Matches `site.base_url: /wiki` |
 | Deploy | `upload-pages-artifact@v3` → `deploy-pages@v4` | Not branch push |
 
-Standalone wiki repos (root `wiki.yaml`, no `pyproject.toml`) use the **same job shape** with `pip install wazootech-wiki` and bare `wiki` — see [references/workflow-template-pip.yml](references/workflow-template-pip.yml).
+Templates mirror that file:
+
+- Monorepo (`pyproject.toml` + `uv.lock`): [workflow-template-uv.yml](references/workflow-template-uv.yml) — substitute `CONFIG_PATH`, `SITE_BASE_URL`, `ARTIFACT_PATH` only
+- Standalone wiki (root `wiki.yaml`, no lockfile): [workflow-template-pip.yml](references/workflow-template-pip.yml) — **identical job shape**; `pip install wazootech-wiki` + bare `wiki` instead of `uv sync` / `uv run wiki`
+
+Pick **one** template. Copy it in full. Nancy-style failures came from partial paste (uv setup + `uv pip install`, missing `--site-base-url`), not from embedding the complete working workflow.
 
 ## Forbidden patterns
 
@@ -43,6 +48,7 @@ Do **not** (common agent mistakes):
 5. Run `uv sync` / `uv run wiki` without `pyproject.toml` + `uv.lock` (standalone wikis → **pip install** only)
 6. Run `uv pip install` on standalone repos without `uv venv` or `--system` — use the pip template instead (CI error: “No virtual environment found”)
 7. Omit `--site-base-url` in CI — repeat `site.base_url` in the workflow even when it is already in `wiki.yaml`
+8. Hybridize install — e.g. keep `astral-sh/setup-uv` but replace `uv sync` with `uv pip install`; pick the full uv or pip template instead
 
 Recommend `_site/` in `.gitignore` when build output is not already ignored.
 
