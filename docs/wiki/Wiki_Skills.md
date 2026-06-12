@@ -69,6 +69,7 @@ skills/
   wiki-deploy/SKILL.md
   wiki-deploy/references/workflow-template-uv.yml
   wiki-deploy/references/workflow-template-pip.yml
+  wiki-deploy/references/alignment-checklist.md
 ```
 
 Human-oriented install and daily workflow: [Getting Started](Getting_Started.md).

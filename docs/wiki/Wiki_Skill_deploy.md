@@ -8,7 +8,13 @@ description: Set up GitHub Pages deployment for a Wiki CLI wiki with Actions.
 
 The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.base_url`, add `.github/workflows/deploy-pages.yml`, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions** in repository settings.
 
-Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Workflow templates mirror `.github/workflows/deploy-pages.yml`: `skills/wiki-deploy/references/workflow-template-uv.yml` (uv monorepo), `skills/wiki-deploy/references/workflow-template-pip.yml` (pip standalone), and `skills/wiki-deploy/references/alignment-checklist.md`.
+Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository.
+
+Workflow assets (mirror `.github/workflows/deploy-pages.yml`):
+
+- `skills/wiki-deploy/references/workflow-template-uv.yml` — uv monorepo
+- `skills/wiki-deploy/references/workflow-template-pip.yml` — pip standalone
+- `skills/wiki-deploy/references/alignment-checklist.md`
 
 ## Install
 

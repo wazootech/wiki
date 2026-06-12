@@ -36,15 +36,12 @@
 - `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance
 - `wiki-best-practices` skill — portable audit script paths, deploy audit red flags, modularity boundary with wiki-deploy
 - `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks
+- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
+- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Fixed
 
 - `wiki init --graph-implicit-types-policy` accepts `fallback` or `append` (was incorrectly `override`) ([#72](https://github.com/wazootech/wiki/issues/72))
-
-### Changed
-
-- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
-- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Changed (breaking)
 
