@@ -90,7 +90,7 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 | Template                                                                          | Purpose                                                                                       |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)               | Starter wiki                                                                                  |
+| [wiki-template](https://github.com/wazootech/wiki-template)                       | Starter wiki                                                                                  |
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template)   | YASGUI + sample wiki or live endpoint for exploring wiki RDF                                  |
 | [nextjs-template](https://github.com/wazootech/nextjs-template)                   | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16))                      |
@@ -200,7 +200,7 @@ Similar **agent memory filesystem** approaches include [Supermemory SMFS](Superm
 ## Repository
 
 - Source and issues: [github.com/wazootech/wiki](https://github.com/wazootech/wiki)
-- Starter template: [github.com/wazootech/llm-wiki-template](https://github.com/wazootech/llm-wiki-template)
+- Starter template: [github.com/wazootech/wiki-template](https://github.com/wazootech/wiki-template)
 
 ## Background
 

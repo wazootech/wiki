@@ -10,7 +10,7 @@
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template: [github.com/wazootech/llm-wiki-template](https://github.com/wazootech/llm-wiki-template) (GitHub **Use this template**).
+Starter template: [github.com/wazootech/wiki-template](https://github.com/wazootech/wiki-template) (GitHub **Use this template**).
 
 
 ## Use cases and integrations
@@ -46,7 +46,7 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 | Template | Purpose |
 |----------|---------|
-| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template) | Starter wiki — use GitHub **Use this template** |
+| [wiki-template](https://github.com/wazootech/wiki-template) | Starter wiki — use GitHub **Use this template** |
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template) ([Pages demo](https://wazootech.github.io/sparql-service-template/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
 | [nextjs-template](https://github.com/wazootech/nextjs-template) | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16)) |
