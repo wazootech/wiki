@@ -80,9 +80,7 @@ Data-only records may use `.yaml`, `.yml`, or `.json` without a markdown body.
 
 ## SPARQL query conventions
 
-When writing \`
-
-<!-- sparql:start -->` blocks or ad-hoc `wiki query` commands:
+When writing `&lt;!-- sparql:start --&gt;` blocks or ad-hoc `wiki query` commands:
 
 - **People** — query `schema:givenName` and `schema:familyName`, not `schema:name`.
 - **TechArticle** — query `schema:headline` and `schema:description`.
@@ -102,6 +100,7 @@ Link to other vault pages with standard Markdown links. Use the page stem (filen
 GFM relative links to `.md` files are also accepted and resolve to the same routes.
 
 To maintain compatibility with Wikipedia-style filenames and avoid routing ambiguities:
+
 - **Use underscores in link targets:** When linking to files with underscores in their names, preserve the underscores in the link path (e.g., `[Opal Security](Opal_Security.md)`). Do not replace them with spaces or percent-encoding (`Opal%20Security.md`).
 - **Use spaces in display text:** Always use spaces instead of underscores in the visible display text of the link (e.g., write `[Opal Security](Opal_Security.md)`, not `[Opal_Security](Opal_Security.md)` or `[Opal_Security.md](Opal_Security.md)`).
 - **Avoid spaces in paths:** The parser and linters enforce that paths do not contain spaces.
