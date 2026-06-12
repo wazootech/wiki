@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+from markupsafe import Markup
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
@@ -22,7 +23,6 @@ from ..schemas.site import InfoboxRow, VirtualPage, WikiSite
 from .backlinks import build_backlinks_html
 from .build import expand_known_curie
 from .markdown import (
-    DEFAULT_MINIMAL_PAGE_LAYOUT,
     INLINE_CSS,
     METADATA_HIDDEN_FIELDS,
     PYGMENTS_FORMATTER,
@@ -32,6 +32,38 @@ from .markdown import (
     render_copyable_pre,
     render_outline_title,
 )
+from .layout_template import get_layout_renderer
+
+_LAYOUT_HTML_KEYS = frozenset(
+    {
+        "inline_css",
+        "logo_svg",
+        "page_content",
+        "layout_label",
+        "type_label",
+        "infobox_html",
+        "toc_html",
+        "backlinks_html",
+        "categories_html",
+        "sidebar_contents_html",
+        "metadata_tool_html",
+        "metadata_tab_html",
+        "metadata_pane_html",
+        "all_pages_json",
+        "current_slug_json",
+        "manifest_json",
+    }
+)
+
+
+def _prepare_layout_context(raw: dict[str, str]) -> dict[str, Markup | str]:
+    prepared: dict[str, Markup | str] = {}
+    for key, value in raw.items():
+        if key in _LAYOUT_HTML_KEYS:
+            prepared[key] = Markup(value)
+        else:
+            prepared[key] = value
+    return prepared
 
 def _logo_letter(site_title: str) -> str:
     from ..config import DEFAULT_SITE_TITLE
@@ -112,10 +144,10 @@ def _site_chrome_context(site: WikiSite, base_url: str) -> dict[str, str]:
     theme_color = resolved_site_theme_color(manifest.theme_color)
     logo_svg = _build_logo_svg(_logo_letter(site_title), manifest.theme_color)
     return {
-        "logo_svg": logo_svg,
+        "logo_svg": Markup(logo_svg),
         "site_manifest_theme_color": theme_color,
-        "site_manifest_name": html_module.escape(site_title),
-        "manifest_json": serialize_web_manifest(site.config),
+        "site_manifest_name": site_title,
+        "manifest_json": Markup(serialize_web_manifest(site.config)),
         "site_manifest_url": _manifest_url(base_url),
     }
 
@@ -176,27 +208,12 @@ def _build_logo_svg(letter: str, theme_color: str | None = None) -> str:
 </svg>"""
 
 
-def _render_html(shell: str, context: dict[str, str]) -> str:
-    """Replace {placeholder} tokens in shell with values from context."""
-    # page_content is rendered markdown and may document placeholder names literally.
-    # Substitute it last so tokens like {metadata_pane_html} in article bodies stay intact.
-    deferred_keys = ("page_content",)
-    result = shell
-    for key, value in context.items():
-        if key in deferred_keys:
-            continue
-        result = result.replace("{" + key + "}", value)
-    for key in deferred_keys:
-        if key in context:
-            result = result.replace("{" + key + "}", context[key])
-    return result
-
-
 def build_index_html(
     site: WikiSite,
+    config_root: Path,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
-    page_layout: str | None = None,
+    default_layout: Path | None = None,
 ) -> str:
     """Compile root Index page HTML."""
     links_html = ""
@@ -240,16 +257,17 @@ def build_index_html(
         "metadata_pane_html": "",
     }
 
-    shell = DEFAULT_MINIMAL_PAGE_LAYOUT if page_layout is None else page_layout
-    return _render_html(shell, context)
+    renderer = get_layout_renderer(config_root)
+    return renderer.render(default_layout, _prepare_layout_context(context))
 
 
 def build_page_html(
     page: VirtualPage,
     site: WikiSite,
+    config_root: Path,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
-    page_layout: str | None = None,
+    default_layout: Path | None = None,
     metadata_mode: str = "compacted",
     metadata_format: str = "json-ld",
 ) -> str:
@@ -274,7 +292,7 @@ def build_page_html(
 
     layout_label = _layout_label(page)
     type_label = _type_label(page)
-    layout_class = html_module.escape(page.layout_stem)
+    layout_class = page.layout_stem
 
     # All Pages JSON for search and random redirect
     import json
@@ -301,7 +319,7 @@ def build_page_html(
         "inline_css": INLINE_CSS,
         "site_base_url": base_url,
         **_site_chrome_context(site, base_url),
-        "page_title": html_module.escape(page.title),
+        "page_title": page.title,
         "body_class": f"wiki-page layout-{layout_class}",
         "page_kind": "article",
         "site_url_style": url_style,
@@ -316,20 +334,15 @@ def build_page_html(
         "backlinks_html": bl_html,
         "categories_html": cats_html,
         "sidebar_contents_html": sidebar_contents_html,
-        "source_markdown": html_module.escape(page.markdown),
+        "source_markdown": page.markdown,
         "metadata_tool_html": metadata_tool_html,
         "metadata_tab_html": metadata_tab_html,
         "metadata_pane_html": metadata_pane_html,
     }
 
-    shell = _page_shell(page, page_layout)
-    return _render_html(shell, context)
-
-
-def _page_shell(page: VirtualPage, default_shell: str | None) -> str:
-    if page.layout_path is not None:
-        return page.layout_path.read_text(encoding="utf-8")
-    return DEFAULT_MINIMAL_PAGE_LAYOUT if default_shell is None else default_shell
+    template_path = page.layout_path if page.layout_path is not None else default_layout
+    renderer = get_layout_renderer(config_root)
+    return renderer.render(template_path, _prepare_layout_context(context))
 
 
 def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:

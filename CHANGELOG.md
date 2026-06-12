@@ -62,7 +62,17 @@
 
 ### Changed
 
-- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css.j2` (wiki path `layouts/default.html` unchanged); default page CSS moved out of `site.py` into the template bundle
+- Page layouts render through Jinja2 (`.html.j2`) instead of `{placeholder}` string substitution; `wiki init` copies `layouts/default.html.j2` from the packaged template
+- Packaged default CSS is `layout_default.css` (plain CSS, not a Jinja template)
+
+### Changed (breaking)
+
+- Rename `site.layout` and `wazoo:layout` targets from `*.html` to `*.html.j2`
+- Replace `{key}` layout tokens with Jinja `{{ key }}`; CLI-injected HTML/JSON slots use safe markup (or explicit `| safe` for hand-authored template HTML)
+
+### Changed
+
+- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css`; default page CSS moved out of `site.py` into the template bundle
 - Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `Config.check` and `Config.lint` are `CheckConfig` / `LintConfig` instances (not plain dicts)
 - `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a computed property from `graph.context`
 
@@ -83,6 +93,9 @@
    - `title` → `manifest.name`
    - `theme_color` → `manifest.theme_color`
 5. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
+6. Page layouts:
+   - Rename `site.layout` and `wazoo:layout` paths from `*.html` to `*.html.j2`
+   - Replace `{key}` tokens with Jinja `{{ key }}` (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md#page-layout))
 
 ## 0.1.9 — 2026-06-08
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .headings import heading_slug
+from .site.layout_template import layout_file_is_valid, layout_path_within_root, layout_stem
 
 LAYOUT_FRONTMATTER_KEY = "wazoo:layout"
 
@@ -28,20 +28,4 @@ def parse_layout_from_frontmatter(
     if not isinstance(raw, str) or not raw.strip():
         return None, "default"
     path = resolve_layout_path(raw, config_root)
-    return path, heading_slug(path.stem)
-
-
-def layout_path_within_root(path: Path, config_root: Path) -> bool:
-    """True when path resolves inside config_root."""
-    try:
-        path.resolve().relative_to(config_root.resolve())
-    except ValueError:
-        return False
-    return True
-
-
-def layout_file_is_valid(path: Path, config_root: Path) -> bool:
-    """True when path is a readable HTML file under config_root."""
-    if not layout_path_within_root(path, config_root):
-        return False
-    return path.is_file() and path.suffix.lower() == ".html"
+    return path, layout_stem(path)

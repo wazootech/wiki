@@ -15,6 +15,8 @@ from wiki.fmt_util import (
 )
 from wiki.site import build_page_html, build_site
 
+from tests.layout_helpers import jinja, write_layout
+
 
 class TestWikiFmt(unittest.TestCase):
     def test_mdformat_preserves_wikilinks(self) -> None:
@@ -101,7 +103,7 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn("```sparql", formatted)
 
     def test_read_view_type_label_badge(self) -> None:
-        seed_template = """<html><body>{type_label}<article id="article-top">{page_content}</article></body></html>"""
+        seed_template = jinja("<html><body>{type_label}<article id=\"article-top\">{page_content}</article></body></html>")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -113,7 +115,7 @@ class TestWikiFmt(unittest.TestCase):
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, page_layout=seed_template)
+            html = build_page_html(page, site, root, default_layout=write_layout(root, "layouts/fmt.html.j2", seed_template))
             self.assertIn('class="layout-label">TechArticle</div>', html)
             self.assertNotIn('class="firstHeading"', html)
             self.assertIn('id="shelf-layout">Shelf layout</h1>', page.html)

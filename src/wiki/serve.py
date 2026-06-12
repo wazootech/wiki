@@ -39,7 +39,7 @@ class _ServerState:
     url_style: str
     watch_enabled: bool
     build_id: int
-    page_layout: str | None
+    default_layout: Path | None
     sparql_service_enabled: bool
     sparql_service_path: str
 
@@ -70,9 +70,25 @@ class WikiHandler(BaseHTTPRequestHandler):
         parsed = parsed.rstrip("/")
 
         if parsed == "" or parsed == "/index":
-            self._send_html(build_index_html(state.site, base_url=base, url_style=state.url_style, page_layout=state.page_layout))
+            self._send_html(
+                build_index_html(
+                    state.site,
+                    state.config.config_root,
+                    base_url=base,
+                    url_style=state.url_style,
+                    default_layout=state.default_layout,
+                )
+            )
         elif parsed == base:
-            self._send_html(build_index_html(state.site, base_url=base, url_style=state.url_style, page_layout=state.page_layout))
+            self._send_html(
+                build_index_html(
+                    state.site,
+                    state.config.config_root,
+                    base_url=base,
+                    url_style=state.url_style,
+                    default_layout=state.default_layout,
+                )
+            )
         elif parsed.startswith(base + "/"):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
@@ -83,9 +99,10 @@ class WikiHandler(BaseHTTPRequestHandler):
                     build_page_html(
                         target,
                         state.site,
+                        state.config.config_root,
                         base_url=base,
                         url_style=state.url_style,
-                        page_layout=state.page_layout,
+                        default_layout=state.default_layout,
                         metadata_mode=metadata_mode,
                         metadata_format=metadata_format,
                     )
@@ -316,11 +333,9 @@ def create_server(
     _validate_sparql_service_path(config, resolved_base_url)
     site = build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
     # Load site wiki page layout if configured; silently fall back to default if file missing
-    page_layout: str | None
+    default_layout: Path | None = None
     if config.page_layout is not None and config.page_layout.is_file():
-        page_layout = config.page_layout.read_text(encoding="utf-8")
-    else:
-        page_layout = None
+        default_layout = config.page_layout
 
     server_state = _ServerState(
         site=site,
@@ -329,7 +344,7 @@ def create_server(
         url_style=resolved_url_style,
         watch_enabled=watch,
         build_id=0,
-        page_layout=page_layout,
+        default_layout=default_layout,
         sparql_service_enabled=config.sparql_service.enabled,
         sparql_service_path=config.sparql_service.path,
     )

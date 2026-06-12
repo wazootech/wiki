@@ -63,7 +63,7 @@ graph:
 site:
   manifest:
     name: Example Wiki
-  layout: layouts/default.html
+  layout: layouts/default.html.j2
   base_url: /wiki
   url_style: dir
 
@@ -121,18 +121,18 @@ Default page layout, routing, and Web App Manifest metadata for `wiki build` / `
 
 ### Site manifest (`site.manifest:`)
 
-Branding and PWA metadata use the [Web App Manifest](https://www.w3.org/TR/appmanifest/) field names. Values feed layout placeholders (`{site_title}`, `{theme_color}`, `{logo_svg}`), `{manifest_json}`, `{manifest_url}`, and the built/served `manifest.webmanifest` file at `{base_url}/manifest.webmanifest`.
+Branding and PWA metadata use the [Web App Manifest](https://www.w3.org/TR/appmanifest/) field names. Values feed layout template variables (`{{ site_manifest_name }}`, `{{ site_manifest_theme_color }}`, `{{ logo_svg }}`), `{{ manifest_json }}`, `{{ site_manifest_url }}`, and the built/served `manifest.webmanifest` file at `{{ site_base_url }}/manifest.webmanifest`.
 
-| Key                              | Default    | Purpose                                                                                                                                                                           |
-| -------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `site.manifest.name`             | `Wiki CLI` | Site name in layout chrome; first character drives the **default** `{logo_svg}` globe glyph when the layout still uses that placeholder; always included in the manifest document |
-| `site.manifest.short_name`       | —          | Optional short label for install surfaces                                                                                                                                         |
-| `site.manifest.description`      | —          | Optional site description                                                                                                                                                         |
-| `site.manifest.theme_color`      | —          | Optional `#RGB` / `#RRGGBB` hex for the **default** `{logo_svg}` globe gradient and `theme-color` / `msapplication-TileColor` meta tags (default `#3b82f6`)                       |
-| `site.manifest.background_color` | —          | Optional `#RGB` / `#RRGGBB` hex background color for the manifest                                                                                                                 |
-| `site.manifest.start_url`        | —          | Manifest `start_url`; defaults to `{site.base_url}/` (or `/` when `base_url` is empty)                                                                                            |
-| `site.manifest.display`          | —          | `fullscreen`, `standalone`, `minimal-ui`, or `browser`                                                                                                                            |
-| `site.manifest.icons`            | —          | PWA install icons; `src` should be an assets path (for example `assets/icon-192.png`); relative values are prefixed with `site.base_url` in `manifest.webmanifest`                |
+| Key                              | Default    | Purpose                                                                                                                                                                            |
+| -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `site.manifest.name`             | `Wiki CLI` | Site name in layout chrome; first character drives the **default** `{{ logo_svg }}` globe glyph when the layout still uses that variable; always included in the manifest document |
+| `site.manifest.short_name`       | —          | Optional short label for install surfaces                                                                                                                                          |
+| `site.manifest.description`      | —          | Optional site description                                                                                                                                                          |
+| `site.manifest.theme_color`      | —          | Optional `#RGB` / `#RRGGBB` hex for the **default** `{{ logo_svg }}` globe gradient and `theme-color` / `msapplication-TileColor` meta tags (default `#3b82f6`)                    |
+| `site.manifest.background_color` | —          | Optional `#RGB` / `#RRGGBB` hex background color for the manifest                                                                                                                  |
+| `site.manifest.start_url`        | —          | Manifest `start_url`; defaults to `{site.base_url}/` (or `/` when `base_url` is empty)                                                                                             |
+| `site.manifest.display`          | —          | `fullscreen`, `standalone`, `minimal-ui`, or `browser`                                                                                                                             |
+| `site.manifest.icons`            | —          | PWA install icons; `src` should be an assets path (for example `assets/icon-192.png`); relative values are prefixed with `site.base_url` in `manifest.webmanifest`                 |
 
 ## Link (`link:`)
 
@@ -166,13 +166,13 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 ## Page layout
 
-When `site.layout` is set, the CLI renders every page through that HTML file using `{placeholder}` tokens. Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md).
+When `site.layout` is set, the CLI renders every page through that Jinja2 layout file (`.html.j2`). Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md).
 
 ### Layout strategy
 
-The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html` referenced from `site.layout`).
+The first-class presentation contract in this repository is page layout files under `layouts/` (for example `layouts/default.html.j2` referenced from `site.layout`).
 
-- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and placeholder contract.
+- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and template variable contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
 - Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
 
@@ -186,80 +186,80 @@ Without a configured layout file (or when the path is missing), every page is re
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>{page_title}</title>
+  <title>{{ page_title }}</title>
 </head>
 <body>
-  <h1>{page_title}</h1>
-  {page_content}
+  <h1>{{ page_title }}</h1>
+  {{ page_content }}
 </body>
 </html>
 ```
 
 No CSS, JavaScript, infobox, table of contents, backlinks, or categories are included.
 
-### Placeholders
+### Template variables
 
-Replace `{key}` tokens in your wiki page layout:
+Layout files are Jinja2 templates ending in `.html.j2`. Text fields are auto-escaped when you use `{{ name }}`. Pre-built HTML and JSON fragments from the CLI are injected as safe markup — use `{{ page_content }}` without `| safe` for those keys.
 
-| Placeholder               | Type         | Description                                                                                                                                                                                                                             |
-| ------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{page_title}`            | escaped text | Page title (frontmatter `name` or document H1).                                                                                                                                                                                         |
-| `{page_content}`          | raw HTML     | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown.                                                                                                                              |
-| `{page_kind}`             | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                                                                                                                                                   |
-| `{body_class}`            | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.                                                                                                                                   |
-| `{base_url}`              | text string  | URL prefix from config (e.g. `/wiki`).                                                                                                                                                                                                  |
-| `{url_style}`             | text string  | `"dir"` or `"file"`.                                                                                                                                                                                                                    |
-| `{site_title}`            | escaped text | Site name from `site.manifest.name` (sidebar label, `<title>` suffix, search placeholder).                                                                                                                                              |
-| `{theme_color}`           | text string  | Resolved hex color from `site.manifest.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags).                                                                                                                   |
-| `{manifest_json}`         | raw JSON     | Canonical Web App Manifest document derived from `site.manifest` (for inline `<script type="application/manifest+json">` or debugging).                                                                                                 |
-| `{manifest_url}`          | text string  | Public URL of `manifest.webmanifest` (`{base_url}/manifest.webmanifest`).                                                                                                                                                               |
-| `{inline_css}`            | raw CSS      | Bundled default page CSS from `layout_default.css.j2` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize presentation via layout HTML or linked assets (see [Custom CSS](#custom-css)).        |
-| `{logo_svg}`              | raw SVG      | Default built-in Wikipedia-style globe logo; center letter from `site.manifest.name`; globe gradient from `site.manifest.theme_color` when set. Override by editing the layout (see [Custom logos and icons](#custom-logos-and-icons)). |
-| `{all_pages_json}`        | JSON string  | Array of `{slug, title}` for all pages.                                                                                                                                                                                                 |
-| `{current_slug_json}`     | JSON string  | Current page slug as a JSON string literal.                                                                                                                                                                                             |
-| `{layout_label}`          | raw HTML     | Layout label when `wazoo:layout` is set (empty when using the site default shell).                                                                                                                                                      |
-| `{type_label}`            | raw HTML     | Schema type badge from frontmatter `type` / `@type` (empty when unset). Read view only.                                                                                                                                                 |
-| `{layout_class}`          | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                                                                                                                                                 |
-| `{infobox_html}`          | raw HTML     | Typed frontmatter property table (empty for index).                                                                                                                                                                                     |
-| `{toc_html}`              | raw HTML     | Table of contents `<div>` with heading links (empty if no headings).                                                                                                                                                                    |
-| `{backlinks_html}`        | raw HTML     | Backlinks section (empty if none).                                                                                                                                                                                                      |
-| `{categories_html}`       | raw HTML     | Category links `<div>` (empty if none).                                                                                                                                                                                                 |
-| `{sidebar_contents_html}` | raw HTML     | Extra sidebar links from typed properties.                                                                                                                                                                                              |
-| `{source_markdown}`       | escaped text | Raw markdown source for the "view source" tab.                                                                                                                                                                                          |
-| `{metadata_tool_html}`    | raw HTML     | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                                                                                                                                                          |
-| `{metadata_tab_html}`     | raw HTML     | Tab bar "Metadata" `<li>` (empty if no frontmatter).                                                                                                                                                                                    |
-| `{metadata_pane_html}`    | raw HTML     | Full metadata display pane `<div>` (empty if no frontmatter).                                                                                                                                                                           |
+| Variable                          | Type         | Description                                                                                                                                                                                                                             |
+| --------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ page_title }}`                | escaped text | Page title (frontmatter `name` or document H1).                                                                                                                                                                                         |
+| `{{ page_content }}`              | HTML         | Rendered page body. For index pages: `<ul>…</ul>` of all page links. For articles: full rendered markdown.                                                                                                                              |
+| `{{ page_kind }}`                 | text string  | `"index"` or `"article"`. Use in JS or CSS selectors.                                                                                                                                                                                   |
+| `{{ body_class }}`                | text string  | CSS classes for the `<body>` element. `wiki-index` for index, `wiki-page layout-{slug}` for articles.                                                                                                                                   |
+| `{{ site_base_url }}`             | text string  | URL prefix from config (e.g. `/wiki`).                                                                                                                                                                                                  |
+| `{{ site_url_style }}`            | text string  | `"dir"` or `"file"`.                                                                                                                                                                                                                    |
+| `{{ site_manifest_name }}`        | escaped text | Site name from `site.manifest.name` (sidebar label, `<title>` suffix, search placeholder).                                                                                                                                              |
+| `{{ site_manifest_theme_color }}` | text string  | Resolved hex color from `site.manifest.theme_color`, or `#3b82f6` when unset (`theme-color` and TileColor meta tags).                                                                                                                   |
+| `{{ manifest_json }}`             | JSON         | Canonical Web App Manifest document derived from `site.manifest` (for inline `<script type="application/manifest+json">` or debugging).                                                                                                 |
+| `{{ site_manifest_url }}`         | text string  | Public URL of `manifest.webmanifest` (`{{ site_base_url }}/manifest.webmanifest`).                                                                                                                                                      |
+| `{{ inline_css }}`                | CSS          | Bundled default page CSS from `layout_default.css` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize presentation via layout HTML or linked assets (see [Custom CSS](#custom-css)).           |
+| `{{ logo_svg }}`                  | SVG          | Default built-in Wikipedia-style globe logo; center letter from `site.manifest.name`; globe gradient from `site.manifest.theme_color` when set. Override by editing the layout (see [Custom logos and icons](#custom-logos-and-icons)). |
+| `{{ all_pages_json }}`            | JSON         | Array of `{slug, title}` for all pages.                                                                                                                                                                                                 |
+| `{{ current_slug_json }}`         | JSON         | Current page slug as a JSON string literal.                                                                                                                                                                                             |
+| `{{ layout_label }}`              | HTML         | Layout label when `wazoo:layout` is set (empty when using the site default shell).                                                                                                                                                      |
+| `{{ type_label }}`                | HTML         | Schema type badge from frontmatter `type` / `@type` (empty when unset). Read view only.                                                                                                                                                 |
+| `{{ layout_class }}`              | text string  | CSS-safe slug derived from the layout file stem (`default` when unset).                                                                                                                                                                 |
+| `{{ infobox_html }}`              | HTML         | Typed frontmatter property table (empty for index).                                                                                                                                                                                     |
+| `{{ toc_html }}`                  | HTML         | Table of contents `<div>` with heading links (empty if no headings).                                                                                                                                                                    |
+| `{{ backlinks_html }}`            | HTML         | Backlinks section (empty if none).                                                                                                                                                                                                      |
+| `{{ categories_html }}`           | HTML         | Category links `<div>` (empty if none).                                                                                                                                                                                                 |
+| `{{ sidebar_contents_html }}`     | HTML         | Extra sidebar links from typed properties.                                                                                                                                                                                              |
+| `{{ source_markdown }}`           | escaped text | Raw markdown source for the "view source" tab.                                                                                                                                                                                          |
+| `{{ metadata_tool_html }}`        | HTML         | Sidebar "View metadata" link `<li>` (empty if no frontmatter).                                                                                                                                                                          |
+| `{{ metadata_tab_html }}`         | HTML         | Tab bar "Metadata" `<li>` (empty if no frontmatter).                                                                                                                                                                                    |
+| `{{ metadata_pane_html }}`        | HTML         | Full metadata display pane `<div>` (empty if no frontmatter).                                                                                                                                                                           |
 
-Unknown `{placeholders}` are left untouched in the output. This lets you use literal braces in JavaScript or CSS without escaping.
+Use `{% raw %}…{% endraw %}` when you need literal `{{` in hand-authored layout HTML. For trusted inline HTML you author yourself, `| safe` is available.
 
 ### Custom CSS
 
-The bundled stylesheet injected as `{inline_css}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
+The bundled stylesheet injected as `{{ inline_css }}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
 
-1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{inline_css}` with your own CSS (you lose the bundled defaults unless you copy them).
-1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html.j2`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{{ inline_css }}` with your own CSS (you lose the bundled defaults unless you copy them).
+1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{{ site_base_url }}/assets/site.css">`. Built assets are served at `{{ site_base_url }}/assets/…` during `wiki serve` and copied into the build output.
 
-`site.manifest.theme_color` only affects the default `{logo_svg}` globe gradient and `theme-color` / TileColor meta tags; accent colors inside `{inline_css}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
+`site.manifest.theme_color` only affects the default `{{ logo_svg }}` globe gradient and `theme-color` / TileColor meta tags; accent colors inside `{{ inline_css }}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
 
 ### Custom logos and icons
 
-The default layout uses `{logo_svg}` inside `#p-logo`. When you do not customize the layout, Wiki CLI injects a built-in globe SVG: the center glyph is the first character of resolved `site.manifest.name`, and the gradient comes from `site.manifest.theme_color` (fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
+The default layout uses `{{ logo_svg }}` inside `#p-logo`. When you do not customize the layout, Wiki CLI injects a built-in globe SVG: the center glyph is the first character of resolved `site.manifest.name`, and the gradient comes from `site.manifest.theme_color` (fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
 
 **Custom sidebar logo**
 
 1. Enable `wiki.assets` (uncomment or add an `assets:` directory in `wiki.yaml`).
 1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`.
-1. Edit `site.layout` and replace `{logo_svg}` with an asset reference:
+1. Edit `site.layout` and replace `{{ logo_svg }}` with an asset reference:
 
 ```html
-<img src="{base_url}/assets/logo.svg" alt="" width="80" height="80">
+<img src="{{ site_base_url }}/assets/logo.svg" alt="" width="80" height="80">
 ```
 
 You can also embed inline SVG directly in the layout file (no asset copy).
 
 **Favicons and touch icons**
 
-Put `favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, and similar files under `assets/`. Add standard `<link rel="icon">` and `<link rel="apple-touch-icon">` tags in the layout `<head>` pointing at `{base_url}/assets/…`. Favicons are not configurable through dedicated yaml keys.
+Put `favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, and similar files under `assets/`. Add standard `<link rel="icon">` and `<link rel="apple-touch-icon">` tags in the layout `<head>` pointing at `{{ site_base_url }}/assets/…`. Favicons are not configurable through dedicated yaml keys.
 
 **PWA / manifest icons**
 
@@ -278,11 +278,11 @@ site:
         type: image/png
 ```
 
-`{manifest_url}` and the built `manifest.webmanifest` file pick these up automatically. The default layout already includes `<link rel="manifest" href="{manifest_url}">`.
+`{{ site_manifest_url }}` and the built `manifest.webmanifest` file pick these up automatically. The default layout already includes `<link rel="manifest" href="{{ site_manifest_url }}">`.
 
-Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+Built assets are served at `{{ site_base_url }}/assets/…` during `wiki serve` and copied into the build output.
 
-See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for the layout file contract and placeholder list.
+See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for the layout file contract and template variable list.
 
 The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
 
@@ -313,7 +313,7 @@ The wiki builder generates these selectors in the rendered page content:
 
 ### JavaScript hooks
 
-The bundled default wiki page layout (`layouts/default.html` created by `wiki init`) provides:
+The bundled default wiki page layout (`layouts/default.html.j2` created by `wiki init`) provides:
 
 | Function                       | Purpose                                              |
 | ------------------------------ | ---------------------------------------------------- |
@@ -374,9 +374,9 @@ In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline map
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key              | Default | What it audits                                                      |
-| --------------------- | ------- | ------------------------------------------------------------------- |
-| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
+| Rule key              | Default | What it audits                                                         |
+| --------------------- | ------- | ---------------------------------------------------------------------- |
+| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 

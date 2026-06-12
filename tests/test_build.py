@@ -8,7 +8,9 @@ from click.testing import CliRunner
 from wiki.cli import main
 from wiki.config import Config
 from wiki.paths import page_output_path
-from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, render_default_layout, render_wiki_yaml
+from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, load_packaged_default_layout, render_wiki_yaml
+
+from tests.layout_helpers import jinja, write_layout
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -180,7 +182,7 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            test_template = """<!DOCTYPE html>
+            test_template = jinja("""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -192,9 +194,11 @@ class TestWikiBuild(unittest.TestCase):
 {infobox_html}
 {page_content}
 </body>
-</html>"""
-            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
-            (root / "test_shell.html").write_text(test_template, encoding="utf-8")
+</html>""")
+            (root / "wiki.yaml").write_text(
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
+            )
+            write_layout(root, "test_shell.html.j2", test_template)
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
 type: schema:Person
@@ -239,7 +243,7 @@ name: Bella Davidson
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            template = """<!DOCTYPE html>
+            template = jinja("""<!DOCTYPE html>
 <html lang=\"en\">
 <head>
 <meta charset=\"UTF-8\">
@@ -251,9 +255,11 @@ name: Bella Davidson
 {page_content}
 {metadata_pane_html}
 </body>
-</html>"""
-            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8")
-            (root / "test_shell.html").write_text(template, encoding="utf-8")
+</html>""")
+            (root / "wiki.yaml").write_text(
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
+            )
+            write_layout(root, "test_shell.html.j2", template)
             (wiki / "Page.md").write_text(
                 """---
 type: Person
@@ -286,7 +292,9 @@ about: wiki:Alice_Theory
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html\n", encoding="utf-8")
+            (root / "wiki.yaml").write_text(
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html.j2\n", encoding="utf-8"
+            )
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
@@ -297,19 +305,19 @@ about: wiki:Alice_Theory
 
     def test_build_site_block_drives_logo_letter(self) -> None:
         runner = CliRunner()
-        template = """<!DOCTYPE html>
+        template = jinja("""<!DOCTYPE html>
 <html><head><title>{page_title} - {site_manifest_name}</title></head>
-<body>{logo_svg}<span class="logo-text">{site_manifest_name}</span>{page_content}</body></html>"""
+<body>{logo_svg}<span class="logo-text">{site_manifest_name}</span>{page_content}</body></html>""")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html\n",
+                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html.j2\n",
                 encoding="utf-8",
             )
-            (root / "test_shell.html").write_text(template, encoding="utf-8")
+            write_layout(root, "test_shell.html.j2", template)
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
@@ -322,20 +330,13 @@ about: wiki:Alice_Theory
 
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
-        docs_html = repo_root / "docs" / "layouts" / "default.html"
-        expected = render_default_layout(
-            InitOptions(
-                graph_context_wiki=DOCS_WIKI_INIT_OPTIONS.graph_context_wiki,
-                site_base_url=DOCS_WIKI_INIT_OPTIONS.site_base_url,
-                site_url_style=DOCS_WIKI_INIT_OPTIONS.site_url_style,
-                site_manifest_name="Wiki CLI",
-            )
-        )
-        self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html not found at {docs_html}")
+        docs_html = repo_root / "docs" / "layouts" / "default.html.j2"
+        expected = load_packaged_default_layout()
+        self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html.j2 not found at {docs_html}")
         self.assertEqual(
             docs_html.read_text(encoding="utf-8"),
             expected,
-            "docs/layouts/default.html must match render_default_layout for this repo's wiki.yaml",
+            "docs/layouts/default.html.j2 must match the packaged default layout template",
         )
 
     def test_build_writes_manifest_webmanifest(self) -> None:

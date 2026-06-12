@@ -35,7 +35,9 @@ def _free_port() -> int:
     return port
 
 
-_RICH_TEMPLATE = """<!DOCTYPE html>
+from tests.layout_helpers import jinja, write_layout
+
+_RICH_TEMPLATE = jinja("""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -50,10 +52,10 @@ _RICH_TEMPLATE = """<!DOCTYPE html>
 {backlinks_html}
 {categories_html}
 </body>
-</html>"""
+</html>""")
 
 
-_METADATA_TEMPLATE = """<!DOCTYPE html>
+_METADATA_TEMPLATE = jinja("""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -67,7 +69,7 @@ _METADATA_TEMPLATE = """<!DOCTYPE html>
 {metadata_pane_html}
 {page_content}
 </body>
-</html>"""
+</html>""")
 
 
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
@@ -91,8 +93,7 @@ def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
 
 def _serve_with_template(wiki_dir: Path, template: str = _RICH_TEMPLATE) -> Generator[int, None, None]:
     port = _free_port()
-    template_path = wiki_dir / "test_shell.html"
-    template_path.write_text(template, encoding="utf-8")
+    template_path = write_layout(wiki_dir, "test_shell.html.j2", template)
     config = Config(
         wiki={"inputs": [wiki_dir]},
         site={"layout": template_path},

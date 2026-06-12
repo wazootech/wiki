@@ -49,7 +49,7 @@ def _metadata_format_css() -> str:
 def _load_layout_default_css() -> str:
     from importlib.resources import files
 
-    return files("wiki.templates").joinpath("layout_default.css.j2").read_text(
+    return files("wiki.templates").joinpath("layout_default.css").read_text(
         encoding="utf-8"
     )
 
@@ -61,21 +61,6 @@ INLINE_CSS = (
     + "\n\n"
     + PYGMENTS_CSS
 )
-
-DEFAULT_MINIMAL_PAGE_LAYOUT = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="{site_manifest_theme_color}">
-<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">
-<title>{page_title}</title>
-</head>
-<body>
-<h1 id="firstHeading">{page_title}</h1>
-{page_content}
-</body>
-</html>"""
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type"}
 

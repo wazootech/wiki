@@ -49,7 +49,7 @@ Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, Tr
 
 ## Wiki page layout
 
-If your [Wiki Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that file unless `wazoo:layout` overrides it. The builder passes page content and metadata as `{placeholder}` tokens.
+If your [Wiki Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that Jinja2 template unless `wazoo:layout` overrides it. The builder passes page content and metadata as template variables (see [Template variables](Wiki_Configuration.md#template-variables)).
 
 If the configured template file is missing, the fallback shell is used silently.
 

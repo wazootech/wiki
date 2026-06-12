@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import subprocess
 from functools import lru_cache
+from importlib.resources import files
 from pathlib import Path
 from typing import Callable
 
@@ -16,7 +17,8 @@ from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 __all__ = [
     "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
-    "render_default_layout",
+    "copy_default_layout",
+    "load_packaged_default_layout",
     "render_wiki_yaml",
     "resolve_init_options",
 ]
@@ -189,7 +191,13 @@ def render_wiki_yaml(opts: InitOptions) -> str:
     return _strip_scaffold_comment(rendered)
 
 
-def render_default_layout(opts: InitOptions) -> str:
-    """Render the packaged layout_default.html.j2 page layout scaffold."""
-    rendered = _init_template_env().get_template(_DEFAULT_LAYOUT_TEMPLATE).render(**opts.model_dump())
-    return _strip_scaffold_comment(rendered)
+def load_packaged_default_layout() -> str:
+    """Return the packaged default page layout template content."""
+    source = files("wiki").joinpath(f"templates/{_DEFAULT_LAYOUT_TEMPLATE}").read_text(encoding="utf-8")
+    return _strip_scaffold_comment(source)
+
+
+def copy_default_layout(dest: Path) -> None:
+    """Copy the packaged default page layout into a workspace."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(load_packaged_default_layout(), encoding="utf-8")

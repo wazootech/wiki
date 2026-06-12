@@ -584,14 +584,33 @@ name: Wiki CLI
             wiki = root / "wiki"
             wiki.mkdir()
             (wiki / "page.md").write_text(
-                "---\ntype: TechArticle\nwazoo:layout: layouts/missing.html\n---\n",
+                "---\ntype: TechArticle\nwazoo:layout: layouts/missing.html.j2\n---\n",
                 encoding="utf-8",
             )
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
 
             issues = check_layout_frontmatter(config)
             self.assertEqual(len(issues), 1)
-            self.assertIn("layouts/missing.html", issues[0])
+            self.assertIn("layouts/missing.html.j2", issues[0])
+
+    def test_check_layout_frontmatter_rejects_plain_html_extension(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            layouts = root / "layouts"
+            layouts.mkdir()
+            wiki.mkdir()
+            (layouts / "legacy.html").write_text("<html></html>", encoding="utf-8")
+            (wiki / "page.md").write_text(
+                "---\ntype: TechArticle\nwazoo:layout: layouts/legacy.html\n---\n",
+                encoding="utf-8",
+            )
+            config = Config(wiki={"inputs": [wiki]}, config_root=root)
+
+            issues = check_layout_frontmatter(config)
+            self.assertEqual(len(issues), 1)
+            self.assertIn(".html.j2", issues[0])
+
 
 if __name__ == "__main__":
     unittest.main()

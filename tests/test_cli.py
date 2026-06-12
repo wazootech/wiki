@@ -13,7 +13,7 @@ from click.testing import CliRunner
 
 from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
-from wiki.init_scaffold import InitOptions, render_default_layout, render_wiki_yaml
+from wiki.init_scaffold import InitOptions, load_packaged_default_layout, render_wiki_yaml
 
 
 class TestCLI(unittest.TestCase):
@@ -465,14 +465,12 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
                 # Check site layout is configured and seeded
                 self.assertIn("name: Wiki CLI", config_content)
-                self.assertIn("layout: layouts/default.html", config_content)
-                default_layout = Path("layouts") / "default.html"
+                self.assertIn("layout: layouts/default.html.j2", config_content)
+                default_layout = Path("layouts") / "default.html.j2"
                 self.assertTrue(default_layout.is_file())
-                expected_layout = render_default_layout(
-                    InitOptions(graph_context_wiki="https://wiki.example.org/"),
-                )
+                expected_layout = load_packaged_default_layout()
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("{site_manifest_name}", expected_layout)
+                self.assertIn("{{ site_manifest_name }}", expected_layout)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(graph_context_wiki="https://wiki.example.org/"),
@@ -601,21 +599,14 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("Invalid GitHub repo", result.output)
 
     def test_docs_default_layout_matches_packaged_template(self) -> None:
-        docs_template = Path("docs/layouts/default.html").read_text(encoding="utf-8")
-        expected = render_default_layout(
-            InitOptions(
-                graph_context_wiki="https://wazootech.github.io/wiki/",
-                site_base_url="/wiki",
-                site_url_style="dir",
-                site_manifest_name="Wiki CLI",
-            )
-        )
+        docs_template = Path("docs/layouts/default.html.j2").read_text(encoding="utf-8")
+        expected = load_packaged_default_layout()
         self.assertEqual(docs_template, expected)
 
     def test_config_rejects_unknown_html_template_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("wiki:\n  inputs: [wiki]\nhtml_template: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("wiki:\n  inputs: [wiki]\nhtml_template: layouts/default.html.j2\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 Config.load(config_path)
             self.assertIn("unknown top-level keys: html_template", str(ctx.exception))
@@ -623,7 +614,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_config_rejects_unknown_wiki_page_layout_key(self) -> None:
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
-            config_path.write_text("wiki:\n  inputs: [wiki]\nwiki_page_layout: layouts/default.html\n", encoding="utf-8")
+            config_path.write_text("wiki:\n  inputs: [wiki]\nwiki_page_layout: layouts/default.html.j2\n", encoding="utf-8")
             with self.assertRaises(ValueError) as ctx:
                 Config.load(config_path)
             self.assertIn("unknown top-level keys: wiki_page_layout", str(ctx.exception))

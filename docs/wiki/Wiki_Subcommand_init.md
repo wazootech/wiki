@@ -22,23 +22,23 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 
 ## Options
 
-| Flag                             | Description                                                                                    |
-| -------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `--force`                        | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html` |
-| `--git`                          | Run `git init` after scaffolding                                                               |
-| `--repo`                         | GitHub `owner/repo`; infer `graph.context.wiki` and `site.base_url` for GitHub Pages           |
-| `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                   |
-| `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                           |
-| `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                     |
-| `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                           |
-| `--link-style`                   | Override `link.style`: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`)       |
-| `--site-manifest-name`           | Override `site.manifest.name` (default `Wiki CLI`)                                             |
-| `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                |
-| `--graph-base-iri`               | Override `graph.base_iri` URI                                                                  |
-| `--site-manifest-theme-color`    | Override `site.manifest.theme_color` (e.g. `#3b82f6`)                                          |
-| `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                              |
-| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                 |
-| `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`) |
+| Flag                             | Description                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--force`                        | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html.j2` |
+| `--git`                          | Run `git init` after scaffolding                                                                  |
+| `--repo`                         | GitHub `owner/repo`; infer `graph.context.wiki` and `site.base_url` for GitHub Pages              |
+| `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                      |
+| `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                              |
+| `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                        |
+| `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                              |
+| `--link-style`                   | Override `link.style`: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`)          |
+| `--site-manifest-name`           | Override `site.manifest.name` (default `Wiki CLI`)                                                |
+| `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                   |
+| `--graph-base-iri`               | Override `graph.base_iri` URI                                                                     |
+| `--site-manifest-theme-color`    | Override `site.manifest.theme_color` (e.g. `#3b82f6`)                                             |
+| `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                                 |
+| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                    |
+| `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`)    |
 
 ## URL resolution
 
@@ -77,7 +77,7 @@ Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, s
 
 ## Generated files
 
-- `layouts/default.html` — rendered from packaged [`layout default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2) (same Jinja2 scaffold pattern as `wiki.yaml.j2`); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
+- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

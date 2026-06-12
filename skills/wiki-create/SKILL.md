@@ -122,7 +122,7 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 ### What init creates
 
 - `wiki.yaml` — wiki, graph, site, lint, fmt defaults
-- `layouts/default.html`
+- `layouts/default.html.j2`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`
 - `README.md`
 

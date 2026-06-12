@@ -4,9 +4,8 @@ from tempfile import TemporaryDirectory
 
 from wiki.config import Config
 from wiki.format import METADATA_VIEWS
-from wiki.init_scaffold import InitOptions, render_default_layout
+from wiki.init_scaffold import load_packaged_default_layout
 from wiki.site import (
-    DEFAULT_MINIMAL_PAGE_LAYOUT,
     build_index_html,
     build_page_html,
     build_site,
@@ -16,7 +15,9 @@ from wiki.site import (
     strip_leading_title_heading,
 )
 
-_FULL_TEST_TEMPLATE = """<!DOCTYPE html>
+from tests.layout_helpers import jinja, write_layout
+
+_FULL_TEST_TEMPLATE = jinja("""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -33,7 +34,15 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 {backlinks_html}
 {categories_html}
 </body>
-</html>"""
+</html>""")
+
+
+def _full_test_layout(root: Path) -> Path:
+    return write_layout(root, "layouts/full_test.html.j2", _FULL_TEST_TEMPLATE)
+
+
+def _default_layout(root: Path) -> Path:
+    return write_layout(root, "layouts/default.html.j2", load_packaged_default_layout())
 
 
 class TestWikiSite(unittest.TestCase):
@@ -54,7 +63,9 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(
+                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
+            )
             self.assertIn('class="toc"', html)
             self.assertIn('href="#early-life"', html)
             self.assertIn('href="#firstHeading"', html)
@@ -126,7 +137,9 @@ name: Bella Davidson
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "Gregory_Davidson")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(
+                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
+            )
 
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
@@ -149,13 +162,15 @@ name: Bella Davidson
             wiki.mkdir()
             layouts = root / "layouts"
             layouts.mkdir()
-            custom_shell = """<!DOCTYPE html>
+            custom_shell = jinja(
+                """<!DOCTYPE html>
 <html><body><div id="custom-shell">{page_title}{infobox_html}{page_content}</div></body></html>"""
-            (layouts / "project.html").write_text(custom_shell, encoding="utf-8")
+            )
+            (layouts / "project.html.j2").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
 type: schema:CreativeWork
-wazoo:layout: layouts/project.html
+wazoo:layout: layouts/project.html.j2
 name: Project Atlas
 related:
   - wiki:Project_Atlas
@@ -175,9 +190,11 @@ name: Project Atlas Record
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(
+                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
+            )
 
-            self.assertEqual(page.layout_path, (layouts / "project.html").resolve())
+            self.assertEqual(page.layout_path, (layouts / "project.html.j2").resolve())
             self.assertEqual(page.layout_stem, "project")
             self.assertIn('id="custom-shell"', html)
             self.assertIn('class="infobox page-meta"', html)
@@ -204,7 +221,9 @@ name: Project Atlas
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(
+                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
+            )
 
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
@@ -238,8 +257,8 @@ name: Project Atlas
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            page_layout_shell = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
-            html = build_page_html(page, site, page_layout=page_layout_shell)
+            page_layout = _default_layout(root)
+            html = build_page_html(page, site, root, default_layout=page_layout)
 
             self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
             self.assertIn('<span class="wikilink">semantic web</span>', html)
@@ -288,7 +307,7 @@ name: Project Atlas
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
     def test_seed_template_includes_code_copy_initialization(self) -> None:
-        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
+        seed_template = load_packaged_default_layout()
         self.assertIn("initCodeCopyButtons", seed_template)
         self.assertIn("pre[data-copy]", seed_template)
         self.assertIn("copyPreContent", seed_template)
@@ -313,8 +332,8 @@ specialty: Diagnostics
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
-            page_layout_shell = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=page_layout_shell)
+            page_layout = _default_layout(root)
+            html = build_page_html(page, site, root, base_url="/wiki", url_style="dir", default_layout=page_layout)
 
             self.assertIn("Metadata</a>", html)
             self.assertIn('href="#view-metadata-content"', html)
@@ -385,7 +404,7 @@ specialty: Diagnostics
             (wiki / "Alice.md").write_text("# Alice\n", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
-            html = build_index_html(site)
+            html = build_index_html(site, root)
             self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", html)
             self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
@@ -451,7 +470,9 @@ specialty: Diagnostics
             config = Config.load(root / "wiki.yaml")
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(p for p in site.pages if p.full_slug == "Farzapedia")
-            html = build_page_html(page, site, base_url="/wiki", url_style="dir", page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(
+                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
+            )
             self.assertIn('href="/wiki/Wiki_CLI/"', html)
             self.assertIn(">Wiki CLI</a>", html)
             self.assertNotIn(">wiki:Wiki_CLI</a>", html)
@@ -465,7 +486,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site)
+            html = build_page_html(page, site, root)
             self.assertIn("<h1 id=\"firstHeading\">My Article</h1>", html)
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
@@ -475,7 +496,7 @@ specialty: Diagnostics
             self.assertNotIn("On this page", html)
 
     def test_default_layout_read_view_includes_first_heading(self) -> None:
-        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
+        seed_template = load_packaged_default_layout()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -488,13 +509,13 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, page_layout=seed_template)
+            html = build_page_html(page, site, root, default_layout=_default_layout(root))
             self.assertIn('<h1 class="firstHeading" id="firstHeading">Wiki CLI</h1>', html)
             self.assertNotIn("<h1", page.html)
             self.assertIn("Lead paragraph.", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
-        seed_template = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
+        seed_template = load_packaged_default_layout()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -503,7 +524,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, page_layout=seed_template)
+            html = build_page_html(page, site, root, default_layout=_default_layout(root))
             self.assertNotIn("From Wiki CLI, the semantic knowledge base", html)
 
     def test_fallback_has_page_kind(self) -> None:
@@ -514,10 +535,10 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
-            index_html = build_index_html(site)
+            index_html = build_index_html(site, root)
             self.assertIn("All Pages", index_html)
             page = site.pages[0]
-            article_html = build_page_html(page, site)
+            article_html = build_page_html(page, site, root)
             self.assertIn("Page", article_html)
 
     def test_page_content_does_not_expand_documented_placeholder_tokens(self) -> None:
@@ -535,7 +556,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, page_layout=_FULL_TEST_TEMPLATE)
+            html = build_page_html(page, site, root, default_layout=_full_test_layout(root))
             self.assertIn("{metadata_pane_html}", html)
             self.assertNotIn("metadata-format-switch", html)
 
@@ -549,14 +570,14 @@ specialty: Diagnostics
 
             dir_config = Config(wiki={"inputs": [wiki]}, site={"url_style": "dir"}, config_root=root)
             dir_site = build_site(dir_config)
-            dir_index = build_index_html(dir_site, base_url="/wiki", url_style=dir_config.site.url_style)
+            dir_index = build_index_html(dir_site, root, base_url="/wiki", url_style=dir_config.site.url_style)
             self.assertIn('href="/wiki/alice/"', dir_index)
             self.assertIn('href="/wiki/bob/"', dir_index)
             self.assertNotIn(".html", dir_index)
 
             file_config = Config(wiki={"inputs": [wiki]}, site={"url_style": "file"}, config_root=root)
             file_site = build_site(file_config)
-            file_index = build_index_html(file_site, base_url="/wiki", url_style=file_config.site.url_style)
+            file_index = build_index_html(file_site, root, base_url="/wiki", url_style=file_config.site.url_style)
             self.assertIn('href="/wiki/alice.html"', file_index)
             self.assertIn('href="/wiki/bob.html"', file_index)
 
@@ -568,7 +589,7 @@ specialty: Diagnostics
             (wiki / "Alice.md").write_text("# Alice\n", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
-            html = build_index_html(site, page_layout=_FULL_TEST_TEMPLATE)
+            html = build_index_html(site, root, default_layout=_full_test_layout(root))
             self.assertNotIn("{type_label}", html)
             self.assertNotIn('class="layout-label"', html)
 
@@ -581,7 +602,7 @@ specialty: Diagnostics
             (wiki / "Plain.md").write_text("# Plain\n", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
-            html = build_index_html(site, page_layout=_FULL_TEST_TEMPLATE)
+            html = build_index_html(site, root, default_layout=_full_test_layout(root))
             article_start = html.index('<article id="article-top">')
             article_end = html.index("</article>", article_start)
             article = html[article_start:article_end]
@@ -617,7 +638,7 @@ specialty: Diagnostics
                 config_root=root,
             )
             site = build_site(config)
-            html = build_index_html(site, page_layout="{logo_svg}")
+            html = build_index_html(site, root, default_layout=write_layout(root, "layouts/logo.html.j2", jinja("{logo_svg}")))
             self.assertIn('stop-color="#6366f1"', html)
 
     def test_build_index_html_emits_theme_color_meta_tags(self) -> None:
@@ -630,9 +651,14 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(
                 site,
-                page_layout=(
-                    '<meta name="theme-color" content="{site_manifest_theme_color}">'
-                    '<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">'
+                root,
+                default_layout=write_layout(
+                    root,
+                    "layouts/theme.html.j2",
+                    jinja(
+                        '<meta name="theme-color" content="{site_manifest_theme_color}">'
+                        '<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">'
+                    ),
                 ),
             )
             self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
@@ -651,7 +677,12 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(
                 site,
-                page_layout='<meta name="theme-color" content="{site_manifest_theme_color}">',
+                root,
+                default_layout=write_layout(
+                    root,
+                    "layouts/theme_single.html.j2",
+                    jinja('<meta name="theme-color" content="{site_manifest_theme_color}">'),
+                ),
             )
             self.assertIn('<meta name="theme-color" content="#6366f1">', html)
 
@@ -690,7 +721,12 @@ specialty: Diagnostics
             site = build_site(config)
             html = build_index_html(
                 site,
-                page_layout='{site_manifest_url}|{manifest_json}',
+                root,
+                default_layout=write_layout(
+                    root,
+                    "layouts/manifest.html.j2",
+                    jinja("{site_manifest_url}|{manifest_json}"),
+                ),
             )
             self.assertIn("/wiki/manifest.webmanifest", html)
             self.assertIn('"name":"Acme Docs"', html)

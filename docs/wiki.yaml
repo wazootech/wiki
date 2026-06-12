@@ -45,8 +45,8 @@ site:
     #   - src: assets/icon-512.png
     #     sizes: "512x512"
     #     type: image/png
-  # Default page layout HTML with {placeholder} tokens.
-  layout: layouts/default.html
+  # Default page layout Jinja template (see Wiki Configuration → Page layout).
+  layout: layouts/default.html.j2
   # URL prefix for built and served pages.
   base_url: /wiki
   # dir → slug/index.html; file → slug.html
@@ -61,7 +61,7 @@ link:
 
 # Integrity severities (wiki check): SHACL, routes, layout files.
 check:
-  # Error when wazoo:layout points at a missing .html file.
+  # Error when wazoo:layout points at a missing .html.j2 file.
   missing_layout_file: error
 
 # Convention severities (wiki lint): links, filenames, headings.

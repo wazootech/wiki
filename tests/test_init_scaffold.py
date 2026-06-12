@@ -14,11 +14,12 @@ from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.schemas.wiki_config import normalize_base_iri
 from wiki.init_scaffold import (
     InitOptions,
+    copy_default_layout,
     detect_origin_repo,
     infer_github_pages_urls,
+    load_packaged_default_layout,
     normalize_base_url,
     parse_github_repo,
-    render_default_layout,
     render_wiki_yaml,
     resolve_init_options,
 )
@@ -135,13 +136,19 @@ class TestRenderWikiYaml(TestCase):
             config = Config.load(config_path)
             self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
-    def test_render_default_layout(self) -> None:
-        rendered = render_default_layout(InitOptions(graph_context_wiki="https://wiki.example.org/"))
-        self.assertIn("{page_title}", rendered)
-        self.assertIn("{site_manifest_name}", rendered)
+    def test_load_packaged_default_layout(self) -> None:
+        rendered = load_packaged_default_layout()
+        self.assertIn("{{ page_title }}", rendered)
+        self.assertIn("{{ site_manifest_name }}", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn('<title>{page_title} - {site_manifest_name}</title>', rendered)
-        self.assertIn('placeholder="Search {site_manifest_name}"', rendered)
+        self.assertIn("<title>{{ page_title }} - {{ site_manifest_name }}</title>", rendered)
+        self.assertIn('placeholder="Search {{ site_manifest_name }}"', rendered)
+
+    def test_copy_default_layout(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "layouts" / "default.html.j2"
+            copy_default_layout(dest)
+            self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_default_layout())
 
 
 class TestResolveInitOptions(TestCase):

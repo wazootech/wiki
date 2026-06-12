@@ -42,9 +42,9 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key              | What it audits                                                      |
-| --------------------- | ------------------------------------------------------------------- |
-| `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
+| Rule key              | What it audits                                                         |
+| --------------------- | ---------------------------------------------------------------------- |
+| `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
 
 Default: `missing_layout_file` is `error`.
 

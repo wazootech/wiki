@@ -11,8 +11,8 @@ from .html import (
     resolved_site_theme_color,
     serialize_web_manifest,
 )
+from .layout_template import MINIMAL_LAYOUT_TEMPLATE
 from .markdown import (
-    DEFAULT_MINIMAL_PAGE_LAYOUT,
     INLINE_CSS,
     extract_title,
     humanize_route,
@@ -27,7 +27,7 @@ from .markdown import (
 from .html import _build_logo_svg  # noqa: F401
 
 __all__ = [
-    "DEFAULT_MINIMAL_PAGE_LAYOUT",
+    "MINIMAL_LAYOUT_TEMPLATE",
     "DEFAULT_THEME_COLOR",
     "INLINE_CSS",
     "InfoboxRow",

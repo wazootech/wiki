@@ -137,14 +137,14 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "layouts").mkdir()
-            (base_path / "layouts" / "custom.html").write_text("<html></html>", encoding="utf-8")
+            (base_path / "layouts" / "custom.html.j2").write_text("<html></html>", encoding="utf-8")
             (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    name: Nested Wiki\n  layout: layouts/custom.html\n",
+                "site:\n  manifest:\n    name: Nested Wiki\n  layout: layouts/custom.html.j2\n",
                 encoding="utf-8",
             )
             config = Config.load(base_path)
             self.assertEqual(config.site.manifest.name, "Nested Wiki")
-            self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html").resolve())
+            self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html.j2").resolve())
 
     def test_Config_load_manifest_theme_color(self) -> None:
         with TemporaryDirectory() as tmpdir:

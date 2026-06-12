@@ -451,10 +451,10 @@ def build(
     site = build_site(runtime_config, base_url=base_url, url_style=url_style)
     output_dir = output_dir.resolve()
 
-    # Load site wiki page layout if configured; silently fall back to default if file missing
-    page_layout_str: str | None = None
+    config_root = runtime_config.config_root
+    default_layout: Path | None = None
     if runtime_config.page_layout is not None and runtime_config.page_layout.is_file():
-        page_layout_str = runtime_config.page_layout.read_text(encoding="utf-8")
+        default_layout = runtime_config.page_layout
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
@@ -483,7 +483,13 @@ def build(
 
     has_root_index = any(page.full_slug == "" for page in site.pages)
     if not has_root_index:
-        index_html = build_index_html(site, base_url=base_url, url_style=url_style, page_layout=page_layout_str)
+        index_html = build_index_html(
+            site,
+            config_root,
+            base_url=base_url,
+            url_style=url_style,
+            default_layout=default_layout,
+        )
         (page_output_dir / "index.html").write_text(index_html, encoding="utf-8")
         if verbose:
             rel = page_output_dir.relative_to(output_dir)
@@ -492,7 +498,17 @@ def build(
     for page in site.pages:
         file_path = page_output_path(page_output_dir, page.full_slug, url_style)
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(build_page_html(page, site, base_url=base_url, url_style=url_style, page_layout=page_layout_str), encoding="utf-8")
+        file_path.write_text(
+            build_page_html(
+                page,
+                site,
+                config_root,
+                base_url=base_url,
+                url_style=url_style,
+                default_layout=default_layout,
+            ),
+            encoding="utf-8",
+        )
         if verbose:
             rel_path = file_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
@@ -596,7 +612,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 
 
 @main.command()
-@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.")
+@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.j2.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer graph.context.wiki and site.base_url for GitHub Pages.")
 @click.option("--graph-context-wiki", "graph_context_wiki", default=None, help="Override graph.context.wiki (overrides --repo inference).")
@@ -633,7 +649,7 @@ def init(
     import subprocess
 
     from .init_scaffold import (
-        render_default_layout,
+        copy_default_layout,
         render_wiki_yaml,
         resolve_init_options,
     )
@@ -730,8 +746,6 @@ def init(
         "Defines validation rules for Person profiles in this wiki.\n",
         encoding="utf-8",
     )
-    seed_template = render_default_layout(init_options)
-
     (wiki_dir / "Ethan_Davidson.md").write_text(
         "---\n"
         "type: schema:Person\n"
@@ -746,10 +760,10 @@ def init(
     config_path.write_text(config_content, encoding="utf-8")
 
     layouts_dir = cwd / "layouts"
-    default_layout_path = layouts_dir / "default.html"
+    default_layout_path = layouts_dir / "default.html.j2"
     layouts_dir.mkdir(parents=True, exist_ok=True)
     if force or not default_layout_path.exists():
-        default_layout_path.write_text(seed_template, encoding="utf-8")
+        copy_default_layout(default_layout_path)
 
     if init_git:
         if shutil.which("git") is None:
@@ -762,7 +776,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html.j2."
     if init_git:
         message += " Ran git init."
     click.echo(message)
