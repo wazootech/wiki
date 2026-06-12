@@ -65,6 +65,15 @@ After install (user-run or agent-run with approval), run `wiki --help` again.
 - **Success** → **Wiki CLI is installed and ready to go.** Exit.
 - **Failure** → Report the error output. Exit. The user chooses whether to retry, fix their environment, or ask again.
 
+### 4. Install troubleshooting
+
+If `pip install` fails:
+
+1. Confirm Python 3.12+: `python3 --version`
+2. Retry with module invocation: `python3 -m pip install wazootech-wiki`
+3. Optional isolated install: `pipx install wazootech-wiki` (when pipx is available)
+4. Fallback: standalone binary from [GitHub Releases](https://github.com/wazootech/wiki/releases)
+
 ## Do not
 
 - Suggest `wiki init`, creating a workspace, or daily workflow commands as a required next step.
