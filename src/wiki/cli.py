@@ -609,7 +609,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
 @click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
-@click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["override", "fallback"]), default=None, help="Strategy when applying graph.implicit_types.")
+@click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
 def init(
     force: bool,

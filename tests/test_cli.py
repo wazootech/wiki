@@ -512,6 +512,49 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
+    def test_cli_init_implicit_types_policy_append(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    [
+                        "init",
+                        "--force",
+                        "--graph-context-wiki",
+                        "https://wiki.example.org/",
+                        "--graph-implicit-types",
+                        "schema:TechArticle",
+                        "--graph-implicit-types-policy",
+                        "append",
+                    ],
+                    catch_exceptions=False,
+                )
+                self.assertEqual(result.exit_code, 0)
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("implicit_types:", config_content)
+                self.assertIn("- schema:TechArticle", config_content)
+                self.assertIn("implicit_types_policy: append", config_content)
+
+    def test_cli_init_rejects_invalid_implicit_types_policy(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    [
+                        "init",
+                        "--force",
+                        "--graph-context-wiki",
+                        "https://wiki.example.org/",
+                        "--graph-implicit-types-policy",
+                        "override",
+                    ],
+                    catch_exceptions=False,
+                )
+                self.assertNotEqual(result.exit_code, 0)
+                self.assertIn("append", result.output)
+
     def test_cli_init_context_wiki_overrides_repo(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:

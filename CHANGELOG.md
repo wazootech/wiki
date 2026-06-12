@@ -30,6 +30,10 @@
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
 - Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
 
+### Fixed
+
+- `wiki init --graph-implicit-types-policy` accepts `fallback` or `append` (was incorrectly `override`) ([#72](https://github.com/wazootech/wiki/issues/72))
+
 ### Changed
 
 - `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip

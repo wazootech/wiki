@@ -68,6 +68,12 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 | Site display name | Custom display title | `--site-manifest-name "My Title"` |
 | Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
 | Theme color | Manifest theme color | `--site-manifest-theme-color "#3b82f6"` |
+| URL style | File vs directory routes | `--site-url-style dir` or `file` |
+| Content predicate | Body text RDF predicate | `--graph-content-predicate schema:articleBody` |
+| Document IRIs | IRIs differ from `wiki:` namespace | `--graph-base-iri https://…/` |
+| Implicit types | Wiki-wide default `rdf:type` CURIEs | `--graph-implicit-types schema:TechArticle` (repeatable) |
+| Implicit types policy | Merge vs fallback for types | `--graph-implicit-types-policy append` or `fallback` |
+| File extension in IRIs | Include `.md` in document URIs | `--graph-include-file-extension` |
 
 If the user has no preference for namespace and no `--repo`, pass:
 

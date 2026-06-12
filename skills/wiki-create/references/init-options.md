@@ -24,6 +24,13 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--site-url-style` | `dir` or `file` (default `dir`) |
 | `--graph-content-predicate` | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`) |
 | `--link-style` | `markdown` or `wikilink` |
+| `--site-manifest-name` | Override `site.manifest.name` (default `Wiki CLI`) |
+| `--wiki-inputs` | Default markdown directories relative to config root (repeatable; default `wiki`) |
+| `--graph-base-iri` | Override `graph.base_iri` when document IRIs differ from `graph.context.wiki` |
+| `--site-manifest-theme-color` | Override `site.manifest.theme_color` (e.g. `#3b82f6`) |
+| `--graph-implicit-types` | Default `rdf:type` CURIEs for untyped documents (repeatable) |
+| `--graph-implicit-types-policy` | `fallback` or `append` when applying `graph.implicit_types` |
+| `--graph-include-file-extension` / `--no-graph-include-file-extension` | Include file extension in inferred document URIs |
 
 ## URL resolution order
 
