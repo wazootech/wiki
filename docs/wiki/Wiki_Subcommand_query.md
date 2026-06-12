@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki query
-description: Run SPARQL SELECT or CONSTRUCT against the vault graph.
+description: Run SPARQL SELECT or CONSTRUCT against the wiki graph.
 ---
 
 # `wiki query`
 
-Execute **SPARQL** against the loaded vault graph (with OWL-RL inference unless `--no-inference`).
+Execute **SPARQL** against the loaded wiki graph (with OWL-RL inference unless `--no-inference`).
 
 ## Usage
 

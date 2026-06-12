@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki fmt
-description: Format markdown vault pages using mdformat with wikilink preservation.
+description: Format markdown wiki pages using mdformat with wikilink preservation.
 ---
 
 # `wiki fmt`
 
-Format markdown vault pages in-place using **mdformat**. Mechanical markdown style (ATX headings, list spacing, GFM tables, frontmatter layout) is configured under the top-level **`fmt`** key in `wiki.yaml` (or `wiki.json`).
+Format markdown wiki pages in-place using **mdformat**. Mechanical markdown style (ATX headings, list spacing, GFM tables, frontmatter layout) is configured under the top-level **`fmt`** key in `wiki.yaml` (or `wiki.json`).
 
 ## Configuration
 
@@ -41,7 +41,7 @@ Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for examp
 
 1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses wiki-cli defaults)
 1. **Pointer** — TOML at the relative path in `fmt:`
-1. **Vault TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
+1. **Wiki TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
 1. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
 1. **Defaults** — wiki-cli fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
 
@@ -75,7 +75,7 @@ wiki --config docs fmt -v
 
 | Flag              | Description                                                               |
 | ----------------- | ------------------------------------------------------------------------- |
-| `FILE...`         | Optional markdown paths; otherwise entire vault                           |
+| `FILE...`         | Optional markdown paths; otherwise entire wiki                            |
 | `--check`         | Check formatting without modifying files; exits 1 if formatting is needed |
 | `-v`, `--verbose` | Print fmt config source and formatted files                               |
 

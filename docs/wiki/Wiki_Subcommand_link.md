@@ -6,7 +6,7 @@ description: Suggest missing wikilinks and repair unambiguous broken internal li
 
 # `wiki link`
 
-Suggest **missing wikilinks** for plain-text mentions of other vault pages, or **repair** broken internal links when the fix is unambiguous. Report-only by default — mutations require explicit flags.
+Suggest **missing wikilinks** for plain-text mentions of other wiki pages, or **repair** broken internal links when the fix is unambiguous. Report-only by default — mutations require explicit flags.
 
 ## Usage
 
@@ -26,7 +26,7 @@ wiki link --fix-broken --dry-run
 
 | Flag              | Description                                                                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FILE...`         | Optional markdown paths; otherwise entire vault                                                                                                                     |
+| `FILE...`         | Optional markdown paths; otherwise entire wiki                                                                                                                      |
 | `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link.style` in [wiki.yaml](Wiki_Configuration.md) (`wikilink` or `markdown`) |
 | `--fix-broken`    | Repair unambiguous broken wikilinks and internal markdown page links                                                                                                |
 | `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files                                                                                                           |
@@ -45,7 +45,7 @@ Missing-link suggestions skip:
 Broken-link repair (`--fix-broken`) only runs when:
 
 - The target page rename is listed in `link.renames` (see [Wiki Configuration](Wiki_Configuration.md))
-- A unique fuzzy route match exists among vault pages
+- A unique fuzzy route match exists among wiki pages
 - A unique fuzzy heading fragment exists on the target page
 
 It never auto-creates pages or deletes links. Asset links, metadata CURIEs, and ambiguous matches stay manual.

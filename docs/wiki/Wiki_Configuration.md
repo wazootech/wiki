@@ -20,7 +20,7 @@ Three audit lanes map to three commands:
 
 ### Rule placement
 
-Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Wiki policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
 - **`vault.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
@@ -237,7 +237,7 @@ Unknown `{placeholders}` are left untouched in the output. This lets you use lit
 The bundled stylesheet injected as `{inline_css}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
 
 1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{inline_css}` with your own CSS (you lose the bundled defaults unless you copy them).
-1. **Link vault assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+1. **Link wiki assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
 
 `site.manifest.theme_color` only affects the default `{logo_svg}` globe gradient and `theme-color` / TileColor meta tags; accent colors inside `{inline_css}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
 
@@ -347,13 +347,13 @@ vault:
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 ```
 
-**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
+**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one wiki.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
 
-When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style vault.
+When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style wiki.
 
 ## Formatting (`fmt`)
 
@@ -394,7 +394,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` is the dogfood vault config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
+`docs/wiki.yaml` is the dogfood wiki config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 

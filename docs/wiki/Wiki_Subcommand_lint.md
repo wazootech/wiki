@@ -6,7 +6,7 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 # `wiki lint`
 
-Run **convention** audits on the vault: broken links, filename pattern, heading style, and internal link style.
+Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
@@ -22,11 +22,11 @@ wiki lint --strict
 
 ## Options
 
-| Flag              | Description                                     |
-| ----------------- | ----------------------------------------------- |
-| `FILE...`         | Optional markdown paths; otherwise entire vault |
-| `-v`, `--verbose` | Print warnings                                  |
-| `--strict`        | Treat warnings as errors (exit 1)               |
+| Flag              | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `FILE...`         | Optional markdown paths; otherwise entire wiki |
+| `-v`, `--verbose` | Print warnings                                 |
+| `--strict`        | Treat warnings as errors (exit 1)              |
 
 ## What is linted
 

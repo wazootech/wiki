@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-**Wiki CLI** is a command-line toolchain and compiler for Markdown vaults. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
+**Wiki CLI** is a command-line toolchain and compiler for Markdown wikis. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
@@ -15,20 +15,20 @@ Starter template: [github.com/wazootech/llm-wiki-template](https://github.com/wa
 
 ## Use cases and integrations
 
-Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside your existing vault without owning the editor.
+Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside your existing wiki without owning the editor.
 
-- **Obsidian & PKM** — Validate links and run queries inside your personal vault. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
+- **Obsidian & PKM** — Validate links and run queries inside your personal wiki. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
 - **Static Documentation & Wikis** — Auto-generate styled HTML documentation pages, tables of contents, and sidebar infoboxes for publishing to GitHub Pages or static hosts.
-- **LLM Vaults & Agent Memory** — Validate and query machine-generated Markdown databases. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
+- **LLM Wikis & Agent Memory** — Validate and query machine-generated Markdown databases. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
 - **Adoption path** — `wiki init` → `wiki check` → `wiki serve` (add `lint`, `query`, and `build` as you need them).
 
 ### Distinguishing Wiki CLI from Farzapedia
 
-While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory vault optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
-- **Farzapedia** is a specific *content vault* containing diary entries, notes, and messages.
-- **Wiki CLI** is a *utility* for *any* vault. It compiles Markdown files, enforces structure (SHACL), queries data (SPARQL), and builds static websites.
+While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory wiki optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
+- **Farzapedia** is a specific *content wiki* containing diary entries, notes, and messages.
+- **Wiki CLI** is a *utility* for *any* wiki. It compiles Markdown files, enforces structure (SHACL), queries data (SPARQL), and builds static websites.
 
-Canonical docs home: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs vault.
+Adoption path: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs wiki.
 
 ## Key features
 
@@ -36,7 +36,7 @@ Three beats, one toolchain:
 
 | Beat | Commands | What you get |
 |------|----------|--------------|
-| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL integrity, vault conventions, mechanical Markdown layout |
+| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL integrity, wiki conventions, mechanical Markdown layout |
 | **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | OWL-RL inference, inline SPARQL tables, JSON-LD and RDF serializations |
 | **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata pane, local preview, optional read-only SPARQL endpoint, wikilink hygiene |
 
@@ -46,7 +46,7 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 | Template | Purpose |
 |----------|---------|
-| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template) | Starter vault — use GitHub **Use this template** |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template) | Starter wiki — use GitHub **Use this template** |
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template) ([Pages demo](https://wazootech.github.io/sparql-service-template/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
 | [nextjs-template](https://github.com/wazootech/nextjs-template) | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16)) |
@@ -259,7 +259,7 @@ Identify embedded SPARQL blocks in your markdown files, run their queries agains
 Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL block in scope against that same graph (all markdown files with blocks, or only the FILE paths you pass).
 
 ```bash
-# Render all SPARQL blocks in the vault
+# Render all SPARQL blocks in the wiki
 wiki render
 
 # Rebuild the in-memory graph before rendering (same process only)
@@ -284,9 +284,9 @@ wiki render wiki/people/*.md
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the vault graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the vault fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.inputs` or `vault.assets` change (not when CLI source code changes).
+**Graph cache:** By default, the wiki graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the wiki fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `vault.inputs` or `vault.assets` change (not when CLI source code changes).
 
-Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged vaults, but it adds `.wiki/cache/` artifacts and still invalidates on vault or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
+Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged wikis, but it adds `.wiki/cache/` artifacts and still invalidates on wiki or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
 
 An embedded SPARQL block is defined in your markdown files like this:
 ````html
@@ -504,7 +504,7 @@ wiki serve
 # Custom host and port
 wiki serve --host 0.0.0.0 --port 3000
 
-# Watch vault files; rebuild graph, SPARQL blocks, and reload the browser on change
+# Watch wiki files; rebuild graph, SPARQL blocks, and reload the browser on change
 wiki serve --watch
 
 # Editable install: run the in-repo package without reinstalling after pip/uv -e .
@@ -589,11 +589,11 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 
 ### Obsidian integration
 
-While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your vault using the **Shell Commands** community plugin.
+While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your wiki using the **Shell Commands** community plugin.
 
 Recommended workflows:
 * **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL validations and formatting.
-* **Trigger re-rendering**: Map a hotkey or command palette item to `wiki render` to automatically update all dynamic SPARQL blocks in the vault.
+* **Trigger re-rendering**: Map a hotkey or command palette item to `wiki render` to automatically update all dynamic SPARQL blocks in the wiki.
 
 ### Declarative modeling & full-text SPARQL
 
@@ -671,7 +671,7 @@ SELECT ?given ?family WHERE {
 ```
 
 #### Opt-in full-text SPARQL over markdown content
-By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article vaults). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
+By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article wikis). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql
 PREFIX schema: <https://schema.org/>

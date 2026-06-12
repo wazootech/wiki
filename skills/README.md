@@ -2,7 +2,7 @@
 
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-Agent skills for [Wiki CLI](https://github.com/wazootech/wiki). They live under `skills/` and are **not** vault content — do not add this folder to `vault.inputs`.
+Agent skills for [Wiki CLI](https://github.com/wazootech/wiki). They live under `skills/` and are **not** wiki content — do not add this folder to `vault.inputs`.
 
 ## Onboarding (independent modules)
 
@@ -16,13 +16,13 @@ No orchestrator and **no required order**. Each skill completes its own job and 
 - Missing CLI while creating a wiki → `wiki-create` states the blocker and stops; the user chooses how to install.
 - After install → `wiki-install` confirms ready; it does not suggest scaffolding.
 
-## Vault hygiene
+## Wiki hygiene
 
 | Skill | Purpose |
 | ----- | ------- |
-| [wiki-best-practices](wiki-best-practices/SKILL.md) | Audit a vault: fmt, lint, check, render |
+| [wiki-best-practices](wiki-best-practices/SKILL.md) | Audit a wiki: fmt, lint, check, render |
 
 ## Docs
 
-- Vault reference: [Wiki_Skills.md](../docs/wiki/Wiki_Skills.md), [Wiki_Skill_install.md](../docs/wiki/Wiki_Skill_install.md), [Wiki_Skill_create.md](../docs/wiki/Wiki_Skill_create.md), [Wiki_Skill_best_practices.md](../docs/wiki/Wiki_Skill_best_practices.md)
+- Wiki skills reference: [Wiki_Skills.md](../docs/wiki/Wiki_Skills.md), [Wiki_Skill_install.md](../docs/wiki/Wiki_Skill_install.md), [Wiki_Skill_create.md](../docs/wiki/Wiki_Skill_create.md), [Wiki_Skill_best_practices.md](../docs/wiki/Wiki_Skill_best_practices.md)
 - User walkthrough: [Getting_Started.md](../docs/wiki/Getting_Started.md)

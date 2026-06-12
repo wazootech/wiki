@@ -327,7 +327,7 @@ def query(
 @main.command()
 @optional_files_argument
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources before rendering.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--check", is_flag=True, help="Check if inline SPARQL blocks are up to date without modifying files. Exits with non-zero code if any are stale.")
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
@@ -524,7 +524,7 @@ def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf
     if files:
         if len(files) > 1 and rdf_format in _raw_formats:
             click.echo(
-                "Error: raw RDF export formats require a single FILE or whole-vault export (omit FILE).",
+                "Error: raw RDF export formats require a single FILE or whole-wiki export (omit FILE).",
                 err=True,
             )
             sys.exit(1)
@@ -586,7 +586,7 @@ def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf
               help="Override site.base_url. Empty string for root-level URLs.")
 @click.option("--site-url-style", "site_url_style", default=None,
               type=click.Choice(["file", "dir"]), help="Override site.url_style: <slug>.html (file) or <slug>/ (dir).")
-@click.option("--watch", is_flag=True, help="Watch vault; rebuild graph, SPARQL blocks, site, and reload browser.")
+@click.option("--watch", is_flag=True, help="Watch wiki; rebuild graph, SPARQL blocks, site, and reload browser.")
 @click.pass_obj
 def serve(config: Config, host: str, port: int, site_base_url: str | None, site_url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
@@ -774,7 +774,7 @@ def init(
 @click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
 def fmt(config: Config, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
-    """Format markdown vault pages using mdformat."""
+    """Format markdown wiki pages using mdformat."""
     from .fmt_util import describe_fmt_source, format_markdown
 
     if files:

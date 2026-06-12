@@ -8,7 +8,7 @@ description: Install and verify the Wiki CLI on PATH for agents and contributors
 
 The **wiki-install** skill is procedural knowledge for coding agents: detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help`, and exit with a ready-to-go message.
 
-Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Skills live under `skills/` and are **not** vault content — do not add that folder to `vault.inputs`.
+Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Skills live under `skills/` and are **not** wiki content — do not add that folder to `vault.inputs`.
 
 ## Install
 

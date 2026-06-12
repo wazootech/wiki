@@ -15,7 +15,7 @@ In the [Wiki CLI](Wiki_CLI.md), SPARQL powers [Wiki Subcommand query](Wiki_Subco
 The [Wiki CLI](Wiki_CLI.md) automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
 
 - **`schema:`** `https://schema.org/` (Standard schema vocabulary)
-- **`wiki:`** `https://wazootech.github.io/wiki/wiki/` (Your local vault namespace)
+- **`wiki:`** `https://wazootech.github.io/wiki/wiki/` (Your local wiki namespace)
 - **`rdf:`** `http://www.w3.org/1999/02/22-rdf-syntax-ns#` (Standard RDF attributes)
 
 ## Example query types
@@ -52,7 +52,7 @@ SELECT ?doc ?headline ?description WHERE {
 
 ## Active database summary
 
-The table below queries the active graph to list all distinct classes currently instantiated in your vault:
+The table below queries the active graph to list all distinct classes currently instantiated in your wiki:
 
 <!-- sparql:start -->
 

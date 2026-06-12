@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: Wiki CLI agent skills
-description: Procedural knowledge for coding agents — install, scaffold, and audit vaults.
+description: Procedural knowledge for coding agents — install, scaffold, and audit wikis.
 ---
 
 # Wiki CLI agent skills
 
-[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the wiki-cli repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** vault pages — do not add `skills/` to `vault.inputs`.
+[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the wiki-cli repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** wiki pages — do not add `skills/` to `vault.inputs`.
 
 Onboarding skills are **independent modules** with no required order. Each completes its job and stops without telling the user to invoke another skill.
 
@@ -40,14 +40,14 @@ Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install int
 
 ## Onboarding
 
-| Skill        | Vault reference                             | Purpose                                            |
+| Skill        | Wiki reference                              | Purpose                                            |
 | ------------ | ------------------------------------------- | -------------------------------------------------- |
 | wiki-install | [Wiki Skill install](Wiki_Skill_install.md) | Install and verify `wazootech-wiki` on PATH        |
 | wiki-create  | [Wiki Skill create](Wiki_Skill_create.md)   | `wiki init` plus preferences wizard (CLI required) |
 
-## Vault hygiene
+## Wiki hygiene
 
-| Skill               | Vault reference                                           | Purpose                           |
+| Skill               | Wiki reference                                            | Purpose                           |
 | ------------------- | --------------------------------------------------------- | --------------------------------- |
 | wiki-best-practices | [Wiki Skill best practices](Wiki_Skill_best_practices.md) | fmt → lint → check → render audit |
 

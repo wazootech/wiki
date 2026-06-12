@@ -1,6 +1,6 @@
-﻿# Wiki CLI (`wazootech-wiki`)
+# Wiki CLI (`wazootech-wiki`)
 
-Semantic knowledge **toolchain** for Markdown vaults: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Wiki_CLI.md](docs/wiki/Wiki_CLI.md) for scope, boundaries, and command reference.
+Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Wiki_CLI.md](docs/wiki/Wiki_CLI.md) for scope, boundaries, and command reference.
 
 ## Architecture decision: Python core
 
@@ -14,9 +14,9 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Vault**: The markdown corpus the CLI loads from `vault.inputs` (paths relative to the config file, usually beside `wiki.yaml`). A vault is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Vault** (or **Wiki corpus**): The markdown corpus the CLI loads from `vault.inputs` (paths relative to the config file, usually beside `wiki.yaml`). It is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
 
-**Document**: An individual Markdown page in the vault containing a metadata block. _Avoid_: Page, post, wiki page.
+**Document**: An individual Markdown page in the wiki containing a metadata block. _Avoid_: Page, post, wiki page.
 
 **Frontmatter**: A YAML or JSON metadata block at the top of a Document, mapping to a JSON-LD compliant representation. _Avoid_: Metadata, header.
 
@@ -40,13 +40,13 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Rendering**: The process of executing embedded SPARQL Queries within Documents and injecting the formatted results back into the files. _Avoid_: Exporting, updating.
 
-**Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Vault** build. _Avoid_: Disk cache, pickle store.
+**Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Wiki** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: Integrity validation on the **Vault** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter.
+**Checking**: Integrity validation on the **Wiki** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter.
 
 **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 
-**Linting**: Convention audits on the **Vault** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (mdformat). _Avoid_: Checking (use `wiki check` for integrity).
+**Linting**: Convention audits on the **Wiki** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (mdformat). _Avoid_: Checking (use `wiki check` for integrity).
 
 **Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
 
@@ -58,13 +58,13 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 ## Relationships
 
-- A **Vault** is the filesystem corpus of **Documents** (and related assets) listed by `vault.inputs`
+- A **Vault** (the wiki corpus) is the filesystem corpus of **Documents** (and related assets) listed by `vault.inputs`
 - A **Wiki** is composed of the **Documents** in a **Vault**, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using **Config**, which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
 - **Validation** checks **Documents** against custom **Shapes** to ensure data integrity
-- **Checking** runs integrity checks on the **Vault** via `wiki check`; **Linting** runs convention audits via `wiki lint`; **Link hygiene** is optional via `wiki link`; stale SPARQL blocks use `wiki render --check`
+- **Checking** runs integrity checks on the **Wiki** via `wiki check`; **Linting** runs convention audits via `wiki lint`; **Link hygiene** is optional via `wiki link`; stale SPARQL blocks use `wiki render --check`
 - **Query** executes custom SPARQL queries against the expanded RDF graph of the **Wiki**
 - **Rendering** runs embedded **Queries** inside **Documents** and updates their dynamic sections inline
 - **Graph cache** lets multiple **Queries** and **Rendering** steps in one CLI run reuse a single loaded RDF graph

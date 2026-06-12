@@ -66,7 +66,7 @@ New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki ini
 
 - `vault.inputs: [wiki]`
 - `graph.context.wiki` — default namespace for `wiki:` CURIEs and auto-generated document IRIs
-- Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply vault-wide default `rdf:type` CURIEs)
+- Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply wiki-wide default `rdf:type` CURIEs)
 - Commented `graph.base_iri` example (uncomment only when document IRIs must differ from `context.wiki`)
 - `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`
 - `lint` rules at `warning` for filename and links
