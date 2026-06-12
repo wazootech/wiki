@@ -56,7 +56,15 @@ wiki -c docs/wiki.yaml lint -v
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
 
 ### Config schema changes
-On breaking `wiki.yaml` changes: fail at load with minimal allowlist errors only. Do not add per-key migration hints in CLI output or `config migrate` shims unless explicitly requested; document upgrades in `CHANGELOG.md` and [Wiki Configuration](docs/wiki/Wiki_Configuration.md). **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
+
+When changing `wiki.yaml` schema or rejecting invalid keys:
+
+- **Fail fast** with allowlist validation (`unknown top-level keys`, `Invalid wiki keys`, etc.).
+- **Do not** add per-key rename hints in error messages (e.g. "`input_dirs` → use `wiki.input_dirs`"). These tables are bloat, drift from the schema, and often suggest wrong mappings.
+- **Do not** add `wiki config migrate`, batched alias tables, or other backwards-compat loaders unless the user explicitly requests migration support.
+- **Do** document breaking moves in `CHANGELOG.md` (Migration section) and [Wiki Configuration](docs/wiki/Wiki_Configuration.md).
+
+Upgrade narrative belongs in docs and release notes, not in runtime error strings. **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
 
 ### Architecture
 See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

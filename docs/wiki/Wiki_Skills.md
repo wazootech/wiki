@@ -42,31 +42,12 @@ npx skills add wazootech/wiki --skill '*' -g -y
 
 Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
 
-| Skill        | Install                                            | Reference                                   |
-| ------------ | -------------------------------------------------- | ------------------------------------------- |
-| wiki-install | `npx skills add wazootech/wiki@wiki-install -g -y` | [Wiki Skill install](Wiki_Skill_install.md) |
-| wiki-create  | `npx skills add wazootech/wiki@wiki-create -g -y`  | [Wiki Skill create](Wiki_Skill_create.md)   |
-| wiki-improve | `npx skills add wazootech/wiki@wiki-improve -g -y` | [Wiki Skill improve](Wiki_Skill_improve.md) |
-| wiki-deploy  | `npx skills add wazootech/wiki@wiki-deploy -g -y`  | [Wiki Skill deploy](Wiki_Skill_deploy.md)   |
-
-## Onboarding
-
-| Skill        | Wiki reference                              | Purpose                                            |
-| ------------ | ------------------------------------------- | -------------------------------------------------- |
-| wiki-install | [Wiki Skill install](Wiki_Skill_install.md) | Install and verify `wazootech-wiki` on PATH        |
-| wiki-create  | [Wiki Skill create](Wiki_Skill_create.md)   | `wiki init` plus preferences wizard (CLI required) |
-
-## Improve
-
-| Skill        | Wiki reference                              | Purpose                                                |
-| ------------ | ------------------------------------------- | ------------------------------------------------------ |
-| wiki-improve | [Wiki Skill improve](Wiki_Skill_improve.md) | fmt → lint → check → render survey and findings report |
-
-## Deploy
-
-| Skill       | Wiki reference                            | Purpose                                      |
-| ----------- | ----------------------------------------- | -------------------------------------------- |
-| wiki-deploy | [Wiki Skill deploy](Wiki_Skill_deploy.md) | GitHub Pages workflow and artifact alignment |
+| Skill        | Install                                            | Reference                                   | Purpose                                                |
+| ------------ | -------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------ |
+| wiki-install | `npx skills add wazootech/wiki@wiki-install -g -y` | [Wiki Skill install](Wiki_Skill_install.md) | Install and verify `wazootech-wiki` on PATH            |
+| wiki-create  | `npx skills add wazootech/wiki@wiki-create -g -y`  | [Wiki Skill create](Wiki_Skill_create.md)   | `wiki init` plus preferences wizard (CLI required)     |
+| wiki-improve | `npx skills add wazootech/wiki@wiki-improve -g -y` | [Wiki Skill improve](Wiki_Skill_improve.md) | fmt → lint → check → render survey and findings report |
+| wiki-deploy  | `npx skills add wazootech/wiki@wiki-deploy -g -y`  | [Wiki Skill deploy](Wiki_Skill_deploy.md)   | GitHub Pages workflow and artifact alignment           |
 
 ## Repository layout
 
