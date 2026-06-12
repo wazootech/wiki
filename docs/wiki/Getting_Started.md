@@ -80,7 +80,7 @@ See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 Coding agents can use repository skills documented in [Wiki Skills](Wiki_Skills.md): [Wiki Skill install](Wiki_Skill_install.md), [Wiki Skill create](Wiki_Skill_create.md), [Wiki Skill best practices](Wiki_Skill_best_practices.md), and [Wiki Skill deploy](Wiki_Skill_deploy.md).
 
-After upgrading wiki-cli or when skills behave oddly, refresh agent skills:
+After upgrading Wiki CLI or when skills behave unexpectedly, refresh agent skills:
 
 ```bash
 npx skills add wazootech/wiki --skill '*' -g -y

@@ -34,7 +34,7 @@ Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install int
 
 ### Refresh after upgrades
 
-When wiki-cli ships skill fixes (deploy templates, init guidance), re-run:
+When Wiki CLI ships skill fixes (deploy templates, init guidance), re-run:
 
 ```bash
 npx skills add wazootech/wiki --skill '*' -g -y
