@@ -22,7 +22,7 @@ npx skills add wazootech/wiki@wiki-best-practices -g -y
 
 - Wiki audit before a PR
 - `check` or `lint` failures, broken links, or `wiki.yaml` review
-- Deploy alignment with [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md)
+- Deploy alignment with [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) (setup: [Wiki Skill deploy](Wiki_Skill_deploy.md))
 
 ## Quick start
 

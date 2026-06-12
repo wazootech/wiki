@@ -14,15 +14,23 @@ Audit a [Wiki CLI](https://github.com/wazootech/wiki) wiki. Run tools and cite o
 
 Skills live outside `wiki.inputs` — they are agent procedural knowledge, not published wiki pages.
 
+## Modularity
+
+This skill **only** audits wiki hygiene (fmt, lint, check, render, deploy alignment). When done, report findings and **stop**. For **setting up** GitHub Pages, use the **wiki-deploy** skill by name — do not use relative paths like `../../wiki-deploy/` (they break when the skill is installed under `.agents/skills/`).
+
 ## Quick start
 
-From the repo root (directory containing `wiki.yaml`):
+From the wiki repository root, run the bundled audit script **relative to this skill’s install directory**:
 
 ```bash
+# wiki-cli checkout:
 bash skills/wiki-best-practices/scripts/audit.sh -c path/to/wiki.yaml
+
+# vendored under .agents/skills/:
+bash .agents/skills/wiki-best-practices/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
-The script prefers `wiki` on PATH when it supports `fmt`; otherwise falls back to `uv run wiki` or `python -m wiki` (use the latter in this repo if a global PyPI install is stale).
+The script prefers `wiki` on PATH when it supports `fmt`; otherwise falls back to `uv run wiki` or `python -m wiki` (use the latter in this repo if a global PyPI install is stale). Paths after `-c` are relative to the current working directory — run from the repo root.
 
 In **this repo**: `-c docs/wiki.yaml`. For a single changed page, append file paths after the config flag.
 
@@ -61,7 +69,7 @@ Regex belongs in `wiki.filename_pattern`, not under `check:`. Unknown keys shoul
 
 ### 4. Deploy alignment (custom wikis)
 
-When auditing deploy-related pages or CI, cross-check workflow paths ([references/deploy-alignment.md](references/deploy-alignment.md)):
+When **setting up** GitHub Pages, use the **wiki-deploy** skill. When **auditing** existing CI, cross-check workflow paths and red flags ([references/deploy-alignment.md](references/deploy-alignment.md)):
 
 - `-c` points at the correct `wiki.yaml`
 - `--site-base-url` matches the Pages path (`/wiki`, `/my-wiki`, or `''` for root)
@@ -93,7 +101,7 @@ Never edit wiki files unless the user asks. Suggest:
 ## Report template
 
 ```markdown
-## Wiki wiki audit — <wiki or path>
+## Wiki audit — <wiki or path>
 
 **Config:** <wiki.yaml path>
 **Date:** <ISO date>

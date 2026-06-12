@@ -35,7 +35,25 @@ For your own wiki, copy the workflow and change:
 
 See [Wiki Subcommand build](Wiki_Subcommand_build.md) for `site.url_style`, `wiki.assets`, and collision checks.
 
+## Avoid these mistakes
+
+When using `upload-pages-artifact` and `deploy-pages`:
+
+- Do not commit `_site/` to `main` — add `_site/` to `.gitignore` and let CI build the artifact
+- Do not use **Deploy from a branch** in Pages settings — use **GitHub Actions** as the source
+- Do not use `peaceiris/actions-gh-pages` or push to a `gh-pages` branch for this pattern
+- Do not set artifact `path` to `_site` when `site.base_url` is `/wiki` — upload `_site/wiki` instead
+- Do not run `uv sync` in CI unless the repo has `pyproject.toml` and `uv.lock`
+- Do not use `uv pip install` on standalone wikis without `uv venv` or `--system` — use `pip install wazootech-wiki` instead
+
+Verify Pages is wired to Actions: `gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'` should show `build_type: workflow`.
+
+## Agent skill
+
+Coding agents can use [Wiki Skill deploy](Wiki_Skill_deploy.md) (`skills/wiki-deploy`) to scaffold the workflow and align artifact paths.
+
 ## Related
 
 - [Getting Started](Getting_Started.md)
 - [Wiki Configuration](Wiki_Configuration.md)
+- [Wiki Skill deploy](Wiki_Skill_deploy.md)

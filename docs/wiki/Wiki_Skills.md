@@ -32,11 +32,22 @@ npx skills add wazootech/wiki --list
 
 Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install into the current project only (`.agents/skills/`). `-y` skips confirmation prompts.
 
+### Refresh after upgrades
+
+When wiki-cli ships skill fixes (deploy templates, init guidance), re-run:
+
+```bash
+npx skills add wazootech/wiki --skill '*' -g -y
+```
+
+Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
+
 | Skill               | Install                                                   | Reference                                                 |
 | ------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
 | wiki-install        | `npx skills add wazootech/wiki@wiki-install -g -y`        | [Wiki Skill install](Wiki_Skill_install.md)               |
 | wiki-create         | `npx skills add wazootech/wiki@wiki-create -g -y`         | [Wiki Skill create](Wiki_Skill_create.md)                 |
 | wiki-best-practices | `npx skills add wazootech/wiki@wiki-best-practices -g -y` | [Wiki Skill best practices](Wiki_Skill_best_practices.md) |
+| wiki-deploy         | `npx skills add wazootech/wiki@wiki-deploy -g -y`         | [Wiki Skill deploy](Wiki_Skill_deploy.md)                 |
 
 ## Onboarding
 
@@ -51,6 +62,12 @@ Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install int
 | ------------------- | --------------------------------------------------------- | --------------------------------- |
 | wiki-best-practices | [Wiki Skill best practices](Wiki_Skill_best_practices.md) | fmt → lint → check → render audit |
 
+## Deploy
+
+| Skill       | Wiki reference                            | Purpose                                      |
+| ----------- | ----------------------------------------- | -------------------------------------------- |
+| wiki-deploy | [Wiki Skill deploy](Wiki_Skill_deploy.md) | GitHub Pages workflow and artifact alignment |
+
 ## Repository layout
 
 ```
@@ -59,6 +76,10 @@ skills/
   wiki-create/SKILL.md
   wiki-best-practices/SKILL.md
   wiki-best-practices/scripts/audit.sh
+  wiki-deploy/SKILL.md
+  wiki-deploy/references/workflow-template-uv.yml
+  wiki-deploy/references/workflow-template-pip.yml
+  wiki-deploy/references/alignment-checklist.md
 ```
 
 Human-oriented install and daily workflow: [Getting Started](Getting_Started.md).

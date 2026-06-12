@@ -29,15 +29,21 @@
 
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
 - Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
+- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
+
+### Changed
+
+- `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
+- `wiki-best-practices` skill — portable audit script paths, deploy audit red flags, modularity boundary with wiki-deploy
+- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS
+- `wiki-deploy` skill — forbid `uv pip install` without venv on standalone repos; eval for CI “No virtual environment found” footgun
+- [Getting Started](docs/wiki/Getting_Started.md) and [Wiki Skills](docs/wiki/Wiki_Skills.md) — refresh agent skills after wiki-cli upgrades; avoid committing stale `.agents/skills/`
+- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
+- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Fixed
 
 - `wiki init --graph-implicit-types-policy` accepts `fallback` or `append` (was incorrectly `override`) ([#72](https://github.com/wazootech/wiki/issues/72))
-
-### Changed
-
-- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
-- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Changed (breaking)
 
