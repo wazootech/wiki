@@ -603,13 +603,13 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-base-url", "site_base_url", default=None, help="Override site.base_url (default /wiki or inferred from --repo).")
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
-@click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Override link.style: markdown or wikilink.")
+@click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "obsidian"]), help="Override link.style: standard Markdown links or Obsidian wikilinks.")
 @click.option("--site-manifest-name", "site_manifest_name", default="Wiki CLI", help="Override site.manifest.name (default 'Wiki CLI').")
 @click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
 @click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
-@click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["override", "fallback"]), default=None, help="Strategy when applying graph.implicit_types.")
+@click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
 def init(
     force: bool,

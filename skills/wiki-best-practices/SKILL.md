@@ -75,7 +75,7 @@ When `lint.*` rules are `off`, still note violations. Use the spot-check table b
 | ---- | ------------- |
 | Filenames | Wikipedia-style (`Page_Name.md`); `index.md` only for folder routes |
 | Headings | Title-case H1; sentence-case H2+; ATX `#` only |
-| Links | Markdown `[text](Page.md)` when `link.style: markdown` |
+| Links | Standard Markdown `[text](Page.md)` when `link.style: markdown`; Obsidian `[[Page]]` when `obsidian` |
 | Frontmatter | `type` / shapes aligned; CURIEs use `graph.context` |
 | SPARQL | People → `givenName`/`familyName`; TechArticle → `headline`/`description` |
 | Prose | No `---` thematic breaks in body; `## References` on standard pages |

@@ -31,13 +31,13 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                           |
 | `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                     |
 | `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                           |
-| `--link-style`                   | Override `link.style`: `markdown` or `wikilink`                                                |
+| `--link-style`                   | Override `link.style`: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`)       |
 | `--site-manifest-name`           | Override `site.manifest.name` (default `Wiki CLI`)                                             |
 | `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                |
 | `--graph-base-iri`               | Override `graph.base_iri` URI                                                                  |
 | `--site-manifest-theme-color`    | Override `site.manifest.theme_color` (e.g. `#3b82f6`)                                          |
 | `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                              |
-| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `override`                               |
+| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                 |
 | `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`) |
 
 ## URL resolution

@@ -210,11 +210,15 @@ class TestConfig(unittest.TestCase):
             config = Config.load(base_path)
             self.assertEqual(config.link.style, "markdown")
 
+    def test_Config_load_obsidian_link_style(self) -> None:
+        config = Config(link={"style": "obsidian"})
+        self.assertEqual(config.link.style, "obsidian")
+
     def test_Config_rejects_invalid_link_style(self) -> None:
         from pydantic import ValidationError
 
         with self.assertRaises(ValidationError):
-            Config(link={"style": "obsidian"})
+            Config(link={"style": "wikilink"})
 
     def test_Config_implicit_types_defaults(self) -> None:
         config = Config()

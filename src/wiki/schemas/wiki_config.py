@@ -27,7 +27,7 @@ from .rules import CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
 
-_LINK_STYLES = frozenset({"wikilink", "markdown"})
+_LINK_STYLES = frozenset({"markdown", "obsidian"})
 DEFAULT_LINK_STYLE = "markdown"
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
@@ -137,7 +137,7 @@ def format_config_validation_error(config_name: str, exc: ValidationError) -> Va
             if block == "link" and field == "style":
                 bad = error.get("input")
                 return ValueError(
-                    f"Invalid config file {config_name}: Invalid link_style: {bad!r} (expected wikilink or markdown)"
+                    f"Invalid config file {config_name}: Invalid link_style: {bad!r} (expected markdown or obsidian)"
                 )
         if len(loc) >= 2 and loc[0] == "lint":
             field = str(loc[1])
@@ -399,10 +399,10 @@ class LinkConfig(BaseModel):
         if value is None:
             return DEFAULT_LINK_STYLE
         if not isinstance(value, str):
-            raise ValueError(f"expected wikilink or markdown, got {value!r}")
+            raise ValueError(f"expected markdown or obsidian, got {value!r}")
         normalized = value.strip().lower()
         if normalized not in _LINK_STYLES:
-            raise ValueError(f"expected wikilink or markdown, got {value!r}")
+            raise ValueError(f"expected markdown or obsidian, got {value!r}")
         return normalized
 
 

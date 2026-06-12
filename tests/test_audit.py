@@ -474,7 +474,7 @@ type: schema:WebPage
             wikilink_config = Config(
                 wiki={"inputs": [wiki]},
                 config_root=Path(tmpdir),
-                link={"style": "wikilink"},
+                link={"style": "obsidian"},
             )
             (wiki / "Guide.md").write_text(
                 "# Guide\n\nSee [[Target]] for details.\n",

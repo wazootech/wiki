@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-_LINK_STYLES = frozenset({"wikilink", "markdown"})
+_LINK_STYLES = frozenset({"markdown", "obsidian"})
 _VALID_URL_STYLES = frozenset({"dir", "file"})
 
 
@@ -38,8 +38,8 @@ class InitOptions(BaseModel):
         if value is None:
             return None
         if not isinstance(value, str):
-            raise ValueError(f"expected wikilink or markdown, got {value!r}")
+            raise ValueError(f"expected markdown or obsidian, got {value!r}")
         normalized = value.strip().lower()
         if normalized not in _LINK_STYLES:
-            raise ValueError(f"expected wikilink or markdown, got {value!r}")
+            raise ValueError(f"expected markdown or obsidian, got {value!r}")
         return normalized
