@@ -29,6 +29,13 @@
 
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
 - Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
+- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
+
+### Changed
+
+- `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance
+- `wiki-best-practices` skill — portable audit script paths, deploy audit red flags, modularity boundary with wiki-deploy
+- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks
 
 ### Fixed
 

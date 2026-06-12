@@ -78,7 +78,7 @@ See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 ## Agent skills
 
-Coding agents can use repository skills documented in [Wiki Skills](Wiki_Skills.md): [Wiki Skill install](Wiki_Skill_install.md), [Wiki Skill create](Wiki_Skill_create.md), and [Wiki Skill best practices](Wiki_Skill_best_practices.md).
+Coding agents can use repository skills documented in [Wiki Skills](Wiki_Skills.md): [Wiki Skill install](Wiki_Skill_install.md), [Wiki Skill create](Wiki_Skill_create.md), [Wiki Skill best practices](Wiki_Skill_best_practices.md), and [Wiki Skill deploy](Wiki_Skill_deploy.md).
 
 ## Next steps
 

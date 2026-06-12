@@ -111,7 +111,7 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 ## Agent skills
 
-Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-best-practices` in the repository).
+Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-best-practices`, `skills/wiki-deploy` in the repository).
 
 ## Start here
 
