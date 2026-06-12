@@ -45,7 +45,7 @@ When using `upload-pages-artifact` and `deploy-pages`:
 - Do not set artifact `path` to `_site` when `site.base_url` is `/wiki` — upload `_site/wiki` instead
 - Do not run `uv sync` in CI unless the repo has `pyproject.toml` and `uv.lock`
 - Do not use `uv pip install` on standalone wikis without `uv venv` or `--system` — use `pip install wazootech-wiki` instead
-- Do not hybridize install steps — embed [workflow-template-uv.yml](../../skills/wiki-deploy/references/workflow-template-uv.yml) or [workflow-template-pip.yml](../../skills/wiki-deploy/references/workflow-template-pip.yml) wholesale and substitute paths only
+- Do not hybridize install steps — embed `skills/wiki-deploy/references/workflow-template-uv.yml` or `skills/wiki-deploy/references/workflow-template-pip.yml` wholesale and substitute paths only (see [Wiki Skill deploy](Wiki_Skill_deploy.md))
 
 Verify Pages is wired to Actions: `gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'` should show `build_type: workflow`.
 
