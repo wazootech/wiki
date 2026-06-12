@@ -451,7 +451,7 @@ def load_graph(
     reload: bool = False,
     disk_cache: bool = False,
 ) -> Graph:
-    """Load vault sources into a Graph, reusing the in-process cache when possible.
+    """Load wiki sources into a Graph, reusing the in-process cache when possible.
 
     Multiple calls in the same process (many SPARQL blocks, query + render, SHACL
     checks, serve requests) share one graph build unless ``reload`` is set.

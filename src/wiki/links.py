@@ -72,12 +72,12 @@ def markdown_link_is_page(target: str) -> bool:
 
 
 def markdown_link_target(route: str) -> str:
-    """Return the vault-relative markdown path for a page route."""
+    """Return the wiki-relative markdown path for a page route."""
     return f"{route}.md"
 
 
 def format_internal_link(target_route: str, display: str, style: str = "markdown") -> str:
-    """Format an internal vault link for insertion or CLI suggestions."""
+    """Format an internal wiki link for insertion or CLI suggestions."""
     if style == "markdown":
         return f"[{display}]({markdown_link_target(target_route)})"
     return f"[[{target_route}|{display}]]"

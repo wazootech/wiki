@@ -80,7 +80,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
             self.assertIn("Metadata reference", warnings[0])
 
     def test_wiki_curie_with_fragment_resolves_to_page_route(self) -> None:
-        """wiki:Page#fragment refers to the same vault route as wiki:Page."""
+        """wiki:Page#fragment refers to the same wiki route as wiki:Page."""
         with TemporaryDirectory() as tmpdir:
             config = Config(wiki={"inputs": [tmpdir]})
             Path(tmpdir, "Microdata.md").write_text(

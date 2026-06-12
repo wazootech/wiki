@@ -34,7 +34,7 @@ FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
 def optional_files_argument(f):
     """Decorator: zero or more FILE positionals (``nargs=-1``).
 
-    Handlers receive ``files: tuple[Path, ...]``. Omit FILE for whole-vault mode.
+    Handlers receive ``files: tuple[Path, ...]``. Omit FILE for whole-wiki mode.
     """
     return click.argument(
         "files",
@@ -185,7 +185,7 @@ def link(
     check: bool,
     verbose: bool,
 ) -> None:
-    """Suggest or repair internal links for vault pages."""
+    """Suggest or repair internal links for wiki pages."""
     from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
     from .link_suggest import apply_link_opportunities, find_link_opportunities
     from .links import format_internal_link
@@ -251,7 +251,7 @@ def link(
 @click.option("-f", "--format", "output_format", type=FormatChoice(["table", "json", "csv", "tsv", "turtle", "n3", "markdown"], case_sensitive=False), default="table", show_default=True, help="Output format for query results.")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
 @click.option("--pretty", is_flag=True, help="Rich table for SELECT results (stdout only; not with -o or --jq).")

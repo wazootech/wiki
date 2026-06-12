@@ -10,7 +10,7 @@ from ..links import is_external_link
 from ..paths import iter_document_files, route_for_document_file
 from ..parser import split_document_body
 from ..schemas.site import VirtualPage, WikiSite
-from ..vault_links import LinkIndex
+from ..wiki_links import LinkIndex
 from .markdown import (
     extract_outline,
     extract_title,

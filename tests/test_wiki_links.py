@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 
 from wiki.config import Config
 from wiki.site import build_site
-from wiki.vault_links import LinkIndex
+from wiki.wiki_links import LinkIndex
 
 
 class TestVaultLinks(unittest.TestCase):

@@ -1,4 +1,4 @@
-"""Vault-wide link graph: broken-link detection and backlink indexing."""
+"""Wiki-wide link graph: broken-link detection and backlink indexing."""
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ _METADATA_SKIP_KEYS = frozenset({"@context", "@id", "id", "@type", "type"})
 
 
 class LinkIndex:
-    """Link graph of a Vault: routes, broken links, and backlinks."""
+    """Link graph of a wiki: routes, broken links, and backlinks."""
 
     def __init__(
         self,

@@ -32,23 +32,23 @@
 - Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
 - Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
 
-- **CLI flags** align with `wiki.yaml` block paths: `--vault-inputs` (was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
-- Rename `vault.input_dirs` → `vault.inputs` and `vault.asset_dirs` → `vault.assets`
+- **CLI flags** align with `wiki.yaml` block paths: `--wiki-inputs` (was `--vault-inputs`, was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
+- Rename `wiki.input_dirs` → `wiki.inputs` and `wiki.asset_dirs` → `wiki.assets` (was `vault.xxx` before the top-level block rename)
 - Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
-- **Unified Config:** remove the flat runtime `Config` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.vault.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `Config.for_root()`.
+- **Unified Config:** remove the flat runtime `Config` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.wiki.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `Config.for_root()`.
 - Rename root loader type `WikiConfig` → `Config` (`from wiki.config import Config`); **`WikiConfig`** reserved for a future `wiki:` yaml section
-- Rename exported section types: `VaultBlock` → `VaultConfig`, …; add `FmtConfig` for `Config.fmt` (`.options` / `.toml`)
+- Rename exported section types: `VaultBlock` → `VaultConfig` → `WikiConfig`, …; add `FmtConfig` for `Config.fmt` (`.options` / `.toml`)
 - Rename `DEFAULT_CHECK_RULES` / `DEFAULT_LINT_RULES` → `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG`
 
 ### Changed
 
-- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css.j2` (vault path `layouts/default.html` unchanged); default page CSS moved out of `site.py` into the template bundle
+- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css.j2` (wiki path `layouts/default.html` unchanged); default page CSS moved out of `site.py` into the template bundle
 - Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `Config.check` and `Config.lint` are `CheckConfig` / `LintConfig` instances (not plain dicts)
 - `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a computed property from `graph.context`
 
 ### Migration
 
-1. In `vault:` rename path keys:
+1. In `wiki:` rename path keys:
    - `input_dirs` → `inputs`
    - `asset_dirs` → `assets`
 2. In `graph:` rename keys:
@@ -56,7 +56,7 @@
    - `default_types` → `implicit_types`
    - `default_types_policy` → `implicit_types_policy`
    - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when document IRIs must differ from the `wiki:` namespace)
-3. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`VaultConfig`, `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
+3. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`WikiConfig` (was `VaultConfig`), `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
 4. In `site:` move branding into `manifest:`:
    - `title` → `manifest.name`
    - `theme_color` → `manifest.theme_color`
