@@ -6,7 +6,7 @@ description: Integrity checks — SHACL validation, route safety, and layout fro
 
 # `wiki check`
 
-Run **integrity** checks on the vault: strict **SHACL** validation, route safety, output collisions, and layout frontmatter contracts.
+Run **integrity** checks on the wiki: strict **SHACL** validation, route safety, output collisions, and layout frontmatter contracts.
 
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
@@ -22,23 +22,23 @@ wiki check --strict
 
 ## Options
 
-| Flag              | Description                                                                   |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `FILE...`         | Optional documents; otherwise entire vault (scoped mode: SHACL per file only) |
-| `-v`, `--verbose` | Print warnings                                                                |
-| `--strict`        | Treat warnings as errors (exit 1)                                             |
+| Flag              | Description                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `FILE...`         | Optional documents; otherwise entire wiki (scoped mode: SHACL per file only) |
+| `-v`, `--verbose` | Print warnings                                                               |
+| `--strict`        | Treat warnings as errors (exit 1)                                            |
 
 ## What is checked
 
-### Full vault (default)
+### Full wiki (default)
 
 `wiki check` with no `FILE` argument runs every check below.
 
 ### Always errors (not configurable)
 
-- **SHACL** — shapes from vault frontmatter (`sh:NodeShape`, etc.) on the full RDF graph
+- **SHACL** — shapes from wiki frontmatter (`sh:NodeShape`, etc.) on the full RDF graph
 - **Route safety** — unsafe path segments (spaces, reserved characters, and similar)
-- **Output collisions** — two vault sources mapping to the same built URL (against default `_site` layout)
+- **Output collisions** — two wiki sources mapping to the same built URL (against default `_site` layout)
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
@@ -52,7 +52,7 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 
 ### Scoped mode (one or more FILE args)
 
-`wiki check path/to/Page.md` (or multiple paths) runs **SHACL only** per file. Route safety, output collisions, and layout frontmatter rules are **full-vault only**. Cross-document SHACL interactions may only appear in a full-vault check. Broken links on those pages require `wiki lint` with the same paths.
+`wiki check path/to/Page.md` (or multiple paths) runs **SHACL only** per file. Route safety, output collisions, and layout frontmatter rules are **full-wiki only**. Cross-document SHACL interactions may only appear in a full-wiki check. Broken links on those pages require `wiki lint` with the same paths.
 
 `--strict` applies only when warnings exist; scoped mode does not emit warnings today.
 

@@ -6,7 +6,7 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 # `wiki lint`
 
-Run **convention** audits on the vault: broken links, filename pattern, heading style, and internal link style.
+Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
@@ -22,11 +22,11 @@ wiki lint --strict
 
 ## Options
 
-| Flag              | Description                                     |
-| ----------------- | ----------------------------------------------- |
-| `FILE...`         | Optional markdown paths; otherwise entire vault |
-| `-v`, `--verbose` | Print warnings                                  |
-| `--strict`        | Treat warnings as errors (exit 1)               |
+| Flag              | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `FILE...`         | Optional markdown paths; otherwise entire wiki |
+| `-v`, `--verbose` | Print warnings                                 |
+| `--strict`        | Treat warnings as errors (exit 1)              |
 
 ## What is linted
 
@@ -35,7 +35,7 @@ wiki lint --strict
 | Rule key             | What it audits                                                                                   |
 | -------------------- | ------------------------------------------------------------------------------------------------ |
 | `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                    |
-| `filename_pattern`   | Full filename vs `vault.filename_pattern` regex (`.md` files only)                               |
+| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                |
 | `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
 | `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
 | `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |

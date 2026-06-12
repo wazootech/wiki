@@ -1,17 +1,17 @@
 # Agent guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical vault-authoring detail lives in the vault [Style Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
 
-This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use **`-c docs/wiki.yaml`** on wiki commands here so local runs match CI.
+This repository dogfoods the docs wiki at `docs/wiki.yaml` (`docs/wiki/`). Use **`-c docs/wiki.yaml`** on wiki commands here so local runs match CI.
 
-## Vault rules
+## Wiki rules
 
 ### Clean filenames
 - **Rule:** Default user-facing examples should prefer **Wikipedia-style** filenames for ordinary pages (e.g., `Opal_Security.md`, `Gregory_Davidson.md`) — preserved capitalization and underscores. Do not default to lowercase kebab-case (`opal-security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
 - **Enforcer:** `lint.filename_pattern` in `wiki.yaml` (warning by default). Route safety (spaces, unsafe URL characters) always fails as an error in `wiki check`.
 
 ### Internal links
-- **Rule:** Use standard Markdown links to other vault pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this vault. Ensure internal links point at existing documents.
+- **Rule:** Use standard Markdown links to other wiki pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this wiki. Ensure internal links point at existing documents.
 - **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
@@ -24,7 +24,7 @@ This repository dogfoods the docs vault at `docs/wiki.yaml` (`docs/wiki/`). Use 
 Use Markdown links for all internal and external URLs.
 
 ### Formatting (`wiki fmt`)
-- **Rule:** After editing any vault page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
+- **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
 - **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki Subcommand lint](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
 
 ---
@@ -32,7 +32,7 @@ Use Markdown links for all internal and external URLs.
 ## Developer notes
 
 ### Running validations
-Before submitting commits, format the vault and verify against the active schema and guidelines. In this repo, mirror CI:
+Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
 ```bash
 # 1. Format (apply, then verify)

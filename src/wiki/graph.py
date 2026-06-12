@@ -1,4 +1,4 @@
-﻿"""RDF Lib graph loading, frontmatter-to-triple conversion, and blank node resolution."""
+"""RDF Lib graph loading, frontmatter-to-triple conversion, and blank node resolution."""
 
 from __future__ import annotations
 
@@ -417,14 +417,14 @@ _EXT_FORMAT_MAP = {
 }
 
 
-def _build_graph_from_vault(context: Config) -> Graph:
-    """Load asserted triples from all vault sources without OWL-RL inference."""
+def _build_graph_from_wiki(context: Config) -> Graph:
+    """Load asserted triples from all wiki sources without OWL-RL inference."""
     graph = Graph()
     context.bind_namespaces(graph)
 
     document_files = set(iter_document_files(context))
 
-    for input_dir in context.vault.inputs:
+    for input_dir in context.wiki.inputs:
         if not input_dir.exists():
             continue
         for file_path in sorted(input_dir.rglob("*")):
@@ -451,7 +451,7 @@ def load_graph(
     reload: bool = False,
     disk_cache: bool = False,
 ) -> Graph:
-    """Load vault sources into a Graph, reusing the in-process cache when possible.
+    """Load wiki sources into a Graph, reusing the in-process cache when possible.
 
     Multiple calls in the same process (many SPARQL blocks, query + render, SHACL
     checks, serve requests) share one graph build unless ``reload`` is set.
@@ -479,7 +479,7 @@ def load_graph(
                 set_process_graph(context, infer, cached_disk)
                 return cached_disk
 
-    graph = _build_graph_from_vault(context)
+    graph = _build_graph_from_wiki(context)
     if infer:
         from .infer import apply_inference
         apply_inference(graph, context)

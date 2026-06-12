@@ -36,7 +36,7 @@ from .document import (
     span_overlaps,
     split_frontmatter_text,
 )
-from .vault_links import LinkIndex
+from .wiki_links import LinkIndex
 from .schemas import BrokenLink, CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
@@ -381,7 +381,7 @@ def _line_number_for_offset(content: str, offset: int) -> int:
 
 
 def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list[str]:
-    """Flag Obsidian wikilinks in body prose when vault link_style is markdown."""
+    """Flag Obsidian wikilinks in body prose when wiki link_style is markdown."""
     if config.link.style != "markdown":
         return []
     warnings: list[str] = []

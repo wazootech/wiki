@@ -27,13 +27,13 @@ wiki -c docs/wiki.yaml serve
 
 ## Custom wikis
 
-For your own vault, copy the workflow and change:
+For your own wiki, copy the workflow and change:
 
 - `-c` path to your config
 - `--site-base-url` to match your Pages path (`/wiki`, `/my-wiki`, or `''` for root)
 - `path` in `upload-pages-artifact` to the directory that contains your built `index.html`
 
-See [Wiki Subcommand build](Wiki_Subcommand_build.md) for `site.url_style`, `vault.assets`, and collision checks.
+See [Wiki Subcommand build](Wiki_Subcommand_build.md) for `site.url_style`, `wiki.assets`, and collision checks.
 
 ## Related
 

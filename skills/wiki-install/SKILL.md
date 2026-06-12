@@ -10,11 +10,11 @@ description: >-
 
 Install and verify the [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command, PyPI package **`wazootech-wiki`**).
 
-Skills under `skills/` are agent procedural knowledge — not vault pages and not indexed by `wiki`.
+Skills under `skills/` are agent procedural knowledge — not wiki pages and not indexed by `wiki`.
 
 ## Modularity
 
-This skill **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest creating a wiki, scaffolding a vault, or any follow-on task. Do not name other skills or skills paths.
+This skill **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest creating a wiki, scaffolding a wiki, or any follow-on task. Do not name other skills or skills paths.
 
 ## Workflow
 
@@ -63,4 +63,4 @@ After install (user-run or agent-run with approval), run `wiki --help` again.
 
 - Suggest `wiki init`, creating a workspace, or daily workflow commands as a required next step.
 - Auto-run `pip install` without user approval.
-- Duplicate full vault or configuration documentation.
+- Duplicate full wiki or configuration documentation.

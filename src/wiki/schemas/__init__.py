@@ -1,4 +1,4 @@
-﻿"""Pydantic schema models for wiki config and domain types."""
+"""Pydantic schema models for wiki config and domain types."""
 
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import InitOptions
@@ -13,7 +13,7 @@ from .wiki_config import (
     SiteConfig,
     SiteManifestConfig,
     SparqlServiceConfig,
-    VaultConfig,
+    WikiConfig,
     Config,
 )
 
@@ -38,7 +38,7 @@ __all__ = [
     "SiteManifestConfig",
     "SparqlServiceConfig",
     "TocItem",
-    "VaultConfig",
+    "WikiConfig",
     "VirtualPage",
     "Config",
     "WikiSite",

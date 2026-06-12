@@ -1,7 +1,7 @@
 ---
 type: TechArticle
 headline: Getting started
-description: Install the wiki CLI and scaffold a new vault.
+description: Install the wiki CLI and scaffold a new wiki.
 ---
 
 # Getting started
@@ -62,7 +62,7 @@ wiki build --output-dir _site
 
 Use `wiki check -v` / `wiki lint -v` to see warnings. In CI, run both with `--strict` so warnings fail the job.
 
-## Work in this repository’s docs vault
+## Work in this repository’s docs wiki
 
 The published site under `docs/wiki/` is built with:
 
@@ -83,7 +83,7 @@ Coding agents can use repository skills documented in [Wiki Skills](Wiki_Skills.
 ## Next steps
 
 - [Wiki CLI](Wiki_CLI.md) — command reference home
-- [Wiki Configuration](Wiki_Configuration.md) — tune `vault`, `graph`, `site`, `link`, and check severities
+- [Wiki Configuration](Wiki_Configuration.md) — tune `wiki`, `graph`, `site`, `link`, and check severities
 - [Style Guide](Style_Guide.md) — document types, shapes, and wikilinks
 - [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity validation and CI checks
 - [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits (broken links, filenames, headings)

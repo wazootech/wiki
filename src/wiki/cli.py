@@ -34,7 +34,7 @@ FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
 def optional_files_argument(f):
     """Decorator: zero or more FILE positionals (``nargs=-1``).
 
-    Handlers receive ``files: tuple[Path, ...]``. Omit FILE for whole-vault mode.
+    Handlers receive ``files: tuple[Path, ...]``. Omit FILE for whole-wiki mode.
     """
     return click.argument(
         "files",
@@ -45,19 +45,19 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--vault-inputs", "vault_inputs", multiple=True, default=None, help="Override vault.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
+@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
 @click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
 @click.pass_context
-def main(ctx: click.Context, vault_inputs: tuple[str, ...] | None, config_path: str) -> None:
+def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
         config = Config.load(Path(config_path))
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    if vault_inputs:
-        config.vault.inputs = [
+    if wiki_inputs:
+        config.wiki.inputs = [
             Path(d) if Path(d).is_absolute() else config.config_root / d
-            for d in vault_inputs
+            for d in wiki_inputs
         ]
 
     ctx.obj = config
@@ -185,7 +185,7 @@ def link(
     check: bool,
     verbose: bool,
 ) -> None:
-    """Suggest or repair internal links for vault pages."""
+    """Suggest or repair internal links for wiki pages."""
     from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
     from .link_suggest import apply_link_opportunities, find_link_opportunities
     from .links import format_internal_link
@@ -251,7 +251,7 @@ def link(
 @click.option("-f", "--format", "output_format", type=FormatChoice(["table", "json", "csv", "tsv", "turtle", "n3", "markdown"], case_sensitive=False), default="table", show_default=True, help="Output format for query results.")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
 @click.option("--pretty", is_flag=True, help="Rich table for SELECT results (stdout only; not with -o or --jq).")
@@ -327,7 +327,7 @@ def query(
 @main.command()
 @optional_files_argument
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from vault sources before rendering.")
+@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources before rendering.")
 @click.option("--cache", "disk_cache", is_flag=True, help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.")
 @click.option("--check", is_flag=True, help="Check if inline SPARQL blocks are up to date without modifying files. Exits with non-zero code if any are stale.")
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
@@ -433,8 +433,8 @@ def build(
         if verbose and success > 0:
             click.echo(f"Rendered SPARQL dynamic blocks in {success} files.")
 
-    if not any(d.exists() for d in runtime_config.vault.inputs):
-        dirs_str = ", ".join(str(d) for d in runtime_config.vault.inputs)
+    if not any(d.exists() for d in runtime_config.wiki.inputs):
+        dirs_str = ", ".join(str(d) for d in runtime_config.wiki.inputs)
         click.echo(f"Error: none of the input directories exist ({dirs_str}).", err=True)
         sys.exit(1)
 
@@ -524,7 +524,7 @@ def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf
     if files:
         if len(files) > 1 and rdf_format in _raw_formats:
             click.echo(
-                "Error: raw RDF export formats require a single FILE or whole-vault export (omit FILE).",
+                "Error: raw RDF export formats require a single FILE or whole-wiki export (omit FILE).",
                 err=True,
             )
             sys.exit(1)
@@ -586,7 +586,7 @@ def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf
               help="Override site.base_url. Empty string for root-level URLs.")
 @click.option("--site-url-style", "site_url_style", default=None,
               type=click.Choice(["file", "dir"]), help="Override site.url_style: <slug>.html (file) or <slug>/ (dir).")
-@click.option("--watch", is_flag=True, help="Watch vault; rebuild graph, SPARQL blocks, site, and reload browser.")
+@click.option("--watch", is_flag=True, help="Watch wiki; rebuild graph, SPARQL blocks, site, and reload browser.")
 @click.pass_obj
 def serve(config: Config, host: str, port: int, site_base_url: str | None, site_url_style: str | None, watch: bool) -> None:
     """Start a local HTTP server for browsing the wiki."""
@@ -605,7 +605,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "wikilink"]), help="Override link.style: markdown or wikilink.")
 @click.option("--site-manifest-name", "site_manifest_name", default="Wiki CLI", help="Override site.manifest.name (default 'Wiki CLI').")
-@click.option("--vault-inputs", "vault_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
+@click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
 @click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
@@ -621,7 +621,7 @@ def init(
     graph_content_predicate: str | None,
     link_style: str | None,
     site_manifest_name: str,
-    vault_inputs: tuple[str, ...],
+    wiki_inputs: tuple[str, ...],
     graph_base_iri: str | None,
     site_manifest_theme_color: str | None,
     graph_implicit_types: tuple[str, ...],
@@ -676,7 +676,7 @@ def init(
         init_git=init_git,
         prompt_context_wiki=prompt_context_wiki,
         site_manifest_name=site_manifest_name,
-        vault_inputs=list(vault_inputs) if vault_inputs else None,
+        wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         graph_base_iri=graph_base_iri,
         site_manifest_theme_color=site_manifest_theme_color,
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
@@ -774,7 +774,7 @@ def init(
 @click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
 def fmt(config: Config, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
-    """Format markdown vault pages using mdformat."""
+    """Format markdown wiki pages using mdformat."""
     from .fmt_util import describe_fmt_source, format_markdown
 
     if files:

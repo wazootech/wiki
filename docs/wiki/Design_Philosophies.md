@@ -21,7 +21,7 @@ Four audit/format lanes (aligned with common CLI tooling):
 | Formatting   | `wiki fmt`   | mdformat                                                                                                                                                                     |
 | Link hygiene | `wiki link`  | Optional `link.renames`; `--apply` and `--fix-broken` require explicit flags                                                                                                 |
 
-`wiki check` answers whether the vault satisfies its **integrity contracts** (graph shapes and build/presentation invariants) — it never mutates prose. `wiki lint` answers whether content follows **vault policy** (resolvable references and authoring conventions). `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `lint` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
+`wiki check` answers whether the wiki satisfies its **integrity contracts** (graph shapes and build/presentation invariants) — it never mutates prose. `wiki lint` answers whether content follows **wiki policy** (resolvable references and authoring conventions). `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `lint` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
 
 `wiki build` runs convention then integrity preflight (`lint` then `check`) unless `--no-check`. `wiki link` is never part of that preflight.
 
@@ -55,7 +55,7 @@ wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:fa
 
 ## Flat command surface
 
-Subcommands are top-level (`wiki check`, not `wiki vault check`). Global options [Wiki CLI](Wiki_CLI.md#global-options) apply everywhere.
+Subcommands are top-level (`wiki check`, not `wiki wiki check`). Global options [Wiki CLI](Wiki_CLI.md#global-options) apply everywhere.
 
 ## Userland over platform lock-in
 

@@ -1,4 +1,4 @@
-﻿"""Tests for inline SPARQL block rendering."""
+"""Tests for inline SPARQL block rendering."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ SELECT ?givenName WHERE {
                 encoding="utf-8",
             )
             config = Config(
-                vault={"inputs": [wiki_dir]},
+                wiki={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
                 graph={"context": {"wiki": "https://wiki.example.org/"}},
             )

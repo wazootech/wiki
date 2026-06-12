@@ -7,7 +7,7 @@ from wiki.config import Config
 from wiki.headings import parse_headings
 from wiki.site import render_wiki_markdown
 from wiki.site.markdown import extract_outline
-from wiki.vault_links import _heading_ids
+from wiki.wiki_links import _heading_ids
 
 
 class TestHeadings(unittest.TestCase):
@@ -53,7 +53,7 @@ class TestHeadings(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            config = Config(vault={"inputs": [wiki_dir]})
+            config = Config(wiki={"inputs": [wiki_dir]})
             warnings = lint_heading_levels(config)
 
             self.assertEqual(len(warnings), 1)

@@ -26,7 +26,7 @@ Farzapedia champions four crucial properties of modern knowledge engineering:
 - **File Over App**: Universal, standardized Markdown files mean your [second brain](Second_Brain.md) is completely independent of any single app or operating system.
 - **BYOAI (Bring Your Own AI)**: A flat directory of clean files allows you to plug in any LLM agent (Claude, OpenAI, Codex) to query, write, or refactor your knowledge base without altering the underlying data.
 
-## Dynamic querying in this vault
+## Dynamic querying in this wiki
 
 The [Wiki CLI](Wiki_CLI.md) is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful [SPARQL](SPARQL.md) queries with [Wiki Subcommand query](Wiki_Subcommand_query.md) and refresh live indexes with [Wiki Subcommand render](Wiki_Subcommand_render.md)—fulfilling the dream of a queryable, self-updating mind map.
 

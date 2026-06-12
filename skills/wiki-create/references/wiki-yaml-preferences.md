@@ -31,4 +31,4 @@ Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config 
 | `lint:` | `wiki lint` | Conventions |
 | `check:` | `wiki check` | SHACL, routes, layouts |
 
-Regex belongs in `vault.filename_pattern`, not under `check:`.
+Regex belongs in `wiki.filename_pattern`, not under `check:`.

@@ -1,4 +1,4 @@
-﻿"""Path, route, URL, and output-manifest helpers for wiki pages."""
+"""Path, route, URL, and output-manifest helpers for wiki pages."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ UNSAFE_ROUTE_CHARS = set("?#%")
 
 def iter_document_files(config: Config) -> list[Path]:
     doc_files: list[Path] = []
-    for input_dir in config.vault.inputs:
+    for input_dir in config.wiki.inputs:
         if input_dir.exists():
             for file_path in sorted(input_dir.rglob("*")):
                 if not file_path.is_file() or file_path.suffix.lower() not in DOCUMENT_EXTENSIONS:
@@ -29,11 +29,11 @@ def iter_markdown_files(config: Config) -> list[Path]:
     return [file_path for file_path in iter_document_files(config) if file_path.suffix.lower() == ".md"]
 
 
-def _vault_document_index(config: Config) -> dict[Path, Path]:
+def _wiki_document_index(config: Config) -> dict[Path, Path]:
     return {file_path.resolve(): file_path for file_path in iter_document_files(config)}
 
 
-def _resolve_vault_paths(
+def _resolve_wiki_paths(
     config: Config,
     paths: tuple[Path, ...],
     *,
@@ -42,22 +42,22 @@ def _resolve_vault_paths(
 ) -> list[Path]:
     if not paths:
         return []
-    index = _vault_document_index(config)
+    index = _wiki_document_index(config)
     selected: list[Path] = []
     for path in paths:
         resolved = path.resolve()
-        vault_path = index.get(resolved)
-        if vault_path is None:
-            raise ValueError(f"{path.name} is not a vault document under inputs (or is excluded).")
-        if vault_path.suffix.lower() not in allowed_suffixes:
-            raise ValueError(f"{label} only supports {', '.join(sorted(allowed_suffixes))} files, got {vault_path.name}.")
-        selected.append(vault_path)
+        wiki_path = index.get(resolved)
+        if wiki_path is None:
+            raise ValueError(f"{path.name} is not a wiki document under inputs (or is excluded).")
+        if wiki_path.suffix.lower() not in allowed_suffixes:
+            raise ValueError(f"{label} only supports {', '.join(sorted(allowed_suffixes))} files, got {wiki_path.name}.")
+        selected.append(wiki_path)
     return selected
 
 
 def select_document_paths(config: Config, paths: tuple[Path, ...]) -> list[Path]:
-    """Resolve explicit CLI paths to vault documents (.md, .yaml, .json), preserving order."""
-    return _resolve_vault_paths(
+    """Resolve explicit CLI paths to wiki documents (.md, .yaml, .json), preserving order."""
+    return _resolve_wiki_paths(
         config,
         paths,
         allowed_suffixes=set(DOCUMENT_EXTENSIONS),
@@ -66,8 +66,8 @@ def select_document_paths(config: Config, paths: tuple[Path, ...]) -> list[Path]
 
 
 def select_markdown_paths(config: Config, paths: tuple[Path, ...]) -> list[Path]:
-    """Resolve explicit CLI paths to vault markdown files, preserving order."""
-    return _resolve_vault_paths(config, paths, allowed_suffixes={".md"}, label="command")
+    """Resolve explicit CLI paths to wiki markdown files, preserving order."""
+    return _resolve_wiki_paths(config, paths, allowed_suffixes={".md"}, label="command")
 
 
 def routes_from_markdown_files(config: Config, paths: tuple[Path, ...]) -> set[str]:
@@ -154,12 +154,12 @@ def detect_output_collisions(entries: list[OutputEntry]) -> list[str]:
 
 
 def validate_filename_pattern(config: Config, md_file: Path) -> str | None:
-    if not config.vault.filename_pattern:
+    if not config.wiki.filename_pattern:
         return None
     if md_file.suffix.lower() != ".md":
         return None
     try:
-        pattern = re.compile(config.vault.filename_pattern)
+        pattern = re.compile(config.wiki.filename_pattern)
     except re.error as exc:
         return f"Invalid filename_pattern: {exc}"
     if pattern.fullmatch(md_file.name) is None:
@@ -178,7 +178,7 @@ def validate_route_safety(config: Config) -> list[str]:
 
 
 def _relative_to_input_dir(config: Config, md_file: Path) -> Path:
-    for root in config.vault.inputs:
+    for root in config.wiki.inputs:
         try:
             return md_file.relative_to(root)
         except ValueError:

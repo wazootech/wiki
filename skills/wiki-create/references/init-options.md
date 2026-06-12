@@ -39,7 +39,7 @@ When `--graph-context-wiki` is not passed:
 
 | Path | Purpose |
 | ---- | ------- |
-| `wiki.yaml` | Config: vault, graph, site, lint, fmt |
+| `wiki.yaml` | Config: wiki, graph, site, lint, fmt |
 | `layouts/default.html` | Default page layout |
 | `wiki/Person_Shape.md` | Starter SHACL shape |
 | `wiki/Ethan_Davidson.md` | Starter Person example |

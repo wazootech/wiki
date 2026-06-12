@@ -17,6 +17,6 @@ sh:property:
 
 # TechArticle validation shape
 
-This document defines the basic **SHACL validation rules** enforced upon any `type: TechArticle` documents in this vault.
+This document defines the basic **SHACL validation rules** enforced upon any `type: TechArticle` documents in this wiki.
 
 It ensures that all technical articles have at least a `headline` and `description` in their YAML frontmatter.

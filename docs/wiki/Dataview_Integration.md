@@ -6,11 +6,11 @@ description: Query and visualize your semantic markdown files in Obsidian using 
 
 # Dataview integration
 
-The [Wiki CLI](Wiki_CLI.md) and Obsidian's community **Dataview** plugin can be used together on the same Markdown vault. Because both tools operate on plain text Markdown files and standard YAML/JSON frontmatter, they interoperate naturally without needing any data migration or conversion.
+The [Wiki CLI](Wiki_CLI.md) and Obsidian's community **Dataview** plugin can be used together on the same Markdown wiki. Because both tools operate on plain text Markdown files and standard YAML/JSON frontmatter, they interoperate naturally without needing any data migration or conversion.
 
 ## How they complement each other
 
-While both tools allow you to query your vault metadata, they optimize for different workflows:
+While both tools allow you to query your wiki metadata, they optimize for different workflows:
 
 - **Dataview** is designed for **interactive, in-editor presentation** inside the Obsidian GUI. It is perfect for dynamic dashboards, daily note tracking, and local navigation.
 - **Wiki CLI** is a **verifiable semantic compiler and toolchain** designed to run anywhere (local terminal, CI/CD pipelines, or static web servers). It enforces data structures via [SHACL](SHACL.md), executes query-based rendering via [SPARQL](SPARQL.md), and builds standalone static HTML sites.
@@ -31,7 +31,7 @@ Because the Wiki CLI parses standard YAML frontmatter, any properties you declar
 
 ### 1. Basic DQL vs SPARQL
 
-To list all software applications in the vault:
+To list all software applications in the wiki:
 
 #### Dataview (DQL)
 

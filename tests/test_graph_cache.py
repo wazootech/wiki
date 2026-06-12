@@ -1,4 +1,4 @@
-﻿"""Tests for vault fingerprinting and in-process graph cache."""
+"""Tests for wiki fingerprinting and in-process graph cache."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from wiki.graph_cache import (
     clear_all_process_graphs,
     disk_cache_path,
     get_process_graph,
-    vault_fingerprint,
+    wiki_fingerprint,
 )
 
 
@@ -27,7 +27,7 @@ class TestGraphCache(unittest.TestCase):
         clear_all_process_graphs()
 
     def _config(self, wiki_dir: Path) -> Config:
-        return Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+        return Config(wiki={"inputs": [wiki_dir]}, config_root=wiki_dir)
 
     def test_second_load_reuses_cached_graph(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -62,12 +62,12 @@ class TestGraphCache(unittest.TestCase):
             page.write_text("---\ntype: Person\ngivenName: Ada\n---\n", encoding="utf-8")
             config = self._config(wiki_dir)
 
-            fp1 = vault_fingerprint(config)
+            fp1 = wiki_fingerprint(config)
             load_graph(config, infer=False)
             self.assertIsNotNone(get_process_graph(config, infer=False))
 
             page.write_text("---\ntype: Person\ngivenName: Grace\n---\n", encoding="utf-8")
-            fp2 = vault_fingerprint(config)
+            fp2 = wiki_fingerprint(config)
             self.assertNotEqual(fp1, fp2)
             self.assertIsNone(get_process_graph(config, infer=False))
 
@@ -94,10 +94,10 @@ class TestGraphCache(unittest.TestCase):
                 "---\ntype: Person\ngivenName: Ada\n---\n",
                 encoding="utf-8",
             )
-            config_a = Config(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://a.example/"}, config_root=wiki_dir)
-            config_b = Config(vault={"inputs": [wiki_dir]}, graph={"base_iri": "https://b.example/"}, config_root=wiki_dir)
+            config_a = Config(wiki={"inputs": [wiki_dir]}, graph={"base_iri": "https://a.example/"}, config_root=wiki_dir)
+            config_b = Config(wiki={"inputs": [wiki_dir]}, graph={"base_iri": "https://b.example/"}, config_root=wiki_dir)
 
-            self.assertNotEqual(vault_fingerprint(config_a), vault_fingerprint(config_b))
+            self.assertNotEqual(wiki_fingerprint(config_a), wiki_fingerprint(config_b))
 
     def test_disk_cache_reuses_graph_across_cleared_process_cache(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -113,11 +113,11 @@ class TestGraphCache(unittest.TestCase):
             self.assertTrue(disk_cache_path(config, infer=False).exists())
 
             clear_all_process_graphs()
-            with patch("wiki.graph._build_graph_from_vault", side_effect=AssertionError("should not rebuild vault graph")):
+            with patch("wiki.graph._build_graph_from_wiki", side_effect=AssertionError("should not rebuild wiki graph")):
                 g2 = load_graph(config, infer=False, disk_cache=True)
             self.assertEqual(graph_stats(g1), graph_stats(g2))
 
-    def test_disk_cache_invalidation_rebuilds_after_vault_change(self) -> None:
+    def test_disk_cache_invalidation_rebuilds_after_wiki_change(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir)
             page = wiki_dir / "page.md"
@@ -130,7 +130,7 @@ class TestGraphCache(unittest.TestCase):
 
             page.write_text("---\ntype: Person\ngivenName: Grace\n---\n", encoding="utf-8")
             clear_all_process_graphs()
-            with patch("wiki.graph._build_graph_from_vault", wraps=graph_module._build_graph_from_vault) as wrapped_build:
+            with patch("wiki.graph._build_graph_from_wiki", wraps=graph_module._build_graph_from_wiki) as wrapped_build:
                 g2 = load_graph(config, infer=False, disk_cache=True)
                 self.assertTrue(wrapped_build.called)
             self.assertGreater(graph_stats(g2)["triples"], 0)

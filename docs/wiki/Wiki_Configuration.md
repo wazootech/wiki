@@ -4,7 +4,7 @@
 
 The CLI loads **Config** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 
-The in-memory **Config** model uses the same nested blocks as the file (`vault`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `Config.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `vault` and `site`. Library and test code can construct configs with `Config(vault={...}, config_root=path)` or `Config.for_root(path, vault={...})`.
+The in-memory **Config** model uses the same nested blocks as the file (`wiki`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `Config.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `wiki` and `site`. Library and test code can construct configs with `Config(wiki={...}, config_root=path)` or `Config.for_root(path, wiki={...})`.
 
 Config files are validated strictly through a Pydantic schema (`extra='forbid'` on every block). Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
 
@@ -12,27 +12,27 @@ Config files are validated strictly through a Pydantic schema (`extra='forbid'` 
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                                                                                                                                       |
-| ---------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                                           |
-| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus `vault.filename_pattern` regex) |
-| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                                           |
+| Lane       | Command      | YAML block | Purpose                                                                                                                                                      |
+| ---------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                                          |
+| Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus `wiki.filename_pattern` regex) |
+| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                                          |
 
 ### Rule placement
 
-Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Vault policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Wiki policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
-- **`vault.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
+- **`wiki.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
 - Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
 
-Relative **`--vault-inputs`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
+Relative **`--wiki-inputs`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
 
 ## Top-level blocks
 
 | Block             | Purpose                                                     |
 | ----------------- | ----------------------------------------------------------- |
-| `vault:`          | Content paths, indexing excludes, filename regex            |
+| `wiki:`           | Content paths, indexing excludes, filename regex            |
 | `graph:`          | RDF document URIs, namespace prefixes, SPARQL body literals |
 | `site:`           | Built/served HTML chrome and URL routing                    |
 | `link:`           | `wiki link` authoring format and rename repair map          |
@@ -44,7 +44,7 @@ Relative **`--vault-inputs`** paths on the CLI resolve against the config file d
 ## Example
 
 ```yaml
-vault:
+wiki:
   inputs:
     - wiki
   assets:
@@ -85,16 +85,16 @@ fmt:
 
 JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-LD compatible).
 
-## Vault (`vault:`)
+## Wiki (`wiki:`)
 
-| Key                      | Default                            | Purpose                                                                                    |
-| ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------ |
-| `vault.inputs`           | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)                        |
-| `vault.assets`           | `["assets"]` if that folder exists | Static files copied on `wiki build`                                                        |
-| `vault.exclude`          | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing                  |
-| `vault.filename_pattern` | —                                  | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
+| Key                     | Default                            | Purpose                                                                                    |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `wiki.inputs`           | `["wiki"]`                         | Markdown and data files to load (relative to config file directory)                        |
+| `wiki.assets`           | `["assets"]` if that folder exists | Static files copied on `wiki build`                                                        |
+| `wiki.exclude`          | `[]`                               | Glob patterns (POSIX paths relative to config root) skipped when indexing                  |
+| `wiki.filename_pattern` | —                                  | Full-filename regex for markdown files (see [Filename conventions](#filename-conventions)) |
 
-Page URLs come from paths under `vault.inputs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
+Page URLs come from paths under `wiki.inputs`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
 ## Graph (`graph:`)
 
@@ -237,17 +237,17 @@ Unknown `{placeholders}` are left untouched in the output. This lets you use lit
 The bundled stylesheet injected as `{inline_css}` covers the default Wikipedia-style shell (navigation, tabs, infobox, TOC, code blocks). It is not a `wiki.yaml` key. To change how pages look:
 
 1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{inline_css}` with your own CSS (you lose the bundled defaults unless you copy them).
-1. **Link vault assets** — put `.css` files under a directory listed in `vault.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
+1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{base_url}/assets/site.css">`. Built assets are served at `{base_url}/assets/…` during `wiki serve` and copied into the build output.
 
 `site.manifest.theme_color` only affects the default `{logo_svg}` globe gradient and `theme-color` / TileColor meta tags; accent colors inside `{inline_css}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
 
 ### Custom logos and icons
 
-The default layout uses `{logo_svg}` inside `#p-logo`. When you do not customize the layout, Wiki CLI injects a built-in globe SVG: the center glyph is the first character of resolved `site.manifest.name`, and the gradient comes from `site.manifest.theme_color` (fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `vault.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
+The default layout uses `{logo_svg}` inside `#p-logo`. When you do not customize the layout, Wiki CLI injects a built-in globe SVG: the center glyph is the first character of resolved `site.manifest.name`, and the gradient comes from `site.manifest.theme_color` (fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
 
 **Custom sidebar logo**
 
-1. Enable `vault.assets` (uncomment or add an `assets:` directory in `wiki.yaml`).
+1. Enable `wiki.assets` (uncomment or add an `assets:` directory in `wiki.yaml`).
 1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`.
 1. Edit `site.layout` and replace `{logo_svg}` with an asset reference:
 
@@ -338,22 +338,22 @@ CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `sit
 
 ## Filename conventions
 
-The CLI does not hard-code kebab-case. Projects choose a convention with **`vault.filename_pattern`**, matched against the **full filename** (including `.md`) on markdown files only.
+The CLI does not hard-code kebab-case. Projects choose a convention with **`wiki.filename_pattern`**, matched against the **full filename** (including `.md`) on markdown files only.
 
 **Wikipedia-style (recommended):** preserved capitalization and underscores — `Gregory_Davidson.md`, `Pokemon_Diamond_(copy_1).md`, `LLM_Wiki_CLI.md`. Use a pattern such as:
 
 ```yaml
-vault:
+wiki:
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
 ```
 
-**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one vault.
+**Kebab-case (optional):** if you prefer `gregory-house.md`, set an explicit pattern (for example `[a-z0-9-]+\\.md`) and enforce it via `lint.filename_pattern`. Wikipedia-style and kebab-case should not be mixed in one wiki.
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
 
-When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style vault.
+When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks in body prose. Set `lint.link_style: off` to allow wikilinks while keeping markdown as the apply format, or set `link.style: wikilink` for an Obsidian-style wiki.
 
 ## Formatting (`fmt`)
 
@@ -387,18 +387,18 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | Rule key           | Default   | What it audits                                                                                                 |
 | ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
 | `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
-| `filename_pattern` | `warning` | Full filename vs `vault.filename_pattern` regex                                                                |
+| `filename_pattern` | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
 | `link_style`       | `warning` | Wikilinks in body prose when `link.style` is `markdown`                                                        |
 
 ## This repository
 
-`docs/wiki.yaml` is the dogfood vault config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
+`docs/wiki.yaml` is the dogfood wiki config: the same structure and default severities as `wiki init` (`wiki.yaml.j2`), with this repository’s GitHub Pages URLs and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md#global-options) — `-c` and `--vault-inputs` global options
+- [Wiki CLI](Wiki_CLI.md#global-options) — `-c` and `--wiki-inputs` global options
 - [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity checks
 - [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL

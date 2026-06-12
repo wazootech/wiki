@@ -1,24 +1,24 @@
 ---
 type: TechArticle
 headline: Style guide
-description: Canonical rules for vault filenames, links, prose, frontmatter, shapes, and SPARQL blocks.
+description: Canonical rules for wiki filenames, links, prose, frontmatter, shapes, and SPARQL blocks.
 ---
 
 # Style guide
 
-This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) vault. [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) wiki. [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
-In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate vault-authoring prose here—link here instead.
+In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate wiki-authoring prose here—link here instead.
 
 ## File layout
 
-- Put pages under directories listed in `vault.inputs` (usually `wiki/`).
-- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `vault.filename_pattern`.
+- Put pages under directories listed in `wiki.inputs` (usually `wiki/`).
+- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `wiki.filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
 
-Configure `vault.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md) to match your vault's naming convention. This documentation vault uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
+Configure `wiki.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md) to match your wiki's naming convention. This documentation wiki uses `[A-Za-z0-9_()-]+\.md` (Wikipedia-style, full filename match).
 
 **Enforcer:** `lint.filename_pattern` (warning by default).
 
@@ -87,15 +87,15 @@ When writing `&lt;!-- sparql:start --&gt;` blocks or ad-hoc `wiki query` command
 - **SoftwareApplication** — query `schema:name` and `schema:description`.
 - **SHACL shapes** — query `rdfs:label` and `rdfs:comment` on shape documents.
 - **Types** — use `rdf:type` with full URIs or configured prefixes (`schema:`, `wiki:`, `sh:`).
-- **Inference** — omit `--no-inference` in vault blocks unless you intentionally want raw asserted triples only.
+- **Inference** — omit `--no-inference` in sparql blocks unless you intentionally want raw asserted triples only.
 
 ## SHACL shapes
 
-Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this vault). Shapes in the vault are loaded into the validation graph; [Wiki Subcommand check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
+Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this wiki). Shapes in the wiki are loaded into the validation graph; [Wiki Subcommand check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
 
 ## Internal links
 
-Link to other vault pages with standard Markdown links. Use the page stem (filename without `.md`, case preserved), for example `Page_Name.md` or `Display text` pointing at `Page_Name.md`.
+Link to other wiki pages with standard Markdown links. Use the page stem (filename without `.md`, case preserved), for example `Page_Name.md` or `Display text` pointing at `Page_Name.md`.
 
 GFM relative links to `.md` files are also accepted and resolve to the same routes.
 
@@ -111,7 +111,7 @@ All internal links must resolve to existing documents in the wiki.
 
 **Enforcer:** `lint.broken_links` (warning by default).
 
-Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in vault prose.
+Use Markdown links for all internal and external URLs. Do not mix wikilinks (`[[Page]]`) with Markdown links in wiki prose.
 
 Markdown links are the default (`link.style: markdown` in [wiki.yaml](Wiki_Configuration.md)). `wiki link --apply` inserts `[display](Page_Name.md)` links. `wiki lint` reports wikilinks in body prose via `lint.link_style` (warning by default).
 
@@ -128,11 +128,11 @@ Use Markdown links for external URLs. When both exist, list the normative spec f
 - [HTML — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTML)
 ```
 
-W3C-only topics need only the spec link. Keep `## Related` for internal vault navigation.
+W3C-only topics need only the spec link. Keep `## Related` for internal wiki navigation.
 
 ## Active database summary
 
-The table below queries the active graph to list all distinct classes currently instantiated in your vault:
+The table below queries the active graph to list all distinct classes currently instantiated in your wiki:
 
 <!-- sparql:start -->
 
@@ -170,4 +170,4 @@ For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
 - [Wiki Subcommand render](Wiki_Subcommand_render.md) — inline SPARQL tables
 - [Wiki Subcommand export](Wiki_Subcommand_export.md) — dump frontmatter as RDF
-- [Design Philosophies](Design_Philosophies.md) — CLI output conventions (not vault prose)
+- [Design Philosophies](Design_Philosophies.md) — CLI output conventions (not wiki prose)

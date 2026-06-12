@@ -6,7 +6,7 @@ description: Update inline SPARQL result tables in markdown files.
 
 # `wiki render`
 
-Find `&lt;!-- sparql:start --&gt;` ... `&lt;!-- sparql:end --&gt;` regions in markdown, run the embedded query against the vault graph, and rewrite the table (or `(no results)`) in place.
+Find `&lt;!-- sparql:start --&gt;` ... `&lt;!-- sparql:end --&gt;` regions in markdown, run the embedded query against the wiki graph, and rewrite the table (or `(no results)`) in place.
 
 Silent on success by default. See [Design Philosophies](Design_Philosophies.md).
 
@@ -26,14 +26,14 @@ wiki render --cache
 
 ## Options
 
-| Flag              | Description                                                                             |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| `FILE...`         | Optional `.md` paths; otherwise entire vault (shell globs expand to multiple FILE args) |
-| `--check`         | Dry-run; exit 1 if any block is stale                                                   |
-| `--no-inference`  | Skip OWL-RL                                                                             |
-| `--reload`        | Rebuild graph before rendering                                                          |
-| `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes                |
-| `-v`, `--verbose` | Print update counts                                                                     |
+| Flag              | Description                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| `FILE...`         | Optional `.md` paths; otherwise entire wiki (shell globs expand to multiple FILE args) |
+| `--check`         | Dry-run; exit 1 if any block is stale                                                  |
+| `--no-inference`  | Skip OWL-RL                                                                            |
+| `--reload`        | Rebuild graph before rendering                                                         |
+| `--cache`         | Persist a warm graph under `.wiki/cache/` for reuse across new processes               |
+| `-v`, `--verbose` | Print update counts                                                                    |
 
 ## Block format
 

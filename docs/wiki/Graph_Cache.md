@@ -6,7 +6,7 @@ description: In-process RDF graph reuse plus optional on-disk warm-start across 
 
 # Graph cache
 
-Each `wiki` process builds the vault RDF graph **once** (unless you pass `--reload`) and reuses it for:
+Each `wiki` process builds the wiki RDF graph **once** (unless you pass `--reload`) and reuses it for:
 
 - every [Wiki Subcommand query](Wiki_Subcommand_query.md) in that process
 - every SPARQL block in [Wiki Subcommand render](Wiki_Subcommand_render.md)
@@ -18,7 +18,7 @@ OWL-RL expansion runs when inference is enabled (default for most commands; use 
 
 - By default, a new shell still starts cold.
 - Pass `--cache` on [Wiki Subcommand query](Wiki_Subcommand_query.md), [Wiki Subcommand render](Wiki_Subcommand_render.md), or `wiki build --render` to persist a warm graph under `.wiki/cache/`.
-- The persisted graph is reused only when the vault fingerprint still matches.
+- The persisted graph is reused only when the wiki fingerprint still matches.
 - `--reload` forces a fresh build and refreshes the current cache entry.
 
 ## Long-lived workflows
@@ -29,8 +29,8 @@ OWL-RL expansion runs when inference is enabled (default for most commands; use 
 
 - In-process reuse is still the default and simplest model.
 - `--cache` helps repeated one-shot commands across fresh shells.
-- The disk cache is invalidated automatically on vault or config changes.
-- `.wiki/cache/` is excluded from vault fingerprinting so cache artifacts do not invalidate themselves.
+- The disk cache is invalidated automatically on wiki or config changes.
+- `.wiki/cache/` is excluded from wiki fingerprinting so cache artifacts do not invalidate themselves.
 
 ## CI tips
 

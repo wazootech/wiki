@@ -6,7 +6,7 @@ description: Local HTTP server for live HTML preview and optional read-only SPAR
 
 # `wiki serve`
 
-Start a development server that renders vault pages on demand.
+Start a development server that renders wiki pages on demand.
 
 ## Usage
 

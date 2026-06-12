@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki-best-practices agent skill
-description: Audit a vault with fmt, lint, check, and render in CI order.
+description: Audit a wiki with fmt, lint, check, and render in CI order.
 ---
 
 # wiki-best-practices agent skill
 
-The **wiki-best-practices** skill audits a Wiki CLI vault for CI-ready hygiene: run `fmt --check`, `lint --strict`, `check --strict`, and `render --check` in order, interpret `wiki.yaml`, and spot-check [Style Guide](Style_Guide.md) conventions.
+The **wiki-best-practices** skill audits a Wiki CLI wiki for CI-ready hygiene: run `fmt --check`, `lint --strict`, `check --strict`, and `render --check` in order, interpret `wiki.yaml`, and spot-check [Style Guide](Style_Guide.md) conventions.
 
 Canonical skill file: [`skills/wiki-best-practices/SKILL.md`](../../skills/wiki-best-practices/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Includes [`skills/wiki-best-practices/scripts/audit.sh`](../../skills/wiki-best-practices/scripts/audit.sh) for the strict pipeline.
 
@@ -20,7 +20,7 @@ npx skills add wazootech/wiki@wiki-best-practices -g -y
 
 ## When to use it
 
-- Vault audit before a PR
+- Wiki audit before a PR
 - `check` or `lint` failures, broken links, or `wiki.yaml` review
 - Deploy alignment with [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md)
 
@@ -32,7 +32,7 @@ From a directory containing `wiki.yaml`:
 bash skills/wiki-best-practices/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
-In this repository: `-c docs/wiki.yaml`. Append vault file paths to scope fmt, lint, and check to changed pages.
+In this repository: `-c docs/wiki.yaml`. Append wiki file paths to scope fmt, lint, and check to changed pages.
 
 Manual equivalent:
 
@@ -51,7 +51,7 @@ wiki -c path/to/wiki.yaml render --check
 | `lint:`  | `wiki lint`  | Conventions — links, filenames, headings |
 | `check:` | `wiki check` | Integrity — SHACL, routes, layouts       |
 
-Never edit vault files unless the user asks. Suggest `wiki fmt`, `wiki link --fix-broken`, or `wiki link --apply` as separate repair steps ([Design Philosophies](Design_Philosophies.md)).
+Never edit wiki files unless the user asks. Suggest `wiki fmt`, `wiki link --fix-broken`, or `wiki link --apply` as separate repair steps ([Design Philosophies](Design_Philosophies.md)).
 
 ## Related
 

@@ -1,4 +1,4 @@
-"""Build in-memory WikiSite from vault documents."""
+"""Build in-memory WikiSite from wiki documents."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from ..links import is_external_link
 from ..paths import iter_document_files, route_for_document_file
 from ..parser import split_document_body
 from ..schemas.site import VirtualPage, WikiSite
-from ..vault_links import LinkIndex
+from ..wiki_links import LinkIndex
 from .markdown import (
     extract_outline,
     extract_title,
@@ -28,7 +28,7 @@ def build_site(
         config = input_dirs
     else:
         dirs_arg = [input_dirs] if isinstance(input_dirs, Path) else input_dirs
-        config = Config.for_root(Path.cwd(), vault={"inputs": [str(p) for p in dirs_arg]})
+        config = Config.for_root(Path.cwd(), wiki={"inputs": [str(p) for p in dirs_arg]})
     resolved_base_url = config.site.base_url if base_url is None else base_url
     resolved_url_style = config.site.url_style if url_style is None else url_style
     pages: list[VirtualPage] = []

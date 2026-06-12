@@ -19,7 +19,7 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 |                          | [Wiki CLI](Wiki_CLI.md)                         | [Supermemory SMFS](Supermemory_SMFS.md)      | [Letta MemFS](Letta_MemFS.md)               |
 | ------------------------ | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
 | **Metaphor**             | Semantic markdown **wiki** / codebase           | Cloud container as **mount** or virtual bash | **Git repo** of memory markdown             |
-| **Authority**            | Your vault on disk                              | Supermemory API                              | Local Git (+ Letta Cloud for API agents)    |
+| **Authority**            | Your wiki on disk                               | Supermemory API                              | Local Git (+ Letta Cloud for API agents)    |
 | **Structured semantics** | YAML-LD, [SHACL](SHACL.md), [SPARQL](SPARQL.md) | Memory paths + cloud graph                   | `description` frontmatter; optional folders |
 | **Hot context**          | Agent chooses pages to open                     | `profile.md` + semantic grep                 | `system/` loaded every turn                 |
 | **Search**               | SPARQL, link graph, `wiki query`                | Semantic `grep` (literal with flags)         | Tree + on-demand file read                  |
@@ -29,7 +29,7 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 
 ### When to use which
 
-**[Wiki CLI](Wiki_CLI.md)** — You want a **local-first, explicit, interlinked vault** that doubles as documentation: [Declarative Knowledge](Declarative_Knowledge.md) in frontmatter, [Procedural Knowledge](Procedural_Knowledge.md) in `wiki check` / `wiki render`, optional [Retrieval Augmented Generation](Retrieval_Augmented_Generation.md)-style synthesis via SPARQL instead of opaque embeddings. Fits [Farzapedia](Farzapedia.md)-style gardens with machine-checkable structure.
+**[Wiki CLI](Wiki_CLI.md)** — You want a **local-first, explicit, interlinked wiki** that doubles as documentation: [Declarative Knowledge](Declarative_Knowledge.md) in frontmatter, [Procedural Knowledge](Procedural_Knowledge.md) in `wiki check` / `wiki render`, optional [Retrieval Augmented Generation](Retrieval_Augmented_Generation.md)-style synthesis via SPARQL instead of opaque embeddings. Fits [Farzapedia](Farzapedia.md)-style gardens with machine-checkable structure.
 
 **[Supermemory SMFS](Supermemory_SMFS.md)** — You need **scale, semantic recall, and integrations** (documents, images, Slack, Notion, etc.) with minimal agent onboarding: mount `agent_memory/` or drop in `@supermemory/bash` for serverless. Accept cloud authority and background graph maintenance.
 
@@ -37,10 +37,10 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 
 ## Complementary use
 
-These are not always mutually exclusive. A team might maintain a published **[Wiki CLI](Wiki_CLI.md)** vault for product knowledge while a Letta agent keeps **private MemFS** notes, or mount **SMFS** for ingested corpora that feed summaries written into the wiki. The [Wiki CLI](Wiki_CLI.md)’s strength is **shared, validated, link-stable markdown**; SMFS and MemFS optimize **per-agent runtime memory**.
+These are not always mutually exclusive. A team might maintain a published **[Wiki CLI](Wiki_CLI.md)** wiki for product knowledge while a Letta agent keeps **private MemFS** notes, or mount **SMFS** for ingested corpora that feed summaries written into the wiki. The [Wiki CLI](Wiki_CLI.md)’s strength is **shared, validated, link-stable markdown**; SMFS and MemFS optimize **per-agent runtime memory**.
 
 ## Related pages
 
 - [LLM Wiki](LLM_Wiki.md) — pattern origins (Andrej Karpathy, Farza Majeed)
 - [Second Brain](Second_Brain.md) — PKM goals
-- [Style Guide](Style_Guide.md) — conventions for this vault
+- [Style Guide](Style_Guide.md) — conventions for this wiki

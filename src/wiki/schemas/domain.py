@@ -1,4 +1,4 @@
-"""Shared domain DTOs for vault paths, links, and audit issues."""
+"""Shared domain DTOs for wiki paths, links, and audit issues."""
 
 from __future__ import annotations
 

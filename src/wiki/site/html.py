@@ -369,7 +369,7 @@ def _build_metadata_panel_html(page: VirtualPage, site: WikiSite, selected_view:
     if not page.frontmatter:
         return ""
 
-    page_config = site.config or Config.for_root(Path.cwd(), vault={"inputs": []})
+    page_config = site.config or Config.for_root(Path.cwd(), wiki={"inputs": []})
     view_group_id = _metadata_view_dom_id(page)
     radios_and_labels: list[str] = []
     panels: list[str] = []

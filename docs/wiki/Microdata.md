@@ -21,7 +21,7 @@ The [Wiki CLI](Wiki_CLI.md) extracts this format directly from wiki documents in
   <meta itemprop="schema:description" content="A practical introduction to structuring linked metadata directly in markup." />
   <div itemprop="schema:about" itemscope itemtype="schema:SoftwareApplication">
     <span itemprop="schema:name">Wiki CLI</span>
-    (<span itemprop="schema:description">A semantic command-line companion for markdown vaults</span>)
+    (<span itemprop="schema:description">A semantic command-line companion for markdown wikis</span>)
     supports extraction via BeautifulSoup.
   </div>
 </div>

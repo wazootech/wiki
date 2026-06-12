@@ -1,4 +1,4 @@
-﻿"""Tests for the wiki serve subcommand."""
+"""Tests for the wiki serve subcommand."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from wiki.serve import (
     _watch_for_changes,
     build_site,
     create_server,
-    refresh_vault,
+    refresh_wiki,
     run_server,
 )
 
@@ -72,7 +72,7 @@ _METADATA_TEMPLATE = """<!DOCTYPE html>
 
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
     port = _free_port()
-    config = Config(vault={"inputs": [wiki_dir]}, config_root=wiki_dir)
+    config = Config(wiki={"inputs": [wiki_dir]}, config_root=wiki_dir)
     server = create_server(config, host="127.0.0.1", port=port)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
@@ -94,7 +94,7 @@ def _serve_with_template(wiki_dir: Path, template: str = _RICH_TEMPLATE) -> Gene
     template_path = wiki_dir / "test_shell.html"
     template_path.write_text(template, encoding="utf-8")
     config = Config(
-        vault={"inputs": [wiki_dir]},
+        wiki={"inputs": [wiki_dir]},
         site={"layout": template_path},
         config_root=wiki_dir,
     )
@@ -164,7 +164,7 @@ class TestServe(unittest.TestCase):
 
     def test_index_links_use_config_file_url_style(self) -> None:
         self._write("hello-world.md", "# Hello World\n\nSome content.")
-        config = Config(vault={"inputs": [self.wiki_dir]}, site={"url_style": "file"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, site={"url_style": "file"}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -370,7 +370,7 @@ class TestServe(unittest.TestCase):
         self.assertIn("[default: 127.0.0.1]", result.output)
         self.assertIn("--site-base-url", result.output)
 
-    def test_refresh_vault_renders_sparql_and_builds_site(self) -> None:
+    def test_refresh_wiki_renders_sparql_and_builds_site(self) -> None:
         source = """---
 type: Person
 givenName: Gregory
@@ -383,16 +383,16 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 """
         page = self.wiki_dir / "gregory.md"
         page.write_text(source, encoding="utf-8")
-        config = Config(vault={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir)
 
-        site = refresh_vault(config, changed_paths={page})
+        site = refresh_wiki(config, changed_paths={page})
 
         self.assertRegex(page.read_text(encoding="utf-8"), r"\| givenName\s+\|")
         self.assertGreater(len(site.pages), 0)
 
     def test_sparql_endpoint_get_service_description_turtle(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -447,7 +447,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_get_service_description_rdf_xml(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -474,7 +474,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_get_select_json(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -501,7 +501,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_post_construct_turtle(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -538,7 +538,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_sparql_endpoint_can_be_disabled(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
         port = _free_port()
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": False}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": False}, config_root=self.wiki_dir)
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
         t.start()
@@ -564,7 +564,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
     def test_sparql_endpoint_custom_path(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
         port = _free_port()
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/sparql"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/sparql"}, config_root=self.wiki_dir)
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
         t.start()
@@ -589,7 +589,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_rejects_update_queries(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -623,7 +623,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_allows_literals_with_update_keywords(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Delete\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True}, config_root=self.wiki_dir)
         port = _free_port()
         server = create_server(config, host="127.0.0.1", port=port)
         t = threading.Thread(target=server.serve_forever, daemon=True)
@@ -653,25 +653,25 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_sparql_endpoint_invalid_root_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/"}, config_root=self.wiki_dir)
         with self.assertRaisesRegex(ValueError, "shadow the entire server"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_base_url_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki"}, config_root=self.wiki_dir)
         with self.assertRaisesRegex(ValueError, "collides with page routes"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_page_subpath_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki/foo"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki/foo"}, config_root=self.wiki_dir)
         with self.assertRaisesRegex(ValueError, "collides with page routes"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
     def test_sparql_endpoint_invalid_watch_path_rejected(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")
-        config = Config(vault={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki/__watch"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, sparql_service={"enabled": True, "path": "/wiki/__watch"}, config_root=self.wiki_dir)
         with self.assertRaisesRegex(ValueError, "collides with the watch endpoint"):
             create_server(config, host="127.0.0.1", port=_free_port())
 
@@ -697,9 +697,9 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
             return state
 
         refreshed_sites = [object(), object()]
-        with patch("wiki.serve.refresh_vault", side_effect=refreshed_sites) as refresh_mock, patch("wiki.serve.time.sleep", return_value=None):
+        with patch("wiki.serve.refresh_wiki", side_effect=refreshed_sites) as refresh_mock, patch("wiki.serve.time.sleep", return_value=None):
             _watch_for_changes(
-                Config(vault={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir),
+                Config(wiki={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir),
                 watch_dirs=watch_dirs,
                 base_url="/wiki",
                 url_style="dir",
@@ -730,7 +730,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.server_close_called = True
 
         fake_server = FakeServer()
-        config = Config(vault={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, config_root=self.wiki_dir)
 
         with patch("wiki.serve.create_server", return_value=fake_server):
             run_server(config)
@@ -740,7 +740,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
     def test_serve_does_not_mutate_loaded_config_site_overrides(self) -> None:
         runner = CliRunner()
-        config = Config(vault={"inputs": [self.wiki_dir]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=self.wiki_dir)
+        config = Config(wiki={"inputs": [self.wiki_dir]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=self.wiki_dir)
 
         with patch("wiki.cli.Config.load", return_value=config), patch("wiki.serve.run_server") as run_server_mock:
             result = runner.invoke(

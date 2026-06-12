@@ -32,7 +32,7 @@ Developer **Farza** (founder of buildspace) created [Farzapedia](Farzapedia.md) 
 
 - **The Takeaway**: [Farzapedia](Farzapedia.md) demonstrated that an LLM can act as an objective, disciplined "gardener" of a human's mind, creating a private, local, and navigably explicit knowledge base that can be queried by any downstream AI.
 
-## Integrating the LLM Wiki in this vault
+## Integrating the LLM Wiki in this wiki
 
 This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
 
