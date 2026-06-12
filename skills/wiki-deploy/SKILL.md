@@ -41,7 +41,8 @@ Do **not** (common agent mistakes):
 3. Use `peaceiris/actions-gh-pages` or any action that pushes static files to a branch
 4. Set `publish_dir` or artifact `path` to `_site` when `site.base_url` is non-empty (e.g. `/wiki` → **`_site/wiki`**)
 5. Run `uv sync` / `uv run wiki` without `pyproject.toml` + `uv.lock` (standalone wikis → **pip install** only)
-6. Omit `--site-base-url` in CI — repeat `site.base_url` in the workflow even when it is already in `wiki.yaml`
+6. Run `uv pip install` on standalone repos without `uv venv` or `--system` — use the pip template instead (CI error: “No virtual environment found”)
+7. Omit `--site-base-url` in CI — repeat `site.base_url` in the workflow even when it is already in `wiki.yaml`
 
 Recommend `_site/` in `.gitignore` when build output is not already ignored.
 
@@ -187,6 +188,7 @@ Do not run `wiki serve` or open PRs unless the user asks.
 | Broken asset links | `--site-base-url` in CI must match `site.base_url` in `wiki.yaml` |
 | Build fails in CI | Run same `check` / `lint` / `build` locally with `-v`; fix wiki before deploy |
 | `uv sync` fails in CI | Repo has no `pyproject.toml` — use pip template instead |
+| `uv pip install` / no venv in CI | Standalone repo — drop `setup-uv`; use `pip install wazootech-wiki` and bare `wiki` |
 | Wrong namespace IRIs | `graph.context.wiki` in `wiki.yaml` should match the public site URL (often set at `wiki init --repo`) |
 
 ## References

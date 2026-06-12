@@ -44,6 +44,7 @@ When using `upload-pages-artifact` and `deploy-pages`:
 - Do not use `peaceiris/actions-gh-pages` or push to a `gh-pages` branch for this pattern
 - Do not set artifact `path` to `_site` when `site.base_url` is `/wiki` — upload `_site/wiki` instead
 - Do not run `uv sync` in CI unless the repo has `pyproject.toml` and `uv.lock`
+- Do not use `uv pip install` on standalone wikis without `uv venv` or `--system` — use `pip install wazootech-wiki` instead
 
 Verify Pages is wired to Actions: `gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'` should show `build_type: workflow`.
 

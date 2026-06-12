@@ -47,7 +47,15 @@ If it fails:
 
 ## Workflow (CLI present)
 
-Ask **one decision at a time** with a short explainer. Prefer **flags** over interactive `wiki init` prompts (stdin blocks agents).
+Prefer **flags** over interactive `wiki init` prompts (stdin blocks agents). Ask **one decision at a time** for destructive or ambiguous choices (`--force`, overwrite README). Batch optional preferences when defaults are fine.
+
+### Infer before asking
+
+When context already supplies values, **do not re-prompt**:
+
+- **`--repo owner/repo`** — from a GitHub repo attachment, `gh repo view --json nameWithOwner`, or `git remote get-url origin` (parse `github.com:owner/repo` or `github.com/owner/repo.git`)
+- **Link style** — default to markdown (omit `--link-style`) unless the user asks for Obsidian wikilinks
+- **Theme color, inputs dir, URL style** — skip unless the user wants customization
 
 ### Choose mode
 
@@ -58,6 +66,8 @@ Ask **one decision at a time** with a short explainer. Prefer **flags** over int
 
 1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory** (`wiki.yaml`, `README.md`, `wiki/`, `layouts/`).
 2. **Init options** — Run `wiki init --help` (same resolved `wiki` command as above) and map the user’s answers to flags from the output. Prefer flags over bare `wiki init` — stdin prompts block agents.
+
+**Optional preferences (one turn):** If not already inferred, ask link style (markdown vs Obsidian) and whether they want a custom site display name (`--site-manifest-name`). Only ask about theme color, inputs directory, or other flags when the user wants to customize.
 
 | Topic | When to ask | Flag |
 | ----- | ----------- | ---- |
@@ -126,6 +136,8 @@ With user approval, recommend:
 ## Clean exit
 
 Summarize: workspace path, init flags used, wizard edits (if any). Do not suggest daily commands (`check`, `lint`, `serve`) unless the user asks.
+
+For GitHub Pages CI, the **wiki-deploy** skill is a separate step when they are ready — it is not part of scaffolding.
 
 **Do not** run `wiki check`, `wiki lint`, or `wiki serve` unless the user asks.
 

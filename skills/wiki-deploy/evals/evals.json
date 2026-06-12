@@ -49,6 +49,18 @@
         "Does not commit _site to main or suggest deploy from a branch",
         "Does not use peaceiris or publish_dir ./_site"
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "Fix CI: uv pip install wazootech-wiki fails with No virtual environment found",
+      "expected_output": "Replace uv pip hybrid with pip template; no setup-uv on standalone wiki.",
+      "files": [],
+      "expectations": [
+        "Recommends pip install wazootech-wiki or pip workflow template",
+        "Does not use uv pip install without uv venv or pyproject monorepo",
+        "Does not keep astral-sh/setup-uv for standalone wiki repos",
+        "Mentions No virtual environment found or equivalent uv pip footgun"
+      ]
     }
   ]
 }

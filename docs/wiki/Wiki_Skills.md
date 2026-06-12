@@ -32,6 +32,16 @@ npx skills add wazootech/wiki --list
 
 Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install into the current project only (`.agents/skills/`). `-y` skips confirmation prompts.
 
+### Refresh after upgrades
+
+When wiki-cli ships skill fixes (deploy templates, init guidance), re-run:
+
+```bash
+npx skills add wazootech/wiki --skill '*' -g -y
+```
+
+Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
+
 | Skill               | Install                                                   | Reference                                                 |
 | ------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
 | wiki-install        | `npx skills add wazootech/wiki@wiki-install -g -y`        | [Wiki Skill install](Wiki_Skill_install.md)               |

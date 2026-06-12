@@ -33,9 +33,11 @@
 
 ### Changed
 
-- `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance
+- `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
 - `wiki-best-practices` skill — portable audit script paths, deploy audit red flags, modularity boundary with wiki-deploy
-- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks
+- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS
+- `wiki-deploy` skill — forbid `uv pip install` without venv on standalone repos; eval for CI “No virtual environment found” footgun
+- [Getting Started](docs/wiki/Getting_Started.md) and [Wiki Skills](docs/wiki/Wiki_Skills.md) — refresh agent skills after wiki-cli upgrades; avoid committing stale `.agents/skills/`
 - `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
 - `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 

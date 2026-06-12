@@ -74,6 +74,8 @@ If `pip install` fails:
 3. Optional isolated install: `pipx install wazootech-wiki` (when pipx is available)
 4. Fallback: standalone binary from [GitHub Releases](https://github.com/wazootech/wiki/releases)
 
+If an IDE-integrated pip or package tool fails but the user approves a terminal install, prefer **`python3 -m pip install wazootech-wiki` in the user’s shell** — especially on macOS with a system or python.org Python where sandboxed agent tools cannot write to site-packages.
+
 ## Do not
 
 - Suggest `wiki init`, creating a workspace, or daily workflow commands as a required next step.
