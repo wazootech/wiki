@@ -1,4 +1,4 @@
-# Canonical shape: .github/workflows/deploy-pages.yml in the wiki-cli repository.
+# Canonical shape: .github/workflows/deploy-pages.yml in the Wiki CLI repository.
 # Substitute CONFIG_PATH, SITE_BASE_URL, and ARTIFACT_PATH when adapting to other monorepos.
 # Requires pyproject.toml + uv.lock with the wiki dependency.
 

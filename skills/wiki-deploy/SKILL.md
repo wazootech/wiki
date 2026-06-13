@@ -19,7 +19,7 @@ This skill **only** sets up GitHub Pages deployment (workflow + config alignment
 
 ## Canonical workflow reference
 
-The **working** deploy workflow in the wiki-cli repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
+The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
 
 | Step | Dogfood value | Why |
 | ---- | ------------- | --- |
@@ -56,7 +56,7 @@ Recommend `_site/` in `.gitignore` when build output is not already ignored.
 
 Prefer `wiki` on PATH when `wiki fmt --help` succeeds (or `fmt` appears in `wiki --help`).
 
-In the **wiki-cli repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
+In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
 
 ```bash
 uv run wiki --help
@@ -74,7 +74,7 @@ wiki --help
 wiki fmt --help
 ```
 
-If either fails, say **deployment requires a current Wiki CLI on PATH** (PyPI: **`wazootech-wiki`**) and **stop**.
+If either fails, say **`wiki` on PATH is required** (install Wiki CLI from PyPI: **`wazootech-wiki`**) and **stop**.
 
 Locate `wiki.yaml` (repo root or ask the user). If absent, say a wiki workspace is required and **stop**.
 

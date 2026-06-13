@@ -8,7 +8,7 @@ description: Scaffold a Wiki CLI workspace with wiki init and a light preference
 
 The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for site name, first page, and light `wiki.yaml` tweaks.
 
-Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Requires a **current** Wiki CLI (`wiki fmt --help` must work) before any init or file edits.
+Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [Wiki CLI](https://github.com/wazootech/wiki) repository. Requires **`wiki` on PATH** (`wiki fmt --help` must work) before any init or file edits.
 
 ## Install
 
@@ -16,7 +16,7 @@ Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/S
 npx skills add wazootech/wiki@wiki-create -g -y
 ```
 
-`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all Wiki CLI skills or list available skills.
 
 ## When to use it
 
@@ -26,7 +26,7 @@ npx skills add wazootech/wiki@wiki-create -g -y
 
 ## Prerequisite
 
-Run `wiki --help` and `wiki fmt --help`. If either fails, state that a current Wiki CLI is required (PyPI package **`wazootech-wiki`**), and **stop** — do not run `wiki init` or name other skills.
+Run `wiki --help` and `wiki fmt --help`. If either fails, state that **`wiki` on PATH is required** (install Wiki CLI from PyPI package **`wazootech-wiki`**), and **stop** — do not run `wiki init` or name other skills.
 
 ## Workflow summary
 

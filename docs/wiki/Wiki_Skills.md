@@ -6,7 +6,7 @@ description: Procedural knowledge for coding agents — install, scaffold, impro
 
 # Wiki CLI agent skills
 
-[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the wiki-cli repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
+[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
 
 Onboarding skills are **independent modules** with no required order. Each completes its job and stops without telling the user to invoke another skill.
 
@@ -23,7 +23,7 @@ Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills
 ```
 
 ```bash
-# All wiki-cli skills (global)
+# All Wiki CLI skills (global)
 npx skills add wazootech/wiki --skill '*' -g -y
 
 # List skills without installing

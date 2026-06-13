@@ -8,7 +8,7 @@ description: Set up GitHub Pages deployment for a Wiki CLI wiki with Actions.
 
 The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.base_url`, add `.github/workflows/deploy-pages.yml`, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions** in repository settings.
 
-Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository.
+Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [Wiki CLI](https://github.com/wazootech/wiki) repository.
 
 Workflow assets (mirror `.github/workflows/deploy-pages.yml` — embed one template in full, substitute `CONFIG_PATH`, `SITE_BASE_URL`, and `ARTIFACT_PATH` only):
 
@@ -22,7 +22,7 @@ Workflow assets (mirror `.github/workflows/deploy-pages.yml` — embed one templ
 npx skills add wazootech/wiki@wiki-deploy -g -y
 ```
 
-`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all Wiki CLI skills or list available skills.
 
 ## When to use it
 

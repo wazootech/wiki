@@ -297,7 +297,7 @@ class TestWikiFmt(unittest.TestCase):
             original = "# Title\n\nSome text  \n"
             file_path.write_text(original, encoding="utf-8")
             config = Config.load(root)
-            self.assertEqual(describe_fmt_source(file_path, config), "wiki-cli fmt defaults")
+            self.assertEqual(describe_fmt_source(file_path, config), "Wiki CLI fmt defaults")
             formatted = format_markdown(original, file_path, config)
             self.assertNotIn("Some text  \n", formatted)
             opts, _ = _resolve_fmt_toml_opts(file_path, config)

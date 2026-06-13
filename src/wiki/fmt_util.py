@@ -79,7 +79,7 @@ def _resolve_fmt_toml_opts(file_path: Path, config: Config) -> tuple[dict[str, A
     if conf_path is not None:
         return dict(toml_opts), str(conf_path)
 
-    return dict(DEFAULT_FMT_OPTS), "wiki-cli fmt defaults"
+    return dict(DEFAULT_FMT_OPTS), "Wiki CLI fmt defaults"
 
 
 def describe_fmt_source(file_path: Path, config: Config) -> str:

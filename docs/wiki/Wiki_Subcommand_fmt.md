@@ -23,7 +23,7 @@ fmt:
 
 Keys and values follow [mdformat configuration](https://mdformat.readthedocs.io/en/stable/users/configuration_file.html). Unknown keys fail at config load; invalid values fail at load or when `wiki fmt` reads TOML.
 
-An empty mapping (`fmt: {}`) is valid and resolves to the same **wiki-cli fmt defaults** as omitting `fmt` when no TOML file applies (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`).
+An empty mapping (`fmt: {}`) is valid and resolves to the same **Wiki CLI fmt defaults** as omitting `fmt` when no TOML file applies (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`).
 
 ### Pointer mode (optional TOML file)
 
@@ -39,11 +39,11 @@ Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for examp
 
 `wiki fmt` stops at the **first** source below. Inline `fmt` always wins — it never merges with a `.mdformat.toml` on disk.
 
-1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses wiki-cli defaults)
+1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses Wiki CLI defaults)
 1. **Pointer** — TOML at the relative path in `fmt:`
 1. **Wiki TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
 1. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
-1. **Defaults** — wiki-cli fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
+1. **Defaults** — Wiki CLI fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `frontmatter` / `wikilink`)
 
 `wiki fmt -v` prints which step matched (for example `Using inline fmt in wiki config.`).
 

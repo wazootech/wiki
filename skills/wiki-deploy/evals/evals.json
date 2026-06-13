@@ -33,7 +33,7 @@
       "expected_output": "States CLI required, stops without creating workflow.",
       "files": [],
       "expectations": [
-        "States Wiki CLI on PATH is required",
+        "States `wiki` on PATH is required",
         "Does not create workflow file when CLI is missing",
         "Does not mention wiki-install skill path by name"
       ]

@@ -32,7 +32,7 @@
       "expected_output": "When CLI missing: states CLI requirement, optional wazootech-wiki one-liner, stops without naming wiki-install or running init.",
       "files": [],
       "expectations": [
-        "States that Wiki CLI on PATH is required when CLI is missing",
+        "States that `wiki` on PATH is required when CLI is missing",
         "Does not run wiki init when CLI is missing",
         "Does not say wiki-install or reference skills/wiki-install path",
         "Does not paste a full step-by-step pip install guide"

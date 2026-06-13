@@ -36,7 +36,7 @@ wiki fmt --help
 
 (or confirm `fmt` appears in `wiki --help` output)
 
-- **Both pass** → confirm briefly, then **Wiki CLI is installed and ready to go.** Exit.
+- **Both pass** → confirm briefly, then **`wiki` is on PATH and ready to go.** Exit.
 - **`--help` passes but `fmt` fails** → stale or wrong `wiki` on PATH; go to **Stale CLI** below (do not say ready-to-go).
 
 ### 2. Install (CLI missing)
@@ -57,7 +57,7 @@ You may offer to run `pip install wazootech-wiki` **only if the user explicitly 
 
 If `wiki upgrade --yes` reports a standalone-binary message (`pip upgrade is not available`), point them to GitHub Releases instead of pip.
 
-**Contributors in the wiki-cli repository** may instead use:
+**Contributors in the Wiki CLI repository** may instead use:
 
 ```bash
 uv pip install -e .
@@ -70,7 +70,7 @@ Use `uv run wiki` only when the current working directory is this checkout and t
 
 After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again.
 
-- **Both pass** → **Wiki CLI is installed and ready to go.** Exit.
+- **Both pass** → **`wiki` is on PATH and ready to go.** Exit.
 - **Failure** → Report the error output. Exit. The user chooses whether to retry, fix their environment, or ask again.
 
 ### 4. Stale CLI (`--help` works, `fmt` missing)

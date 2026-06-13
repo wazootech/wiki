@@ -22,7 +22,7 @@ This skill **only** scaffolds or customizes a workspace. When done, summarize an
 
 Prefer `wiki` on PATH when `wiki fmt --help` succeeds (or `fmt` appears in `wiki --help`).
 
-In the **wiki-cli repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
+In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale (`--help` works but `fmt` fails), try:
 
 ```bash
 uv run wiki --help
@@ -42,7 +42,7 @@ wiki fmt --help
 
 If either fails:
 
-1. Say that **creating a wiki requires a current Wiki CLI on PATH** (package **`wazootech-wiki`**).
+1. Say that **creating a wiki requires `wiki` on PATH** (install Wiki CLI — package **`wazootech-wiki`**).
 2. If `--help` passes but `fmt` fails, note stale or shadowed `wiki` — upgrade/reinstall before init.
 3. **Do not** run `wiki init`, write scaffold files, or paste a step-by-step pip guide.
 4. **Do not** say “use wiki-install” or reference any skill path.

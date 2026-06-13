@@ -1,14 +1,14 @@
 ---
 type: TechArticle
 headline: wiki-install agent skill
-description: Install and verify the Wiki CLI on PATH for agents and contributors.
+description: Install Wiki CLI and verify `wiki` on PATH for agents and contributors.
 ---
 
 # wiki-install agent skill
 
 The **wiki-install** skill is procedural knowledge for coding agents: detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help` and a **`fmt` capability probe**, and exit with a ready-to-go message.
 
-Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install/SKILL.md) in the [wiki-cli](https://github.com/wazootech/wiki) repository. Skills live under `skills/` and are **not** wiki content — do not add that folder to `wiki.inputs`.
+Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install/SKILL.md) in the [Wiki CLI](https://github.com/wazootech/wiki) repository. Skills live under `skills/` and are **not** wiki content — do not add that folder to `wiki.inputs`.
 
 ## Install
 
@@ -16,7 +16,7 @@ Canonical skill file: [`skills/wiki-install/SKILL.md`](../../skills/wiki-install
 npx skills add wazootech/wiki@wiki-install -g -y
 ```
 
-`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all wiki-cli skills or list available skills.
+`-g` installs for all projects; omit `-g` for the current project only. `-y` skips prompts. See [Wiki Skills](Wiki_Skills.md) to install all Wiki CLI skills or list available skills.
 
 ## When to use it
 
@@ -28,10 +28,10 @@ npx skills add wazootech/wiki@wiki-install -g -y
 ## What it does
 
 1. Run `wiki --help`, then `wiki fmt --help` (capability probe).
-2. If both pass, confirm **Wiki CLI is installed and ready to go** and stop.
+2. If both pass, confirm **`wiki` is on PATH and ready to go** and stop.
 3. If missing, give `pip install wazootech-wiki` (run install only with explicit user approval).
 4. If `--help` passes but `fmt` fails, recommend upgrade/reinstall — do not say ready-to-go.
-5. Contributors in the wiki-cli checkout may use `uv pip install -e .` and `uv run wiki --help` instead.
+5. Contributors in the Wiki CLI checkout may use `uv pip install -e .` and `uv run wiki --help` instead.
 6. Re-verify after install; report errors if verification still fails.
 
 ## Modularity
