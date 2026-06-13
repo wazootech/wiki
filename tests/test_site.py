@@ -22,17 +22,17 @@ _FULL_TEST_TEMPLATE = jinja("""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title}</title>
+<title>{page.title}</title>
 </head>
 <body>
-{type_label}
+{page.type_label}
 <article id="article-top">
-{infobox_html}
-{page_content}
+{page.nav.infobox}
+{page.content}
 </article>
-{toc_html}
-{backlinks_html}
-{categories_html}
+{page.nav.toc}
+{page.nav.backlinks}
+{page.nav.categories}
 </body>
 </html>""")
 
@@ -164,7 +164,7 @@ name: Bella Davidson
             layouts.mkdir()
             custom_shell = jinja(
                 """<!DOCTYPE html>
-<html><body><div id="custom-shell">{page_title}{infobox_html}{page_content}</div></body></html>"""
+<html><body><div id="custom-shell">{page.title}{page.nav.infobox}{page.content}</div></body></html>"""
             )
             (layouts / "project.html.j2").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
@@ -590,7 +590,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             html = build_index_html(site, root, default_layout=_full_test_layout(root))
-            self.assertNotIn("{type_label}", html)
+            self.assertNotIn("{page.type_label}", html)
             self.assertNotIn('class="layout-label"', html)
 
     def test_build_index_html_emits_pages_list_with_categories(self) -> None:
@@ -638,7 +638,7 @@ specialty: Diagnostics
                 config_root=root,
             )
             site = build_site(config)
-            html = build_index_html(site, root, default_layout=write_layout(root, "layouts/logo.html.j2", jinja("{logo_svg}")))
+            html = build_index_html(site, root, default_layout=write_layout(root, "layouts/logo.html.j2", jinja("{site.logo_svg}")))
             self.assertIn('stop-color="#6366f1"', html)
 
     def test_build_index_html_emits_theme_color_meta_tags(self) -> None:
@@ -656,8 +656,8 @@ specialty: Diagnostics
                     root,
                     "layouts/theme.html.j2",
                     jinja(
-                        '<meta name="theme-color" content="{site_manifest_theme_color}">'
-                        '<meta name="msapplication-TileColor" content="{site_manifest_theme_color}">'
+                        '<meta name="theme-color" content="{site.manifest.theme_color}">'
+                        '<meta name="msapplication-TileColor" content="{site.manifest.theme_color}">'
                     ),
                 ),
             )
@@ -681,7 +681,7 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/theme_single.html.j2",
-                    jinja('<meta name="theme-color" content="{site_manifest_theme_color}">'),
+                    jinja('<meta name="theme-color" content="{site.manifest.theme_color}">'),
                 ),
             )
             self.assertIn('<meta name="theme-color" content="#6366f1">', html)
@@ -725,7 +725,7 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/manifest.html.j2",
-                    jinja("{site_manifest_url}|{manifest_json}"),
+                    jinja("{site.manifest.url}|{site.manifest.json}"),
                 ),
             )
             self.assertIn("/wiki/manifest.webmanifest", html)

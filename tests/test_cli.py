@@ -470,7 +470,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(default_layout.is_file())
                 expected_layout = load_packaged_default_layout()
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("{{ site_manifest_name }}", expected_layout)
+                self.assertIn("{{ site.manifest.name }}", expected_layout)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(graph_context_wiki="https://wiki.example.org/"),

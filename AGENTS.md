@@ -7,7 +7,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yaml` (`docs/wiki/`). Use *
 ### Product naming
 - **Wiki CLI** — product name in prose (docs, skills, CHANGELOG, user-facing CLI strings).
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — Package name on PyPI and NPM
+- **`wazootech-wiki`** — Package name on PyPI and NPM.
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules

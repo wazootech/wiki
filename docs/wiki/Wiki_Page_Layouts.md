@@ -39,7 +39,9 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 ## Template variables
 
-Layout templates use the variables documented in [Wiki Configuration](Wiki_Configuration.md#page-layout), including `{{ layout_class }}`, `{{ layout_label }}`, `{{ infobox_html }}`, and `{{ page_content }}`. Custom logos and favicons are layout plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
+Layout templates use the variables documented in [Wiki Configuration](Wiki_Configuration.md#page-layout), including `{{ page.layout.class }}`, `{{ page.layout.label }}`, `{{ page.nav.infobox }}`, and `{{ page.content }}`. Custom logos and favicons are layout plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
+
+Layout files are Jinja2 (`.html.j2`). Wiki CLI defines the template **context**; syntax, filters, conditionals, and blocks follow [Jinja](https://jinja.palletsprojects.com/en/stable/templates/).
 
 ## Related
 

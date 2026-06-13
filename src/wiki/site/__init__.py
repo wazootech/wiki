@@ -3,10 +3,13 @@
 from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .build import build_site
 from .html import (
-    DEFAULT_THEME_COLOR,
     build_index_html,
     build_infobox_rows,
     build_page_html,
+)
+from .layout_context import build_layout_context, build_logo_svg
+from .manifest import (
+    DEFAULT_THEME_COLOR,
     build_web_manifest,
     resolved_site_theme_color,
     serialize_web_manifest,
@@ -34,7 +37,8 @@ __all__ = [
     "TocItem",
     "VirtualPage",
     "WikiSite",
-    "build_index_html",
+    "build_layout_context",
+    "build_logo_svg",
     "build_infobox_rows",
     "build_page_html",
     "build_site",

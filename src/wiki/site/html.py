@@ -13,6 +13,8 @@ from markupsafe import Markup
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
+from pygments.lexers import get_lexer_by_name
+from pygments.util import ClassNotFound
 
 from ..config import DEFAULT_URL_STYLE, Config
 from ..format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
@@ -23,7 +25,6 @@ from ..schemas.site import InfoboxRow, VirtualPage, WikiSite
 from .backlinks import build_backlinks_html
 from .build import expand_known_curie
 from .markdown import (
-    INLINE_CSS,
     METADATA_HIDDEN_FIELDS,
     PYGMENTS_FORMATTER,
     _get_page_categories,
@@ -32,180 +33,8 @@ from .markdown import (
     render_copyable_pre,
     render_outline_title,
 )
+from .layout_context import build_layout_context, build_logo_svg
 from .layout_template import get_layout_renderer
-
-_LAYOUT_HTML_KEYS = frozenset(
-    {
-        "inline_css",
-        "logo_svg",
-        "page_content",
-        "layout_label",
-        "type_label",
-        "infobox_html",
-        "toc_html",
-        "backlinks_html",
-        "categories_html",
-        "sidebar_contents_html",
-        "metadata_tool_html",
-        "metadata_tab_html",
-        "metadata_pane_html",
-        "all_pages_json",
-        "current_slug_json",
-        "manifest_json",
-    }
-)
-
-
-def _prepare_layout_context(raw: dict[str, str]) -> dict[str, Markup | str]:
-    prepared: dict[str, Markup | str] = {}
-    for key, value in raw.items():
-        if key in _LAYOUT_HTML_KEYS:
-            prepared[key] = Markup(value)
-        else:
-            prepared[key] = value
-    return prepared
-
-def _logo_letter(site_title: str) -> str:
-    from ..config import DEFAULT_SITE_TITLE
-
-    text = (site_title or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
-    return text[0].upper()
-
-
-_DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
-DEFAULT_THEME_COLOR = _DEFAULT_LOGO_THEME[0]
-
-
-def resolved_site_theme_color(theme_color: str | None) -> str:
-    return theme_color or DEFAULT_THEME_COLOR
-
-
-def _manifest_start_url(config: Config) -> str:
-    manifest = config.site.manifest
-    if manifest.start_url:
-        return manifest.start_url
-    base_url = config.site.base_url or ""
-    return f"{base_url}/" if base_url else "/"
-
-
-def _manifest_icon_src(src: str, base_url: str) -> str:
-    if "://" in src:
-        return src
-    normalized = src.lstrip("/")
-    return f"{base_url}/{normalized}" if base_url else f"/{normalized}"
-
-
-def build_web_manifest(config: Config) -> dict[str, Any]:
-    """Canonical Web App Manifest object for embed and file output."""
-    manifest = config.site.manifest
-    base_url = config.site.base_url or ""
-    doc: dict[str, Any] = {"name": manifest.name}
-
-    if manifest.short_name:
-        doc["short_name"] = manifest.short_name
-    if manifest.description:
-        doc["description"] = manifest.description
-    if manifest.theme_color:
-        doc["theme_color"] = manifest.theme_color
-    if manifest.background_color:
-        doc["background_color"] = manifest.background_color
-    if manifest.display:
-        doc["display"] = manifest.display
-
-    doc["start_url"] = _manifest_start_url(config)
-
-    if manifest.icons:
-        icons: list[dict[str, str]] = []
-        for icon in manifest.icons:
-            entry: dict[str, str] = {"src": _manifest_icon_src(icon.src, base_url)}
-            if icon.sizes:
-                entry["sizes"] = icon.sizes
-            if icon.type:
-                entry["type"] = icon.type
-            if icon.purpose:
-                entry["purpose"] = icon.purpose
-            icons.append(entry)
-        doc["icons"] = icons
-
-    return doc
-
-
-def serialize_web_manifest(config: Config) -> str:
-    return json.dumps(build_web_manifest(config), separators=(",", ":"), ensure_ascii=False)
-
-
-def _manifest_url(base_url: str) -> str:
-    return f"{base_url}/manifest.webmanifest" if base_url else "/manifest.webmanifest"
-
-
-def _site_chrome_context(site: WikiSite, base_url: str) -> dict[str, str]:
-    manifest = site.config.site.manifest
-    site_title = manifest.name
-    theme_color = resolved_site_theme_color(manifest.theme_color)
-    logo_svg = _build_logo_svg(_logo_letter(site_title), manifest.theme_color)
-    return {
-        "logo_svg": Markup(logo_svg),
-        "site_manifest_theme_color": theme_color,
-        "site_manifest_name": site_title,
-        "manifest_json": Markup(serialize_web_manifest(site.config)),
-        "site_manifest_url": _manifest_url(base_url),
-    }
-
-
-def _parse_hex_color(value: str) -> tuple[int, int, int]:
-    normalized = value.lstrip("#")
-    if len(normalized) == 3:
-        normalized = "".join(ch * 2 for ch in normalized)
-    r = int(normalized[0:2], 16)
-    g = int(normalized[2:4], 16)
-    b = int(normalized[4:6], 16)
-    return r, g, b
-
-
-def _format_hex_color(r: int, g: int, b: int) -> str:
-    return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
-
-
-def _logo_theme_colors(theme_color: str | None) -> tuple[str, str, str]:
-    if theme_color is None:
-        return _DEFAULT_LOGO_THEME
-    r, g, b = _parse_hex_color(theme_color)
-    dark = _format_hex_color(int(r * 0.55), int(g * 0.55), int(b * 0.55))
-    light = _format_hex_color(
-        min(255, int(r + (255 - r) * 0.55)),
-        min(255, int(g + (255 - g) * 0.55)),
-        min(255, int(b + (255 - b) * 0.55)),
-    )
-    return theme_color, dark, light
-
-
-def _build_logo_svg(letter: str, theme_color: str | None = None) -> str:
-    glyph = html_module.escape(letter)
-    globe_start, globe_end, grid_accent = _logo_theme_colors(theme_color)
-    return f"""<svg viewBox="0 0 200 200" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="{globe_start}" />
-      <stop offset="100%" stop-color="{globe_end}" />
-    </linearGradient>
-    <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="{grid_accent}" stop-opacity="0.3" />
-    </linearGradient>
-  </defs>
-  <circle cx="100" cy="100" r="80" fill="url(#globeGrad)" />
-  <path d="M 100 20 Q 50 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 150 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="3" />
-  <path d="M 100 20 Q 10 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <path d="M 100 20 Q 190 100 100 180" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" stroke-dasharray="3,3" />
-  <line x1="100" y1="20" x2="100" y2="180" stroke="url(#gridGrad)" stroke-width="2" />
-  <line x1="20" y1="100" x2="180" y2="100" stroke="url(#gridGrad)" stroke-width="2.5" />
-  <path d="M 30 70 Q 100 90 170 70" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 30 130 Q 100 110 170 130" fill="none" stroke="url(#gridGrad)" stroke-width="2" />
-  <path d="M 45 45 Q 100 65 155 45" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <path d="M 45 155 Q 100 135 155 155" fill="none" stroke="url(#gridGrad)" stroke-width="1.5" />
-  <text x="100" y="112" font-family="'Inter', sans-serif" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle" style="letter-spacing: -2px;">{glyph}</text>
-</svg>"""
 
 
 def build_index_html(
@@ -225,40 +54,20 @@ def build_index_html(
             cats_attr = ",".join(cats)
             links_html += f'<li data-categories="{html_module.escape(cats_attr)}"><a href="{page_href(base_url, page.file_slug, url_style)}">{html_module.escape(page.title)}</a></li>\n'
 
-    # All Pages JSON for search and random redirect
-    import json
-    pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
-    pages_json = json.dumps(pages_data, default=str)
-
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
-    context = {
-        "inline_css": INLINE_CSS,
-        "site_base_url": base_url,
-        **_site_chrome_context(site, base_url),
-        "page_title": "All Pages",
-        "body_class": "wiki-index",
-        "page_kind": "index",
-        "site_url_style": url_style,
-        "all_pages_json": pages_json,
-        "current_slug_json": json.dumps(""),
-        "page_content": page_content,
-        "layout_label": "",
-        "type_label": "",
-        "layout_class": "index",
-        "infobox_html": "",
-        "toc_html": "",
-        "backlinks_html": "",
-        "categories_html": "",
-        "sidebar_contents_html": "",
-        "source_markdown": "",
-        "metadata_tool_html": "",
-        "metadata_tab_html": "",
-        "metadata_pane_html": "",
-    }
+    context = build_layout_context(
+        site=site,
+        base_url=base_url,
+        url_style=url_style,
+        content=page_content,
+        body_class="wiki-index",
+        kind="index",
+        layout_class="index",
+    )
 
     renderer = get_layout_renderer(config_root)
-    return renderer.render(default_layout, _prepare_layout_context(context))
+    return renderer.render(default_layout, context)
 
 
 def build_page_html(
@@ -294,11 +103,6 @@ def build_page_html(
     type_label = _type_label(page)
     layout_class = page.layout_stem
 
-    # All Pages JSON for search and random redirect
-    import json
-    pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
-    pages_json = json.dumps(pages_data, default=str)
-
     metadata_mode_html = _build_metadata_panel_html(page, site, selected_view)
     if page.has_frontmatter:
         metadata_tool_html = '<li><a href="#view-metadata-content" onclick="switchTab(\'metadata\'); return false;">View metadata</a></li>'
@@ -315,34 +119,32 @@ def build_page_html(
         metadata_tab_html = ""
         metadata_pane_html = ""
 
-    context = {
-        "inline_css": INLINE_CSS,
-        "site_base_url": base_url,
-        **_site_chrome_context(site, base_url),
-        "page_title": page.title,
-        "body_class": f"wiki-page layout-{layout_class}",
-        "page_kind": "article",
-        "site_url_style": url_style,
-        "all_pages_json": pages_json,
-        "current_slug_json": json.dumps(page.full_slug),
-        "page_content": page.html,
-        "layout_label": layout_label,
-        "type_label": type_label,
-        "layout_class": layout_class,
-        "infobox_html": infobox_html,
-        "toc_html": toc_html,
-        "backlinks_html": bl_html,
-        "categories_html": cats_html,
-        "sidebar_contents_html": sidebar_contents_html,
-        "source_markdown": page.markdown,
-        "metadata_tool_html": metadata_tool_html,
-        "metadata_tab_html": metadata_tab_html,
-        "metadata_pane_html": metadata_pane_html,
-    }
+    context = build_layout_context(
+        site=site,
+        base_url=base_url,
+        url_style=url_style,
+        page=page,
+        content=page.html,
+        body_class=f"wiki-page layout-{layout_class}",
+        kind="article",
+        slug=page.full_slug,
+        layout_class=layout_class,
+        layout_label=layout_label,
+        type_label=type_label,
+        source=page.markdown,
+        nav_infobox=infobox_html,
+        nav_toc=toc_html,
+        nav_backlinks=bl_html,
+        nav_categories=cats_html,
+        nav_sidebar=sidebar_contents_html,
+        metadata_tool=metadata_tool_html,
+        metadata_tab=metadata_tab_html,
+        metadata_pane=metadata_pane_html,
+    )
 
     template_path = page.layout_path if page.layout_path is not None else default_layout
     renderer = get_layout_renderer(config_root)
-    return renderer.render(template_path, _prepare_layout_context(context))
+    return renderer.render(template_path, context)
 
 
 def _build_toc_html(page: VirtualPage, base_url: str, url_style: str) -> str:
@@ -625,4 +427,5 @@ def _type_label(page: VirtualPage) -> str:
     return ""
 
 
+_build_logo_svg = build_logo_svg
 

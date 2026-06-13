@@ -138,11 +138,11 @@ class TestRenderWikiYaml(TestCase):
 
     def test_load_packaged_default_layout(self) -> None:
         rendered = load_packaged_default_layout()
-        self.assertIn("{{ page_title }}", rendered)
-        self.assertIn("{{ site_manifest_name }}", rendered)
+        self.assertIn("{{ page.title }}", rendered)
+        self.assertIn("{{ site.manifest.name }}", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn("<title>{{ page_title }} - {{ site_manifest_name }}</title>", rendered)
-        self.assertIn('placeholder="Search {{ site_manifest_name }}"', rendered)
+        self.assertIn("<title>{{ page.title }} - {{ site.manifest.name }}</title>", rendered)
+        self.assertIn('placeholder="Search {{ site.manifest.name }}"', rendered)
 
     def test_copy_default_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:

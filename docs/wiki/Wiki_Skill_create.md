@@ -30,10 +30,10 @@ Run `wiki --help` and `wiki fmt --help`. If either fails, state that **`wiki` on
 
 ## Workflow summary
 
-| Mode                | Action                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| No `wiki.yaml`      | Phase A: `wiki init` with explicit flags → post-init `check --strict` → Phase B: wizard     |
-| `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                                     |
+| Mode                | Action                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| No `wiki.yaml`      | Phase A: `wiki init` with explicit flags → post-init `check --strict` → Phase B: wizard |
+| `wiki.yaml` present | Wizard-only; no re-init unless the user wants `--force`                                 |
 
 Post-init `check --strict` runs by default after new init; the user may opt out in the same turn (e.g. “skip check”).
 

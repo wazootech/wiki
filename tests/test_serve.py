@@ -42,15 +42,15 @@ _RICH_TEMPLATE = jinja("""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title}</title>
+<title>{page.title}</title>
 </head>
 <body>
-<h1>{page_title}</h1>
-{infobox_html}
-{page_content}
-{toc_html}
-{backlinks_html}
-{categories_html}
+<h1>{page.title}</h1>
+{page.nav.infobox}
+{page.content}
+{page.nav.toc}
+{page.nav.backlinks}
+{page.nav.categories}
 </body>
 </html>""")
 
@@ -60,14 +60,14 @@ _METADATA_TEMPLATE = jinja("""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title}</title>
+<title>{page.title}</title>
 </head>
 <body>
-<h1>{page_title}</h1>
-{metadata_tool_html}
-{metadata_tab_html}
-{metadata_pane_html}
-{page_content}
+<h1>{page.title}</h1>
+{page.metadata.tool}
+{page.metadata.tab}
+{page.metadata.pane}
+{page.content}
 </body>
 </html>""")
 

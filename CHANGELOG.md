@@ -20,7 +20,7 @@
 
 ### Added
 
-- `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`, `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives layout chrome, `{manifest_json}` / `{manifest_url}` placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
+- `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`, `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives layout chrome, `{{ site.manifest.json }}` / `{{ site.manifest.url }}` placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
 - `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
 
 ## Unreleased
@@ -47,6 +47,7 @@
 
 ### Changed (breaking)
 
+- Layout template context uses nested namespaces (`site.*`, `page.*`, `wiki.*`) instead of flat keys (`page_title`, `site_manifest_name`, …); update custom `.html.j2` layouts (see Migration)
 - `wiki-best-practices` agent skill renamed to `wiki-improve` — reinstall with `npx skills add wazootech/wiki@wiki-improve -g -y`; improve-style advisor framing and prioritized findings report; `audit.sh` pipeline unchanged
 - Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
 - Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
@@ -80,6 +81,31 @@
 ### Migration
 
 - Agent skill `wiki-best-practices` → `wiki-improve`: `npx skills add wazootech/wiki@wiki-improve -g -y` (remove stale `wiki-best-practices` from `~/.agents/skills/` or project `.agents/skills/` if present). Wiki doc page renamed to [Wiki Skill improve](docs/wiki/Wiki_Skill_improve.md).
+- **Layout template variables (breaking):** flat keys removed; use nested paths in custom `.html.j2` files:
+
+| Flat (remove) | Nested (use) |
+| --- | --- |
+| `site_base_url` | `site.base_url` |
+| `site_url_style` | `site.url_style` |
+| `site_manifest_name` | `site.manifest.name` |
+| `site_manifest_theme_color` | `site.manifest.theme_color` |
+| `site_manifest_url` | `site.manifest.url` |
+| `manifest_json` | `site.manifest.json` |
+| `logo_svg` | `site.logo_svg` |
+| `inline_css` | `site.inline_css` |
+| `page_title` | `page.title` |
+| `page_content` | `page.content` |
+| `page_kind` | `page.kind` |
+| `body_class` | `page.body_class` |
+| `layout_class` / `layout_label` | `page.layout.class` / `page.layout.label` |
+| `type_label` | `page.type_label` |
+| `infobox_html` / `toc_html` / … | `page.nav.infobox` / `page.nav.toc` / … |
+| `metadata_*_html` | `page.metadata.tool` / `.tab` / `.pane` |
+| `source_markdown` | `page.source` |
+| `all_pages_json` | `wiki.pages_json` |
+| `current_slug_json` | `page.slug_json` (plus new `page.slug` string) |
+
+See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#template-variables).
 
 1. In `wiki:` rename path keys:
    - `input_dirs` → `inputs`
@@ -96,7 +122,7 @@
 5. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
 6. Page layouts:
    - Rename `site.layout` and `wazoo:layout` paths from `*.html` to `*.html.j2`
-   - Replace `{key}` tokens with Jinja `{{ key }}` (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md#page-layout))
+   - Replace flat template keys with nested Jinja paths (`{{ page.title }}`, `{{ site.manifest.name }}`, …; see [Template variables](docs/wiki/Wiki_Configuration.md#template-variables))
 
 ## 0.1.9 — 2026-06-08
 

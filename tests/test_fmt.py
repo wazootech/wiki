@@ -103,7 +103,7 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn("```sparql", formatted)
 
     def test_read_view_type_label_badge(self) -> None:
-        seed_template = jinja("<html><body>{type_label}<article id=\"article-top\">{page_content}</article></body></html>")
+        seed_template = jinja("<html><body>{page.type_label}<article id=\"article-top\">{page.content}</article></body></html>")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

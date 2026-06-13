@@ -187,12 +187,12 @@ class TestWikiBuild(unittest.TestCase):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page_title}</title>
+<title>{page.title}</title>
 </head>
 <body>
-<h1>{page_title}</h1>
-{infobox_html}
-{page_content}
+<h1>{page.title}</h1>
+{page.nav.infobox}
+{page.content}
 </body>
 </html>""")
             (root / "wiki.yaml").write_text(
@@ -248,12 +248,12 @@ name: Bella Davidson
 <head>
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
-<title>{page_title}</title>
+<title>{page.title}</title>
 </head>
 <body>
-<h1>{page_title}</h1>
-{page_content}
-{metadata_pane_html}
+<h1>{page.title}</h1>
+{page.content}
+{page.metadata.pane}
 </body>
 </html>""")
             (root / "wiki.yaml").write_text(
@@ -306,8 +306,8 @@ about: wiki:Alice_Theory
     def test_build_site_block_drives_logo_letter(self) -> None:
         runner = CliRunner()
         template = jinja("""<!DOCTYPE html>
-<html><head><title>{page_title} - {site_manifest_name}</title></head>
-<body>{logo_svg}<span class="logo-text">{site_manifest_name}</span>{page_content}</body></html>""")
+<html><head><title>{page.title} - {site.manifest.name}</title></head>
+<body>{site.logo_svg}<span class="logo-text">{site.manifest.name}</span>{page.content}</body></html>""")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

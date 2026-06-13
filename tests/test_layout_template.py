@@ -27,7 +27,7 @@ class TestLayoutTemplate(unittest.TestCase):
             root = Path(tmpdir)
             layout = root / "layouts" / "default.html.j2"
             layout.parent.mkdir(parents=True)
-            layout.write_text("<html>{{ page_title }}</html>", encoding="utf-8")
+            layout.write_text("<html>{{ page.title }}</html>", encoding="utf-8")
             self.assertTrue(layout_file_is_valid(layout, root))
 
 
