@@ -67,7 +67,7 @@ When context already supplies values, **do not re-prompt**:
 
 ### Phase A — Init
 
-1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory** (`wiki.yaml`, `README.md`, `wiki/`, `layouts/`).
+1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory** (`wiki.yaml`, `README.md`, `wiki/`, `layouts/`, `assets/logo.svg`).
 2. **Init options** — Run `wiki init --help` (same resolved `wiki` command as above) and map the user’s answers to flags from the output. Prefer flags over bare `wiki init` — stdin prompts block agents.
 
 **Optional preferences (one turn):** If not already inferred, ask link style (markdown vs Obsidian) and whether they want a custom site display name (`--site-manifest-name`). Only ask about theme color, inputs directory, or other flags when the user wants to customize.
@@ -134,6 +134,7 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 
 - `wiki.yaml` — wiki, graph, site, lint, fmt defaults
 - `layouts/default.html.j2`
+- `assets/logo.svg`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`
 - `README.md`
 

@@ -671,6 +671,7 @@ def init(
 
     from .init_scaffold import (
         copy_default_layout,
+        copy_default_logo,
         render_wiki_yaml,
         resolve_init_options,
     )
@@ -728,6 +729,7 @@ def init(
         "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
         "## Workspace Layout\n\n"
         "- `wiki.yaml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
+        "- `assets/logo.svg` — Sidebar logo (served via `wiki.assets`).\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
         "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
         "  - `Ethan_Davidson.md` — An example Person document.\n\n"
@@ -786,6 +788,10 @@ def init(
     if force or not default_layout_path.exists():
         copy_default_layout(default_layout_path)
 
+    logo_path = cwd / "assets" / "logo.svg"
+    if force or not logo_path.exists():
+        copy_default_logo(logo_path)
+
     if init_git:
         if shutil.which("git") is None:
             click.echo("Error: git was requested with --git, but no git executable was found on PATH.", err=True)
@@ -797,7 +803,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html.j2."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, assets/logo.svg, and layouts/default.html.j2."
     if init_git:
         message += " Ran git init."
     click.echo(message)

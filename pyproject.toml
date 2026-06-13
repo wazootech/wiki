@@ -35,7 +35,7 @@ wikilink = "wiki.mdformat_wikilink"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = {find = {where = ["src"], include = ["wiki*"]}}
-package-data = {"wiki" = ["templates/*", "templates/schemas/*"]}
+package-data = {"wiki" = ["templates/*", "templates/schemas/*", "templates/assets/*"]}
 
 [dependency-groups]
 standalone = ["pyinstaller>=6.0"]

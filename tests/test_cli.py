@@ -13,7 +13,7 @@ from click.testing import CliRunner
 
 from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
-from wiki.init_scaffold import InitOptions, load_packaged_default_layout, render_wiki_yaml
+from wiki.init_scaffold import InitOptions, load_packaged_default_layout, load_packaged_default_logo, render_wiki_yaml
 
 
 class TestCLI(unittest.TestCase):
@@ -521,11 +521,21 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 # Check site layout is configured and seeded
                 self.assertIn("name: Wiki CLI", config_content)
                 self.assertIn("layout: layouts/default.html.j2", config_content)
+                self.assertIn("assets:", config_content)
+                self.assertIn("- assets", config_content)
                 default_layout = Path("layouts") / "default.html.j2"
                 self.assertTrue(default_layout.is_file())
                 expected_layout = load_packaged_default_layout()
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
+                self.assertIn("/assets/logo.svg", expected_layout)
+                self.assertNotIn("{{ site.logo_svg }}", expected_layout)
                 self.assertIn("{{ site.manifest.name }}", expected_layout)
+
+                default_logo = Path("assets") / "logo.svg"
+                self.assertTrue(default_logo.is_file())
+                expected_logo = load_packaged_default_logo()
+                self.assertEqual(default_logo.read_text(encoding="utf-8"), expected_logo)
+                self.assertIn("<svg", expected_logo)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(graph_context_wiki="https://wiki.example.org/"),

@@ -18,7 +18,9 @@ __all__ = [
     "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
     "copy_default_layout",
+    "copy_default_logo",
     "load_packaged_default_layout",
+    "load_packaged_default_logo",
     "render_wiki_yaml",
     "resolve_init_options",
 ]
@@ -164,6 +166,7 @@ def resolve_init_options(
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
 _DEFAULT_LAYOUT_TEMPLATE = "layout_default.html.j2"
+_DEFAULT_LOGO_TEMPLATE = "assets/logo.svg"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -201,3 +204,14 @@ def copy_default_layout(dest: Path) -> None:
     """Copy the packaged default page layout into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(load_packaged_default_layout(), encoding="utf-8")
+
+
+def load_packaged_default_logo() -> str:
+    """Return the packaged default sidebar logo SVG content."""
+    return files("wiki").joinpath(f"templates/{_DEFAULT_LOGO_TEMPLATE}").read_text(encoding="utf-8")
+
+
+def copy_default_logo(dest: Path) -> None:
+    """Copy the packaged default sidebar logo into a workspace."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(load_packaged_default_logo(), encoding="utf-8")

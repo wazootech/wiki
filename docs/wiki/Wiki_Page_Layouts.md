@@ -20,7 +20,7 @@ site:
   layout: layouts/default.html.j2
 ```
 
-`wiki init` copies `layouts/default.html.j2` from the packaged default layout. To customize CSS, edit the layout HTML or link stylesheets from `wiki.assets`; see [Wiki Configuration](Wiki_Configuration.md#custom-css).
+`wiki init` copies `layouts/default.html.j2` from the packaged default layout. The sidebar logo uses `assets/logo.svg` via `wiki.assets`. To customize CSS, edit the layout HTML or link stylesheets from `wiki.assets`; see [Wiki Configuration](Wiki_Configuration.md#custom-css).
 
 ## `wazoo:layout`
 
