@@ -29,14 +29,13 @@
 
 - Hidden SPARQL queries in inline render blocks — wrap the fenced query in an HTML comment (`<!-- sparql:start` … `-->`) so built pages show only the results table; visible-query syntax is unchanged ([#73](https://github.com/wazootech/wiki/issues/73))
 - JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page schemas; configurable via `check.frontmatter_schema` and `check.missing_schema_ref` ([#71](https://github.com/wazootech/wiki/issues/71))
-- `wiki init` scaffolds `schemas/person.json` and binds it from `Person_Shape.md`
-- Dogfood schema at `docs/schemas/tech-article.json` bound from [Tech Article Shape](docs/wiki/Tech_Article_Shape.md)
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
 - Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
 - `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
 
 ### Changed
 
+- `wiki init` no longer scaffolds starter JSON Schema files — SHACL-only `Person_Shape.md` is the default; add `wazoo:jsonSchema` bindings when you want JSON Schema validation
 - Agent skills — restore `wiki-improve/scripts/audit.sh` (was empty in rename commit); `wiki-install` capability probe (`wiki fmt --help`) catches stale PATH installs; `wiki-create` default-on post-init `check --strict` with opt-out; stale-CLI handling aligned across create/deploy/improve; eval updates
 - `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
 - `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS

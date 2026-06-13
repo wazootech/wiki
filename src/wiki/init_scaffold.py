@@ -18,7 +18,6 @@ __all__ = [
     "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
     "copy_default_layout",
-    "copy_default_person_schema",
     "load_packaged_default_layout",
     "render_wiki_yaml",
     "resolve_init_options",
@@ -165,7 +164,6 @@ def resolve_init_options(
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
 _DEFAULT_LAYOUT_TEMPLATE = "layout_default.html.j2"
-_DEFAULT_PERSON_SCHEMA = "schemas/person.json"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -203,10 +201,3 @@ def copy_default_layout(dest: Path) -> None:
     """Copy the packaged default page layout into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(load_packaged_default_layout(), encoding="utf-8")
-
-
-def copy_default_person_schema(dest: Path) -> None:
-    """Copy the packaged Person JSON Schema into a workspace."""
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    source = files("wiki").joinpath(f"templates/{_DEFAULT_PERSON_SCHEMA}").read_text(encoding="utf-8")
-    dest.write_text(source, encoding="utf-8")

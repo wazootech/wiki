@@ -671,7 +671,6 @@ def init(
 
     from .init_scaffold import (
         copy_default_layout,
-        copy_default_person_schema,
         render_wiki_yaml,
         resolve_init_options,
     )
@@ -730,9 +729,8 @@ def init(
         "## Workspace Layout\n\n"
         "- `wiki.yaml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
-        "  - `Person_Shape.md` — SHACL shape and JSON Schema binding for Person documents.\n"
-        "  - `Ethan_Davidson.md` — An example Person document.\n"
-        "  - `schemas/person.json` — JSON Schema for Person frontmatter.\n\n"
+        "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
+        "  - `Ethan_Davidson.md` — An example Person document.\n\n"
         "## Commands\n\n"
         "- **Check** (integrity: SHACL, JSON Schema, route safety, layout frontmatter):\n"
         "  ```bash\n"
@@ -757,7 +755,6 @@ def init(
         "id: wiki:PersonShape\n"
         "type: sh:NodeShape\n"
         "sh:targetClass: schema:Person\n"
-        "wazoo:jsonSchema: schemas/person.json\n"
         "sh:property:\n"
         "  - sh:path: schema:givenName\n"
         "    sh:datatype: xsd:string\n"
@@ -789,10 +786,6 @@ def init(
     if force or not default_layout_path.exists():
         copy_default_layout(default_layout_path)
 
-    person_schema_path = cwd / "schemas" / "person.json"
-    if force or not person_schema_path.exists():
-        copy_default_person_schema(person_schema_path)
-
     if init_git:
         if shutil.which("git") is None:
             click.echo("Error: git was requested with --git, but no git executable was found on PATH.", err=True)
@@ -804,7 +797,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, schemas/person.json, and layouts/default.html.j2."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html.j2."
     if init_git:
         message += " Ran git init."
     click.echo(message)
