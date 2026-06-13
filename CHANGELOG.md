@@ -27,6 +27,7 @@
 
 ### Added
 
+- Hidden SPARQL queries in inline render blocks — wrap the fenced query in an HTML comment (`<!-- sparql:start` … `-->`) so built pages show only the results table; visible-query syntax is unchanged ([#73](https://github.com/wazootech/wiki/issues/73))
 - JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page schemas; configurable via `check.frontmatter_schema` and `check.missing_schema_ref` ([#71](https://github.com/wazootech/wiki/issues/71))
 - `wiki init` scaffolds `schemas/person.json` and binds it from `Person_Shape.md`
 - Dogfood schema at `docs/schemas/tech-article.json` bound from [Tech Article Shape](docs/wiki/Tech_Article_Shape.md)

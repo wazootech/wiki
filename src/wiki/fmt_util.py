@@ -22,7 +22,7 @@ DEFAULT_FMT_OPTS: dict[str, Any] = {
 }
 
 SPARQL_REGION_RE = re.compile(
-    r"<!--\s*sparql:start\s*-->.*?<!--\s*sparql:end\s*-->",
+    r"<!--\s*sparql:start\b.*?<!--\s*sparql:end\s*-->",
     re.DOTALL | re.IGNORECASE,
 )
 _SPARQL_PLACEHOLDER = "WIKI_FMT_SPARQL_BLOCK_{index}"

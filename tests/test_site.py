@@ -299,6 +299,34 @@ name: Project Atlas
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn('class="highlight"', html)
 
+    def test_render_hidden_sparql_block_omits_query_from_html(self) -> None:
+        markdown = (
+            "<!-- sparql:start\n"
+            "```sparql\nSELECT ?name WHERE { ?person foaf:name ?name }\n```\n"
+            "-->\n\n"
+            "| name |\n| --- |\n| Alice |\n\n"
+            "<!-- sparql:end -->\n"
+        )
+        html = render_wiki_markdown(markdown)
+
+        self.assertIn("Alice", html)
+        self.assertIn("<table>", html)
+        self.assertNotIn("language-sparql", html)
+        self.assertNotIn('class="highlight"', html)
+        self.assertNotIn("<pre data-copy=", html)
+
+    def test_render_visible_sparql_block_shows_query_in_html(self) -> None:
+        markdown = (
+            "<!-- sparql:start -->\n"
+            "```sparql\nSELECT ?name WHERE { ?person foaf:name ?name }\n```\n\n"
+            "| name |\n| --- |\n| Alice |\n\n"
+            "<!-- sparql:end -->\n"
+        )
+        html = render_wiki_markdown(markdown)
+
+        self.assertIn("language-sparql", html)
+        self.assertIn("SELECT ?name", html)
+
     def test_render_copyable_pre_escapes_attribute_text(self) -> None:
         html = render_copyable_pre('line "one"\nline two', "&lt;tag&gt;")
 

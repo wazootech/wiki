@@ -61,6 +61,50 @@ SELECT ?givenName WHERE {
             _, _, stale = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
             self.assertEqual(stale, [])
 
+    def test_render_hidden_query_preserves_comment_structure(self) -> None:
+        """Hidden-query blocks update the table but keep the query inside HTML comments."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            page = wiki_dir / "hidden.md"
+            page.write_text(
+                """---
+type: Person
+givenName: Bob
+familyName: Jones
+---
+<!-- sparql:start
+```sparql
+SELECT ?givenName WHERE {
+  ?s <https://schema.org/givenName> ?givenName .
+  FILTER(STRSTARTS(STR(?s), "https://wiki.example.org/"))
+}
+```
+-->
+
+<!-- sparql:end -->
+""",
+                encoding="utf-8",
+            )
+            config = Config(
+                wiki={"inputs": [wiki_dir]},
+                config_root=wiki_dir,
+                graph={"context": {"wiki": "https://wiki.example.org/"}},
+            )
+            graph = load_graph(config, infer=False)
+
+            render_markdown_files(config, graph, explicit_files=(page,))
+            rendered = page.read_text(encoding="utf-8")
+
+            self.assertIn("<!-- sparql:start\n", rendered)
+            self.assertIn("```sparql\n", rendered)
+            self.assertIn("-->\n\n", rendered)
+            self.assertIn("  ?s <https://schema.org/givenName> ?givenName .", rendered)
+            self.assertRegex(rendered, r"\| givenName\s+\|")
+            self.assertIn("Bob", rendered)
+
+            _, _, stale = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
+            self.assertEqual(stale, [])
+
 
 if __name__ == "__main__":
     unittest.main()
