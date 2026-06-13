@@ -50,7 +50,7 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template) ([Pages demo](https://wazootech.github.io/sparql-service-template/)) | YASGUI demo against exported Turtle or a live `wiki serve` endpoint |
 | [nextjs-template](https://github.com/wazootech/nextjs-template) | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16)) |
-| [mintlify-template](https://github.com/wazootech/mintlify-template) | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31)) |
+| [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template) | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31)) |
 
 
 ## Installation
@@ -431,7 +431,7 @@ knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are Jinja2 templates (`.html.j2`) with the same variable contract (`{{ infobox_html }}`, `{{ page_content }}`, `{{ layout_class }}`, and so on).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are Jinja2 templates (`.html.j2`) with the same variable contract (`{{ page.nav.infobox }}`, `{{ page.content }}`, `{{ page.layout.class }}`, and so on).
 
 Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, and `type` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 

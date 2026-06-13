@@ -94,7 +94,7 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 | [sparql-service-template](https://github.com/wazootech/sparql-service-template)   | YASGUI + sample wiki or live endpoint for exploring wiki RDF                                  |
 | [nextjs-template](https://github.com/wazootech/nextjs-template)                   | OAuth 2.0-protected, Next.js wiki viewer ([#15](https://github.com/wazootech/wiki/issues/15)) |
 | [obsidian-quartz-template](https://github.com/wazootech/obsidian-quartz-template) | Obsidian PKM viewer ([#16](https://github.com/wazootech/wiki/issues/16))                      |
-| [mintlify-template](https://github.com/wazootech/mintlify-template)               | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31))                 |
+| [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template)     | Mintlify/Holocron viewer ([#31](https://github.com/wazootech/wiki/issues/31))                 |
 
 ## Features
 
