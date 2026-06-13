@@ -16,7 +16,7 @@ Four audit/format lanes (aligned with common CLI tooling):
 
 | Lane         | Command      | Config / tool                                                                                                                                                                |
 | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Integrity    | `wiki check` | Always-on SHACL, routes, collisions, layout frontmatter (`check.*`) — **report only**                                                                                        |
+| Integrity    | `wiki check` | Always-on SHACL, JSON Schema frontmatter, routes, collisions, layout frontmatter (`check.*`) — **report only**                                                               |
 | Convention   | `wiki lint`  | `lint.broken_links`, `lint.filename_pattern`, `lint.headings`, `lint.heading_levels`, `lint.duplicate_headings`, `lint.thematic_breaks`, `lint.link_style` — **report only** |
 | Formatting   | `wiki fmt`   | mdformat                                                                                                                                                                     |
 | Link hygiene | `wiki link`  | Optional `link.renames`; `--apply` and `--fix-broken` require explicit flags                                                                                                 |

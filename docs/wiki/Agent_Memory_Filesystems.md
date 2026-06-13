@@ -16,16 +16,16 @@ Traditional chat UIs are largely stateless. These systems let an agent (and ofte
 
 ### Feature matrix
 
-|                          | [Wiki CLI](Wiki_CLI.md)                         | [Supermemory SMFS](Supermemory_SMFS.md)      | [Letta MemFS](Letta_MemFS.md)               |
-| ------------------------ | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
-| **Metaphor**             | Semantic markdown **wiki** / codebase           | Cloud container as **mount** or virtual bash | **Git repo** of memory markdown             |
-| **Authority**            | Your wiki on disk                               | Supermemory API                              | Local Git (+ Letta Cloud for API agents)    |
-| **Structured semantics** | YAML-LD, [SHACL](SHACL.md), [SPARQL](SPARQL.md) | Memory paths + cloud graph                   | `description` frontmatter; optional folders |
-| **Hot context**          | Agent chooses pages to open                     | `profile.md` + semantic grep                 | `system/` loaded every turn                 |
-| **Search**               | SPARQL, link graph, `wiki query`                | Semantic `grep` (literal with flags)         | Tree + on-demand file read                  |
-| **Validation**           | `wiki check` (SHACL + hygiene)                  | Supermemory indexing rules                   | Git + agent discipline                      |
-| **Publishing**           | Static site, RDF export                         | N/A (runtime memory)                         | N/A (agent memory)                          |
-| **Typical user**         | Wiki authors, PKM + semantics                   | Multi-modal, multi-source agents             | Letta Code coding agents                    |
+|                          | [Wiki CLI](Wiki_CLI.md)                                      | [Supermemory SMFS](Supermemory_SMFS.md)      | [Letta MemFS](Letta_MemFS.md)               |
+| ------------------------ | ------------------------------------------------------------ | -------------------------------------------- | ------------------------------------------- |
+| **Metaphor**             | Semantic markdown **wiki** / codebase                        | Cloud container as **mount** or virtual bash | **Git repo** of memory markdown             |
+| **Authority**            | Your wiki on disk                                            | Supermemory API                              | Local Git (+ Letta Cloud for API agents)    |
+| **Structured semantics** | YAML-LD, [SHACL](SHACL.md), JSON Schema, [SPARQL](SPARQL.md) | Memory paths + cloud graph                   | `description` frontmatter; optional folders |
+| **Hot context**          | Agent chooses pages to open                                  | `profile.md` + semantic grep                 | `system/` loaded every turn                 |
+| **Search**               | SPARQL, link graph, `wiki query`                             | Semantic `grep` (literal with flags)         | Tree + on-demand file read                  |
+| **Validation**           | `wiki check` (SHACL, JSON Schema, layout)                    | Supermemory indexing rules                   | Git + agent discipline                      |
+| **Publishing**           | Static site, RDF export                                      | N/A (runtime memory)                         | N/A (agent memory)                          |
+| **Typical user**         | Wiki authors, PKM + semantics                                | Multi-modal, multi-source agents             | Letta Code coding agents                    |
 
 ### When to use which
 

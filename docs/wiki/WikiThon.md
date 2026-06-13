@@ -23,7 +23,7 @@ It rode the same cultural moment as the [LLM Wiki](LLM_Wiki.md) pattern (Andrej 
 
 Participants were asked to build systems that reason over **long context**, **memory**, and **workflows**—not shallow prompt wrappers. The sponsored substrate was [HydraDB](https://docs.hydradb.com/get-started/introduction), a unified context layer for agents (ingest documents and memories, recall ranked context via APIs such as `full_recall`, then ground an LLM on the result).
 
-That complements file-first wikis like those described in [Personal Knowledge](Personal_Knowledge.md): HydraDB emphasizes managed recall and graph-backed context, while the [Wiki CLI](Wiki_CLI.md) supports markdown + RDF + [SHACL](SHACL.md) validation for static, inspectable wikis.
+That complements file-first wikis like those described in [Personal Knowledge](Personal_Knowledge.md): HydraDB emphasizes managed recall and graph-backed context, while the [Wiki CLI](Wiki_CLI.md) supports markdown + RDF + [SHACL](SHACL.md) and JSON Schema validation for static, inspectable wikis.
 
 ## Prizes and community
 

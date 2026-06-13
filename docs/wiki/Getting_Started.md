@@ -33,12 +33,12 @@ wiki init --repo wazootech/wiki
 wiki init --git
 ```
 
-`wiki init` writes `wiki.yaml`, `README.md`, `layouts/` wiki page layouts, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags and `--force` behavior.
+`wiki init` writes `wiki.yaml`, `README.md`, `layouts/`, `schemas/person.json`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags and `--force` behavior.
 
 ## Daily workflow
 
 ```bash
-# Validate integrity (SHACL, routes, layout; silent on success)
+# Validate integrity (SHACL, JSON Schema, routes, layout; silent on success)
 wiki check
 
 # Validate conventions (filename pattern, headings, link style)

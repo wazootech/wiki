@@ -15,7 +15,14 @@ from .format import run_query, process_rdf_format
 from .render import render_markdown_files
 from .parser import document_data_from_path
 from .graph import load_graph, graph_stats
-from .audit import check_shacl_file, merge_results, run_check, run_lint
+from .audit import (
+    _apply_issues,
+    check_frontmatter_schema,
+    check_shacl_file,
+    merge_results,
+    run_check,
+    run_lint,
+)
 from .jqfilter import resolve_path
 from .format_choice import FormatChoice
 from .paths import (
@@ -102,13 +109,15 @@ def _print_check_messages(errors: list[str], warnings: list[str], verbose: bool)
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
 def check(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
-    """Integrity checks: SHACL, routes, collisions, layout (FILE...: SHACL only)."""
+    """Integrity checks: SHACL, JSON Schema, routes, collisions, layout (FILE...: SHACL + JSON Schema)."""
     if files:
         conforms = True
         errors: list[str] = []
         warnings: list[str] = []
 
-        for file in files:
+        resolved_files = select_document_paths(config, files)
+
+        for file in resolved_files:
             res = check_shacl_file(file, config, verbose=verbose)
             if res is None:
                 errors.append(f"No valid document metadata found in {file.name}")
@@ -118,6 +127,18 @@ def check(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) 
                 if not shacl_conforms:
                     conforms = False
                     errors.append(f"SHACL Validation Violation in {file.name}:\n{shacl_text}")
+
+        missing_schema_issues, schema_validation_issues = check_frontmatter_schema(
+            config,
+            file_paths=resolved_files,
+        )
+        schema_results = {"conforms": True, "errors": [], "warnings": []}
+        _apply_issues(schema_results, "missing_schema_ref", missing_schema_issues, config.check)
+        _apply_issues(schema_results, "frontmatter_schema", schema_validation_issues, config.check)
+        if not schema_results["conforms"]:
+            conforms = False
+        errors.extend(schema_results["errors"])
+        warnings.extend(schema_results["warnings"])
 
         if strict and warnings:
             errors.extend(warnings)
@@ -650,6 +671,7 @@ def init(
 
     from .init_scaffold import (
         copy_default_layout,
+        copy_default_person_schema,
         render_wiki_yaml,
         resolve_init_options,
     )
@@ -708,10 +730,11 @@ def init(
         "## Workspace Layout\n\n"
         "- `wiki.yaml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
-        "  - `Person_Shape.md` — Validation shape for Person documents.\n"
-        "  - `Ethan_Davidson.md` — An example Person document.\n\n"
+        "  - `Person_Shape.md` — SHACL shape and JSON Schema binding for Person documents.\n"
+        "  - `Ethan_Davidson.md` — An example Person document.\n"
+        "  - `schemas/person.json` — JSON Schema for Person frontmatter.\n\n"
         "## Commands\n\n"
-        "- **Check** (integrity: SHACL, route safety, layout frontmatter):\n"
+        "- **Check** (integrity: SHACL, JSON Schema, route safety, layout frontmatter):\n"
         "  ```bash\n"
         "  wiki check\n"
         "  ```\n"
@@ -734,6 +757,7 @@ def init(
         "id: wiki:PersonShape\n"
         "type: sh:NodeShape\n"
         "sh:targetClass: schema:Person\n"
+        "wazoo:jsonSchema: schemas/person.json\n"
         "sh:property:\n"
         "  - sh:path: schema:givenName\n"
         "    sh:datatype: xsd:string\n"
@@ -765,6 +789,10 @@ def init(
     if force or not default_layout_path.exists():
         copy_default_layout(default_layout_path)
 
+    person_schema_path = cwd / "schemas" / "person.json"
+    if force or not person_schema_path.exists():
+        copy_default_person_schema(person_schema_path)
+
     if init_git:
         if shutil.which("git") is None:
             click.echo("Error: git was requested with --git, but no git executable was found on PATH.", err=True)
@@ -776,7 +804,7 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, and layouts/default.html.j2."
+    message = "Initialized wiki.yaml, README.md, wiki/ starter files, schemas/person.json, and layouts/default.html.j2."
     if init_git:
         message += " Ran git init."
     click.echo(message)

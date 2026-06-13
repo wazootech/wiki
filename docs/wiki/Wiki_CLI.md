@@ -7,7 +7,7 @@ description: Command-line interface for querying, validating, and publishing sem
 
 # Wiki CLI
 
-This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md), infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
+This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
 
 ```bash
 pip install wazootech-wiki
@@ -30,7 +30,7 @@ See [Getting Started](Getting_Started.md) for a full walkthrough.
 ## What wiki is
 
 - The **compiler / validator / query engine** for Markdown knowledge bases with semantic frontmatter
-- An **OOTB wiki builder** — links, navigation, SHACL checks, SPARQL, and static HTML from a folder of `.md` files
+- An **OOTB wiki builder** — links, navigation, SHACL and JSON Schema checks, SPARQL, and static HTML from a folder of `.md` files
 - A **memory layer** — ingest or watch an existing wiki without owning the editor
 - **Interop-first** — works alongside [Obsidian](Obsidian_Integration.md), [LLM Wiki](LLM_Wiki.md) setups, and any Markdown editor
 
@@ -43,13 +43,13 @@ Adoption path: `wiki init` → `wiki check` → `wiki serve`, then add `lint`, `
 - A **note app clone**, CMS, or authenticated multi-user web product
 - An **auth layer** — local-first CLI and static publish; see deferred scope in [ecosystem templates](#ecosystem-templates) below
 
-Humans and agents keep writing where they already write. `wiki` makes that content **trustworthy** (SHACL + conventions), **searchable** (SPARQL + OWL-RL), and **publishable** (static HTML, JSON-LD, Turtle, optional read-only SPARQL over `wiki serve`).
+Humans and agents keep writing where they already write. `wiki` makes that content **trustworthy** (SHACL, JSON Schema, and conventions), **searchable** (SPARQL + OWL-RL), and **publishable** (static HTML, JSON-LD, Turtle, optional read-only SPARQL over `wiki serve`).
 
 ## Memory layer and ingestion
 
 Rather than owning your editor or data store, the Wiki CLI functions as a **read-only memory layer** over your wiki. It parses, indexes, and queries the Markdown documents on your filesystem without mutating them or locking you into a proprietary format.
 
-- **Ingestion:** The CLI reads YAML/JSON frontmatter and HTML microdata from your files, compiling them into an in-memory RDF graph that can be queried with SPARQL or verified against SHACL shapes.
+- **Ingestion:** The CLI reads YAML/JSON frontmatter and HTML microdata from your files, compiling them into an in-memory RDF graph that can be queried with SPARQL or verified against SHACL shapes and JSON Schema bindings.
 - **Watching:** Running `wiki serve --watch` instructs the CLI to watch the wiki directory. Any edits you make in your preferred editor are immediately processed, updating the graph in the background and keeping your preview server synchronized.
 
 ## Toolchain vs authoring surface
@@ -98,7 +98,7 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 ## Features
 
-- **Check** — SHACL integrity, route safety, layout frontmatter ([Wiki Subcommand check](Wiki_Subcommand_check.md))
+- **Check** — SHACL and JSON Schema integrity, route safety, layout frontmatter ([Wiki Subcommand check](Wiki_Subcommand_check.md))
 - **Lint** — broken links, filename pattern, and heading conventions ([Wiki Subcommand lint](Wiki_Subcommand_lint.md))
 - **Link** — suggest missing wikilinks and repair broken internal links ([Wiki Subcommand link](Wiki_Subcommand_link.md))
 - **Fmt** — mdformat for markdown ([Wiki Subcommand fmt](Wiki_Subcommand_fmt.md))
@@ -167,7 +167,7 @@ ORDER BY ?command
 | command | description |
 | --- | --- |
 | [Wiki_Subcommand_build](Wiki_Subcommand_build.md) | Generate a static HTML site from the wiki. |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, route safety, and layout frontmatter. |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL, JSON Schema frontmatter, route safety, and layout frontmatter. |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yaml and starter wiki pages interactively. |
@@ -197,14 +197,14 @@ To prevent drift mechanically, you can wire a local Git hook or CI workflow that
 
 1. **[Wiki Subcommand fmt](Wiki_Subcommand_fmt.md)**: Auto-formats Markdown structures and standardizes YAML frontmatter layout.
 1. **[Wiki Subcommand lint](Wiki_Subcommand_lint.md) `--strict`**: Flags broken links, non-conforming filename patterns, and heading casing warnings as hard errors.
-1. **[Wiki Subcommand check](Wiki_Subcommand_check.md) `--strict`**: Ensures frontmatter properties strictly conform to defined [SHACL](SHACL.md) shapes.
+1. **[Wiki Subcommand check](Wiki_Subcommand_check.md) `--strict`**: Ensures frontmatter conforms to [SHACL](SHACL.md) shapes and bound JSON Schema documents (`wazoo:jsonSchema`).
 
 ### Resilient schema evolution
 
 Enforcing schemas on text databases can become problematic as structures evolve. The Wiki CLI avoids schema rigidity using semantic web principles:
 
 - **Additive RDF properties**: Since frontmatter is compiled into a graph, new or unconstrained keys do not cause parsing failures. They are ingested as open-world triples that can be queried or ignored.
-- **Decoupled validation**: SHACL validation is a diagnostic step, not an execution blocker. Files with invalid schemas can still be compiled, parsed, and queried.
+- **Decoupled validation**: SHACL and JSON Schema validation are diagnostic steps, not execution blockers. Files with invalid schemas can still be compiled, parsed, and queried.
 - **Class-scoped shapes**: Shapes target specific classes (e.g., `sh:targetClass schema:TechArticle`). Introducing a new document type only requires writing a new shape constraint, leaving legacy documents untouched.
 - **Namespace contexts**: Properties map to URIs via `graph.context` in [Wiki Configuration](Wiki_Configuration.md). You can rename or alias fields at the config layer without physically editing every source document.
 

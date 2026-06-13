@@ -29,6 +29,6 @@ Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config 
 | ----- | ------- | ------- |
 | `fmt:` | `wiki fmt` | Mechanical markdown |
 | `lint:` | `wiki lint` | Conventions |
-| `check:` | `wiki check` | SHACL, routes, layouts |
+| `check:` | `wiki check` | SHACL, JSON Schema, routes, layouts |
 
 Regex belongs in `wiki.filename_pattern`, not under `check:`.

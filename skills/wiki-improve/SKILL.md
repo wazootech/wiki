@@ -36,7 +36,7 @@ Prefers `wiki` on PATH when `wiki fmt --help` succeeds. In the **Wiki CLI checko
 | ----- | ------- | ------- |
 | `fmt:` | `wiki fmt` | Mechanical markdown |
 | `lint:` | `wiki lint` | Conventions — links, filenames, headings |
-| `check:` | `wiki check` | Integrity — SHACL, routes, layouts |
+| `check:` | `wiki check` | Integrity — SHACL, JSON Schema, routes, layouts |
 
 Regex belongs in `wiki.filename_pattern`, not under `check:`.
 

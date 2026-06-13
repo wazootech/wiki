@@ -3,6 +3,7 @@ type: sh:NodeShape
 rdfs:label: TechArticle Shape
 rdfs:comment: Basic validation rules for TechArticle documents.
 sh:targetClass: schema:TechArticle
+wazoo:jsonSchema: schemas/tech-article.json
 sh:property:
   - sh:path: schema:headline
     sh:minCount: 1
@@ -17,6 +18,6 @@ sh:property:
 
 # TechArticle validation shape
 
-This document defines the basic **SHACL validation rules** enforced upon any `type: TechArticle` documents in this wiki.
+This document defines **SHACL validation rules** and a **JSON Schema** binding (`schemas/tech-article.json`) enforced on any `type: TechArticle` document in this wiki.
 
 It ensures that all technical articles have at least a `headline` and `description` in their YAML frontmatter.

@@ -13,17 +13,17 @@ The [Wiki CLI](Wiki_CLI.md) and Obsidian's community **Dataview** plugin can be 
 While both tools allow you to query your wiki metadata, they optimize for different workflows:
 
 - **Dataview** is designed for **interactive, in-editor presentation** inside the Obsidian GUI. It is perfect for dynamic dashboards, daily note tracking, and local navigation.
-- **Wiki CLI** is a **verifiable semantic compiler and toolchain** designed to run anywhere (local terminal, CI/CD pipelines, or static web servers). It enforces data structures via [SHACL](SHACL.md), executes query-based rendering via [SPARQL](SPARQL.md), and builds standalone static HTML sites.
+- **Wiki CLI** is a **verifiable semantic compiler and toolchain** designed to run anywhere (local terminal, CI/CD pipelines, or static web servers). It enforces data structures via [SHACL](SHACL.md) and JSON Schema, executes query-based rendering via [SPARQL](SPARQL.md), and builds standalone static HTML sites.
 
 ### Comparison
 
-| Feature               | Obsidian Dataview                        | Wiki CLI                                      |
-| --------------------- | ---------------------------------------- | --------------------------------------------- |
-| **Execution Context** | Inside the Obsidian application (GUI)    | Terminal, scripts, and CI/CD pipelines        |
-| **Query Language**    | DQL (custom SQL-like) or JavaScript      | SPARQL (W3C standard)                         |
-| **Validation**        | Presentation only (no constraints check) | `wiki check` (SHACL constraints validation)   |
-| **Logical Inference** | None (direct field matching)             | OWL-RL reasoning (implicit class hierarchies) |
-| **Output Formats**    | Dynamic markdown views in Obsidian       | Static HTML, Turtle, JSON-LD, RDF/XML         |
+| Feature               | Obsidian Dataview                        | Wiki CLI                                        |
+| --------------------- | ---------------------------------------- | ----------------------------------------------- |
+| **Execution Context** | Inside the Obsidian application (GUI)    | Terminal, scripts, and CI/CD pipelines          |
+| **Query Language**    | DQL (custom SQL-like) or JavaScript      | SPARQL (W3C standard)                           |
+| **Validation**        | Presentation only (no constraints check) | `wiki check` (SHACL and JSON Schema validation) |
+| **Logical Inference** | None (direct field matching)             | OWL-RL reasoning (implicit class hierarchies)   |
+| **Output Formats**    | Dynamic markdown views in Obsidian       | Static HTML, Turtle, JSON-LD, RDF/XML           |
 
 ## Query examples
 

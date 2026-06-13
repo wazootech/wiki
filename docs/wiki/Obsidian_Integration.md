@@ -12,11 +12,11 @@ Use the community **Shell Commands** plugin to run `wiki` against your wiki root
 
 ## Suggested commands
 
-| Trigger       | Command               | Purpose                    |
-| ------------- | --------------------- | -------------------------- |
-| On save       | `wiki check`          | Fast SHACL + link feedback |
-| Hotkey        | `wiki render`         | Refresh all SPARQL tables  |
-| Before commit | `wiki check --strict` | CI-parity validation       |
+| Trigger       | Command               | Purpose                           |
+| ------------- | --------------------- | --------------------------------- |
+| On save       | `wiki check`          | Fast SHACL + JSON Schema feedback |
+| Hotkey        | `wiki render`         | Refresh all SPARQL tables         |
+| Before commit | `wiki check --strict` | CI-parity validation              |
 
 Point the plugin’s working directory at the folder containing `wiki.yaml`.
 

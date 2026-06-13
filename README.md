@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-**Wiki CLI** is a command-line toolchain and compiler for Markdown wikis. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
+**Wiki CLI** is a command-line toolchain and compiler for Markdown wikis. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL and JSON Schema, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
@@ -26,7 +26,7 @@ Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside
 
 While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory wiki optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
 - **Farzapedia** is a specific *content wiki* containing diary entries, notes, and messages.
-- **Wiki CLI** is a *utility* for *any* wiki. It compiles Markdown files, enforces structure (SHACL), queries data (SPARQL), and builds static websites.
+- **Wiki CLI** is a *utility* for *any* wiki. It compiles Markdown files, enforces structure (SHACL and JSON Schema), queries data (SPARQL), and builds static websites.
 
 Adoption path: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs wiki.
 
@@ -36,7 +36,7 @@ Three beats, one toolchain:
 
 | Beat | Commands | What you get |
 |------|----------|--------------|
-| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL integrity, wiki conventions, mechanical Markdown layout |
+| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL and JSON Schema integrity, wiki conventions, mechanical Markdown layout |
 | **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | OWL-RL inference, inline SPARQL tables, JSON-LD and RDF serializations |
 | **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata pane, local preview, optional read-only SPARQL endpoint, wikilink hygiene |
 
@@ -184,7 +184,7 @@ wiki serve
 
 
 ### `check`
-Run **integrity** validations: strict SHACL schema validation, route safety, output collisions, and layout frontmatter. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Run **integrity** validations: strict SHACL validation, JSON Schema frontmatter validation, route safety, output collisions, and layout frontmatter. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 wiki check
@@ -193,7 +193,7 @@ wiki check -v
 wiki check --strict
 ```
 
-Single-file mode runs SHACL validation for that document only. Broken links and other conventions are **`wiki lint`**.
+Single-file mode runs SHACL and JSON Schema validation for that document only. Broken links and other conventions are **`wiki lint`**.
 
 ### `lint`
 Run **convention** audits: broken links, filename pattern, heading style (ATX `#` only, sentence-case H2+), and link style.
@@ -614,7 +614,7 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your wiki using the **Shell Commands** community plugin.
 
 Recommended workflows:
-* **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL validations and formatting.
+* **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL, JSON Schema, and layout validation.
 * **Trigger re-rendering**: Map a hotkey or command palette item to `wiki render` to automatically update all dynamic SPARQL blocks in the wiki.
 
 ### Declarative modeling & full-text SPARQL
