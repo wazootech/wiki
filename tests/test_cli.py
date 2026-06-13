@@ -236,6 +236,61 @@ name: Invalid Name
             )
             self.assertEqual(result.exit_code, 0)
 
+    def test_cli_check_scoped_frontmatter_schema(self) -> None:
+        """Scoped wiki check runs JSON Schema validation via file_paths wiring."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            schemas_dir = config_dir / "schemas"
+            schemas_dir.mkdir()
+            (schemas_dir / "article.json").write_text(
+                json.dumps(
+                    {
+                        "type": "object",
+                        "required": ["headline", "description"],
+                        "properties": {
+                            "headline": {"type": "string"},
+                            "description": {"type": "string"},
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (config_dir / "wiki.yaml").write_text(
+                yaml.dump({"wiki": {"inputs": ["wiki"]}}),
+                encoding="utf-8",
+            )
+            (wiki_dir / "Article_Shape.md").write_text(
+                "---\n"
+                "type: sh:NodeShape\n"
+                "sh:targetClass: schema:TechArticle\n"
+                "wazoo:jsonSchema: schemas/article.json\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            valid = wiki_dir / "Valid.md"
+            valid.write_text(
+                "---\ntype: TechArticle\nheadline: Ok\ndescription: Fine\n---\n",
+                encoding="utf-8",
+            )
+            broken = wiki_dir / "Broken.md"
+            broken.write_text("---\ntype: TechArticle\nheadline: Only\n---\n", encoding="utf-8")
+            other = wiki_dir / "Other_Broken.md"
+            other.write_text("---\ntype: TechArticle\nheadline: Other\n---\n", encoding="utf-8")
+
+            ok = runner.invoke(main, ["-c", str(config_dir), "check", str(valid)])
+            self.assertEqual(ok.exit_code, 0, msg=ok.output)
+
+            fail = runner.invoke(main, ["-c", str(config_dir), "check", str(broken)])
+            self.assertEqual(fail.exit_code, 1, msg=fail.output)
+            self.assertIn("description", fail.output)
+
+            scoped = runner.invoke(main, ["-c", str(config_dir), "check", str(valid)])
+            self.assertEqual(scoped.exit_code, 0, msg=scoped.output)
+            self.assertNotIn("Other_Broken", scoped.output)
+
     def test_cli_query_formats(self) -> None:
         """Test that wiki query executes successfully with various output formats."""
         runner = CliRunner()

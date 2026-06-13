@@ -48,7 +48,7 @@ wiki -c docs/wiki.yaml fmt --check
 # 2. Conventions: broken links, filename pattern, headings, link style
 wiki -c docs/wiki.yaml lint --strict
 
-# 3. Integrity: SHACL, route safety, layout frontmatter
+# 3. Integrity: SHACL, JSON Schema frontmatter, route safety, layout frontmatter
 wiki -c docs/wiki.yaml check --strict
 
 # 4. Stale inline SPARQL result blocks

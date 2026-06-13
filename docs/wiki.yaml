@@ -59,10 +59,14 @@ link:
   # renames:
   #   Old_Page_Name: New_Page_Name
 
-# Integrity severities (wiki check): SHACL, routes, layout files.
+# Integrity severities (wiki check): SHACL, JSON Schema, routes, layout files.
 check:
   # Error when wazoo:layout points at a missing .html.j2 file.
   missing_layout_file: error
+  # Error when frontmatter fails JSON Schema validation.
+  frontmatter_schema: error
+  # Error when wazoo:jsonSchema cannot be loaded (local or remote).
+  missing_schema_ref: error
 
 # Convention severities (wiki lint): links, filenames, headings.
 lint:

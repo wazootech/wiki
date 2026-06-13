@@ -36,6 +36,7 @@ from .document import (
     span_overlaps,
     split_frontmatter_text,
 )
+from .frontmatter_schema import check_frontmatter_schema
 from .wiki_links import LinkIndex
 from .schemas import BrokenLink, CheckConfig, LintConfig
 
@@ -458,7 +459,7 @@ def check_layout_frontmatter(
 
 
 def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run integrity checks: SHACL, route safety, collisions, and layout frontmatter."""
+    """Run integrity checks: SHACL, route safety, collisions, layout, and JSON Schema frontmatter."""
     results = _empty_results()
 
     try:
@@ -487,6 +488,13 @@ def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, 
 
     layout_issues = check_layout_frontmatter(config, file_filter=file_filter)
     _apply_issues(results, "missing_layout_file", layout_issues, config.check)
+
+    missing_schema_issues, schema_validation_issues = check_frontmatter_schema(
+        config,
+        file_filter=file_filter,
+    )
+    _apply_issues(results, "missing_schema_ref", missing_schema_issues, config.check)
+    _apply_issues(results, "frontmatter_schema", schema_validation_issues, config.check)
 
     return results
 

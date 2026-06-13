@@ -105,6 +105,8 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("duplicate_headings: off", rendered)
         self.assertIn("thematic_breaks: off", rendered)
         self.assertIn("missing_layout_file: error", rendered)
+        self.assertIn("frontmatter_schema: error", rendered)
+        self.assertIn("missing_schema_ref: error", rendered)
         self.assertIn("wrap: \"no\"", rendered)
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)

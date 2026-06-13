@@ -23,8 +23,10 @@ class CheckConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     missing_layout_file: Annotated[Severity, Field(default="error")] = "error"
+    frontmatter_schema: Annotated[Severity, Field(default="error")] = "error"
+    missing_schema_ref: Annotated[Severity, Field(default="error")] = "error"
 
-    @field_validator("missing_layout_file", mode="before")
+    @field_validator("missing_layout_file", "frontmatter_schema", "missing_schema_ref", mode="before")
     @classmethod
     def _validate_severity(cls, value: object) -> Severity:
         return coerce_severity(value)

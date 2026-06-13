@@ -1,6 +1,6 @@
 # Wiki CLI (`wazootech-wiki`)
 
-Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and body into RDF, validate with SHACL, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Wiki_CLI.md](docs/wiki/Wiki_CLI.md) for scope, boundaries, and command reference.
+Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and body into RDF, validate with SHACL and JSON Schema, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/Wiki_CLI.md](docs/wiki/Wiki_CLI.md) for scope, boundaries, and command reference.
 
 ## Architecture decision: Python core
 
@@ -32,7 +32,7 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Axiom**: Ontological rules and schema definitions loaded from Turtle files to guide the inference process. _Avoid_: Rule, schema rule.
 
-**Validation**: The process of checking the frontmatter of Documents against SHACL Shapes to ensure structure and value compliance. _Avoid_: Formatting check, manual review.
+**Validation**: The process of checking Document frontmatter against SHACL shapes and optional JSON Schema bindings (`wazoo:jsonSchema`) to ensure structure and value compliance. _Avoid_: Formatting check, manual review.
 
 **Shape**: A SHACL constraint definition loaded from Turtle files to validate the structure of Documents. _Avoid_: Rule, template.
 
@@ -42,7 +42,7 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Wiki** build. _Avoid_: Disk cache, pickle store.
 
-**Checking**: Integrity validation on the **Wiki** via `wiki check` — SHACL, route safety, collisions, and layout frontmatter.
+**Checking**: Integrity validation on the **Wiki** via `wiki check` — SHACL, JSON Schema frontmatter, route safety, collisions, and layout frontmatter.
 
 **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 

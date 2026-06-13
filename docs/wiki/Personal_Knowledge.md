@@ -23,9 +23,9 @@ owns: Bella
 
 This is parsed as a typed graph triple (`wiki:gregory wiki:owns wiki:bella`), allowing the graph to mathematically reason about family, colleague, or friend connections.
 
-### Built-in structural correctness (SHACL shapes)
+### Built-in structural correctness
 
-Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The [Wiki CLI](Wiki_CLI.md) uses **SHACL shapes** to audit your notes automatically. This ensures your [second brain](Second_Brain.md) remains consistently structured and complete.
+Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The [Wiki CLI](Wiki_CLI.md) uses **SHACL shapes** and optional **JSON Schema** bindings (`wazoo:jsonSchema`) to audit your notes automatically. This ensures your [second brain](Second_Brain.md) remains consistently structured and complete.
 
 ### Infinite dynamic synthesis (SPARQL)
 
@@ -36,4 +36,4 @@ Instead of manually maintaining index lists or tag pages, you write a simple SPA
 A modern [second brain](Second_Brain.md) must distinguish between **[declarative knowledge](Declarative_Knowledge.md)** ("knowing what") and **[procedural knowledge](Procedural_Knowledge.md)** ("knowing how"):
 
 - **[Declarative Knowledge](Declarative_Knowledge.md)**: Represented statically as semantic facts, class hierarchies, and properties within your markdown frontmatter. These are parsed into the permanent RDF graph.
-- **[Procedural Knowledge](Procedural_Knowledge.md)**: Represented dynamically as executable actions, workflows, query parameters, and validation rules (e.g., active SHACL shape rules and custom SPARQL blocks). The CLI automates this procedural layer through commands like `wiki check` and `wiki render`, transforming static notes into an active, self-correcting system.
+- **[Procedural Knowledge](Procedural_Knowledge.md)**: Represented dynamically as executable actions, workflows, query parameters, and validation rules (e.g., active SHACL shape rules, JSON Schema bindings, and custom SPARQL blocks). The CLI automates this procedural layer through commands like `wiki check` and `wiki render`, transforming static notes into an active, self-correcting system.

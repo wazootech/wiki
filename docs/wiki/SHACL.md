@@ -46,11 +46,30 @@ sh:property:
 
 When you run `wiki check`, any page with `type: Project` is automatically validated against these constraints.
 
+### JSON Schema (optional)
+
+On the same shape document, add `wazoo:jsonSchema` beside `sh:targetClass` to validate frontmatter with [JSON Schema](https://json-schema.org/) in parallel with SHACL:
+
+```yaml
+---
+type: sh:NodeShape
+sh:targetClass: schema:Project
+wazoo:jsonSchema: schemas/project.json
+sh:property:
+  - sh:path: schema:name
+    sh:minCount: 1
+---
+```
+
+`wiki init` scaffolds `schemas/person.json` and binds it from `Person_Shape.md`. Individual pages can append schemas with their own `wazoo:jsonSchema` key (string or list). Shape binding documents are not validated as instances — only their schema refs are checked for loadability.
+
+See [Tech Article Shape](Tech_Article_Shape.md) in this wiki for a dogfooded example.
+
 Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is listed in `wiki.inputs`; markdown frontmatter is the default authoring style in this wiki.
 
 ## Related
 
-- [Wiki Subcommand check](Wiki_Subcommand_check.md) — PySHACL validation
+- [Wiki Subcommand check](Wiki_Subcommand_check.md) — PySHACL and JSON Schema frontmatter validation
 - [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — prose and link conventions (separate from shapes)
 - [Style Guide](Style_Guide.md) — shape authoring and filenames
 - [Software Application Shape](Software_Application_Shape.md) — example `sh:NodeShape`

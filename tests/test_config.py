@@ -89,7 +89,9 @@ class TestConfig(unittest.TestCase):
                     }
                 },
                 "check": {
-                    "missing_layout_file": "error"
+                    "missing_layout_file": "error",
+                    "frontmatter_schema": "error",
+                    "missing_schema_ref": "warning",
                 },
                 "lint": {
                     "broken_links": "error",
@@ -104,6 +106,8 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(config.wiki.assets, [base_path.absolute() / "assets", base_path.absolute() / "media/photos"])
             self.assertEqual(config.wiki.exclude, ["wiki/drafts/**", "assets/private/**"])
             self.assertEqual(config.check.missing_layout_file, "error")
+            self.assertEqual(config.check.frontmatter_schema, "error")
+            self.assertEqual(config.check.missing_schema_ref, "warning")
             self.assertEqual(config.lint.broken_links, "error")
             self.assertEqual(config.lint.filename_pattern, "error")
             self.assertEqual(config.wiki.filename_pattern, "[A-Za-z0-9_()-]+\\.md")

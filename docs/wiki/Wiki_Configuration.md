@@ -14,13 +14,13 @@ Three audit lanes map to three commands:
 
 | Lane       | Command      | YAML block | Purpose                                                                                                                                                      |
 | ---------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Integrity  | `wiki check` | `check:`   | SHACL, route safety, collisions, layout frontmatter                                                                                                          |
+| Integrity  | `wiki check` | `check:`   | SHACL, JSON Schema frontmatter, route safety, collisions, layout frontmatter                                                                                 |
 | Convention | `wiki lint`  | `lint:`    | `broken_links`, `filename_pattern`, `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, `link_style` (plus `wiki.filename_pattern` regex) |
 | Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat options; inline mapping or TOML path)                                                                                          |
 
 ### Rule placement
 
-Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Wiki policy and link conventions belong under **`lint:`**. SHACL, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
+Mechanical markdown (lists, tables, ATX syntax, line endings) belongs under top-level **`fmt:`** and **`wiki fmt`**. You may use an inline mapping in `wiki.yaml`, a relative path to a TOML file, or fall back to `.mdformat.toml` at the config root or above the page file. Wiki policy and link conventions belong under **`lint:`**. SHACL, JSON Schema, routes, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
 - **`wiki.filename_pattern`** is the regex string. **`lint.filename_pattern`** is the severity (`error`, `warning`, or `off`).
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
@@ -405,8 +405,16 @@ Under `check`, each rule is `error`, `warning`, or `off`:
 | Rule key              | Default | What it audits                                                         |
 | --------------------- | ------- | ---------------------------------------------------------------------- |
 | `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
+| `frontmatter_schema`  | `error` | Frontmatter that fails JSON Schema validation                          |
+| `missing_schema_ref`  | `error` | `wazoo:jsonSchema` paths or URLs that cannot be loaded                 |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
+
+### JSON Schema frontmatter (`wazoo:jsonSchema`)
+
+`wiki check` validates frontmatter against JSON Schema in parallel with SHACL. Bind schemas on shape documents with **`wazoo:jsonSchema`** beside **`sh:targetClass`**; every page whose effective `type` matches that class must pass the bound schema(s). Individual pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list). Schema refs are local paths under the wiki config root (`.json` only) or remote `http(s)` URLs.
+
+Shape binding documents are not validated as instances — only their schema refs are checked for loadability. Authoring detail: [SHACL](SHACL.md), [Style Guide](Style_Guide.md). Example in this wiki: [Tech Article Shape](Tech_Article_Shape.md) → `schemas/tech-article.json`.
 
 ## Convention audits (`lint`)
 
