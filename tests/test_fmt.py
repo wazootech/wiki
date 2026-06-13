@@ -102,6 +102,25 @@ class TestWikiFmt(unittest.TestCase):
             self.assertNotIn("| Class |", formatted)
             self.assertIn("```sparql", formatted)
 
+    def test_fmt_preserves_hidden_sparql_render_blocks(self) -> None:
+        compact_table = "| class |\n| --- |\n| owl:Class |\n"
+        original = (
+            "<!-- sparql:start\n"
+            "```sparql\nSELECT ?class WHERE { ?class a owl:Class }\n```\n"
+            "-->\n"
+            f"{compact_table}"
+            "<!-- sparql:end -->\n"
+        )
+        with TemporaryDirectory() as tmpdir:
+            file_path = Path(tmpdir) / "Query.md"
+            file_path.write_text(original, encoding="utf-8")
+            formatted = format_markdown(original, file_path, Config(config_root=Path(tmpdir)))
+            self.assertIn("| class |", formatted)
+            self.assertNotIn("| Class |", formatted)
+            self.assertIn("<!-- sparql:start\n", formatted)
+            self.assertIn("```sparql", formatted)
+            self.assertIn("-->\n", formatted)
+
     def test_read_view_type_label_badge(self) -> None:
         seed_template = jinja("<html><body>{page.type_label}<article id=\"article-top\">{page.content}</article></body></html>")
         with TemporaryDirectory() as tmpdir:

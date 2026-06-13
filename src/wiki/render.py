@@ -14,9 +14,12 @@ from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 from .paths import iter_markdown_files, page_routes, select_markdown_paths
 
 # Matches SPARQL wrapper comments, fenced query, rendered table, and end comment.
+# Visible query: <!-- sparql:start --> ... fence ... table ... <!-- sparql:end -->
+# Hidden query:   <!-- sparql:start ... fence ... --> ... table ... <!-- sparql:end -->
 SPARQL_BLOCK_REGEX = re.compile(
-    r"(?P<start><!--\s*sparql:start\s*-->)(?P<prefix>\s*)"
+    r"(?P<start><!--\s*sparql:start(?:\s*-->)?)(?P<prefix>\s*)"
     r"(?P<fence>```sparql\s*(?P<query>.*?)\s*```)(?P<mid>\s*)"
+    r"(?:(?P<comment_end>-->)(?P<post_comment>\s*))?"
     r"(?P<table>.*?)(?P<suffix>\s*)(?P<end><!--\s*sparql:end\s*-->)",
     re.DOTALL | re.IGNORECASE,
 )
@@ -49,9 +52,12 @@ def _replace_sparql_table(match: re.Match[str], rendered_markdown: str) -> str:
     suffix = match.group("suffix")
     if not suffix:
         suffix = "\n"
+    comment_end = match.group("comment_end") or ""
+    post_comment = match.group("post_comment") or ""
     return (
         f"{match.group('start')}{match.group('prefix')}{match.group('fence')}"
-        f"{match.group('mid')}{rendered_markdown}{suffix}{match.group('end')}"
+        f"{match.group('mid')}{comment_end}{post_comment}{rendered_markdown}{suffix}"
+        f"{match.group('end')}"
     )
 
 

@@ -89,6 +89,12 @@ When writing `&lt;!-- sparql:start --&gt;` blocks or ad-hoc `wiki query` command
 - **Types** — use `rdf:type` with full URIs or configured prefixes (`schema:`, `wiki:`, `sh:`).
 - **Inference** — omit `--no-inference` in sparql blocks unless you intentionally want raw asserted triples only.
 
+Inline SPARQL blocks use `&lt;!-- sparql:start --&gt;` … `&lt;!-- sparql:end --&gt;` with a fenced `sparql` query and a GFM results table. `wiki render` runs the query and rewrites the table in place.
+
+**Visible query (default)** — close the start comment before the fence so the query appears in built HTML: `&lt;!-- sparql:start --&gt;`, then the `sparql` fence and table, then `&lt;!-- sparql:end --&gt;`.
+
+**Hidden query** — leave the start comment open (`&lt;!-- sparql:start` on its own line), put the `sparql` fence and query next, close the HTML comment with `--&gt;` on the line after the fence, then the results table and `&lt;!-- sparql:end --&gt;`. The query stays inside the HTML comment (invisible in built pages; still executed by `wiki render`). See the live block under [Active database summary](#active-database-summary) below.
+
 ## SHACL shapes
 
 Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this wiki). Shapes in the wiki are loaded into the validation graph; [Wiki Subcommand check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
@@ -136,8 +142,7 @@ W3C-only topics need only the spec link. Keep `## Related` for internal wiki nav
 
 The table below queries the active graph to list all distinct classes currently instantiated in your wiki:
 
-<!-- sparql:start -->
-
+<!-- sparql:start
 ```sparql
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -147,6 +152,7 @@ SELECT DISTINCT ?class WHERE {
 }
 ORDER BY ?class
 ```
+-->
 
 | Class                                  |
 | -------------------------------------- |

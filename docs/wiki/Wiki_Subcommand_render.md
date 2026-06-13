@@ -37,7 +37,7 @@ wiki render --cache
 
 ## Block format
 
-See [Style Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper and fenced `sparql` code block.
+See [Style Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper and fenced `sparql` code block. Close the start comment before the fence to show the query in built HTML; leave it open and close after the fence (`<!-- sparql:start` … `-->`) to hide the query from published pages while `wiki render` still updates the table.
 
 ## Related
 
