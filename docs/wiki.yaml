@@ -5,8 +5,8 @@ wiki:
   inputs:
     - wiki
   # Static files for custom CSS, logos, favicons (copied on wiki build).
-  # assets:
-  #   - assets
+  assets:
+    - assets
   # Full-filename regex for markdown files (lint.filename_pattern severity).
   filename_pattern: "[A-Za-z0-9_()-]+\\.md"
   # Glob patterns skipped when indexing (POSIX paths relative to config root).

@@ -15,9 +15,11 @@ from wiki.schemas.wiki_config import normalize_base_iri
 from wiki.init_scaffold import (
     InitOptions,
     copy_default_layout,
+    copy_default_logo,
     detect_origin_repo,
     infer_github_pages_urls,
     load_packaged_default_layout,
+    load_packaged_default_logo,
     normalize_base_url,
     parse_github_repo,
     render_wiki_yaml,
@@ -109,6 +111,8 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("missing_schema_ref: error", rendered)
         self.assertIn("wrap: \"no\"", rendered)
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
+        self.assertIn("assets:", rendered)
+        self.assertIn("- assets", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
@@ -145,12 +149,26 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("{# wiki init scaffold", rendered)
         self.assertIn("<title>{{ page.title }} - {{ site.manifest.name }}</title>", rendered)
         self.assertIn('placeholder="Search {{ site.manifest.name }}"', rendered)
+        self.assertIn("/assets/logo.svg", rendered)
+        self.assertNotIn("{{ site.logo_svg }}", rendered)
+
+    def test_load_packaged_default_logo(self) -> None:
+        rendered = load_packaged_default_logo()
+        self.assertIn("<svg", rendered)
+        self.assertIn('viewBox="0 0 200 200"', rendered)
+        self.assertIn(">W</text>", rendered)
 
     def test_copy_default_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "layouts" / "default.html.j2"
             copy_default_layout(dest)
             self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_default_layout())
+
+    def test_copy_default_logo(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "assets" / "logo.svg"
+            copy_default_logo(dest)
+            self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_default_logo())
 
 
 class TestResolveInitOptions(TestCase):

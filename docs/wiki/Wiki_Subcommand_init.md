@@ -65,6 +65,7 @@ Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `x
 New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki init` renders from is [`src/wiki/templates/wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2) (Jinja2). Contributors edit that `.j2` file; Jinja variables (such as `graph_context_wiki`, `site_base_url`, `site_url_style`, `graph_content_predicate`, `link_style`, and other parameters mapped from Click CLI flags) render into nested `graph:`, `site:`, and `link:` blocks via `{% if %}`.
 
 - `wiki.inputs: [wiki]`
+- `wiki.assets: [assets]` — static files (logo, CSS, favicons) copied on build/serve
 - `graph.context.wiki` — default namespace for `wiki:` CURIEs and auto-generated document IRIs
 - Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply wiki-wide default `rdf:type` CURIEs)
 - Commented `graph.base_iri` example (uncomment only when document IRIs must differ from `context.wiki`)
@@ -77,7 +78,8 @@ Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, s
 
 ## Generated files
 
-- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Edit to customize the look and feel.
+- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg`. Edit to customize the look and feel.
+- `assets/logo.svg` — starter sidebar logo (served at `{{ site.base_url }}/assets/logo.svg`)
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

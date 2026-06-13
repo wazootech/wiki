@@ -271,19 +271,19 @@ The bundled stylesheet injected as `{{ site.inline_css }}` covers the default Wi
 
 ### Custom logos and icons
 
-The default layout uses `{{ site.logo_svg }}` inside `#p-logo`. When you do not customize the layout, Wiki CLI injects a built-in globe SVG: the center glyph is the first character of resolved `site.manifest.name`, and the gradient comes from `site.manifest.theme_color` (fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
+Fresh `wiki init` workspaces ship `assets/logo.svg`, enable `wiki.assets`, and reference the file from the copied default layout (`<img src="{{ site.base_url }}/assets/logo.svg" …>`). Replace that SVG or switch back to `{{ site.logo_svg }}` for a theme-color-aware built-in globe (center glyph from `site.manifest.name`; gradient from `site.manifest.theme_color`, fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
 
 **Custom sidebar logo**
 
-1. Enable `wiki.assets` (uncomment or add an `assets:` directory in `wiki.yaml`).
+1. Enable `wiki.assets` (already enabled in the init scaffold, or add an `assets:` directory in `wiki.yaml`).
 1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`.
-1. Edit `site.layout` and replace `{{ site.logo_svg }}` with an asset reference:
+1. Edit `site.layout` and reference the asset (init already uses this pattern):
 
 ```html
 <img src="{{ site.base_url }}/assets/logo.svg" alt="" width="80" height="80">
 ```
 
-You can also embed inline SVG directly in the layout file (no asset copy).
+You can also embed inline SVG directly in the layout file (no asset copy), or use `{{ site.logo_svg }}` instead of an asset file.
 
 **Favicons and touch icons**
 
