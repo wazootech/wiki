@@ -218,6 +218,8 @@ This repository implements the [LLM Wiki](LLM_Wiki.md) pattern for [Personal Kno
 
 Similar **agent memory filesystem** approaches include [Supermemory SMFS](Supermemory_SMFS.md), [Letta MemFS](Letta_MemFS.md), and [Agent Memory Filesystems](Agent_Memory_Filesystems.md).
 
+For **frontmatter-only validation** without the full semantic toolchain, see [Braincheck](Braincheck.md).
+
 ## Repository
 
 - Source and issues: [github.com/wazootech/wiki](https://github.com/wazootech/wiki)
