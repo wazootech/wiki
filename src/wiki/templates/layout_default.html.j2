@@ -16,7 +16,7 @@
   <div id="p-logo" role="banner">
     <a href="{{ site.base_url }}/" title="Visit the main page">
       {{ site.logo_svg }}
-      <span class="logo-text">{{ site.manifest.name }}</span>
+      <span class="logo-text">{{ site.manifest.short_name or site.manifest.name }}</span>
     </a>
   </div>
   <div class="portal" role="navigation" id="p-navigation">
