@@ -167,7 +167,7 @@ ORDER BY ?command
 | command | description |
 | --- | --- |
 | [Wiki_Subcommand_build](Wiki_Subcommand_build.md) | Generate a static HTML site from the wiki. |
-| [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL, JSON Schema frontmatter, route safety, and layout frontmatter. |
+| [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yaml and starter wiki pages interactively. |
