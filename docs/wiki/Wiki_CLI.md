@@ -187,6 +187,27 @@ Global flags: `-c`, `--wiki-inputs`.
 - [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) — CI workflow for this site
 - [Obsidian Integration](Obsidian_Integration.md) — Shell Commands plugin workflows
 
+## Managing drift and schema evolution
+
+A common challenge in text-based memory bases is metadata drift—especially when files are updated programmatically by external LLM agents. The Wiki CLI provides two strategies to keep a compounding codebase clean over long periods:
+
+### Automated cleaning harness
+
+To prevent drift mechanically, you can wire a local Git hook or CI workflow that executes the following checks in order:
+
+1. **[Wiki Subcommand fmt](Wiki_Subcommand_fmt.md)**: Auto-formats Markdown structures and standardizes YAML frontmatter layout.
+1. **[Wiki Subcommand lint](Wiki_Subcommand_lint.md) `--strict`**: Flags broken links, non-conforming filename patterns, and heading casing warnings as hard errors.
+1. **[Wiki Subcommand check](Wiki_Subcommand_check.md) `--strict`**: Ensures frontmatter properties strictly conform to defined [SHACL](SHACL.md) shapes.
+
+### Resilient schema evolution
+
+Enforcing schemas on text databases can become problematic as structures evolve. The Wiki CLI avoids schema rigidity using semantic web principles:
+
+- **Additive RDF properties**: Since frontmatter is compiled into a graph, new or unconstrained keys do not cause parsing failures. They are ingested as open-world triples that can be queried or ignored.
+- **Decoupled validation**: SHACL validation is a diagnostic step, not an execution blocker. Files with invalid schemas can still be compiled, parsed, and queried.
+- **Class-scoped shapes**: Shapes target specific classes (e.g., `sh:targetClass schema:TechArticle`). Introducing a new document type only requires writing a new shape constraint, leaving legacy documents untouched.
+- **Namespace contexts**: Properties map to URIs via `graph.context` in [Wiki Configuration](Wiki_Configuration.md). You can rename or alias fields at the config layer without physically editing every source document.
+
 ## Design
 
 The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout).
