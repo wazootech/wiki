@@ -414,7 +414,7 @@ Build-safety rules (unsafe URL characters, spaces in routes) and output URL coll
 
 `wiki check` validates frontmatter against JSON Schema in parallel with SHACL. Bind schemas on shape documents with **`wazoo:jsonSchema`** beside **`sh:targetClass`**; every page whose effective `type` matches that class must pass the bound schema(s). Individual pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list). Schema refs are local paths under the wiki config root (`.json` only) or remote `http(s)` URLs.
 
-Shape binding documents are not validated as instances — only their schema refs are checked for loadability. Authoring detail: [SHACL](SHACL.md), [Style Guide](Style_Guide.md). Example in this wiki: [Tech Article Shape](Tech_Article_Shape.md) → `schemas/tech-article.json`.
+Shape binding documents are not validated as instances — only their schema refs are checked for loadability. Authoring detail: [SHACL](SHACL.md), [Style Guide](Style_Guide.md).
 
 ## Convention audits (`lint`)
 

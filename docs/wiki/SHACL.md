@@ -61,7 +61,7 @@ sh:property:
 ---
 ```
 
-`wiki init` scaffolds `schemas/person.json` and binds it from `Person_Shape.md`. Individual pages can append schemas with their own `wazoo:jsonSchema` key (string or list). Shape binding documents are not validated as instances — only their schema refs are checked for loadability.
+`wiki init` scaffolds a starter `Person_Shape.md` with SHACL constraints. Optionally bind JSON Schema on shape documents with `wazoo:jsonSchema` beside `sh:targetClass`, or append per-page schemas with their own `wazoo:jsonSchema` key (string or list). Shape binding documents are not validated as instances — only their schema refs are checked for loadability.
 
 See [Tech Article Shape](Tech_Article_Shape.md) in this wiki for a dogfooded example.
 
