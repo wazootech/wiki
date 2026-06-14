@@ -299,6 +299,16 @@ name: Project Atlas
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn('class="highlight"', html)
 
+    def test_render_wiki_markdown_does_not_pass_through_raw_html(self) -> None:
+        html = render_wiki_markdown('<script>alert("x")</script>\n\nSafe paragraph.\n')
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn("Safe paragraph.", html)
+
+        event_html = render_wiki_markdown('<img src=x onerror=alert(1)>\n')
+        self.assertNotIn("<img", event_html)
+        self.assertIn("&lt;img", event_html)
+
     def test_render_hidden_sparql_block_omits_query_from_html(self) -> None:
         markdown = (
             "<!-- sparql:start\n"

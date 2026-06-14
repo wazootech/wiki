@@ -57,6 +57,8 @@ If the configured template file is missing, the fallback shell is used silently.
 
 By default, convention (`wiki lint`) then integrity (`wiki check`) preflight must pass before the output directory is wiped and rebuilt. Output path collisions abort the build with errors.
 
+Wiki page bodies are rendered without raw HTML passthrough; inline HTML tags in markdown are not emitted as live markup in built pages.
+
 ## Related
 
 - [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md)
