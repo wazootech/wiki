@@ -17,7 +17,7 @@ class TestLayoutTemplate(unittest.TestCase):
     def test_layout_file_is_valid_rejects_plain_html(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
-            plain = root / "layouts" / "legacy.html"
+            plain = root / "layouts" / "plain.html"
             plain.parent.mkdir(parents=True)
             plain.write_text("<html></html>", encoding="utf-8")
             self.assertFalse(layout_file_is_valid(plain, root))

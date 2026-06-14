@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Page layouts
+headline: Wiki Page Layouts
 description: Wiki page layout files for build and serve output.
 ---
 
-# Wiki page layouts
+# Wiki Page Layouts
 
 Wiki CLI builds each article into HTML using a **page layout** Jinja2 template (`.html.j2`). Two levels apply:
 

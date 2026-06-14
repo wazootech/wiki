@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Graph cache
+headline: Graph Cache
 description: In-process RDF graph reuse plus optional on-disk warm-start across repeated CLI runs.
 ---
 
-# Graph cache
+# Graph Cache
 
 Each `wiki` process builds the wiki RDF graph **once** (unless you pass `--reload`) and reuses it for:
 

@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Wiki CLI agent skills
+headline: Wiki CLI Agent Skills
 description: Procedural knowledge for coding agents — install, scaffold, improve, and deploy wikis.
 ---
 
-# Wiki CLI agent skills
+# Wiki CLI Agent Skills
 
 [Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
 

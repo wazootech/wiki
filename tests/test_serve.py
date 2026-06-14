@@ -35,41 +35,41 @@ def _free_port() -> int:
     return port
 
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
-_RICH_TEMPLATE = jinja("""<!DOCTYPE html>
+_RICH_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.nav.infobox}
-{page.content}
-{page.nav.toc}
-{page.nav.backlinks}
-{page.nav.categories}
+<h1>{{ page.title }}</h1>
+{{ page.nav.infobox }}
+{{ page.content }}
+{{ page.nav.toc }}
+{{ page.nav.backlinks }}
+{{ page.nav.categories }}
 </body>
-</html>""")
+</html>"""
 
 
-_METADATA_TEMPLATE = jinja("""<!DOCTYPE html>
+_METADATA_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.metadata.tool}
-{page.metadata.tab}
-{page.metadata.pane}
-{page.content}
+<h1>{{ page.title }}</h1>
+{{ page.metadata.tool }}
+{{ page.metadata.tab }}
+{{ page.metadata.pane }}
+{{ page.content }}
 </body>
-</html>""")
+</html>"""
 
 
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
@@ -136,22 +136,6 @@ class TestServe(unittest.TestCase):
         conn.close()
         return resp.status, body
 
-    def test_manifest_endpoint(self) -> None:
-        self._write("hello-world.md", "# Hello World\n\nSome content.")
-        for port in _serve_in_thread(self.wiki_dir):
-            conn = HTTPConnection("127.0.0.1", port, timeout=5)
-            conn.request("GET", "/wiki/manifest.webmanifest")
-            resp = conn.getresponse()
-            body = resp.read().decode("utf-8")
-            conn.close()
-            status = resp.status
-            content_type = resp.getheader("Content-Type")
-        self.assertEqual(status, 200)
-        self.assertEqual(content_type, "application/manifest+json")
-        self.assertIn('"name":"Wiki CLI"', body)
-        self.assertIn('"start_url":"/wiki/"', body)
-
-    def test_index_page(self) -> None:
         self._write("hello-world.md", "# Hello World\n\nSome content.")
         self._write("foo-bar.md", "# Foo Bar\n\nContent.")
         for port in _serve_in_thread(self.wiki_dir):

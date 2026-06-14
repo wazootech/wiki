@@ -15,26 +15,26 @@ from wiki.site import (
     strip_leading_title_heading,
 )
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
-_FULL_TEST_TEMPLATE = jinja("""<!DOCTYPE html>
+_FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-{page.type_label}
+{{ page.type_label }}
 <article id="article-top">
-{page.nav.infobox}
-{page.content}
+{{ page.nav.infobox }}
+{{ page.content }}
 </article>
-{page.nav.toc}
-{page.nav.backlinks}
-{page.nav.categories}
+{{ page.nav.toc }}
+{{ page.nav.backlinks }}
+{{ page.nav.categories }}
 </body>
-</html>""")
+</html>"""
 
 
 def _full_test_layout(root: Path) -> Path:
@@ -162,10 +162,8 @@ name: Bella Davidson
             wiki.mkdir()
             layouts = root / "layouts"
             layouts.mkdir()
-            custom_shell = jinja(
-                """<!DOCTYPE html>
-<html><body><div id="custom-shell">{page.title}{page.nav.infobox}{page.content}</div></body></html>"""
-            )
+            custom_shell = """<!DOCTYPE html>
+<html><body><div id="custom-shell">{{ page.title }}{{ page.nav.infobox }}{{ page.content }}</div></body></html>"""
             (layouts / "project.html.j2").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
@@ -654,7 +652,7 @@ specialty: Diagnostics
         self.assertIn('stop-color="#6366f1"', themed)
         self.assertNotIn('stop-color="#3b82f6"', themed)
 
-    def test_build_index_html_icon_url_reflects_manifest_icons(self) -> None:
+    def test_build_index_html_uses_base_url_for_asset_paths(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -662,7 +660,7 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(
                 wiki={"inputs": [wiki]},
-                site={"manifest": {"icons": [{"src": "assets/custom-logo.svg"}]}, "base_url": "/wiki"},
+                site={"base_url": "/wiki"},
                 config_root=root,
             )
             site = build_site(config)
@@ -672,12 +670,31 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/logo.html.j2",
-                    jinja("{site.manifest.icons[0].url}"),
+                    "{{ site.base_url }}/assets/custom-logo.svg",
                 ),
             )
             self.assertIn("/wiki/assets/custom-logo.svg", html)
 
-    def test_build_index_html_emits_theme_color_meta_tags(self) -> None:
+    def test_default_layout_head_includes_theme_color_and_favicon(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(
+                wiki={"inputs": [wiki]},
+                site={"base_url": "/wiki"},
+                config_root=root,
+            )
+            site = build_site(config)
+            html = build_index_html(site, root, default_layout=_default_layout(root))
+            self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
+            self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
+            self.assertIn('href="/wiki/assets/logo.svg"', html)
+            self.assertNotIn('rel="manifest"', html)
+            self.assertNotIn("manifest.webmanifest", html)
+
+    def test_build_index_html_emits_literal_theme_color_from_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -691,80 +708,14 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/theme.html.j2",
-                    jinja(
-                        '<meta name="theme-color" content="{site.manifest.theme_color}">'
-                        '<meta name="msapplication-TileColor" content="{site.manifest.theme_color}">'
+                    (
+                        '<meta name="theme-color" content="#6366f1">'
+                        '<meta name="msapplication-TileColor" content="#6366f1">'
                     ),
                 ),
             )
-            self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
-            self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
-
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
-            config = Config(
-                wiki={"inputs": [wiki]},
-                site={"manifest": {"theme_color": "#6366f1"}},
-                config_root=root,
-            )
-            site = build_site(config)
-            html = build_index_html(
-                site,
-                root,
-                default_layout=write_layout(
-                    root,
-                    "layouts/theme_single.html.j2",
-                    jinja('<meta name="theme-color" content="{site.manifest.theme_color}">'),
-                ),
-            )
             self.assertIn('<meta name="theme-color" content="#6366f1">', html)
-
-    def test_build_web_manifest_uses_manifest_fields(self) -> None:
-        from wiki.site import build_web_manifest
-
-        config = Config(
-            site={
-                "manifest": {
-                    "name": "Acme Docs",
-                    "short_name": "Acme",
-                    "theme_color": "#6366f1",
-                    "display": "standalone",
-                },
-                "base_url": "/wiki",
-            },
-        )
-        doc = build_web_manifest(config)
-        self.assertEqual(doc["name"], "Acme Docs")
-        self.assertEqual(doc["short_name"], "Acme")
-        self.assertEqual(doc["theme_color"], "#6366f1")
-        self.assertEqual(doc["display"], "standalone")
-        self.assertEqual(doc["start_url"], "/wiki/")
-
-    def test_build_index_html_includes_manifest_url(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
-            config = Config(
-                wiki={"inputs": [wiki]},
-                site={"manifest": {"name": "Acme Docs", "theme_color": "#6366f1"}, "base_url": "/wiki"},
-                config_root=root,
-            )
-            site = build_site(config)
-            html = build_index_html(
-                site,
-                root,
-                default_layout=write_layout(
-                    root,
-                    "layouts/manifest.html.j2",
-                    jinja("{site.manifest.url}"),
-                ),
-            )
-            self.assertIn("/wiki/manifest.webmanifest", html)
+            self.assertIn('<meta name="msapplication-TileColor" content="#6366f1">', html)
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@
         "Uses -c docs/wiki.yaml or equivalent config path",
         "Artifact path is _site/wiki not bare _site",
         "Includes check and build steps before deploy-pages",
-        "References deploy-pages.yml shape or upload-pages-artifact plus deploy-pages"
+        "References deploy.yml shape or upload-pages-artifact plus deploy-pages"
       ]
     },
     {

@@ -4,26 +4,30 @@
 
 ### Changed
 
-- Consolidate [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
+- Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
+- Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 
-- Remove non-spec `site.manifest.logo` and layout variables `{{ site.manifest.logo }}` / `{{ site.manifest.logo_url }}`. Use W3C `site.manifest.icons` with `{{ site.manifest.icons[0].url }}` for sidebar logo and favicon links. Remove `{{ site.manifest.primary_icon_url }}` and `{{ site.manifest.json }}` from layout context. `wiki init` scaffolds a default `icons` entry for `assets/logo.svg` and generates that asset from `site.manifest.name` and optional `site.manifest.theme_color`. Keep `{{ site.manifest.url }}` for the manifest file link.
+## 0.1.15 — 2026-06-14
+
+### Fixed
+
+- Release workflow keeps canonical `release.yaml` filename for npm OIDC trusted publishing; npm publish skips existing versions and verify step retries registry propagation.
+
+## 0.1.14 — 2026-06-14
+
+### Changed
+
+- Consolidate [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
+- Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:` keeps `layout`, `base_url`, and `url_style`. Init flags rename to `--site-name` and `--site-theme-color` (logo asset only; not persisted to yaml).
+- `wiki init` omits `lint:` keys that default to `off` (`headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`).
+- Docs and agent skills use title-case H1 headings and sentence-case H2+ without numbered headings.
 
 ### Migration
 
-- Replace `site.manifest.logo: assets/logo.svg` with:
-
-```yaml
-site:
-  manifest:
-    icons:
-      - src: assets/logo.svg
-        sizes: "200x200"
-        type: image/svg+xml
-        purpose: any
-```
-
-- In layouts, replace `{{ site.manifest.logo_url }}` or `{{ site.manifest.primary_icon_url }}` with `{% if site.manifest.icons %}…{{ site.manifest.icons[0].url }}…{% endif %}`.
-- Replace inline `{{ site.manifest.json }}` with fetching `{{ site.manifest.url }}` or the built `manifest.webmanifest` file.
+- Delete the entire `site.manifest` block from `wiki.yaml`.
+- Move branding into `layouts/default.html.j2` (or your `site.layout` file): edit `<title>`, sidebar label, `theme-color` meta tags, and asset URLs such as `{{ site.base_url }}/assets/logo.svg` directly.
+- Replace `{{ site.manifest.* }}` template variables with literals or `{{ site.base_url }}/assets/…` paths in custom layouts.
+- Remove `<link rel="manifest">` and any dependency on built/served `manifest.webmanifest`.
 
 ## 0.1.13 — 2026-06-10
 
@@ -55,8 +59,8 @@ site:
 - Hidden SPARQL queries in inline render blocks — wrap the fenced query in an HTML comment (`<!-- sparql:start` … `-->`) so built pages show only the results table; visible-query syntax is unchanged ([#73](https://github.com/wazootech/wiki/issues/73))
 - JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page schemas; configurable via `check.frontmatter_schema` and `check.missing_schema_ref` ([#71](https://github.com/wazootech/wiki/issues/71))
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
-- Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate `release.yaml`)
-- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
+- Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate release workflows)
+- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
 
 ### Changed
 

@@ -1,4 +1,4 @@
-# Deploy alignment checklist
+# Deploy Alignment Checklist
 
 Use when wiring or reviewing GitHub Pages for a Wiki CLI wiki.
 
@@ -36,12 +36,12 @@ page_output_dir = _site                               # when base_url is ""
 - `_site/` or build output committed to `main`
 - Workflow uses `peaceiris/actions-gh-pages` or pushes to `gh-pages`
 - `publish_dir` or artifact `path` is `_site` while `site.base_url` is `/wiki` (or any non-empty path)
-- Pages `build_type: legacy` while an Actions deploy workflow exists
+- GitHub Pages `build_type: legacy` (branch deploy) while an Actions deploy workflow exists — use `build_type: workflow` instead
 - `uv sync` in CI but no `pyproject.toml` / `uv.lock`
 - `astral-sh/setup-uv` + `uv pip install` without `uv venv` or `--system` (CI error: “No virtual environment found”)
 - Hybrid install: `setup-uv` present but `uv sync` replaced with `uv pip install` — use the full pip or uv template instead
 
-Canonical reference workflow: [deploy-pages.yml](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml).
+Canonical reference workflow: [deploy.yml](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy.yml).
 
 ## Pipeline order
 
