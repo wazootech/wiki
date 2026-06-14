@@ -406,6 +406,41 @@ def render(
         click.echo(f"Rendered SPARQL: {', '.join(parts)}.")
 
 
+def _path_is_same_or_ancestor(ancestor: Path, descendant: Path) -> bool:
+    ancestor = ancestor.resolve()
+    descendant = descendant.resolve()
+    if ancestor == descendant:
+        return True
+    try:
+        descendant.relative_to(ancestor)
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_build_output_dir(page_output_dir: Path, runtime_config: Config) -> None:
+    page_output_dir = page_output_dir.resolve()
+    protected: list[tuple[str, Path]] = [
+        ("config root", runtime_config.config_root.resolve()),
+    ]
+    for input_dir in runtime_config.wiki.inputs:
+        protected.append(("wiki input", input_dir.resolve()))
+    for asset_dir in runtime_config.wiki.assets:
+        protected.append(("wiki asset", asset_dir.resolve()))
+    layout = runtime_config.page_layout
+    if layout is not None and layout.is_file():
+        protected.append(("page layout", layout.parent.resolve()))
+
+    for label, path in protected:
+        if _path_is_same_or_ancestor(page_output_dir, path):
+            click.echo(
+                f"Error: refusing to clean build output path {page_output_dir} because it "
+                f"overlaps {label} at {path}. Choose a separate output directory such as _site.",
+                err=True,
+            )
+            sys.exit(1)
+
+
 @main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
@@ -489,6 +524,9 @@ def build(
     if collision_issues:
         _print_check_messages(collision_issues, [], verbose=True)
         sys.exit(1)
+
+    page_output_dir = page_output_dir.resolve()
+    _validate_build_output_dir(page_output_dir, runtime_config)
 
     if page_output_dir.exists():
         shutil.rmtree(page_output_dir)

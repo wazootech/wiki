@@ -332,14 +332,14 @@ wiki build
 # Build with explicit .html URLs instead
 wiki build --site-url-style file
 
-# Build to a custom directory with verbose output
-wiki build --output-dir docs -v
+# Build to a disposable directory with verbose output (must not overlap wiki inputs)
+wiki build --output-dir _site -v
 
 # Build for a project site under /my-wiki/
 wiki build --site-base-url /my-wiki --output-dir _site
 
-# Build with pages at root level (no prefix)
-wiki build --site-base-url '' --output-dir docs
+# Build with pages at root level (no prefix); output must be separate from source
+wiki build --site-base-url '' --output-dir _site
 
 # Automatically update all dynamic SPARQL blocks in source files before building
 wiki build --render
