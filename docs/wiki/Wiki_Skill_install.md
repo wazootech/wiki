@@ -29,7 +29,7 @@ npx skills add wazootech/wiki@wiki-install -g -y
 
 1. Run `wiki --help`, then `wiki fmt --help` (capability probe).
 1. If both pass, confirm **`wiki` is on PATH and ready to go** and stop.
-1. If missing, give `pip install wazootech-wiki` (run install only with explicit user approval).
+1. If missing, give `pip install wazootech-wiki` or `npm install -g wazootech-wiki` (run install only with explicit user approval). Zero-install: `npx wazootech-wiki` accepts the same subcommands as `wiki`.
 1. If `--help` passes but `fmt` fails, recommend upgrade/reinstall — do not say ready-to-go.
 1. Contributors in the Wiki CLI checkout may use `uv pip install -e .` and `uv run wiki --help` instead.
 1. Re-verify after install; report errors if verification still fails.

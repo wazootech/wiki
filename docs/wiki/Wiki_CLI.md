@@ -7,12 +7,14 @@ description: Command-line interface for querying, validating, and publishing sem
 
 # Wiki CLI
 
-This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
+This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI and npm as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
 
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
+
+Install options: PyPI (`pip install wazootech-wiki`), npm ([`wazootech-wiki` on npm](https://www.npmjs.com/package/wazootech-wiki) → `wiki` on PATH), or zero-install (`npx wazootech-wiki` / `uvx wazootech-wiki` — same subcommands as `wiki`). See [Getting Started](Getting_Started.md#install).
 
 ## Quickstart
 

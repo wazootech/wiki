@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki-install skill).
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
 - Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 

@@ -77,14 +77,20 @@ Multiple `wiki.exe` shims can coexist across Python installs. If PATH is preferr
 npm install -g wazootech-wiki
 ```
 
-This installs the `wiki` command globally via npm. The npm package automatically creates a private Python virtual environment and installs the matching PyPI version of `wazootech-wiki` as the engine. Python 3.12 or newer is required.
+This installs the **`wiki`** command globally (the npm package name is `wazootech-wiki`). The npm package automatically creates a private Python virtual environment and installs the matching PyPI version of `wazootech-wiki` as the engine. Python 3.12 or newer is required on the machine.
 
-Zero-install (no install required):
+`npx wazootech-wiki` and `uvx wazootech-wiki` accept the **same subcommands and flags** as `wiki` — they run the same Python CLI via a Node shim.
+
+Zero-install (no global install required):
 
 ```bash
 npx wazootech-wiki --help
+npx wazootech-wiki init
+npx wazootech-wiki -c docs/wiki.yaml check
 uvx wazootech-wiki --help
 ```
+
+After `npm install -g wazootech-wiki`, use `wiki` instead of the `npx` prefix (for example `wiki check`).
 
 ### Standalone binary (no Python required)
 
