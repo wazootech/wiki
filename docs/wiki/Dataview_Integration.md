@@ -29,7 +29,7 @@ While both tools allow you to query your wiki metadata, they optimize for differ
 
 Because the Wiki CLI parses standard YAML frontmatter, any properties you declare for semantic queries in the CLI are also accessible to Dataview.
 
-### 1. Basic DQL vs SPARQL
+### Basic DQL vs SPARQL
 
 To list all software applications in the wiki:
 
@@ -59,7 +59,7 @@ ORDER BY ?name
 
 ______________________________________________________________________
 
-### 2. Advanced Querying with DataviewJS
+### Advanced Querying with DataviewJS
 
 If you need programmatic control or custom rendering inside Obsidian, you can use DataviewJS to filter and present your semantic properties:
 

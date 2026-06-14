@@ -82,7 +82,7 @@ Locate `wiki.yaml` (repo root or ask the user). If absent, say a wiki workspace 
 
 Ask **one decision at a time** with a short explainer. Run `wiki build --help` when you need current build flags.
 
-### 1. Pages URL shape
+### Pages URL shape
 
 GitHub Pages project sites publish at `https://{owner}.github.io/{repo}/`.
 
@@ -94,7 +94,7 @@ GitHub Pages project sites publish at `https://{owner}.github.io/{repo}/`.
 
 Read `site.base_url` from `wiki.yaml`. If it disagrees with the user’s GitHub Pages URL, align **both** `wiki.yaml` and the workflow `wiki build --site-base-url` flag (only edit `wiki.yaml` with user approval).
 
-### 2. Artifact path (critical)
+### Artifact path (critical)
 
 `wiki build --output-dir _site --site-base-url <path>` writes HTML under:
 
@@ -105,7 +105,7 @@ Read `site.base_url` from `wiki.yaml`. If it disagrees with the user’s GitHub 
 
 See [references/alignment-checklist.md](references/alignment-checklist.md).
 
-### 3. Install strategy in CI
+### Install strategy in CI
 
 | Repo signal | Template | Install |
 | ----------- | -------- | ------- |
@@ -114,7 +114,7 @@ See [references/alignment-checklist.md](references/alignment-checklist.md).
 
 Use Python **3.12+**.
 
-### 4. Workflow file
+### Workflow file
 
 Create or update `.github/workflows/deploy-pages.yml` (or `deploy.yml`) with user approval.
 
@@ -144,7 +144,7 @@ Typical job order:
 
 Permissions required: `contents: read`, `pages: write`, `id-token: write`. Use `concurrency: group: pages`.
 
-### 5. Repository settings and verification
+### Repository settings and verification
 
 Tell the user to enable **Settings → Pages → Build and deployment → GitHub Actions**.
 
@@ -158,7 +158,7 @@ Expect `build_type: workflow`. If GitHub returns `build_type: legacy` (branch-ba
 
 Confirm the latest Actions run succeeded and the published URL loads.
 
-### 6. Local preview (optional)
+### Local preview (optional)
 
 ```bash
 wiki -c path/to/wiki.yaml serve
@@ -166,7 +166,7 @@ wiki -c path/to/wiki.yaml serve
 
 Default preview URL follows `site.base_url` (e.g. `http://127.0.0.1:8080/wiki/` when `site.base_url` is `/wiki` — not the server root alone).
 
-### 7. Pre-merge validation
+### Pre-merge validation
 
 With user approval, run locally before committing the workflow:
 
