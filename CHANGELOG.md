@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Consolidate [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
+
 - Remove non-spec `site.manifest.logo` and layout variables `{{ site.manifest.logo }}` / `{{ site.manifest.logo_url }}`. Use W3C `site.manifest.icons` with `{{ site.manifest.icons[0].url }}` for sidebar logo and favicon links. Remove `{{ site.manifest.primary_icon_url }}` and `{{ site.manifest.json }}` from layout context. `wiki init` scaffolds a default `icons` entry for `assets/logo.svg` and generates that asset from `site.manifest.name` and optional `site.manifest.theme_color`. Keep `{{ site.manifest.url }}` for the manifest file link.
 
 ### Migration
