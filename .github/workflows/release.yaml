@@ -1,5 +1,8 @@
 name: Release
 
+# Keep this file as release.yaml — npm trusted publishing on npmjs.com is bound to
+# .github/workflows/release.yaml exactly; renaming to .yml breaks OIDC with E404.
+
 on:
   push:
     tags:
@@ -109,11 +112,27 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish to npm (trusted publishing / OIDC)
-        run: npm publish --provenance --access public
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          if npm view "wazootech-wiki@${VERSION}" version 2>/dev/null | grep -qx "${VERSION}"; then
+            echo "wazootech-wiki@${VERSION} already on registry; skipping publish."
+            exit 0
+          fi
+          npm publish --provenance --access public
 
       - name: Verify npm publish
         run: |
-          npm view wazootech-wiki@${{ needs.verify.outputs.version }} version
+          VERSION="${{ needs.verify.outputs.version }}"
+          for attempt in 1 2 3 4 5 6; do
+            if npm view "wazootech-wiki@${VERSION}" version 2>/dev/null | grep -qx "${VERSION}"; then
+              echo "Verified wazootech-wiki@${VERSION} on registry."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/6: version not visible yet; waiting..."
+            sleep 10
+          done
+          echo "::error::wazootech-wiki@${VERSION} not found on registry after retries."
+          exit 1
 
   build-standalone:
     name: Build standalone (${{ matrix.slug }})

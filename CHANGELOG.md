@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.15 — 2026-06-14
+
+### Fixed
+
+- Release workflow keeps canonical `release.yaml` filename for npm OIDC trusted publishing; npm publish skips existing versions and verify step retries registry propagation.
+
 ## 0.1.14 — 2026-06-14
 
 ### Changed
