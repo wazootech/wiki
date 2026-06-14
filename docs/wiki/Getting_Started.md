@@ -100,12 +100,12 @@ See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 ## Agent skills
 
-Coding agents can use repository skills documented in [Wiki Skills](Wiki_Skills.md): [Wiki Skill install](Wiki_Skill_install.md), [Wiki Skill create](Wiki_Skill_create.md), [Wiki Skill improve](Wiki_Skill_improve.md), and [Wiki Skill deploy](Wiki_Skill_deploy.md).
+Coding agents can use the consolidated **`wiki`** skill documented in [Wiki Skills](Wiki_Skills.md) and [Wiki Skill](Wiki_Skill.md).
 
 After upgrading Wiki CLI or when skills behave unexpectedly, refresh agent skills:
 
 ```bash
-npx skills add wazootech/wiki --skill '*' -g -y
+npx skills add wazootech/wiki@wiki -g -y
 ```
 
 Do not commit `.agents/skills/` to your wiki repo unless you intentionally vendor a snapshot — stale copies miss fixes like deploy workflow templates.

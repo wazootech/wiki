@@ -1,45 +1,24 @@
----
-name: wiki-install
-description: >-
-  Install and verify the Wiki CLI (wazootech-wiki on PyPI). Use when the user needs
-  to install wiki, wiki is not found on PATH, pip or PyPI setup, or the CLI is
-  missing — even if they do not say "skill".
----
-
 # Install Wiki CLI
 
 Install and verify the [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command, PyPI package **`wazootech-wiki`**).
 
-Skills under `skills/` are agent procedural knowledge — not wiki pages and not indexed by `wiki`.
+This workflow **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest `wiki init`, creating a workspace, or other workflows unless the user asks.
 
-## Modularity
+Run `bash skills/wiki/scripts/verify-cli.sh` first (`.agents/skills/wiki/scripts/verify-cli.sh` when vendored).
 
-This skill **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest creating a wiki, scaffolding a wiki, or any follow-on task. Do not name other skills or skills paths.
-
-## Workflow
-
-### Detect
-
-Run:
+## Detect
 
 ```bash
 wiki --help
-```
-
-If that fails, go to **Install (CLI missing)** below.
-
-If `--help` succeeds, run the **capability probe**:
-
-```bash
 wiki fmt --help
 ```
 
-(or confirm `fmt` appears in `wiki --help` output)
+If that fails, go to **Install (CLI missing)** or **Stale CLI** below.
 
 - **Both pass** → confirm briefly, then **`wiki` is on PATH and ready to go.** Exit.
-- **`--help` passes but `fmt` fails** → stale or wrong `wiki` on PATH; go to **Stale CLI** below (do not say ready-to-go).
+- **`--help` passes but `fmt` fails** → stale or wrong `wiki` on PATH; go to **Stale CLI** (do not say ready-to-go).
 
-### Install (CLI missing)
+## Install (CLI missing)
 
 Tell the user the CLI was not found. Offer install paths in this order unless the user prefers otherwise:
 
@@ -68,11 +47,11 @@ npx wazootech-wiki --help
 npx wazootech-wiki fmt --help
 ```
 
-Treat **`npx wazootech-wiki <args>`** (or **`uvx wazootech-wiki <args>`**) as **`wiki <args>`** for all subcommands and flags. First run may be slow while the venv is created.
+Treat **`npx wazootech-wiki <args>`** (or **`uvx wazootech-wiki <args>`**) as **`wiki <args>`** for all subcommands and flags.
 
 **Standalone binary (no Python):** download the archive for their OS from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify `SHA256SUMS`, extract, and run `./wiki --help` (or `wiki.exe` on Windows).
 
-You may offer to run `pip install wazootech-wiki` or `npm install -g wazootech-wiki` **only if the user explicitly approves** (network and environment vary).
+You may offer to run `pip install wazootech-wiki` or `npm install -g wazootech-wiki` **only if the user explicitly approves**.
 
 If `wiki upgrade --yes` reports a standalone-binary message (`pip upgrade is not available`), point them to GitHub Releases instead of pip.
 
@@ -85,14 +64,14 @@ uv run wiki --help
 
 Use `uv run wiki` only when the current working directory is this checkout and the user is developing the CLI — not as the default for end users.
 
-### Verify
+## Verify
 
-After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again.
+After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again, or re-run `verify-cli.sh`.
 
 - **Both pass** → **`wiki` is on PATH and ready to go.** Exit.
-- **Failure** → Report the error output. Exit. The user chooses whether to retry, fix their environment, or ask again.
+- **Failure** → Report the error output. Exit.
 
-### Stale CLI (`--help` works, `fmt` missing)
+## Stale CLI (`--help` works, `fmt` missing)
 
 Treat as an outdated or shadowed install — not ready:
 
@@ -101,25 +80,18 @@ Treat as an outdated or shadowed install — not ready:
 3. On Windows, multiple `wiki.exe` on PATH can shadow the upgraded install — run `where wiki` (or `which wiki`) and align PATH with the Python environment that owns `wazootech-wiki`.
 4. Re-run capability probe before saying ready-to-go.
 
-### Install troubleshooting
-
-If `pip install` fails:
-
-1. Confirm Python 3.12+: `python3 --version`
-2. Retry with module invocation: `python3 -m pip install wazootech-wiki`
-3. Optional isolated install: `pipx install wazootech-wiki` (when pipx is available)
-4. Fallback: standalone binary from [GitHub Releases](https://github.com/wazootech/wiki/releases)
-
-If an IDE-integrated pip or package tool fails but the user approves a terminal install, prefer **`python3 -m pip install wazootech-wiki` in the user’s shell** — especially on macOS with a system or python.org Python where sandboxed agent tools cannot write to site-packages.
+## Install troubleshooting
 
 | Issue | Response |
 | ----- | -------- |
 | `wiki --help` works but `fmt` missing | Stale or wrong `wiki` on PATH — upgrade/reinstall per **Stale CLI** |
 | npm venv broken or incomplete | `npm rebuild -g wazootech-wiki` (or reinstall the npm package) |
+| `pip install` fails | Confirm Python 3.12+; retry `python3 -m pip install wazootech-wiki`; optional `pipx install wazootech-wiki` |
+| IDE pip tool fails on macOS | Prefer **`python3 -m pip install wazootech-wiki` in the user's shell** |
 
 ## Do not
 
-- Suggest `wiki init`, creating a workspace, or daily workflow commands as a required next step.
+- Suggest `wiki init` or scaffolding as a required next step.
 - Auto-run `pip install` without user approval.
 - Say **ready to go** when the capability probe fails.
 - Duplicate full wiki or configuration documentation.

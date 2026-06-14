@@ -6,15 +6,15 @@ description: Procedural knowledge for coding agents — install, scaffold, impro
 
 # Wiki CLI Agent Skills
 
-[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. Each skill is a `SKILL.md` file with a focused workflow. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
+[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. One consolidated **`wiki`** skill routes to focused workflow references. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
 
-Onboarding skills are **independent modules** with no required order. Each completes its job and stops without telling the user to invoke another skill.
+Onboarding workflows are **independent modules** with no required order. Each completes its job and stops unless the user asks for the next step in the same turn.
 
 ## Install via skills.sh
 
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills) (`npx skills`). Source repository: [wazootech/wiki](https://github.com/wazootech/wiki). Browse the ecosystem at [skills.sh](https://skills.sh/). Install works from GitHub as soon as the repo is public. Leaderboard and search on skills.sh are driven by anonymous install telemetry from `npx skills add` — there is no separate index request.
+Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills) (`npx skills`). Source repository: [wazootech/wiki](https://github.com/wazootech/wiki). Browse the ecosystem at [skills.sh](https://skills.sh/).
 
 ### Badge for your README
 
@@ -23,8 +23,7 @@ Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills
 ```
 
 ```bash
-# All Wiki CLI skills (global)
-npx skills add wazootech/wiki --skill '*' -g -y
+npx skills add wazootech/wiki@wiki -g -y
 
 # List skills without installing
 npx skills add wazootech/wiki --list
@@ -37,30 +36,29 @@ Use `-g` for a user-wide install (`~/.agents/skills/`). Omit `-g` to install int
 When Wiki CLI ships skill fixes (deploy templates, init guidance), re-run:
 
 ```bash
-npx skills add wazootech/wiki --skill '*' -g -y
+npx skills add wazootech/wiki@wiki -g -y
 ```
 
 Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
 
-| Skill        | Install                                            | Reference                                   | Purpose                                                |
-| ------------ | -------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------ |
-| wiki-install | `npx skills add wazootech/wiki@wiki-install -g -y` | [Wiki Skill install](Wiki_Skill_install.md) | Install and verify `wazootech-wiki` on PATH            |
-| wiki-create  | `npx skills add wazootech/wiki@wiki-create -g -y`  | [Wiki Skill create](Wiki_Skill_create.md)   | `wiki init` plus preferences wizard (CLI required)     |
-| wiki-improve | `npx skills add wazootech/wiki@wiki-improve -g -y` | [Wiki Skill improve](Wiki_Skill_improve.md) | fmt → lint → check → render survey and findings report |
-| wiki-deploy  | `npx skills add wazootech/wiki@wiki-deploy -g -y`  | [Wiki Skill deploy](Wiki_Skill_deploy.md)   | GitHub Pages workflow and artifact alignment           |
+| Skill | Install                                    | Reference                   | Workflows                                             |
+| ----- | ------------------------------------------ | --------------------------- | ----------------------------------------------------- |
+| wiki  | `npx skills add wazootech/wiki@wiki -g -y` | [Wiki Skill](Wiki_Skill.md) | Install, create, improve, deploy (route one per turn) |
 
 ## Repository layout
 
 ```
 skills/
-  wiki-install/SKILL.md
-  wiki-create/SKILL.md
-  wiki-improve/SKILL.md
-  wiki-improve/scripts/audit.sh
-  wiki-deploy/SKILL.md
-  wiki-deploy/references/workflow-template-uv.yml
-  wiki-deploy/references/workflow-template-pip.yml
-  wiki-deploy/references/alignment-checklist.md
+  wiki/SKILL.md
+  wiki/scripts/audit.sh
+  wiki/scripts/verify-cli.sh
+  wiki/references/install.md
+  wiki/references/create.md
+  wiki/references/improve.md
+  wiki/references/deploy.md
+  wiki/references/workflow-template-uv.yml
+  wiki/references/workflow-template-pip.yml
+  wiki/references/alignment-checklist.md
 ```
 
 Human-oriented install and daily workflow: [Getting Started](Getting_Started.md).

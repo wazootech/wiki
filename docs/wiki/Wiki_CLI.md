@@ -129,7 +129,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 
 ## Agent skills
 
-Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki-install`, `skills/wiki-create`, `skills/wiki-improve`, `skills/wiki-deploy` in the repository).
+Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki/` in the repository).
 
 ## Start here
 
