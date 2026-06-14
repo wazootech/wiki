@@ -155,10 +155,10 @@ Settings for the `wiki link` command family (separate from `lint.link_style` sev
 
 ## Serve API
 
-| Key                      | Default       | Purpose                                               |
-| ------------------------ | ------------- | ----------------------------------------------------- |
-| `sparql_service.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` |
-| `sparql_service.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                |
+| Key                      | Default       | Purpose                                                                                                                                |
+| ------------------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `sparql_service.enabled` | `false`       | Enable or disable the SPARQL endpoint on `wiki serve` (YAML boolean; common string forms such as `"false"` and `"off"` are normalized) |
+| `sparql_service.path`    | `/api/sparql` | Reserved route for the SPARQL endpoint                                                                                                 |
 
 Example:
 

@@ -417,9 +417,20 @@ class SparqlServiceConfig(BaseModel):
     def _coerce_enabled(cls, value: object) -> bool:
         if value is None:
             return False
-        if not isinstance(value, bool):
-            return True
-        return value
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int):
+            if value in (0, 1):
+                return bool(value)
+            raise ValueError(f"expected boolean enabled value, got {value!r}")
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"false", "0", "no", "off"}:
+                return False
+            if normalized in {"true", "1", "yes", "on"}:
+                return True
+            raise ValueError(f"expected boolean enabled value, got {value!r}")
+        raise ValueError(f"expected boolean enabled value, got {value!r}")
 
 
 class Config(BaseModel):
