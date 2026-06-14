@@ -2,12 +2,14 @@
 
 ## Unreleased
 
+## 0.1.14 — 2026-06-14
+
 ### Changed
 
 - Consolidate [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
-
 - Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:` keeps `layout`, `base_url`, and `url_style`. Init flags rename to `--site-name` and `--site-theme-color` (logo asset only; not persisted to yaml).
 - `wiki init` omits `lint:` keys that default to `off` (`headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`).
+- Docs and agent skills use title-case H1 headings and sentence-case H2+ without numbered headings.
 
 ### Migration
 
