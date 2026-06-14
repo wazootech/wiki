@@ -447,7 +447,7 @@ Built and served HTML pages include a **Metadata** tab with a compact no-JavaScr
 
 #### GitHub Pages deployment
 
-Create `.github/workflows/deploy-pages.yml` in your wiki repository:
+Create `.github/workflows/deploy.yml` in your wiki repository:
 
 ```yaml
 name: Deploy Wiki to Pages

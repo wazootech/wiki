@@ -19,7 +19,7 @@ This skill **only** sets up GitHub Pages deployment (workflow + config alignment
 
 ## Canonical workflow reference
 
-The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
+The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
 
 | Step | Dogfood value | Why |
 | ---- | ------------- | --- |
@@ -116,7 +116,7 @@ Use Python **3.12+**.
 
 ### Workflow file
 
-Create or update `.github/workflows/deploy-pages.yml` (or `deploy.yml`) with user approval.
+Create or update `.github/workflows/deploy.yml` with user approval.
 
 Substitute placeholders in the chosen template:
 
@@ -203,7 +203,7 @@ Do not run `wiki serve` or open PRs unless the user asks.
 ## References
 
 - [references/alignment-checklist.md](references/alignment-checklist.md) — path alignment and audit red flags
-- [references/workflow-template-uv.yml](references/workflow-template-uv.yml) — monorepo / uv (matches deploy-pages.yml)
+- [references/workflow-template-uv.yml](references/workflow-template-uv.yml) — monorepo / uv (matches deploy.yml)
 - [references/workflow-template-pip.yml](references/workflow-template-pip.yml) — standalone wiki repos
 
 Human docs: [Deploying to GitHub Pages](https://github.com/wazootech/wiki/blob/main/docs/wiki/Deploying_to_GitHub_Pages.md), [Wiki Subcommand build](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Subcommand_build.md).

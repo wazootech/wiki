@@ -5,6 +5,7 @@
 ### Changed
 
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
+- Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 
 ## 0.1.15 — 2026-06-14
 
@@ -59,7 +60,7 @@
 - JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page schemas; configurable via `check.frontmatter_schema` and `check.missing_schema_ref` ([#71](https://github.com/wazootech/wiki/issues/71))
 - Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
 - Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate release workflows)
-- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
+- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
 
 ### Changed
 

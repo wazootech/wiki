@@ -6,11 +6,11 @@ description: Set up GitHub Pages deployment for a Wiki CLI wiki with Actions.
 
 # wiki-deploy Agent Skill
 
-The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.base_url`, add `.github/workflows/deploy-pages.yml`, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions** in repository settings.
+The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.base_url`, add `.github/workflows/deploy.yml`, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions** in repository settings.
 
 Canonical skill file: [`skills/wiki-deploy/SKILL.md`](../../skills/wiki-deploy/SKILL.md) in the [Wiki CLI](https://github.com/wazootech/wiki) repository.
 
-Workflow assets (mirror `.github/workflows/deploy-pages.yml` — embed one template in full, substitute `CONFIG_PATH`, `SITE_BASE_URL`, and `ARTIFACT_PATH` only):
+Workflow assets (mirror `.github/workflows/deploy.yml` — embed one template in full, substitute `CONFIG_PATH`, `SITE_BASE_URL`, and `ARTIFACT_PATH` only):
 
 - `skills/wiki-deploy/references/workflow-template-uv.yml` — uv monorepo (`pyproject.toml` + `uv.lock`)
 - `skills/wiki-deploy/references/workflow-template-pip.yml` — pip standalone (same job shape as dogfood workflow)
@@ -38,7 +38,7 @@ Requires **`wiki` on PATH** and an existing **`wiki.yaml`**.
 1. Confirm `wiki --help` and locate `wiki.yaml`.
 1. Derive `site.base_url` from config and the user’s `{owner}.github.io/{repo}` URL.
 1. Compute artifact path (`_site/wiki`, `_site/{repo}`, or `_site` for root).
-1. Create or update `.github/workflows/deploy-pages.yml` from the template (with user approval).
+1. Create or update `.github/workflows/deploy.yml` from the template (with user approval).
 1. Remind you to enable GitHub Actions as the Pages source.
 
 ## Modularity
