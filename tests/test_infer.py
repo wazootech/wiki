@@ -1,11 +1,13 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from rdflib import URIRef, RDF, RDFS, Namespace
+
+from rdflib import RDF, RDFS, Namespace, URIRef
 
 from wiki.config import Config
-from wiki.infer import apply_inference
 from wiki.graph import load_graph
+from wiki.infer import apply_inference
+
 
 class TestReasoning(unittest.TestCase):
     def test_full_reasoning_pipeline(self) -> None:

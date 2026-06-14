@@ -6,7 +6,11 @@ import unittest
 
 from rdflib import Graph
 
-from wiki.sparql_service import SD, build_service_description_graph, serialize_service_description
+from wiki.sparql_service import (
+    SD,
+    build_service_description_graph,
+    serialize_service_description,
+)
 
 
 class SparqlServiceDescriptionTests(unittest.TestCase):

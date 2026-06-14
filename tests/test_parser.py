@@ -1,12 +1,13 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 from wiki.parser import (
     document_data_from_path,
-    parse_frontmatter,
-    split_frontmatter_body,
-    split_document_body,
     ensure_context,
+    parse_frontmatter,
+    split_document_body,
+    split_frontmatter_body,
 )
 
 

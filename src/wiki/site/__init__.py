@@ -2,7 +2,10 @@
 
 from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .build import build_site
+
+# Test-only / internal exports kept for compatibility
 from .html import (
+    _build_logo_svg,  # noqa: F401
     build_index_html,
     build_infobox_rows,
     build_page_html,
@@ -20,9 +23,6 @@ from .markdown import (
     strip_leading_title_heading,
 )
 
-# Test-only / internal exports kept for compatibility
-from .html import _build_logo_svg  # noqa: F401
-
 __all__ = [
     "MINIMAL_LAYOUT_TEMPLATE",
     "INLINE_CSS",
@@ -32,6 +32,7 @@ __all__ = [
     "WikiSite",
     "build_layout_context",
     "build_logo_svg",
+    "build_index_html",
     "build_infobox_rows",
     "build_page_html",
     "build_site",

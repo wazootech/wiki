@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 
 from .audit import collect_broken_links
-from .document import WIKILINK_FULL_REGEX, split_frontmatter_text
-from .schemas import BrokenLink, BrokenLinkFix
 from .config import Config
+from .document import WIKILINK_FULL_REGEX, split_frontmatter_text
 from .headings import GitHubHeadingSlugger
 from .links import fragment_id, resolve_page_route, split_target
 from .paths import iter_document_files, route_for_document_file
+from .schemas import BrokenLink, BrokenLinkFix
 
 MARKDOWN_LINK_FULL_REGEX = re.compile(r"(!?\[[^\]]*\]\()([^)]+)(\))")
 FUZZY_ROUTE_CUTOFF = 0.86

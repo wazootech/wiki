@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import re
 from difflib import get_close_matches
-from typing import Any, Optional
+from typing import Any
 
 import click
 
@@ -63,7 +62,7 @@ class FormatChoice(click.Choice):
     # Resolve MIME types before the normal Choice machinery runs
     # ------------------------------------------------------------------
 
-    def normalize_choice(self, choice: Any, ctx: Optional[click.Context]) -> str:
+    def normalize_choice(self, choice: Any, ctx: click.Context | None) -> str:
         raw = str(choice)
 
         # Alias lookup — case-insensitive when case_sensitive=False
@@ -84,7 +83,7 @@ class FormatChoice(click.Choice):
     # "Did you mean … ?"  when an invalid value is entered
     # ------------------------------------------------------------------
 
-    def get_invalid_choice_message(self, value: Any, ctx: Optional[click.Context]) -> str:
+    def get_invalid_choice_message(self, value: Any, ctx: click.Context | None) -> str:
         base = super().get_invalid_choice_message(value, ctx)
 
         valid = list(dict.fromkeys(str(c) for c in self.choices))

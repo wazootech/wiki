@@ -5,13 +5,29 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional
-from rdflib import Graph
+from typing import Any
+
 import pyshacl
+from rdflib import Graph
 
 from .assets import build_asset_manifest
 from .config import Config
+from .document import (
+    WIKILINK_FULL_REGEX,
+    body_code_spans,
+    markdown_body,
+    span_overlaps,
+    split_frontmatter_text,
+)
+from .frontmatter_schema import check_frontmatter_schema
+from .graph import frontmatter_to_graph, load_graph
 from .headings import parse_headings
+from .layout import (
+    LAYOUT_FRONTMATTER_KEY,
+    layout_file_is_valid,
+    resolve_layout_path,
+)
+from .parser import document_data_from_path, split_document_body
 from .paths import (
     build_page_manifest,
     detect_output_collisions,
@@ -21,23 +37,8 @@ from .paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from .parser import document_data_from_path, split_document_body
-from .graph import frontmatter_to_graph, load_graph
-from .layout import (
-    LAYOUT_FRONTMATTER_KEY,
-    layout_file_is_valid,
-    resolve_layout_path,
-)
-from .document import (
-    WIKILINK_FULL_REGEX,
-    body_code_spans,
-    markdown_body,
-    span_overlaps,
-    split_frontmatter_text,
-)
-from .frontmatter_schema import check_frontmatter_schema
-from .wiki_links import LinkIndex
 from .schemas import BrokenLink, CheckConfig, LintConfig
+from .wiki_links import LinkIndex
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ def load_shapes(data_graph: Graph) -> Graph:
     return shapes_graph
 
 
-def check_shacl_file(file_path: Path, context: Config, verbose: bool = False) -> Optional[tuple[bool, str]]:
+def check_shacl_file(file_path: Path, context: Config, verbose: bool = False) -> tuple[bool, str] | None:
     """Validate a single document file's metadata against loaded shapes.
 
     Returns None if no document metadata is found, otherwise returns (conforms, results_text).

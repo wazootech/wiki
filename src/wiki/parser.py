@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
-import yaml
+from typing import Any
 
+import yaml
 
 DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json"}
 DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json"}
 
 
-def parse_frontmatter(content: str) -> Optional[dict[str, Any]]:
+def parse_frontmatter(content: str) -> dict[str, Any] | None:
     """Parse YAML or JSON frontmatter block from a markdown content string."""
     if not content.startswith("---"):
         return None
@@ -56,7 +56,7 @@ def ensure_context(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def document_data_from_path(path: Path, content_predicate: Optional[str] = None) -> Optional[dict[str, Any]]:
+def document_data_from_path(path: Path, content_predicate: str | None = None) -> dict[str, Any] | None:
     """Read a supported wiki document file and return its parsed data dict with context."""
     try:
         suffix = path.suffix.lower()
@@ -78,7 +78,7 @@ def document_data_from_path(path: Path, content_predicate: Optional[str] = None)
         return None
 
 
-def frontmatter_from_path(path: Path, content_predicate: Optional[str] = None) -> Optional[dict[str, Any]]:
+def frontmatter_from_path(path: Path, content_predicate: str | None = None) -> dict[str, Any] | None:
     """Read a markdown file and return its parsed frontmatter dict with context.
     
     Optionally appends the text content of the body using the provided predicate key.
@@ -102,7 +102,7 @@ def frontmatter_from_path(path: Path, content_predicate: Optional[str] = None) -
         return None
 
 
-def split_frontmatter_body(content: str) -> tuple[Optional[dict[str, Any]], str]:
+def split_frontmatter_body(content: str) -> tuple[dict[str, Any] | None, str]:
     """Split markdown content into (frontmatter_dict, body_text).
 
     Returns (None, content) if no valid frontmatter is found.
@@ -116,7 +116,7 @@ def split_frontmatter_body(content: str) -> tuple[Optional[dict[str, Any]], str]
     return split.data, split.body.strip()
 
 
-def split_document_body(path: Path) -> tuple[Optional[dict[str, Any]], str]:
+def split_document_body(path: Path) -> tuple[dict[str, Any] | None, str]:
     """Split a supported wiki document into (data, body_text)."""
     suffix = path.suffix.lower()
     if suffix == ".md":

@@ -3,28 +3,28 @@
 from __future__ import annotations
 
 import html as html_module
-import json
 import re
-from pathlib import Path
 from typing import Any
-from urllib.parse import quote
 
 from markdown_it import MarkdownIt
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
+
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
-from ..config import DEFAULT_URL_STYLE, Config
+from ..config import DEFAULT_URL_STYLE
 from ..headings import GitHubHeadingSlugger, heading_slug, parse_headings
-from ..format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
-from ..schemas.metadata import METADATA_VIEWS
-from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
-from ..links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
-from ..paths import iter_document_files, page_url, route_for_document_file
-from ..parser import split_document_body
+from ..links import (
+    is_external_link,
+    markdown_link_is_page,
+    resolve_page_href,
+)
+from ..paths import page_url
 from ..render import strip_sparql_wrappers_for_html
+from ..schemas.metadata import METADATA_VIEWS
+from ..schemas.site import TocItem, VirtualPage
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 

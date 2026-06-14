@@ -7,9 +7,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from wiki.config import Config
 from wiki import graph as graph_module
-from wiki.graph import load_graph, graph_stats
+from wiki.config import Config
+from wiki.graph import graph_stats, load_graph
 from wiki.graph_cache import (
     cache_dir,
     clear_all_process_graphs,

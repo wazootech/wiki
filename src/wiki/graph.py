@@ -6,14 +6,15 @@ import logging
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
 from bs4 import BeautifulSoup, Tag, XMLParsedAsHTMLWarning
-from rdflib import Graph, Literal, URIRef, RDF, BNode
+from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 from rdflib.parser import InputSource, Parser, StringInputSource
 from rdflib.plugin import register
 
-from .config import Context, Config
+from .config import Config, Context
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file
 
@@ -178,8 +179,8 @@ def _effective_types(data: dict[str, Any], context: Context | Config) -> list[An
 def frontmatter_to_graph(
     data: dict[str, Any],
     context: Context | Config,
-    file_id: Optional[str] = None,
-    body: Optional[str] = None,
+    file_id: str | None = None,
+    body: str | None = None,
     include_file_extension: bool = False,
     file_ext: str = ".md",
     content_predicate: str | None = None,

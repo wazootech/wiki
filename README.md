@@ -141,6 +141,10 @@ Use this repo's docs wiki as the main contributor sandbox.
 # Install the project in editable mode
 uv pip install -e .
 
+# Python static analysis (dev dependency group)
+uv sync --group dev
+uv run ruff check .
+
 # Run the docs wiki integrity checks from the repo root
 wiki -c docs/wiki.yaml check
 wiki -c docs/wiki.yaml lint

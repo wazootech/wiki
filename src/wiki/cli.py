@@ -7,14 +7,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
 import click
 
-from .config import Config
-from .format import run_query, process_rdf_format
-from .render import render_markdown_files
-from .parser import document_data_from_path
-from .graph import load_graph, graph_stats
 from .audit import (
     _apply_issues,
     check_frontmatter_schema,
@@ -23,8 +19,12 @@ from .audit import (
     run_check,
     run_lint,
 )
-from .jqfilter import resolve_path
+from .config import Config
+from .format import process_rdf_format, run_query
 from .format_choice import FormatChoice
+from .graph import graph_stats, load_graph
+from .jqfilter import resolve_path
+from .parser import document_data_from_path
 from .paths import (
     iter_document_files,
     iter_markdown_files,
@@ -33,6 +33,7 @@ from .paths import (
     select_document_paths,
     select_markdown_paths,
 )
+from .render import render_markdown_files
 from .runtime import resolve_runtime_config
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
@@ -207,7 +208,11 @@ def link(
     verbose: bool,
 ) -> None:
     """Suggest or repair internal links for wiki pages."""
-    from .link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
+    from .link_fix import (
+        apply_broken_link_fixes,
+        find_broken_link_fixes,
+        remaining_broken_links,
+    )
     from .link_suggest import apply_link_opportunities, find_link_opportunities
     from .links import format_internal_link
 
@@ -282,11 +287,11 @@ def query(
     context: Config,
     query_args: tuple[str, ...],
     output_format: str,
-    output: Optional[Path],
+    output: Path | None,
     no_inference: bool,
     reload: bool,
     disk_cache: bool,
-    jq: Optional[str],
+    jq: str | None,
     pretty: bool,
     verbose: bool,
 ) -> None:
@@ -467,7 +472,7 @@ def build(
 ) -> None:
     """Build static HTML site from wiki documents."""
     from .assets import build_asset_manifest
-    from .site import build_site, build_index_html, build_page_html
+    from .site import build_index_html, build_page_html, build_site
 
     runtime_config = resolve_runtime_config(config, base_url=site_base_url, url_style=site_url_style)
 
@@ -513,7 +518,6 @@ def build(
         default_layout = runtime_config.page_layout
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
-    from .assets import build_asset_manifest
     from .paths import build_page_manifest, detect_output_collisions, page_output_path
 
     manifest = (
@@ -583,7 +587,7 @@ def build(
 @click.option("-f", "--format", "rdf_format", type=FormatChoice(["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"], case_sensitive=False), default="dict", show_default=True, help="Output format for RDF export.")
 @click.option("--mode", type=click.Choice(["expanded", "compacted"], case_sensitive=False), default="expanded", show_default=True, help="Serialization mode for formats that support compaction.")
 @click.pass_obj
-def export(context: Config, files: tuple[Path, ...], output: Optional[Path], rdf_format: str, mode: str) -> None:
+def export(context: Config, files: tuple[Path, ...], output: Path | None, rdf_format: str, mode: str) -> None:
     """Export document frontmatter as RDF or JSON-LD."""
     result_payload: Any = None
     _raw_formats = {"turtle", "xml", "n3", "nt", "trig", "nquads"}
@@ -904,7 +908,11 @@ def fmt(config: Config, files: tuple[Path, ...], check: bool, verbose: bool) -> 
 @click.option("-v", "--verbose", is_flag=True, help="Show pip install output.")
 def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
     """Check for updates and upgrade the wiki CLI."""
-    from .upgrade import check_version, get_windows_path_mismatch_warning, perform_upgrade
+    from .upgrade import (
+        check_version,
+        get_windows_path_mismatch_warning,
+        perform_upgrade,
+    )
 
     current, latest, is_outdated = check_version()
     path_warning = get_windows_path_mismatch_warning()

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from rdflib import Graph
+
 import owlrl
+from rdflib import Graph
 
 from .config import Context
 

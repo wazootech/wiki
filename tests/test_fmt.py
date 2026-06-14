@@ -5,17 +5,15 @@ from tempfile import TemporaryDirectory
 import mdformat
 from click.testing import CliRunner
 
+from layout_helpers import write_layout
 from wiki.cli import main
 from wiki.config import Config
 from wiki.fmt_util import (
-    DEFAULT_FMT_OPTS,
     _resolve_fmt_toml_opts,
     describe_fmt_source,
     format_markdown,
 )
 from wiki.site import build_page_html, build_site
-
-from layout_helpers import write_layout
 
 
 class TestWikiFmt(unittest.TestCase):

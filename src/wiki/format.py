@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .format_choice import FormatChoice
-from .schemas.metadata import METADATA_VIEWS, MetadataView
+from .schemas.metadata import METADATA_VIEWS
 
 # Pygments has no dedicated N3/TriG/N-Triples lexers; "nt" aliases to NestedTextLexer.
 METADATA_PYGMENTS_LEXER_ALIASES: dict[str, str] = {

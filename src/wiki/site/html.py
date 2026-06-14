@@ -9,21 +9,23 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from markupsafe import Markup
 from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
 
 from ..config import DEFAULT_URL_STYLE, Config
-from ..format import process_rdf_format, resolve_metadata_pygments_lexer, resolve_metadata_view
+from ..format import (
+    process_rdf_format,
+    resolve_metadata_pygments_lexer,
+    resolve_metadata_view,
+)
 from ..links import is_external_link, resolve_page_route
-from ..paths import page_url
 from ..schemas.metadata import METADATA_VIEWS
 from ..schemas.site import InfoboxRow, VirtualPage, WikiSite
 from .backlinks import build_backlinks_html
 from .build import expand_known_curie
+from .layout_context import build_layout_context, build_logo_svg
+from .layout_template import get_layout_renderer
 from .markdown import (
     METADATA_HIDDEN_FIELDS,
     PYGMENTS_FORMATTER,
@@ -33,8 +35,6 @@ from .markdown import (
     render_copyable_pre,
     render_outline_title,
 )
-from .layout_context import build_layout_context, build_logo_svg
-from .layout_template import get_layout_renderer
 
 
 def build_index_html(

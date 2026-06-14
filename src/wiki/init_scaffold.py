@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 import subprocess
+from collections.abc import Callable
 from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
-from typing import Callable
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 

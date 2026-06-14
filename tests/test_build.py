@@ -5,12 +5,15 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
+from layout_helpers import write_layout
 from wiki.cli import main
 from wiki.config import Config
+from wiki.init_scaffold import (
+    DOCS_WIKI_INIT_OPTIONS,
+    load_packaged_default_layout,
+    render_wiki_yaml,
+)
 from wiki.paths import page_output_path
-from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, load_packaged_default_layout, render_wiki_yaml
-
-from layout_helpers import write_layout
 
 
 class TestWikiBuild(unittest.TestCase):

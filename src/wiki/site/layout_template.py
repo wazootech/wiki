@@ -5,7 +5,13 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader, select_autoescape
+from jinja2 import (
+    ChoiceLoader,
+    Environment,
+    FileSystemLoader,
+    PackageLoader,
+    select_autoescape,
+)
 
 MINIMAL_LAYOUT_TEMPLATE = "layout_minimal.html.j2"
 LAYOUT_SUFFIX = ".html.j2"

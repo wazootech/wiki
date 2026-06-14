@@ -7,8 +7,8 @@ from typing import Any
 
 from ..config import Config
 from ..links import is_external_link
-from ..paths import iter_document_files, route_for_document_file
 from ..parser import split_document_body
+from ..paths import iter_document_files, route_for_document_file
 from ..schemas.site import VirtualPage, WikiSite
 from ..wiki_links import LinkIndex
 from .markdown import (
@@ -17,6 +17,7 @@ from .markdown import (
     render_wiki_markdown,
     strip_leading_title_heading,
 )
+
 
 def build_site(
     input_dirs: Config | list[Path] | Path,

@@ -2,11 +2,13 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from wiki.assets import build_asset_manifest, iter_asset_files
+from wiki.audit import lint_broken_links
 from wiki.config import Config
 from wiki.paths import (
+    OutputEntry,
     build_page_manifest,
     detect_output_collisions,
-    OutputEntry,
     page_output_path,
     page_routes,
     page_url,
@@ -14,8 +16,6 @@ from wiki.paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from wiki.audit import lint_broken_links
-from wiki.assets import build_asset_manifest, iter_asset_files
 
 
 class TestWikiPaths(unittest.TestCase):

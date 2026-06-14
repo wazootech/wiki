@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from layout_helpers import write_layout
 from wiki.config import Config
 from wiki.format import METADATA_VIEWS
 from wiki.init_scaffold import load_packaged_default_layout
@@ -14,8 +15,6 @@ from wiki.site import (
     render_wiki_markdown,
     strip_leading_title_heading,
 )
-
-from layout_helpers import write_layout
 
 _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -578,7 +577,6 @@ specialty: Diagnostics
             self.assertNotIn("On this page", html)
 
     def test_default_layout_read_view_includes_first_heading(self) -> None:
-        seed_template = load_packaged_default_layout()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -597,7 +595,6 @@ specialty: Diagnostics
             self.assertIn("Lead paragraph.", html)
 
     def test_read_view_does_not_include_generic_site_sub(self) -> None:
-        seed_template = load_packaged_default_layout()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

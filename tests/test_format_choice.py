@@ -1,11 +1,11 @@
 """Unit tests for the FormatChoice custom Click type."""
 
 import unittest
-from click.testing import CliRunner
+
 import click
+from click.testing import CliRunner
 
 from wiki.format_choice import FormatChoice
-
 
 QUERY_FORMATS = ["table", "json", "csv", "tsv", "turtle", "n3", "markdown"]
 EXPORT_FORMATS = ["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquads"]

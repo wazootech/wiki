@@ -41,6 +41,10 @@ Use Markdown links for all internal and external URLs.
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
 ```bash
+# 0. Python static analysis (requires dev deps)
+uv sync --group dev
+uv run ruff check .
+
 # 1. Format (apply, then verify)
 wiki -c docs/wiki.yaml fmt
 wiki -c docs/wiki.yaml fmt --check
