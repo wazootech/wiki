@@ -102,19 +102,19 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("content_predicate: schema:articleBody", rendered)
         self.assertIn("style: markdown", rendered)
         self.assertIn("link:", rendered)
-        self.assertIn("headings: off", rendered)
-        self.assertIn("heading_levels: off", rendered)
-        self.assertIn("duplicate_headings: off", rendered)
-        self.assertIn("thematic_breaks: off", rendered)
+        self.assertNotIn("headings: off", rendered)
+        self.assertNotIn("heading_levels: off", rendered)
+        self.assertNotIn("duplicate_headings: off", rendered)
+        self.assertNotIn("thematic_breaks: off", rendered)
         self.assertIn("missing_layout_file: error", rendered)
         self.assertIn("frontmatter_schema: error", rendered)
         self.assertIn("missing_schema_ref: error", rendered)
-        self.assertIn("wrap: \"no\"", rendered)
+        self.assertIn('wrap: "no"', rendered)
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
-        self.assertIn("src: assets/logo.svg", rendered)
-        self.assertIn('sizes: "200x200"', rendered)
+        self.assertIn("layout: layouts/default.html.j2", rendered)
+        self.assertNotIn("manifest:", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
@@ -147,13 +147,16 @@ class TestRenderWikiYaml(TestCase):
     def test_load_packaged_default_layout(self) -> None:
         rendered = load_packaged_default_layout()
         self.assertIn("{{ page.title }}", rendered)
-        self.assertIn("{{ site.manifest.name }}", rendered)
+        self.assertIn("Wiki CLI", rendered)
         self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn("<title>{{ page.title }} - {{ site.manifest.name }}</title>", rendered)
-        self.assertIn('placeholder="Search {{ site.manifest.name }}"', rendered)
-        self.assertIn("{{ site.manifest.icons[0].url }}", rendered)
-        self.assertNotIn("{{ site.manifest.primary_icon_url }}", rendered)
-        self.assertNotIn("{{ site.manifest.logo_url }}", rendered)
+        self.assertIn("<title>{{ page.title }} - Wiki CLI</title>", rendered)
+        self.assertIn('placeholder="Search Wiki CLI"', rendered)
+        self.assertIn("{{ site.base_url }}/assets/logo.svg", rendered)
+        self.assertIn('<meta name="theme-color" content="#3b82f6">', rendered)
+        self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', rendered)
+        self.assertIn('<link rel="icon" href="{{ site.base_url }}/assets/logo.svg">', rendered)
+        self.assertNotIn('rel="manifest"', rendered)
+        self.assertNotIn("{{ site.manifest", rendered)
         self.assertNotIn("{{ site.logo_svg }}", rendered)
 
     def test_load_packaged_default_logo(self) -> None:
@@ -174,7 +177,7 @@ class TestRenderWikiYaml(TestCase):
     def test_copy_default_logo(self) -> None:
         with TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "assets" / "logo.svg"
-            copy_default_logo(dest, site_manifest_name="Acme Docs")
+            copy_default_logo(dest, site_name="Acme Docs")
             self.assertEqual(
                 dest.read_text(encoding="utf-8"),
                 load_packaged_default_logo("Acme Docs"),
@@ -236,14 +239,15 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "site_url_style": ("site", "url_style"),
     "graph_content_predicate": ("graph", "content_predicate"),
     "link_style": ("link", "style"),
-    "site_manifest_name": ("site", "manifest", "name"),
     "wiki_inputs": ("wiki", "inputs"),
     "graph_base_iri": ("graph", "base_iri"),
-    "site_manifest_theme_color": ("site", "manifest", "theme_color"),
     "graph_implicit_types": ("graph", "implicit_types"),
     "graph_implicit_types_policy": ("graph", "implicit_types_policy"),
     "graph_include_file_extension": ("graph", "include_file_extension"),
 }
+
+# Init-only flags: affect scaffold assets, not wiki.yaml fields.
+INIT_ONLY_OPTIONS = frozenset({"site_name", "site_theme_color"})
 
 
 class TestInitLockstep(TestCase):
@@ -295,4 +299,6 @@ class TestInitLockstep(TestCase):
                     break
         
         for field in InitOptions.model_fields:
+            if field in INIT_ONLY_OPTIONS:
+                continue
             self.assertIn(field, INIT_OPTIONS_TO_CONFIG_PATH, f"InitOptions field '{field}' is not mapped in INIT_OPTIONS_TO_CONFIG_PATH.")

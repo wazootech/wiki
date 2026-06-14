@@ -10,7 +10,7 @@ from wiki.config import Config
 from wiki.paths import page_output_path
 from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, load_packaged_default_layout, render_wiki_yaml
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -182,19 +182,19 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            test_template = jinja("""<!DOCTYPE html>
+            test_template = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.nav.infobox}
-{page.content}
+<h1>{{ page.title }}</h1>
+{{ page.nav.infobox }}
+{{ page.content }}
 </body>
-</html>""")
+</html>"""
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
             )
@@ -243,19 +243,19 @@ name: Bella Davidson
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            template = jinja("""<!DOCTYPE html>
+            template = """<!DOCTYPE html>
 <html lang=\"en\">
 <head>
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.content}
-{page.metadata.pane}
+<h1>{{ page.title }}</h1>
+{{ page.content }}
+{{ page.metadata.pane }}
 </body>
-</html>""")
+</html>"""
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
             )
@@ -303,11 +303,11 @@ about: wiki:Alice_Theory
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
 
-    def test_build_site_block_drives_manifest_icon_url(self) -> None:
+    def test_build_layout_uses_base_url_asset_path(self) -> None:
         runner = CliRunner()
-        template = jinja("""<!DOCTYPE html>
-<html><head><title>{page.title} - {site.manifest.name}</title></head>
-<body><img src="{site.manifest.icons[0].url}" alt=""><span class="logo-text">{site.manifest.name}</span>{page.content}</body></html>""")
+        template = """<!DOCTYPE html>
+<html><head><title>{{ page.title }} - Acme Docs</title></head>
+<body><img src="{{ site.base_url }}/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>{{ page.content }}</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -321,9 +321,7 @@ about: wiki:Alice_Theory
             )
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\n  assets: [assets]\n"
-                "site:\n  manifest:\n    name: Acme Docs\n    icons:\n      - src: assets/logo.svg\n"
-                "        sizes: \"200x200\"\n        type: image/svg+xml\n        purpose: any\n"
-                "  layout: test_shell.html.j2\n",
+                "site:\n  layout: test_shell.html.j2\n",
                 encoding="utf-8",
             )
             write_layout(root, "test_shell.html.j2", template)
@@ -349,26 +347,6 @@ about: wiki:Alice_Theory
             expected,
             "docs/layouts/default.html.j2 must match the packaged default layout template",
         )
-
-    def test_build_writes_manifest_webmanifest(self) -> None:
-        runner = CliRunner()
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            output_dir = root / "_site"
-            wiki.mkdir()
-            (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n",
-                encoding="utf-8",
-            )
-            (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
-            result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
-            self.assertEqual(result.exit_code, 0, result.output)
-            manifest_path = output_dir / "wiki" / "manifest.webmanifest"
-            self.assertTrue(manifest_path.is_file())
-            body = manifest_path.read_text(encoding="utf-8")
-            self.assertIn('"name":"Acme Docs"', body)
-            self.assertIn('"start_url":"/wiki/"', body)
 
     def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent

@@ -51,8 +51,6 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(config.graph.include_file_extension)
         self.assertEqual(config.site.base_url, "/wiki")
         self.assertEqual(config.site.url_style, "dir")
-        self.assertIsNone(config.site.manifest.theme_color)
-        self.assertEqual(config.site.manifest.name, "Wiki CLI")
         self.assertIsNone(config.wiki.filename_pattern)
         self.assertEqual(config.check, DEFAULT_CHECK_CONFIG)
         self.assertEqual(config.lint, DEFAULT_LINT_CONFIG)
@@ -66,7 +64,6 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             config = Config.load(Path(tmpdir))
             self.assertEqual(config.wiki.inputs, [config.config_root.absolute() / "wiki"])
-            self.assertEqual(config.site.manifest.name, "Wiki CLI")
 
     def test_Config_load_yaml(self) -> None:
         """Test Config.load correctly parses wiki.yaml."""
@@ -117,64 +114,23 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(config.sparql_service.path, "/sparql")
             self.assertIn("custom_pref", config.namespaces)
 
-    def test_Config_load_manifest_name(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    name: Acme Docs\n",
-                encoding="utf-8",
-            )
-            config = Config.load(base_path)
-            self.assertEqual(config.site.manifest.name, "Acme Docs")
-
-    def test_Config_load_blank_manifest_name_falls_back(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text(
-                'site:\n  manifest:\n    name: "   "\n',
-                encoding="utf-8",
-            )
-            config = Config.load(base_path)
-            self.assertEqual(config.site.manifest.name, "Wiki CLI")
-
     def test_Config_load_site_block(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "layouts").mkdir()
             (base_path / "layouts" / "custom.html.j2").write_text("<html></html>", encoding="utf-8")
             (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    name: Nested Wiki\n  layout: layouts/custom.html.j2\n",
+                "site:\n  layout: layouts/custom.html.j2\n",
                 encoding="utf-8",
             )
             config = Config.load(base_path)
-            self.assertEqual(config.site.manifest.name, "Nested Wiki")
             self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html.j2").resolve())
 
-    def test_Config_load_manifest_theme_color(self) -> None:
+    def test_Config_rejects_site_manifest_block(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    theme_color: '#f00'\n",
-                encoding="utf-8",
-            )
-            config = Config.load(base_path)
-            self.assertEqual(config.site.manifest.theme_color, "#ff0000")
-
-    def test_Config_rejects_manifest_logo_key(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    logo: assets/custom.svg\n",
-                encoding="utf-8",
-            )
-            with self.assertRaises(ValueError):
-                Config.load(base_path)
-
-    def test_Config_rejects_invalid_manifest_theme_color(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text(
-                "site:\n  manifest:\n    theme_color: blue\n",
+                "site:\n  manifest:\n    name: Acme Docs\n",
                 encoding="utf-8",
             )
             with self.assertRaises(ValueError):
@@ -364,7 +320,7 @@ class TestConfig(unittest.TestCase):
             self.assertTrue(config.is_excluded(base_path / "assets" / ".env.local"))
             self.assertFalse(config.is_excluded(base_path / "wiki" / "published.md"))
 
-    def test_Config_load_rejects_legacy_check_keys(self) -> None:
+    def test_Config_load_rejects_moved_check_keys(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
@@ -380,7 +336,7 @@ class TestConfig(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown check keys"):
                 Config.load(base_path)
 
-    def test_Config_rejects_legacy_check_keys_at_init(self) -> None:
+    def test_Config_rejects_moved_check_keys_at_init(self) -> None:
         from pydantic import ValidationError
 
         with self.assertRaises(ValidationError):

@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="{{ site.manifest.theme_color }}">
-<meta name="msapplication-TileColor" content="{{ site.manifest.theme_color }}">
-<link rel="manifest" href="{{ site.manifest.url }}">
-{% if site.manifest.icons %}<link rel="icon" href="{{ site.manifest.icons[0].url }}">{% endif %}
-{% for icon in site.manifest.icons %}{% if icon.sizes == "180x180" and icon.type == "image/png" %}<link rel="apple-touch-icon" href="{{ icon.url }}" sizes="{{ icon.sizes }}">{% endif %}{% endfor %}
-<title>{{ page.title }} - {{ site.manifest.name }}</title>
+<meta name="theme-color" content="#3b82f6">
+<meta name="msapplication-TileColor" content="#3b82f6">
+<link rel="icon" href="{{ site.base_url }}/assets/logo.svg">
+<title>{{ page.title }} - Wiki CLI</title>
 <style>{{ site.inline_css }}</style>
 </head>
 <body class="{{ page.body_class }}" data-page-kind="{{ page.kind }}">
@@ -17,8 +15,8 @@
 <aside id="mw-navigation">
   <div id="p-logo" role="banner">
     <a href="{{ site.base_url }}/" title="Visit the main page">
-      {% if site.manifest.icons %}<img src="{{ site.manifest.icons[0].url }}" alt="" width="80" height="80">{% endif %}
-      <span class="logo-text">{{ site.manifest.short_name or site.manifest.name }}</span>
+      <img src="{{ site.base_url }}/assets/logo.svg" alt="" width="80" height="80">
+      <span class="logo-text">Wiki CLI</span>
     </a>
   </div>
   <div class="portal" role="navigation" id="p-navigation">
@@ -55,7 +53,7 @@
   <div class="vector-navigation-search">
     <div id="p-search" role="search">
       <div class="search-container">
-        <input type="search" id="searchInput" placeholder="Search {{ site.manifest.name }}" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
+        <input type="search" id="searchInput" placeholder="Search Wiki CLI" class="search-input" oninput="onSearchInput(event)" onkeydown="handleSearchKey(event)">
         <button class="search-button" type="button" aria-label="Search" onclick="triggerSearch()">&#x1F50D;</button>
       </div>
       <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>

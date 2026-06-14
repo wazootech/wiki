@@ -36,7 +36,7 @@ page_output_dir = _site                               # when base_url is ""
 - `_site/` or build output committed to `main`
 - Workflow uses `peaceiris/actions-gh-pages` or pushes to `gh-pages`
 - `publish_dir` or artifact `path` is `_site` while `site.base_url` is `/wiki` (or any non-empty path)
-- Pages `build_type: legacy` while an Actions deploy workflow exists
+- GitHub Pages `build_type: legacy` (branch deploy) while an Actions deploy workflow exists — use `build_type: workflow` instead
 - `uv sync` in CI but no `pyproject.toml` / `uv.lock`
 - `astral-sh/setup-uv` + `uv pip install` without `uv venv` or `--system` (CI error: “No virtual environment found”)
 - Hybrid install: `setup-uv` present but `uv sync` replaced with `uv pip install` — use the full pip or uv template instead

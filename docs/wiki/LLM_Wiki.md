@@ -44,7 +44,7 @@ This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of t
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md) — including [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) (`llm-wiki-template` planned ([#83](https://github.com/wazootech/wiki/issues/83)))
+- [Wiki CLI](Wiki_CLI.md) — including [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) ([llm-wiki-template](https://github.com/wazootech/llm-wiki-template))
 - [Declarative Knowledge](Declarative_Knowledge.md)
 - [Procedural Knowledge](Procedural_Knowledge.md)
 - [Farzapedia](Farzapedia.md)
