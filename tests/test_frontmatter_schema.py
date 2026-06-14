@@ -310,6 +310,60 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
             self.assertIn("not allowed by check.remote_schema_hosts", missing[0])
             self.assertEqual(validation, [])
 
+    def test_remote_schema_ref_allowlist_allows_matching_host(self) -> None:
+        remote_schema = {
+            "type": "object",
+            "required": ["label"],
+            "properties": {"label": {"type": "string"}},
+        }
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def read(self, max_bytes: int):
+                return json.dumps(remote_schema).encode("utf-8")
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Remote_Shape.md").write_text(
+                "---\n"
+                "type: sh:NodeShape\n"
+                "sh:targetClass: schema:Thing\n"
+                "wazoo:jsonSchema: https://example.org/schema.json\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (wiki / "Good.md").write_text(
+                "---\ntype: schema:Thing\nlabel: ok\n---\n",
+                encoding="utf-8",
+            )
+            (wiki / "Bad.md").write_text(
+                "---\ntype: schema:Thing\n---\n",
+                encoding="utf-8",
+            )
+            config = Config(
+                wiki={"inputs": [wiki]},
+                config_root=root,
+                check={
+                    "remote_schema_refs": "allowlist",
+                    "remote_schema_hosts": ["example.org"],
+                },
+            )
+
+            with patch("wiki.frontmatter_schema.urlopen", return_value=FakeResponse()) as mock_urlopen:
+                missing, validation = check_frontmatter_schema(config)
+
+            mock_urlopen.assert_called_once()
+            self.assertEqual(missing, [])
+            self.assertEqual(len(validation), 1)
+            self.assertIn("In Bad:", validation[0])
+
     def test_build_type_schema_registry_dedupes_refs(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
