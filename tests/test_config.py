@@ -160,6 +160,16 @@ class TestConfig(unittest.TestCase):
             config = Config.load(base_path)
             self.assertEqual(config.site.manifest.theme_color, "#ff0000")
 
+    def test_Config_rejects_manifest_logo_key(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "site:\n  manifest:\n    logo: assets/custom.svg\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                Config.load(base_path)
+
     def test_Config_rejects_invalid_manifest_theme_color(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)

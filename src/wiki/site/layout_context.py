@@ -12,12 +12,11 @@ from ..config import DEFAULT_URL_STYLE
 from ..schemas.site import VirtualPage, WikiSite
 from .manifest import (
     DEFAULT_THEME_COLOR,
-    build_web_manifest,
+    layout_manifest_icons,
     manifest_start_url,
     manifest_url,
     resolved_manifest_name,
     resolved_site_theme_color,
-    serialize_web_manifest,
 )
 from .markdown import INLINE_CSS
 
@@ -26,8 +25,6 @@ _DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
 LAYOUT_CONTEXT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
     {
         ("site", "inline_css"),
-        ("site", "logo_svg"),
-        ("site", "manifest", "json"),
         ("page", "content"),
         ("page", "layout", "label"),
         ("page", "type_label"),
@@ -54,12 +51,6 @@ class LayoutManifest(TypedDict, total=False):
     display: str | None
     icons: list[dict[str, Any]]
     url: str
-    json: Markup
-
-
-def _logo_letter(site_title: str) -> str:
-    text = resolved_manifest_name(site_title)
-    return text[0].upper()
 
 
 def _parse_hex_color(value: str) -> tuple[int, int, int]:
@@ -129,20 +120,16 @@ def build_layout_manifest(*, site: WikiSite, base_url: str) -> dict[str, Any]:
         "background_color": manifest.background_color,
         "start_url": manifest_start_url(config),
         "display": manifest.display,
-        "icons": [icon.model_dump(exclude_none=True) for icon in (manifest.icons or [])],
+        "icons": layout_manifest_icons(config),
         "url": manifest_url(base_url),
-        "json": serialize_web_manifest(config),
     }
 
 
 def _site_context(*, site: WikiSite, base_url: str, url_style: str) -> dict[str, Any]:
-    manifest_cfg = site.config.site.manifest
-    manifest_name = resolved_manifest_name(manifest_cfg.name)
     return {
         "base_url": base_url,
         "url_style": url_style,
         "inline_css": INLINE_CSS,
-        "logo_svg": build_logo_svg(_logo_letter(manifest_name), manifest_cfg.theme_color),
         "manifest": build_layout_manifest(site=site, base_url=base_url),
     }
 

@@ -166,7 +166,6 @@ def resolve_init_options(
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
 _DEFAULT_LAYOUT_TEMPLATE = "layout_default.html.j2"
-_DEFAULT_LOGO_TEMPLATE = "assets/logo.svg"
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -206,12 +205,27 @@ def copy_default_layout(dest: Path) -> None:
     dest.write_text(load_packaged_default_layout(), encoding="utf-8")
 
 
-def load_packaged_default_logo() -> str:
-    """Return the packaged default sidebar logo SVG content."""
-    return files("wiki").joinpath(f"templates/{_DEFAULT_LOGO_TEMPLATE}").read_text(encoding="utf-8")
+def load_packaged_default_logo(
+    site_manifest_name: str = "Wiki CLI",
+    site_manifest_theme_color: str | None = None,
+) -> str:
+    """Return the default sidebar logo SVG for init scaffolding."""
+    from .site.layout_context import build_logo_svg
+    from .site.manifest import resolved_manifest_name
+
+    letter = resolved_manifest_name(site_manifest_name)[0].upper()
+    return build_logo_svg(letter, site_manifest_theme_color)
 
 
-def copy_default_logo(dest: Path) -> None:
-    """Copy the packaged default sidebar logo into a workspace."""
+def copy_default_logo(
+    dest: Path,
+    *,
+    site_manifest_name: str = "Wiki CLI",
+    site_manifest_theme_color: str | None = None,
+) -> None:
+    """Write the default sidebar logo into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(load_packaged_default_logo(), encoding="utf-8")
+    dest.write_text(
+        load_packaged_default_logo(site_manifest_name, site_manifest_theme_color),
+        encoding="utf-8",
+    )

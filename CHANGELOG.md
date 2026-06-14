@@ -1,5 +1,28 @@
 ﻿# Changelog
 
+## Unreleased
+
+### Changed
+
+- Remove non-spec `site.manifest.logo` and layout variables `{{ site.manifest.logo }}` / `{{ site.manifest.logo_url }}`. Use W3C `site.manifest.icons` with `{{ site.manifest.icons[0].url }}` for sidebar logo and favicon links. Remove `{{ site.manifest.primary_icon_url }}` and `{{ site.manifest.json }}` from layout context. `wiki init` scaffolds a default `icons` entry for `assets/logo.svg` and generates that asset from `site.manifest.name` and optional `site.manifest.theme_color`. Keep `{{ site.manifest.url }}` for the manifest file link.
+
+### Migration
+
+- Replace `site.manifest.logo: assets/logo.svg` with:
+
+```yaml
+site:
+  manifest:
+    icons:
+      - src: assets/logo.svg
+        sizes: "200x200"
+        type: image/svg+xml
+        purpose: any
+```
+
+- In layouts, replace `{{ site.manifest.logo_url }}` or `{{ site.manifest.primary_icon_url }}` with `{% if site.manifest.icons %}…{{ site.manifest.icons[0].url }}…{% endif %}`.
+- Replace inline `{{ site.manifest.json }}` with fetching `{{ site.manifest.url }}` or the built `manifest.webmanifest` file.
+
 ## 0.1.13 — 2026-06-10
 
 ### Added

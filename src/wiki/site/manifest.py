@@ -10,8 +10,6 @@ from ..schemas.wiki_config import DEFAULT_SITE_TITLE
 
 _DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
 DEFAULT_THEME_COLOR = _DEFAULT_LOGO_THEME[0]
-
-
 def resolved_manifest_name(name: str | None) -> str:
     return (name or DEFAULT_SITE_TITLE).strip() or DEFAULT_SITE_TITLE
 
@@ -37,6 +35,17 @@ def manifest_icon_src(src: str, base_url: str) -> str:
         return src
     normalized = src.lstrip("/")
     return f"{base_url}/{normalized}" if base_url else f"/{normalized}"
+
+
+def layout_manifest_icons(config: Config) -> list[dict[str, Any]]:
+    manifest = config.site.manifest
+    base_url = config.site.base_url or ""
+    icons: list[dict[str, Any]] = []
+    for icon in manifest.icons or []:
+        entry: dict[str, Any] = icon.model_dump(exclude_none=True)
+        entry["url"] = manifest_icon_src(icon.src, base_url)
+        icons.append(entry)
+    return icons
 
 
 def build_web_manifest(config: Config) -> dict[str, Any]:

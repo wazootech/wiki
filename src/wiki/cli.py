@@ -790,7 +790,11 @@ def init(
 
     logo_path = cwd / "assets" / "logo.svg"
     if force or not logo_path.exists():
-        copy_default_logo(logo_path)
+        copy_default_logo(
+            logo_path,
+            site_manifest_name=init_options.site_manifest_name,
+            site_manifest_theme_color=init_options.site_manifest_theme_color,
+        )
 
     if init_git:
         if shutil.which("git") is None:
