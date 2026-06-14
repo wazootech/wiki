@@ -1,4 +1,5 @@
 import unittest
+
 from wiki.jqfilter import resolve_path
 
 

@@ -2,22 +2,21 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.config import Config
 from wiki.audit import (
+    check_layout_frontmatter,
+    check_shacl_all,
+    check_shacl_file,
     lint_broken_links,
     lint_duplicate_headings,
     lint_filenames,
     lint_heading_levels,
     lint_headings,
-    lint_thematic_breaks,
     lint_link_style,
-    check_layout_frontmatter,
+    lint_thematic_breaks,
     load_shapes,
-    check_shacl_file,
-    check_shacl_all,
-    run_check,
     run_lint,
 )
+from wiki.config import Config
 
 
 class TestChecking(unittest.TestCase):
@@ -117,8 +116,9 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
 
     def test_load_shapes_edge_cases(self) -> None:
         """Test load_shapes behaves predictably with different underlying graph states."""
-        from wiki.graph import load_graph
         from rdflib import Graph
+
+        from wiki.graph import load_graph
 
         # Empty graph
         with TemporaryDirectory() as tmpdir:

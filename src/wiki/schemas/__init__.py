@@ -6,13 +6,13 @@ from .metadata import METADATA_VIEWS, MetadataView
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .wiki_config import (
+    Config,
     FmtConfig,
     GraphConfig,
     LinkConfig,
     SiteConfig,
     SparqlServiceConfig,
     WikiConfig,
-    Config,
 )
 
 __all__ = [

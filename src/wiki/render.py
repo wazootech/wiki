@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Any
 
 import click
 from markdown_it import MarkdownIt
 
-from .format import run_query
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
+
+from .format import run_query
 from .paths import iter_markdown_files, page_routes, select_markdown_paths
 
 # Matches SPARQL wrapper comments, fenced query, rendered table, and end comment.

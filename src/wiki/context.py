@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from rdflib import Namespace, RDF, RDFS, OWL
+from rdflib import OWL, RDF, RDFS, Namespace
 from rdflib.namespace import XSD
 
 SCHEMA = Namespace("https://schema.org/")

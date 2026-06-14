@@ -5,16 +5,17 @@ from __future__ import annotations
 import socket
 import threading
 import unittest
-from io import BytesIO
+from collections.abc import Generator
 from http.client import HTTPConnection
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import sleep
-from typing import Generator
 from unittest.mock import patch
 
 from click.testing import CliRunner
 
+from layout_helpers import write_layout
 from wiki.cli import main
 from wiki.config import Config
 from wiki.serve import (
@@ -34,8 +35,6 @@ def _free_port() -> int:
     s.close()
     return port
 
-
-from layout_helpers import write_layout
 
 _RICH_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">

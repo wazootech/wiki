@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import subprocess
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
@@ -20,7 +19,6 @@ from wiki.upgrade import (
     get_windows_path_mismatch_warning,
     is_frozen_install,
 )
-
 
 PYPI_RESPONSE_LATEST = {
     "info": {"version": "1.0.0"},

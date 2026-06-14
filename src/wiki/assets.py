@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import posixpath
 from pathlib import Path, PurePosixPath
-from urllib.parse import quote, unquote, urlsplit
+from urllib.parse import quote, unquote
 
 from .config import Config
 from .links import is_external_link, split_target

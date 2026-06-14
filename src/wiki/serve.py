@@ -5,29 +5,35 @@ from __future__ import annotations
 import html as html_module
 import json
 import mimetypes
-import re
 import sys
 import threading
 import time
 from dataclasses import dataclass
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from typing import Any
 from urllib.parse import parse_qs, urlsplit
-from typing import Any, Optional
 
 from .config import Config
-from .format import detect_query_form, is_sparql_update, normalize_metadata_format, normalize_metadata_mode, run_query
+from .format import (
+    detect_query_form,
+    is_sparql_update,
+    normalize_metadata_format,
+    normalize_metadata_mode,
+    run_query,
+)
 from .graph import load_graph
-from .sparql_service import build_service_description_graph, serialize_service_description
 from .site import (
-    WikiSite,
     VirtualPage,
-    build_site,
+    WikiSite,
     build_index_html,
     build_page_html,
+    build_site,
 )
-
-
+from .sparql_service import (
+    build_service_description_graph,
+    serialize_service_description,
+)
 
 
 @dataclass
@@ -210,7 +216,7 @@ class WikiHandler(BaseHTTPRequestHandler):
 <h1>{code}</h1>
 <p>{html_module.escape(message)}</p>
 </body>
-</html>""".encode("utf-8")
+</html>""".encode()
         self.send_response(code)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))

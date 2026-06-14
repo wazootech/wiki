@@ -1,17 +1,17 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from rdflib import Graph, URIRef, RDF, Literal
+
+from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
-from wiki.config import Context, Config
+from wiki.config import Config
 from wiki.graph import (
     frontmatter_to_graph,
     kebab_case,
-    resolve_predicate,
-    resolve_object,
     load_graph,
-    graph_stats,
+    resolve_object,
+    resolve_predicate,
 )
 
 
@@ -447,7 +447,6 @@ Raw Body Text.
 
     def test_load_graph_logs_warnings_on_bad_files(self) -> None:
         """Test that load_graph emits warnings for unparseable content instead of silent pass."""
-        import logging
         from wiki.graph import logger as graph_logger
 
         with TemporaryDirectory() as tmpdir:
@@ -518,7 +517,6 @@ name: Good Page
             config = Config(
                 wiki={"inputs": [wiki_dir]},
                 graph={
-                    "context": {"wiki": "https://example.test/wiki/"},
                     "context": {"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"},
                 },
             )

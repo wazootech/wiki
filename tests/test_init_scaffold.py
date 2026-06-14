@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import subprocess
-import yaml
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 
+import yaml
+
 from wiki.config import Config
 from wiki.fmt_util import DEFAULT_FMT_OPTS
-from wiki.schemas.wiki_config import normalize_base_iri
 from wiki.init_scaffold import (
     InitOptions,
     copy_default_layout,
@@ -25,6 +25,7 @@ from wiki.init_scaffold import (
     render_wiki_yaml,
     resolve_init_options,
 )
+from wiki.schemas.wiki_config import normalize_base_iri
 
 
 class TestParseGithubRepo(TestCase):
@@ -271,7 +272,8 @@ class TestInitLockstep(TestCase):
 
     def test_init_options_map_to_valid_config_paths(self) -> None:
         """Ensure every InitOptions field maps to a valid Pydantic model path on Config."""
-        from typing import get_args, get_origin, Union
+        from typing import Union, get_args, get_origin
+
         from pydantic import BaseModel
         for field, path in INIT_OPTIONS_TO_CONFIG_PATH.items():
             self.assertIn(field, InitOptions.model_fields, f"Mapped field '{field}' is not in InitOptions.")

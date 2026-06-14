@@ -2,18 +2,23 @@ import json
 import threading
 import time
 import unittest
-import yaml
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
-from urllib.request import urlopen
 from urllib.error import URLError
+from urllib.request import urlopen
 
+import yaml
 from click.testing import CliRunner
 
 from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
-from wiki.init_scaffold import InitOptions, load_packaged_default_layout, load_packaged_default_logo, render_wiki_yaml
+from wiki.init_scaffold import (
+    InitOptions,
+    load_packaged_default_layout,
+    load_packaged_default_logo,
+    render_wiki_yaml,
+)
 
 
 class TestCLI(unittest.TestCase):
@@ -1444,6 +1449,7 @@ ex:foo ex:bar "from-import-dir" .
     def test_server_serve_real_request(self) -> None:
         """Test wiki serve with real --host/--port via HTTP request."""
         import socket
+
         from wiki.config import Config
         from wiki.serve import run_server
 
@@ -1485,6 +1491,7 @@ Hello from server test.
     def test_server_serve_custom_base_url(self) -> None:
         """Test wiki serve with custom --site-base-url."""
         import socket
+
         from wiki.config import Config
         from wiki.serve import run_server
 

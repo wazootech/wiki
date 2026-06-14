@@ -2,9 +2,13 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.audit import lint_broken_links, collect_broken_links
+from wiki.audit import collect_broken_links, lint_broken_links
 from wiki.config import Config
-from wiki.link_fix import apply_broken_link_fixes, find_broken_link_fixes, remaining_broken_links
+from wiki.link_fix import (
+    apply_broken_link_fixes,
+    find_broken_link_fixes,
+    remaining_broken_links,
+)
 
 
 class TestLinkFix(unittest.TestCase):

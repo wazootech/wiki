@@ -9,8 +9,8 @@ import shutil
 import subprocess
 import sys
 import sysconfig
-from pathlib import PureWindowsPath
 from importlib.metadata import version
+from pathlib import PureWindowsPath
 from urllib.error import URLError
 from urllib.request import urlopen
 

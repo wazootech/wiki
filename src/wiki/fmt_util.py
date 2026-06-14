@@ -8,8 +8,14 @@ from pathlib import Path
 from typing import Any
 
 import mdformat
-from mdformat._conf import DEFAULT_OPTS, InvalidConfError, read_toml_opts, _validate_keys, _validate_values
 import mdformat.plugins
+from mdformat._conf import (
+    DEFAULT_OPTS,
+    InvalidConfError,
+    _validate_keys,
+    _validate_values,
+    read_toml_opts,
+)
 
 from .config import Config
 

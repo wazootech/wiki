@@ -3,10 +3,17 @@ import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
 import yaml
 from rdflib import Graph, Namespace
 
-from wiki.config import Context, Config, DEFAULT_CHECK_CONFIG, DEFAULT_LINT_CONFIG, DEFAULT_NAMESPACES
+from wiki.config import (
+    DEFAULT_CHECK_CONFIG,
+    DEFAULT_LINT_CONFIG,
+    DEFAULT_NAMESPACES,
+    Config,
+    Context,
+)
 from wiki.schemas import FmtConfig
 
 MINIMAL_WIKI_YAML = "wiki:\n  inputs: [wiki]\n"

@@ -322,7 +322,6 @@ def check_frontmatter_schema(
             continue
 
         if is_schema_binding_document(fm_data):
-            binding = True
             try:
                 binding_refs = coerce_schema_refs(fm_data.get(JSON_SCHEMA_KEY)) or []
             except ValueError:

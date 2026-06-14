@@ -4,12 +4,18 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from .document import MARKDOWN_LINK_REGEX, WIKILINK_REGEX, markdown_body, split_frontmatter_text
-from .schemas import LinkOpportunity
+
 from .config import Config
-from .parser import document_data_from_path
+from .document import (
+    MARKDOWN_LINK_REGEX,
+    WIKILINK_REGEX,
+    markdown_body,
+    split_frontmatter_text,
+)
 from .links import format_internal_link
+from .parser import document_data_from_path
 from .paths import iter_markdown_files, route_for_document_file
+from .schemas import LinkOpportunity
 from .site import extract_title, humanize_route
 
 MIN_ALIAS_LENGTH = 4

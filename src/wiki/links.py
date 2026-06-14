@@ -9,7 +9,6 @@ from urllib.parse import unquote, urlsplit
 from .headings import heading_slug
 from .paths import page_url
 
-
 EXTERNAL_SCHEMES = {"http", "https", "mailto", "tel"}
 PAGE_LINK_EXTENSIONS = {"", ".md", ".yaml", ".yml", ".json"}
 

@@ -10,7 +10,6 @@ from urllib.parse import unquote
 
 from .assets import asset_reference_issue, audit_assets
 from .config import Config
-from .headings import parse_headings
 from .document import (
     MARKDOWN_LINK_FULL_REGEX,
     WIKILINK_FULL_REGEX,
@@ -19,7 +18,14 @@ from .document import (
     split_frontmatter_text,
     strip_inline_code,
 )
-from .links import fragment_id, is_external_link, markdown_link_is_page, resolve_page_route, split_target
+from .headings import parse_headings
+from .links import (
+    fragment_id,
+    is_external_link,
+    markdown_link_is_page,
+    resolve_page_route,
+    split_target,
+)
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file
 from .schemas import BrokenLink
