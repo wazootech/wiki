@@ -458,6 +458,57 @@ wiki:
 
 Page routes keep the casing from the filename; GitHub Pages URLs are case-sensitive.
 
+`wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
+
+When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks (`[[Page]]`) in body prose. Set `lint.link_style: off` to allow wikilinks while keeping Markdown as the apply format, or set `link.style: obsidian` for an Obsidian-style wiki.
+
+## Formatting (`fmt`)
+
+Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed — not both:
+
+| Shape          | Example               | When to use                                 |
+| -------------- | --------------------- | ------------------------------------------- |
+| Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
+| Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
+
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+
+Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
+
+In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`); yaml shapes above are unchanged.
+
+## Integrity checks (`check`)
+
+Under `check`, each rule is `error`, `warning`, or `off`:
+
+| Rule key              | Default | What it audits                                                           |
+| --------------------- | ------- | ------------------------------------------------------------------------ |
+| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file   |
+| `frontmatter_schema`  | `error` | Frontmatter that fails JSON Schema validation                            |
+| `missing_schema_ref`  | `error` | `wazoo:jsonSchema` paths or URLs that cannot be loaded                   |
+| `remote_schema_refs`  | `allow` | Policy for remote `http(s)` schema refs: `allow`, `deny`, or `allowlist` |
+| `remote_schema_hosts` | `[]`    | Hostnames permitted when `remote_schema_refs` is `allowlist`             |
+
+Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
+
+### JSON Schema frontmatter (`wazoo:jsonSchema`)
+
+`wiki check` validates frontmatter against JSON Schema in parallel with SHACL. Bind schemas on shape documents with **`wazoo:jsonSchema`** beside **`sh:targetClass`**; every page whose effective `type` matches that class must pass the bound schema(s). Individual pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list). Schema refs are local paths under the wiki config root (`.json` only) or remote `http(s)` URLs. Remote refs can trigger outbound network requests; set `check.remote_schema_refs: deny` in CI over untrusted wikis, or `allowlist` with `check.remote_schema_hosts` for trusted hosts only.
+
+Shape binding documents are not validated as instances — only their schema refs are checked for loadability. Authoring detail: [SHACL](SHACL.md), [Style Guide](Style_Guide.md).
+
+## Convention audits (`lint`)
+
+Under `lint`, each rule is `error`, `warning`, or `off`:
+
+| Rule key           | Default   | What it audits                                                                                                 |
+| ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
+| `filename_pattern` | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
+| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
+| `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
+| `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `markdown`                                  |
+
 ## This repository
 
 `docs/wiki.yaml` is the dogfood wiki config: the same structure, block order, and Init columns as `wiki init` ([`wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2)), plus dogfood overrides — `graph.context.wiki` for GitHub Pages and `graph.content_predicate: schema:articleBody` for SPARQL full-text.

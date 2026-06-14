@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from jsonschema import Draft202012Validator
@@ -137,17 +138,40 @@ def build_type_schema_registry(config: Config) -> dict[str, list[str]]:
 class SchemaLoader:
     """Load and cache JSON Schema documents from local paths or remote URLs."""
 
-    def __init__(self, config_root: Path) -> None:
+    def __init__(
+        self,
+        config_root: Path,
+        *,
+        remote_schema_refs: str = "allow",
+        remote_schema_hosts: list[str] | None = None,
+    ) -> None:
         self.config_root = config_root.resolve()
+        self.remote_schema_refs = remote_schema_refs
+        self.remote_schema_hosts = set(remote_schema_hosts or [])
         self._schema_cache: dict[str, tuple[dict[str, Any] | None, str | None]] = {}
         self._validator_cache: dict[str, tuple[Draft202012Validator | None, str | None]] = {}
+
+    def _remote_policy_error(self, ref: str) -> str | None:
+        if self.remote_schema_refs == "allow":
+            return None
+        if self.remote_schema_refs == "deny":
+            return "remote schema refs are disabled by check.remote_schema_refs"
+        host = urlsplit(ref).hostname
+        if host is None or host not in self.remote_schema_hosts:
+            label = host or ref
+            return f"remote schema host {label!r} is not allowed by check.remote_schema_hosts"
+        return None
 
     def load_schema(self, ref: str) -> tuple[dict[str, Any] | None, str | None]:
         if ref in self._schema_cache:
             return self._schema_cache[ref]
 
         if is_remote_schema_ref(ref):
-            schema, error = self._fetch_remote(ref)
+            policy_error = self._remote_policy_error(ref)
+            if policy_error:
+                schema, error = None, policy_error
+            else:
+                schema, error = self._fetch_remote(ref)
         else:
             schema, error = self._load_local(ref)
 
@@ -269,7 +293,11 @@ def check_frontmatter_schema(
         return [], []
 
     registry = build_type_schema_registry(config)
-    loader = SchemaLoader(config.config_root)
+    loader = SchemaLoader(
+        config.config_root,
+        remote_schema_refs=config.check.remote_schema_refs,
+        remote_schema_hosts=config.check.remote_schema_hosts,
+    )
     missing_issues: list[str] = []
     validation_issues: list[str] = []
 

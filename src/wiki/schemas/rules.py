@@ -25,11 +25,45 @@ class CheckConfig(BaseModel):
     missing_layout_file: Annotated[Severity, Field(default="error")] = "error"
     frontmatter_schema: Annotated[Severity, Field(default="error")] = "error"
     missing_schema_ref: Annotated[Severity, Field(default="error")] = "error"
+    remote_schema_refs: Literal["allow", "deny", "allowlist"] = "allow"
+    remote_schema_hosts: list[str] = Field(default_factory=list)
 
     @field_validator("missing_layout_file", "frontmatter_schema", "missing_schema_ref", mode="before")
     @classmethod
     def _validate_severity(cls, value: object) -> Severity:
         return coerce_severity(value)
+
+    @field_validator("remote_schema_refs", mode="before")
+    @classmethod
+    def _validate_remote_schema_refs(cls, value: object) -> str:
+        if value is None:
+            return "allow"
+        if not isinstance(value, str):
+            raise ValueError(f"expected allow, deny, or allowlist, got {value!r}")
+        normalized = value.strip().lower()
+        if normalized not in {"allow", "deny", "allowlist"}:
+            raise ValueError(f"expected allow, deny, or allowlist, got {value!r}")
+        return normalized
+
+    @field_validator("remote_schema_hosts", mode="before")
+    @classmethod
+    def _validate_remote_schema_hosts(cls, value: object) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, str):
+            text = value.strip()
+            return [text] if text else []
+        if isinstance(value, list):
+            hosts: list[str] = []
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValueError("remote_schema_hosts items must be strings")
+                text = item.strip()
+                if not text:
+                    raise ValueError("remote_schema_hosts items must be non-empty strings")
+                hosts.append(text)
+            return hosts
+        raise ValueError(f"expected remote_schema_hosts string or list, got {value!r}")
 
 
 class LintConfig(BaseModel):
