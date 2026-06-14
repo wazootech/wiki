@@ -17,13 +17,9 @@ wiki:
 graph:
   # Predicate for full-text body literals in SPARQL (for example schema:articleBody).
   content_predicate: schema:articleBody
-  # Whether to include the file extension in the document URI.
   # include_file_extension: false
-  # Types to add to untyped pages.
   # implicit_types: [schema:TechArticle]
-  # Policy for implicit types: fallback or append.
   # implicit_types_policy: fallback
-  # Base IRIs for document URIs.
   # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
   # CURIE prefix map for frontmatter and microdata.
   context:
