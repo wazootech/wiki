@@ -1,7 +1,7 @@
 name: Release
 
-# Keep this file as release.yaml — npm trusted publishing on npmjs.com is bound to
-# .github/workflows/release.yaml exactly; renaming to .yml breaks OIDC with E404.
+# Keep this file as release.yml — npm and PyPI trusted publishing are bound to
+# .github/workflows/release.yml exactly; renaming breaks OIDC with E404.
 
 on:
   push:
