@@ -10,7 +10,7 @@
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic workspace). Full registry: [Wiki CLI — Ecosystem templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
+Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic workspace). See [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
 
 
 ## Use cases and integrations
@@ -44,7 +44,7 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 ## Ecosystem templates
 
-Shipped and planned GitHub template repos (starters, SPARQL query UI, publish integrations) are listed in [Wiki CLI — Ecosystem templates](docs/wiki/Wiki_CLI.md#ecosystem-templates). Quick links: [wiki-template](https://github.com/wazootech/wiki-template), [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) ([Pages demo](https://wazootech.github.io/wiki-yasgui-template/)).
+Shipped and planned GitHub template repos (starters, SPARQL query UI, publish integrations) are listed in [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates). Quick links: [wiki-template](https://github.com/wazootech/wiki-template), [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) ([Pages demo](https://wazootech.github.io/wiki-yasgui-template/)).
 
 
 ## Installation

@@ -41,7 +41,7 @@ Adoption path: `wiki init` → `wiki check` → `wiki serve`, then add `lint`, `
 - The **primary editor** or daily note-taking surface
 - A **replacement** for Obsidian, Logseq, or another wiki UI
 - A **note app clone**, CMS, or authenticated multi-user web product
-- An **auth layer** — local-first CLI and static publish; see deferred scope in [ecosystem templates](#ecosystem-templates) below
+- An **auth layer** — local-first CLI and static publish; see deferred scope in [Wiki CLI templates](#ecosystem-templates) below
 
 Humans and agents keep writing where they already write. `wiki` makes that content **trustworthy** (SHACL, JSON Schema, and conventions), **searchable** (SPARQL + OWL-RL), and **publishable** (static HTML, JSON-LD, Turtle, optional read-only SPARQL over `wiki serve`).
 
@@ -273,7 +273,7 @@ For **frontmatter-only validation** without the full semantic toolchain, see [Br
 ## Repository
 
 - Source and issues: [github.com/wazootech/wiki](https://github.com/wazootech/wiki)
-- Ecosystem templates: [registry above](#ecosystem-templates) — generic starter [wiki-template](https://github.com/wazootech/wiki-template); planned [LLM Wiki](LLM_Wiki.md) starter `llm-wiki-template` ([#83](https://github.com/wazootech/wiki/issues/83))
+- [Wiki CLI templates](#ecosystem-templates) — generic starter [wiki-template](https://github.com/wazootech/wiki-template); planned [LLM Wiki](LLM_Wiki.md) starter `llm-wiki-template` ([#83](https://github.com/wazootech/wiki/issues/83))
 
 ## Background
 
