@@ -24,9 +24,9 @@ from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from ..links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from ..paths import iter_document_files, page_url, route_for_document_file
 from ..parser import split_document_body
+from ..render import strip_sparql_wrappers_for_html
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
-_SPARQL_HTML_COMMENT_RE = re.compile(r"<!--\s*sparql:(start|end)", re.IGNORECASE)
 
 PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
 PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
@@ -177,10 +177,7 @@ def _wiki_markdown_it(**options: object) -> MarkdownIt:
 
 def _register_safe_html_render_rules(md: MarkdownIt) -> None:
     def _html_block_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
-        content = tokens[idx].content
-        if _SPARQL_HTML_COMMENT_RE.search(content):
-            return content
-        return html_module.escape(content)
+        return html_module.escape(tokens[idx].content)
 
     def _html_inline_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
         return html_module.escape(tokens[idx].content)
@@ -197,6 +194,7 @@ def render_outline_title(
 ) -> str:
     """Render heading inline markdown for TOC labels without nested section links."""
     md = _wiki_markdown_it()
+    _register_safe_html_render_rules(md)
     _register_wiki_inline_render_rules(md, base_url, url_style, current_route, toc_mode=True)
     return md.renderInline(title).strip()
 
@@ -249,7 +247,7 @@ def render_wiki_markdown(
         return self.renderToken(tokens, idx, options, env)
 
     md.add_render_rule("heading_open", _heading_open_renderer)
-    return md.render(text)
+    return md.render(strip_sparql_wrappers_for_html(text))
 
 
 def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:

@@ -25,6 +25,18 @@ SPARQL_BLOCK_REGEX = re.compile(
 )
 
 
+def strip_sparql_wrappers_for_html(text: str) -> str:
+    """Remove SPARQL HTML comment wrappers before site markdown rendering."""
+
+    def repl(match: re.Match[str]) -> str:
+        table = match.group("table").strip()
+        if match.group("comment_end"):
+            return f"{table}\n"
+        return f"{match.group('fence')}\n\n{table}\n"
+
+    return SPARQL_BLOCK_REGEX.sub(repl, text)
+
+
 def has_sparql_blocks(md_file: Path) -> bool:
     """Return True if the markdown file contains at least one SPARQL block."""
     try:
