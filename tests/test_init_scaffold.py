@@ -152,6 +152,10 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("<title>{{ page.title }} - Wiki CLI</title>", rendered)
         self.assertIn('placeholder="Search Wiki CLI"', rendered)
         self.assertIn("{{ site.base_url }}/assets/logo.svg", rendered)
+        self.assertIn('<meta name="theme-color" content="#3b82f6">', rendered)
+        self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', rendered)
+        self.assertIn('<link rel="icon" href="{{ site.base_url }}/assets/logo.svg">', rendered)
+        self.assertNotIn('rel="manifest"', rendered)
         self.assertNotIn("{{ site.manifest", rendered)
         self.assertNotIn("{{ site.logo_svg }}", rendered)
 

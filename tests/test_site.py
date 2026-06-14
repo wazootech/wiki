@@ -677,6 +677,25 @@ specialty: Diagnostics
             )
             self.assertIn("/wiki/assets/custom-logo.svg", html)
 
+    def test_default_layout_head_includes_theme_color_and_favicon(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
+            config = Config(
+                wiki={"inputs": [wiki]},
+                site={"base_url": "/wiki"},
+                config_root=root,
+            )
+            site = build_site(config)
+            html = build_index_html(site, root, default_layout=_default_layout(root))
+            self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
+            self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
+            self.assertIn('href="/wiki/assets/logo.svg"', html)
+            self.assertNotIn('rel="manifest"', html)
+            self.assertNotIn("manifest.webmanifest", html)
+
     def test_build_index_html_emits_literal_theme_color_from_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

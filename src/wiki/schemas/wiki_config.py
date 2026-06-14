@@ -30,7 +30,6 @@ _LINK_STYLES = frozenset({"markdown", "obsidian"})
 DEFAULT_LINK_STYLE = "markdown"
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
-DEFAULT_SITE_TITLE = "Wiki CLI"
 DEFAULT_WIKI_BASE = "https://wiki.example.org/"
 VALID_URL_STYLES = {"dir", "file"}
 
