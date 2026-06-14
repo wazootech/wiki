@@ -468,5 +468,34 @@ class TestConfig(unittest.TestCase):
             self.assertIsInstance(config.fmt, FmtConfig)
             self.assertEqual(config.fmt.options["extensions"], ["gfm", "frontmatter", "wikilink"])
 
+    def test_sparql_service_enabled_string_false(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yaml").write_text(
+                "sparql_service:\n  enabled: \"false\"\n",
+                encoding="utf-8",
+            )
+            config = Config.load(base_path)
+            self.assertFalse(config.sparql_service.enabled)
+
+    def test_sparql_service_enabled_string_variants(self) -> None:
+        for raw, expected in (
+            ("0", False),
+            ("no", False),
+            ("off", False),
+            ("true", True),
+            ("1", True),
+            ("yes", True),
+            ("on", True),
+        ):
+            with self.subTest(raw=raw):
+                config = Config.for_root(".", sparql_service={"enabled": raw})
+                self.assertEqual(config.sparql_service.enabled, expected)
+
+    def test_sparql_service_enabled_invalid_string(self) -> None:
+        with self.assertRaises(ValueError):
+            Config.for_root(".", sparql_service={"enabled": "maybe"})
+
+
 if __name__ == "__main__":
     unittest.main()

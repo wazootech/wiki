@@ -236,6 +236,8 @@ sparql_service:  # optional block
 | `enabled` | optional | `false`       | commented example | `wiki serve` SPARQL endpoint |
 | `path`    | optional | `/api/sparql` | commented example | reserved route on serve      |
 
+`sparql_service.enabled` accepts YAML booleans and normalizes common string forms such as `true`, `false`, `on`, `off`, `yes`, `no`, `1`, and `0`; prefer native YAML booleans.
+
 Example when enabled:
 
 ```yaml
