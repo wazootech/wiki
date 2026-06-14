@@ -47,12 +47,14 @@ wiki check --strict
 | `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
 | `frontmatter_schema`  | Frontmatter that fails JSON Schema validation                          |
 | `missing_schema_ref`  | `wazoo:jsonSchema` paths or URLs that cannot be loaded                 |
+| `remote_schema_refs`  | Policy for remote schema URLs: `allow`, `deny`, or `allowlist`         |
+| `remote_schema_hosts` | Hostnames allowed when `remote_schema_refs` is `allowlist`             |
 
-Default: `missing_layout_file`, `frontmatter_schema`, and `missing_schema_ref` are `error`.
+Default: `missing_layout_file`, `frontmatter_schema`, and `missing_schema_ref` are `error`. `remote_schema_refs` defaults to `allow`.
 
 ### JSON Schema frontmatter
 
-Bind schemas on `sh:NodeShape` documents with `wazoo:jsonSchema` and `sh:targetClass`. Type-level schemas apply to every matching page; pages may append extra schemas with their own `wazoo:jsonSchema` (string or list). Local refs resolve under the wiki config root; remote `http(s)` URLs are fetched at check time. Shape binding documents are excluded from instance validation. See [SHACL](SHACL.md) and [Style Guide](Style_Guide.md#shacl-shapes).
+Bind schemas on `sh:NodeShape` documents with `wazoo:jsonSchema` and `sh:targetClass`. Type-level schemas apply to every matching page; pages may append extra schemas with their own `wazoo:jsonSchema` (string or list). Local refs resolve under the wiki config root; remote `http(s)` URLs are fetched at check time unless `check.remote_schema_refs` is `deny` or the host is outside `check.remote_schema_hosts` when using `allowlist`. Shape binding documents are excluded from instance validation. See [SHACL](SHACL.md) and [Style Guide](Style_Guide.md#shacl-shapes).
 
 Broken links, filename pattern, and heading style are **not** part of `wiki check` — use [Wiki Subcommand lint](Wiki_Subcommand_lint.md).
 

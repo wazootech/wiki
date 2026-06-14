@@ -14,7 +14,6 @@ from .config import Config
 from .headings import parse_headings
 from .paths import (
     build_page_manifest,
-    build_site_manifest_entry,
     detect_output_collisions,
     iter_document_files,
     iter_markdown_files,
@@ -479,7 +478,6 @@ def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, 
         owned_output_dir = Path("_site") / config.site.base_url.strip("/") if config.site.base_url else Path("_site")
         collision_issues = detect_output_collisions(
             build_page_manifest(config, owned_output_dir, config.site.base_url, config.site.url_style)
-            + [build_site_manifest_entry(owned_output_dir, config.site.base_url)]
             + build_asset_manifest(config, owned_output_dir, config.site.base_url)
         )
         if collision_issues:

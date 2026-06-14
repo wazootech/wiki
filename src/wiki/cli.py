@@ -406,6 +406,41 @@ def render(
         click.echo(f"Rendered SPARQL: {', '.join(parts)}.")
 
 
+def _path_is_same_or_ancestor(ancestor: Path, descendant: Path) -> bool:
+    ancestor = ancestor.resolve()
+    descendant = descendant.resolve()
+    if ancestor == descendant:
+        return True
+    try:
+        descendant.relative_to(ancestor)
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_build_output_dir(page_output_dir: Path, runtime_config: Config) -> None:
+    page_output_dir = page_output_dir.resolve()
+    protected: list[tuple[str, Path]] = [
+        ("config root", runtime_config.config_root.resolve()),
+    ]
+    for input_dir in runtime_config.wiki.inputs:
+        protected.append(("wiki input", input_dir.resolve()))
+    for asset_dir in runtime_config.wiki.assets:
+        protected.append(("wiki asset", asset_dir.resolve()))
+    layout = runtime_config.page_layout
+    if layout is not None and layout.is_file():
+        protected.append(("page layout", layout.parent.resolve()))
+
+    for label, path in protected:
+        if _path_is_same_or_ancestor(page_output_dir, path):
+            click.echo(
+                f"Error: refusing to clean build output path {page_output_dir} because it "
+                f"overlaps {label} at {path}. Choose a separate output directory such as _site.",
+                err=True,
+            )
+            sys.exit(1)
+
+
 @main.command()
 @click.option("--output-dir", default="_site", show_default=True,
               type=click.Path(path_type=Path), help="Directory to write site files.")
@@ -479,12 +514,10 @@ def build(
 
     page_output_dir = output_dir / base_url.strip("/") if base_url else output_dir
     from .assets import build_asset_manifest
-    from .paths import build_page_manifest, build_site_manifest_entry, detect_output_collisions, page_output_path
-    from .site import serialize_web_manifest
+    from .paths import build_page_manifest, detect_output_collisions, page_output_path
 
     manifest = (
         build_page_manifest(runtime_config, page_output_dir, base_url, url_style)
-        + [build_site_manifest_entry(page_output_dir, base_url)]
         + build_asset_manifest(runtime_config, page_output_dir, base_url)
     )
     collision_issues = detect_output_collisions(manifest)
@@ -492,15 +525,12 @@ def build(
         _print_check_messages(collision_issues, [], verbose=True)
         sys.exit(1)
 
+    page_output_dir = page_output_dir.resolve()
+    _validate_build_output_dir(page_output_dir, runtime_config)
+
     if page_output_dir.exists():
         shutil.rmtree(page_output_dir)
     page_output_dir.mkdir(parents=True, exist_ok=True)
-
-    manifest_path = page_output_dir / "manifest.webmanifest"
-    manifest_path.write_text(serialize_web_manifest(runtime_config) + "\n", encoding="utf-8")
-    if verbose:
-        rel = manifest_path.relative_to(output_dir)
-        click.echo(f"  {rel}")
 
     has_root_index = any(page.full_slug == "" for page in site.pages)
     if not has_root_index:
@@ -641,10 +671,10 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "obsidian"]), help="Override link.style: standard Markdown links or Obsidian wikilinks.")
-@click.option("--site-manifest-name", "site_manifest_name", default="Wiki CLI", help="Override site.manifest.name (default 'Wiki CLI').")
+@click.option("--site-name", "site_name", default="Wiki CLI", help="Site name for init logo glyph only (not written to wiki.yaml).")
 @click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
-@click.option("--site-manifest-theme-color", "site_manifest_theme_color", default=None, help="Theme color for web manifest.")
+@click.option("--site-theme-color", "site_theme_color", default=None, help="Theme color for init logo only (not written to wiki.yaml).")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
 @click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
@@ -657,10 +687,10 @@ def init(
     site_url_style: str | None,
     graph_content_predicate: str | None,
     link_style: str | None,
-    site_manifest_name: str,
+    site_name: str,
     wiki_inputs: tuple[str, ...],
     graph_base_iri: str | None,
-    site_manifest_theme_color: str | None,
+    site_theme_color: str | None,
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
@@ -713,10 +743,10 @@ def init(
         cwd=cwd,
         init_git=init_git,
         prompt_context_wiki=prompt_context_wiki,
-        site_manifest_name=site_manifest_name,
+        site_name=site_name,
         wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         graph_base_iri=graph_base_iri,
-        site_manifest_theme_color=site_manifest_theme_color,
+        site_theme_color=site_theme_color,
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
@@ -792,8 +822,8 @@ def init(
     if force or not logo_path.exists():
         copy_default_logo(
             logo_path,
-            site_manifest_name=init_options.site_manifest_name,
-            site_manifest_theme_color=init_options.site_manifest_theme_color,
+            site_name=init_options.site_name,
+            site_theme_color=init_options.site_theme_color,
         )
 
     if init_git:

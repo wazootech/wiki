@@ -4,20 +4,12 @@ from __future__ import annotations
 
 import html as html_module
 import json
-from typing import Any, TypedDict
+from typing import Any
 
 from markupsafe import Markup
 
 from ..config import DEFAULT_URL_STYLE
 from ..schemas.site import VirtualPage, WikiSite
-from .manifest import (
-    DEFAULT_THEME_COLOR,
-    layout_manifest_icons,
-    manifest_start_url,
-    manifest_url,
-    resolved_manifest_name,
-    resolved_site_theme_color,
-)
 from .markdown import INLINE_CSS
 
 _DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
@@ -39,18 +31,6 @@ LAYOUT_CONTEXT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
         ("wiki", "pages_json"),
     }
 )
-
-
-class LayoutManifest(TypedDict, total=False):
-    name: str
-    short_name: str | None
-    description: str | None
-    theme_color: str
-    background_color: str | None
-    start_url: str
-    display: str | None
-    icons: list[dict[str, Any]]
-    url: str
 
 
 def _parse_hex_color(value: str) -> tuple[int, int, int]:
@@ -109,28 +89,11 @@ def build_logo_svg(letter: str, theme_color: str | None = None) -> str:
 </svg>"""
 
 
-def build_layout_manifest(*, site: WikiSite, base_url: str) -> dict[str, Any]:
-    config = site.config
-    manifest = config.site.manifest
-    return {
-        "name": resolved_manifest_name(manifest.name),
-        "short_name": manifest.short_name,
-        "description": manifest.description,
-        "theme_color": resolved_site_theme_color(manifest.theme_color),
-        "background_color": manifest.background_color,
-        "start_url": manifest_start_url(config),
-        "display": manifest.display,
-        "icons": layout_manifest_icons(config),
-        "url": manifest_url(base_url),
-    }
-
-
-def _site_context(*, site: WikiSite, base_url: str, url_style: str) -> dict[str, Any]:
+def _site_context(*, base_url: str, url_style: str) -> dict[str, Any]:
     return {
         "base_url": base_url,
         "url_style": url_style,
         "inline_css": INLINE_CSS,
-        "manifest": build_layout_manifest(site=site, base_url=base_url),
     }
 
 
@@ -177,7 +140,7 @@ def build_layout_context(
     resolved_slug_json = slug_json if slug_json is not None else json.dumps(slug)
 
     raw: dict[str, Any] = {
-        "site": _site_context(site=site, base_url=base_url, url_style=url_style),
+        "site": _site_context(base_url=base_url, url_style=url_style),
         "page": {
             "title": title,
             "kind": kind,

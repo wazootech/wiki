@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Style guide
+headline: Style Guide
 description: Canonical rules for wiki filenames, links, prose, frontmatter, shapes, and SPARQL blocks.
 ---
 
-# Style guide
+# Style Guide
 
 This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) wiki. [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 

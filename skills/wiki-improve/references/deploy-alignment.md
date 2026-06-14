@@ -1,4 +1,4 @@
-# Deploy audit (existing CI)
+# Deploy Audit (Existing CI)
 
 **Setup** from scratch → **wiki-deploy** skill.
 
@@ -19,4 +19,4 @@ When auditing deploy-related wiki pages or workflows:
 - `setup-uv` + `uv pip install` on standalone repos without venv/`--system`
 - Hybrid install: `setup-uv` with `uv pip install` instead of full uv or pip template
 
-Canonical workflow: [deploy-pages.yml](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml).
+Canonical workflow: [deploy.yml](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy.yml).

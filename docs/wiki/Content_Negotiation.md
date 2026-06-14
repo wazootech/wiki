@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Content negotiation
+headline: Content Negotiation
 description: Managing resource representations through HTTP request headers.
 ---
 
-# Content negotiation
+# Content Negotiation
 
 **Content negotiation** is the mechanism defined in the HTTP specification that allows for the delivery of different versions of a resource at the same URI. This enables the same endpoint to deliver data as HTML to a browser, but as [RDF](RDF.md) or [JSON](JSON.md) to an API client.
 

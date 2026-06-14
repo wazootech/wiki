@@ -25,7 +25,6 @@ from .site import (
     build_site,
     build_index_html,
     build_page_html,
-    serialize_web_manifest,
 )
 
 
@@ -60,10 +59,6 @@ class WikiHandler(BaseHTTPRequestHandler):
             return
         if parsed.rstrip("/") == f"{base}/__watch":
             self._send_json({"build": state.build_id})
-            return
-        manifest_path = f"{base}/manifest.webmanifest" if base else "/manifest.webmanifest"
-        if parsed == manifest_path:
-            self._send_manifest()
             return
         if parsed.endswith(".html"):
             parsed = parsed[:-5]
@@ -196,10 +191,6 @@ class WikiHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
-    def _send_manifest(self) -> None:
-        body = (serialize_web_manifest(_server_state(self.server).config) + "\n").encode("utf-8")
-        self._send_bytes(200, body, "application/manifest+json")
 
     def _send_bytes(self, code: int, body: bytes, content_type: str) -> None:
         self.send_response(code)

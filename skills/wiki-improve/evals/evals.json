@@ -48,6 +48,7 @@
         "Categories finding as config or mentions wiki.yaml schema",
         "Mentions CHANGELOG or Migration for upgrades",
         "Does not suggest config migrate or per-key rename hints",
+        "May cite site.manifest or other removed site keys as examples of invalid yaml",
         "Does not modify wiki files"
       ]
     }

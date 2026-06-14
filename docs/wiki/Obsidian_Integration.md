@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Obsidian integration
+headline: Obsidian Integration
 description: Run Wiki CLI from Obsidian via Shell Commands.
 ---
 
-# Obsidian integration
+# Obsidian Integration
 
 The CLI works well beside [Obsidian](Obsidian.md) because Obsidian markdown is natively supported by the CLI.
 

@@ -21,6 +21,16 @@ DEFAULT_FMT_OPTS: dict[str, Any] = {
     "extensions": ["gfm", "frontmatter", "wikilink"],
 }
 
+
+def render_default_mdformat_toml() -> str:
+    """Canonical .mdformat.toml text for wiki init (aligned with DEFAULT_FMT_OPTS)."""
+    extensions = ", ".join(f'"{ext}"' for ext in DEFAULT_FMT_OPTS["extensions"])
+    return (
+        f'wrap = "{DEFAULT_FMT_OPTS["wrap"]}"\n'
+        f'end_of_line = "{DEFAULT_FMT_OPTS["end_of_line"]}"\n'
+        f"extensions = [{extensions}]\n"
+    )
+
 SPARQL_REGION_RE = re.compile(
     r"<!--\s*sparql:start\b.*?<!--\s*sparql:end\s*-->",
     re.DOTALL | re.IGNORECASE,

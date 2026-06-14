@@ -9,7 +9,7 @@
       "expectations": [
         "Uses wiki init with --repo or equivalent non-interactive flags",
         "Runs or plans wiki check --strict after init",
-        "Asks about or applies site manifest name or first page in wizard",
+        "Asks about or applies logo glyph (--site-name) or first page in wizard",
         "Does not run wiki lint or wiki serve unsolicited",
         "Does not include a full pip install tutorial"
       ]
@@ -45,7 +45,7 @@
       "files": [],
       "expectations": [
         "Skips wiki init or does not use --force without explicit user request",
-        "Focuses on site name, first page, or preferences wizard",
+        "Focuses on layout branding, logo glyph, first page, or preferences wizard",
         "Does not run check/lint/serve unsolicited"
       ]
     },

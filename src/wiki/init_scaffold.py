@@ -118,10 +118,10 @@ def resolve_init_options(
     cwd: Path,
     init_git: bool,
     prompt_context_wiki: Callable[[str], str],
-    site_manifest_name: str = "Wiki CLI",
+    site_name: str = "Wiki CLI",
     wiki_inputs: list[str] | None = None,
     graph_base_iri: str | None = None,
-    site_manifest_theme_color: str | None = None,
+    site_theme_color: str | None = None,
     graph_implicit_types: list[str] | None = None,
     graph_implicit_types_policy: str | None = None,
     graph_include_file_extension: bool | None = None,
@@ -154,10 +154,10 @@ def resolve_init_options(
         site_url_style=resolved_url_style,
         graph_content_predicate=graph_content_predicate,
         link_style=link_style,
-        site_manifest_name=site_manifest_name,
+        site_name=site_name,
         wiki_inputs=wiki_inputs,
         graph_base_iri=graph_base_iri,
-        site_manifest_theme_color=site_manifest_theme_color,
+        site_theme_color=site_theme_color,
         graph_implicit_types=graph_implicit_types,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
@@ -206,26 +206,25 @@ def copy_default_layout(dest: Path) -> None:
 
 
 def load_packaged_default_logo(
-    site_manifest_name: str = "Wiki CLI",
-    site_manifest_theme_color: str | None = None,
+    site_name: str = "Wiki CLI",
+    site_theme_color: str | None = None,
 ) -> str:
     """Return the default sidebar logo SVG for init scaffolding."""
     from .site.layout_context import build_logo_svg
-    from .site.manifest import resolved_manifest_name
 
-    letter = resolved_manifest_name(site_manifest_name)[0].upper()
-    return build_logo_svg(letter, site_manifest_theme_color)
+    letter = (site_name.strip() or "Wiki CLI")[0].upper()
+    return build_logo_svg(letter, site_theme_color)
 
 
 def copy_default_logo(
     dest: Path,
     *,
-    site_manifest_name: str = "Wiki CLI",
-    site_manifest_theme_color: str | None = None,
+    site_name: str = "Wiki CLI",
+    site_theme_color: str | None = None,
 ) -> None:
     """Write the default sidebar logo into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(
-        load_packaged_default_logo(site_manifest_name, site_manifest_theme_color),
+        load_packaged_default_logo(site_name, site_theme_color),
         encoding="utf-8",
     )

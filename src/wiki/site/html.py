@@ -1,4 +1,4 @@
-"""HTML shell assembly, manifests, and page chrome."""
+"""HTML shell assembly and page chrome."""
 
 from __future__ import annotations
 

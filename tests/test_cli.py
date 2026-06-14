@@ -519,9 +519,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertNotIn("wazoo:layout:", person_content)
 
                 # Check site layout is configured and seeded
-                self.assertIn("name: Wiki CLI", config_content)
-                self.assertIn("src: assets/logo.svg", config_content)
-                self.assertIn('sizes: "200x200"', config_content)
+                self.assertNotIn("manifest:", config_content)
                 self.assertIn("layout: layouts/default.html.j2", config_content)
                 self.assertIn("assets:", config_content)
                 self.assertIn("- assets", config_content)
@@ -529,11 +527,10 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(default_layout.is_file())
                 expected_layout = load_packaged_default_layout()
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("{{ site.manifest.icons[0].url }}", expected_layout)
-                self.assertNotIn("{{ site.manifest.primary_icon_url }}", expected_layout)
-                self.assertNotIn("{{ site.manifest.logo_url }}", expected_layout)
+                self.assertIn("{{ site.base_url }}/assets/logo.svg", expected_layout)
+                self.assertNotIn("{{ site.manifest", expected_layout)
                 self.assertNotIn("{{ site.logo_svg }}", expected_layout)
-                self.assertIn("{{ site.manifest.name }}", expected_layout)
+                self.assertIn("Wiki CLI", expected_layout)
 
                 default_logo = Path("assets") / "logo.svg"
                 self.assertTrue(default_logo.is_file())
@@ -579,7 +576,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
-    def test_cli_init_site_manifest_name_logo_letter(self) -> None:
+    def test_cli_init_site_name_logo_letter(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
@@ -590,7 +587,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                         "--force",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
-                        "--site-manifest-name",
+                        "--site-name",
                         "My Project",
                     ],
                     catch_exceptions=False,
@@ -600,7 +597,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(logo_content.is_file())
                 self.assertIn(">M</text>", logo_content.read_text(encoding="utf-8"))
                 config_content = Path("wiki.yaml").read_text(encoding="utf-8")
-                self.assertIn("name: My Project", config_content)
+                self.assertNotIn("name: My Project", config_content)
+                self.assertNotIn("manifest:", config_content)
 
     def test_cli_init_implicit_types_policy_append(self) -> None:
         runner = CliRunner()
@@ -1317,6 +1315,69 @@ Hello from [[alice]].""", encoding="utf-8")
         result = runner.invoke(main, ["--wiki-inputs", "nonexistent", "build"])
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Error", result.output)
+
+    def test_cli_build_rejects_output_overlapping_config_root(self) -> None:
+        """Build must not wipe the config root when --output-dir overlaps it."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("wiki:\n  inputs:\n    - wiki\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "-c", str(config_dir),
+                "build",
+                "--output-dir", str(config_dir),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("refusing to clean build output path", result.output)
+            self.assertTrue(page.exists())
+
+    def test_cli_build_rejects_output_containing_wiki_inputs(self) -> None:
+        """Build must not wipe a parent directory that contains wiki inputs."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "--wiki-inputs", str(wiki_dir),
+                "build",
+                "--output-dir", str(root),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("overlaps wiki input", result.output)
+            self.assertTrue(page.exists())
+
+    def test_cli_build_rejects_output_equal_to_wiki_input(self) -> None:
+        """Build must not use the wiki input directory itself as page output."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "--wiki-inputs", str(wiki_dir),
+                "build",
+                "--output-dir", str(wiki_dir),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("overlaps wiki input", result.output)
+            self.assertTrue(page.exists())
 
     def test_global_raw_dir_flag(self) -> None:
         """Test --wiki-inputs with multiple directories: loads files from both."""

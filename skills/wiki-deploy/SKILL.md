@@ -19,7 +19,7 @@ This skill **only** sets up GitHub Pages deployment (workflow + config alignment
 
 ## Canonical workflow reference
 
-The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy-pages.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy-pages.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
+The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps (for example keeping `setup-uv` but swapping `uv sync` for `uv pip install`).
 
 | Step | Dogfood value | Why |
 | ---- | ------------- | --- |
@@ -82,7 +82,7 @@ Locate `wiki.yaml` (repo root or ask the user). If absent, say a wiki workspace 
 
 Ask **one decision at a time** with a short explainer. Run `wiki build --help` when you need current build flags.
 
-### 1. Pages URL shape
+### Pages URL shape
 
 GitHub Pages project sites publish at `https://{owner}.github.io/{repo}/`.
 
@@ -94,7 +94,7 @@ GitHub Pages project sites publish at `https://{owner}.github.io/{repo}/`.
 
 Read `site.base_url` from `wiki.yaml`. If it disagrees with the user’s GitHub Pages URL, align **both** `wiki.yaml` and the workflow `wiki build --site-base-url` flag (only edit `wiki.yaml` with user approval).
 
-### 2. Artifact path (critical)
+### Artifact path (critical)
 
 `wiki build --output-dir _site --site-base-url <path>` writes HTML under:
 
@@ -105,7 +105,7 @@ Read `site.base_url` from `wiki.yaml`. If it disagrees with the user’s GitHub 
 
 See [references/alignment-checklist.md](references/alignment-checklist.md).
 
-### 3. Install strategy in CI
+### Install strategy in CI
 
 | Repo signal | Template | Install |
 | ----------- | -------- | ------- |
@@ -114,9 +114,9 @@ See [references/alignment-checklist.md](references/alignment-checklist.md).
 
 Use Python **3.12+**.
 
-### 4. Workflow file
+### Workflow file
 
-Create or update `.github/workflows/deploy-pages.yml` (or `deploy.yml`) with user approval.
+Create or update `.github/workflows/deploy.yml` with user approval.
 
 Substitute placeholders in the chosen template:
 
@@ -144,7 +144,7 @@ Typical job order:
 
 Permissions required: `contents: read`, `pages: write`, `id-token: write`. Use `concurrency: group: pages`.
 
-### 5. Repository settings and verification
+### Repository settings and verification
 
 Tell the user to enable **Settings → Pages → Build and deployment → GitHub Actions**.
 
@@ -154,11 +154,11 @@ After the workflow is committed, verify when `gh` is available:
 gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'
 ```
 
-Expect `build_type: workflow`. If `legacy` with a branch source, Pages is still serving from `main` / `gh-pages` — not the Actions artifact.
+Expect `build_type: workflow`. If GitHub returns `build_type: legacy` (branch-based Pages source), the site is still served from `main` / `gh-pages` — not the Actions artifact.
 
 Confirm the latest Actions run succeeded and the published URL loads.
 
-### 6. Local preview (optional)
+### Local preview (optional)
 
 ```bash
 wiki -c path/to/wiki.yaml serve
@@ -166,7 +166,7 @@ wiki -c path/to/wiki.yaml serve
 
 Default preview URL follows `site.base_url` (e.g. `http://127.0.0.1:8080/wiki/` when `site.base_url` is `/wiki` — not the server root alone).
 
-### 7. Pre-merge validation
+### Pre-merge validation
 
 With user approval, run locally before committing the workflow:
 
@@ -203,7 +203,7 @@ Do not run `wiki serve` or open PRs unless the user asks.
 ## References
 
 - [references/alignment-checklist.md](references/alignment-checklist.md) — path alignment and audit red flags
-- [references/workflow-template-uv.yml](references/workflow-template-uv.yml) — monorepo / uv (matches deploy-pages.yml)
+- [references/workflow-template-uv.yml](references/workflow-template-uv.yml) — monorepo / uv (matches deploy.yml)
 - [references/workflow-template-pip.yml](references/workflow-template-pip.yml) — standalone wiki repos
 
 Human docs: [Deploying to GitHub Pages](https://github.com/wazootech/wiki/blob/main/docs/wiki/Deploying_to_GitHub_Pages.md), [Wiki Subcommand build](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Subcommand_build.md).

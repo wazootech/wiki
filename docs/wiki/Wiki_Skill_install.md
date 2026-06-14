@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: wiki-install agent skill
+headline: wiki-install Agent Skill
 description: Install Wiki CLI and verify `wiki` on PATH for agents and contributors.
 ---
 
-# wiki-install agent skill
+# wiki-install Agent Skill
 
 The **wiki-install** skill is procedural knowledge for coding agents: detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help` and a **`fmt` capability probe**, and exit with a ready-to-go message.
 

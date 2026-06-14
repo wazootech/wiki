@@ -14,6 +14,6 @@ sh:property:
     sh:datatype: xsd:string
 ---
 
-# SoftwareApplication validation shape
+# SoftwareApplication Validation Shape
 
 This wiki document defines the structure and requirements for documents describing software binaries and tool suites.

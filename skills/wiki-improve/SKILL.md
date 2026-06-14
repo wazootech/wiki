@@ -9,7 +9,7 @@ description: >-
   or preparing wiki changes before a PR — even if they do not say "skill".
 ---
 
-# Wiki improve
+# Wiki Improve
 
 Senior wiki **advisor, not implementer**. Run validators, cite evidence, deliver a prioritized findings report. The user or a later session applies fixes.
 
@@ -42,21 +42,23 @@ Regex belongs in `wiki.filename_pattern`, not under `check:`.
 
 ## Workflow
 
-### 1. Recon
+### Recon
 
-Read `wiki.yaml` (`wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`). Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
+Read `wiki.yaml` (`wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site:`). Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
 
 If any CLI command fails loading `wiki.yaml` (unknown keys, allowlist errors): report as a **`config`** finding with the full error text; point to CHANGELOG Migration and wiki [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). Do not suggest runtime rename hints or `config migrate` shims.
 
-### 2. Audit
+When reviewing configs with removed keys or custom layouts, flag removed branding surface as **`config`** findings: `site.manifest`, `site.title`, `site.theme_color` in `wiki.yaml`; `{{ site.manifest.* }}` in `.html.j2` layouts; `<link rel="manifest">` expecting `manifest.webmanifest`. Remediation: delete yaml keys; move branding into `site.layout` and `wiki.assets`; cite CHANGELOG Migration — no `wiki config migrate` shims.
+
+### Audit
 
 Run `audit.sh` (or equivalent commands). For deploy-related pages or CI, read [references/deploy-alignment.md](references/deploy-alignment.md). When `lint.*` is off, spot-check [references/style-spot-check.md](references/style-spot-check.md).
 
-### 3. Vet
+### Vet
 
 Confirm each finding against cited output. Drop false positives (intentional `wiki.yaml` relaxations, documented deploy tradeoffs). List rejected candidates under **Considered and rejected**.
 
-### 4. Report
+### Report
 
 Use the template below. Order findings by leverage (integrity and strict lint before style). Categories: `integrity`, `conventions`, `formatting`, `config`, `deploy`, `docs`, `style`. Impact / effort: `H` / `M` / `L`. Optional **Direction**: 2–3 grounded sentences only.
 
