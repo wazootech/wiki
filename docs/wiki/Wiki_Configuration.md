@@ -217,7 +217,7 @@ ATX heading syntax is also enforced by **`wiki fmt`** (mdformat); Setext underli
 
 When `link.style` is `markdown`, set `lint.link_style: off` to allow wikilinks in prose, or set `link.style: obsidian` for an Obsidian-style wiki.
 
-## SPARQL serve API (`sparql_service:`)
+## Serve API
 
 Opt-in read-only SPARQL HTTP endpoint on `wiki serve`:
 
