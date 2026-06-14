@@ -90,49 +90,15 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 GitHub **template repositories** in the [wazootech](https://github.com/wazootech) org sit at the edges of the toolchain — publish surfaces, query UIs, and starter vaults — while Wiki CLI owns the semantic layer ([Design philosophies](Design_Philosophies.md)). This section is the canonical registry.
 
-### Naming convention
-
-| Tier               | When                                                         | Slug shape                                     | Examples                                                                                        |
-| ------------------ | ------------------------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Privileged starter | The one generic Wiki CLI workspace                           | `wiki-template`                                | [wiki-template](https://github.com/wazootech/wiki-template)                                     |
-| Pattern starter    | Repo implements a named pattern that already contains “wiki” | `{pattern}-template` (no extra `wiki-` prefix) | `llm-wiki-template` ([#83](https://github.com/wazootech/wiki/issues/83))                        |
-| Integration        | Third-party stack plus Wiki CLI artifact contract            | `wiki-{stack}-template`                        | `wiki-nextjs-template`, `wiki-quartz-template`, `wiki-mintlify-template`, `wiki-astro-template` |
-| Legacy shipped     | Already published under an older convention                  | keep until optional rename                     | [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)                       |
-
-All templates use kebab-case, end with `-template`, and never use `wiki-cli` in slugs. Link to the **repo** when it exists; link to the **tracking issue** when it does not. Do not rely on slug prefix alone — use this registry.
-
-### Registry
-
-| Slug                                                                      | Status  | Purpose                                                                                            | Tracking                                                                                               |
-| ------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [wiki-template](https://github.com/wazootech/wiki-template)               | Shipped | Minimal generic Wiki CLI workspace (`wiki init` parity plus deploy)                                | —                                                                                                      |
-| `llm-wiki-template`                                                       | Planned | [LLM Wiki](LLM_Wiki.md) pattern vault — shapes, agent DX, gardening                                | [#83](https://github.com/wazootech/wiki/issues/83)                                                     |
-| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) | Shipped | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL, optional Virtuoso backend | [#14](https://github.com/wazootech/wiki/issues/14), [#81](https://github.com/wazootech/wiki/issues/81) |
-| `wiki-nextjs-template`                                                    | Planned | Next.js SSG consumer of `wiki export`                                                              | [#15](https://github.com/wazootech/wiki/issues/15)                                                     |
-| `wiki-quartz-template`                                                    | Planned | Quartz static site from a compatible vault plus `wiki check` CI                                    | [#16](https://github.com/wazootech/wiki/issues/16)                                                     |
-| `wiki-mintlify-template`                                                  | Planned | Mintlify or Holocron docs site from a compatible vault                                             | [#31](https://github.com/wazootech/wiki/issues/31)                                                     |
-| `wiki-astro-template`                                                     | Planned | Astro SSG consumer of `wiki export`                                                                | [#96](https://github.com/wazootech/wiki/issues/96)                                                     |
-
-### Starter vaults
-
-- **[wiki-template](https://github.com/wazootech/wiki-template)** — generic scaffold. Use GitHub **Use this template** or `wiki init` locally.
-- **`llm-wiki-template`** (planned) — opinionated [LLM Wiki](LLM_Wiki.md) vault following the Karpathy pattern; distinct from the generic starter ([#83](https://github.com/wazootech/wiki/issues/83)).
-
-The shipped `wiki-template` repo description on GitHub still says “LLM Wiki starter template”; docs treat it as generic until `llm-wiki-template` ships.
-
-### SPARQL query UI
-
-One template repo — **[wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)** — not a separate Virtuoso template ([#81](https://github.com/wazootech/wiki/issues/81) folds into this repo’s README in a later phase).
-
-| Mode               | How                                                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live dev endpoint  | `wiki serve` with `sparql_service.enabled: true` — read-only `/api/sparql` ([Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint), [SPARQL](SPARQL.md)) |
-| Static export      | `wiki export` Turtle or TriG; point YASGUI at the file                                                                                                              |
-| Persistent backend | Optional Virtuoso export→load docs in the same template (planned)                                                                                                   |
-
-### Publish integrations
-
-Planned GitHub templates wire Wiki CLI output into third-party static-site or docs stacks: `wiki-nextjs-template` ([#15](https://github.com/wazootech/wiki/issues/15)), `wiki-quartz-template` ([#16](https://github.com/wazootech/wiki/issues/16)), `wiki-mintlify-template` ([#31](https://github.com/wazootech/wiki/issues/31)), `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Obsidian remains a supported authoring surface in prose; the Quartz slug does not include `obsidian`.
+| Template                                                                  | Description                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [wiki-template](https://github.com/wazootech/wiki-template)               | Generic Wiki CLI workspace (`wiki init` parity plus deploy)                                                                                                                                                         |
+| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL ([#14](https://github.com/wazootech/wiki/issues/14), [#81](https://github.com/wazootech/wiki/issues/81))                                    |
+| `llm-wiki-template`                                                       | Planned [LLM Wiki](LLM_Wiki.md) starter ([#83](https://github.com/wazootech/wiki/issues/83))                                                                                                                        |
+| `wiki-nextjs-template`                                                    | Planned Next.js SSG consumer of `wiki export` ([#15](https://github.com/wazootech/wiki/issues/15))                                                                                                                  |
+| `wiki-quartz-template`                                                    | Planned Quartz static site from a compatible vault plus `wiki check` CI ([#16](https://github.com/wazootech/wiki/issues/16)); Obsidian remains a supported authoring surface — the slug does not include `obsidian` |
+| `wiki-mintlify-template`                                                  | Planned Mintlify or Holocron docs site from a compatible vault ([#31](https://github.com/wazootech/wiki/issues/31))                                                                                                 |
+| `wiki-astro-template`                                                     | Planned Astro SSG consumer of `wiki export` ([#96](https://github.com/wazootech/wiki/issues/96))                                                                                                                    |
 
 ### Artifact contract
 
