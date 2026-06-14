@@ -17,9 +17,13 @@ wiki:
 graph:
   # Predicate for full-text body literals in SPARQL (for example schema:articleBody).
   content_predicate: schema:articleBody
+  # Whether to include the file extension in the document URI.
   # include_file_extension: false
+  # Types to add to untyped pages.
   # implicit_types: [schema:TechArticle]
+  # Policy for implicit types: fallback or append.
   # implicit_types_policy: fallback
+  # Base IRIs for document URIs.
   # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
   # CURIE prefix map for frontmatter and microdata.
   context:
@@ -63,14 +67,6 @@ lint:
   broken_links: warning
   # Wiki filename_pattern regex (see wiki.filename_pattern).
   filename_pattern: warning
-  # ATX headings, sentence-case H2+, numbered headings.
-  headings: off
-  # Heading level gaps (for example H1 then H3).
-  heading_levels: off
-  # Duplicate heading text on one page.
-  duplicate_headings: off
-  # Horizontal rules used as thematic breaks in body prose.
-  thematic_breaks: off
   # Obsidian wikilinks in body when link.style is markdown.
   link_style: warning
 
