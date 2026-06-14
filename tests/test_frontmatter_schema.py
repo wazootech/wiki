@@ -255,6 +255,61 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
             self.assertEqual(len(validation), 1)
             self.assertIn("In Bad:", validation[0])
 
+    def test_remote_schema_ref_denied_without_network(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Remote_Shape.md").write_text(
+                "---\n"
+                "type: sh:NodeShape\n"
+                "sh:targetClass: schema:Thing\n"
+                "wazoo:jsonSchema: https://example.org/schema.json\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            config = Config(
+                wiki={"inputs": [wiki]},
+                config_root=root,
+                check={"remote_schema_refs": "deny"},
+            )
+
+            with patch("wiki.frontmatter_schema.urlopen", side_effect=AssertionError("network call")):
+                missing, validation = check_frontmatter_schema(config)
+
+            self.assertEqual(len(missing), 1)
+            self.assertIn("remote schema refs are disabled", missing[0])
+            self.assertEqual(validation, [])
+
+    def test_remote_schema_ref_allowlist_blocks_unknown_host(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "Remote_Shape.md").write_text(
+                "---\n"
+                "type: sh:NodeShape\n"
+                "sh:targetClass: schema:Thing\n"
+                "wazoo:jsonSchema: https://example.org/schema.json\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            config = Config(
+                wiki={"inputs": [wiki]},
+                config_root=root,
+                check={
+                    "remote_schema_refs": "allowlist",
+                    "remote_schema_hosts": ["schemas.example.org"],
+                },
+            )
+
+            with patch("wiki.frontmatter_schema.urlopen", side_effect=AssertionError("network call")):
+                missing, validation = check_frontmatter_schema(config)
+
+            self.assertEqual(len(missing), 1)
+            self.assertIn("not allowed by check.remote_schema_hosts", missing[0])
+            self.assertEqual(validation, [])
+
     def test_build_type_schema_registry_dedupes_refs(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

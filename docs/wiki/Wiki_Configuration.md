@@ -410,17 +410,19 @@ In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline map
 
 Under `check`, each rule is `error`, `warning`, or `off`:
 
-| Rule key              | Default | What it audits                                                         |
-| --------------------- | ------- | ---------------------------------------------------------------------- |
-| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
-| `frontmatter_schema`  | `error` | Frontmatter that fails JSON Schema validation                          |
-| `missing_schema_ref`  | `error` | `wazoo:jsonSchema` paths or URLs that cannot be loaded                 |
+| Rule key              | Default | What it audits                                                           |
+| --------------------- | ------- | ------------------------------------------------------------------------ |
+| `missing_layout_file` | `error` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file   |
+| `frontmatter_schema`  | `error` | Frontmatter that fails JSON Schema validation                            |
+| `missing_schema_ref`  | `error` | `wazoo:jsonSchema` paths or URLs that cannot be loaded                   |
+| `remote_schema_refs`  | `allow` | Policy for remote `http(s)` schema refs: `allow`, `deny`, or `allowlist` |
+| `remote_schema_hosts` | `[]`    | Hostnames permitted when `remote_schema_refs` is `allowlist`             |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
 ### JSON Schema frontmatter (`wazoo:jsonSchema`)
 
-`wiki check` validates frontmatter against JSON Schema in parallel with SHACL. Bind schemas on shape documents with **`wazoo:jsonSchema`** beside **`sh:targetClass`**; every page whose effective `type` matches that class must pass the bound schema(s). Individual pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list). Schema refs are local paths under the wiki config root (`.json` only) or remote `http(s)` URLs.
+`wiki check` validates frontmatter against JSON Schema in parallel with SHACL. Bind schemas on shape documents with **`wazoo:jsonSchema`** beside **`sh:targetClass`**; every page whose effective `type` matches that class must pass the bound schema(s). Individual pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list). Schema refs are local paths under the wiki config root (`.json` only) or remote `http(s)` URLs. Remote refs can trigger outbound network requests; set `check.remote_schema_refs: deny` in CI over untrusted wikis, or `allowlist` with `check.remote_schema_hosts` for trusted hosts only.
 
 Shape binding documents are not validated as instances — only their schema refs are checked for loadability. Authoring detail: [SHACL](SHACL.md), [Style Guide](Style_Guide.md).
 

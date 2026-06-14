@@ -512,5 +512,17 @@ class TestConfig(unittest.TestCase):
             self.assertIsInstance(config.fmt, FmtConfig)
             self.assertEqual(config.fmt.options["extensions"], ["gfm", "frontmatter", "wikilink"])
 
+    def test_check_remote_schema_policy(self) -> None:
+        config = Config.for_root(
+            ".",
+            check={
+                "remote_schema_refs": "allowlist",
+                "remote_schema_hosts": ["schemas.example.org"],
+            },
+        )
+        self.assertEqual(config.check.remote_schema_refs, "allowlist")
+        self.assertEqual(config.check.remote_schema_hosts, ["schemas.example.org"])
+
+
 if __name__ == "__main__":
     unittest.main()
