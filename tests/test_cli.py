@@ -1318,6 +1318,69 @@ Hello from [[alice]].""", encoding="utf-8")
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Error", result.output)
 
+    def test_cli_build_rejects_output_overlapping_config_root(self) -> None:
+        """Build must not wipe the config root when --output-dir overlaps it."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            config_dir = Path(tmpdir)
+            wiki_dir = config_dir / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+            (config_dir / "wiki.yaml").write_text("wiki:\n  inputs:\n    - wiki\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "-c", str(config_dir),
+                "build",
+                "--output-dir", str(config_dir),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("refusing to clean build output path", result.output)
+            self.assertTrue(page.exists())
+
+    def test_cli_build_rejects_output_containing_wiki_inputs(self) -> None:
+        """Build must not wipe a parent directory that contains wiki inputs."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "--wiki-inputs", str(wiki_dir),
+                "build",
+                "--output-dir", str(root),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("overlaps wiki input", result.output)
+            self.assertTrue(page.exists())
+
+    def test_cli_build_rejects_output_equal_to_wiki_input(self) -> None:
+        """Build must not use the wiki input directory itself as page output."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir) / "wiki"
+            wiki_dir.mkdir()
+            page = wiki_dir / "page.md"
+            page.write_text("# Page\n", encoding="utf-8")
+
+            result = runner.invoke(main, [
+                "--wiki-inputs", str(wiki_dir),
+                "build",
+                "--output-dir", str(wiki_dir),
+                "--site-base-url", "",
+                "--no-check",
+            ])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("overlaps wiki input", result.output)
+            self.assertTrue(page.exists())
+
     def test_global_raw_dir_flag(self) -> None:
         """Test --wiki-inputs with multiple directories: loads files from both."""
         runner = CliRunner()
