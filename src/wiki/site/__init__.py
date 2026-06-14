@@ -8,12 +8,6 @@ from .html import (
     build_page_html,
 )
 from .layout_context import build_layout_context, build_logo_svg
-from .manifest import (
-    DEFAULT_THEME_COLOR,
-    build_web_manifest,
-    resolved_site_theme_color,
-    serialize_web_manifest,
-)
 from .layout_template import MINIMAL_LAYOUT_TEMPLATE
 from .markdown import (
     INLINE_CSS,
@@ -31,7 +25,6 @@ from .html import _build_logo_svg  # noqa: F401
 
 __all__ = [
     "MINIMAL_LAYOUT_TEMPLATE",
-    "DEFAULT_THEME_COLOR",
     "INLINE_CSS",
     "InfoboxRow",
     "TocItem",
@@ -42,14 +35,11 @@ __all__ = [
     "build_infobox_rows",
     "build_page_html",
     "build_site",
-    "build_web_manifest",
     "extract_title",
     "humanize_route",
     "render_copyable_pre",
     "render_outline_title",
     "render_wiki_markdown",
-    "resolved_site_theme_color",
-    "serialize_web_manifest",
     "split_by_headings",
     "strip_leading_title_heading",
 ]

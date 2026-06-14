@@ -1,4 +1,4 @@
-{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_manifest_name, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, site_manifest_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
+{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_name, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, site_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
 
 # Wiki paths, assets, and filename policy (wiki check / wiki lint).
 wiki:
@@ -62,24 +62,8 @@ graph:
     sh: http://www.w3.org/ns/shacl#
     xsd: http://www.w3.org/2001/XMLSchema#
 
-# Page layout, URL routing, and Web App Manifest branding.
+# Page layout and URL routing.
 site:
-  manifest:
-    # Site name in layout chrome and manifest.webmanifest.
-    name: {{ site_manifest_name }}
-    icons:
-      - src: assets/logo.svg
-        sizes: "200x200"
-        type: image/svg+xml
-        purpose: any
-{% if site_manifest_theme_color %}
-    theme_color: "{{ site_manifest_theme_color }}"
-{% else %}
-    # theme_color: "#6366f1"
-{% endif %}
-    #   - src: assets/icon-512.png
-    #     sizes: "512x512"
-    #     type: image/png
   # Default page layout Jinja template (see Wiki Configuration → Page layout).
   layout: layouts/default.html.j2
   # URL prefix for built and served pages.

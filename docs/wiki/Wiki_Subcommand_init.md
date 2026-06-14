@@ -32,10 +32,10 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                        |
 | `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                              |
 | `--link-style`                   | Override `link.style`: standard Markdown (`markdown`) or Obsidian wikilinks (`obsidian`)          |
-| `--site-manifest-name`           | Override `site.manifest.name` (default `Wiki CLI`)                                                |
+| `--site-name`                    | Logo glyph letter only at init (default `Wiki CLI`; not written to `wiki.yaml`)                   |
 | `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                   |
 | `--graph-base-iri`               | Override `graph.base_iri` URI                                                                     |
-| `--site-manifest-theme-color`    | Override `site.manifest.theme_color` (e.g. `#3b82f6`)                                             |
+| `--site-theme-color`             | Logo gradient at init only (e.g. `#3b82f6`; not written to `wiki.yaml`)                           |
 | `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                                 |
 | `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                    |
 | `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`)    |
@@ -69,17 +69,16 @@ New workspaces receive a plain `wiki.yaml`. The packaged scaffold that `wiki ini
 - `graph.context.wiki` — default namespace for `wiki:` CURIEs and auto-generated document IRIs
 - Commented `graph.implicit_types` / `graph.implicit_types_policy` examples (uncomment to apply wiki-wide default `rdf:type` CURIEs)
 - Commented `graph.base_iri` example (uncomment only when document IRIs must differ from `context.wiki`)
-- `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`
+- `site.base_url: /wiki` (or inferred from `--repo`), `site.url_style: dir`, `site.layout`
 - `lint` rules at `warning` for filename and links
-- `site.manifest.name` and `site.layout` — site name and default page layout for build/serve
 - `fmt:` — inline mdformat options for `wiki fmt` (`wrap`, `end_of_line`, `extensions`)
 
 Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, set `fmt: .mdformat.toml` and create that file with the same mdformat options as the inline `fmt` block.
 
 ## Generated files
 
-- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg`. Edit to customize the look and feel.
-- `assets/logo.svg` — starter sidebar logo (first `site.manifest.icons` entry; served at `{{ site.manifest.icons[0].url }}`); center glyph is the first letter of `--site-manifest-name` (default `Wiki CLI` → `W`)
+- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg` at `{{ site.base_url }}/assets/logo.svg`. Edit to customize site name, colors, and chrome.
+- `assets/logo.svg` — starter sidebar logo; center glyph is the first letter of `--site-name` (default `Wiki CLI` → `W`); optional `--site-theme-color` sets the gradient
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

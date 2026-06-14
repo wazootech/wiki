@@ -9,7 +9,7 @@
       "expectations": [
         "Uses wiki init with --repo or equivalent non-interactive flags",
         "Runs or plans wiki check --strict after init",
-        "Asks about or applies site manifest name or first page in wizard",
+        "Asks about or applies site name (logo) or first page in wizard",
         "Does not run wiki lint or wiki serve unsolicited",
         "Does not include a full pip install tutorial"
       ]

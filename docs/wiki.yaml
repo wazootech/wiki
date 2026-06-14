@@ -32,20 +32,8 @@ graph:
     sh: http://www.w3.org/ns/shacl#
     xsd: http://www.w3.org/2001/XMLSchema#
 
-# Page layout, URL routing, and Web App Manifest branding.
+# Page layout and URL routing.
 site:
-  manifest:
-    # Site name in layout chrome and manifest.webmanifest.
-    name: Wiki CLI
-    icons:
-      - src: assets/logo.svg
-        sizes: "200x200"
-        type: image/svg+xml
-        purpose: any
-    # theme_color: "#6366f1"
-    #   - src: assets/icon-512.png
-    #     sizes: "512x512"
-    #     type: image/png
   # Default page layout Jinja template (see Wiki Configuration → Page layout).
   layout: layouts/default.html.j2
   # URL prefix for built and served pages.

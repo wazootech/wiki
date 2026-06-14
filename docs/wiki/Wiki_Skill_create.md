@@ -37,7 +37,7 @@ Run `wiki --help` and `wiki fmt --help`. If either fails, state that **`wiki` on
 
 Post-init `check --strict` runs by default after new init; the user may opt out in the same turn (e.g. “skip check”).
 
-Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-manifest-name`, `--wiki-inputs`, `--graph-base-iri`, `--site-manifest-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
+Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-name`, `--wiki-inputs`, `--graph-base-iri`, `--site-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
 
 After approved edits to markdown or config, run `wiki fmt` on changed paths.
 

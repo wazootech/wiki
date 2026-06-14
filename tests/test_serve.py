@@ -136,22 +136,6 @@ class TestServe(unittest.TestCase):
         conn.close()
         return resp.status, body
 
-    def test_manifest_endpoint(self) -> None:
-        self._write("hello-world.md", "# Hello World\n\nSome content.")
-        for port in _serve_in_thread(self.wiki_dir):
-            conn = HTTPConnection("127.0.0.1", port, timeout=5)
-            conn.request("GET", "/wiki/manifest.webmanifest")
-            resp = conn.getresponse()
-            body = resp.read().decode("utf-8")
-            conn.close()
-            status = resp.status
-            content_type = resp.getheader("Content-Type")
-        self.assertEqual(status, 200)
-        self.assertEqual(content_type, "application/manifest+json")
-        self.assertIn('"name":"Wiki CLI"', body)
-        self.assertIn('"start_url":"/wiki/"', body)
-
-    def test_index_page(self) -> None:
         self._write("hello-world.md", "# Hello World\n\nSome content.")
         self._write("foo-bar.md", "# Foo Bar\n\nContent.")
         for port in _serve_in_thread(self.wiki_dir):

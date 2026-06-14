@@ -2,15 +2,9 @@
 
 Use after `wiki init` when the user approves file edits. Run `wiki fmt` on changed markdown paths.
 
-## Site display name
+## Site branding
 
-```yaml
-site:
-  manifest:
-    name: My Wiki
-```
-
-Maps to layout chrome and `manifest.webmanifest`.
+Edit `layouts/default.html.j2` (or your `site.layout` file) for site name, theme color, favicon, and sidebar logo. Init scaffolds `assets/logo.svg` and references it at `{{ site.base_url }}/assets/logo.svg` in the default layout.
 
 ## Lint strictness (only if asked)
 

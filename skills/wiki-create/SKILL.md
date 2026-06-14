@@ -70,7 +70,7 @@ When context already supplies values, **do not re-prompt**:
 1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory** (`wiki.yaml`, `README.md`, `wiki/`, `layouts/`, `assets/logo.svg`).
 2. **Init options** — Run `wiki init --help` (same resolved `wiki` command as above) and map the user’s answers to flags from the output. Prefer flags over bare `wiki init` — stdin prompts block agents.
 
-**Optional preferences (one turn):** If not already inferred, ask link style (markdown vs Obsidian) and whether they want a custom site display name (`--site-manifest-name`). Only ask about theme color, inputs directory, or other flags when the user wants to customize.
+**Optional preferences (one turn):** If not already inferred, ask link style (markdown vs Obsidian) and whether they want a custom logo letter (`--site-name`). Only ask about theme color, inputs directory, or other flags when the user wants to customize.
 
 | Topic | When to ask | Flag |
 | ----- | ----------- | ---- |
@@ -78,9 +78,9 @@ When context already supplies values, **do not re-prompt**:
 | Custom namespace | No GitHub / custom site | `--graph-context-wiki https://…/` and optional `--site-base-url` |
 | Git repository | User wants `git init` now | `--git` (requires `git` on PATH) |
 | Link style | Obsidian wikilinks vs standard Markdown | `--link-style obsidian` (default: omit → `markdown`) |
-| Site display name | Custom display title | `--site-manifest-name "My Title"` |
+| Logo letter | Custom glyph in `assets/logo.svg` | `--site-name "My Title"` |
 | Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
-| Theme color | Manifest theme color | `--site-manifest-theme-color "#3b82f6"` |
+| Theme color | Logo gradient at init only | `--site-theme-color "#3b82f6"` |
 | URL style | File vs directory routes | `--site-url-style dir` or `file` |
 | Content predicate | Body text RDF predicate | `--graph-content-predicate schema:articleBody` |
 | Document IRIs | IRIs differ from `wiki:` namespace | `--graph-base-iri https://…/` |
@@ -124,7 +124,8 @@ Gather **before init** when it affects flags (`--repo`, `--link-style`). **After
 
 | Topic | Action |
 | ----- | ------ |
-| Site display name | Edit `site.manifest.name` in `wiki.yaml` |
+| Site branding | Edit `layouts/default.html.j2` (title, sidebar label, theme color, asset URLs) |
+| Logo glyph | Re-run init with `--site-name` on a fresh scaffold, or edit `assets/logo.svg` |
 | First page | Replace or rename `wiki/Ethan_Davidson.md`, or add the user’s page |
 | Lint strictness | Only if user asks — see [references/wiki-yaml-preferences.md](references/wiki-yaml-preferences.md) |
 
