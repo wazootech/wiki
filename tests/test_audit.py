@@ -600,9 +600,9 @@ name: Wiki CLI
             layouts = root / "layouts"
             layouts.mkdir()
             wiki.mkdir()
-            (layouts / "legacy.html").write_text("<html></html>", encoding="utf-8")
+            (layouts / "plain.html").write_text("<html></html>", encoding="utf-8")
             (wiki / "page.md").write_text(
-                "---\ntype: TechArticle\nwazoo:layout: layouts/legacy.html\n---\n",
+                "---\ntype: TechArticle\nwazoo:layout: layouts/plain.html\n---\n",
                 encoding="utf-8",
             )
             config = Config(wiki={"inputs": [wiki]}, config_root=root)

@@ -32,20 +32,8 @@ graph:
     sh: http://www.w3.org/ns/shacl#
     xsd: http://www.w3.org/2001/XMLSchema#
 
-# Page layout, URL routing, and Web App Manifest branding.
+# Page layout and URL routing.
 site:
-  manifest:
-    # Site name in layout chrome and manifest.webmanifest.
-    name: Wiki CLI
-    icons:
-      - src: assets/logo.svg
-        sizes: "200x200"
-        type: image/svg+xml
-        purpose: any
-    # theme_color: "#6366f1"
-    #   - src: assets/icon-512.png
-    #     sizes: "512x512"
-    #     type: image/png
   # Default page layout Jinja template (see Wiki Configuration → Page layout).
   layout: layouts/default.html.j2
   # URL prefix for built and served pages.
@@ -75,14 +63,6 @@ lint:
   broken_links: warning
   # Wiki filename_pattern regex (see wiki.filename_pattern).
   filename_pattern: warning
-  # ATX headings, sentence-case H2+, numbered headings.
-  headings: off
-  # Heading level gaps (for example H1 then H3).
-  heading_levels: off
-  # Duplicate heading text on one page.
-  duplicate_headings: off
-  # Horizontal rules used as thematic breaks in body prose.
-  thematic_breaks: off
   # Obsidian wikilinks in body when link.style is markdown.
   link_style: warning
 

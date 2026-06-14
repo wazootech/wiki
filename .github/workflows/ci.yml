@@ -80,6 +80,7 @@ jobs:
       run: |
         node -e "require('./npm/python')"
         node -e "require('./npm/setup')"
+        node npm/test-setup-argv.js
 
     - name: Verify npm can pack
       run: npm pack --dry-run

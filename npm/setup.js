@@ -1,4 +1,4 @@
-const { execSync, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { findPython } = require('./python');
@@ -33,16 +33,19 @@ function die(message) {
   process.exit(1);
 }
 
-function run(cmd, description) {
+function run(command, args, description) {
   console.error(`  ${description}...`);
-  try {
-    execSync(cmd, { stdio: 'inherit', timeout: 300000 });
-  } catch (err) {
-    const msg = err.status
-      ? `  ${description} exited with code ${err.status}`
-      : `  Failed to run ${description.toLowerCase()}: ${err.message}`;
-    throw new Error(msg);
+  const result = spawnSync(command, args, { stdio: 'inherit', timeout: 300000 });
+  if (result.error) {
+    throw new Error(`  Failed to run ${description.toLowerCase()}: ${result.error.message}`);
   }
+  if (result.status !== 0) {
+    throw new Error(`  ${description} exited with code ${result.status}`);
+  }
+}
+
+function pipInstallArgv(pkgSpec) {
+  return ['-m', 'pip', 'install', pkgSpec];
 }
 
 function setup() {
@@ -71,11 +74,11 @@ Then rerun: npm install -g wazootech-wiki`);
   const pythonPath = pythonInfo.path;
   const venvPython = getVenvPython();
 
-  run(`"${pythonPath}" -m venv "${VENV_DIR}"`, 'Creating Python virtual environment');
-  run(`"${venvPython}" -m pip install --upgrade pip`, 'Upgrading pip');
+  run(pythonPath, ['-m', 'venv', VENV_DIR], 'Creating Python virtual environment');
+  run(venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip'], 'Upgrading pip');
 
   const pkgSpec = process.env.WIKI_PIP_SPEC || `wazootech-wiki==${version}`;
-  run(`"${venvPython}" -m pip install ${pkgSpec}`, 'Installing wazootech-wiki');
+  run(venvPython, pipInstallArgv(pkgSpec), 'Installing wazootech-wiki');
   console.error(`wazootech-wiki ${version} Python environment ready.`);
 }
 
@@ -84,3 +87,4 @@ if (require.main === module) {
 }
 
 module.exports = setup;
+module.exports.pipInstallArgv = pipInstallArgv;

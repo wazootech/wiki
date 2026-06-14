@@ -6,7 +6,7 @@ description: CI workflow to check, build, and publish the docs wiki.
 
 # Deploying to GitHub Pages
 
-This repository publishes `docs/wiki/` using `docs/wiki.yaml`. The workflow lives at `.github/workflows/deploy-pages.yml`.
+This repository publishes `docs/wiki/` using `docs/wiki.yaml`. The workflow lives at `.github/workflows/deploy.yml`.
 
 ## Pipeline
 

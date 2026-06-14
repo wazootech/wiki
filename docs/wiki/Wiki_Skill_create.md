@@ -1,12 +1,12 @@
 ---
 type: TechArticle
-headline: wiki-create agent skill
+headline: wiki-create Agent Skill
 description: Scaffold a Wiki CLI workspace with wiki init and a light preferences wizard.
 ---
 
-# wiki-create agent skill
+# wiki-create Agent Skill
 
-The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for site name, first page, and light `wiki.yaml` tweaks.
+The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for logo glyph (`--site-name`), first page, and light `wiki.yaml` tweaks.
 
 Canonical skill file: [`skills/wiki-create/SKILL.md`](../../skills/wiki-create/SKILL.md) in the [Wiki CLI](https://github.com/wazootech/wiki) repository. Requires **`wiki` on PATH** (`wiki fmt --help` must work) before any init or file edits.
 
@@ -37,7 +37,9 @@ Run `wiki --help` and `wiki fmt --help`. If either fails, state that **`wiki` on
 
 Post-init `check --strict` runs by default after new init; the user may opt out in the same turn (e.g. “skip check”).
 
-Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-manifest-name`, `--wiki-inputs`, `--graph-base-iri`, `--site-manifest-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
+Gather init flags before running (see [Wiki Subcommand init](Wiki_Subcommand_init.md)): `--repo`, `--graph-context-wiki`, `--site-base-url`, `--site-url-style`, `--graph-content-predicate`, `--link-style`, `--site-name`, `--wiki-inputs`, `--graph-base-iri`, `--site-theme-color`, `--graph-implicit-types`, `--graph-implicit-types-policy`, `--graph-include-file-extension`. Prefer flags over bare `wiki init` in agent sessions (stdin blocks).
+
+`--site-name` and `--site-theme-color` affect only the generated `assets/logo.svg` at init (not written to `wiki.yaml`). Site title, theme color meta, and other chrome → edit `layouts/default.html.j2`.
 
 After approved edits to markdown or config, run `wiki fmt` on changed paths.
 

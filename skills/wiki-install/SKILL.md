@@ -18,7 +18,7 @@ This skill **only** installs and verifies the CLI. When done, say the CLI is rea
 
 ## Workflow
 
-### 1. Detect
+### Detect
 
 Run:
 
@@ -39,7 +39,7 @@ wiki fmt --help
 - **Both pass** → confirm briefly, then **`wiki` is on PATH and ready to go.** Exit.
 - **`--help` passes but `fmt` fails** → stale or wrong `wiki` on PATH; go to **Stale CLI** below (do not say ready-to-go).
 
-### 2. Install (CLI missing)
+### Install (CLI missing)
 
 Tell the user the CLI was not found. Offer install paths in this order unless the user prefers otherwise:
 
@@ -66,14 +66,14 @@ uv run wiki --help
 
 Use `uv run wiki` only when the current working directory is this checkout and the user is developing the CLI — not as the default for end users.
 
-### 3. Verify
+### Verify
 
 After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again.
 
 - **Both pass** → **`wiki` is on PATH and ready to go.** Exit.
 - **Failure** → Report the error output. Exit. The user chooses whether to retry, fix their environment, or ask again.
 
-### 4. Stale CLI (`--help` works, `fmt` missing)
+### Stale CLI (`--help` works, `fmt` missing)
 
 Treat as an outdated or shadowed install — not ready:
 
@@ -82,7 +82,7 @@ Treat as an outdated or shadowed install — not ready:
 3. On Windows, multiple `wiki.exe` on PATH can shadow the upgraded install — run `where wiki` (or `which wiki`) and align PATH with the Python environment that owns `wazootech-wiki`.
 4. Re-run capability probe before saying ready-to-go.
 
-### 5. Install troubleshooting
+### Install troubleshooting
 
 If `pip install` fails:
 

@@ -1,7 +1,7 @@
 ---
 type: schema:SoftwareApplication
 name: Wiki CLI
-softwareVersion: 0.1.13
+softwareVersion: 0.1.15
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 ---
 
@@ -90,15 +90,15 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 GitHub **template repositories** in the [wazootech](https://github.com/wazootech) org sit at the edges of the toolchain — publish surfaces, query UIs, and starter vaults — while Wiki CLI owns the semantic layer ([Design philosophies](Design_Philosophies.md)). This section is the canonical registry.
 
-| Template                                                                  | Description                                                                                                                                                                                                         |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [wiki-template](https://github.com/wazootech/wiki-template)               | Generic Wiki CLI workspace (`wiki init` parity plus deploy)                                                                                                                                                         |
-| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL ([#14](https://github.com/wazootech/wiki/issues/14), [#81](https://github.com/wazootech/wiki/issues/81))                                    |
-| `llm-wiki-template`                                                       | Planned [LLM Wiki](LLM_Wiki.md) starter ([#83](https://github.com/wazootech/wiki/issues/83))                                                                                                                        |
-| `wiki-nextjs-template`                                                    | Planned Next.js SSG consumer of `wiki export` ([#15](https://github.com/wazootech/wiki/issues/15))                                                                                                                  |
-| `wiki-quartz-template`                                                    | Planned Quartz static site from a compatible vault plus `wiki check` CI ([#16](https://github.com/wazootech/wiki/issues/16)); Obsidian remains a supported authoring surface — the slug does not include `obsidian` |
-| `wiki-mintlify-template`                                                  | Planned Mintlify or Holocron docs site from a compatible vault ([#31](https://github.com/wazootech/wiki/issues/31))                                                                                                 |
-| `wiki-astro-template`                                                     | Planned Astro SSG consumer of `wiki export` ([#96](https://github.com/wazootech/wiki/issues/96))                                                                                                                    |
+| Template                                                                      | Description                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [wiki-template](https://github.com/wazootech/wiki-template)                   | Generic Wiki CLI workspace (`wiki init` parity plus deploy)                                                                                                                                                 |
+| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)     | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL ([#14](https://github.com/wazootech/wiki/issues/14), [#81](https://github.com/wazootech/wiki/issues/81))                            |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)           | [LLM Wiki](LLM_Wiki.md) starter vault with agent-oriented pages and gardening hooks ([#83](https://github.com/wazootech/wiki/issues/83))                                                                    |
+| [wiki-nextjs-template](https://github.com/wazootech/wiki-nextjs-template)     | Next.js SSG consumer of `wiki export` JSON-LD ([#15](https://github.com/wazootech/wiki/issues/15))                                                                                                          |
+| [wiki-quartz-template](https://github.com/wazootech/wiki-quartz-template)     | Quartz static site from a compatible vault plus `wiki check` CI ([#16](https://github.com/wazootech/wiki/issues/16)); Obsidian remains a supported authoring surface — the slug does not include `obsidian` |
+| [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template) | Mintlify or Holocron docs site from a compatible vault ([#31](https://github.com/wazootech/wiki/issues/31))                                                                                                 |
+| [wiki-astro-template](https://github.com/wazootech/wiki-astro-template)       | Astro SSG consumer of `wiki export` JSON-LD ([#96](https://github.com/wazootech/wiki/issues/96))                                                                                                            |
 
 ### Artifact contract
 
@@ -239,7 +239,7 @@ For **frontmatter-only validation** without the full semantic toolchain, see [Br
 ## Repository
 
 - Source and issues: [github.com/wazootech/wiki](https://github.com/wazootech/wiki)
-- [Wiki CLI templates](#ecosystem-templates) — generic starter [wiki-template](https://github.com/wazootech/wiki-template); planned [LLM Wiki](LLM_Wiki.md) starter `llm-wiki-template` ([#83](https://github.com/wazootech/wiki/issues/83))
+- [Wiki CLI templates](#ecosystem-templates) — generic starter [wiki-template](https://github.com/wazootech/wiki-template); [LLM Wiki](LLM_Wiki.md) starter [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)
 
 ## Background
 

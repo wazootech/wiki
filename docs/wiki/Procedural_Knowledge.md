@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Procedural knowledge
+headline: Procedural Knowledge
 description: Knowing how — workflows, rules, and executable processes rather than static facts.
 ---
 
-# Procedural knowledge
+# Procedural Knowledge
 
 **Procedural knowledge** is "knowing how": skills, workflows, validation rules, and repeatable processes. It contrasts with [Declarative Knowledge](Declarative_Knowledge.md) ("knowing what")—facts, classifications, and relationships stored as data.
 

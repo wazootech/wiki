@@ -1,4 +1,4 @@
-# Wiki CLI agent skills
+# Wiki CLI Agent Skills
 
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 

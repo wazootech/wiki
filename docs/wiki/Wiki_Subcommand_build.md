@@ -57,6 +57,8 @@ If the configured template file is missing, the fallback shell is used silently.
 
 By default, convention (`wiki lint`) then integrity (`wiki check`) preflight must pass before the output directory is wiped and rebuilt. Output path collisions abort the build with errors.
 
+`--output-dir` must point at a disposable directory that does not overlap the wiki config root, input directories, asset directories, or the page layout folder. The build refuses to delete paths that would remove source or config files.
+
 ## Related
 
 - [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md)

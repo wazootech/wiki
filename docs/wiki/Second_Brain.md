@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Second brain
+headline: Second Brain
 description: External system for capturing and organizing personal knowledge outside your head.
 ---
 
-# Second brain
+# Second Brain
 
 A **second brain** is a [personal knowledge](Personal_Knowledge.md) management (PKM) practice: an external, trusted place to store ideas, notes, and references so you can think clearly and act without holding everything in working memory.
 

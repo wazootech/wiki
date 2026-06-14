@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Retrieval-augmented generation
+headline: Retrieval-Augmented Generation
 description: Pattern where an LLM retrieves external chunks at query time instead of relying on a precompiled knowledge structure.
 ---
 
-# Retrieval-augmented generation
+# Retrieval-Augmented Generation
 
 **Retrieval-augmented generation (RAG)** is a pattern where a language model answers questions by retrieving relevant passages from an external corpus—often via vector embeddings—at query time, then conditioning its reply on those chunks.
 
