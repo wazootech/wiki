@@ -15,26 +15,26 @@ from wiki.site import (
     strip_leading_title_heading,
 )
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
-_FULL_TEST_TEMPLATE = jinja("""<!DOCTYPE html>
+_FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-{page.type_label}
+{{ page.type_label }}
 <article id="article-top">
-{page.nav.infobox}
-{page.content}
+{{ page.nav.infobox }}
+{{ page.content }}
 </article>
-{page.nav.toc}
-{page.nav.backlinks}
-{page.nav.categories}
+{{ page.nav.toc }}
+{{ page.nav.backlinks }}
+{{ page.nav.categories }}
 </body>
-</html>""")
+</html>"""
 
 
 def _full_test_layout(root: Path) -> Path:
@@ -162,10 +162,8 @@ name: Bella Davidson
             wiki.mkdir()
             layouts = root / "layouts"
             layouts.mkdir()
-            custom_shell = jinja(
-                """<!DOCTYPE html>
-<html><body><div id="custom-shell">{page.title}{page.nav.infobox}{page.content}</div></body></html>"""
-            )
+            custom_shell = """<!DOCTYPE html>
+<html><body><div id="custom-shell">{{ page.title }}{{ page.nav.infobox }}{{ page.content }}</div></body></html>"""
             (layouts / "project.html.j2").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
@@ -672,7 +670,7 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/logo.html.j2",
-                    jinja("{site.base_url}/assets/custom-logo.svg"),
+                    "{{ site.base_url }}/assets/custom-logo.svg",
                 ),
             )
             self.assertIn("/wiki/assets/custom-logo.svg", html)
@@ -710,7 +708,7 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/theme.html.j2",
-                    jinja(
+                    (
                         '<meta name="theme-color" content="#6366f1">'
                         '<meta name="msapplication-TileColor" content="#6366f1">'
                     ),

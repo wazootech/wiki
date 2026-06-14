@@ -154,7 +154,7 @@ After the workflow is committed, verify when `gh` is available:
 gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'
 ```
 
-Expect `build_type: workflow`. If `legacy` with a branch source, Pages is still serving from `main` / `gh-pages` — not the Actions artifact.
+Expect `build_type: workflow`. If GitHub returns `build_type: legacy` (branch-based Pages source), the site is still served from `main` / `gh-pages` — not the Actions artifact.
 
 Confirm the latest Actions run succeeded and the published URL loads.
 

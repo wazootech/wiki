@@ -320,7 +320,7 @@ class TestConfig(unittest.TestCase):
             self.assertTrue(config.is_excluded(base_path / "assets" / ".env.local"))
             self.assertFalse(config.is_excluded(base_path / "wiki" / "published.md"))
 
-    def test_Config_load_rejects_legacy_check_keys(self) -> None:
+    def test_Config_load_rejects_moved_check_keys(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
@@ -336,7 +336,7 @@ class TestConfig(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown check keys"):
                 Config.load(base_path)
 
-    def test_Config_rejects_legacy_check_keys_at_init(self) -> None:
+    def test_Config_rejects_moved_check_keys_at_init(self) -> None:
         from pydantic import ValidationError
 
         with self.assertRaises(ValidationError):

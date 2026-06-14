@@ -15,7 +15,7 @@ from wiki.fmt_util import (
 )
 from wiki.site import build_page_html, build_site
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
 
 class TestWikiFmt(unittest.TestCase):
@@ -122,7 +122,7 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn("-->\n", formatted)
 
     def test_read_view_type_label_badge(self) -> None:
-        seed_template = jinja("<html><body>{page.type_label}<article id=\"article-top\">{page.content}</article></body></html>")
+        seed_template = '<html><body>{{ page.type_label }}<article id="article-top">{{ page.content }}</article></body></html>'
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

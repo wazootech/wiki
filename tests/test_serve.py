@@ -35,41 +35,41 @@ def _free_port() -> int:
     return port
 
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
-_RICH_TEMPLATE = jinja("""<!DOCTYPE html>
+_RICH_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.nav.infobox}
-{page.content}
-{page.nav.toc}
-{page.nav.backlinks}
-{page.nav.categories}
+<h1>{{ page.title }}</h1>
+{{ page.nav.infobox }}
+{{ page.content }}
+{{ page.nav.toc }}
+{{ page.nav.backlinks }}
+{{ page.nav.categories }}
 </body>
-</html>""")
+</html>"""
 
 
-_METADATA_TEMPLATE = jinja("""<!DOCTYPE html>
+_METADATA_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.metadata.tool}
-{page.metadata.tab}
-{page.metadata.pane}
-{page.content}
+<h1>{{ page.title }}</h1>
+{{ page.metadata.tool }}
+{{ page.metadata.tab }}
+{{ page.metadata.pane }}
+{{ page.content }}
 </body>
-</html>""")
+</html>"""
 
 
 def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:

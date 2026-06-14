@@ -24,7 +24,7 @@ See [Wiki Skills](Wiki_Skills.md) for `-g` / `-y` and installing all skills.
 
 ## What it does
 
-1. Recon `wiki.yaml` and CI workflows — including legacy `site.manifest` / `site.title` / `site.theme_color` keys and `{{ site.manifest.* }}` in custom layouts (report as `config` findings; migrate branding into layout files).
+1. Recon `wiki.yaml` and CI workflows — including removed `site.manifest` / `site.title` / `site.theme_color` keys and `{{ site.manifest.* }}` in custom layouts (report as `config` findings; migrate branding into layout files).
 1. Run `audit.sh` (fmt → lint → check → render; optional `link --check` when wired).
 1. Vet findings; report with categorized table, evidence, and next steps.
 1. Suggest repairs (`wiki fmt`, `wiki link --fix-broken`) only when asked — never auto-edit.

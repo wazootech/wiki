@@ -10,7 +10,7 @@ from wiki.config import Config
 from wiki.paths import page_output_path
 from wiki.init_scaffold import DOCS_WIKI_INIT_OPTIONS, InitOptions, load_packaged_default_layout, render_wiki_yaml
 
-from tests.layout_helpers import jinja, write_layout
+from layout_helpers import write_layout
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -182,19 +182,19 @@ class TestWikiBuild(unittest.TestCase):
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            test_template = jinja("""<!DOCTYPE html>
+            test_template = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.nav.infobox}
-{page.content}
+<h1>{{ page.title }}</h1>
+{{ page.nav.infobox }}
+{{ page.content }}
 </body>
-</html>""")
+</html>"""
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
             )
@@ -243,19 +243,19 @@ name: Bella Davidson
             wiki = root / "wiki"
             output_dir = root / "_site"
             wiki.mkdir()
-            template = jinja("""<!DOCTYPE html>
+            template = """<!DOCTYPE html>
 <html lang=\"en\">
 <head>
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
-<title>{page.title}</title>
+<title>{{ page.title }}</title>
 </head>
 <body>
-<h1>{page.title}</h1>
-{page.content}
-{page.metadata.pane}
+<h1>{{ page.title }}</h1>
+{{ page.content }}
+{{ page.metadata.pane }}
 </body>
-</html>""")
+</html>"""
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
             )
@@ -305,9 +305,9 @@ about: wiki:Alice_Theory
 
     def test_build_layout_uses_base_url_asset_path(self) -> None:
         runner = CliRunner()
-        template = jinja("""<!DOCTYPE html>
-<html><head><title>{page.title} - Acme Docs</title></head>
-<body><img src="{site.base_url}/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>{page.content}</body></html>""")
+        template = """<!DOCTYPE html>
+<html><head><title>{{ page.title }} - Acme Docs</title></head>
+<body><img src="{{ site.base_url }}/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>{{ page.content }}</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

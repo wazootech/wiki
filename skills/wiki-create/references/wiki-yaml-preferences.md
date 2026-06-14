@@ -16,7 +16,7 @@ Other `lint.*` keys (e.g. `headings`, `heading_levels`) are valid but init omits
 
 ## Removed / invalid keys (config load fails)
 
-Do not add these to new scaffolds; legacy wikis must migrate:
+Do not add these to new scaffolds; remove them when upgrading — invalid in the current schema:
 
 - `site.manifest`, `site.title`, `site.theme_color`
 - Template vars `{{ site.manifest.* }}` — replace with literals or `{{ site.base_url }}/assets/…` in custom layouts

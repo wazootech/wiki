@@ -34,7 +34,7 @@ Three audit lanes map to three commands:
 **Rule placement:** Mechanical markdown belongs under **`fmt:`**. Wiki policy and link conventions belong under **`lint:`**. SHACL, JSON Schema, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
 - Putting a regex under `check.filename_pattern` fails at load with a hint.
-- Legacy combined `check:` keys (`filename_pattern`, `headings`) are rejected — move them to `lint:`.
+- `check.filename_pattern` and `check.headings` fail at load — use `lint.filename_pattern` and `lint.headings`.
 
 Relative **`--wiki-inputs`** paths on the CLI resolve against the config file directory (same as paths in yaml), not the shell cwd.
 
