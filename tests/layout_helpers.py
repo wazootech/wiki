@@ -8,7 +8,7 @@ from pathlib import Path
 
 def jinja(text: str) -> str:
     """Convert legacy {token} placeholders to Jinja {{ token }}."""
-    return re.sub(r"\{([\w.]+)\}", r"{{ \1 }}", text)
+    return re.sub(r"\{([^{}]+)\}", r"{{ \1 }}", text)
 
 
 def write_layout(root: Path, rel_path: str, content: str) -> Path:

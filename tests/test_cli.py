@@ -520,6 +520,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
                 # Check site layout is configured and seeded
                 self.assertIn("name: Wiki CLI", config_content)
+                self.assertIn("src: assets/logo.svg", config_content)
+                self.assertIn('sizes: "200x200"', config_content)
                 self.assertIn("layout: layouts/default.html.j2", config_content)
                 self.assertIn("assets:", config_content)
                 self.assertIn("- assets", config_content)
@@ -527,13 +529,15 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(default_layout.is_file())
                 expected_layout = load_packaged_default_layout()
                 self.assertEqual(default_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn("/assets/logo.svg", expected_layout)
+                self.assertIn("{{ site.manifest.icons[0].url }}", expected_layout)
+                self.assertNotIn("{{ site.manifest.primary_icon_url }}", expected_layout)
+                self.assertNotIn("{{ site.manifest.logo_url }}", expected_layout)
                 self.assertNotIn("{{ site.logo_svg }}", expected_layout)
                 self.assertIn("{{ site.manifest.name }}", expected_layout)
 
                 default_logo = Path("assets") / "logo.svg"
                 self.assertTrue(default_logo.is_file())
-                expected_logo = load_packaged_default_logo()
+                expected_logo = load_packaged_default_logo("Wiki CLI")
                 self.assertEqual(default_logo.read_text(encoding="utf-8"), expected_logo)
                 self.assertIn("<svg", expected_logo)
 
@@ -574,6 +578,29 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
+
+    def test_cli_init_site_manifest_name_logo_letter(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            with runner.isolated_filesystem(temp_dir=tmpdir):
+                result = runner.invoke(
+                    main,
+                    [
+                        "init",
+                        "--force",
+                        "--graph-context-wiki",
+                        "https://wiki.example.org/",
+                        "--site-manifest-name",
+                        "My Project",
+                    ],
+                    catch_exceptions=False,
+                )
+                self.assertEqual(result.exit_code, 0)
+                logo_content = Path("assets") / "logo.svg"
+                self.assertTrue(logo_content.is_file())
+                self.assertIn(">M</text>", logo_content.read_text(encoding="utf-8"))
+                config_content = Path("wiki.yaml").read_text(encoding="utf-8")
+                self.assertIn("name: My Project", config_content)
 
     def test_cli_init_implicit_types_policy_append(self) -> None:
         runner = CliRunner()

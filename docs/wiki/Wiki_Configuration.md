@@ -121,18 +121,28 @@ Default page layout, routing, and Web App Manifest metadata for `wiki build` / `
 
 ### Site manifest (`site.manifest:`)
 
-Branding and PWA metadata use the [Web App Manifest](https://www.w3.org/TR/appmanifest/) field names. Values feed layout template variables under `site.manifest.*` (for example `{{ site.manifest.name }}`, `{{ site.manifest.theme_color }}`), `{{ site.logo_svg }}`, and the built/served `manifest.webmanifest` file at `{{ site.manifest.url }}` (`{{ site.base_url }}/manifest.webmanifest`).
+Branding and PWA metadata use [Web App Manifest](https://www.w3.org/TR/appmanifest/) field names only under `site.manifest`. Values feed layout template variables under `site.manifest.*` (for example `{{ site.manifest.name }}`, `{{ site.manifest.icons[0].url }}`, `{{ site.manifest.url }}`) and the built/served `manifest.webmanifest` file. Non-spec yaml keys are rejected at config load.
 
-| Key                              | Default    | Purpose                                                                                                                                                                                             |
-| -------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `site.manifest.name`             | `Wiki CLI` | Site name in layout chrome; first character drives the **default** `{{ site.logo_svg }}` globe glyph when the layout still uses that variable; always included in the manifest document             |
-| `site.manifest.short_name`       | —          | Optional short label for install surfaces                                                                                                                                                           |
-| `site.manifest.description`      | —          | Optional site description                                                                                                                                                                           |
-| `site.manifest.theme_color`      | —          | Optional `#RGB` / `#RRGGBB` hex for the **default** `{{ site.logo_svg }}` globe gradient and `theme-color` / `msapplication-TileColor` meta tags; template context defaults to `#3b82f6` when unset |
-| `site.manifest.background_color` | —          | Optional `#RGB` / `#RRGGBB` hex background color for the manifest                                                                                                                                   |
-| `site.manifest.start_url`        | —          | Manifest `start_url`; defaults to `{site.base_url}/` (or `/` when `base_url` is empty)                                                                                                              |
-| `site.manifest.display`          | —          | `fullscreen`, `standalone`, `minimal-ui`, or `browser`                                                                                                                                              |
-| `site.manifest.icons`            | —          | PWA install icons; `src` should be an assets path (for example `assets/icon-192.png`); relative values are prefixed with `site.base_url` in `manifest.webmanifest`                                  |
+| Key                              | Default         | Purpose                                                                                                                                                                                                      |
+| -------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `site.manifest.name`             | `Wiki CLI`      | Site name in layout chrome; first character drives the center glyph in the init-generated default logo asset; always included in the manifest document                                                       |
+| `site.manifest.icons`            | init: see below | W3C icon resources (`src`, `sizes`, `type`, `purpose`); emitted in `manifest.webmanifest`; first entry drives sidebar logo and default `<link rel="icon">` in the packaged layout                            |
+| `site.manifest.short_name`       | —               | Optional short label for install surfaces                                                                                                                                                                    |
+| `site.manifest.description`      | —               | Optional site description                                                                                                                                                                                    |
+| `site.manifest.theme_color`      | —               | Optional `#RGB` / `#RRGGBB` hex for `theme-color` / `msapplication-TileColor` meta tags; when set at `wiki init`, also drives the generated logo gradient; template context defaults to `#3b82f6` when unset |
+| `site.manifest.background_color` | —               | Optional `#RGB` / `#RRGGBB` hex background color for the manifest                                                                                                                                            |
+| `site.manifest.start_url`        | —               | Manifest `start_url`; defaults to `{site.base_url}/` (or `/` when `base_url` is empty)                                                                                                                       |
+| `site.manifest.display`          | —               | `fullscreen`, `standalone`, `minimal-ui`, or `browser`                                                                                                                                                       |
+
+Init scaffold default icon entry:
+
+```yaml
+icons:
+  - src: assets/logo.svg
+    sizes: "200x200"
+    type: image/svg+xml
+    purpose: any
+```
 
 ## Link (`link:`)
 
@@ -205,29 +215,27 @@ Wiki CLI documents the variables below; for all other layout authoring — `{% i
 
 #### `site`
 
-| Variable                | Type        | Description                                                                                                                                                                                                                    |
-| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `{{ site.base_url }}`   | text string | URL prefix from config (e.g. `/wiki`).                                                                                                                                                                                         |
-| `{{ site.url_style }}`  | text string | `"dir"` or `"file"`.                                                                                                                                                                                                           |
-| `{{ site.inline_css }}` | CSS         | Bundled default page CSS from `layout_default.css` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize via layout HTML or linked assets (see [Custom CSS](#custom-css)).               |
-| `{{ site.logo_svg }}`   | SVG         | Default built-in Wikipedia-style globe logo; center letter from `site.manifest.name`; globe gradient from `site.manifest.theme_color`. Override by editing the layout (see [Custom logos and icons](#custom-logos-and-icons)). |
+| Variable                | Type        | Description                                                                                                                                                                                                      |
+| ----------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ site.base_url }}`   | text string | URL prefix from config (e.g. `/wiki`).                                                                                                                                                                           |
+| `{{ site.url_style }}`  | text string | `"dir"` or `"file"`.                                                                                                                                                                                             |
+| `{{ site.inline_css }}` | CSS         | Bundled default page CSS from `layout_default.css` plus runtime metadata-format and Pygments rules. Not configurable in `wiki.yaml`; customize via layout HTML or linked assets (see [Custom CSS](#custom-css)). |
 
 #### `site.manifest` (PWA Web App Manifest)
 
-Template values mirror [W3C Web App Manifest](https://www.w3.org/TR/appmanifest/) members from `site.manifest` in `wiki.yaml`, plus computed fields. `name` and `theme_color` always resolve to usable defaults in templates (`Wiki CLI` and `#3b82f6` when yaml is unset).
+Template values mirror [W3C Web App Manifest](https://www.w3.org/TR/appmanifest/) members from `site.manifest` in `wiki.yaml`, plus a small set of computed helpers (`icons[].url`, `manifest.url`, and resolved defaults for `name`, `theme_color`, and `start_url`). `name` and `theme_color` always resolve to usable defaults in templates (`Wiki CLI` and `#3b82f6` when yaml is unset).
 
-| Variable                               | Type         | Description                                                                                                                             |
-| -------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `{{ site.manifest.name }}`             | escaped text | Site name (sidebar label, `<title>` suffix, search placeholder).                                                                        |
-| `{{ site.manifest.short_name }}`       | escaped text | Optional short label (empty when unset).                                                                                                |
-| `{{ site.manifest.description }}`      | escaped text | Optional site description (empty when unset).                                                                                           |
-| `{{ site.manifest.theme_color }}`      | text string  | Hex color for `theme-color` / TileColor meta tags and default logo gradient (`#3b82f6` when yaml unset).                                |
-| `{{ site.manifest.background_color }}` | text string  | Optional manifest background hex (empty when unset).                                                                                    |
-| `{{ site.manifest.start_url }}`        | text string  | Manifest `start_url` (`{site.base_url}/` or `/` when `base_url` is empty).                                                              |
-| `{{ site.manifest.display }}`          | text string  | `fullscreen`, `standalone`, `minimal-ui`, or `browser` (empty when unset).                                                              |
-| `{{ site.manifest.icons }}`            | JSON         | Icon list from yaml (`src`, `sizes`, `type`, `purpose`); empty list when unset.                                                         |
-| `{{ site.manifest.url }}`              | text string  | Public URL of `manifest.webmanifest`.                                                                                                   |
-| `{{ site.manifest.json }}`             | JSON         | Canonical manifest document (icons prefixed with `site.base_url`; for inline `<script type="application/manifest+json">` or debugging). |
+| Variable                               | Type         | Description                                                                                                                                                    |
+| -------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{ site.manifest.name }}`             | escaped text | Site name (sidebar label, `<title>` suffix, search placeholder).                                                                                               |
+| `{{ site.manifest.short_name }}`       | escaped text | Optional short label (empty when unset).                                                                                                                       |
+| `{{ site.manifest.description }}`      | escaped text | Optional site description (empty when unset).                                                                                                                  |
+| `{{ site.manifest.theme_color }}`      | text string  | Hex color for `theme-color` / TileColor meta tags (`#3b82f6` when yaml unset).                                                                                 |
+| `{{ site.manifest.background_color }}` | text string  | Optional manifest background hex (empty when unset).                                                                                                           |
+| `{{ site.manifest.start_url }}`        | text string  | Manifest `start_url` (`{site.base_url}/` or `/` when `base_url` is empty).                                                                                     |
+| `{{ site.manifest.display }}`          | text string  | `fullscreen`, `standalone`, `minimal-ui`, or `browser` (empty when unset).                                                                                     |
+| `{{ site.manifest.icons }}`            | list         | Icon entries from yaml with computed `url` per entry (`src`, `sizes`, `type`, `purpose`, `url`); use `icons[0].url` for sidebar logo and favicon when present. |
+| `{{ site.manifest.url }}`              | text string  | Public URL of `manifest.webmanifest`.                                                                                                                          |
 
 #### `page`
 
@@ -267,27 +275,27 @@ The bundled stylesheet injected as `{{ site.inline_css }}` covers the default Wi
 1. **Edit the layout HTML** — `site.layout` (usually `layouts/default.html.j2`) is the primary extension point. Add or override rules in a `<style>` block, change classes on structural elements, or replace `{{ site.inline_css }}` with your own CSS (you lose the bundled defaults unless you copy them).
 1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout with a normal `<link>` tag, for example `<link rel="stylesheet" href="{{ site.base_url }}/assets/site.css">`. Built assets are served at `{{ site.base_url }}/assets/…` during `wiki serve` and copied into the build output.
 
-`site.manifest.theme_color` only affects the default `{{ site.logo_svg }}` globe gradient and `theme-color` / TileColor meta tags; accent colors inside `{{ site.inline_css }}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
+`site.manifest.theme_color` affects `theme-color` / TileColor meta tags and the gradient in the init-generated default logo asset; accent colors inside `{{ site.inline_css }}` remain the bundled defaults unless you override them in the layout or a linked stylesheet.
 
 ### Custom logos and icons
 
-Fresh `wiki init` workspaces ship `assets/logo.svg`, enable `wiki.assets`, and reference the file from the copied default layout (`<img src="{{ site.base_url }}/assets/logo.svg" …>`). Replace that SVG or switch back to `{{ site.logo_svg }}` for a theme-color-aware built-in globe (center glyph from `site.manifest.name`; gradient from `site.manifest.theme_color`, fallback `#3b82f6`). There is no `site.logo` or `site.favicon` yaml key — customize branding through `wiki.assets` and `site.layout`, the same pattern as [Custom CSS](#custom-css).
+Fresh `wiki init` workspaces ship `assets/logo.svg`, declare it under `site.manifest.icons`, enable `wiki.assets`, and reference the sidebar logo from the copied default layout (`<img src="{{ site.manifest.icons[0].url }}" …>` when `icons` is set). Init generates the SVG from the first letter of `site.manifest.name` (uppercased) and optional `site.manifest.theme_color`. Replace the asset file or update the `icons` entry. There is no separate `site.logo` yaml key — customize branding through `wiki.assets`, `site.manifest.icons`, and `site.layout`, the same pattern as [Custom CSS](#custom-css).
 
 **Custom sidebar logo**
 
 1. Enable `wiki.assets` (already enabled in the init scaffold, or add an `assets:` directory in `wiki.yaml`).
-1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`.
-1. Edit `site.layout` and reference the asset (init already uses this pattern):
+1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`, and point the first `site.manifest.icons` entry at that path.
+1. Edit `site.layout` and reference the logo URL (init already uses this pattern):
 
 ```html
-<img src="{{ site.base_url }}/assets/logo.svg" alt="" width="80" height="80">
+{% if site.manifest.icons %}<img src="{{ site.manifest.icons[0].url }}" alt="" width="80" height="80">{% endif %}
 ```
 
-You can also embed inline SVG directly in the layout file (no asset copy), or use `{{ site.logo_svg }}` instead of an asset file.
+You can also embed inline SVG directly in the layout file (no asset copy).
 
 **Favicons and touch icons**
 
-Put `favicon.ico`, `favicon.svg`, `apple-touch-icon.png`, and similar files under `assets/`. Add standard `<link rel="icon">` and `<link rel="apple-touch-icon">` tags in the layout `<head>` pointing at `{{ site.base_url }}/assets/…`. Favicons are not configurable through dedicated yaml keys.
+Use W3C `site.manifest.icons` entries. The packaged default layout emits `<link rel="icon">` from `icons[0].url` and `<link rel="apple-touch-icon">` when an icon has `sizes: "180x180"` and `type: image/png`. Add more entries or customize `<head>` in `site.layout` as needed.
 
 **PWA / manifest icons**
 

@@ -113,6 +113,8 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
+        self.assertIn("src: assets/logo.svg", rendered)
+        self.assertIn('sizes: "200x200"', rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
         self.assertNotIn("__", rendered)
@@ -149,7 +151,9 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("{# wiki init scaffold", rendered)
         self.assertIn("<title>{{ page.title }} - {{ site.manifest.name }}</title>", rendered)
         self.assertIn('placeholder="Search {{ site.manifest.name }}"', rendered)
-        self.assertIn("/assets/logo.svg", rendered)
+        self.assertIn("{{ site.manifest.icons[0].url }}", rendered)
+        self.assertNotIn("{{ site.manifest.primary_icon_url }}", rendered)
+        self.assertNotIn("{{ site.manifest.logo_url }}", rendered)
         self.assertNotIn("{{ site.logo_svg }}", rendered)
 
     def test_load_packaged_default_logo(self) -> None:
@@ -157,6 +161,9 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("<svg", rendered)
         self.assertIn('viewBox="0 0 200 200"', rendered)
         self.assertIn(">W</text>", rendered)
+
+        acme = load_packaged_default_logo("Acme Docs")
+        self.assertIn(">A</text>", acme)
 
     def test_copy_default_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -167,8 +174,11 @@ class TestRenderWikiYaml(TestCase):
     def test_copy_default_logo(self) -> None:
         with TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "assets" / "logo.svg"
-            copy_default_logo(dest)
-            self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_default_logo())
+            copy_default_logo(dest, site_manifest_name="Acme Docs")
+            self.assertEqual(
+                dest.read_text(encoding="utf-8"),
+                load_packaged_default_logo("Acme Docs"),
+            )
 
 
 class TestResolveInitOptions(TestCase):

@@ -79,7 +79,7 @@ Init does **not** write `.mdformat.toml`. To use a separate TOML file instead, s
 ## Generated files
 
 - `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg`. Edit to customize the look and feel.
-- `assets/logo.svg` — starter sidebar logo (served at `{{ site.base_url }}/assets/logo.svg`)
+- `assets/logo.svg` — starter sidebar logo (first `site.manifest.icons` entry; served at `{{ site.manifest.icons[0].url }}`); center glyph is the first letter of `--site-manifest-name` (default `Wiki CLI` → `W`)
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

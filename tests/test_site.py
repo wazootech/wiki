@@ -654,7 +654,7 @@ specialty: Diagnostics
         self.assertIn('stop-color="#6366f1"', themed)
         self.assertNotIn('stop-color="#3b82f6"', themed)
 
-    def test_build_index_html_logo_reflects_config_theme_color(self) -> None:
+    def test_build_index_html_icon_url_reflects_manifest_icons(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -662,12 +662,20 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(
                 wiki={"inputs": [wiki]},
-                site={"manifest": {"theme_color": "#6366f1"}},
+                site={"manifest": {"icons": [{"src": "assets/custom-logo.svg"}]}, "base_url": "/wiki"},
                 config_root=root,
             )
             site = build_site(config)
-            html = build_index_html(site, root, default_layout=write_layout(root, "layouts/logo.html.j2", jinja("{site.logo_svg}")))
-            self.assertIn('stop-color="#6366f1"', html)
+            html = build_index_html(
+                site,
+                root,
+                default_layout=write_layout(
+                    root,
+                    "layouts/logo.html.j2",
+                    jinja("{site.manifest.icons[0].url}"),
+                ),
+            )
+            self.assertIn("/wiki/assets/custom-logo.svg", html)
 
     def test_build_index_html_emits_theme_color_meta_tags(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -735,7 +743,7 @@ specialty: Diagnostics
         self.assertEqual(doc["display"], "standalone")
         self.assertEqual(doc["start_url"], "/wiki/")
 
-    def test_build_index_html_includes_manifest_placeholders(self) -> None:
+    def test_build_index_html_includes_manifest_url(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -743,7 +751,7 @@ specialty: Diagnostics
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
             config = Config(
                 wiki={"inputs": [wiki]},
-                site={"manifest": {"name": "Acme Docs", "theme_color": "#6366f1"}},
+                site={"manifest": {"name": "Acme Docs", "theme_color": "#6366f1"}, "base_url": "/wiki"},
                 config_root=root,
             )
             site = build_site(config)
@@ -753,12 +761,10 @@ specialty: Diagnostics
                 default_layout=write_layout(
                     root,
                     "layouts/manifest.html.j2",
-                    jinja("{site.manifest.url}|{site.manifest.json}"),
+                    jinja("{site.manifest.url}"),
                 ),
             )
             self.assertIn("/wiki/manifest.webmanifest", html)
-            self.assertIn('"name":"Acme Docs"', html)
-            self.assertIn('"theme_color":"#6366f1"', html)
 
 
 if __name__ == "__main__":

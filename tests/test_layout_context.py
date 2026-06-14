@@ -45,7 +45,9 @@ class TestLayoutContext(unittest.TestCase):
             self.assertEqual(context["page"]["title"], "All Pages")
             self.assertEqual(context["page"]["kind"], "index")
             self.assertIsInstance(context["site"]["inline_css"], Markup)
-            self.assertIsInstance(context["site"]["manifest"]["json"], Markup)
+            self.assertEqual(
+                context["site"]["manifest"]["url"], "/wiki/manifest.webmanifest"
+            )
             self.assertIsInstance(context["wiki"]["pages_json"], Markup)
 
     def test_article_context_includes_slug(self) -> None:
@@ -106,7 +108,7 @@ class TestLayoutContext(unittest.TestCase):
 
     def test_markup_paths_registered(self) -> None:
         self.assertIn(("page", "content"), LAYOUT_CONTEXT_MARKUP_PATHS)
-        self.assertIn(("site", "manifest", "json"), LAYOUT_CONTEXT_MARKUP_PATHS)
+        self.assertNotIn(("site", "manifest", "json"), LAYOUT_CONTEXT_MARKUP_PATHS)
 
 
 if __name__ == "__main__":

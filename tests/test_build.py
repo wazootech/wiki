@@ -303,18 +303,27 @@ about: wiki:Alice_Theory
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
 
-    def test_build_site_block_drives_logo_letter(self) -> None:
+    def test_build_site_block_drives_manifest_icon_url(self) -> None:
         runner = CliRunner()
         template = jinja("""<!DOCTYPE html>
 <html><head><title>{page.title} - {site.manifest.name}</title></head>
-<body>{site.logo_svg}<span class="logo-text">{site.manifest.name}</span>{page.content}</body></html>""")
+<body><img src="{site.manifest.icons[0].url}" alt=""><span class="logo-text">{site.manifest.name}</span>{page.content}</body></html>""")
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
+            assets = root / "assets"
             output_dir = root / "_site"
             wiki.mkdir()
+            assets.mkdir()
+            (assets / "logo.svg").write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>',
+                encoding="utf-8",
+            )
             (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  manifest:\n    name: Acme Docs\n  layout: test_shell.html.j2\n",
+                "wiki:\n  inputs: [wiki]\n  assets: [assets]\n"
+                "site:\n  manifest:\n    name: Acme Docs\n    icons:\n      - src: assets/logo.svg\n"
+                "        sizes: \"200x200\"\n        type: image/svg+xml\n        purpose: any\n"
+                "  layout: test_shell.html.j2\n",
                 encoding="utf-8",
             )
             write_layout(root, "test_shell.html.j2", template)
@@ -324,9 +333,11 @@ about: wiki:Alice_Theory
 
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
-            self.assertIn(">A</text>", html)
+            self.assertIn('src="/wiki/assets/logo.svg"', html)
             self.assertIn('<span class="logo-text">Acme Docs</span>', html)
             self.assertIn("<title>Page - Acme Docs</title>", html)
+            built_logo = (output_dir / "wiki" / "assets" / "logo.svg").read_text(encoding="utf-8")
+            self.assertIn("<text>A</text>", built_logo)
 
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
