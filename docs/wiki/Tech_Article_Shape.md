@@ -15,7 +15,7 @@ sh:property:
     sh:message: "TechArticle must have a description summary."
 ---
 
-# TechArticle validation shape
+# TechArticle Validation Shape
 
 This document defines **SHACL validation rules** enforced on any `type: TechArticle` document in this wiki.
 

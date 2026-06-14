@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Getting started
+headline: Getting Started
 description: Install the wiki CLI and scaffold a new wiki.
 ---
 
-# Getting started
+# Getting Started
 
 ## Install
 

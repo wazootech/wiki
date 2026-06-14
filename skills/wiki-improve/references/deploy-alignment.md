@@ -1,4 +1,4 @@
-# Deploy audit (existing CI)
+# Deploy Audit (Existing CI)
 
 **Setup** from scratch → **wiki-deploy** skill.
 

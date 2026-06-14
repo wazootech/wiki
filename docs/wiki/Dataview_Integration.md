@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Dataview integration
+headline: Dataview Integration
 description: Query and visualize your semantic markdown files in Obsidian using Dataview DQL and DataviewJS.
 ---
 
-# Dataview integration
+# Dataview Integration
 
 The [Wiki CLI](Wiki_CLI.md) and Obsidian's community **Dataview** plugin can be used together on the same Markdown wiki. Because both tools operate on plain text Markdown files and standard YAML/JSON frontmatter, they interoperate naturally without needing any data migration or conversion.
 

@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: wiki-improve agent skill
+headline: wiki-improve Agent Skill
 description: Survey a wiki with fmt, lint, check, and render; produce a prioritized findings report.
 ---
 
-# wiki-improve agent skill
+# wiki-improve Agent Skill
 
 The **wiki-improve** skill surveys a Wiki CLI wiki as a read-only advisor and delivers a prioritized findings report with evidence. Canonical instructions: [`skills/wiki-improve/SKILL.md`](../../skills/wiki-improve/SKILL.md). Strict pipeline script: [`skills/wiki-improve/scripts/audit.sh`](../../skills/wiki-improve/scripts/audit.sh).
 

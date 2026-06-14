@@ -1,11 +1,11 @@
 ---
 type: TechArticle
-headline: Farzapedia and personal AI wikis
+headline: Farzapedia and Personal AI Wikis
 description: An interlinked digital garden serving as an example for the LLM Wiki pattern.
 about: wiki:Wiki_CLI
 ---
 
-# Farzapedia and personal AI wikis
+# Farzapedia and Personal AI Wikis
 
 **Farzapedia** is a pioneering, private [personal knowledge](Personal_Knowledge.md) wiki developed by **Farza** (founder of buildspace). It serves as the definitive real-world implementation of the **[LLM Wiki](LLM_Wiki.md)** design pattern, [announced on X in April 2026](https://x.com/FarzaTV/status/2040563939797504467).
 

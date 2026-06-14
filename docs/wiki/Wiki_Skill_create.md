@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: wiki-create agent skill
+headline: wiki-create Agent Skill
 description: Scaffold a Wiki CLI workspace with wiki init and a light preferences wizard.
 ---
 
-# wiki-create agent skill
+# wiki-create Agent Skill
 
 The **wiki-create** skill scaffolds a new workspace: non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for logo glyph (`--site-name`), first page, and light `wiki.yaml` tweaks.
 

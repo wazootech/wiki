@@ -1,4 +1,4 @@
-# Style spot-check
+# Style Spot-Check
 
 Use when `lint.*` rules are `off` but conventions still matter. Canonical detail: wiki [Style Guide](https://github.com/wazootech/wiki/blob/main/docs/wiki/Style_Guide.md).
 

@@ -1,6 +1,10 @@
-## ﻿--- type: TechArticle headline: Wiki configuration description: Reference for wiki.yaml, wiki.yml, and wiki.json (Config).
+---
+type: TechArticle
+headline: Wiki Configuration
+description: Reference for wiki.yaml, wiki.yml, and wiki.json (Config).
+---
 
-# Wiki configuration
+# Wiki Configuration
 
 The CLI loads **Config** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
 

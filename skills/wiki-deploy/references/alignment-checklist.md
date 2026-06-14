@@ -1,4 +1,4 @@
-# Deploy alignment checklist
+# Deploy Alignment Checklist
 
 Use when wiring or reviewing GitHub Pages for a Wiki CLI wiki.
 

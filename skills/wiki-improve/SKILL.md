@@ -9,7 +9,7 @@ description: >-
   or preparing wiki changes before a PR — even if they do not say "skill".
 ---
 
-# Wiki improve
+# Wiki Improve
 
 Senior wiki **advisor, not implementer**. Run validators, cite evidence, deliver a prioritized findings report. The user or a later session applies fixes.
 

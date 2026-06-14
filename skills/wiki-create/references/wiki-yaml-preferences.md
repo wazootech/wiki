@@ -1,4 +1,4 @@
-# Preferences wizard — `wiki.yaml` touches
+# Preferences Wizard — `wiki.yaml` Touches
 
 Use after `wiki init` when the user approves file edits. Run `wiki fmt` on changed markdown paths.
 

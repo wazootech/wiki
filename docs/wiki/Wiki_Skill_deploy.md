@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: wiki-deploy agent skill
+headline: wiki-deploy Agent Skill
 description: Set up GitHub Pages deployment for a Wiki CLI wiki with Actions.
 ---
 
-# wiki-deploy agent skill
+# wiki-deploy Agent Skill
 
 The **wiki-deploy** skill wires GitHub Pages for a Wiki CLI wiki: align `site.base_url`, add `.github/workflows/deploy-pages.yml`, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions** in repository settings.
 

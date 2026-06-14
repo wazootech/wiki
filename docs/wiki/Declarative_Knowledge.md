@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: Declarative knowledge
+headline: Declarative Knowledge
 description: Knowing what — facts, types, and relationships expressed as structured data.
 ---
 
-# Declarative knowledge
+# Declarative Knowledge
 
 **Declarative knowledge** is "knowing what": facts, definitions, taxonomies, and explicit relationships. In this wiki it is represented primarily as YAML frontmatter on markdown pages, compiled into an [RDF](RDF.md) graph via the [Wiki CLI](Wiki_CLI.md).
 
