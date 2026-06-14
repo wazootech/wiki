@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+
+- Escape all raw HTML in wiki markdown rendering uniformly, including TOC/sidebar outline labels; strip SPARQL comment wrappers before site HTML rendering instead of passthrough ([#91](https://github.com/wazootech/wiki/issues/91), PR [#102](https://github.com/wazootech/wiki/pull/102))
+
 ### Changed
 
+- Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki-install skill).
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
 - Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 

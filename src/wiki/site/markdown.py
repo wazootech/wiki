@@ -24,6 +24,7 @@ from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from ..links import is_external_link, markdown_link_is_page, resolve_page_href, resolve_page_route
 from ..paths import iter_document_files, page_url, route_for_document_file
 from ..parser import split_document_body
+from ..render import strip_sparql_wrappers_for_html
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
@@ -168,6 +169,23 @@ def _register_wiki_inline_render_rules(
     md.add_render_rule("link_open", _link_open_renderer)
 
 
+def _wiki_markdown_it(**options: object) -> MarkdownIt:
+    md_options: dict[str, object] = {"linkify": False}
+    md_options.update(options)
+    return MarkdownIt("gfm-like", md_options)
+
+
+def _register_safe_html_render_rules(md: MarkdownIt) -> None:
+    def _html_block_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        return html_module.escape(tokens[idx].content)
+
+    def _html_inline_renderer(self: Any, tokens: Any, idx: int, options: Any, env: Any) -> str:
+        return html_module.escape(tokens[idx].content)
+
+    md.add_render_rule("html_block", _html_block_renderer)
+    md.add_render_rule("html_inline", _html_inline_renderer)
+
+
 def render_outline_title(
     title: str,
     base_url: str = "/wiki",
@@ -175,7 +193,8 @@ def render_outline_title(
     current_route: str = "",
 ) -> str:
     """Render heading inline markdown for TOC labels without nested section links."""
-    md = MarkdownIt("gfm-like", {"linkify": False})
+    md = _wiki_markdown_it()
+    _register_safe_html_render_rules(md)
     _register_wiki_inline_render_rules(md, base_url, url_style, current_route, toc_mode=True)
     return md.renderInline(title).strip()
 
@@ -186,7 +205,8 @@ def render_wiki_markdown(
     url_style: str = DEFAULT_URL_STYLE,
     current_route: str = "",
 ) -> str:
-    md = MarkdownIt("gfm-like", {"linkify": False})
+    md = _wiki_markdown_it()
+    _register_safe_html_render_rules(md)
     _register_wiki_inline_render_rules(md, base_url, url_style, current_route)
     heading_slugger = GitHubHeadingSlugger()
 
@@ -227,7 +247,7 @@ def render_wiki_markdown(
         return self.renderToken(tokens, idx, options, env)
 
     md.add_render_rule("heading_open", _heading_open_renderer)
-    return md.render(text)
+    return md.render(strip_sparql_wrappers_for_html(text))
 
 
 def split_by_headings(markdown: str) -> list[tuple[int, str, str]]:

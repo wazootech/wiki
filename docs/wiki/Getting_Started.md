@@ -8,12 +8,32 @@ description: Install the wiki CLI and scaffold a new wiki.
 
 ## Install
 
+### From PyPI
+
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
 
-Editable install from this repository:
+### From npm
+
+```bash
+npm install -g wazootech-wiki
+wiki --help
+```
+
+This installs **`wiki`** on PATH. The npm package creates a private Python virtual environment and installs the matching PyPI **`wazootech-wiki`** release. Python 3.12 or newer is required on the machine.
+
+Zero-install (no global install):
+
+```bash
+npx wazootech-wiki init
+npx wazootech-wiki check
+```
+
+`npx wazootech-wiki` and `uvx wazootech-wiki` accept the same subcommands and flags as `wiki`.
+
+### Editable install from this repository
 
 ```bash
 uv pip install -e .

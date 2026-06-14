@@ -297,6 +297,16 @@ name: Project Atlas
         self.assertIn("&lt;tag&gt;", html)
         self.assertNotIn('class="highlight"', html)
 
+    def test_render_wiki_markdown_does_not_pass_through_raw_html(self) -> None:
+        html = render_wiki_markdown('<script>alert("x")</script>\n\nSafe paragraph.\n')
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn("Safe paragraph.", html)
+
+        event_html = render_wiki_markdown('<img src=x onerror=alert(1)>\n')
+        self.assertNotIn("<img", event_html)
+        self.assertIn("&lt;img", event_html)
+
     def test_render_hidden_sparql_block_omits_query_from_html(self) -> None:
         markdown = (
             "<!-- sparql:start\n"
@@ -324,6 +334,52 @@ name: Project Atlas
 
         self.assertIn("language-sparql", html)
         self.assertIn("SELECT ?name", html)
+
+    def test_render_hidden_sparql_block_with_raw_html_does_not_execute_markup(self) -> None:
+        markdown = (
+            "<!-- sparql:start\n"
+            "<script>alert(1)</script>\n"
+            "```sparql\nSELECT ?name WHERE { ?person foaf:name ?name }\n```\n"
+            "-->\n\n"
+            "| name |\n| --- |\n| Alice |\n\n"
+            "<!-- sparql:end -->\n"
+        )
+        html = render_wiki_markdown(markdown)
+
+        self.assertIn("Alice", html)
+        self.assertIn("<table>", html)
+        self.assertNotIn("<script>", html)
+        self.assertNotIn("<img", html)
+        self.assertNotIn("<!-- sparql:start", html)
+
+    def test_render_outline_title_does_not_pass_through_raw_html(self) -> None:
+        html = render_outline_title('<img src=x onerror=alert(1)>')
+        self.assertNotIn("<img", html)
+        self.assertIn("&lt;img", html)
+
+    def test_build_page_html_escapes_raw_html_in_toc_and_sidebar_headings(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            (wiki / "page.md").write_text(
+                "# Page\n\n## Safe section\n\n### <script>alert(1)</script>\n",
+                encoding="utf-8",
+            )
+            config = Config(wiki={"inputs": [wiki]}, config_root=root)
+            site = build_site(config)
+            page = site.pages[0]
+            page_layout = _default_layout(root)
+            html = build_page_html(page, site, root, default_layout=page_layout)
+
+            toc_start = html.index('id="toc"')
+            sidebar_start = html.index('id="p-contents"')
+            toc_html = html[toc_start:toc_start + 800]
+            sidebar_html = html[sidebar_start:sidebar_start + 800]
+            self.assertNotIn("<script>", toc_html)
+            self.assertNotIn("<script>", sidebar_html)
+            self.assertIn("&lt;script&gt;", toc_html)
+            self.assertIn("&lt;script&gt;", sidebar_html)
 
     def test_render_copyable_pre_escapes_attribute_text(self) -> None:
         html = render_copyable_pre('line "one"\nline two', "&lt;tag&gt;")

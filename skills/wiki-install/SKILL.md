@@ -51,9 +51,28 @@ wiki --help
 wiki fmt --help
 ```
 
+**npm (requires Node 18+ and Python 3.12+ on the machine):**
+
+```bash
+npm install -g wazootech-wiki
+wiki --help
+wiki fmt --help
+```
+
+Global npm install puts **`wiki`** on PATH. The npm package bootstraps a private Python venv with the matching PyPI release.
+
+**Zero-install (no global install):**
+
+```bash
+npx wazootech-wiki --help
+npx wazootech-wiki fmt --help
+```
+
+Treat **`npx wazootech-wiki <args>`** (or **`uvx wazootech-wiki <args>`**) as **`wiki <args>`** for all subcommands and flags. First run may be slow while the venv is created.
+
 **Standalone binary (no Python):** download the archive for their OS from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify `SHA256SUMS`, extract, and run `./wiki --help` (or `wiki.exe` on Windows).
 
-You may offer to run `pip install wazootech-wiki` **only if the user explicitly approves** (network and environment vary).
+You may offer to run `pip install wazootech-wiki` or `npm install -g wazootech-wiki` **only if the user explicitly approves** (network and environment vary).
 
 If `wiki upgrade --yes` reports a standalone-binary message (`pip upgrade is not available`), point them to GitHub Releases instead of pip.
 
@@ -96,6 +115,7 @@ If an IDE-integrated pip or package tool fails but the user approves a terminal 
 | Issue | Response |
 | ----- | -------- |
 | `wiki --help` works but `fmt` missing | Stale or wrong `wiki` on PATH — upgrade/reinstall per **Stale CLI** |
+| npm venv broken or incomplete | `npm rebuild -g wazootech-wiki` (or reinstall the npm package) |
 
 ## Do not
 

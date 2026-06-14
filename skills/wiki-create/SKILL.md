@@ -29,7 +29,7 @@ uv run wiki --help
 python -m wiki --help
 ```
 
-Use the command that passes both `--help` and the `fmt` capability probe for all steps below (`wiki`, `uv run wiki`, or `python -m wiki`). If neither PATH nor checkout fallbacks work, stop and recommend upgrading **`wazootech-wiki`** (one-liner only — do not name other skills).
+Use the command that passes both `--help` and the `fmt` capability probe for all steps below (`wiki`, `npx wazootech-wiki`, `uv run wiki`, or `python -m wiki`). If neither PATH nor checkout fallbacks work, stop and recommend upgrading **`wazootech-wiki`** (one-liner only — do not name other skills).
 
 ## Prerequisite gate
 

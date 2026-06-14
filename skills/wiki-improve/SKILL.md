@@ -28,7 +28,7 @@ bash skills/wiki-improve/scripts/audit.sh -c path/to/wiki.yaml
 # vendored: bash .agents/skills/wiki-improve/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
-Prefers `wiki` on PATH when `wiki fmt --help` succeeds. In the **Wiki CLI checkout**, if PATH `wiki` is stale (`--help` works but `fmt` fails), use `uv run wiki` or `python -m wiki`. Else stop and recommend upgrading **`wazootech-wiki`** (one-liner; do not name other skills). Append file paths after `-c` to scope fmt, lint, and check. In **this repo**: `-c docs/wiki.yaml`.
+Prefers `wiki` on PATH when `wiki fmt --help` succeeds. If `wiki` is missing, use `npx wazootech-wiki` (same subcommands). In the **Wiki CLI checkout**, if PATH `wiki` is stale (`--help` works but `fmt` fails), use `uv run wiki` or `python -m wiki`. Else stop and recommend upgrading **`wazootech-wiki`** (one-liner; do not name other skills). Append file paths after `-c` to scope fmt, lint, and check. In **this repo**: `-c docs/wiki.yaml`.
 
 [`scripts/audit.sh`](scripts/audit.sh) runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`. Stop on first failure; paste relevant CLI output.
 
