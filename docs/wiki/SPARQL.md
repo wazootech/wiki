@@ -78,7 +78,7 @@ ORDER BY ?class
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc queries from the terminal
 - [Wiki Subcommand render](Wiki_Subcommand_render.md) — refresh inline SPARQL result tables in markdown
 - [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
-- [sparql-service-template](https://github.com/wazootech/sparql-service-template) — external YASGUI template repository
+- [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) — external YASGUI template repository ([ecosystem registry](Wiki_CLI.md#ecosystem-templates))
 - [Style Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block conventions
 
 ## References
