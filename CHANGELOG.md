@@ -18,9 +18,8 @@
 ### Migration
 
 - Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
-- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`). Existing **`wiki.yaml`** configs still load; rename manually or re-init with `--force` to switch.
-- Fresh `wiki init` with default `--site-layout wikipedia` writes `layouts/wikipedia.html`, copies `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html`. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
-- Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use full-page page layouts with layout tokens instead.
+- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually or re-init with `--force` to switch. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
+- Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use monolithic page layouts with layout tokens instead.
 - Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`

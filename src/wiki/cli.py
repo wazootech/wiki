@@ -53,8 +53,8 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
-@click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
+@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yml (.md, .yaml, .json; repeatable).")
+@click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yml or directory containing wiki.yml/wiki.yaml/wiki.json (default: current directory).")
 @click.pass_context
 def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
@@ -192,7 +192,7 @@ def lint(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) -
 
 @main.command()
 @optional_files_argument
-@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yaml).")
+@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yml).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
 @click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
