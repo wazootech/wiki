@@ -85,7 +85,7 @@
     {
       "id": 7,
       "workflow": "create",
-      "prompt": "Customize my wiki — wiki.yaml already exists",
+      "prompt": "Customize my wiki — wiki.yml already exists",
       "expected_output": "Wizard-only mode; no force re-init; edits only with approval.",
       "files": [],
       "expectations": [
@@ -129,7 +129,7 @@
       "expectations": [
         "Runs lint or check scoped to the changed file or full wiki",
         "Mentions deploy alignment (site-base-url or artifact path)",
-        "Uses -c with discovered wiki.yaml",
+        "Uses -c with discovered wiki config (wiki.yml or legacy wiki.yaml)",
         "Does not modify wiki files without explicit request"
       ]
     },
@@ -149,12 +149,12 @@
     {
       "id": 12,
       "workflow": "improve",
-      "prompt": "Audit my wiki — wiki check fails with unknown top-level keys in wiki.yaml",
+      "prompt": "Audit my wiki — wiki check fails with unknown top-level keys in wiki config",
       "expected_output": "Config load error cited as config finding; points to CHANGELOG Migration; no config migrate or rename hints in error strings.",
       "files": [],
       "expectations": [
         "Reports config load or unknown key error with evidence",
-        "Categories finding as config or mentions wiki.yaml schema",
+        "Categories finding as config or mentions wiki config schema",
         "Mentions CHANGELOG or Migration for upgrades",
         "Does not suggest config migrate or per-key rename hints",
         "May cite site.manifest or other removed site keys as examples of invalid yaml",
@@ -164,7 +164,7 @@
     {
       "id": 13,
       "workflow": "deploy",
-      "prompt": "Deploy my wiki to GitHub Pages — repo is me/my-notes with wiki.yaml at the root",
+      "prompt": "Deploy my wiki to GitHub Pages — repo is me/my-notes with wiki.yml at the root",
       "expected_output": "Workflow with --site-base-url /my-notes, artifact path _site/my-notes, Pages Actions source reminder.",
       "files": [],
       "expectations": [
@@ -204,7 +204,7 @@
     {
       "id": 16,
       "workflow": "deploy",
-      "prompt": "Deploy nancy-kataria/wiki to GitHub Pages — wiki.yaml at repo root, site.base_url is /wiki",
+      "prompt": "Deploy nancy-kataria/wiki to GitHub Pages — wiki.yml at repo root, site.base_url is /wiki",
       "expected_output": "Pip template, artifact _site/wiki, no uv sync, no committing _site.",
       "files": [],
       "expectations": [
@@ -259,7 +259,7 @@
       "id": 20,
       "workflow": "create",
       "prompt": "Create a wiki called Ethanpedia with a primary color of forest green.",
-      "expected_output": "Verify CLI (install gate if missing); wiki init with --site-name Ethanpedia and --site-theme-color set to a forest-green hex; post-init check --strict; no invalid wiki.yaml branding keys.",
+      "expected_output": "Verify CLI (install gate if missing); wiki init with --site-name Ethanpedia and --site-theme-color set to a forest-green hex; post-init check --strict; no invalid branding keys in wiki config.",
       "files": [],
       "expectations": [
         "Runs or plans verify-cli.sh or equivalent wiki --help and fmt capability check before init",
@@ -267,7 +267,7 @@
         "Uses wiki init with --site-name Ethanpedia or equivalent non-interactive title flag",
         "Uses --site-theme-color with a forest green hex (e.g. #228B22, #2E8B57, #355E3B) at init",
         "Runs or plans wiki check --strict after init unless user opts out",
-        "Does not write site.theme_color or site.title to wiki.yaml (removed invalid keys)",
+        "Does not write site.theme_color or site.title to wiki config (removed invalid keys)",
         "Does not run wiki lint or wiki serve unsolicited"
       ]
     }

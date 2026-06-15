@@ -1,5 +1,5 @@
 # Same job shape as .github/workflows/deploy.yml — for standalone wiki repos
-# (root wiki.yaml, no pyproject.toml). Substitute CONFIG_PATH, SITE_BASE_URL, ARTIFACT_PATH.
+# (root wiki.yml or legacy wiki.yaml, no pyproject.toml). Substitute CONFIG_PATH, SITE_BASE_URL, ARTIFACT_PATH.
 # Example: repo named "wiki" with site.base_url /wiki → ARTIFACT_PATH _site/wiki
 
 name: Deploy Wiki to Pages

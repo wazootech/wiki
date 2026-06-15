@@ -33,7 +33,7 @@ Read one reference per turn unless the user explicitly asked for a multi-step fl
 
 ```bash
 bash skills/wiki/scripts/verify-cli.sh
-bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml [FILE...]
+bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 ```
 
 `verify-cli.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
@@ -46,7 +46,7 @@ See `skills/wiki/references/install.md`.
 
 ## Create workflow
 
-Non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for logo glyph (`--site-name`), first page, and light `wiki.yaml` tweaks. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
+Non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for logo glyph (`--site-name`), first page, and light wiki config tweaks (`wiki.yml`). Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
 
 See `skills/wiki/references/create.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
 
@@ -58,7 +58,7 @@ See `skills/wiki/references/improve.md`, [Wiki Configuration](Wiki_Configuration
 
 ## Deploy workflow
 
-Align `site.base_url`, add `.github/workflows/deploy.yml` from wholesale templates, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions**. Requires **`wiki` on PATH** and an existing **`wiki.yaml`**.
+Align `site.base_url`, add `.github/workflows/deploy.yml` from wholesale templates, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions**. Requires **`wiki` on PATH** and an existing wiki config (`wiki.yml`, or legacy `wiki.yaml`).
 
 Workflow assets (embed one template in full; substitute `CONFIG_PATH`, `SITE_BASE_URL`, `ARTIFACT_PATH` only):
 

@@ -1,8 +1,8 @@
 # Deploy Wiki to GitHub Pages
 
-Publish a [Wiki CLI](https://github.com/wazootech/wiki) wiki with GitHub Actions and GitHub Pages. Requires **`wiki` on PATH** and a **`wiki.yaml`** in the repository.
+Publish a [Wiki CLI](https://github.com/wazootech/wiki) wiki with GitHub Actions and GitHub Pages. Requires **`wiki` on PATH** and a wiki config (`wiki.yml`, or legacy `wiki.yaml`) in the repository.
 
-This workflow **only** sets up GitHub Pages deployment. When done, summarize URLs and paths and **stop**. If the CLI or `wiki.yaml` is missing, state the blocker and stop.
+This workflow **only** sets up GitHub Pages deployment. When done, summarize URLs and paths and **stop**. If the CLI or wiki config is missing, state the blocker and stop.
 
 Run `verify-cli.sh` before editing workflows.
 
@@ -50,7 +50,7 @@ wiki fmt --help
 
 If either fails, say **`wiki` on PATH is required** (install **`wazootech-wiki`**) and **stop**.
 
-Locate `wiki.yaml`. If absent, say a wiki workspace is required and **stop**.
+Locate wiki config (`wiki.yml` preferred; legacy `wiki.yaml` also loads). If absent, say a wiki workspace is required and **stop**.
 
 ## Workflow
 
@@ -64,7 +64,7 @@ Ask **one decision at a time** with a short explainer.
 | Nested path | `/wiki` | `https://owner.github.io/wiki/` |
 | User/org root | `''` | `https://owner.github.io/` |
 
-Read `site.base_url` from `wiki.yaml`. Align **both** `wiki.yaml` and workflow `wiki build --site-base-url` (edit yaml only with user approval).
+Read `site.base_url` from wiki config. Align **both** wiki config and workflow `wiki build --site-base-url` (edit config only with user approval).
 
 ### Artifact path (critical)
 
@@ -88,7 +88,7 @@ Use Python **3.12+**.
 
 Create or update `.github/workflows/deploy.yml` with user approval. Substitute:
 
-- `CONFIG_PATH` — path to `wiki.yaml`
+- `CONFIG_PATH` — path to wiki config (`wiki.yml` or legacy `wiki.yaml`)
 - `SITE_BASE_URL` — matches `site.base_url`
 - `ARTIFACT_PATH` — built HTML root (e.g. `_site/wiki`)
 
@@ -113,15 +113,15 @@ Expect `build_type: workflow`.
 With user approval:
 
 ```bash
-wiki -c path/to/wiki.yaml check --strict
-wiki -c path/to/wiki.yaml build --output-dir _site --site-base-url <SITE_BASE_URL>
+wiki -c path/to/wiki.yml check --strict
+wiki -c path/to/wiki.yml build --output-dir _site --site-base-url <SITE_BASE_URL>
 ```
 
 Confirm `<ARTIFACT_PATH>/index.html` exists.
 
 ## Clean exit
 
-Summarize: `wiki.yaml` path, `site.base_url`, workflow path, `SITE_BASE_URL` / `ARTIFACT_PATH`, expected published URL, Pages settings reminder.
+Summarize: wiki config path, `site.base_url`, workflow path, `SITE_BASE_URL` / `ARTIFACT_PATH`, expected published URL, Pages settings reminder.
 
 Do not run `wiki serve` or open PRs unless the user asks.
 

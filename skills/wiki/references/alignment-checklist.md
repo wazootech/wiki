@@ -4,8 +4,8 @@ Use when wiring or reviewing GitHub Pages for a Wiki CLI wiki.
 
 ## Config and CLI
 
-- `-c` points at the correct `wiki.yaml`
-- `site.base_url` in `wiki.yaml` matches the public Pages path
+- `-c` points at the wiki config (`wiki.yml`, or legacy `wiki.yaml`)
+- `site.base_url` in wiki config matches the public Pages path
 - `wiki build --site-base-url` in CI uses the **same** value as `site.base_url`
 - `graph.context.wiki` matches the deployed site origin when possible (often from `wiki init --repo`)
 
@@ -47,4 +47,4 @@ Canonical reference workflow: [deploy.yml](https://github.com/wazootech/wiki/blo
 
 Typical CI: `check --strict` → `lint --strict` → `build --output-dir _site` → `upload-pages-artifact` → `deploy-pages`.
 
-Local preview: `wiki -c path/to/wiki.yaml serve` (URL follows `site.base_url`).
+Local preview: `wiki -c path/to/wiki.yml serve` (URL follows `site.base_url`; legacy `wiki.yaml` also works).

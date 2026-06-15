@@ -30,14 +30,14 @@ find_uv() {
 
 usage() {
   cat <<'EOF'
-Usage: skills/wiki/scripts/audit.sh -c <wiki.yaml> [FILE...]
+Usage: skills/wiki/scripts/audit.sh -c <wiki.yml> [FILE...]
 
 Run strict wiki validators in CI order:
   fmt --check → lint --strict → check --strict → render --check
   (+ wiki link --check when present in .github/workflows/)
 
 Options:
-  -c PATH   Path to wiki.yaml (required)
+  -c PATH   Path to wiki config (wiki.yml; legacy wiki.yaml also works)
   -h        Show this help
 
 Remaining arguments are optional wiki file paths passed to fmt, lint, and check.
@@ -75,7 +75,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$CONFIG" ]]; then
-  echo "audit.sh: -c wiki.yaml is required" >&2
+  echo "audit.sh: -c wiki config path is required" >&2
   usage >&2
   exit 2
 fi

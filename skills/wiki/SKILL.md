@@ -3,7 +3,7 @@ name: wiki
 description: >-
   Manages Wiki CLI end to end — install and verify wazootech-wiki, scaffold with wiki init,
   audit vault hygiene (fmt, lint, check, render), and deploy to GitHub Pages. Use whenever
-  the user mentions wiki, Wiki CLI, wazootech-wiki, wiki init, wiki.yaml, broken links,
+  the user mentions wiki, Wiki CLI, wazootech-wiki, wiki init, wiki.yml, wiki.yaml, broken links,
   lint/check failures, pre-PR wiki review, GitHub Pages for a wiki, or getting started with
   semantic markdown — even if they do not say "skill". Route to one workflow reference,
   complete that job, and stop.
@@ -21,7 +21,7 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 2. **One workflow per turn** — read the matching reference below, finish that job, stop. Do not chain install → create → deploy unless the user asked for the full flow.
 3. **Improve is advisory** — survey and report; never edit wiki files unless the user explicitly asks.
 4. **Deploy uses wholesale templates** — embed [workflow-template-uv.yml](references/workflow-template-uv.yml) or [workflow-template-pip.yml](references/workflow-template-pip.yml) in full; substitute placeholders only.
-5. **No config migration shims** — unknown `wiki.yaml` keys fail at load; document upgrades in CHANGELOG and wiki docs only.
+5. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
 
 ## Route first
 
@@ -51,7 +51,7 @@ Zero-install equivalent: `npx wazootech-wiki <args>` or `uvx wazootech-wiki <arg
 
 ```bash
 bash skills/wiki/scripts/verify-cli.sh
-bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml [FILE...]
+bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 ```
 
 `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`. In this repo: `-c docs/wiki.yml`.
@@ -64,9 +64,8 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml [FILE...]
 | [references/create.md](references/create.md) | `wiki init` + wizard |
 | [references/improve.md](references/improve.md) | Audit report template |
 | [references/deploy.md](references/deploy.md) | GitHub Pages workflow |
-| [references/wiki-yaml-preferences.md](references/wiki-yaml-preferences.md) | Post-init `wiki.yaml` edits |
-| [references/deploy-alignment.md](references/deploy-alignment.md) | Deploy audit red flags |
+| [references/wiki-config-preferences.md](references/wiki-config-preferences.md) | Post-init wiki config edits |
 | [references/style-spot-check.md](references/style-spot-check.md) | Conventions when lint is off |
-| [references/alignment-checklist.md](references/alignment-checklist.md) | Path alignment checklist |
+| [references/alignment-checklist.md](references/alignment-checklist.md) | Deploy path alignment and audit |
 
 Human docs: [Wiki Skill](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Skill.md), [Getting Started](https://github.com/wazootech/wiki/blob/main/docs/wiki/Getting_Started.md).
