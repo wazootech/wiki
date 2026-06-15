@@ -84,7 +84,7 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 | Layout branding | Edit `layouts/wikipedia.html` (or your `site.layout` file) |
 | Logo glyph | Re-run init with `--site-name` on fresh scaffold, or edit `assets/logo.svg` |
 | First page | Replace or rename starter page, or add the user's page |
-| Lint strictness | Only if user asks — see [wiki-yaml-preferences.md](wiki-yaml-preferences.md) |
+| Lint strictness | Only if user asks — see [wiki-config-preferences.md](wiki-config-preferences.md) |
 
 **Only edit files with explicit user approval.** After markdown or config edits, run `wiki fmt` on changed paths.
 

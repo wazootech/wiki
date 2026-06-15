@@ -6,18 +6,18 @@ Senior wiki **advisor, not implementer**. Run validators, cite evidence, deliver
 
 1. **Never edit wiki pages** unless the user explicitly asks.
 2. **Never guess** — cite CLI output or `file:line` for every finding.
-3. **No config migration shims** — unknown `wiki.yaml` keys fail at load; document upgrades in CHANGELOG and wiki docs only.
+3. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
 4. **Skills are not wiki inputs** — do not index or build `skills/`.
 5. **Stop after the report.** Deploy setup → read [deploy.md](deploy.md) when the user asks (not in the same turn unless they asked for deploy).
 
 ## Quick start
 
 ```bash
-bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml
-# vendored: bash .agents/skills/wiki/scripts/audit.sh -c path/to/wiki.yaml
+bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml
+# vendored: bash .agents/skills/wiki/scripts/audit.sh -c path/to/wiki.yml
 ```
 
-Run `verify-cli.sh` first if wiki command resolution is unclear. Prefers `wiki` on PATH; checkout fallbacks: `uv run wiki`, `python -m wiki`; else `npx wazootech-wiki`. In **this repo**: `-c docs/wiki.yml`.
+Run `verify-cli.sh` first if wiki command resolution is unclear. Prefers `wiki` on PATH; checkout fallbacks: `uv run wiki`, `python -m wiki`; else `npx wazootech-wiki`. In **this repo**: `-c docs/wiki.yml`. Legacy `wiki.yaml` also loads when passed to `-c`.
 
 [`scripts/audit.sh`](../scripts/audit.sh) runs fmt → lint → check → render, then `wiki link --check` only when wired in `.github/workflows/`. Stop on first failure; paste relevant CLI output.
 
@@ -33,15 +33,15 @@ Regex belongs in `wiki.filename_pattern`, not under `check:`.
 
 ### Recon
 
-Read `wiki.yaml` (`wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site:`). Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
+Read wiki config (`wiki.yml` or legacy `wiki.yaml`): `wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site:`. Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
 
 When config load fails (unknown keys): report as **`config`** finding with full error text; point to CHANGELOG Migration and [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). Do not suggest runtime rename hints or automated migration commands.
 
-Flag removed branding surface as **`config`** findings: `site.manifest`, `site.title`, `site.theme_color`; `{{ site.manifest.* }}` in layouts; `<link rel="manifest">` expecting `manifest.webmanifest`.
+Flag removed branding surface as **`config`** findings: `site.manifest`, `site.title`, `site.theme_color`; Jinja `{{ site.manifest.* }}` in layouts; `<link rel="manifest">` expecting `manifest.webmanifest`.
 
 ### Audit
 
-Run `audit.sh` (or equivalent commands). For deploy-related pages or CI, read [deploy-alignment.md](deploy-alignment.md). When `lint.*` is off, spot-check [style-spot-check.md](style-spot-check.md).
+Run `audit.sh` (or equivalent commands). For deploy-related pages or CI, read [alignment-checklist.md](alignment-checklist.md). When `lint.*` is off, spot-check [style-spot-check.md](style-spot-check.md).
 
 ### Vet
 
@@ -56,7 +56,7 @@ Use the template below. Order findings by leverage. Categories: `integrity`, `co
 ```markdown
 ## Wiki improve — <wiki or path>
 
-**Config:** <wiki.yaml path>
+**Config:** <wiki.yml path>
 **Date:** <ISO date>
 
 ### Automated checks
@@ -68,7 +68,7 @@ Use the template below. Order findings by leverage. Categories: `integrity`, `co
 | link --check | skipped/pass/fail | only if CI wired |
 
 ### Config review
-- <wiki.yaml observations>
+- <wiki config observations>
 
 ### Findings
 | # | Finding | Category | Impact | Effort | Evidence |
