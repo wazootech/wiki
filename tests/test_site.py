@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from layout_helpers import write_layout
 from wiki.config import Config
 from wiki.format import METADATA_VIEWS
-from wiki.init_scaffold import load_packaged_default_layout
+from wiki.init_scaffold import load_packaged_official_layout
 from wiki.site import (
     build_index_html,
     build_page_html,
@@ -21,27 +21,31 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{{ page.title }}</title>
+<title>%wiki.page.title%</title>
 </head>
 <body>
-{{ page.type_label }}
+%wiki.page.type_label%
 <article id="article-top">
-{{ page.nav.infobox }}
-{{ page.content }}
+%wiki.nav.infobox%
+%wiki.page.content%
 </article>
-{{ page.nav.toc }}
-{{ page.nav.backlinks }}
-{{ page.nav.categories }}
+%wiki.nav.toc%
+%wiki.nav.backlinks%
+%wiki.nav.categories%
 </body>
 </html>"""
 
 
 def _full_test_layout(root: Path) -> Path:
-    return write_layout(root, "layouts/full_test.html.j2", _FULL_TEST_TEMPLATE)
+    return write_layout(root, "layouts/full_test.html", _FULL_TEST_TEMPLATE)
 
 
 def _default_layout(root: Path) -> Path:
-    return write_layout(root, "layouts/default.html.j2", load_packaged_default_layout())
+    return write_layout(
+        root,
+        "layouts/shell.html",
+        load_packaged_official_layout("wikipedia"),
+    )
 
 
 class TestWikiSite(unittest.TestCase):
@@ -162,12 +166,12 @@ name: Bella Davidson
             layouts = root / "layouts"
             layouts.mkdir()
             custom_shell = """<!DOCTYPE html>
-<html><body><div id="custom-shell">{{ page.title }}{{ page.nav.infobox }}{{ page.content }}</div></body></html>"""
-            (layouts / "project.html.j2").write_text(custom_shell, encoding="utf-8")
+<html><body><div id="custom-shell">%wiki.page.title%%wiki.nav.infobox%%wiki.page.content%</div></body></html>"""
+            (layouts / "project.html").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
 type: schema:CreativeWork
-wazoo:layout: layouts/project.html.j2
+wazoo:layout: layouts/project.html
 name: Project Atlas
 related:
   - wiki:Project_Atlas
@@ -191,7 +195,7 @@ name: Project Atlas Record
                 page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
             )
 
-            self.assertEqual(page.layout_path, (layouts / "project.html.j2").resolve())
+            self.assertEqual(page.layout_path, (layouts / "project.html").resolve())
             self.assertEqual(page.layout_stem, "project")
             self.assertIn('id="custom-shell"', html)
             self.assertIn('class="infobox page-meta"', html)
@@ -388,10 +392,12 @@ name: Project Atlas
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
     def test_seed_template_includes_code_copy_initialization(self) -> None:
-        seed_template = load_packaged_default_layout()
-        self.assertIn("initCodeCopyButtons", seed_template)
-        self.assertIn("pre[data-copy]", seed_template)
-        self.assertIn("copyPreContent", seed_template)
+        from wiki.site.layout_tokens import load_packaged_layout_text
+
+        chrome = load_packaged_layout_text("chrome.html")
+        self.assertIn("initCodeCopyButtons", chrome)
+        self.assertIn("pre[data-copy]", chrome)
+        self.assertIn("copyPreContent", chrome)
 
     def test_build_page_html_highlights_metadata_json(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -490,6 +496,7 @@ specialty: Diagnostics
             self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
             self.assertNotIn("<style>", html)
+            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
             self.assertNotIn("infobox page-meta", html)
 
     def test_strip_leading_title_heading_removes_matching_h1(self) -> None:
@@ -572,6 +579,7 @@ specialty: Diagnostics
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
+            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
             self.assertNotIn("infobox page-meta", html)
             self.assertNotIn("Backlinks", html)
             self.assertNotIn("On this page", html)
@@ -689,12 +697,13 @@ specialty: Diagnostics
             self.assertIn('data-categories="Person"', article)
             self.assertIn('data-categories=""', article)
 
-    def test_inline_css_loads_packaged_layout_default_css(self) -> None:
-        from wiki.site import INLINE_CSS
+    def test_packaged_wikipedia_css_includes_layout_and_highlight_rules(self) -> None:
+        from wiki.site import load_packaged_wikipedia_css
 
-        self.assertIn("#mw-navigation", INLINE_CSS)
-        self.assertIn(".metadata-format-switch", INLINE_CSS)
-        self.assertIn(".highlight", INLINE_CSS)
+        css = load_packaged_wikipedia_css()
+        self.assertIn("#mw-navigation", css)
+        self.assertIn(".metadata-format-switch", css)
+        self.assertIn(".highlight", css)
 
     def test_build_logo_svg_uses_site_theme_color(self) -> None:
         from wiki.site import _build_logo_svg
@@ -722,8 +731,8 @@ specialty: Diagnostics
                 root,
                 default_layout=write_layout(
                     root,
-                    "layouts/logo.html.j2",
-                    "{{ site.base_url }}/assets/custom-logo.svg",
+                    "layouts/logo.html",
+                    "%wiki.base_url%/assets/custom-logo.svg",
                 ),
             )
             self.assertIn("/wiki/assets/custom-logo.svg", html)
@@ -743,6 +752,7 @@ specialty: Diagnostics
             html = build_index_html(site, root, default_layout=_default_layout(root))
             self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
             self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
+            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
             self.assertIn('href="/wiki/assets/logo.svg"', html)
             self.assertNotIn('rel="manifest"', html)
             self.assertNotIn("manifest.webmanifest", html)
@@ -760,7 +770,7 @@ specialty: Diagnostics
                 root,
                 default_layout=write_layout(
                     root,
-                    "layouts/theme.html.j2",
+                    "layouts/theme.html",
                     (
                         '<meta name="theme-color" content="#6366f1">'
                         '<meta name="msapplication-TileColor" content="#6366f1">'

@@ -39,7 +39,7 @@ class TestLayoutContext(unittest.TestCase):
             self.assertEqual(context["site"]["base_url"], "/wiki")
             self.assertEqual(context["page"]["title"], "All Pages")
             self.assertEqual(context["page"]["kind"], "index")
-            self.assertIsInstance(context["site"]["inline_css"], Markup)
+            self.assertNotIn("inline_css", context["site"])
             self.assertNotIn("manifest", context["site"])
             self.assertIsInstance(context["wiki"]["pages_json"], Markup)
 

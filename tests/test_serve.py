@@ -41,15 +41,15 @@ _RICH_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{{ page.title }}</title>
+<title>%wiki.page.title%</title>
 </head>
 <body>
-<h1>{{ page.title }}</h1>
-{{ page.nav.infobox }}
-{{ page.content }}
-{{ page.nav.toc }}
-{{ page.nav.backlinks }}
-{{ page.nav.categories }}
+<h1>%wiki.page.title%</h1>
+%wiki.nav.infobox%
+%wiki.page.content%
+%wiki.nav.toc%
+%wiki.nav.backlinks%
+%wiki.nav.categories%
 </body>
 </html>"""
 
@@ -59,14 +59,14 @@ _METADATA_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{{ page.title }}</title>
+<title>%wiki.page.title%</title>
 </head>
 <body>
-<h1>{{ page.title }}</h1>
-{{ page.metadata.tool }}
-{{ page.metadata.tab }}
-{{ page.metadata.pane }}
-{{ page.content }}
+<h1>%wiki.page.title%</h1>
+%wiki.page.metadata.tool%
+%wiki.page.metadata.tab%
+%wiki.page.metadata.pane%
+%wiki.page.content%
 </body>
 </html>"""
 
@@ -92,7 +92,7 @@ def _serve_in_thread(wiki_dir: Path) -> Generator[int, None, None]:
 
 def _serve_with_template(wiki_dir: Path, template: str = _RICH_TEMPLATE) -> Generator[int, None, None]:
     port = _free_port()
-    template_path = write_layout(wiki_dir, "test_shell.html.j2", template)
+    template_path = write_layout(wiki_dir, "test_shell.html", template)
     config = Config(
         wiki={"inputs": [wiki_dir]},
         site={"layout": template_path},

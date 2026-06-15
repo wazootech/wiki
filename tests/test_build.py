@@ -10,7 +10,7 @@ from wiki.cli import main
 from wiki.config import Config
 from wiki.init_scaffold import (
     DOCS_WIKI_INIT_OPTIONS,
-    load_packaged_default_layout,
+    load_packaged_official_layout,
     render_wiki_yaml,
 )
 from wiki.paths import page_output_path
@@ -190,18 +190,18 @@ class TestWikiBuild(unittest.TestCase):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{{ page.title }}</title>
+<title>%wiki.page.title%</title>
 </head>
 <body>
-<h1>{{ page.title }}</h1>
-{{ page.nav.infobox }}
-{{ page.content }}
+<h1>%wiki.page.title%</h1>
+%wiki.nav.infobox%
+%wiki.page.content%
 </body>
 </html>"""
             (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8"
             )
-            write_layout(root, "test_shell.html.j2", test_template)
+            write_layout(root, "test_shell.html", test_template)
             (wiki / "Gregory_Davidson.yaml").write_text(
                 """id: wiki:Gregory_Davidson
 type: schema:Person
@@ -251,18 +251,18 @@ name: Bella Davidson
 <head>
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
-<title>{{ page.title }}</title>
+<title>%wiki.page.title%</title>
 </head>
 <body>
-<h1>{{ page.title }}</h1>
-{{ page.content }}
-{{ page.metadata.pane }}
+<h1>%wiki.page.title%</h1>
+%wiki.page.content%
+%wiki.page.metadata.pane%
 </body>
 </html>"""
             (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html.j2\n", encoding="utf-8"
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: test_shell.html\n", encoding="utf-8"
             )
-            write_layout(root, "test_shell.html.j2", template)
+            write_layout(root, "test_shell.html", template)
             (wiki / "Page.md").write_text(
                 """---
 type: Person
@@ -296,7 +296,7 @@ about: wiki:Alice_Theory
             output_dir = root / "_site"
             wiki.mkdir()
             (root / "wiki.yaml").write_text(
-                "wiki:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html.j2\n", encoding="utf-8"
+                "wiki:\n  inputs: [wiki]\nsite:\n  layout: nonexistent.html\n", encoding="utf-8"
             )
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
@@ -309,8 +309,8 @@ about: wiki:Alice_Theory
     def test_build_layout_uses_base_url_asset_path(self) -> None:
         runner = CliRunner()
         template = """<!DOCTYPE html>
-<html><head><title>{{ page.title }} - Acme Docs</title></head>
-<body><img src="{{ site.base_url }}/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>{{ page.content }}</body></html>"""
+<html><head><title>%wiki.page.title% - Acme Docs</title></head>
+<body><img src="%wiki.base_url%/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>%wiki.page.content%</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -324,10 +324,10 @@ about: wiki:Alice_Theory
             )
             (root / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\n  assets: [assets]\n"
-                "site:\n  layout: test_shell.html.j2\n",
+                "site:\n  layout: test_shell.html\n",
                 encoding="utf-8",
             )
-            write_layout(root, "test_shell.html.j2", template)
+            write_layout(root, "test_shell.html", template)
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
 
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir), "--no-check"])
@@ -342,13 +342,13 @@ about: wiki:Alice_Theory
 
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
-        docs_html = repo_root / "docs" / "layouts" / "default.html.j2"
-        expected = load_packaged_default_layout()
-        self.assertTrue(docs_html.is_file(), f"docs/layouts/default.html.j2 not found at {docs_html}")
+        docs_layout = repo_root / "docs" / "layouts" / "shell.html"
+        expected = load_packaged_official_layout("wikipedia")
+        self.assertTrue(docs_layout.is_file(), f"docs/layouts/shell.html not found at {docs_layout}")
         self.assertEqual(
-            docs_html.read_text(encoding="utf-8"),
+            docs_layout.read_text(encoding="utf-8"),
             expected,
-            "docs/layouts/default.html.j2 must match the packaged default layout template",
+            "docs/layouts/shell.html must match the packaged shell layout",
         )
 
     def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:

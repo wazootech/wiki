@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Page layouts use **token shells** (`%wiki.*%`) instead of Jinja. Packaged layout split: `layouts/shell.html` (user-editable shell), `layouts/chrome.html` (Vector UI), `layouts/index.html` (minimal inner body). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
 - Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
 - Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
 - Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
@@ -16,6 +17,9 @@
 
 ### Migration
 
+- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout shell tokens](docs/wiki/Wiki_Configuration.md#layout-shell-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
+- Fresh `wiki init` with default `--site-layout wikipedia` writes `layouts/shell.html`, copies `assets/wikipedia.css`, and sets `site.layout: layouts/shell.html`. `--site-layout minimal` omits `site.layout` (packaged minimal fallback).
+- Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
 - Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill pages removed

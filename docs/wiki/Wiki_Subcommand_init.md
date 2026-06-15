@@ -24,7 +24,7 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 
 | Flag                             | Description                                                                                                                                                                        |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--force`                        | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html.j2`                                                                                  |
+| `--force`                        | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/index.html`                                                                                       |
 | `--git`                          | Run `git init` after scaffolding                                                                                                                                                   |
 | `--repo`                         | GitHub `owner/repo`; infer `graph.context.wiki` and `site.base_url` for GitHub Pages                                                                                               |
 | `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                                                                                                       |
@@ -68,8 +68,8 @@ For every key — schema default, whether init writes it, and which command audi
 
 ## Generated files
 
-- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg` at `{{ site.base_url }}/assets/logo.svg`. Edit to customize site name, colors, and chrome.
-- `assets/logo.svg` — starter sidebar logo; center glyph is the first letter of `--site-name` (default `Wiki CLI` → `W`); optional `--site-theme-color` sets the gradient. Edit `layouts/default.html.j2` to change the visible site name, theme color meta tags, and other chrome.
+- `layouts/shell.html` and `assets/wikipedia.css` — copied when `--site-layout wikipedia` (default); token shell links the stylesheet and injects packaged Vector chrome at `%wiki.body%`. With `--site-layout minimal`, `site.layout` is omitted and the packaged minimal inner body applies inside the default shell.
+- `assets/logo.svg` — starter sidebar logo; center glyph is the first letter of `--site-name` (default `Wiki CLI` → `W`); optional `--site-theme-color` sets the gradient. Sidebar label and search placeholder live in the packaged chrome template.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example

@@ -81,7 +81,7 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 
 | Topic | Action |
 | ----- | ------ |
-| Layout branding | Edit `layouts/default.html.j2` only |
+| Layout branding | Edit `layouts/wikipedia.html` (or your `site.layout` file) |
 | Logo glyph | Re-run init with `--site-name` on fresh scaffold, or edit `assets/logo.svg` |
 | First page | Replace or rename starter page, or add the user's page |
 | Lint strictness | Only if user asks — see [wiki-yaml-preferences.md](wiki-yaml-preferences.md) |
@@ -90,7 +90,7 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 
 ### What init creates
 
-- `wiki.yaml`, `layouts/default.html.j2`, `assets/logo.svg`
+- `wiki.yaml`, `layouts/wikipedia.html`, `assets/logo.svg`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`, `README.md`
 
 ## Post-init hygiene

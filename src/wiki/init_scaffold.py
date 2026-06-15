@@ -11,16 +11,18 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from .schemas import InitOptions
+from .schemas import DEFAULT_INIT_LAYOUT, InitOptions
 from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
+    "DEFAULT_INIT_LAYOUT",
     "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
-    "copy_default_layout",
     "copy_default_logo",
-    "load_packaged_default_layout",
+    "copy_official_init_layout",
+    "copy_packaged_assets",
     "load_packaged_default_logo",
+    "load_packaged_official_layout",
     "render_wiki_yaml",
     "resolve_init_options",
 ]
@@ -104,6 +106,7 @@ DOCS_WIKI_INIT_OPTIONS = InitOptions(
     site_url_style=DEFAULT_URL_STYLE,
     graph_content_predicate="schema:articleBody",
     link_style="standard",
+    site_layout="wikipedia",
 )
 
 
@@ -125,6 +128,8 @@ def resolve_init_options(
     graph_implicit_types: list[str] | None = None,
     graph_implicit_types_policy: str | None = None,
     graph_include_file_extension: bool | None = None,
+    site_layout: str | None = None,
+    prompt_site_layout: Callable[[], str] | None = None,
 ) -> InitOptions:
     """Resolve init config from CLI flags, git remote, or interactive prompt."""
     inferred_context_wiki: str | None = None
@@ -139,14 +144,26 @@ def resolve_init_options(
         inferred_context_wiki, inferred_base_url = infer_github_pages_urls(owner, repo_name)
 
     resolved_context_wiki = graph_context_wiki or inferred_context_wiki
+    used_context_prompt = False
     if resolved_context_wiki is None:
         resolved_context_wiki = prompt_context_wiki(DEFAULT_WIKI_BASE)
+        used_context_prompt = True
     resolved_context_wiki = normalize_base_iri(resolved_context_wiki)
 
     resolved_base_url = site_base_url or inferred_base_url or DEFAULT_BASE_URL
     resolved_base_url = normalize_base_url(resolved_base_url)
 
     resolved_url_style = site_url_style or DEFAULT_URL_STYLE
+
+    resolved_site_layout = site_layout
+    if (
+        resolved_site_layout is None
+        and used_context_prompt
+        and prompt_site_layout is not None
+    ):
+        resolved_site_layout = prompt_site_layout()
+    elif resolved_site_layout is None:
+        resolved_site_layout = DEFAULT_INIT_LAYOUT
 
     return InitOptions(
         graph_context_wiki=resolved_context_wiki,
@@ -161,11 +178,18 @@ def resolve_init_options(
         graph_implicit_types=graph_implicit_types,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
+        site_layout=resolved_site_layout,
     )
 
 
 _INIT_TEMPLATE_NAME = "wiki.yaml.j2"
-_DEFAULT_LAYOUT_TEMPLATE = "layout_default.html.j2"
+_OFFICIAL_LAYOUTS_DIR = "layouts"
+_OFFICIAL_LAYOUT_FILES = {
+    "wikipedia": "shell.html",
+    "minimal": "index.html",
+}
+_PACKAGED_ASSETS_DIR = "assets"
+_PACKAGED_ASSET_FILES = ("wikipedia.css",)
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -193,16 +217,30 @@ def render_wiki_yaml(opts: InitOptions) -> str:
     return _strip_scaffold_comment(rendered)
 
 
-def load_packaged_default_layout() -> str:
-    """Return the packaged default page layout template content."""
-    source = files("wiki").joinpath(f"templates/{_DEFAULT_LAYOUT_TEMPLATE}").read_text(encoding="utf-8")
-    return _strip_scaffold_comment(source)
+def load_packaged_official_layout(layout: str) -> str:
+    """Return a packaged official init layout (wikipedia or minimal/index)."""
+    filename = _OFFICIAL_LAYOUT_FILES.get(layout)
+    if filename is None:
+        raise ValueError(f"Unknown official layout: {layout!r}")
+    return files("wiki").joinpath(f"{_OFFICIAL_LAYOUTS_DIR}/{filename}").read_text(
+        encoding="utf-8"
+    )
 
 
-def copy_default_layout(dest: Path) -> None:
-    """Copy the packaged default page layout into a workspace."""
+def copy_official_init_layout(dest: Path, layout: str) -> None:
+    """Copy an official init layout into a workspace (wikipedia shell; minimal is packaged)."""
+    if layout == "minimal":
+        return
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(load_packaged_default_layout(), encoding="utf-8")
+    dest.write_text(load_packaged_official_layout(layout), encoding="utf-8")
+
+
+def copy_packaged_assets(dest_dir: Path) -> None:
+    """Copy bundled wiki assets (for example wikipedia.css) into a workspace assets/ directory."""
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for filename in _PACKAGED_ASSET_FILES:
+        text = files("wiki").joinpath(f"{_PACKAGED_ASSETS_DIR}/{filename}").read_text(encoding="utf-8")
+        (dest_dir / filename).write_text(text, encoding="utf-8")
 
 
 def load_packaged_default_logo(

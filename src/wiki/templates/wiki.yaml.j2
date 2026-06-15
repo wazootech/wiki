@@ -1,4 +1,4 @@
-{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_name, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, site_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
+{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_name, site_layout, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, site_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
 
 # Wiki paths, assets, and filename policy (wiki check / wiki lint).
 wiki:
@@ -64,8 +64,12 @@ graph:
 
 # Page layout and URL routing.
 site:
-  # Default page layout Jinja template (see Wiki Configuration → Page layout).
-  layout: layouts/default.html.j2
+{% if site_layout == "wikipedia" %}
+  # Wikipedia-style page layout (see Wiki Configuration → Page layout).
+  layout: layouts/shell.html
+{% else %}
+  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
+{% endif %}
   # URL prefix for built and served pages.
   base_url: {{ site_base_url }}
   # dir → slug/index.html; file → slug.html
@@ -85,7 +89,7 @@ link:
 
 # Integrity severities (wiki check): SHACL, JSON Schema, routes, layout files.
 check:
-  # Error when wazoo:layout points at a missing .html.j2 file.
+  # Error when wazoo:layout points at a missing .html file.
   missing_layout_file: error
   # Error when frontmatter fails JSON Schema validation.
   frontmatter_schema: error

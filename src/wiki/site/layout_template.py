@@ -1,32 +1,31 @@
-"""Jinja2 rendering for wiki page layout templates."""
+"""Token-based rendering for wiki page layout templates."""
 
 from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
 
-from jinja2 import (
-    ChoiceLoader,
-    Environment,
-    FileSystemLoader,
-    PackageLoader,
-    select_autoescape,
+from .layout_tokens import (
+    PACKAGED_MINIMAL_INNER,
+    render_packaged_minimal,
+    render_shell_layout,
 )
 
-MINIMAL_LAYOUT_TEMPLATE = "layout_minimal.html.j2"
-LAYOUT_SUFFIX = ".html.j2"
+PACKAGED_MINIMAL_LAYOUT = PACKAGED_MINIMAL_INNER
+LAYOUT_SUFFIX = ".html"
 
 
 def layout_stem(path: Path) -> str:
     """Derive a CSS-safe layout slug from a layout file path."""
     name = path.name
-    if name.lower().endswith(LAYOUT_SUFFIX):
+    name_lower = name.lower()
+    if name_lower.endswith(LAYOUT_SUFFIX):
         return name[: -len(LAYOUT_SUFFIX)]
     return path.stem
 
 
 def layout_file_is_valid(path: Path, config_root: Path) -> bool:
-    """True when path is a readable .html.j2 file under config_root."""
+    """True when path is a readable .html token layout under config_root."""
     if not layout_path_within_root(path, config_root):
         return False
     return path.is_file() and path.name.lower().endswith(LAYOUT_SUFFIX)
@@ -42,26 +41,16 @@ def layout_path_within_root(path: Path, config_root: Path) -> bool:
 
 
 class LayoutRenderer:
-    """Render page layouts from the wiki config root or packaged fallbacks."""
+    """Render page layouts from token shells under config_root or packaged fallbacks."""
 
     def __init__(self, config_root: Path) -> None:
         self.config_root = config_root.resolve()
-        self._env = Environment(
-            loader=ChoiceLoader(
-                [
-                    FileSystemLoader(str(self.config_root)),
-                    PackageLoader("wiki", "templates"),
-                ]
-            ),
-            autoescape=select_autoescape(["html", "html.j2"]),
-            keep_trailing_newline=True,
-        )
 
     def render(self, template_path: Path | None, context: dict) -> str:
-        if template_path is not None:
-            name = template_path.resolve().relative_to(self.config_root).as_posix()
-            return self._env.get_template(name).render(**context)
-        return self._env.get_template(MINIMAL_LAYOUT_TEMPLATE).render(**context)
+        if template_path is None:
+            return render_packaged_minimal(context)
+        shell_text = template_path.read_text(encoding="utf-8")
+        return render_shell_layout(shell_text, context, use_chrome=True)
 
 
 @lru_cache(maxsize=32)

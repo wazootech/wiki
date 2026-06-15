@@ -26,7 +26,7 @@ Upgrade steps: CHANGELOG Migration section and [Wiki Configuration](https://gith
 
 ## Site branding
 
-Branding is **not** in `wiki.yaml`. Edit `site.layout` (e.g. `layouts/default.html.j2`) and files under `wiki.assets` for site name, theme color, favicon, and sidebar chrome. Init scaffolds `assets/logo.svg` and references it at `{{ site.base_url }}/assets/logo.svg` in the default layout. `--site-name` and `--site-theme-color` at init affect only the generated logo SVG.
+Branding is **not** in `wiki.yaml`. Edit `site.layout` (e.g. `layouts/wikipedia.html`) and files under `wiki.assets` for site name, theme color, favicon, and sidebar chrome. Init scaffolds `assets/logo.svg` and references it at `{{ site.base_url }}/assets/logo.svg` in the default layout. `--site-name` and `--site-theme-color` at init affect only the generated logo SVG.
 
 ## Lint strictness (only if asked)
 

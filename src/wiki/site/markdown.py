@@ -47,21 +47,11 @@ def _metadata_format_css() -> str:
     return "\n".join(rules)
 
 
-def _load_layout_default_css() -> str:
+def load_packaged_wikipedia_css() -> str:
     from importlib.resources import files
 
-    return files("wiki.templates").joinpath("layout_default.css").read_text(
-        encoding="utf-8"
-    )
+    return files("wiki").joinpath("assets/wikipedia.css").read_text(encoding="utf-8")
 
-
-INLINE_CSS = (
-    _load_layout_default_css().strip()
-    + "\n\n"
-    + _metadata_format_css()
-    + "\n\n"
-    + PYGMENTS_CSS
-)
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type"}
 

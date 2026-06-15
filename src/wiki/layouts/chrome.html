@@ -1,39 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#3b82f6">
-<meta name="msapplication-TileColor" content="#3b82f6">
-<link rel="icon" href="{{ site.base_url }}/assets/logo.svg">
-<title>{{ page.title }} - Wiki CLI</title>
-<style>{{ site.inline_css }}</style>
-</head>
-<body class="{{ page.body_class }}" data-page-kind="{{ page.kind }}">
-
 <!-- Left Navigation Sidebar -->
 <aside id="mw-navigation">
   <div id="p-logo" role="banner">
-    <a href="{{ site.base_url }}/" title="Visit the main page">
-      <img src="{{ site.base_url }}/assets/logo.svg" alt="" width="80" height="80">
+    <a href="%wiki.base_url%/" title="Visit the main page">
+      <img src="%wiki.base_url%/assets/logo.svg" alt="" width="80" height="80">
       <span class="logo-text">Wiki CLI</span>
     </a>
   </div>
   <div class="portal" role="navigation" id="p-navigation">
     <h3>Navigation</h3>
     <ul>
-      <li><a href="{{ site.base_url }}/">Main page</a></li>
+      <li><a href="%wiki.base_url%/">Main page</a></li>
       <li><a href="javascript:void(0)" onclick="goToRandomArticle()" title="Load a random page">Random article</a></li>
     </ul>
   </div>
   <div class="portal" role="navigation" id="p-tools">
     <h3>Tools</h3>
     <ul>
-      {{ page.metadata.tool }}
+      %wiki.page.metadata.tool%
       <li><a href="javascript:void(0)" onclick="switchTab('source')">View page source</a></li>
     </ul>
   </div>
-  {{ page.nav.sidebar }}
+  %wiki.nav.sidebar%
 </aside>
 
 <!-- Vector tabs wrapper -->
@@ -47,7 +34,7 @@
   <div class="vector-navigation-right">
     <ul class="vector-tabs">
       <li id="ca-source"><a href="javascript:void(0)" onclick="switchTab('source')">View source</a></li>
-      {{ page.metadata.tab }}
+      %wiki.page.metadata.tab%
     </ul>
   </div>
   <div class="vector-navigation-search">
@@ -72,27 +59,27 @@
 
 <!-- Main Content Panel -->
 <main id="content" class="mw-body" role="main">
-  <div class="page-shell layout-{{ page.layout.class }}">
-    {{ page.layout.label }}
+  <div class="page-shell layout-%wiki.page.layout.class%">
+    %wiki.page.layout.label%
 
     <!-- READ VIEW (Rendered Article) -->
     <div id="view-read-content" class="wiki-view-pane">
-      {{ page.type_label }}
-      <h1 class="firstHeading" id="firstHeading">{{ page.title }}</h1>
+      %wiki.page.type_label%
+      <h1 class="firstHeading" id="firstHeading">%wiki.page.title%</h1>
 
       <article id="article-top">
-        {{ page.nav.infobox }}
-        {{ page.content }}
+        %wiki.nav.infobox%
+        %wiki.page.content%
       </article>
 
-      {{ page.nav.toc }}
-      {{ page.nav.backlinks }}
-      {{ page.nav.categories }}
+      %wiki.nav.toc%
+      %wiki.nav.backlinks%
+      %wiki.nav.categories%
     </div>
 
     <!-- TALK VIEW (Local persistent notes) -->
     <div id="view-talk-content" class="wiki-view-pane" style="display: none;">
-      <h1 class="firstHeading">Talk / Local Notes: {{ page.title }}</h1>
+      <h1 class="firstHeading">Talk / Local Notes: %wiki.page.title%</h1>
       <div id="siteSub">Your personal scratchpad for this page (saved locally in browser)</div>
 
       <textarea id="talkNotesArea" class="wiki-textarea" placeholder="Write your notes or discussion comments here..." oninput="saveTalkNotes()"></textarea>
@@ -104,16 +91,16 @@
 
     <!-- VIEW SOURCE VIEW (Raw markdown source) -->
     <div id="view-source-content" class="wiki-view-pane" style="display: none;">
-      <h1 class="firstHeading">View Source: {{ page.title }}</h1>
+      <h1 class="firstHeading">View Source: %wiki.page.title%</h1>
       <div id="siteSub">Raw Markdown source code of the document</div>
 
-      <textarea id="markdownSourceArea" class="wiki-textarea" readonly style="background: #fafafa; font-family: monospace;">{{ page.source }}</textarea>
+      <textarea id="markdownSourceArea" class="wiki-textarea" readonly style="background: #fafafa; font-family: monospace;">%wiki.page.source%</textarea>
       <div class="wiki-btn-bar">
         <button type="button" id="copySourceBtn" class="wiki-btn wiki-btn-primary" onclick="copySourceCode()">Copy Markdown</button>
       </div>
     </div>
 
-    {{ page.metadata.pane }}
+    %wiki.page.metadata.pane%
 
     <!-- Standard Wikipedia-like Footer -->
     <footer class="wiki-footer">
@@ -123,10 +110,10 @@
 </main>
 
 <script>
-const ALL_PAGES = {{ wiki.pages_json }};
-const WIKI_BASE_URL = "{{ site.base_url }}";
-const WIKI_URL_STYLE = "{{ site.url_style }}";
-const CURRENT_SLUG = {{ page.slug_json }};
+const ALL_PAGES = %wiki.wiki.pages_json%;
+const WIKI_BASE_URL = "%wiki.base_url%";
+const WIKI_URL_STYLE = "%wiki.site.url_style%";
+const CURRENT_SLUG = %wiki.page.slug_json%;
 
 let selectedSuggestionIndex = -1;
 
@@ -438,5 +425,3 @@ document.addEventListener('DOMContentLoaded', () => {
   initCodeCopyButtons();
 });
 </script>
-</body>
-</html>

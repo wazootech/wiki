@@ -471,7 +471,7 @@ def build(
     verbose: bool,
 ) -> None:
     """Build static HTML site from wiki documents."""
-    from .assets import build_asset_manifest
+    from .assets import build_asset_manifest, write_packaged_asset
     from .site import build_index_html, build_page_html, build_site
 
     runtime_config = resolve_runtime_config(config, base_url=site_base_url, url_style=site_url_style)
@@ -573,6 +573,8 @@ def build(
         entry.output_path.parent.mkdir(parents=True, exist_ok=True)
         if entry.source is not None:
             shutil.copy2(entry.source, entry.output_path)
+        elif entry.output_path.name.endswith(".css"):
+            write_packaged_asset(entry.output_path.name, entry.output_path)
         if verbose:
             rel_path = entry.output_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
@@ -667,7 +669,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 
 
 @main.command()
-@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.j2.")
+@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and seeded layout files.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer graph.context.wiki and site.base_url for GitHub Pages.")
 @click.option("--graph-context-wiki", "graph_context_wiki", default=None, help="Override graph.context.wiki (overrides --repo inference).")
@@ -682,6 +684,13 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
 @click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
+@click.option(
+    "--site-layout",
+    "site_layout",
+    type=click.Choice(["wikipedia", "minimal"]),
+    default=None,
+    help="Page layout: wikipedia (Vector UI) or minimal (unset site.layout).",
+)
 def init(
     force: bool,
     init_git: bool,
@@ -698,14 +707,16 @@ def init(
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
+    site_layout: str | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
     import shutil
     import subprocess
 
     from .init_scaffold import (
-        copy_default_layout,
         copy_default_logo,
+        copy_official_init_layout,
+        copy_packaged_assets,
         render_wiki_yaml,
         resolve_init_options,
     )
@@ -737,6 +748,15 @@ def init(
     def prompt_context_wiki(default: str) -> str:
         return str(click.prompt("Custom wiki namespace IRI (graph.context.wiki)", default=default))
 
+    def prompt_site_layout() -> str:
+        return str(
+            click.prompt(
+                "Page layout",
+                type=click.Choice(["wikipedia", "minimal"]),
+                default="wikipedia",
+            )
+        )
+
     init_options = resolve_init_options(
         repo=repo,
         graph_context_wiki=graph_context_wiki,
@@ -754,6 +774,8 @@ def init(
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
+        site_layout=site_layout,
+        prompt_site_layout=prompt_site_layout if site_layout is None else None,
     )
     config_content = render_wiki_yaml(init_options)
 
@@ -817,10 +839,16 @@ def init(
     config_path.write_text(config_content, encoding="utf-8")
 
     layouts_dir = cwd / "layouts"
-    default_layout_path = layouts_dir / "default.html.j2"
     layouts_dir.mkdir(parents=True, exist_ok=True)
-    if force or not default_layout_path.exists():
-        copy_default_layout(default_layout_path)
+    if init_options.site_layout == "wikipedia":
+        wiki_layout_path = layouts_dir / "shell.html"
+        if force or not wiki_layout_path.exists():
+            copy_official_init_layout(wiki_layout_path, "wikipedia")
+
+    assets_dir = cwd / "assets"
+    css_path = assets_dir / "wikipedia.css"
+    if init_options.site_layout == "wikipedia" and (force or not css_path.exists()):
+        copy_packaged_assets(assets_dir)
 
     logo_path = cwd / "assets" / "logo.svg"
     if force or not logo_path.exists():
@@ -841,7 +869,14 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, assets/logo.svg, and layouts/default.html.j2."
+    layout_note = (
+        "layouts/shell.html and assets/wikipedia.css"
+        if init_options.site_layout == "wikipedia"
+        else "packaged minimal layout (site.layout unset)"
+    )
+    message = (
+        f"Initialized wiki.yaml, README.md, wiki/ starter files, assets/logo.svg, and {layout_note}."
+    )
     if init_git:
         message += " Ran git init."
     click.echo(message)

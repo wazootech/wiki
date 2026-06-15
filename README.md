@@ -421,7 +421,7 @@ Asset directories are relative to the config file and copied under the base URL 
 
 The HTML builder distinguishes three concepts:
 
-- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/default.html.j2`)
+- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/wikipedia.html`)
 - **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
 - **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
 
@@ -430,12 +430,12 @@ Set `wazoo:layout` to choose a different page layout for one page. Paths resolve
 ```yaml
 id: wiki:Gregory_Davidson
 type: schema:Person
-wazoo:layout: layouts/article.html.j2
+wazoo:layout: layouts/article.html
 knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are Jinja2 templates (`.html.j2`) with the same variable contract (`{{ page.nav.infobox }}`, `{{ page.content }}`, `{{ page.layout.class }}`, and so on).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are Jinja2 templates (`.html`) with the same variable contract (`{{ page.nav.infobox }}`, `{{ page.content }}`, `{{ page.layout.class }}`, and so on).
 
 Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, and `type` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
@@ -729,7 +729,7 @@ graph:
 site:
   base_url: /wiki
   url_style: dir
-  layout: layouts/default.html.j2
+  layout: layouts/wikipedia.html
 
 link:
   style: standard

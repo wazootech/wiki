@@ -22,7 +22,7 @@ hiddenimports += [
     "tzdata",
 ]
 
-datas = collect_data_files("wiki", includes=["templates/**"])
+datas = collect_data_files("wiki", includes=["templates/**", "layouts/**", "assets/**"])
 datas += collect_data_files("pyshacl")
 datas += collect_data_files("rdflib")
 
