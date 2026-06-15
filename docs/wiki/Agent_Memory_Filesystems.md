@@ -41,6 +41,7 @@ These are not always mutually exclusive. A team might maintain a published **[Wi
 
 ## Related pages
 
+- [Vivary](Vivary.md) — agent workspace stack (tropo typed graph + strato loop)
 - [LLM Wiki](LLM_Wiki.md) — pattern origins (Andrej Karpathy, Farza Majeed)
 - [Second Brain](Second_Brain.md) — PKM goals
 - [Style Guide](Style_Guide.md) — conventions for this wiki

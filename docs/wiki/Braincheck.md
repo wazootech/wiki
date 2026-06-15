@@ -6,7 +6,7 @@ description: A zero-dependency Python CLI that type-checks YAML frontmatter acro
 
 # Braincheck
 
-[Braincheck](https://github.com/Jeff-Kazzee/braincheck) is a typechecker for Markdown knowledge bases. Every `.md` file is treated as a **typed document**: its YAML frontmatter must conform to a declared schema — shared **base** fields for all documents plus **per-`type`** required and optional fields — declared in a single `schema.yaml`. Think `tsc`, but for frontmatter across your whole vault.
+[Braincheck](https://github.com/Jeff-Kazzee/braincheck), by [Jeff Kazzee](Jeff_Kazzee.md), is a typechecker for Markdown knowledge bases. Every `.md` file is treated as a **typed document**: its YAML frontmatter must conform to a declared schema — shared **base** fields for all documents plus **per-`type`** required and optional fields — declared in a single `schema.yaml`. Think `tsc`, but for frontmatter across your whole vault.
 
 ## What it does
 
@@ -28,6 +28,10 @@ description: A zero-dependency Python CLI that type-checks YAML frontmatter acro
 | W201 | warning | Unknown type (not declared in schema) |
 | W202 | warning | Unknown field for this type           |
 
+## Lineage
+
+Braincheck is the frontmatter-everywhere typechecker. Successor work: [Loam](Loam.md) (folder-as-type, derived metadata) → **tropo** in [Vivary](Vivary.md) (typed graph, blast radius, agent workspace). Braincheck remains valid when you only need `schema.yaml` gates without folder-as-type or a full agent OS.
+
 ## When to use Braincheck
 
 Reach for Braincheck when a vault only needs **frontmatter schema enforcement** — [Obsidian](Obsidian.md)-style [personal knowledge](Personal_Knowledge.md) bases, agent-maintained note trees, or any Markdown folder where typed metadata matters but you do not need RDF compilation, graph queries, or static-site publishing.
@@ -48,9 +52,13 @@ Braincheck is a **narrow, lightweight alternative** when frontmatter hygiene is 
 ## Jeff's thoughts
 
 - <https://x.com/JeffKazzee/status/2065162937820659926?s=20>
+- See also [Jeff Kazzee](Jeff_Kazzee.md)
 
 ## Related
 
+- [Jeff Kazzee](Jeff_Kazzee.md) — author and tool lineage
+- [Loam](Loam.md) — folder-as-type successor
+- [Vivary](Vivary.md) — agent workspace standard; **tropo** extends loam with graph and review layers
 - [Wiki CLI](Wiki_CLI.md) — semantic compiler and validator for Markdown wikis
 - [Obsidian](Obsidian.md) — common authoring surface Braincheck pairs well with
 - [Personal Knowledge](Personal_Knowledge.md) — domain context for typed note vaults
