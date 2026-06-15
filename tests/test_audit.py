@@ -446,7 +446,7 @@ type: schema:WebPage
             )
             self.assertEqual(lint_duplicate_headings(config), [])
 
-    def test_lint_link_style_flags_wikilinks_when_markdown(self) -> None:
+    def test_lint_link_style_flags_wikilinks_when_standard(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki = Path(tmpdir) / "wiki"
             wiki.mkdir()
@@ -468,13 +468,13 @@ type: schema:WebPage
                 "# Guide\n\nLiteral `[[Target]]` and fenced:\n\n```\n[[Target]]\n```\n",
                 encoding="utf-8",
             )
-            markdown_config = Config(wiki={"inputs": [wiki]}, config_root=Path(tmpdir))
-            self.assertEqual(lint_link_style(markdown_config), [])
+            standard_config = Config(wiki={"inputs": [wiki]}, config_root=Path(tmpdir))
+            self.assertEqual(lint_link_style(standard_config), [])
 
             wikilink_config = Config(
                 wiki={"inputs": [wiki]},
                 config_root=Path(tmpdir),
-                link={"style": "obsidian"},
+                link={"style": "wikilink"},
             )
             (wiki / "Guide.md").write_text(
                 "# Guide\n\nSee [[Target]] for details.\n",

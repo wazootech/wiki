@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import yaml
+from pydantic import ValidationError
 from rdflib import Graph, Namespace
 
 from wiki.config import (
@@ -64,7 +65,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsNotNone(config.context)
         self.assertFalse(config.sparql_service.enabled)
         self.assertEqual(config.sparql_service.path, "/api/sparql")
-        self.assertEqual(config.link.style, "markdown")
+        self.assertEqual(config.link.style, "standard")
 
     def test_Config_load_no_files(self) -> None:
         """Test Config.load falls back to defaults when no files exist."""
@@ -183,19 +184,25 @@ class TestConfig(unittest.TestCase):
     def test_Config_load_link_style(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
-            (base_path / "wiki.yaml").write_text("link:\n  style: markdown\n", encoding="utf-8")
+            (base_path / "wiki.yaml").write_text("link:\n  style: standard\n", encoding="utf-8")
             config = Config.load(base_path)
-            self.assertEqual(config.link.style, "markdown")
+            self.assertEqual(config.link.style, "standard")
 
-    def test_Config_load_obsidian_link_style(self) -> None:
-        config = Config(link={"style": "obsidian"})
-        self.assertEqual(config.link.style, "obsidian")
+    def test_Config_load_wikilink_link_style(self) -> None:
+        config = Config(link={"style": "wikilink"})
+        self.assertEqual(config.link.style, "wikilink")
+
+    def test_Config_rejects_legacy_markdown_link_style(self) -> None:
+        with self.assertRaises(ValidationError):
+            Config(link={"style": "markdown"})
+
+    def test_Config_rejects_legacy_obsidian_link_style(self) -> None:
+        with self.assertRaises(ValidationError):
+            Config(link={"style": "obsidian"})
 
     def test_Config_rejects_invalid_link_style(self) -> None:
-        from pydantic import ValidationError
-
         with self.assertRaises(ValidationError):
-            Config(link={"style": "wikilink"})
+            Config(link={"style": "not-a-style"})
 
     def test_Config_implicit_types_defaults(self) -> None:
         config = Config()

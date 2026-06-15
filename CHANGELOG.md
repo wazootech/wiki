@@ -10,6 +10,7 @@
 
 - Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
 - Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
+- Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
 - Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 
@@ -18,6 +19,17 @@
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
 - Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill pages removed
+- In `link:` rename `style: markdown` → `style: standard` and `style: obsidian` → `style: wikilink`:
+
+```yaml
+# Before
+link:
+  style: markdown   # or obsidian
+
+# After
+link:
+  style: standard   # or wikilink
+```
 
 ## 0.1.15 — 2026-06-14
 

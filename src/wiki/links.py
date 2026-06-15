@@ -75,10 +75,10 @@ def markdown_link_target(route: str) -> str:
     return f"{route}.md"
 
 
-def format_internal_link(target_route: str, display: str, style: str = "markdown") -> str:
+def format_internal_link(target_route: str, display: str, style: str = "standard") -> str:
     """Format an internal wiki link for insertion or CLI suggestions."""
-    if style == "markdown":
+    if style == "standard":
         return f"[{display}]({markdown_link_target(target_route)})"
-    if style == "obsidian":
+    if style == "wikilink":
         return f"[[{target_route}|{display}]]"
-    raise ValueError(f"expected markdown or obsidian, got {style!r}")
+    raise ValueError(f"expected standard or wikilink, got {style!r}")

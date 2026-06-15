@@ -74,11 +74,11 @@ site:
 # wiki link command output format and rename repair map.
 link:
 {% if link_style %}
-  # standard Markdown or Obsidian (wiki link --apply).
+  # standard page links or wikilinks (wiki link --apply).
   style: {{ link_style }}
 {% else %}
-  # standard Markdown or Obsidian (wiki link --apply).
-  style: markdown
+  # standard page links or wikilinks (wiki link --apply).
+  style: standard
 {% endif %}
   # renames:
   #   Old_Page_Name: New_Page_Name
@@ -98,7 +98,7 @@ lint:
   broken_links: warning
   # Wiki filename_pattern regex (see wiki.filename_pattern).
   filename_pattern: warning
-  # Obsidian wikilinks in body when link.style is markdown.
+  # Wikilinks in body when link.style is standard.
   link_style: warning
 
 # Optional SPARQL HTTP endpoint on wiki serve (opt-in).

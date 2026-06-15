@@ -103,7 +103,7 @@ DOCS_WIKI_INIT_OPTIONS = InitOptions(
     site_base_url="/wiki",
     site_url_style=DEFAULT_URL_STYLE,
     graph_content_predicate="schema:articleBody",
-    link_style="markdown",
+    link_style="standard",
 )
 
 

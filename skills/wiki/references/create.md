@@ -35,7 +35,7 @@ Prefer **flags** over interactive `wiki init` prompts (stdin blocks agents). Ask
 When context already supplies values, **do not re-prompt**:
 
 - **`--repo owner/repo`** — from a GitHub repo attachment, `gh repo view --json nameWithOwner`, or `git remote get-url origin`
-- **Link style** — default to markdown (omit `--link-style`) unless the user asks for Obsidian wikilinks
+- **Link style** — default to standard page links (omit `--link-style`) unless the user asks for wikilinks
 - **Theme color, inputs dir, URL style** — skip unless the user wants customization
 
 ### Choose mode
@@ -53,7 +53,7 @@ When context already supplies values, **do not re-prompt**:
 | GitHub Pages | User publishes to `{owner}.github.io/{repo}` | `--repo owner/repo` |
 | Custom namespace | No GitHub / custom site | `--graph-context-wiki https://…/` and optional `--site-base-url` |
 | Git repository | User wants `git init` now | `--git` |
-| Link style | Obsidian wikilinks vs standard Markdown | `--link-style obsidian` |
+| Link style | Wikilinks vs standard page links | `--link-style wikilink` |
 | Logo letter | Custom glyph in `assets/logo.svg` | `--site-name "My Title"` |
 | Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
 | Theme color | Logo gradient at init only | `--site-theme-color "#3b82f6"` |

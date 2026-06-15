@@ -674,7 +674,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-base-url", "site_base_url", default=None, help="Override site.base_url (default /wiki or inferred from --repo).")
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
-@click.option("--link-style", "link_style", default=None, type=click.Choice(["markdown", "obsidian"]), help="Override link.style: standard Markdown links or Obsidian wikilinks.")
+@click.option("--link-style", "link_style", default=None, type=click.Choice(["standard", "wikilink"]), help="Override link.style: standard page links or wikilinks.")
 @click.option("--site-name", "site_name", default="Wiki CLI", help="Site name for init logo glyph only (not written to wiki.yaml).")
 @click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")

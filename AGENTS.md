@@ -18,7 +18,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yaml` (`docs/wiki/`). Use *
 
 ### Internal links
 - **Rule:** Use standard Markdown links to other wiki pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this wiki. Ensure internal links point at existing documents.
-- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `markdown`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design Philosophies](docs/wiki/Design_Philosophies.md)).
+- **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `standard`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
 - **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.

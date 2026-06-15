@@ -93,7 +93,7 @@ class TestRenderWikiYaml(TestCase):
                 site_base_url="/wiki",
                 site_url_style="dir",
                 graph_content_predicate="schema:articleBody",
-                link_style="markdown",
+                link_style="standard",
             ),
         )
         self.assertIn("wiki: https://wazootech.github.io/wiki/", rendered)
@@ -101,7 +101,7 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("wazoo: https://schema.wazoo.dev/", rendered)
         self.assertIn("base_url: /wiki", rendered)
         self.assertIn("content_predicate: schema:articleBody", rendered)
-        self.assertIn("style: markdown", rendered)
+        self.assertIn("style: standard", rendered)
         self.assertIn("link:", rendered)
         self.assertNotIn("headings: off", rendered)
         self.assertNotIn("heading_levels: off", rendered)

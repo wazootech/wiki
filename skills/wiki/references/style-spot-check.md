@@ -6,7 +6,7 @@ Use when `lint.*` rules are `off` but conventions still matter. Canonical detail
 | ---- | ---------- |
 | Filenames | Wikipedia-style (`Page_Name.md`); `index.md` only for folder routes |
 | Headings | Title-case H1; sentence-case H2+; no numbered headings; ATX `#` only |
-| Links | Markdown `[text](Page.md)` when `link.style: markdown`; Obsidian `[[Page]]` when `obsidian` |
+| Links | Markdown `[text](Page.md)` when `link.style: standard`; Obsidian `[[Page]]` when `wikilink` |
 | Frontmatter | `type` / shapes aligned; CURIEs use `graph.context` |
 | SPARQL | People → `givenName`/`familyName`; TechArticle → `headline`/`description` |
 | Prose | No `---` thematic breaks in body; `## References` on standard pages |

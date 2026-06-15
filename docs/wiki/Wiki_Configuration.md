@@ -62,7 +62,7 @@ Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitra
 **Split keys** — policy lives in one block, severity or tooling in another:
 
 - **`wiki.filename_pattern`** — the regex string. **`lint.filename_pattern`** — how strictly to flag violations (`error`, `warning`, or `off`).
-- **`link.style`** — what `wiki link --apply` inserts (`markdown` or Obsidian wikilinks). **`lint.link_style`** — whether Obsidian `[[wikilinks]]` in body prose are flagged when `link.style` is `markdown`.
+- **`link.style`** — what `wiki link --apply` inserts (`standard` page links or `wikilink`). **`lint.link_style`** — whether Obsidian `[[wikilinks]]` in body prose are flagged when `link.style` is `standard`.
 
 For why `check`, `lint`, `fmt`, and `wiki link` are separate commands, see [Design philosophies](Design_Philosophies.md#check-lint-fmt-and-link).
 
@@ -156,13 +156,13 @@ Settings for the `wiki link` command family (separate from `lint.link_style` sev
 
 ```yaml
 link:  # optional block
-  style: markdown       # default markdown; init writes
+  style: standard       # default standard; init writes
   renames: {}           # default {}; init omits (commented example)
 ```
 
 | Key       | Required | Default                               | Init              | Audited by               |
 | --------- | -------- | ------------------------------------- | ----------------- | ------------------------ |
-| `style`   | optional | `markdown` (`obsidian` for wikilinks) | writes            | `wiki link --apply` only |
+| `style`   | optional | `standard` (`wikilink` for wikilinks) | writes            | `wiki link --apply` only |
 | `renames` | optional | `{}`                                  | commented example | `wiki link --fix-broken` |
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
@@ -215,11 +215,11 @@ lint:  # optional block
 | `heading_levels`     | optional | `off`     | omits  | heading level gaps (for example H1 then H3)                  |
 | `duplicate_headings` | optional | `off`     | omits  | duplicate heading text on one page                           |
 | `thematic_breaks`    | optional | `off`     | omits  | horizontal rules in body prose                               |
-| `link_style`         | optional | `warning` | writes | Obsidian `[[wikilinks]]` when `link.style` is `markdown`     |
+| `link_style`         | optional | `warning` | writes | Obsidian `[[wikilinks]]` when `link.style` is `standard`     |
 
 ATX heading syntax is also enforced by **`wiki fmt`** (mdformat); Setext underlines are converted on format.
 
-When `link.style` is `markdown`, set `lint.link_style: off` to allow wikilinks in prose, or set `link.style: obsidian` for an Obsidian-style wiki.
+When `link.style` is `standard`, set `lint.link_style: off` to allow wikilinks in prose, or set `link.style: wikilink` for an Obsidian-style wiki.
 
 ## Serve API
 
@@ -460,7 +460,7 @@ Page routes keep the casing from the filename; GitHub Pages URLs are case-sensit
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
 
-When `link.style` is `markdown`, `lint.link_style` (default `warning`) flags Obsidian wikilinks (`[[Page]]`) in body prose. Set `lint.link_style: off` to allow wikilinks while keeping Markdown as the apply format, or set `link.style: obsidian` for an Obsidian-style wiki.
+When `link.style` is `standard`, `lint.link_style` (default `warning`) flags Obsidian wikilinks (`[[Page]]`) in body prose. Set `lint.link_style: off` to allow wikilinks while keeping standard links as the apply format, or set `link.style: wikilink` for an Obsidian-style wiki.
 
 ## Formatting (`fmt`)
 
@@ -507,7 +507,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | `filename_pattern` | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
-| `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `markdown`                                  |
+| `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                  |
 
 ## This repository
 

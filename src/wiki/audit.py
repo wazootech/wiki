@@ -382,8 +382,8 @@ def _line_number_for_offset(content: str, offset: int) -> int:
 
 
 def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list[str]:
-    """Flag Obsidian wikilinks in body prose when wiki link_style is markdown."""
-    if config.link.style != "markdown":
+    """Flag wikilinks in body prose when link.style is standard."""
+    if config.link.style != "standard":
         return []
     warnings: list[str] = []
     for file_path in iter_markdown_files(config):
@@ -401,7 +401,7 @@ def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list
             line_no = _line_number_for_offset(content, body_offset + start)
             warnings.append(
                 f"In {file_path.name}:{line_no}: Wikilink {match.group(0)!r}; "
-                "use Markdown links ([display](Page.md)) per link_style."
+                "use standard links ([display](Page.md)) per link.style."
             )
     return warnings
 

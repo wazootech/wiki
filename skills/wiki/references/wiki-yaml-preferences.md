@@ -35,7 +35,7 @@ Branding is **not** in `wiki.yaml`. Edit `site.layout` (e.g. `layouts/default.ht
 | `lint.headings` | `off`, `warning`, `error` | Sentence-case H2+ and numbered headings (init omits; default `off`) |
 | `lint.filename_pattern` | severity | Wikipedia-style filenames |
 | `lint.broken_links` | severity | Unresolved internal links |
-| `lint.link_style` | severity | Obsidian wikilinks in body when `link.style: markdown` |
+| `lint.link_style` | severity | Obsidian wikilinks in body when `link.style: standard` |
 
 Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config load.
 

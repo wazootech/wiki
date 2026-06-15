@@ -27,7 +27,7 @@ wiki link --fix-broken --dry-run
 | Flag              | Description                                                                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `FILE...`         | Optional markdown paths; otherwise entire wiki                                                                                                                      |
-| `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link.style` in [wiki.yaml](Wiki_Configuration.md) (`markdown` or `obsidian`) |
+| `--apply`         | Insert internal links for each suggestion (body only, never frontmatter); format from `link.style` in [wiki.yaml](Wiki_Configuration.md) (`standard` or `wikilink`) |
 | `--fix-broken`    | Repair unambiguous broken wikilinks and internal markdown page links                                                                                                |
 | `-n`, `--dry-run` | Preview `--apply` or `--fix-broken` without writing files                                                                                                           |
 | `-c`, `--check`   | Exit 1 if opportunities or broken links remain (CI gate)                                                                                                            |
