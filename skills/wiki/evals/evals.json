@@ -1,0 +1,275 @@
+{
+  "skill_name": "wiki",
+  "evals": [
+    {
+      "id": 1,
+      "workflow": "install",
+      "prompt": "I want to use wiki but don't have it installed",
+      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help and fmt capability; ready message without suggesting wiki init or scaffolding.",
+      "files": [],
+      "expectations": [
+        "Mentions pip install wazootech-wiki or equivalent install path",
+        "Runs or instructs verification with wiki --help",
+        "Mentions fmt capability probe or wiki fmt --help",
+        "Ends with installed and ready to go or equivalent success message when CLI works",
+        "Does not mention wiki init as a required next step",
+        "Does not run wiki init"
+      ]
+    },
+    {
+      "id": 2,
+      "workflow": "install",
+      "prompt": "Check if wiki CLI is installed",
+      "expected_output": "Runs wiki --help and fmt capability probe; if success, confirms installed and ready only — no follow-on suggestions.",
+      "files": [],
+      "expectations": [
+        "Runs wiki --help or wiki --version",
+        "Mentions fmt capability probe or wiki fmt --help",
+        "If CLI works, message is ready-to-go style without next-step suggestions",
+        "Does not suggest scaffolding a wiki"
+      ]
+    },
+    {
+      "id": 3,
+      "workflow": "install",
+      "prompt": "wiki --help works but wiki fmt says unknown command — fix my install",
+      "expected_output": "Diagnose stale or wrong wiki on PATH; recommend upgrade/reinstall wazootech-wiki; must not say ready-to-go until capability passes.",
+      "files": [],
+      "expectations": [
+        "Mentions stale or outdated wiki or wrong wiki on PATH",
+        "Recommends pip install --upgrade wazootech-wiki or wiki upgrade",
+        "Does not say installed and ready to go",
+        "Does not suggest wiki init or scaffolding"
+      ]
+    },
+    {
+      "id": 4,
+      "workflow": "create",
+      "prompt": "I want a new wiki in ~/projects/my-notes for GitHub Pages at me/my-notes",
+      "expected_output": "wiki init with --repo me/my-notes; post-init check --strict; preferences wizard; no lint/serve unless asked.",
+      "files": [],
+      "expectations": [
+        "Uses wiki init with --repo or equivalent non-interactive flags",
+        "Runs or plans wiki check --strict after init",
+        "Asks about or applies logo glyph (--site-name) or first page in wizard",
+        "Does not run wiki lint or wiki serve unsolicited",
+        "Does not include a full pip install tutorial"
+      ]
+    },
+    {
+      "id": 5,
+      "workflow": "create",
+      "prompt": "Scaffold a wiki in an empty directory",
+      "expected_output": "Init with explicit flags; post-init check --strict; at least one wizard question; fmt only if edits approved.",
+      "files": [],
+      "expectations": [
+        "Runs or plans wiki init with non-interactive flags",
+        "Runs or plans wiki check --strict after init",
+        "Includes preferences wizard after init",
+        "Does not run lint/serve pipeline unsolicited"
+      ]
+    },
+    {
+      "id": 6,
+      "workflow": "create",
+      "prompt": "Create a wiki for me",
+      "expected_output": "When CLI missing: states CLI requirement, optional wazootech-wiki one-liner, stops without naming removed skill paths or running init.",
+      "files": [],
+      "expectations": [
+        "States that `wiki` on PATH is required when CLI is missing",
+        "Does not run wiki init when CLI is missing",
+        "Does not reference skills/wiki-install or other removed skill paths",
+        "Does not paste a full step-by-step pip install guide"
+      ]
+    },
+    {
+      "id": 7,
+      "workflow": "create",
+      "prompt": "Customize my wiki — wiki.yaml already exists",
+      "expected_output": "Wizard-only mode; no force re-init; edits only with approval.",
+      "files": [],
+      "expectations": [
+        "Skips wiki init or does not use --force without explicit user request",
+        "Focuses on layout branding, logo glyph, first page, or preferences wizard",
+        "Does not run check/lint/serve unsolicited"
+      ]
+    },
+    {
+      "id": 8,
+      "workflow": "create",
+      "prompt": "Scaffold a wiki in an empty directory, skip validation",
+      "expected_output": "Init with explicit flags; no check --strict when user opts out; wizard may follow.",
+      "files": [],
+      "expectations": [
+        "Runs or plans wiki init with non-interactive flags",
+        "Does not run wiki check --strict after init",
+        "Honors user opt-out of validation"
+      ]
+    },
+    {
+      "id": 9,
+      "workflow": "improve",
+      "prompt": "Improve the docs wiki before I open a PR",
+      "expected_output": "Runs strict pipeline on docs/wiki.yaml via audit.sh or equivalent commands; produces automated checks scorecard and prioritized findings table with evidence.",
+      "files": [],
+      "expectations": [
+        "Output mentions fmt, lint, check, and render",
+        "Uses -c docs/wiki.yaml or equivalent config path",
+        "Produces a structured pass/fail report with a findings table",
+        "Findings include category and evidence (file:line or CLI excerpt)",
+        "Does not modify wiki files"
+      ]
+    },
+    {
+      "id": 10,
+      "workflow": "improve",
+      "prompt": "I changed docs/wiki/Deploying_to_GitHub_Pages.md — anything I should verify?",
+      "expected_output": "Scoped audit on the changed file plus deploy alignment notes (-c, --site-base-url, upload-pages-artifact path) in findings table.",
+      "files": [],
+      "expectations": [
+        "Runs lint or check scoped to the changed file or full wiki",
+        "Mentions deploy alignment (site-base-url or artifact path)",
+        "Uses -c with discovered wiki.yaml",
+        "Does not modify wiki files without explicit request"
+      ]
+    },
+    {
+      "id": 11,
+      "workflow": "improve",
+      "prompt": "Audit my wiki — lint is failing on broken links in wiki/Foo.md",
+      "expected_output": "Single-file lint --strict with broken link output cited in findings table; distinguishes lint reporting from wiki link --fix-broken repair.",
+      "files": [],
+      "expectations": [
+        "Runs wiki lint --strict on the target file",
+        "Cites or summarizes lint output for broken links with evidence",
+        "Mentions wiki link --fix-broken as optional repair, separate from lint",
+        "Does not auto-edit files"
+      ]
+    },
+    {
+      "id": 12,
+      "workflow": "improve",
+      "prompt": "Audit my wiki — wiki check fails with unknown top-level keys in wiki.yaml",
+      "expected_output": "Config load error cited as config finding; points to CHANGELOG Migration; no config migrate or rename hints in error strings.",
+      "files": [],
+      "expectations": [
+        "Reports config load or unknown key error with evidence",
+        "Categories finding as config or mentions wiki.yaml schema",
+        "Mentions CHANGELOG or Migration for upgrades",
+        "Does not suggest config migrate or per-key rename hints",
+        "May cite site.manifest or other removed site keys as examples of invalid yaml",
+        "Does not modify wiki files"
+      ]
+    },
+    {
+      "id": 13,
+      "workflow": "deploy",
+      "prompt": "Deploy my wiki to GitHub Pages — repo is me/my-notes with wiki.yaml at the root",
+      "expected_output": "Workflow with --site-base-url /my-notes, artifact path _site/my-notes, Pages Actions source reminder.",
+      "files": [],
+      "expectations": [
+        "Mentions or creates deploy-pages workflow",
+        "Aligns site-base-url with /my-notes or equivalent project-site path",
+        "Sets upload-pages-artifact path to _site/my-notes or explains artifact path rule",
+        "Mentions GitHub Pages Build and deployment GitHub Actions setting",
+        "Does not run wiki init or suggest scaffolding",
+        "Does not suggest peaceiris or deploy from a branch"
+      ]
+    },
+    {
+      "id": 14,
+      "workflow": "deploy",
+      "prompt": "Set up CI to publish docs/wiki.yaml to GitHub Pages at /wiki",
+      "expected_output": "Config path docs/wiki.yaml, build --site-base-url /wiki, artifact _site/wiki.",
+      "files": [],
+      "expectations": [
+        "Uses -c docs/wiki.yaml or equivalent config path",
+        "Artifact path is _site/wiki not bare _site",
+        "Includes check and build steps before deploy-pages",
+        "References deploy.yml shape or upload-pages-artifact plus deploy-pages"
+      ]
+    },
+    {
+      "id": 15,
+      "workflow": "deploy",
+      "prompt": "Publish wiki to GitHub Pages but wiki is not installed",
+      "expected_output": "States CLI required, stops without creating workflow.",
+      "files": [],
+      "expectations": [
+        "States `wiki` on PATH is required",
+        "Does not create workflow file when CLI is missing",
+        "Does not reference removed skill paths by name"
+      ]
+    },
+    {
+      "id": 16,
+      "workflow": "deploy",
+      "prompt": "Deploy nancy-kataria/wiki to GitHub Pages — wiki.yaml at repo root, site.base_url is /wiki",
+      "expected_output": "Pip template, artifact _site/wiki, no uv sync, no committing _site.",
+      "files": [],
+      "expectations": [
+        "Uses pip install wazootech-wiki or pip template not uv sync without pyproject",
+        "Artifact path is _site/wiki",
+        "Does not commit _site to main or suggest deploy from a branch",
+        "Does not use peaceiris or publish_dir ./_site"
+      ]
+    },
+    {
+      "id": 17,
+      "workflow": "deploy",
+      "prompt": "Fix CI: uv pip install wazootech-wiki fails with No virtual environment found",
+      "expected_output": "Replace uv pip hybrid with pip template; no setup-uv on standalone wiki.",
+      "files": [],
+      "expectations": [
+        "Recommends pip install wazootech-wiki or pip workflow template",
+        "Does not use uv pip install without uv venv or pyproject monorepo",
+        "Does not keep astral-sh/setup-uv for standalone wiki repos",
+        "Mentions No virtual environment found or equivalent uv pip footgun"
+      ]
+    },
+    {
+      "id": 18,
+      "workflow": "routing",
+      "prompt": "Set up wiki from scratch and publish to GitHub Pages for repo me/my-notes",
+      "expected_output": "Install gate if needed, then create with --repo, then deploy workflow — without naming removed skill paths.",
+      "files": [],
+      "expectations": [
+        "Addresses install or CLI prerequisite before init when CLI is missing",
+        "Uses wiki init with --repo me/my-notes or equivalent",
+        "Mentions deploy workflow with site-base-url /my-notes and artifact _site/my-notes",
+        "Does not reference skills/wiki-install, wiki-create, wiki-deploy, or wiki-improve paths",
+        "Does not use peaceiris or deploy from a branch"
+      ]
+    },
+    {
+      "id": 19,
+      "workflow": "routing",
+      "prompt": "My wiki lint is failing on broken links — also help me deploy to GitHub Pages later",
+      "expected_output": "Prioritize improve/audit for lint; report findings without editing; defer deploy until user confirms or treat deploy as secondary.",
+      "files": [],
+      "expectations": [
+        "Runs or plans wiki lint --strict or audit.sh for broken links",
+        "Produces findings report style output with evidence",
+        "Does not auto-edit wiki files",
+        "Does not create deploy workflow in the same response without user focusing on deploy",
+        "Mentions wiki link --fix-broken as optional repair separate from lint"
+      ]
+    },
+    {
+      "id": 20,
+      "workflow": "create",
+      "prompt": "Create a wiki called Ethanpedia with a primary color of forest green.",
+      "expected_output": "Verify CLI (install gate if missing); wiki init with --site-name Ethanpedia and --site-theme-color set to a forest-green hex; post-init check --strict; no invalid wiki.yaml branding keys.",
+      "files": [],
+      "expectations": [
+        "Runs or plans verify-cli.sh or equivalent wiki --help and fmt capability check before init",
+        "If CLI is missing, mentions wazootech-wiki install and does not run wiki init until CLI works",
+        "Uses wiki init with --site-name Ethanpedia or equivalent non-interactive title flag",
+        "Uses --site-theme-color with a forest green hex (e.g. #228B22, #2E8B57, #355E3B) at init",
+        "Runs or plans wiki check --strict after init unless user opts out",
+        "Does not write site.theme_color or site.title to wiki.yaml (removed invalid keys)",
+        "Does not run wiki lint or wiki serve unsolicited"
+      ]
+    }
+  ]
+}

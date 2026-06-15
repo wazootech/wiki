@@ -1,6 +1,6 @@
 # Deploy Audit (Existing CI)
 
-**Setup** from scratch → **wiki-deploy** skill.
+**Setup** from scratch → [deploy.md](deploy.md).
 
 When auditing deploy-related wiki pages or workflows:
 
