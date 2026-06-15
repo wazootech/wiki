@@ -258,7 +258,7 @@
     {
       "id": 20,
       "workflow": "create",
-      "prompt": "/wiki create a new wiki named \"Ethanpedia\" using a forest green primary color.",
+      "prompt": "Create a wiki called Ethanpedia with a primary color of forest green.",
       "expected_output": "Verify CLI (install gate if missing); wiki init with --site-name Ethanpedia and --site-theme-color set to a forest-green hex; post-init check --strict; no invalid wiki.yaml branding keys.",
       "files": [],
       "expectations": [
