@@ -28,7 +28,7 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 | User intent | Read | Stop when |
 | ----------- | ---- | --------- |
 | CLI missing, stale, or verify install | [references/install.md](references/install.md) | CLI verified or blocker reported |
-| New wiki, `wiki init`, preferences wizard | [references/create.md](references/create.md) | Scaffold summarized |
+| New wiki, `wiki init`, tweak step | [references/create.md](references/create.md) | Scaffold summarized |
 | Audit, improve, pre-PR, lint/check failures | [references/improve.md](references/improve.md) | Findings report delivered |
 | GitHub Pages, deploy workflow, CI publish | [references/deploy.md](references/deploy.md) | Workflow + URLs summarized |
 

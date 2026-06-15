@@ -360,7 +360,7 @@ The bundled stylesheet at `assets/wikipedia.css` (copied on `wiki init` and emit
 
 ### Custom logos and icons
 
-Fresh `wiki init` workspaces ship `assets/logo.svg` and `assets/wikipedia.css`, enable `wiki.assets`, and reference both from the copied layout (`href="%wiki.base_url%/assets/logo.svg"`). Init generates the SVG from the first letter of `--site-name` (default `Wiki CLI` → `W`) and optional `--site-theme-color` (logo gradient only; not written to `wiki.yaml`). Replace the asset files or edit the layout `<head>` and sidebar markup.
+Fresh `wiki init` workspaces ship `assets/logo.svg` and `assets/wikipedia.css`, enable `wiki.assets`, and reference both from the copied layout (`href="%wiki.base_url%/assets/logo.svg"`). The scaffold logo defaults to letter `W` with a blue gradient; edit `<!-- wiki tweak: … -->` comments in `assets/logo.svg` for the glyph and colors. Sidebar display name and browser theme color live in tweak comments in `site.layout` (for example `layouts/wikipedia.html`). Replace asset files or edit layout markup directly.
 
 **Custom sidebar logo**
 

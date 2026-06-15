@@ -46,7 +46,7 @@ See `skills/wiki/references/install.md`.
 
 ## Create workflow
 
-Non-interactive `wiki init` (flags, not prompts) plus a short preferences wizard for logo glyph (`--site-name`), first page, and light wiki config tweaks (`wiki.yml`). Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
+Non-interactive `wiki init` for workspace structure (config, layout, starter pages), then a short **tweak** step: edit `<!-- wiki tweak: … -->` comments in `assets/logo.svg` and `layouts/wikipedia.html`, replace the starter first page, and optionally uncomment blocks in `wiki.yml`. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
 
 See `skills/wiki/references/create.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
 

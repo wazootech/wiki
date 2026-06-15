@@ -18,12 +18,12 @@ from wiki.init_scaffold import (
     copy_official_init_layout,
     detect_origin_repo,
     infer_github_pages_urls,
-    load_packaged_default_logo,
     load_packaged_official_layout,
     normalize_base_url,
     parse_github_repo,
     render_wiki_yaml,
     resolve_init_options,
+    scaffold_logo_svg,
 )
 from wiki.schemas.wiki_config import normalize_base_iri
 
@@ -177,23 +177,19 @@ class TestRenderWikiYaml(TestCase):
             copy_official_init_layout(dest, "minimal")
             self.assertFalse(dest.exists())
 
-    def test_load_packaged_default_logo(self) -> None:
-        rendered = load_packaged_default_logo()
+    def test_scaffold_logo_svg(self) -> None:
+        rendered = scaffold_logo_svg()
         self.assertIn("<svg", rendered)
         self.assertIn('viewBox="0 0 200 200"', rendered)
         self.assertIn(">W</text>", rendered)
-
-        acme = load_packaged_default_logo("Acme Docs")
-        self.assertIn(">A</text>", acme)
+        self.assertIn("wiki tweak: logo letter", rendered)
+        self.assertIn("wiki tweak: primary theme", rendered)
 
     def test_copy_default_logo(self) -> None:
         with TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "assets" / "logo.svg"
-            copy_default_logo(dest, site_name="Acme Docs")
-            self.assertEqual(
-                dest.read_text(encoding="utf-8"),
-                load_packaged_default_logo("Acme Docs"),
-            )
+            copy_default_logo(dest)
+            self.assertEqual(dest.read_text(encoding="utf-8"), scaffold_logo_svg())
 
 
 class TestResolveInitOptions(TestCase):
@@ -259,8 +255,8 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_include_file_extension": ("graph", "include_file_extension"),
 }
 
-# Init-only flags: affect scaffold assets, not wiki.yaml fields.
-INIT_ONLY_OPTIONS = frozenset({"site_name", "site_theme_color"})
+# Init-only CLI flags with no InitOptions field (none currently).
+INIT_ONLY_OPTIONS: frozenset[str] = frozenset()
 
 
 class TestInitLockstep(TestCase):

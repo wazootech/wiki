@@ -15,10 +15,15 @@
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
 - Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
 
+### Changed
+
+- `wiki init` removes `--force`, `--site-name`, and `--site-theme-color`. Init requires a clean directory; re-scaffold in a new directory or remove existing scaffold files manually. Branding uses `<!-- wiki tweak: … -->` comments in scaffolded `assets/logo.svg` and `layouts/wikipedia.html`.
+
 ### Migration
 
+- Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI. To customize logo letter or theme after init, edit tweak comments in `assets/logo.svg` and `layouts/wikipedia.html` instead.
 - Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
-- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually or re-init with `--force` to switch. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
+- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually to `wiki.yml` or remove before re-init. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
 - Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use monolithic page layouts with layout tokens instead.
 - Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`

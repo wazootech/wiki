@@ -18,10 +18,8 @@ class InitOptions(BaseModel):
     site_url_style: str = "dir"
     graph_content_predicate: str | None = None
     link_style: str | None = None
-    site_name: str = "Wiki CLI"
     wiki_inputs: list[str] | None = None
     graph_base_iri: str | None = None
-    site_theme_color: str | None = None
     graph_implicit_types: list[str] | None = None
     graph_implicit_types_policy: str | None = None
     graph_include_file_extension: bool | None = None

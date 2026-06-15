@@ -21,8 +21,8 @@ __all__ = [
     "copy_default_logo",
     "copy_official_init_layout",
     "copy_packaged_assets",
-    "load_packaged_default_logo",
     "load_packaged_official_layout",
+    "scaffold_logo_svg",
     "render_wiki_yaml",
     "resolve_init_options",
 ]
@@ -121,10 +121,8 @@ def resolve_init_options(
     cwd: Path,
     init_git: bool,
     prompt_context_wiki: Callable[[str], str],
-    site_name: str = "Wiki CLI",
     wiki_inputs: list[str] | None = None,
     graph_base_iri: str | None = None,
-    site_theme_color: str | None = None,
     graph_implicit_types: list[str] | None = None,
     graph_implicit_types_policy: str | None = None,
     graph_include_file_extension: bool | None = None,
@@ -171,10 +169,8 @@ def resolve_init_options(
         site_url_style=resolved_url_style,
         graph_content_predicate=graph_content_predicate,
         link_style=link_style,
-        site_name=site_name,
         wiki_inputs=wiki_inputs,
         graph_base_iri=graph_base_iri,
-        site_theme_color=site_theme_color,
         graph_implicit_types=graph_implicit_types,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
@@ -243,26 +239,26 @@ def copy_packaged_assets(dest_dir: Path) -> None:
         (dest_dir / filename).write_text(text, encoding="utf-8")
 
 
-def load_packaged_default_logo(
-    site_name: str = "Wiki CLI",
-    site_theme_color: str | None = None,
-) -> str:
-    """Return the default sidebar logo SVG for init scaffolding."""
+def scaffold_logo_svg() -> str:
+    """Return the default sidebar logo SVG for init scaffolding with tweak comments."""
     from .site.layout_context import build_logo_svg
 
-    letter = (site_name.strip() or "Wiki CLI")[0].upper()
-    return build_logo_svg(letter, site_theme_color)
+    svg = build_logo_svg("W")
+    svg = svg.replace(
+        '<linearGradient id="globeGrad"',
+        "<!-- wiki tweak: primary theme — edit globeGrad stops; adjust gridGrad accent to match -->\n"
+        '    <linearGradient id="globeGrad"',
+        1,
+    )
+    svg = svg.replace(
+        "<text ",
+        "<!-- wiki tweak: logo letter (one character) -->\n  <text ",
+        1,
+    )
+    return svg
 
 
-def copy_default_logo(
-    dest: Path,
-    *,
-    site_name: str = "Wiki CLI",
-    site_theme_color: str | None = None,
-) -> None:
+def copy_default_logo(dest: Path) -> None:
     """Write the default sidebar logo into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(
-        load_packaged_default_logo(site_name, site_theme_color),
-        encoding="utf-8",
-    )
+    dest.write_text(scaffold_logo_svg(), encoding="utf-8")

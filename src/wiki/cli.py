@@ -669,7 +669,6 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 
 
 @main.command()
-@click.option("--force", is_flag=True, help="Overwrite wiki.yml, README.md, wiki/, and seeded layout files.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer graph.context.wiki and site.base_url for GitHub Pages.")
 @click.option("--graph-context-wiki", "graph_context_wiki", default=None, help="Override graph.context.wiki (overrides --repo inference).")
@@ -677,10 +676,8 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["standard", "wikilink"]), help="Override link.style: standard page links or wikilinks.")
-@click.option("--site-name", "site_name", default="Wiki CLI", help="Site name for init logo glyph only (not written to wiki.yml).")
 @click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
-@click.option("--site-theme-color", "site_theme_color", default=None, help="Theme color for init logo only (not written to wiki.yml).")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
 @click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
@@ -692,7 +689,6 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
     help="Page layout: wikipedia (Vector UI) or minimal (unset site.layout).",
 )
 def init(
-    force: bool,
     init_git: bool,
     repo: str | None,
     graph_context_wiki: str | None,
@@ -700,10 +696,8 @@ def init(
     site_url_style: str | None,
     graph_content_predicate: str | None,
     link_style: str | None,
-    site_name: str,
     wiki_inputs: tuple[str, ...],
     graph_base_iri: str | None,
-    site_theme_color: str | None,
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
@@ -727,16 +721,24 @@ def init(
     readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
-    if not force:
-        if config_path.exists() or legacy_config_path.exists():
-            click.echo("Error: wiki.yml or wiki.yaml already exists. Use --force to overwrite.", err=True)
-            sys.exit(1)
-        if readme_path.exists():
-            click.echo("Error: README.md already exists. Use --force to overwrite.", err=True)
-            sys.exit(1)
-        if wiki_dir.exists() and any(wiki_dir.iterdir()):
-            click.echo("Error: wiki/ is not empty. Use --force to overwrite.", err=True)
-            sys.exit(1)
+    if config_path.exists() or legacy_config_path.exists():
+        click.echo(
+            "Error: wiki.yml or wiki.yaml already exists. Use a new directory or remove the config file.",
+            err=True,
+        )
+        sys.exit(1)
+    if readme_path.exists():
+        click.echo(
+            "Error: README.md already exists. Use a new directory or remove README.md.",
+            err=True,
+        )
+        sys.exit(1)
+    if wiki_dir.exists() and any(wiki_dir.iterdir()):
+        click.echo(
+            "Error: wiki/ is not empty. Use a new directory or clear wiki/ before init.",
+            err=True,
+        )
+        sys.exit(1)
 
     if repo is not None:
         try:
@@ -768,10 +770,8 @@ def init(
         cwd=cwd,
         init_git=init_git,
         prompt_context_wiki=prompt_context_wiki,
-        site_name=site_name,
         wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         graph_base_iri=graph_base_iri,
-        site_theme_color=site_theme_color,
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
@@ -827,6 +827,7 @@ def init(
         encoding="utf-8",
     )
     (wiki_dir / "Ethan_Davidson.md").write_text(
+        "<!-- wiki tweak: replace with your first page -->\n"
         "---\n"
         "type: schema:Person\n"
         "givenName: Ethan\n"
@@ -838,28 +839,22 @@ def init(
     )
 
     config_path.write_text(config_content, encoding="utf-8")
-    if force and legacy_config_path.exists():
-        legacy_config_path.unlink()
 
     layouts_dir = cwd / "layouts"
     layouts_dir.mkdir(parents=True, exist_ok=True)
     if init_options.site_layout == "wikipedia":
         wiki_layout_path = layouts_dir / "wikipedia.html"
-        if force or not wiki_layout_path.exists():
+        if not wiki_layout_path.exists():
             copy_official_init_layout(wiki_layout_path, "wikipedia")
 
     assets_dir = cwd / "assets"
     css_path = assets_dir / "wikipedia.css"
-    if init_options.site_layout == "wikipedia" and (force or not css_path.exists()):
+    if init_options.site_layout == "wikipedia" and not css_path.exists():
         copy_packaged_assets(assets_dir)
 
     logo_path = cwd / "assets" / "logo.svg"
-    if force or not logo_path.exists():
-        copy_default_logo(
-            logo_path,
-            site_name=init_options.site_name,
-            site_theme_color=init_options.site_theme_color,
-        )
+    if not logo_path.exists():
+        copy_default_logo(logo_path)
 
     if init_git:
         if shutil.which("git") is None:

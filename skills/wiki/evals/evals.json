@@ -51,7 +51,7 @@
       "expectations": [
         "Uses wiki init with --repo or equivalent non-interactive flags",
         "Runs or plans wiki check --strict after init",
-        "Asks about or applies logo glyph (--site-name) or first page in wizard",
+        "Asks about or applies logo glyph or first page in tweak step (edit scaffold comments)",
         "Does not run wiki lint or wiki serve unsolicited",
         "Does not include a full pip install tutorial"
       ]
@@ -89,7 +89,7 @@
       "expected_output": "Wizard-only mode; no force re-init; edits only with approval.",
       "files": [],
       "expectations": [
-        "Skips wiki init or does not use --force without explicit user request",
+        "Skips wiki init when wiki.yml already exists (wizard-only / Phase B)",
         "Focuses on layout branding, logo glyph, first page, or preferences wizard",
         "Does not run check/lint/serve unsolicited"
       ]
@@ -259,13 +259,13 @@
       "id": 20,
       "workflow": "create",
       "prompt": "Create a wiki called Ethanpedia with a primary color of forest green.",
-      "expected_output": "Verify CLI (install gate if missing); wiki init with --site-name Ethanpedia and --site-theme-color set to a forest-green hex; post-init check --strict; no invalid branding keys in wiki config.",
+      "expected_output": "Verify CLI (install gate if missing); wiki init with structural flags; Phase B tweak of logo.svg and layout for Ethanpedia branding and forest-green theme; post-init check --strict; no invalid branding keys in wiki config.",
       "files": [],
       "expectations": [
         "Runs or plans verify-cli.sh or equivalent wiki --help and fmt capability check before init",
         "If CLI is missing, mentions wazootech-wiki install and does not run wiki init until CLI works",
-        "Uses wiki init with --site-name Ethanpedia or equivalent non-interactive title flag",
-        "Uses --site-theme-color with a forest green hex (e.g. #228B22, #2E8B57, #355E3B) at init",
+        "Runs wiki init with non-interactive structural flags (not --site-name or --site-theme-color)",
+        "Edits assets/logo.svg and/or layouts/wikipedia.html tweak comments for Ethanpedia and forest green theme",
         "Runs or plans wiki check --strict after init unless user opts out",
         "Does not write site.theme_color or site.title to wiki config (removed invalid keys)",
         "Does not run wiki lint or wiki serve unsolicited"

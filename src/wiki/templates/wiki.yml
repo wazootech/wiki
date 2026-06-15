@@ -1,4 +1,4 @@
-{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_name, site_layout, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, site_theme_color, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
+{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_layout, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
 
 # Wiki paths, assets, and filename policy (wiki check / wiki lint).
 wiki:

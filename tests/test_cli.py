@@ -15,9 +15,9 @@ from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
 from wiki.init_scaffold import (
     InitOptions,
-    load_packaged_default_logo,
     load_packaged_official_layout,
     render_wiki_yaml,
+    scaffold_logo_svg,
 )
 
 
@@ -495,7 +495,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     main,
                     [
                         "init",
-                        "--force",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
                         "--site-layout",
@@ -525,6 +524,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
                 # Check wiki/Ethan_Davidson.md exists
                 person_content = (Path("wiki") / "Ethan_Davidson.md").read_text(encoding="utf-8")
+                self.assertIn("wiki tweak: replace with your first page", person_content)
                 self.assertIn("givenName: Ethan", person_content)
                 self.assertIn("familyName: Davidson", person_content)
                 self.assertNotIn("wazoo:layout:", person_content)
@@ -544,9 +544,13 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertTrue(default_logo.is_file())
                 css_path = Path("assets") / "wikipedia.css"
                 self.assertTrue(css_path.is_file())
-                expected_logo = load_packaged_default_logo("Wiki CLI")
+                expected_logo = scaffold_logo_svg()
                 self.assertEqual(default_logo.read_text(encoding="utf-8"), expected_logo)
                 self.assertIn("<svg", expected_logo)
+                self.assertIn("wiki tweak: logo letter", expected_logo)
+                self.assertIn(">W</text>", expected_logo)
+                self.assertIn("wiki tweak: site display name", expected_layout)
+                self.assertIn("wiki tweak: browser theme color", expected_layout)
 
                 expected_content = render_wiki_yaml(
                     InitOptions(
@@ -559,37 +563,16 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertFalse(Path(".mdformat.toml").exists())
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
-                # Check --force protects existing layouts (second init)
                 result2 = runner.invoke(
                     main,
                     [
                         "init",
-                        "--force",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
-                        "--site-layout",
-                        "wikipedia",
                     ],
-                    catch_exceptions=False,
                 )
-                self.assertEqual(result2.exit_code, 0)
-                self.assertTrue(wiki_layout.is_file())
-                self.assertIn('id="mw-navigation"', wiki_layout.read_text(encoding="utf-8"))
-
-                # Check init without --force still succeeds when layouts exist
-                result3 = runner.invoke(
-                    main,
-                    [
-                        "init",
-                        "--force",
-                        "--graph-context-wiki",
-                        "https://wiki.example.org/",
-                        "--site-layout",
-                        "wikipedia",
-                    ],
-                    catch_exceptions=False,
-                )
-                self.assertEqual(result3.exit_code, 0)
+                self.assertNotEqual(result2.exit_code, 0)
+                self.assertIn("wiki.yml or wiki.yaml already exists", result2.output)
 
                 self.assertFalse((Path(".git")).exists())
 
@@ -599,7 +582,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
             with runner.isolated_filesystem(temp_dir=tmpdir):
                 result = runner.invoke(
                     main,
-                    ["init", "--force", "--repo", "wazootech/wiki"],
+                    ["init", "--repo", "wazootech/wiki"],
                     catch_exceptions=False,
                 )
                 self.assertEqual(result.exit_code, 0)
@@ -610,28 +593,23 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
-    def test_cli_init_site_name_logo_letter(self) -> None:
+    def test_cli_init_scaffold_logo_has_tweak_comments(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
                 result = runner.invoke(
                     main,
-                    [
-                        "init",
-                        "--force",
-                        "--graph-context-wiki",
-                        "https://wiki.example.org/",
-                        "--site-name",
-                        "My Project",
-                    ],
+                    ["init", "--graph-context-wiki", "https://wiki.example.org/"],
                     catch_exceptions=False,
                 )
                 self.assertEqual(result.exit_code, 0)
                 logo_content = Path("assets") / "logo.svg"
                 self.assertTrue(logo_content.is_file())
-                self.assertIn(">M</text>", logo_content.read_text(encoding="utf-8"))
+                logo_text = logo_content.read_text(encoding="utf-8")
+                self.assertIn("wiki tweak: logo letter", logo_text)
+                self.assertIn("wiki tweak: primary theme", logo_text)
+                self.assertIn(">W</text>", logo_text)
                 config_content = Path("wiki.yml").read_text(encoding="utf-8")
-                self.assertNotIn("name: My Project", config_content)
                 self.assertNotIn("manifest:", config_content)
 
     def test_cli_init_implicit_types_policy_append(self) -> None:
@@ -642,7 +620,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     main,
                     [
                         "init",
-                        "--force",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
                         "--graph-implicit-types",
@@ -666,7 +643,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     main,
                     [
                         "init",
-                        "--force",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
                         "--graph-implicit-types-policy",
@@ -685,7 +661,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     main,
                     [
                         "init",
-                        "--force",
                         "--repo",
                         "wazootech/wiki",
                         "--graph-context-wiki",
@@ -707,28 +682,14 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
                 (Path(".git")).mkdir()
-                result = runner.invoke(main, ["init", "--force"], catch_exceptions=False)
+                result = runner.invoke(main, ["init"], catch_exceptions=False)
                 self.assertEqual(result.exit_code, 0)
                 config_content = Path("wiki.yml").read_text(encoding="utf-8")
                 self.assertIn("wiki: https://wazootech.github.io/wiki/", config_content)
                 self.assertNotIn("wiki_base:", config_content)
                 self.assertIn("base_url: /wiki", config_content)
 
-    def test_cli_init_force_removes_legacy_wiki_yaml(self) -> None:
-        runner = CliRunner()
-        with TemporaryDirectory() as tmpdir:
-            with runner.isolated_filesystem(temp_dir=tmpdir):
-                Path("wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n", encoding="utf-8")
-                result = runner.invoke(
-                    main,
-                    ["init", "--force", "--graph-context-wiki", "https://wiki.example.org/"],
-                    catch_exceptions=False,
-                )
-                self.assertEqual(result.exit_code, 0)
-                self.assertTrue(Path("wiki.yml").is_file())
-                self.assertFalse(Path("wiki.yaml").exists())
-
-    def test_cli_init_rejects_existing_wiki_yaml_without_force(self) -> None:
+    def test_cli_init_rejects_existing_wiki_yaml(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
@@ -744,7 +705,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):
-                result = runner.invoke(main, ["init", "--force", "--repo", "not-valid"], catch_exceptions=False)
+                result = runner.invoke(main, ["init", "--repo", "not-valid"], catch_exceptions=False)
                 self.assertNotEqual(result.exit_code, 0)
                 self.assertIn("Invalid GitHub repo", result.output)
 
@@ -776,7 +737,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 with patch("shutil.which", return_value="git"), patch("subprocess.run") as run_mock:
                     result = runner.invoke(
                         main,
-                        ["init", "--force", "--git", "--graph-context-wiki", "https://wiki.example.org/"],
+                        ["init", "--git", "--graph-context-wiki", "https://wiki.example.org/"],
                         catch_exceptions=False,
                     )
 
