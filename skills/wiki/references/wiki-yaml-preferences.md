@@ -19,14 +19,14 @@ Other `lint.*` keys (e.g. `headings`, `heading_levels`) are valid but init omits
 Do not add these to new scaffolds; remove them when upgrading — invalid in the current schema:
 
 - `site.manifest`, `site.title`, `site.theme_color`
-- Template vars `{{ site.manifest.* }}` — replace with literals or `{{ site.base_url }}/assets/…` in custom layouts
+- Template vars `{{ site.manifest.* }}` — replace with literals or `%wiki.base_url%/assets/…` in custom layouts
 - `<link rel="manifest">` and built `manifest.webmanifest` — removed from build/serve
 
 Upgrade steps: CHANGELOG Migration section and [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). No runtime rename hints or `wiki config migrate` shims.
 
 ## Site branding
 
-Branding is **not** in `wiki.yaml`. Edit `site.layout` (e.g. `layouts/default.html.j2`) and files under `wiki.assets` for site name, theme color, favicon, and sidebar chrome. Init scaffolds `assets/logo.svg` and references it at `{{ site.base_url }}/assets/logo.svg` in the default layout. `--site-name` and `--site-theme-color` at init affect only the generated logo SVG.
+Branding is **not** in `wiki.yaml`. Edit `site.layout` (e.g. `layouts/wikipedia.html`) and files under `wiki.assets` for site name, theme color, favicon, and sidebar chrome. Init scaffolds `assets/logo.svg` and references it at `%wiki.base_url%/assets/logo.svg` in the default layout. `--site-name` and `--site-theme-color` at init affect only the generated logo SVG.
 
 ## Lint strictness (only if asked)
 

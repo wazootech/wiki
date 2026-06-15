@@ -126,13 +126,13 @@ class TestConfig(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             (base_path / "layouts").mkdir()
-            (base_path / "layouts" / "custom.html.j2").write_text("<html></html>", encoding="utf-8")
+            (base_path / "layouts" / "custom.html").write_text("<html></html>", encoding="utf-8")
             (base_path / "wiki.yaml").write_text(
-                "site:\n  layout: layouts/custom.html.j2\n",
+                "site:\n  layout: layouts/custom.html\n",
                 encoding="utf-8",
             )
             config = Config.load(base_path)
-            self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html.j2").resolve())
+            self.assertEqual(config.page_layout, (base_path / "layouts" / "custom.html").resolve())
 
     def test_Config_rejects_site_manifest_block(self) -> None:
         with TemporaryDirectory() as tmpdir:

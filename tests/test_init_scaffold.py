@@ -14,12 +14,12 @@ from wiki.config import Config
 from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.init_scaffold import (
     InitOptions,
-    copy_default_layout,
     copy_default_logo,
+    copy_official_init_layout,
     detect_origin_repo,
     infer_github_pages_urls,
-    load_packaged_default_layout,
     load_packaged_default_logo,
+    load_packaged_official_layout,
     normalize_base_url,
     parse_github_repo,
     render_wiki_yaml,
@@ -114,7 +114,7 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
-        self.assertIn("layout: layouts/default.html.j2", rendered)
+        self.assertIn("layout: layouts/wikipedia.html", rendered)
         self.assertNotIn("manifest:", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
@@ -145,20 +145,37 @@ class TestRenderWikiYaml(TestCase):
             config = Config.load(config_path)
             self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
-    def test_load_packaged_default_layout(self) -> None:
-        rendered = load_packaged_default_layout()
-        self.assertIn("{{ page.title }}", rendered)
-        self.assertIn("Wiki CLI", rendered)
-        self.assertNotIn("{# wiki init scaffold", rendered)
-        self.assertIn("<title>{{ page.title }} - Wiki CLI</title>", rendered)
-        self.assertIn('placeholder="Search Wiki CLI"', rendered)
-        self.assertIn("{{ site.base_url }}/assets/logo.svg", rendered)
-        self.assertIn('<meta name="theme-color" content="#3b82f6">', rendered)
-        self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', rendered)
-        self.assertIn('<link rel="icon" href="{{ site.base_url }}/assets/logo.svg">', rendered)
-        self.assertNotIn('rel="manifest"', rendered)
-        self.assertNotIn("{{ site.manifest", rendered)
-        self.assertNotIn("{{ site.logo_svg }}", rendered)
+    def test_minimal_layout_omits_site_layout(self) -> None:
+        rendered = render_wiki_yaml(
+            InitOptions(graph_context_wiki="https://wiki.example.org/", site_layout="minimal"),
+        )
+        self.assertNotIn("layout:", rendered)
+        self.assertIn("# layout unset", rendered)
+
+    def test_load_packaged_official_layout_wikipedia(self) -> None:
+        rendered = load_packaged_official_layout("wikipedia")
+        self.assertIn("%wiki.head%", rendered)
+        self.assertIn("wikipedia.css", rendered)
+        self.assertIn('id="mw-navigation"', rendered)
+        self.assertNotIn("%wiki.body%", rendered)
+
+    def test_load_packaged_official_layout_minimal(self) -> None:
+        rendered = load_packaged_official_layout("minimal")
+        self.assertIn("%wiki.page.title%", rendered)
+        self.assertIn("wikipedia.css", rendered)
+        self.assertNotIn("mw-navigation", rendered)
+
+    def test_copy_official_init_layout_wikipedia(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "layouts" / "wikipedia.html"
+            copy_official_init_layout(dest, "wikipedia")
+            self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_official_layout("wikipedia"))
+
+    def test_copy_official_init_layout_minimal_noop(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "layouts" / "index.html"
+            copy_official_init_layout(dest, "minimal")
+            self.assertFalse(dest.exists())
 
     def test_load_packaged_default_logo(self) -> None:
         rendered = load_packaged_default_logo()
@@ -168,12 +185,6 @@ class TestRenderWikiYaml(TestCase):
 
         acme = load_packaged_default_logo("Acme Docs")
         self.assertIn(">A</text>", acme)
-
-    def test_copy_default_layout(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            dest = Path(tmpdir) / "layouts" / "default.html.j2"
-            copy_default_layout(dest)
-            self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_default_layout())
 
     def test_copy_default_logo(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -238,6 +249,7 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_context_wiki": ("graph", "context", "wiki"),
     "site_base_url": ("site", "base_url"),
     "site_url_style": ("site", "url_style"),
+    "site_layout": ("site", "layout"),
     "graph_content_predicate": ("graph", "content_predicate"),
     "link_style": ("link", "style"),
     "wiki_inputs": ("wiki", "inputs"),

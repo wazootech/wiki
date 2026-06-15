@@ -14,7 +14,7 @@ The **working** deploy workflow in the Wiki CLI repository is [`.github/workflow
 | ---- | ------------- | --- |
 | Permissions | `contents: read`, `pages: write`, `id-token: write` | Official Pages Actions model |
 | Install | `uv sync` + `uv run wiki` | Monorepo has `pyproject.toml` + `uv.lock` |
-| Config | `-c docs/wiki.yaml` | Nested wiki in monorepo |
+| Config | `-c docs/wiki.yml` | Nested wiki in monorepo |
 | Build | `build --output-dir _site --site-base-url /wiki` | Explicit base URL in CI |
 | Artifact | `path: "_site/wiki"` | Matches `site.base_url: /wiki` |
 | Deploy | `upload-pages-artifact@v3` → `deploy-pages@v4` | Not branch push |

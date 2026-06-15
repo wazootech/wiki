@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 _LINK_STYLES = frozenset({"standard", "wikilink"})
 _VALID_URL_STYLES = frozenset({"dir", "file"})
+_INIT_LAYOUTS = frozenset({"wikipedia", "minimal"})
+DEFAULT_INIT_LAYOUT = "wikipedia"
 
 
 class InitOptions(BaseModel):
@@ -23,6 +25,15 @@ class InitOptions(BaseModel):
     graph_implicit_types: list[str] | None = None
     graph_implicit_types_policy: str | None = None
     graph_include_file_extension: bool | None = None
+    site_layout: str = DEFAULT_INIT_LAYOUT
+
+    @field_validator("site_layout", mode="before")
+    @classmethod
+    def _validate_site_layout(cls, value: object) -> str:
+        normalized = str(value or DEFAULT_INIT_LAYOUT).strip().lower()
+        if normalized not in _INIT_LAYOUTS:
+            raise ValueError(f"expected wikipedia or minimal, got {value!r}")
+        return normalized
 
     @field_validator("site_url_style", mode="before")
     @classmethod

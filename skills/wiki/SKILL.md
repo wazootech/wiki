@@ -54,7 +54,7 @@ bash skills/wiki/scripts/verify-cli.sh
 bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml [FILE...]
 ```
 
-`audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`. In this repo: `-c docs/wiki.yaml`.
+`audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`. In this repo: `-c docs/wiki.yml`.
 
 ## Reference index
 

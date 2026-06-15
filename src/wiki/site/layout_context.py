@@ -1,4 +1,4 @@
-"""Nested Jinja layout template context for wiki page shells."""
+"""Nested layout template context for wiki page shells."""
 
 from __future__ import annotations
 
@@ -10,13 +10,11 @@ from markupsafe import Markup
 
 from ..config import DEFAULT_URL_STYLE
 from ..schemas.site import VirtualPage, WikiSite
-from .markdown import INLINE_CSS
 
 _DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
 
 LAYOUT_CONTEXT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
     {
-        ("site", "inline_css"),
         ("page", "content"),
         ("page", "layout", "label"),
         ("page", "type_label"),
@@ -93,7 +91,6 @@ def _site_context(*, base_url: str, url_style: str) -> dict[str, Any]:
     return {
         "base_url": base_url,
         "url_style": url_style,
-        "inline_css": INLINE_CSS,
     }
 
 

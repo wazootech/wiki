@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Page layouts use **`%wiki.*%` layout tokens** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `layouts/index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
 - Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
 - Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
 - Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
@@ -16,6 +17,10 @@
 
 ### Migration
 
+- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
+- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually or re-init with `--force` to switch. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
+- Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use monolithic page layouts with layout tokens instead.
+- Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
 - Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill pages removed

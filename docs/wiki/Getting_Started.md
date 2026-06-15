@@ -53,7 +53,7 @@ wiki init --repo wazootech/wiki
 wiki init --git
 ```
 
-`wiki init` writes `wiki.yaml`, `README.md`, `layouts/`, `assets/logo.svg`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). The scaffold enables `wiki.assets` and wires the default layout to the logo file. Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags and `--force` behavior.
+`wiki init` writes `wiki.yml`, `README.md`, `layouts/`, `assets/logo.svg`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). The scaffold enables `wiki.assets` and wires the default layout to the logo file. Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags and `--force` behavior.
 
 Alternatively, start from a GitHub template: [wiki-template](https://github.com/wazootech/wiki-template) (generic workspace) or the [LLM Wiki](LLM_Wiki.md) starter [llm-wiki-template](https://github.com/wazootech/llm-wiki-template). See [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates).
 
@@ -89,11 +89,11 @@ Use `wiki check -v` / `wiki lint -v` to see warnings. In CI, run both with `--st
 The published site under `docs/wiki/` is built with:
 
 ```bash
-wiki -c docs/wiki.yaml check --strict -v
-wiki -c docs/wiki.yaml lint --strict -v
-python -m wiki -c docs/wiki.yaml serve --watch
-wiki -c docs/wiki.yaml render --cache
-wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki
+wiki -c docs/wiki.yml check --strict -v
+wiki -c docs/wiki.yml lint --strict -v
+python -m wiki -c docs/wiki.yml serve --watch
+wiki -c docs/wiki.yml render --cache
+wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
 ```
 
 See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Actions workflow.

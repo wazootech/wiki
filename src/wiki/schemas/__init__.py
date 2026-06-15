@@ -1,7 +1,7 @@
 """Pydantic schema models for wiki config and domain types."""
 
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
-from .init import InitOptions
+from .init import DEFAULT_INIT_LAYOUT, InitOptions
 from .metadata import METADATA_VIEWS, MetadataView
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import InfoboxRow, TocItem, VirtualPage, WikiSite
@@ -37,6 +37,7 @@ __all__ = [
     "WikiConfig",
     "VirtualPage",
     "Config",
+    "DEFAULT_INIT_LAYOUT",
     "WikiSite",
     "coerce_severity",
 ]

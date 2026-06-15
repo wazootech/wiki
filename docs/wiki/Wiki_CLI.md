@@ -68,7 +68,7 @@ This separation is intentional: the strongest differentiator is the **machine la
 
 ### Obsidian
 
-Run `wiki` against the folder that contains `wiki.yaml`. Use Shell Commands for on-save `wiki check`, hotkey `wiki render`, or `wiki serve --watch` for preview. Details: [Obsidian integration](Obsidian_Integration.md) and [Dataview integration](Dataview_Integration.md).
+Run `wiki` against the folder that contains `wiki.yml` or `wiki.yaml`. Use Shell Commands for on-save `wiki check`, hotkey `wiki render`, or `wiki serve --watch` for preview. Details: [Obsidian integration](Obsidian_Integration.md) and [Dataview integration](Dataview_Integration.md).
 
 ### LLM wikis
 
@@ -106,7 +106,7 @@ GitHub **template repositories** in the [wazootech](https://github.com/wazootech
 
 External templates consume Wiki CLI outputs — they do not replace the compiler:
 
-- **`wiki.yaml`** — config root; `wiki.inputs`, `graph.*`, `site.*`
+- **`wiki.yml`** / **`wiki.yaml`** — config root; `wiki.inputs`, `graph.*`, `site.*`
 - **`wiki export`** — JSON-LD, Turtle, TriG, and other RDF serializations
 - **`wiki build`** — static HTML under `site.base_url`
 
@@ -124,7 +124,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 - **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
 - **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki Subcommand build](Wiki_Subcommand_build.md), [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 - **Export** — JSON-LD and RDF serializations ([Wiki Subcommand export](Wiki_Subcommand_export.md))
-- **Init** — scaffold `wiki.yaml` ([Wiki Subcommand init](Wiki_Subcommand_init.md))
+- **Init** — scaffold `wiki.yml` ([Wiki Subcommand init](Wiki_Subcommand_init.md))
 - **Upgrade** — PyPI updates ([Wiki Subcommand upgrade](Wiki_Subcommand_upgrade.md))
 
 ## Agent skills
@@ -134,23 +134,23 @@ Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/w
 ## Start here
 
 - [Getting Started](Getting_Started.md) — install, `wiki init`, first `check` and `serve`
-- [Wiki Configuration](Wiki_Configuration.md) — `wiki.yaml` options
+- [Wiki Configuration](Wiki_Configuration.md) — `wiki.yml` / `wiki.yaml` options
 - [Style Guide](Style_Guide.md) — frontmatter, shapes, internal links, SPARQL blocks
 - [Graph Cache](Graph_Cache.md) — in-process RDF graph reuse
 - [Design Philosophies](Design_Philosophies.md) — silence is golden, pipes, flat commands
 
 ## Global Options
 
-These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`). `init` and `upgrade` do not load `wiki.yaml`.
+These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`). `init` and `upgrade` do not load a config file.
 
 ### `-c, --config PATH`
 
-Path to `wiki.yaml`, `wiki.yml`, `wiki.json`, or a directory containing one of those files. Defaults to the current directory (`.`).
+Path to `wiki.yml`, `wiki.yaml`, `wiki.json`, or a directory containing one of those files. Defaults to the current directory (`.`).
 
 Example:
 
 ```bash
-wiki -c docs/wiki.yaml check
+wiki -c docs/wiki.yml check
 ```
 
 ### `--wiki-inputs PATH` (repeatable)
@@ -188,7 +188,7 @@ ORDER BY ?command
 | [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
-| [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yaml and starter wiki pages interactively. |
+| [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yml and starter wiki pages interactively. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the wiki graph. |

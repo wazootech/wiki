@@ -11,11 +11,11 @@ from .html import (
     build_page_html,
 )
 from .layout_context import build_layout_context, build_logo_svg
-from .layout_template import MINIMAL_LAYOUT_TEMPLATE
+from .layout_tokens import PACKAGED_MINIMAL_LAYOUT
 from .markdown import (
-    INLINE_CSS,
     extract_title,
     humanize_route,
+    load_packaged_wikipedia_css,
     render_copyable_pre,
     render_outline_title,
     render_wiki_markdown,
@@ -24,8 +24,8 @@ from .markdown import (
 )
 
 __all__ = [
-    "MINIMAL_LAYOUT_TEMPLATE",
-    "INLINE_CSS",
+    "PACKAGED_MINIMAL_LAYOUT",
+    "load_packaged_wikipedia_css",
     "InfoboxRow",
     "TocItem",
     "VirtualPage",

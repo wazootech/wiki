@@ -5,10 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .site.layout_template import (
-    layout_file_is_valid,
-    layout_stem,
-)
+from .site.layout_template import layout_file_is_valid, layout_stem
 
 LAYOUT_FRONTMATTER_KEY = "wazoo:layout"
 

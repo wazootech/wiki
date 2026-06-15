@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki init
-description: Scaffold wiki.yaml and starter wiki pages interactively.
+description: Scaffold wiki.yml and starter wiki pages interactively.
 ---
 
 # `wiki init`
 
-Create a new workspace in the **current directory**: `wiki.yaml`, `README.md`, `layouts/`, and starter files under `wiki/`.
+Create a new workspace in the **current directory**: `wiki.yml`, `README.md`, `layouts/`, and starter files under `wiki/`.
 
 Does not use loaded Config; safe to run before a config exists.
 
@@ -22,23 +22,23 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 
 ## Options
 
-| Flag                             | Description                                                                                                                                                                        |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--force`                        | Overwrite existing `wiki.yaml`, `README.md`, starter `wiki/` files, and `layouts/default.html.j2`                                                                                  |
-| `--git`                          | Run `git init` after scaffolding                                                                                                                                                   |
-| `--repo`                         | GitHub `owner/repo`; infer `graph.context.wiki` and `site.base_url` for GitHub Pages                                                                                               |
-| `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                                                                                                       |
-| `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                                                                                                               |
-| `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                                                                                                         |
-| `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                                                                                                               |
-| `--link-style`                   | Override `link.style`: standard page links (`standard`) or wikilinks (`wikilink`)                                                                                                  |
-| `--site-name`                    | First letter used in `assets/logo.svg` only (default name `Wiki CLI` → `W`); does not change copied layout title, sidebar label, or search placeholder; not written to `wiki.yaml` |
-| `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                                                                                                    |
-| `--graph-base-iri`               | Override `graph.base_iri` URI                                                                                                                                                      |
-| `--site-theme-color`             | Logo gradient at init only (e.g. `#3b82f6`; not written to `wiki.yaml`)                                                                                                            |
-| `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                                                                                                                  |
-| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                                                                                                     |
-| `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`)                                                                                     |
+| Flag                             | Description                                                                                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--force`                        | Overwrite existing `wiki.yml`, `README.md`, starter `wiki/` files, and seeded layout files (`layouts/wikipedia.html` and `assets/wikipedia.css` when `--site-layout wikipedia`)   |
+| `--git`                          | Run `git init` after scaffolding                                                                                                                                                  |
+| `--repo`                         | GitHub `owner/repo`; infer `graph.context.wiki` and `site.base_url` for GitHub Pages                                                                                              |
+| `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                                                                                                      |
+| `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                                                                                                              |
+| `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                                                                                                        |
+| `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                                                                                                              |
+| `--link-style`                   | Override `link.style`: standard page links (`standard`) or wikilinks (`wikilink`)                                                                                                 |
+| `--site-name`                    | First letter used in `assets/logo.svg` only (default name `Wiki CLI` → `W`); does not change copied layout title, sidebar label, or search placeholder; not written to `wiki.yml` |
+| `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                                                                                                   |
+| `--graph-base-iri`               | Override `graph.base_iri` URI                                                                                                                                                     |
+| `--site-theme-color`             | Logo gradient at init only (e.g. `#3b82f6`; not written to `wiki.yml`)                                                                                                            |
+| `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                                                                                                                 |
+| `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                                                                                                    |
+| `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`)                                                                                    |
 
 ## URL resolution
 
@@ -50,7 +50,7 @@ When `--graph-context-wiki` is not passed, init resolves `graph.context.wiki` in
 
 `--graph-context-wiki` always wins over `--repo` and remote detection. `--site-base-url` overrides the inferred path from `--repo`.
 
-Document subject IRIs default to `graph.context.wiki`. Set optional `graph.base_iri` in `wiki.yaml` when auto-generated document IRIs must differ from the `wiki:` namespace (see [Wiki Configuration](Wiki_Configuration.md)).
+Document subject IRIs default to `graph.context.wiki`. Set optional `graph.base_iri` in `wiki.yml` when auto-generated document IRIs must differ from the `wiki:` namespace (see [Wiki Configuration](Wiki_Configuration.md)).
 
 ## Prompts
 
@@ -62,21 +62,20 @@ Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `x
 
 ## Generated config
 
-New workspaces receive a plain `wiki.yaml` rendered from [`wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2). Jinja variables (such as `graph_context_wiki`, `site_base_url`, `graph_content_predicate`, and `link_style`) map from init CLI flags into nested blocks.
+New workspaces receive a plain `wiki.yml` rendered from [`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml). Jinja variables (such as `graph_context_wiki`, `site_base_url`, `graph_content_predicate`, and `link_style`) map from init CLI flags into nested blocks.
 
 For every key — schema default, whether init writes it, and which command audits it — see [Wiki Configuration → Overview](Wiki_Configuration.md#overview) and the per-block defaults tables in [Wiki Configuration](Wiki_Configuration.md).
 
 ## Generated files
 
-- `layouts/default.html.j2` — copied from packaged [`layout_default.html.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/layout_default.html.j2); search, tabs, backlinks, and TOC. Sidebar logo references `assets/logo.svg` at `{{ site.base_url }}/assets/logo.svg`. Edit to customize site name, colors, and chrome.
-- `assets/logo.svg` — starter sidebar logo; center glyph is the first letter of `--site-name` (default `Wiki CLI` → `W`); optional `--site-theme-color` sets the gradient. Edit `layouts/default.html.j2` to change the visible site name, theme color meta tags, and other chrome.
+- `layouts/wikipedia.html` and `assets/wikipedia.css` — copied when `--site-layout wikipedia` (default); full Vector layout with linked stylesheet. With `--site-layout minimal`, `site.layout` is omitted and the packaged `index.html` layout applies.
+- `assets/logo.svg` — starter sidebar logo; center glyph is the first letter of `--site-name` (default `Wiki CLI` → `W`); optional `--site-theme-color` sets the gradient. Sidebar label and search placeholder live in the packaged page layout.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example
-
-By default `wiki init` does **not** create a Git repository. Use `--git` if you want to run `git init` immediately.
 
 ## Related
 
 - [Getting Started](Getting_Started.md)
 - [Wiki Configuration](Wiki_Configuration.md)
+- [Wiki Page Layouts](Wiki_Page_Layouts.md)

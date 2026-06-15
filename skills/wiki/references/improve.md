@@ -17,7 +17,7 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yaml
 # vendored: bash .agents/skills/wiki/scripts/audit.sh -c path/to/wiki.yaml
 ```
 
-Run `verify-cli.sh` first if wiki command resolution is unclear. Prefers `wiki` on PATH; checkout fallbacks: `uv run wiki`, `python -m wiki`; else `npx wazootech-wiki`. In **this repo**: `-c docs/wiki.yaml`.
+Run `verify-cli.sh` first if wiki command resolution is unclear. Prefers `wiki` on PATH; checkout fallbacks: `uv run wiki`, `python -m wiki`; else `npx wazootech-wiki`. In **this repo**: `-c docs/wiki.yml`.
 
 [`scripts/audit.sh`](../scripts/audit.sh) runs fmt → lint → check → render, then `wiki link --check` only when wired in `.github/workflows/`. Stop on first failure; paste relevant CLI output.
 

@@ -40,16 +40,58 @@ def audit_assets(config: Config) -> list[str]:
     return warnings
 
 
+_PACKAGED_ASSET_FILENAMES = frozenset({"wikipedia.css"})
+
+
+def write_packaged_asset(filename: str, dest: Path) -> None:
+    """Write a bundled asset from the wiki package to dest."""
+    from importlib.resources import files as resource_files
+
+    if filename not in _PACKAGED_ASSET_FILENAMES:
+        raise ValueError(f"Unknown packaged asset: {filename!r}")
+    text = resource_files("wiki").joinpath(f"assets/{filename}").read_text(encoding="utf-8")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(text, encoding="utf-8")
+
+
 def build_asset_manifest(config: Config, owned_output_dir: Path, base_url: str) -> list[OutputEntry]:
     entries: list[OutputEntry] = []
     base = base_url.rstrip("/") if base_url else ""
+    seen_outputs: set[Path] = set()
     for asset in iter_asset_files(config):
         rel = config.relative_to_root(asset)
         rel_parts = [part for part in PurePosixPath(rel).parts if part]
         output_path = owned_output_dir.joinpath(*rel_parts)
+        seen_outputs.add(output_path.resolve())
         encoded = quote(rel, safe="/()_-.$~")
         public_url = f"{base}/{encoded}" if base else f"/{encoded}"
         entries.append(OutputEntry(source=asset, output_path=output_path, public_url=public_url, kind="asset"))
+    entries.extend(_packaged_asset_entries(config, owned_output_dir, base, seen_outputs))
+    return entries
+
+
+def _packaged_asset_entries(
+    config: Config,
+    owned_output_dir: Path,
+    base: str,
+    seen_outputs: set[Path],
+) -> list[OutputEntry]:
+    from importlib.resources import files as resource_files
+
+    entries: list[OutputEntry] = []
+    for filename in sorted(_PACKAGED_ASSET_FILENAMES):
+        packaged = resource_files("wiki").joinpath(f"assets/{filename}")
+        if not packaged.is_file():
+            continue
+        rel = f"assets/{filename}"
+        output_path = owned_output_dir / "assets" / filename
+        if output_path.resolve() in seen_outputs:
+            continue
+        workspace_asset = config.config_root / "assets" / filename
+        source = workspace_asset if workspace_asset.is_file() else None
+        encoded = quote(rel, safe="/()_-.$~")
+        public_url = f"{base}/{encoded}" if base else f"/{encoded}"
+        entries.append(OutputEntry(source=source, output_path=output_path, public_url=public_url, kind="asset"))
     return entries
 
 

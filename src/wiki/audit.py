@@ -431,7 +431,7 @@ def check_layout_frontmatter(
     config: Config,
     file_filter: set[str] | None = None,
 ) -> list[str]:
-    """Check that wazoo:layout paths resolve to readable .html.j2 files."""
+    """Check that wazoo:layout paths resolve to readable .html files."""
     missing: list[str] = []
     config_root = config.config_root.resolve()
 
@@ -452,7 +452,7 @@ def check_layout_frontmatter(
         layout_path = resolve_layout_path(raw_layout, config_root)
         if not layout_file_is_valid(layout_path, config_root):
             missing.append(
-                f"In {route}: {LAYOUT_FRONTMATTER_KEY} {raw_layout!r} must resolve to a readable .html.j2 file under the wiki config root."
+                f"In {route}: {LAYOUT_FRONTMATTER_KEY} {raw_layout!r} must resolve to a readable .html file under the wiki config root."
             )
 
     return missing

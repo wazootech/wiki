@@ -53,8 +53,8 @@ def optional_files_argument(f):
 
 
 @click.group()
-@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yaml (.md, .yaml, .json; repeatable).")
-@click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yaml or directory containing wiki.yaml/wiki.yml/wiki.json (default: current directory).")
+@click.option("--wiki-inputs", "wiki_inputs", multiple=True, default=None, help="Override wiki.inputs from wiki.yml (.md, .yaml, .json; repeatable).")
+@click.option("-c", "--config", "config_path", default=".", help="Path to wiki.yml or directory containing wiki.yml/wiki.yaml/wiki.json (default: current directory).")
 @click.pass_context
 def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
@@ -192,7 +192,7 @@ def lint(config: Config, files: tuple[Path, ...], verbose: bool, strict: bool) -
 
 @main.command()
 @optional_files_argument
-@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yaml).")
+@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yml).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
 @click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
@@ -471,7 +471,7 @@ def build(
     verbose: bool,
 ) -> None:
     """Build static HTML site from wiki documents."""
-    from .assets import build_asset_manifest
+    from .assets import build_asset_manifest, write_packaged_asset
     from .site import build_index_html, build_page_html, build_site
 
     runtime_config = resolve_runtime_config(config, base_url=site_base_url, url_style=site_url_style)
@@ -573,6 +573,8 @@ def build(
         entry.output_path.parent.mkdir(parents=True, exist_ok=True)
         if entry.source is not None:
             shutil.copy2(entry.source, entry.output_path)
+        elif entry.output_path.name.endswith(".css"):
+            write_packaged_asset(entry.output_path.name, entry.output_path)
         if verbose:
             rel_path = entry.output_path.relative_to(output_dir)
             click.echo(f"  {rel_path}")
@@ -667,7 +669,7 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 
 
 @main.command()
-@click.option("--force", is_flag=True, help="Overwrite wiki.yaml, README.md, wiki/, and layouts/default.html.j2.")
+@click.option("--force", is_flag=True, help="Overwrite wiki.yml, README.md, wiki/, and seeded layout files.")
 @click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
 @click.option("--repo", default=None, help="GitHub owner/repo; infer graph.context.wiki and site.base_url for GitHub Pages.")
 @click.option("--graph-context-wiki", "graph_context_wiki", default=None, help="Override graph.context.wiki (overrides --repo inference).")
@@ -675,13 +677,20 @@ def serve(config: Config, host: str, port: int, site_base_url: str | None, site_
 @click.option("--site-url-style", "site_url_style", default=None, type=click.Choice(["file", "dir"]), help="Override site.url_style: dir or file.")
 @click.option("--graph-content-predicate", "graph_content_predicate", default=None, help="Override graph.content_predicate CURIE (e.g. schema:articleBody).")
 @click.option("--link-style", "link_style", default=None, type=click.Choice(["standard", "wikilink"]), help="Override link.style: standard page links or wikilinks.")
-@click.option("--site-name", "site_name", default="Wiki CLI", help="Site name for init logo glyph only (not written to wiki.yaml).")
+@click.option("--site-name", "site_name", default="Wiki CLI", help="Site name for init logo glyph only (not written to wiki.yml).")
 @click.option("--wiki-inputs", "wiki_inputs", type=str, multiple=True, help="Default directories to index relative to config root.")
 @click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
-@click.option("--site-theme-color", "site_theme_color", default=None, help="Theme color for init logo only (not written to wiki.yaml).")
+@click.option("--site-theme-color", "site_theme_color", default=None, help="Theme color for init logo only (not written to wiki.yml).")
 @click.option("--graph-implicit-types", "graph_implicit_types", type=str, multiple=True, help="Default types applied to untyped documents.")
 @click.option("--graph-implicit-types-policy", "graph_implicit_types_policy", type=click.Choice(["fallback", "append"]), default=None, help="Strategy when applying graph.implicit_types.")
 @click.option("--graph-include-file-extension/--no-graph-include-file-extension", "graph_include_file_extension", default=None, help="Include file extension in inferred document URIs.")
+@click.option(
+    "--site-layout",
+    "site_layout",
+    type=click.Choice(["wikipedia", "minimal"]),
+    default=None,
+    help="Page layout: wikipedia (Vector UI) or minimal (unset site.layout).",
+)
 def init(
     force: bool,
     init_git: bool,
@@ -698,26 +707,29 @@ def init(
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
+    site_layout: str | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
     import shutil
     import subprocess
 
     from .init_scaffold import (
-        copy_default_layout,
         copy_default_logo,
+        copy_official_init_layout,
+        copy_packaged_assets,
         render_wiki_yaml,
         resolve_init_options,
     )
 
     cwd = Path.cwd()
-    config_path = cwd / "wiki.yaml"
+    config_path = cwd / "wiki.yml"
+    legacy_config_path = cwd / "wiki.yaml"
     readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
     if not force:
-        if config_path.exists():
-            click.echo("Error: wiki.yaml already exists. Use --force to overwrite.", err=True)
+        if config_path.exists() or legacy_config_path.exists():
+            click.echo("Error: wiki.yml or wiki.yaml already exists. Use --force to overwrite.", err=True)
             sys.exit(1)
         if readme_path.exists():
             click.echo("Error: README.md already exists. Use --force to overwrite.", err=True)
@@ -737,6 +749,15 @@ def init(
     def prompt_context_wiki(default: str) -> str:
         return str(click.prompt("Custom wiki namespace IRI (graph.context.wiki)", default=default))
 
+    def prompt_site_layout() -> str:
+        return str(
+            click.prompt(
+                "Page layout",
+                type=click.Choice(["wikipedia", "minimal"]),
+                default="wikipedia",
+            )
+        )
+
     init_options = resolve_init_options(
         repo=repo,
         graph_context_wiki=graph_context_wiki,
@@ -754,6 +775,8 @@ def init(
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
+        site_layout=site_layout,
+        prompt_site_layout=prompt_site_layout if site_layout is None else None,
     )
     config_content = render_wiki_yaml(init_options)
 
@@ -762,7 +785,7 @@ def init(
         "# My Wiki\n\n"
         "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
         "## Workspace Layout\n\n"
-        "- `wiki.yaml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
+        "- `wiki.yml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
         "- `assets/logo.svg` — Sidebar logo (served via `wiki.assets`).\n"
         "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
         "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
@@ -815,12 +838,20 @@ def init(
     )
 
     config_path.write_text(config_content, encoding="utf-8")
+    if force and legacy_config_path.exists():
+        legacy_config_path.unlink()
 
     layouts_dir = cwd / "layouts"
-    default_layout_path = layouts_dir / "default.html.j2"
     layouts_dir.mkdir(parents=True, exist_ok=True)
-    if force or not default_layout_path.exists():
-        copy_default_layout(default_layout_path)
+    if init_options.site_layout == "wikipedia":
+        wiki_layout_path = layouts_dir / "wikipedia.html"
+        if force or not wiki_layout_path.exists():
+            copy_official_init_layout(wiki_layout_path, "wikipedia")
+
+    assets_dir = cwd / "assets"
+    css_path = assets_dir / "wikipedia.css"
+    if init_options.site_layout == "wikipedia" and (force or not css_path.exists()):
+        copy_packaged_assets(assets_dir)
 
     logo_path = cwd / "assets" / "logo.svg"
     if force or not logo_path.exists():
@@ -841,7 +872,14 @@ def init(
             click.echo(f"Error: git init failed: {stderr}", err=True)
             sys.exit(1)
 
-    message = "Initialized wiki.yaml, README.md, wiki/ starter files, assets/logo.svg, and layouts/default.html.j2."
+    layout_note = (
+        "layouts/wikipedia.html and assets/wikipedia.css"
+        if init_options.site_layout == "wikipedia"
+        else "packaged minimal layout (site.layout unset)"
+    )
+    message = (
+        f"Initialized wiki.yml, README.md, wiki/ starter files, assets/logo.svg, and {layout_note}."
+    )
     if init_git:
         message += " Ran git init."
     click.echo(message)

@@ -38,13 +38,13 @@ jobs:
         run: uv sync
       
       - name: Run Docs Wiki Integrity Audits
-        run: uv run wiki -c docs/wiki.yaml check --strict -v
+        run: uv run wiki -c docs/wiki.yml check --strict -v
 
       - name: Run Docs Wiki Convention Audits
-        run: uv run wiki -c docs/wiki.yaml lint --strict -v
+        run: uv run wiki -c docs/wiki.yml lint --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki
+        run: uv run wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

@@ -105,7 +105,7 @@ def smoke_test(exe: Path, *, deep: bool = False) -> None:
     subprocess.check_call([str(exe), "--help"], cwd=ROOT)
     if deep:
         subprocess.check_call(
-            [str(exe), "-c", "docs/wiki.yaml", "check", "--strict"],
+            [str(exe), "-c", "docs/wiki.yml", "check", "--strict"],
             cwd=ROOT,
         )
 
@@ -113,7 +113,7 @@ def smoke_test(exe: Path, *, deep: bool = False) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-smoke", action="store_true")
-    parser.add_argument("--smoke-check", action="store_true", help="Also run docs/wiki.yaml check")
+    parser.add_argument("--smoke-check", action="store_true", help="Also run docs/wiki.yml check")
     parser.add_argument("--print-sha256", action="store_true")
     args = parser.parse_args()
 

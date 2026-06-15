@@ -42,13 +42,13 @@ wiki check --strict
 
 ### Configurable (`check.*` in `wiki.yaml`)
 
-| Rule key              | What it audits                                                         |
-| --------------------- | ---------------------------------------------------------------------- |
-| `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html.j2` file |
-| `frontmatter_schema`  | Frontmatter that fails JSON Schema validation                          |
-| `missing_schema_ref`  | `wazoo:jsonSchema` paths or URLs that cannot be loaded                 |
-| `remote_schema_refs`  | Policy for remote schema URLs: `allow`, `deny`, or `allowlist`         |
-| `remote_schema_hosts` | Hostnames allowed when `remote_schema_refs` is `allowlist`             |
+| Rule key              | What it audits                                                      |
+| --------------------- | ------------------------------------------------------------------- |
+| `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
+| `frontmatter_schema`  | Frontmatter that fails JSON Schema validation                       |
+| `missing_schema_ref`  | `wazoo:jsonSchema` paths or URLs that cannot be loaded              |
+| `remote_schema_refs`  | Policy for remote schema URLs: `allow`, `deny`, or `allowlist`      |
+| `remote_schema_hosts` | Hostnames allowed when `remote_schema_refs` is `allowlist`          |
 
 Default: `missing_layout_file`, `frontmatter_schema`, and `missing_schema_ref` are `error`. `remote_schema_refs` defaults to `allow`.
 

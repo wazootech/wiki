@@ -170,7 +170,7 @@ The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and ad
 
 ## Page layouts (HTML)
 
-For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a Jinja page layout path (for example `layouts/article.html.j2`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yaml`. See [Wiki Page Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
+For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yml` or `wiki.yaml`. See [Wiki Page Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
 
 ## Related
 

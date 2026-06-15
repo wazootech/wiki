@@ -40,8 +40,8 @@ When context already supplies values, **do not re-prompt**:
 
 ### Choose mode
 
-- **`wiki.yaml` absent** → Phase A (init) then Phase B (wizard).
-- **`wiki.yaml` present** → **Wizard-only** (Phase B). Do not re-init unless the user explicitly wants `--force`.
+- **`wiki.yml` and `wiki.yaml` absent** → Phase A (init) then Phase B (wizard).
+- **Either config file present** → **Wizard-only** (Phase B). Do not re-init unless the user explicitly wants `--force`.
 
 ### Phase A — Init
 
@@ -66,7 +66,7 @@ When context already supplies values, **do not re-prompt**:
 
 If no preference for namespace and no `--repo`, pass `--graph-context-wiki https://wiki.example.org/`.
 
-3. **Preflight** — Without `--force`, init fails if `wiki.yaml`, `README.md`, or non-empty `wiki/` exist.
+3. **Preflight** — Without `--force`, init fails if `wiki.yml`, `wiki.yaml`, `README.md`, or non-empty `wiki/` exist.
 4. **Run** — Example: `wiki init --repo owner/repo --git`
 
 ### Post-init smoke (new scaffold only)
@@ -81,7 +81,7 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 
 | Topic | Action |
 | ----- | ------ |
-| Layout branding | Edit `layouts/default.html.j2` only |
+| Layout branding | Edit `layouts/wikipedia.html` (or your `site.layout` file) |
 | Logo glyph | Re-run init with `--site-name` on fresh scaffold, or edit `assets/logo.svg` |
 | First page | Replace or rename starter page, or add the user's page |
 | Lint strictness | Only if user asks — see [wiki-yaml-preferences.md](wiki-yaml-preferences.md) |
@@ -90,7 +90,7 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 
 ### What init creates
 
-- `wiki.yaml`, `layouts/default.html.j2`, `assets/logo.svg`
+- `wiki.yml`, `layouts/wikipedia.html`, `assets/logo.svg`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`, `README.md`
 
 ## Post-init hygiene
@@ -107,7 +107,7 @@ Summarize: workspace path, init flags used, post-init `check --strict` result (i
 
 | Issue | Response |
 | ----- | -------- |
-| `wiki.yaml already exists` | Wizard-only, new directory, or `--force` with user consent |
+| `wiki.yml` or `wiki.yaml` already exists | Wizard-only, new directory, or `--force` with user consent |
 | Invalid `--repo` | Fix `owner/repo` or use `--graph-context-wiki` |
 | `--git` fails | Report error; init may have completed without git |
 | Interactive prompt during init | Re-run with explicit flags |
