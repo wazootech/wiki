@@ -43,7 +43,7 @@ def _full_test_layout(root: Path) -> Path:
 def _default_layout(root: Path) -> Path:
     return write_layout(
         root,
-        "layouts/shell.html",
+        "layouts/wikipedia.html",
         load_packaged_official_layout("wikipedia"),
     )
 
@@ -394,10 +394,10 @@ name: Project Atlas
     def test_seed_template_includes_code_copy_initialization(self) -> None:
         from wiki.site.layout_tokens import load_packaged_layout_text
 
-        chrome = load_packaged_layout_text("chrome.html")
-        self.assertIn("initCodeCopyButtons", chrome)
-        self.assertIn("pre[data-copy]", chrome)
-        self.assertIn("copyPreContent", chrome)
+        layout = load_packaged_layout_text("wikipedia.html")
+        self.assertIn("initCodeCopyButtons", layout)
+        self.assertIn("pre[data-copy]", layout)
+        self.assertIn("copyPreContent", layout)
 
     def test_build_page_html_highlights_metadata_json(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -492,11 +492,11 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             html = build_index_html(site, root)
-            self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", html)
+            self.assertIn("id=firstHeading>All Pages</h1>", html)
             self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
             self.assertNotIn("<style>", html)
-            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
+            self.assertIn("/wiki/assets/wikipedia.css", html)
             self.assertNotIn("infobox page-meta", html)
 
     def test_strip_leading_title_heading_removes_matching_h1(self) -> None:
@@ -575,11 +575,11 @@ specialty: Diagnostics
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, root)
-            self.assertIn("<h1 id=\"firstHeading\">My Article</h1>", html)
+            self.assertIn("id=firstHeading>My Article</h1>", html)
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
-            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
+            self.assertIn("/wiki/assets/wikipedia.css", html)
             self.assertNotIn("infobox page-meta", html)
             self.assertNotIn("Backlinks", html)
             self.assertNotIn("On this page", html)
@@ -752,7 +752,7 @@ specialty: Diagnostics
             html = build_index_html(site, root, default_layout=_default_layout(root))
             self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
             self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
-            self.assertIn('href="/wiki/assets/wikipedia.css"', html)
+            self.assertIn("/wiki/assets/wikipedia.css", html)
             self.assertIn('href="/wiki/assets/logo.svg"', html)
             self.assertNotIn('rel="manifest"', html)
             self.assertNotIn("manifest.webmanifest", html)

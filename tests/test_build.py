@@ -302,7 +302,7 @@ about: wiki:Alice_Theory
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("<h1 id=\"firstHeading\">Page</h1>", html)
+            self.assertIn("id=firstHeading>Page</h1>", html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
 
@@ -342,24 +342,24 @@ about: wiki:Alice_Theory
 
     def test_seed_template_parity(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
-        docs_layout = repo_root / "docs" / "layouts" / "shell.html"
+        docs_layout = repo_root / "docs" / "layouts" / "wikipedia.html"
         expected = load_packaged_official_layout("wikipedia")
-        self.assertTrue(docs_layout.is_file(), f"docs/layouts/shell.html not found at {docs_layout}")
+        self.assertTrue(docs_layout.is_file(), f"docs/layouts/wikipedia.html not found at {docs_layout}")
         self.assertEqual(
             docs_layout.read_text(encoding="utf-8"),
             expected,
-            "docs/layouts/shell.html must match the packaged shell layout",
+            "docs/layouts/wikipedia.html must match the packaged wikipedia layout",
         )
 
-    def test_docs_wiki_yaml_matches_init_scaffold(self) -> None:
+    def test_docs_wiki_yml_matches_init_scaffold(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent
-        docs_yaml = repo_root / "docs" / "wiki.yaml"
+        docs_yml = repo_root / "docs" / "wiki.yml"
         expected = render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)
-        self.assertTrue(docs_yaml.is_file(), f"docs/wiki.yaml not found at {docs_yaml}")
+        self.assertTrue(docs_yml.is_file(), f"docs/wiki.yml not found at {docs_yml}")
         self.assertEqual(
-            docs_yaml.read_text(encoding="utf-8"),
+            docs_yml.read_text(encoding="utf-8"),
             expected,
-            "docs/wiki.yaml must match render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)",
+            "docs/wiki.yml must match render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)",
         )
 
 

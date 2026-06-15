@@ -1,4 +1,4 @@
-"""Helpers for `wiki init`: GitHub repo parsing, URL inference, and wiki.yaml rendering."""
+"""Helpers for `wiki init`: GitHub repo parsing, URL inference, and wiki.yml rendering."""
 
 from __future__ import annotations
 
@@ -99,7 +99,7 @@ def detect_origin_repo(cwd: Path) -> str | None:
     return f"{owner}/{repo}"
 
 
-# Init options for this repository's docs/ wiki (parity with docs/wiki.yaml).
+# Init options for this repository's docs/ wiki (parity with docs/wiki.yml).
 DOCS_WIKI_INIT_OPTIONS = InitOptions(
     graph_context_wiki="https://wazootech.github.io/wiki/",
     site_base_url="/wiki",
@@ -182,10 +182,10 @@ def resolve_init_options(
     )
 
 
-_INIT_TEMPLATE_NAME = "wiki.yaml.j2"
+_INIT_TEMPLATE_NAME = "wiki.yml"
 _OFFICIAL_LAYOUTS_DIR = "layouts"
 _OFFICIAL_LAYOUT_FILES = {
-    "wikipedia": "shell.html",
+    "wikipedia": "wikipedia.html",
     "minimal": "index.html",
 }
 _PACKAGED_ASSETS_DIR = "assets"
@@ -212,7 +212,7 @@ def _strip_scaffold_comment(text: str) -> str:
 
 
 def render_wiki_yaml(opts: InitOptions) -> str:
-    """Render the packaged wiki.yaml.j2 scaffold into wiki.yaml content."""
+    """Render the packaged wiki.yml scaffold into wiki.yml content."""
     rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**opts.model_dump())
     return _strip_scaffold_comment(rendered)
 

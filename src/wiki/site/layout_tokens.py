@@ -1,4 +1,4 @@
-"""Token substitution for wiki page layout shells and chrome."""
+"""Token substitution for wiki page layout templates."""
 
 from __future__ import annotations
 
@@ -10,11 +10,8 @@ from typing import Any
 
 from markupsafe import Markup
 
-PACKAGED_SHELL = "shell.html"
-PACKAGED_CHROME = "chrome.html"
-PACKAGED_MINIMAL_INNER = "index.html"
-
-_SHELL_REQUIRED_TOKENS = frozenset({"%wiki.head%", "%wiki.body%"})
+PACKAGED_MINIMAL_LAYOUT = "index.html"
+PACKAGED_WIKIPEDIA_LAYOUT = "wikipedia.html"
 
 _TOKEN_PATTERN = re.compile(r"%wiki\.[a-z0-9_.]+%", re.IGNORECASE)
 
@@ -67,7 +64,7 @@ def build_head_markup(context: dict[str, Any]) -> str:
     return f"<title>{safe_title} - Wiki CLI</title>"
 
 
-def build_token_map(context: dict[str, Any], *, body: str | None = None) -> dict[str, str]:
+def build_token_map(context: dict[str, Any]) -> dict[str, str]:
     """Flatten layout context into %wiki.*% replacement strings."""
     site = context["site"]
     page = context["page"]
@@ -76,7 +73,7 @@ def build_token_map(context: dict[str, Any], *, body: str | None = None) -> dict
     metadata = page["metadata"]
     layout = page["layout"]
 
-    tokens: dict[str, str] = {
+    return {
         "%wiki.base_url%": _format_leaf(site["base_url"], path=("site", "base_url")),
         "%wiki.assets%": _format_leaf(site["base_url"], path=("site", "base_url")),
         "%wiki.site.url_style%": _format_leaf(site["url_style"], path=("site", "url_style")),
@@ -100,9 +97,6 @@ def build_token_map(context: dict[str, Any], *, body: str | None = None) -> dict
         "%wiki.page.slug_json%": _format_leaf(page["slug_json"], path=("page", "slug_json")),
         "%wiki.head%": build_head_markup(context),
     }
-    if body is not None:
-        tokens["%wiki.body%"] = body
-    return tokens
 
 
 @lru_cache(maxsize=8)
@@ -121,45 +115,19 @@ def substitute(template: str, tokens: dict[str, str]) -> str:
     return result
 
 
-def validate_shell_template(template: str) -> None:
-    missing = sorted(token for token in _SHELL_REQUIRED_TOKENS if token not in template)
-    if missing:
-        joined = ", ".join(missing)
-        raise ValueError(f"Layout shell is missing required tokens: {joined}")
-
-
 def unknown_tokens(template: str, tokens: dict[str, str]) -> list[str]:
     found = _TOKEN_PATTERN.findall(template)
     known = set(tokens.keys())
     return sorted({token for token in found if token not in known})
 
 
-def render_chrome(context: dict[str, Any]) -> str:
-    chrome_template = load_packaged_layout_text(PACKAGED_CHROME)
+def render_layout(template: str, context: dict[str, Any]) -> str:
+    """Substitute %wiki.*% tokens in a full-page layout template."""
     tokens = build_token_map(context)
-    return substitute(chrome_template, tokens)
-
-
-def render_minimal_inner(context: dict[str, Any]) -> str:
-    inner_template = load_packaged_layout_text(PACKAGED_MINIMAL_INNER)
-    tokens = build_token_map(context)
-    return substitute(inner_template, tokens)
+    return substitute(template, tokens)
 
 
 def render_packaged_minimal(context: dict[str, Any]) -> str:
-    """Packaged shell + minimal inner body when site.layout is unset."""
-    shell_template = load_packaged_layout_text(PACKAGED_SHELL)
-    validate_shell_template(shell_template)
-    body = render_minimal_inner(context)
-    tokens = build_token_map(context, body=body)
-    return substitute(shell_template, tokens)
-
-
-def render_shell_layout(shell_template: str, context: dict[str, Any], *, use_chrome: bool) -> str:
-    if "%wiki.body%" in shell_template:
-        validate_shell_template(shell_template)
-        body = render_chrome(context) if use_chrome else render_minimal_inner(context)
-        tokens = build_token_map(context, body=body)
-        return substitute(shell_template, tokens)
-    tokens = build_token_map(context)
-    return substitute(shell_template, tokens)
+    """Packaged index.html when site.layout is unset."""
+    template = load_packaged_layout_text(PACKAGED_MINIMAL_LAYOUT)
+    return render_layout(template, context)

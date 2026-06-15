@@ -2,7 +2,7 @@
 
 Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
 
-This repository dogfoods the docs wiki at `docs/wiki.yaml` (`docs/wiki/`). Use **`-c docs/wiki.yaml`** on wiki commands here so local runs match CI.
+This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **`-c docs/wiki.yml`** on wiki commands here so local runs match CI.
 
 ### Product naming
 - **Wiki CLI** — product name in prose (docs, skills, CHANGELOG, user-facing CLI strings).
@@ -46,21 +46,21 @@ uv sync --group dev
 uv run ruff check .
 
 # 1. Format (apply, then verify)
-wiki -c docs/wiki.yaml fmt
-wiki -c docs/wiki.yaml fmt --check
+wiki -c docs/wiki.yml fmt
+wiki -c docs/wiki.yml fmt --check
 
 # 2. Conventions: broken links, filename pattern, headings, link style
-wiki -c docs/wiki.yaml lint --strict
+wiki -c docs/wiki.yml lint --strict
 
 # 3. Integrity: SHACL, JSON Schema frontmatter, route safety, layout frontmatter
-wiki -c docs/wiki.yaml check --strict
+wiki -c docs/wiki.yml check --strict
 
 # 4. Stale inline SPARQL result blocks
-wiki -c docs/wiki.yaml render --check
+wiki -c docs/wiki.yml render --check
 
 # Verbose output
-wiki -c docs/wiki.yaml check -v
-wiki -c docs/wiki.yaml lint -v
+wiki -c docs/wiki.yml check -v
+wiki -c docs/wiki.yml lint -v
 ```
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
@@ -74,7 +74,7 @@ When changing `wiki.yaml` schema or rejecting invalid keys:
 - **Do not** add `wiki config migrate`, batched alias tables, or other backwards-compat loaders unless the user explicitly requests migration support.
 - **Do** document breaking moves in `CHANGELOG.md` (Migration section) and [Wiki Configuration](docs/wiki/Wiki_Configuration.md).
 
-Upgrade narrative belongs in docs and release notes, not in runtime error strings. **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yaml fmt` on that file** (tables and long sections drift easily).
+Upgrade narrative belongs in docs and release notes, not in runtime error strings. **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yml fmt` on that file** (tables and long sections drift easily).
 
 ### Architecture
 See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

@@ -289,7 +289,7 @@ class TestServe(unittest.TestCase):
         self._write("style-test.md", "# Style")
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/")
-        self.assertIn("<h1 id=\"firstHeading\">All Pages</h1>", body)
+        self.assertIn("id=firstHeading>All Pages</h1>", body)
         self.assertNotIn("<style>", body)
 
         for port in _serve_in_thread(self.wiki_dir):

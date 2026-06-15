@@ -40,7 +40,7 @@ def normalize_base_iri(value: str) -> str:
 IMPLICIT_TYPES_POLICIES = frozenset({"fallback", "append"})
 IMPLICIT_TYPES_POLICY = "fallback"
 
-CONFIG_FILENAMES = ("wiki.yaml", "wiki.yml", "wiki.json")
+CONFIG_FILENAMES = ("wiki.yml", "wiki.yaml", "wiki.json")
 
 _BLOCK_LABELS = {
     "wiki": "wiki",

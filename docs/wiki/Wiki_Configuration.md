@@ -6,7 +6,7 @@ description: Reference for wiki.yaml, wiki.yml, and wiki.json (Config).
 
 # Wiki Configuration
 
-The CLI loads **Config** from `wiki.yaml`, `wiki.yml`, or `wiki.json` in the working directory (or from `-c path`).
+The CLI loads **Config** from `wiki.yml`, `wiki.yaml`, or `wiki.json` in the working directory (or from `-c path`).
 
 The in-memory **Config** model uses the same nested blocks as the file (`wiki`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `Config.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `wiki` and `site`. Library and test code can construct configs with `Config(wiki={...}, config_root=path)` or `Config.for_root(path, wiki={...})`.
 
@@ -18,12 +18,12 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 ### Terminology
 
-| Label               | Meaning                                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Schema optional** | Key or block may be omitted; Pydantic applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                                       |
-| **Init**            | Written by `wiki init` ([`wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2)); omitting an Init key is the same as the schema default. |
-| **Recommended**     | Not enforced by schema, but you typically set it for a real wiki (for example `graph.context.wiki`, `wiki.filename_pattern`, `site.layout`).                                    |
-| **Always on**       | Behavior not gated by yaml severities (route safety, URL collisions, built-in RDF prefixes).                                                                                    |
+| Label               | Meaning                                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Schema optional** | Key or block may be omitted; Pydantic applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                               |
+| **Init**            | Written by `wiki init` ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)); omitting an Init key is the same as the schema default. |
+| **Recommended**     | Not enforced by schema, but you typically set it for a real wiki (for example `graph.context.wiki`, `wiki.filename_pattern`, `site.layout`).                            |
+| **Always on**       | Behavior not gated by yaml severities (route safety, URL collisions, built-in RDF prefixes).                                                                            |
 
 ### Audit lanes
 
@@ -44,7 +44,7 @@ Relative **`--wiki-inputs`** paths on the CLI resolve against the config file di
 
 ### Blocks
 
-Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitrary grouping. `wiki init` and [docs/wiki.yaml](https://github.com/wazootech/wiki/blob/main/docs/wiki.yaml) use the same order as the packaged scaffold [`wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2).
+Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitrary grouping. `wiki init` and [docs/wiki.yml](https://github.com/wazootech/wiki/blob/main/docs/wiki.yml) use the same order as the packaged scaffold [`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml).
 
 | Block             | Role                                                  | Command(s)                        | Schema   | Init scaffold     |
 | ----------------- | ----------------------------------------------------- | --------------------------------- | -------- | ----------------- |
@@ -135,7 +135,7 @@ Default page layout and routing for `wiki build` / `wiki serve`. Branding and ch
 
 ```yaml
 site:  # optional block
-  layout: layouts/shell.html   # unset → packaged minimal shell; init writes when --site-layout wikipedia
+  layout: layouts/wikipedia.html   # unset → packaged index.html; init writes when --site-layout wikipedia
   base_url: /wiki                   # default /wiki; init writes
   url_style: dir                    # default dir; init writes
 ```
@@ -146,7 +146,7 @@ site:  # optional block
 | `base_url`  | optional               | `/wiki` (`""` allowed for site root)  | writes | routes, layout `%wiki.base_url%`                                                    |
 | `url_style` | optional               | `dir` (`file` → `slug.html`)          | writes | output paths; overridable per CLI run                                               |
 
-`site:` does not carry site name, theme color, favicon, or sidebar logo. Edit `site.layout` and files under `wiki.assets`. Fresh `wiki init` workspaces copy `layouts/shell.html` and `assets/wikipedia.css` (default) and generate `assets/logo.svg`.
+`site:` does not carry site name, theme color, favicon, or sidebar logo. Edit `site.layout` and files under `wiki.assets`. Fresh `wiki init` workspaces copy `layouts/wikipedia.html` and `assets/wikipedia.css` (default) and generate `assets/logo.svg`.
 
 CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `site.url_style` for a single run.
 
@@ -286,59 +286,81 @@ In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline map
 
 ## Page layout
 
-When `site.layout` is set, the CLI renders every page through that token layout shell (`.html`). Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md).
+When `site.layout` is set, the CLI renders every page through that page layout (`.html`). Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md).
 
 ### Layout strategy
 
-The first-class presentation contract in this repository is layout files under `layouts/` (for example `layouts/shell.html` referenced from `site.layout`).
+The first-class presentation contract in this repository is layout files under `layouts/` (for example `layouts/wikipedia.html` referenced from `site.layout`).
 
 - The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout token contract.
-- Wiki page layout shells are the primary built-in extension point for presentation; packaged Vector chrome is injected at `%wiki.body%`.
+- Wiki page layout files are the primary built-in extension point for presentation.
 - Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
 
 ### Minimal fallback
 
-Without a configured layout file (or when the path is missing), every page is rendered with the packaged shell plus a minimal inner body (`<h1>` + content). The shell links `assets/wikipedia.css` but does not include sidebar, tabs, infobox, table of contents, backlinks, or categories unless you use a shell that receives full chrome at `%wiki.body%` (the default `wiki init --site-layout wikipedia` path).
+Without a configured layout file (or when the path is missing), every page is rendered with the packaged `index.html` layout (`<h1>` + content, linked `assets/wikipedia.css`). It does not include sidebar, tabs, infobox, table of contents, backlinks, or categories. Use `wiki init --site-layout wikipedia` (default) for the full Vector layout.
 
-### Layout shell tokens
+### Layout tokens
 
-Layout files use `%wiki.*%` token substitution (not Jinja). The CLI builds a token map from the current page render and replaces tokens in your shell. Shells that include `%wiki.body%` receive the packaged Wikipedia-style chrome; shells without `%wiki.body%` are treated as full token templates (power-user forks).
+Layout files use `%wiki.*%` token substitution (not Jinja). On each page render, the CLI builds a token map from the current page context and replaces every known token in your layout file. Unknown `%wiki.*%` spellings are left unchanged.
 
-#### Shell tokens (user-facing)
+Canonical token list (22 tokens):
 
-| Token             | Content                                                 |
-| ----------------- | ------------------------------------------------------- |
-| `%wiki.head%`     | `<title>…</title>` and other dynamic head markup        |
-| `%wiki.body%`     | Full packaged chrome (default) or minimal article block |
-| `%wiki.base_url%` | `site.base_url` for `href` / `src`                      |
-| `%wiki.assets%`   | Alias for `%wiki.base_url%`                             |
+| Token                       | Source                    | Substitution                                                  |
+| --------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `%wiki.base_url%`           | `site.base_url`           | HTML-escaped text (`/wiki`, or `""` for site root)            |
+| `%wiki.assets%`             | same as `%wiki.base_url%` | HTML-escaped text (alias for asset `href` / `src` prefixes)   |
+| `%wiki.site.url_style%`     | `site.url_style`          | HTML-escaped text (`dir` or `file`)                           |
+| `%wiki.head%`               | built per page            | `<title>{page title} - Wiki CLI</title>` (title HTML-escaped) |
+| `%wiki.page.title%`         | page title                | HTML-escaped text (`All Pages` on the index route)            |
+| `%wiki.page.content%`       | rendered markdown body    | Pre-built HTML (not escaped)                                  |
+| `%wiki.page.source%`        | raw markdown source       | HTML-escaped text                                             |
+| `%wiki.page.body_class%`    | layout body class         | HTML-escaped text (`wiki-index` or `wiki-page layout-{stem}`) |
+| `%wiki.page.kind%`          | page kind                 | HTML-escaped text (`index` or `article`)                      |
+| `%wiki.page.type_label%`    | RDF type badge            | Pre-built HTML (empty when no type label)                     |
+| `%wiki.page.layout.class%`  | layout file stem          | HTML-escaped text (e.g. `wikipedia`, `article`)               |
+| `%wiki.page.layout.label%`  | custom layout badge       | Pre-built HTML (empty for default layout)                     |
+| `%wiki.nav.infobox%`        | typed frontmatter table   | Pre-built HTML                                                |
+| `%wiki.nav.toc%`            | table of contents         | Pre-built HTML                                                |
+| `%wiki.nav.backlinks%`      | backlinks section         | Pre-built HTML                                                |
+| `%wiki.nav.categories%`     | category links            | Pre-built HTML                                                |
+| `%wiki.nav.sidebar%`        | extra sidebar portals     | Pre-built HTML                                                |
+| `%wiki.page.metadata.tool%` | metadata tools menu item  | Pre-built HTML                                                |
+| `%wiki.page.metadata.tab%`  | metadata tab link         | Pre-built HTML                                                |
+| `%wiki.page.metadata.pane%` | metadata RDF panes        | Pre-built HTML                                                |
+| `%wiki.wiki.pages_json%`    | all pages for search JS   | Raw JSON array (`[{slug, title}, …]`)                         |
+| `%wiki.page.slug_json%`     | current page slug         | Raw JSON string (for client-side talk notes)                  |
 
-#### Chrome tokens (inside packaged `chrome.html`; rarely edited)
+**Pre-built HTML** tokens are assembled by the site builder (infobox, TOC, metadata panes, and so on). Treat them as trusted markup from Wiki CLI, not as user-authored template fragments.
 
-`%wiki.page.title%`, `%wiki.page.content%`, `%wiki.page.source%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.type_label%`, `%wiki.nav.infobox%`, `%wiki.nav.toc%`, `%wiki.nav.backlinks%`, `%wiki.nav.categories%`, `%wiki.nav.sidebar%`, `%wiki.page.metadata.tool%`, `%wiki.page.metadata.tab%`, `%wiki.page.metadata.pane%`, `%wiki.page.layout.class%`, `%wiki.page.layout.label%`, `%wiki.wiki.pages_json%`, `%wiki.page.slug_json%`, `%wiki.site.url_style%`
+**Packaged layouts**
 
-Text tokens are HTML-escaped; navigation fragments, page content, metadata panes, and JSON boot data are injected as pre-built markup.
+| File                     | When used                                                                     | Typical tokens                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `layouts/wikipedia.html` | `site.layout` after `wiki init --site-layout wikipedia` (copied to workspace) | All tokens above (Vector chrome + search script)                                                                           |
+| `layouts/index.html`     | `site.layout` unset or missing file                                           | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
 
-Example shell (`layouts/shell.html` after `wiki init`):
+Example excerpt (`layouts/wikipedia.html` after `wiki init`):
 
 ```html
 <link rel="stylesheet" href="%wiki.base_url%/assets/wikipedia.css">
 <link rel="icon" href="%wiki.base_url%/assets/logo.svg">
 %wiki.head%
 …
-%wiki.body%
+<h1 class="firstHeading" id="firstHeading">%wiki.page.title%</h1>
+%wiki.page.content%
 ```
 
 ### Custom CSS
 
 The bundled stylesheet at `assets/wikipedia.css` (copied on `wiki init` and emitted on `wiki build`) covers the default Wikipedia-style layout (navigation, tabs, infobox, TOC, code blocks, metadata format chips, and Pygments). It is not a `wiki.yaml` key. To change how pages look:
 
-1. **Edit the layout shell** — `site.layout` (for example `layouts/shell.html`) is the primary extension point. Add linked stylesheets in `<head>`, or override rules in a local `assets/*.css` file.
-1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the shell, for example `<link rel="stylesheet" href="%wiki.base_url%/assets/site.css">`. Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
+1. **Edit the layout file** — `site.layout` (for example `layouts/wikipedia.html`) is the primary extension point. Add linked stylesheets in `<head>`, or override rules in a local `assets/*.css` file.
+1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout, for example `<link rel="stylesheet" href="%wiki.base_url%/assets/site.css">`. Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
 
 ### Custom logos and icons
 
-Fresh `wiki init` workspaces ship `assets/logo.svg` and `assets/wikipedia.css`, enable `wiki.assets`, and reference both from the copied shell (`href="%wiki.base_url%/assets/logo.svg"`). Init generates the SVG from the first letter of `--site-name` (default `Wiki CLI` → `W`) and optional `--site-theme-color` (logo gradient only; not written to `wiki.yaml`). Replace the asset files or edit the shell `<head>` and sidebar markup in packaged chrome.
+Fresh `wiki init` workspaces ship `assets/logo.svg` and `assets/wikipedia.css`, enable `wiki.assets`, and reference both from the copied layout (`href="%wiki.base_url%/assets/logo.svg"`). Init generates the SVG from the first letter of `--site-name` (default `Wiki CLI` → `W`) and optional `--site-theme-color` (logo gradient only; not written to `wiki.yaml`). Replace the asset files or edit the layout `<head>` and sidebar markup.
 
 **Custom sidebar logo**
 
@@ -354,11 +376,11 @@ You can also embed inline SVG directly in the layout file (no asset copy).
 
 **Favicons and touch icons**
 
-Add `<link rel="icon">`, `<link rel="apple-touch-icon">`, or other `<head>` tags directly in `site.layout`. The packaged default shell includes a favicon link to `%wiki.base_url%/assets/logo.svg`.
+Add `<link rel="icon">`, `<link rel="apple-touch-icon">`, or other `<head>` tags directly in `site.layout`. The packaged default layout includes a favicon link to `%wiki.base_url%/assets/logo.svg`.
 
 Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
 
-See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for the layout file contract and template variable list.
+See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for `site.layout`, `wazoo:layout`, and packaged layout files.
 
 The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
 
@@ -389,7 +411,7 @@ The wiki builder generates these selectors in the rendered page content:
 
 ### JavaScript hooks
 
-The bundled default wiki chrome (injected at `%wiki.body%` when using `layouts/shell.html`) provides:
+The bundled default wiki layout (`layouts/wikipedia.html`) provides:
 
 | Function                       | Purpose                                              |
 | ------------------------------ | ---------------------------------------------------- |
@@ -408,7 +430,7 @@ The bundled default wiki chrome (injected at `%wiki.body%` when using `layouts/s
 | `navigateSearch(slug)`         | Navigate to a search result.                         |
 | `applyCategoryFilterFromUrl()` | Filter index page by `?category=` URL parameter.     |
 
-If the configured template file does not exist, the packaged minimal `index.html` layout is used silently — no error.
+If the configured page layout file does not exist, the packaged minimal `index.html` layout is used silently — no error.
 
 ## Filename conventions
 
@@ -478,7 +500,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yaml` is the dogfood wiki config: the same structure, block order, and Init columns as `wiki init` ([`wiki.yaml.j2`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yaml.j2)), plus dogfood overrides — `graph.context.wiki` for GitHub Pages and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
+`docs/wiki.yml` is the dogfood wiki config: the same structure, block order, and Init columns as `wiki init` ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)), plus dogfood overrides — `graph.context.wiki` for GitHub Pages and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 

@@ -89,7 +89,7 @@ For safety, the endpoint is **disabled by default**. Its path is validated at st
 
 ## Wiki page layout
 
-The same `site.layout` from [Wiki Configuration](Wiki_Configuration.md#page-layout) applies to the dev server — a Jinja `.html` layout file (packaged `index.html` when unset). Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md). Page bodies use the same markdown renderer as `wiki build`; raw HTML in markdown is not emitted as live markup.
+The same `site.layout` from [Wiki Configuration](Wiki_Configuration.md#page-layout) applies to the dev server — a page layout (`.html`; packaged `index.html` when unset). Per-page overrides use `wazoo:layout` in frontmatter; see [Wiki Page Layouts](Wiki_Page_Layouts.md). Page bodies use the same markdown renderer as `wiki build`; raw HTML in markdown is not emitted as live markup.
 
 ## Metadata view
 

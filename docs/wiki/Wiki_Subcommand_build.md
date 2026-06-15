@@ -49,9 +49,9 @@ Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, Tr
 
 ## Wiki page layout
 
-If your [Wiki Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that token shell unless `wazoo:layout` overrides it. The builder substitutes layout tokens (see [Layout shell tokens](Wiki_Configuration.md#layout-shell-tokens)).
+If your [Wiki Configuration](Wiki_Configuration.md#page-layout) sets `site.layout`, every page is rendered through that page layout unless `wazoo:layout` overrides it. The builder substitutes layout tokens (see [Layout tokens](Wiki_Configuration.md#layout-tokens)).
 
-If the configured template file is missing, the fallback shell is used silently.
+If the configured page layout file is missing, the packaged `index.html` fallback is used silently.
 
 ## Checks and collisions
 

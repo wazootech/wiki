@@ -114,7 +114,7 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
-        self.assertIn("layout: layouts/shell.html", rendered)
+        self.assertIn("layout: layouts/wikipedia.html", rendered)
         self.assertNotIn("manifest:", rendered)
         self.assertIn("# fmt: .mdformat.toml", rendered)
         self.assertNotIn("{#", rendered)
@@ -155,17 +155,19 @@ class TestRenderWikiYaml(TestCase):
     def test_load_packaged_official_layout_wikipedia(self) -> None:
         rendered = load_packaged_official_layout("wikipedia")
         self.assertIn("%wiki.head%", rendered)
-        self.assertIn("%wiki.body%", rendered)
         self.assertIn("wikipedia.css", rendered)
+        self.assertIn('id="mw-navigation"', rendered)
+        self.assertNotIn("%wiki.body%", rendered)
 
     def test_load_packaged_official_layout_minimal(self) -> None:
         rendered = load_packaged_official_layout("minimal")
         self.assertIn("%wiki.page.title%", rendered)
+        self.assertIn("wikipedia.css", rendered)
         self.assertNotIn("mw-navigation", rendered)
 
     def test_copy_official_init_layout_wikipedia(self) -> None:
         with TemporaryDirectory() as tmpdir:
-            dest = Path(tmpdir) / "layouts" / "shell.html"
+            dest = Path(tmpdir) / "layouts" / "wikipedia.html"
             copy_official_init_layout(dest, "wikipedia")
             self.assertEqual(dest.read_text(encoding="utf-8"), load_packaged_official_layout("wikipedia"))
 

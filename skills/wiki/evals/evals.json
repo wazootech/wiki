@@ -110,11 +110,11 @@
       "id": 9,
       "workflow": "improve",
       "prompt": "Improve the docs wiki before I open a PR",
-      "expected_output": "Runs strict pipeline on docs/wiki.yaml via audit.sh or equivalent commands; produces automated checks scorecard and prioritized findings table with evidence.",
+      "expected_output": "Runs strict pipeline on docs/wiki.yml via audit.sh or equivalent commands; produces automated checks scorecard and prioritized findings table with evidence.",
       "files": [],
       "expectations": [
         "Output mentions fmt, lint, check, and render",
-        "Uses -c docs/wiki.yaml or equivalent config path",
+        "Uses -c docs/wiki.yml or equivalent config path",
         "Produces a structured pass/fail report with a findings table",
         "Findings include category and evidence (file:line or CLI excerpt)",
         "Does not modify wiki files"
@@ -179,11 +179,11 @@
     {
       "id": 14,
       "workflow": "deploy",
-      "prompt": "Set up CI to publish docs/wiki.yaml to GitHub Pages at /wiki",
-      "expected_output": "Config path docs/wiki.yaml, build --site-base-url /wiki, artifact _site/wiki.",
+      "prompt": "Set up CI to publish docs/wiki.yml to GitHub Pages at /wiki",
+      "expected_output": "Config path docs/wiki.yml, build --site-base-url /wiki, artifact _site/wiki.",
       "files": [],
       "expectations": [
-        "Uses -c docs/wiki.yaml or equivalent config path",
+        "Uses -c docs/wiki.yml or equivalent config path",
         "Artifact path is _site/wiki not bare _site",
         "Includes check and build steps before deploy-pages",
         "References deploy.yml shape or upload-pages-artifact plus deploy-pages"

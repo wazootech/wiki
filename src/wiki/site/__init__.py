@@ -11,7 +11,7 @@ from .html import (
     build_page_html,
 )
 from .layout_context import build_layout_context, build_logo_svg
-from .layout_template import PACKAGED_MINIMAL_LAYOUT
+from .layout_tokens import PACKAGED_MINIMAL_LAYOUT
 from .markdown import (
     extract_title,
     humanize_route,

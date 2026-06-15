@@ -10,23 +10,23 @@ description: Wiki page layout files for build and serve output.
 
 Wiki CLI builds each article into HTML using a **page layout** file. Two levels apply:
 
-1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `layouts/shell.html`)
+1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `layouts/wikipedia.html`)
 
 1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file (`.html` only)
 
 ## `site.layout`
 
-Set the path in `wiki.yaml` relative to the directory that contains the config file:
+Set the path in `wiki.yml` (or `wiki.yaml`) relative to the directory that contains the config file:
 
 ```yaml
 
 site:
 
-  layout: layouts/shell.html
+  layout: layouts/wikipedia.html
 
 ```
 
-`wiki init` with `--site-layout wikipedia` (default) copies `layouts/shell.html` and `assets/wikipedia.css` from the packaged bundle. The shell links the stylesheet and injects full Vector chrome at `%wiki.body%`. With `--site-layout minimal`, `site.layout` is omitted and Wiki CLI uses the packaged minimal inner body inside the default shell.
+`wiki init` with `--site-layout wikipedia` (default) copies `layouts/wikipedia.html` and `assets/wikipedia.css` from the packaged bundle. With `--site-layout minimal`, `site.layout` is omitted and Wiki CLI uses the packaged `index.html` layout.
 
 ## `wazoo:layout`
 
@@ -50,9 +50,9 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 ## Layout tokens
 
-Layout files use `%wiki.*%` token substitution (not Jinja). See [Layout shell tokens](Wiki_Configuration.md#layout-shell-tokens) in Wiki Configuration for the full token table, including `%wiki.page.content%`, `%wiki.nav.infobox%`, and `%wiki.page.layout.class%`.
+Layout files use `%wiki.*%` token substitution (not Jinja). The **canonical reference** is [Layout tokens](Wiki_Configuration.md#layout-tokens) in Wiki Configuration — a full table of every `%wiki.*%` token, its source field, and whether the value is HTML-escaped, pre-built markup, or raw JSON.
 
-Custom logos and favicons are shell markup plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
+Custom logos and favicons are layout markup plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 
 ## Related
 

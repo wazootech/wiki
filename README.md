@@ -86,7 +86,7 @@ Zero-install (no global install required):
 ```bash
 npx wazootech-wiki --help
 npx wazootech-wiki init
-npx wazootech-wiki -c docs/wiki.yaml check
+npx wazootech-wiki -c docs/wiki.yml check
 uvx wazootech-wiki --help
 ```
 
@@ -146,11 +146,11 @@ uv sync --group dev
 uv run ruff check .
 
 # Run the docs wiki integrity checks from the repo root
-wiki -c docs/wiki.yaml check
-wiki -c docs/wiki.yaml lint
+wiki -c docs/wiki.yml check
+wiki -c docs/wiki.yml lint
 
 # Start the docs wiki local preview with auto-reload
-python -m wiki -c docs/wiki.yaml serve --watch
+python -m wiki -c docs/wiki.yml serve --watch
 ```
 
 `serve --watch` rebuilds when files under `wiki.inputs` and `wiki.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
@@ -158,8 +158,8 @@ python -m wiki -c docs/wiki.yaml serve --watch
 Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
-- Use `python -m wiki -c docs/wiki.yaml serve --watch` for the main live-preview workflow (restart after CLI changes).
-- Run `wiki -c docs/wiki.yaml check --strict -v` and `wiki -c docs/wiki.yaml lint --strict -v` before landing documentation changes.
+- Use `python -m wiki -c docs/wiki.yml serve --watch` for the main live-preview workflow (restart after CLI changes).
+- Run `wiki -c docs/wiki.yml check --strict -v` and `wiki -c docs/wiki.yml lint --strict -v` before landing documentation changes.
 - Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
 
 ## Quickstart
@@ -435,7 +435,7 @@ knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are Jinja2 templates (`.html`) with the same variable contract (`{{ page.nav.infobox }}`, `{{ page.content }}`, `{{ page.layout.class }}`, and so on).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are `.html` page layouts: use `%wiki.page.content%`, `%wiki.nav.infobox%`, `%wiki.page.layout.class%`, and the other layout tokens listed in [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens).
 
 Any article with displayable frontmatter gets a sidebar infobox. Structural keys such as `@context`, `@id`, `id`, `@type`, and `type` are hidden from the infobox. Infobox values become links automatically when they reference another wiki page or an external URL.
 
@@ -500,13 +500,13 @@ jobs:
         run: uv sync
       
       - name: Run Docs Wiki Integrity Audits
-        run: uv run wiki -c docs/wiki.yaml check --strict -v
+        run: uv run wiki -c docs/wiki.yml check --strict -v
 
       - name: Run Docs Wiki Convention Audits
-        run: uv run wiki -c docs/wiki.yaml lint --strict -v
+        run: uv run wiki -c docs/wiki.yml lint --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.yaml build --output-dir _site --site-base-url /wiki
+        run: uv run wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
