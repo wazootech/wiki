@@ -10,6 +10,10 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 - **TypeScript at the edges only** — the npm package is a thin delivery wrapper (private venv + matching PyPI engine), not a second implementation.
 - **Revisit a rewrite only if** — a concrete npm-only distribution requirement, a web-first product that dominates the roadmap, or maintenance pain in Python that outweighs the RDF ecosystem advantage.
 
+## Architecture decision: Library-first API
+
+Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Python library** (`Workspace`, typed `AuditReport` / operation results) with the Click CLI as a thin I/O wrapper. See [ADR 001](docs/adr/001-library-first-api.md) and [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md). Semver applies to symbols in `wiki.__all__`; audit dict helpers are removed in favor of Pydantic report models.
+
 ## Language
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.

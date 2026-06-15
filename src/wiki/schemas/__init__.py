@@ -3,6 +3,17 @@
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import DEFAULT_INIT_LAYOUT, InitOptions
 from .metadata import METADATA_VIEWS, MetadataView
+from .reports import (
+    AuditReport,
+    BuildOptions,
+    BuildResult,
+    ExportResult,
+    FmtReport,
+    Issue,
+    LinkReport,
+    RenderReport,
+    ScaffoldResult,
+)
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import InfoboxRow, TocItem, VirtualPage, WikiSite
 from .wiki_config import (
@@ -16,6 +27,15 @@ from .wiki_config import (
 )
 
 __all__ = [
+    "AuditReport",
+    "BuildOptions",
+    "BuildResult",
+    "ExportResult",
+    "FmtReport",
+    "Issue",
+    "LinkReport",
+    "RenderReport",
+    "ScaffoldResult",
     "BrokenLink",
     "BrokenLinkFix",
     "CheckConfig",

@@ -16,6 +16,7 @@ from wiki.frontmatter_schema import (
     is_schema_binding_document,
     validation_payload,
 )
+from wiki.schemas import AuditReport
 
 
 class TestFrontmatterSchemaHelpers(unittest.TestCase):
@@ -411,8 +412,8 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
 
             results = run_check(config)
-            self.assertFalse(results["conforms"])
-            self.assertTrue(any("description" in err for err in results["errors"]))
+            self.assertFalse(results.ok)
+            self.assertTrue(any("description" in err.message for err in results.errors))
 
     def _setup_severity_fixture(self, root: Path) -> Path:
         wiki = root / "wiki"
@@ -450,20 +451,17 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
         return wiki
 
     @staticmethod
-    def _missing_ref_messages(results: dict) -> list[str]:
-        return [
-            msg
-            for msg in results["errors"] + results["warnings"]
-            if "missing.json" in msg
-        ]
+    def _issue_messages(report: AuditReport) -> list[str]:
+        errors, warnings = report.messages()
+        return errors + warnings
 
     @staticmethod
-    def _validation_messages(results: dict) -> list[str]:
-        return [
-            msg
-            for msg in results["errors"] + results["warnings"]
-            if "description" in msg
-        ]
+    def _missing_ref_messages(results: AuditReport) -> list[str]:
+        return [msg for msg in TestFrontmatterSchemaValidation._issue_messages(results) if "missing.json" in msg]
+
+    @staticmethod
+    def _validation_messages(results: AuditReport) -> list[str]:
+        return [msg for msg in TestFrontmatterSchemaValidation._issue_messages(results) if "description" in msg]
 
     def test_run_check_frontmatter_schema_severity_matrix(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -486,14 +484,14 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
                     )
                     results = run_check(config)
                     validation_errors = [
-                        msg for msg in results["errors"] if "description" in msg
+                        issue.message for issue in results.errors if "description" in issue.message
                     ]
                     validation_warnings = [
-                        msg for msg in results["warnings"] if "description" in msg
+                        issue.message for issue in results.warnings if "description" in issue.message
                     ]
                     self.assertEqual(len(validation_errors), expect_errors)
                     self.assertEqual(len(validation_warnings), expect_warnings)
-                    self.assertEqual(results["conforms"], expect_conforms)
+                    self.assertEqual(results.ok, expect_conforms)
 
     def test_run_check_missing_schema_ref_severity_matrix(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -516,10 +514,10 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
                     )
                     results = run_check(config)
                     missing_errors = [
-                        msg for msg in results["errors"] if "missing.json" in msg
+                        issue.message for issue in results.errors if "missing.json" in issue.message
                     ]
                     missing_warnings = [
-                        msg for msg in results["warnings"] if "missing.json" in msg
+                        issue.message for issue in results.warnings if "missing.json" in issue.message
                     ]
                     self.assertGreaterEqual(len(missing_errors), expect_errors)
                     self.assertGreaterEqual(len(missing_warnings), expect_warnings)
@@ -532,7 +530,7 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
                     else:
                         self.assertGreater(len(missing_errors), 0)
                         self.assertEqual(missing_warnings, [])
-                    self.assertEqual(results["conforms"], expect_conforms)
+                    self.assertEqual(results.ok, expect_conforms)
 
     def test_run_check_both_schema_rules_off_skips_validation(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -545,7 +543,7 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
             )
 
             results = run_check(config)
-            self.assertTrue(results["conforms"])
+            self.assertTrue(results.ok)
             self.assertEqual(self._missing_ref_messages(results), [])
             self.assertEqual(self._validation_messages(results), [])
 

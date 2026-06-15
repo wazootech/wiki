@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Any
 
 import pyshacl
 from rdflib import Graph
@@ -37,7 +36,7 @@ from .paths import (
     validate_filename_pattern,
     validate_route_safety,
 )
-from .schemas import BrokenLink, CheckConfig, LintConfig
+from .schemas import AuditReport, BrokenLink, CheckConfig, Issue, LintConfig
 from .wiki_links import LinkIndex
 
 logger = logging.getLogger(__name__)
@@ -407,24 +406,27 @@ def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list
 
 
 def _apply_issues(
-    results: dict[str, Any],
+    report: AuditReport,
     rule_key: str,
     issues: list[str],
     rules: CheckConfig | LintConfig,
-) -> None:
+) -> AuditReport:
     severity = getattr(rules, rule_key, "warning")
     if severity == "off":
-        return
+        return report
     if severity == "error":
         if issues:
-            results["conforms"] = False
-            results["errors"].extend(issues)
+            report.ok = False
+            report.errors.extend(
+                Issue(code=rule_key, message=message, severity="error")
+                for message in issues
+            )
     else:
-        results["warnings"].extend(issues)
-
-
-def _empty_results() -> dict[str, Any]:
-    return {"conforms": True, "errors": [], "warnings": []}
+        report.warnings.extend(
+            Issue(code=rule_key, message=message, severity="warning")
+            for message in issues
+        )
+    return report
 
 
 def check_layout_frontmatter(
@@ -458,23 +460,80 @@ def check_layout_frontmatter(
     return missing
 
 
-def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, Any]:
-    """Run integrity checks: SHACL, route safety, collisions, layout, and JSON Schema frontmatter."""
-    results = _empty_results()
+def run_check(
+    config: Config,
+    file_filter: set[str] | None = None,
+    *,
+    file_paths: list[Path] | None = None,
+) -> AuditReport:
+    """Run integrity checks: SHACL, route safety, collisions, layout, and JSON Schema frontmatter.
+
+    When ``file_paths`` is set, runs scoped per-file SHACL and schema checks only (no whole-wiki SHACL).
+    """
+    report = AuditReport.empty()
+
+    if file_paths is not None:
+        for file_path in file_paths:
+            res = check_shacl_file(file_path, config)
+            if res is None:
+                report.ok = False
+                report.errors.append(
+                    Issue(
+                        code="missing_metadata",
+                        message=f"No valid document metadata found in {file_path.name}",
+                        path=file_path,
+                        severity="error",
+                    )
+                )
+            else:
+                shacl_conforms, shacl_text = res
+                if not shacl_conforms:
+                    report.ok = False
+                    report.errors.append(
+                        Issue(
+                            code="shacl_violation",
+                            message=f"SHACL Validation Violation in {file_path.name}:\n{shacl_text}",
+                            path=file_path,
+                            severity="error",
+                        )
+                    )
+
+        missing_schema_issues, schema_validation_issues = check_frontmatter_schema(
+            config,
+            file_paths=file_paths,
+        )
+        _apply_issues(report, "missing_schema_ref", missing_schema_issues, config.check)
+        _apply_issues(report, "frontmatter_schema", schema_validation_issues, config.check)
+        return report
 
     try:
         shacl_conforms, shacl_text = check_shacl_all(config)
         if not shacl_conforms:
-            results["conforms"] = False
-            results["errors"].append(f"SHACL Validation Violation:\n{shacl_text}")
-    except Exception as e:
-        results["conforms"] = False
-        results["errors"].append(f"SHACL validation system error: {e}")
+            report.ok = False
+            report.errors.append(
+                Issue(
+                    code="shacl_violation",
+                    message=f"SHACL Validation Violation:\n{shacl_text}",
+                    severity="error",
+                )
+            )
+    except Exception as exc:
+        report.ok = False
+        report.errors.append(
+            Issue(
+                code="shacl_system_error",
+                message=f"SHACL validation system error: {exc}",
+                severity="error",
+            )
+        )
 
     safety_issues = validate_route_safety(config)
     if safety_issues:
-        results["conforms"] = False
-        results["errors"].extend(safety_issues)
+        report.ok = False
+        report.errors.extend(
+            Issue(code="route_safety", message=message, severity="error")
+            for message in safety_issues
+        )
     else:
         owned_output_dir = Path("_site") / config.site.base_url.strip("/") if config.site.base_url else Path("_site")
         collision_issues = detect_output_collisions(
@@ -482,60 +541,62 @@ def run_check(config: Config, file_filter: set[str] | None = None) -> dict[str, 
             + build_asset_manifest(config, owned_output_dir, config.site.base_url)
         )
         if collision_issues:
-            results["conforms"] = False
-            results["errors"].extend(collision_issues)
+            report.ok = False
+            report.errors.extend(
+                Issue(code="output_collision", message=message, severity="error")
+                for message in collision_issues
+            )
 
     layout_issues = check_layout_frontmatter(config, file_filter=file_filter)
-    _apply_issues(results, "missing_layout_file", layout_issues, config.check)
+    _apply_issues(report, "missing_layout_file", layout_issues, config.check)
 
     missing_schema_issues, schema_validation_issues = check_frontmatter_schema(
         config,
         file_filter=file_filter,
     )
-    _apply_issues(results, "missing_schema_ref", missing_schema_issues, config.check)
-    _apply_issues(results, "frontmatter_schema", schema_validation_issues, config.check)
+    _apply_issues(report, "missing_schema_ref", missing_schema_issues, config.check)
+    _apply_issues(report, "frontmatter_schema", schema_validation_issues, config.check)
 
-    return results
+    return report
 
 
-def run_lint(config: Config, file_filter: set[str] | None = None) -> dict[str, Any]:
+def run_lint(config: Config, file_filter: set[str] | None = None) -> AuditReport:
     """Run lint rules: broken links, filename pattern, heading style, and link style."""
-    results = _empty_results()
+    report = AuditReport.empty()
 
     safety_issues = validate_route_safety(config)
     if safety_issues:
-        results["conforms"] = False
-        results["errors"].extend(safety_issues)
-        return results
+        report.ok = False
+        report.errors.extend(
+            Issue(code="route_safety", message=message, severity="error")
+            for message in safety_issues
+        )
+        return report
 
     link_issues = lint_broken_links(config, file_filter=file_filter)
-    _apply_issues(results, "broken_links", link_issues, config.lint)
+    _apply_issues(report, "broken_links", link_issues, config.lint)
 
     filename_issues = lint_filenames(config, file_filter=file_filter)
-    _apply_issues(results, "filename_pattern", filename_issues, config.lint)
+    _apply_issues(report, "filename_pattern", filename_issues, config.lint)
 
     heading_issues = lint_headings(config, file_filter=file_filter)
-    _apply_issues(results, "headings", heading_issues, config.lint)
+    _apply_issues(report, "headings", heading_issues, config.lint)
 
     heading_level_issues = lint_heading_levels(config, file_filter=file_filter)
-    _apply_issues(results, "heading_levels", heading_level_issues, config.lint)
+    _apply_issues(report, "heading_levels", heading_level_issues, config.lint)
 
     duplicate_heading_issues = lint_duplicate_headings(config, file_filter=file_filter)
-    _apply_issues(results, "duplicate_headings", duplicate_heading_issues, config.lint)
+    _apply_issues(report, "duplicate_headings", duplicate_heading_issues, config.lint)
 
     thematic_break_issues = lint_thematic_breaks(config, file_filter=file_filter)
-    _apply_issues(results, "thematic_breaks", thematic_break_issues, config.lint)
+    _apply_issues(report, "thematic_breaks", thematic_break_issues, config.lint)
 
     link_style_issues = lint_link_style(config, file_filter=file_filter)
-    _apply_issues(results, "link_style", link_style_issues, config.lint)
+    _apply_issues(report, "link_style", link_style_issues, config.lint)
 
-    return results
+    return report
 
 
-def merge_results(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
-    """Merge two audit result dicts from run_check and run_lint."""
-    return {
-        "conforms": first["conforms"] and second["conforms"],
-        "errors": first["errors"] + second["errors"],
-        "warnings": first["warnings"] + second["warnings"],
-    }
+def merge_results(first: AuditReport, second: AuditReport) -> AuditReport:
+    """Merge two audit reports from run_check and run_lint."""
+    return first.merge(second)

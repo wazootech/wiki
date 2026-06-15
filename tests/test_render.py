@@ -58,7 +58,7 @@ SELECT ?givenName WHERE {
             self.assertRegex(rendered, r"\| givenName\s+\|")
             self.assertIn("Alice", rendered)
 
-            _, _, stale = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
+            _, _, stale, _ = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
             self.assertEqual(stale, [])
 
     def test_render_hidden_query_preserves_comment_structure(self) -> None:
@@ -102,7 +102,7 @@ SELECT ?givenName WHERE {
             self.assertRegex(rendered, r"\| givenName\s+\|")
             self.assertIn("Bob", rendered)
 
-            _, _, stale = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
+            _, _, stale, _ = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
             self.assertEqual(stale, [])
 
 

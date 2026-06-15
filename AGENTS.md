@@ -65,6 +65,8 @@ wiki -c docs/wiki.yml lint -v
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
 
+For library-level validation and build in Python (without subprocess), see [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md). Unit tests target `Workspace`, `AuditReport`, and `build_workspace` directly under `tests/`.
+
 ### Config schema changes
 
 When changing `wiki.yaml` schema or rejecting invalid keys:
