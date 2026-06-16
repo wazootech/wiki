@@ -55,6 +55,10 @@ wiki init --git
 
 `wiki init` writes `wiki.yml`, `README.md`, `layouts/`, `assets/logo.svg`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). The scaffold enables `wiki.assets` and wires the default layout to the logo file. Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. Init requires a clean directory (no existing `wiki.yml`, `README.md`, or non-empty `wiki/`). See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags.
 
+### Branding
+
+Site name, theme color, logo, and favicon are **not** `wiki.yml` keys. They live in `site.layout` (for example `layouts/wikipedia.html`) and files under `wiki.assets` (for example `assets/logo.svg`). After init, edit `<!-- wiki tweak: … -->` comments in those scaffold files rather than adding branding keys to config. See [Wiki Configuration — Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) and [Wiki Subcommand init](Wiki_Subcommand_init.md).
+
 Alternatively, start from a GitHub template: [wiki-template](https://github.com/wazootech/wiki-template) (generic workspace) or the [LLM Wiki](LLM_Wiki.md) starter [llm-wiki-template](https://github.com/wazootech/llm-wiki-template). See [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates).
 
 ## Daily workflow

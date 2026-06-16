@@ -9,26 +9,13 @@ from typing import Any
 from markupsafe import Markup
 
 from ..config import DEFAULT_URL_STYLE
+from ..schemas.layout import LAYOUT_MARKUP_PATHS, LayoutContext
 from ..schemas.site import VirtualPage, WikiSite
 
 _DEFAULT_LOGO_THEME = ("#3b82f6", "#1d4ed8", "#93c5fd")
 
-LAYOUT_CONTEXT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
-    {
-        ("page", "content"),
-        ("page", "layout", "label"),
-        ("page", "type_label"),
-        ("page", "nav", "infobox"),
-        ("page", "nav", "toc"),
-        ("page", "nav", "backlinks"),
-        ("page", "nav", "categories"),
-        ("page", "nav", "sidebar"),
-        ("page", "metadata", "tool"),
-        ("page", "metadata", "tab"),
-        ("page", "metadata", "pane"),
-        ("wiki", "pages_json"),
-    }
-)
+# Backward-compatible alias for tests and internal callers.
+LAYOUT_CONTEXT_MARKUP_PATHS = LAYOUT_MARKUP_PATHS
 
 
 def _parse_hex_color(value: str) -> tuple[int, int, int]:
@@ -95,7 +82,7 @@ def _site_context(*, base_url: str, url_style: str) -> dict[str, Any]:
 
 
 def _apply_markup(context: dict[str, Any]) -> dict[str, Any]:
-    for path in LAYOUT_CONTEXT_MARKUP_PATHS:
+    for path in LAYOUT_MARKUP_PATHS:
         node: Any = context
         for key in path[:-1]:
             node = node[key]
@@ -168,4 +155,5 @@ def build_layout_context(
             "pages_json": pages_json,
         },
     }
+    LayoutContext.model_validate(raw)
     return _apply_markup(raw)

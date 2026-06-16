@@ -1,4 +1,4 @@
-"""Tests for layout token substitution."""
+"""Tests for layout slot substitution."""
 
 from __future__ import annotations
 

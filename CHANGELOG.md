@@ -5,6 +5,7 @@
 ### Added
 
 - **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Workspace` session, typed `AuditReport` / `Issue` and operation result models, `build_workspace`, `scaffold_workspace`, link/render/export/fmt library ops, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+- Typed **layout context** models (`LayoutContext`) validated at `build_layout_context` with expanded layout slot contract tests ([#106](https://github.com/wazootech/wiki/issues/106)).
 
 ### Fixed
 
@@ -12,7 +13,8 @@
 
 ### Changed
 
-- Page layouts use **`%wiki.*%` layout tokens** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `layouts/index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
+- Init/branding docs: Getting Started branding subsection; clarify tweak-comment workflow ([#107](https://github.com/wazootech/wiki/issues/107)).
+- Page layouts use **`%wiki.*%` layout slots** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `layouts/index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
 - Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
 - Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
 - Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
@@ -28,9 +30,9 @@
 - **Library API:** If you imported audit dict helpers or relied on `run_check` / `run_lint` returning `dict[str, Any]`, switch to `AuditReport` and `Issue` (`report.ok`, `report.errors`, `issue.code`). Prefer `from wiki import Workspace, AuditReport` for new integrations.
 
 - Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI. To customize logo letter or theme after init, edit tweak comments in `assets/logo.svg` and `layouts/wikipedia.html` instead.
-- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
+- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` slots (see [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
 - Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually to `wiki.yml` or remove before re-init. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
-- Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use monolithic page layouts with layout tokens instead.
+- Workspaces that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Remove `%wiki.body%` from custom layouts; use monolithic page layouts with layout slots instead.
 - Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
@@ -58,15 +60,15 @@ link:
 ### Changed
 
 - Consolidate [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
-- Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:` keeps `layout`, `base_url`, and `url_style`. Init flags rename to `--site-name` and `--site-theme-color` (logo asset only; not persisted to yaml).
+- Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:` keeps `layout`, `base_url`, and `url_style`. A brief 0.1.14 release added `--site-name` and `--site-theme-color` for logo SVG only; those init flags were removed before the next release — see Unreleased migration for the tweak-comment workflow.
 - `wiki init` omits `lint:` keys that default to `off` (`headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`).
 - Docs and agent skills use title-case H1 headings and sentence-case H2+ without numbered headings.
 
 ### Migration
 
 - Delete the entire `site.manifest` block from `wiki.yaml`.
-- Move branding into `layouts/default.html.j2` (or your `site.layout` file): edit `<title>`, sidebar label, `theme-color` meta tags, and asset URLs such as `{{ site.base_url }}/assets/logo.svg` directly.
-- Replace `{{ site.manifest.* }}` template variables with literals or `{{ site.base_url }}/assets/…` paths in custom layouts.
+- Move branding into your `site.layout` file (for example `layouts/wikipedia.html`): edit sidebar label, `theme-color` meta tags, and asset URLs such as `%wiki.base_url%/assets/logo.svg`. Use `%wiki.*%` layout slots, not Jinja (see Unreleased migration).
+- Replace legacy manifest placeholders and Jinja `{{ site.manifest.* }}` paths with literals or `%wiki.base_url%/assets/…` in custom layouts.
 - Remove `<link rel="manifest">` and any dependency on built/served `manifest.webmanifest`.
 
 ## 0.1.13 — 2026-06-10
