@@ -14,7 +14,7 @@ from pathlib import PureWindowsPath
 from urllib.error import URLError
 from urllib.request import urlopen
 
-import click
+from .errors import UpgradeError
 
 PYPI_JSON_URL = "https://pypi.org/pypi/wazootech-wiki/json"
 GITHUB_RELEASES_URL = "https://github.com/wazootech/wiki/releases/latest"
@@ -112,14 +112,13 @@ def frozen_upgrade_message() -> str:
     )
 
 
-def perform_upgrade(verbose: bool) -> None:
+def perform_upgrade(*, verbose: bool = False) -> None:
     """Run 'pip install --upgrade wazootech-wiki' in a subprocess."""
     if is_frozen_install():
-        raise click.ClickException(frozen_upgrade_message())
+        raise UpgradeError(frozen_upgrade_message())
 
     cmd = [sys.executable, "-m", "pip", "install", "--upgrade", PACKAGE_NAME]
     if verbose:
-        click.echo(f"Running: {' '.join(cmd)}")
         subprocess.check_call(cmd)
     else:
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

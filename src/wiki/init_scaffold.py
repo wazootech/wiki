@@ -11,7 +11,7 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from .schemas import DEFAULT_INIT_LAYOUT, InitOptions
+from .schemas import DEFAULT_INIT_LAYOUT, InitOptions, ScaffoldResult
 from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     "scaffold_logo_svg",
     "render_wiki_yaml",
     "resolve_init_options",
+    "scaffold_workspace",
 ]
 
 DEFAULT_BASE_URL = "/wiki"
@@ -262,3 +263,138 @@ def copy_default_logo(dest: Path) -> None:
     """Write the default sidebar logo into a workspace."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(scaffold_logo_svg(), encoding="utf-8")
+
+
+_README_TEMPLATE = (
+    "# My Wiki\n\n"
+    "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
+    "## Workspace Layout\n\n"
+    "- `wiki.yml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
+    "- `assets/logo.svg` — Sidebar logo (served via `wiki.assets`).\n"
+    "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
+    "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
+    "  - `Ethan_Davidson.md` — An example Person document.\n\n"
+    "## Commands\n\n"
+    "- **Check** (integrity: SHACL, JSON Schema, route safety, layout frontmatter):\n"
+    "  ```bash\n"
+    "  wiki check\n"
+    "  ```\n"
+    "- **Lint** (conventions: broken links, filename pattern, heading style):\n"
+    "  ```bash\n"
+    "  wiki lint\n"
+    "  ```\n"
+    "- **Preview** (starts a local dev server with auto-reload):\n"
+    "  ```bash\n"
+    "  wiki serve --watch\n"
+    "  ```\n"
+    "- **Build** (compiles to static HTML site):\n"
+    "  ```bash\n"
+    "  wiki build\n"
+    "  ```\n"
+)
+
+_PERSON_SHAPE_TEMPLATE = (
+    "---\n"
+    "id: wiki:PersonShape\n"
+    "type: sh:NodeShape\n"
+    "sh:targetClass: schema:Person\n"
+    "sh:property:\n"
+    "  - sh:path: schema:givenName\n"
+    "    sh:datatype: xsd:string\n"
+    "    sh:minCount: 1\n"
+    "  - sh:path: schema:familyName\n"
+    "    sh:datatype: xsd:string\n"
+    "    sh:minCount: 1\n"
+    "---\n\n"
+    "# Person shape\n\n"
+    "Defines validation rules for Person profiles in this wiki.\n"
+)
+
+_EXAMPLE_PERSON_TEMPLATE = (
+    "<!-- wiki tweak: replace with your first page -->\n"
+    "---\n"
+    "type: schema:Person\n"
+    "givenName: Ethan\n"
+    "familyName: Davidson\n"
+    "---\n\n"
+    "# Ethan Davidson\n\n"
+    "Welcome to my personal wiki page! This page serves as a starting point and conforming example of a Person profile.\n"
+)
+
+
+def scaffold_workspace(
+    cwd: Path,
+    init_options: InitOptions,
+    *,
+    init_git: bool = False,
+) -> ScaffoldResult:
+    """Write wiki.yml, starter pages, assets, and optional layout files."""
+    import shutil
+
+    written: list[Path] = []
+    config_path = cwd / "wiki.yml"
+    readme_path = cwd / "README.md"
+    wiki_dir = cwd / "wiki"
+
+    wiki_dir.mkdir(parents=True, exist_ok=True)
+    readme_path.write_text(_README_TEMPLATE, encoding="utf-8")
+    written.extend([readme_path, wiki_dir])
+
+    person_shape = wiki_dir / "Person_Shape.md"
+    person_shape.write_text(_PERSON_SHAPE_TEMPLATE, encoding="utf-8")
+    example_person = wiki_dir / "Ethan_Davidson.md"
+    example_person.write_text(_EXAMPLE_PERSON_TEMPLATE, encoding="utf-8")
+    written.extend([person_shape, example_person])
+
+    config_content = render_wiki_yaml(init_options)
+    config_path.write_text(config_content, encoding="utf-8")
+    written.append(config_path)
+
+    layouts_dir = cwd / "layouts"
+    layouts_dir.mkdir(parents=True, exist_ok=True)
+    if init_options.site_layout == "wikipedia":
+        wiki_layout_path = layouts_dir / "wikipedia.html"
+        if not wiki_layout_path.exists():
+            copy_official_init_layout(wiki_layout_path, "wikipedia")
+            written.append(wiki_layout_path)
+
+    assets_dir = cwd / "assets"
+    css_path = assets_dir / "wikipedia.css"
+    if init_options.site_layout == "wikipedia" and not css_path.exists():
+        copy_packaged_assets(assets_dir)
+        written.append(css_path)
+
+    logo_path = cwd / "assets" / "logo.svg"
+    if not logo_path.exists():
+        copy_default_logo(logo_path)
+        written.append(logo_path)
+
+    if init_git:
+        if shutil.which("git") is None:
+            return ScaffoldResult(
+                ok=False,
+                error_message="git was requested with --git, but no git executable was found on PATH.",
+            )
+        try:
+            subprocess.run(["git", "init"], cwd=cwd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr.strip() if exc.stderr else "unknown git init error"
+            return ScaffoldResult(ok=False, error_message=f"git init failed: {stderr}")
+
+    layout_note = (
+        "layouts/wikipedia.html and assets/wikipedia.css"
+        if init_options.site_layout == "wikipedia"
+        else "packaged minimal layout (site.layout unset)"
+    )
+    message = (
+        f"Initialized wiki.yml, README.md, wiki/ starter files, assets/logo.svg, and {layout_note}."
+    )
+    if init_git:
+        message += " Ran git init."
+
+    return ScaffoldResult(
+        ok=True,
+        config_path=config_path,
+        written_paths=written,
+        message=message,
+    )

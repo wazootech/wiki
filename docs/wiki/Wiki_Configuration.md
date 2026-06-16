@@ -304,6 +304,8 @@ Without a configured layout file (or when the path is missing), every page is re
 
 Layout files use `%wiki.*%` token substitution (not Jinja). On each page render, the CLI builds a token map from the current page context and replaces every known token in your layout file. Unknown `%wiki.*%` spellings are left unchanged.
 
+Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_layout_token_map` as the single boundary for token production. See [Wiki Programmatic API](Wiki_Programmatic_API.md#layout-token-contract).
+
 Canonical token list (22 tokens):
 
 | Token                       | Source                    | Substitution                                                  |

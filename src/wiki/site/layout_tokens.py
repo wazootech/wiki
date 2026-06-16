@@ -64,6 +64,11 @@ def build_head_markup(context: dict[str, Any]) -> str:
     return f"<title>{safe_title} - Wiki CLI</title>"
 
 
+def build_layout_token_map(context: dict[str, Any]) -> dict[str, str]:
+    """Public alias for layout token contract boundary."""
+    return build_token_map(context)
+
+
 def build_token_map(context: dict[str, Any]) -> dict[str, str]:
     """Flatten layout context into %wiki.*% replacement strings."""
     site = context["site"]

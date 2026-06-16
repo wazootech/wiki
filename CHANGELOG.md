@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Workspace` session, typed `AuditReport` / `Issue` and operation result models, `build_workspace`, `scaffold_workspace`, link/render/export/fmt library ops, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+
 ### Fixed
 
 - Escape all raw HTML in wiki markdown rendering uniformly, including TOC/sidebar outline labels; strip SPARQL comment wrappers before site HTML rendering instead of passthrough ([#91](https://github.com/wazootech/wiki/issues/91), PR [#102](https://github.com/wazootech/wiki/pull/102))
@@ -20,6 +24,8 @@
 - `wiki init` removes `--force`, `--site-name`, and `--site-theme-color`. Init requires a clean directory; re-scaffold in a new directory or remove existing scaffold files manually. Branding uses `<!-- wiki tweak: … -->` comments in scaffolded `assets/logo.svg` and `layouts/wikipedia.html`.
 
 ### Migration
+
+- **Library API:** If you imported audit dict helpers or relied on `run_check` / `run_lint` returning `dict[str, Any]`, switch to `AuditReport` and `Issue` (`report.ok`, `report.errors`, `issue.code`). Prefer `from wiki import Workspace, AuditReport` for new integrations.
 
 - Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI. To customize logo letter or theme after init, edit tweak comments in `assets/logo.svg` and `layouts/wikipedia.html` instead.
 - Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` tokens (see [Layout tokens](docs/wiki/Wiki_Configuration.md#layout-tokens)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.

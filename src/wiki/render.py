@@ -6,7 +6,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-import click
 from markdown_it import MarkdownIt
 
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
@@ -105,14 +104,15 @@ def render_markdown_files(
     graph: Any,
     dry_run: bool = False,
     explicit_files: tuple[Path, ...] = (),
-) -> tuple[int, int, list[str]]:
+) -> tuple[int, int, list[str], list[str]]:
     """Iterate over markdown files, parse and replace dynamic SPARQL sections inline.
 
-    Returns (success_count, error_count, stale_files).
+    Returns (success_count, error_count, stale_files, render_errors).
     """
     success_count = 0
     error_count = 0
     stale_files: list[str] = []
+    render_errors: list[str] = []
     markdown_files = select_markdown_files_for_render(context, explicit_files=explicit_files)
 
     known_slugs = {pr.route for pr in page_routes(context)}
@@ -138,8 +138,8 @@ def render_markdown_files(
                     return match.group(0)
                 modified = True
                 return _replace_sparql_table(match, rendered_markdown)
-            except Exception as e:
-                click.echo(f"Error rendering query in {md_file.name}: {e}", err=True)
+            except Exception as exc:
+                render_errors.append(f"Error rendering query in {md_file.name}: {exc}")
                 file_errors += 1
                 return match.group(0)
 
@@ -158,7 +158,7 @@ def render_markdown_files(
                 success_count += 1
         error_count += file_errors
 
-    return (success_count, error_count, stale_files)
+    return (success_count, error_count, stale_files, render_errors)
 
 
 def render_markdown(text: str) -> str:

@@ -202,27 +202,27 @@ type: schema:WebPage
                 lint={"filename_pattern": "warning"},
             )
             res_warning = run_lint(config_warning)
-            self.assertTrue(res_warning["conforms"])
-            self.assertEqual(len(res_warning["warnings"]), 1)
-            self.assertEqual(len(res_warning["errors"]), 0)
+            self.assertTrue(res_warning.ok)
+            self.assertEqual(len(res_warning.warnings), 1)
+            self.assertEqual(len(res_warning.errors), 0)
 
             config_error = Config(
                 wiki={"inputs": [wiki_dir], "filename_pattern": r"[a-z0-9-]+\.md"},
                 lint={"filename_pattern": "error"},
             )
             res_error = run_lint(config_error)
-            self.assertFalse(res_error["conforms"])
-            self.assertEqual(len(res_error["warnings"]), 0)
-            self.assertEqual(len(res_error["errors"]), 1)
+            self.assertFalse(res_error.ok)
+            self.assertEqual(len(res_error.warnings), 0)
+            self.assertEqual(len(res_error.errors), 1)
 
             config_off = Config(
                 wiki={"inputs": [wiki_dir], "filename_pattern": r"[a-z0-9-]+\.md"},
                 lint={"filename_pattern": "off"},
             )
             res_off = run_lint(config_off)
-            self.assertTrue(res_off["conforms"])
-            self.assertEqual(len(res_off["warnings"]), 0)
-            self.assertEqual(len(res_off["errors"]), 0)
+            self.assertTrue(res_off.ok)
+            self.assertEqual(len(res_off.warnings), 0)
+            self.assertEqual(len(res_off.errors), 0)
 
     def test_filename_pattern_reports_non_matching_names(self) -> None:
         """Custom filename_pattern controls filename hygiene without preset styles."""
@@ -234,9 +234,9 @@ type: schema:WebPage
             config = Config(wiki={"inputs": [wiki_dir], "filename_pattern": r"[A-Z][A-Za-z0-9_]*\.md"})
             res = run_lint(config)
 
-            self.assertTrue(res["conforms"])
-            self.assertEqual(len(res["warnings"]), 1)
-            self.assertIn("ethan-davidson.md", res["warnings"][0])
+            self.assertTrue(res.ok)
+            self.assertEqual(len(res.warnings), 1)
+            self.assertIn("ethan-davidson.md", res.warnings[0].message)
 
     def test_wikilink_resolution_requires_path_specifier_target(self) -> None:
         """Wikilinks use path specifiers and do not space-normalize targets."""
@@ -251,7 +251,7 @@ type: schema:WebPage
             config = Config(wiki={"inputs": [wiki_dir]})
             res = run_lint(config)
 
-            self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w for w in res["warnings"]))
+            self.assertTrue(any("Broken WikiLink [Ethan Davidson]" in w.message for w in res.warnings))
 
     def test_lint_headings_numbered_and_thematic_break(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -489,8 +489,8 @@ type: schema:WebPage
             (wiki / "Guide.md").write_text("# Guide\n\nSee [[Target]].\n", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, config_root=Path(tmpdir), lint={"link_style": "error"})
             res = run_lint(config)
-            self.assertFalse(res["conforms"])
-            self.assertTrue(any("Wikilink" in e for e in res["errors"]))
+            self.assertFalse(res.ok)
+            self.assertTrue(any("Wikilink" in e.message for e in res.errors))
 
     def test_run_lint_headings_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -502,8 +502,8 @@ type: schema:WebPage
             )
             config = Config(wiki={"inputs": [wiki_dir]}, lint={"headings": "error"})
             res = run_lint(config)
-            self.assertFalse(res["conforms"])
-            self.assertTrue(any("Numbered heading" in e for e in res["errors"]))
+            self.assertFalse(res.ok)
+            self.assertTrue(any("Numbered heading" in e.message for e in res.errors))
 
     def test_run_lint_heading_levels_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -515,8 +515,8 @@ type: schema:WebPage
             )
             config = Config(wiki={"inputs": [wiki_dir]}, lint={"heading_levels": "error"})
             res = run_lint(config)
-            self.assertFalse(res["conforms"])
-            self.assertTrue(any("skips level" in e for e in res["errors"]))
+            self.assertFalse(res.ok)
+            self.assertTrue(any("skips level" in e.message for e in res.errors))
 
     def test_run_lint_duplicate_headings_severity(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -528,8 +528,8 @@ type: schema:WebPage
             )
             config = Config(wiki={"inputs": [wiki_dir]}, lint={"duplicate_headings": "error"})
             res = run_lint(config)
-            self.assertFalse(res["conforms"])
-            self.assertTrue(any("Duplicate heading" in e for e in res["errors"]))
+            self.assertFalse(res.ok)
+            self.assertTrue(any("Duplicate heading" in e.message for e in res.errors))
 
     def test_frontmatter_defined_shapes(self) -> None:
         """Test that SHACL shapes defined in markdown frontmatter are loaded and enforced."""
