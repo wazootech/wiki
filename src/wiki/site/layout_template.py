@@ -1,4 +1,4 @@
-"""Layout token substitution for wiki page layout files."""
+"""Layout slot substitution for wiki page layout files."""
 
 from __future__ import annotations
 

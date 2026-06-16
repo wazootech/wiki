@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# Leaf paths wrapped as Markup before token substitution (shared by layout_context + layout_tokens).
+# Leaf paths wrapped as Markup before slot substitution (shared by layout_context + layout_tokens).
 LAYOUT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
     {
         ("page", "content"),

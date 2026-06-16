@@ -1,4 +1,4 @@
-"""Layout token and context contract tests (#106 alignment)."""
+"""Layout slot and context contract tests (#106 alignment)."""
 
 from __future__ import annotations
 
@@ -108,9 +108,9 @@ class TestLayoutContract(unittest.TestCase):
         template = load_packaged_official_layout("wikipedia")
         tokens = build_layout_token_map(_sample_context())
         unknown = unknown_tokens(template, tokens)
-        self.assertEqual(unknown, [], msg=f"Unknown layout tokens: {unknown}")
+        self.assertEqual(unknown, [], msg=f"Unknown layout slots: {unknown}")
 
-    def test_docs_wikipedia_layout_tokens_are_known(self) -> None:
+    def test_docs_wikipedia_layout_slots_are_known(self) -> None:
         docs_layout = Path(__file__).resolve().parents[1] / "docs" / "layouts" / "wikipedia.html"
         if not docs_layout.is_file():
             self.skipTest("docs layout not present")

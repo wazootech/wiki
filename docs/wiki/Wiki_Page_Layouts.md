@@ -48,9 +48,9 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 `wazoo:layout` is ordinary frontmatter: it appears in the RDF graph, infobox, and metadata pane like other properties.
 
-## Layout tokens
+## Layout slots
 
-Layout files use `%wiki.*%` token substitution (not Jinja). The **canonical reference** is [Layout tokens](Wiki_Configuration.md#layout-tokens) in Wiki Configuration — a full table of every `%wiki.*%` token, its source field, and whether the value is HTML-escaped, pre-built markup, or raw JSON.
+Layout files use `%wiki.*%` slot substitution (not Jinja). The **canonical reference** is [Layout slots](Wiki_Configuration.md#layout-slots) in Wiki Configuration — a full table of every `%wiki.*%` slot, its source field, and whether the value is HTML-escaped, pre-built markup, or raw JSON.
 
 Custom logos and favicons are layout markup plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 

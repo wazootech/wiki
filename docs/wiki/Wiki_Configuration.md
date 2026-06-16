@@ -292,7 +292,7 @@ When `site.layout` is set, the CLI renders every page through that page layout (
 
 The first-class presentation contract in this repository is layout files under `layouts/` (for example `layouts/wikipedia.html` referenced from `site.layout`).
 
-- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout token contract.
+- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout slot contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
 - Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
 
@@ -300,15 +300,15 @@ The first-class presentation contract in this repository is layout files under `
 
 Without a configured layout file (or when the path is missing), every page is rendered with the packaged `index.html` layout (`<h1>` + content, linked `assets/wikipedia.css`). It does not include sidebar, tabs, infobox, table of contents, backlinks, or categories. Use `wiki init --site-layout wikipedia` (default) for the full Vector layout.
 
-### Layout tokens
+### Layout slots
 
-Layout files use `%wiki.*%` token substitution (not Jinja). On each page render, the CLI builds a token map from the current page context and replaces every known token in your layout file. Unknown `%wiki.*%` spellings are left unchanged.
+Layout files use `%wiki.*%` slot substitution (not Jinja). On each page render, the CLI builds a slot map from the current page context and replaces every known slot in your layout file. Unknown `%wiki.*%` spellings are left unchanged.
 
-Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_layout_token_map` as the single boundary for token production. See [Wiki Programmatic API](Wiki_Programmatic_API.md#layout-token-contract).
+Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_layout_token_map` as the single boundary for slot production. See [Wiki Programmatic API](Wiki_Programmatic_API.md#layout-slot-contract).
 
-Canonical token list (22 tokens):
+Canonical slot list (22 slots):
 
-| Token                       | Source                    | Substitution                                                  |
+| Slot                        | Source                    | Substitution                                                  |
 | --------------------------- | ------------------------- | ------------------------------------------------------------- |
 | `%wiki.base_url%`           | `site.base_url`           | HTML-escaped text (`/wiki`, or `""` for site root)            |
 | `%wiki.assets%`             | same as `%wiki.base_url%` | HTML-escaped text (alias for asset `href` / `src` prefixes)   |
@@ -333,13 +333,13 @@ Canonical token list (22 tokens):
 | `%wiki.wiki.pages_json%`    | all pages for search JS   | Raw JSON array (`[{slug, title}, …]`)                         |
 | `%wiki.page.slug_json%`     | current page slug         | Raw JSON string (for client-side talk notes)                  |
 
-**Pre-built HTML** tokens are assembled by the site builder (infobox, TOC, metadata panes, and so on). Treat them as trusted markup from Wiki CLI, not as user-authored template fragments.
+**Pre-built HTML** slots are assembled by the site builder (infobox, TOC, metadata panes, and so on). Treat them as trusted markup from Wiki CLI, not as user-authored template fragments.
 
 **Packaged layouts**
 
-| File                     | When used                                                                     | Typical tokens                                                                                                             |
+| File                     | When used                                                                     | Typical slots                                                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `layouts/wikipedia.html` | `site.layout` after `wiki init --site-layout wikipedia` (copied to workspace) | All tokens above (Vector chrome + search script)                                                                           |
+| `layouts/wikipedia.html` | `site.layout` after `wiki init --site-layout wikipedia` (copied to workspace) | All slots above (Vector chrome + search script)                                                                            |
 | `layouts/index.html`     | `site.layout` unset or missing file                                           | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
 
 Example excerpt (`layouts/wikipedia.html` after `wiki init`):

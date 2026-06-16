@@ -44,7 +44,7 @@ def build_head_markup(context: dict[str, Any]) -> str:
 
 
 def build_layout_token_map(context: dict[str, Any]) -> dict[str, str]:
-    """Public alias for layout token contract boundary."""
+    """Public alias for layout slot contract boundary."""
     return build_token_map(context)
 
 
