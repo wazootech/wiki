@@ -132,7 +132,7 @@ Interactive `wiki init` still owns prompts, `--git`, and preflight guards in the
 
 ## Layout token contract
 
-Page layouts substitute `%wiki.*%` tokens. The contract boundary for tests and downstream layout tools is `wiki.site.layout_tokens.build_layout_token_map` (alias: `build_layout_context` → token map). Contract tests in the repository assert every token in packaged layouts is produced by that map. See [Wiki Configuration](Wiki_Configuration.md#layout-tokens).
+Page layouts substitute `%wiki.*%` tokens. `build_layout_context` validates a typed `LayoutContext` (internal schema in `wiki.schemas.layout`) before markup and token substitution. The contract boundary for tests and downstream layout tools is `wiki.site.layout_tokens.build_layout_token_map`. Contract tests assert the context key tree, markup paths, and that every token in packaged layouts is produced by that map. See [Wiki Configuration](Wiki_Configuration.md#layout-tokens).
 
 ## Exceptions
 

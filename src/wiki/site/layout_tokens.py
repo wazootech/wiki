@@ -10,35 +10,14 @@ from typing import Any
 
 from markupsafe import Markup
 
+from ..schemas.layout import LAYOUT_MARKUP_PATHS, LAYOUT_RAW_JSON_PATHS
+
 PACKAGED_MINIMAL_LAYOUT = "index.html"
 PACKAGED_WIKIPEDIA_LAYOUT = "wikipedia.html"
 
 _TOKEN_PATTERN = re.compile(r"%wiki\.[a-z0-9_.]+%", re.IGNORECASE)
 
-# Context leaf paths: True = inject as Markup/raw HTML, False = HTML-escape text.
-_MARKUP_LEAVES: frozenset[tuple[str, ...]] = frozenset(
-    {
-        ("page", "content"),
-        ("page", "layout", "label"),
-        ("page", "type_label"),
-        ("page", "nav", "infobox"),
-        ("page", "nav", "toc"),
-        ("page", "nav", "backlinks"),
-        ("page", "nav", "categories"),
-        ("page", "nav", "sidebar"),
-        ("page", "metadata", "tool"),
-        ("page", "metadata", "tab"),
-        ("page", "metadata", "pane"),
-        ("wiki", "pages_json"),
-    }
-)
-
-_RAW_JSON_LEAVES: frozenset[tuple[str, ...]] = frozenset(
-    {
-        ("wiki", "pages_json"),
-        ("page", "slug_json"),
-    }
-)
+_RAW_JSON_LEAVES = LAYOUT_RAW_JSON_PATHS
 
 
 def _context_leaf(context: dict[str, Any], path: tuple[str, ...]) -> Any:
@@ -53,7 +32,7 @@ def _format_leaf(value: Any, *, path: tuple[str, ...]) -> str:
         return ""
     if path in _RAW_JSON_LEAVES:
         return str(value)
-    if path in _MARKUP_LEAVES or isinstance(value, Markup):
+    if path in LAYOUT_MARKUP_PATHS or isinstance(value, Markup):
         return str(value)
     return html_module.escape(str(value))
 

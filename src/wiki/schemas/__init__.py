@@ -2,6 +2,17 @@
 
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import DEFAULT_INIT_LAYOUT, InitOptions
+from .layout import (
+    LAYOUT_MARKUP_PATHS,
+    LAYOUT_RAW_JSON_PATHS,
+    LayoutContext,
+    PageLayoutContext,
+    PageLayoutPart,
+    PageMetadataContext,
+    PageNavContext,
+    SiteLayoutContext,
+    WikiLayoutContext,
+)
 from .metadata import METADATA_VIEWS, MetadataView
 from .reports import (
     AuditReport,
@@ -43,18 +54,27 @@ __all__ = [
     "GraphConfig",
     "InfoboxRow",
     "InitOptions",
+    "LAYOUT_MARKUP_PATHS",
+    "LAYOUT_RAW_JSON_PATHS",
+    "LayoutContext",
     "LinkConfig",
     "LinkOpportunity",
     "LintConfig",
+    "PageLayoutContext",
+    "PageLayoutPart",
+    "PageMetadataContext",
+    "PageNavContext",
     "METADATA_VIEWS",
     "MetadataView",
     "OutputEntry",
     "PageRoute",
     "Severity",
     "SiteConfig",
+    "SiteLayoutContext",
     "SparqlServiceConfig",
     "TocItem",
     "WikiConfig",
+    "WikiLayoutContext",
     "VirtualPage",
     "Config",
     "DEFAULT_INIT_LAYOUT",
