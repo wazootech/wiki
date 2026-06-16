@@ -78,9 +78,9 @@ Treat the wiki as a compounding codebase agents maintain over time. Structured f
 
 No Obsidian or agent stack required. `wiki init` scaffolds a wiki; conventions are documented in [Style Guide](Style_Guide.md).
 
-## Three beats of the CLI
+## Three capabilities of the CLI
 
-| Beat         | Commands                    | Value                                            |
+| Capability   | Commands                    | Value                                            |
 | ------------ | --------------------------- | ------------------------------------------------ |
 | Trust        | `check`, `lint`, `fmt`      | Integrity contracts and authoring conventions    |
 | Intelligence | `query`, `render`, `export` | SPARQL, inline result blocks, RDF serializations |

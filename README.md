@@ -32,10 +32,10 @@ Adoption path: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs wiki.
 
 ## Key features
 
-Three beats, one toolchain:
+Three capabilities, one toolchain:
 
-| Beat | Commands | What you get |
-|------|----------|--------------|
+| Capability | Commands | What you get |
+|------------|----------|--------------|
 | **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL and JSON Schema integrity, wiki conventions, mechanical Markdown layout |
 | **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | OWL-RL inference, inline SPARQL tables, JSON-LD and RDF serializations |
 | **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata pane, local preview, optional read-only SPARQL endpoint, wikilink hygiene |
@@ -747,5 +747,3 @@ sparql_service:
 ## Glossary and decisions
 To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
 *   [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
-
-
