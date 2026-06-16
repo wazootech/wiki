@@ -8,7 +8,7 @@ description: Stable Python library entry points for loading a wiki, validating, 
 
 Wiki CLI (`wazootech-wiki`) exposes a **library-first** Python API for CI pipelines, tests, and agent automation. The `wiki` command remains the primary user surface; library calls return typed results and raise domain exceptions instead of printing or exiting.
 
-See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. Semver policy and API inventory live in repository ADR 001 (`docs/adr/001-library-first-api.md` on GitHub).
+See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. Semver applies to symbols in `wiki.__all__` (listed below); other `wiki.*` modules are internal unless documented on this page.
 
 ## Install and imports
 
@@ -97,7 +97,7 @@ result = build_workspace(
     ),
 )
 if not result.ok:
-    # preflight AuditReport on result.report when lint/check failed
+    # preflight AuditReport on result.preflight when lint/check failed
     ...
 print(result.page_count, result.written_paths)
 ```
@@ -111,7 +111,7 @@ from wiki import LinkOptions, run_link, render_workspace, export_documents, form
 
 link_report = run_link(ws, None, LinkOptions(check=True))
 render_report = render_workspace(ws, None, check_only=True)
-export_result = export_documents(ws, paths=None, format="turtle")
+export_result = export_documents(ws, None, rdf_format="turtle", mode="expanded")
 fmt_report = format_files(ws, None, check_only=True)
 ```
 

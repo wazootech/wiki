@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Workspace` session, typed `AuditReport` / `Issue` and operation result models, `build_workspace`, `scaffold_workspace`, link/render/export/fmt library ops, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md) and [ADR 001](docs/adr/001-library-first-api.md).
+- **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Workspace` session, typed `AuditReport` / `Issue` and operation result models, `build_workspace`, `scaffold_workspace`, link/render/export/fmt library ops, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
 
 ### Fixed
 
