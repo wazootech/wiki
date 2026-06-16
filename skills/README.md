@@ -16,4 +16,4 @@ Typical flow: **install** → **create** → **deploy** → **improve** (each op
 npx skills add wazootech/wiki@wiki -g -y
 ```
 
-Docs: [Wiki_Skills.md](../docs/wiki/Wiki_Skills.md) and [Wiki_Skill.md](../docs/wiki/Wiki_Skill.md). User walkthrough: [Getting_Started.md](../docs/wiki/Getting_Started.md).
+Docs: [Wiki_Skills.md](../docs/wiki/Wiki_Skills.md). User walkthrough: [Getting_Started.md](../docs/wiki/Getting_Started.md).

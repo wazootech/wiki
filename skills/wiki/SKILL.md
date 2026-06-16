@@ -69,4 +69,4 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 | [references/alignment-checklist.md](references/alignment-checklist.md) | Deploy path alignment and audit |
 | [references/programmatic-api.md](references/programmatic-api.md) | In-process Python API (`Workspace`, `AuditReport`) |
 
-Human docs: [Wiki Skill](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Skill.md), [Getting Started](https://github.com/wazootech/wiki/blob/main/docs/wiki/Getting_Started.md), [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).
+Human docs: [Wiki Skills](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Skills.md), [Getting Started](https://github.com/wazootech/wiki/blob/main/docs/wiki/Getting_Started.md), [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).

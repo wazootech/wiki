@@ -10,6 +10,8 @@ description: Procedural knowledge for coding agents — install, scaffold, impro
 
 Onboarding workflows are **independent modules** with no required order. Each completes its job and stops unless the user asks for the next step in the same turn.
 
+Canonical skill file: [`skills/wiki/SKILL.md`](https://github.com/wazootech/wiki/blob/main/skills/wiki/SKILL.md).
+
 ## Install via skills.sh
 
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
@@ -41,9 +43,57 @@ npx skills add wazootech/wiki@wiki -g -y
 
 Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
 
-| Skill | Install                                    | Reference                   | Workflows                                             |
-| ----- | ------------------------------------------ | --------------------------- | ----------------------------------------------------- |
-| wiki  | `npx skills add wazootech/wiki@wiki -g -y` | [Wiki Skill](Wiki_Skill.md) | Install, create, improve, deploy (route one per turn) |
+## Workflows and routing
+
+The single **`wiki`** skill routes to four workflow references:
+
+| Intent                         | Reference                           | Stop when                        |
+| ------------------------------ | ----------------------------------- | -------------------------------- |
+| CLI missing or stale           | `skills/wiki/references/install.md` | CLI verified or blocker reported |
+| New wiki / `wiki init`         | `skills/wiki/references/create.md`  | Scaffold summarized              |
+| Audit / pre-PR / lint failures | `skills/wiki/references/improve.md` | Findings report delivered        |
+| GitHub Pages / CI deploy       | `skills/wiki/references/deploy.md`  | Workflow + URLs summarized       |
+
+Read one reference per turn unless the user explicitly asked for a multi-step flow (for example install → create → deploy).
+
+## Scripts
+
+```bash
+bash skills/wiki/scripts/verify-cli.sh
+bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
+```
+
+`verify-cli.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
+
+## Install workflow
+
+Detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, verify with `wiki --help` and a **`fmt` capability probe**, and exit with a ready-to-go message. Does not suggest `wiki init` unless the user asks.
+
+See `skills/wiki/references/install.md`.
+
+## Create workflow
+
+Non-interactive `wiki init` for workspace structure (config, layout, starter pages), then a short **tweak** step: edit `<!-- wiki tweak: … -->` comments in `assets/logo.svg` and `layouts/wikipedia.html`, replace the starter first page, and optionally uncomment blocks in `wiki.yml`. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
+
+See `skills/wiki/references/create.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
+
+## Improve workflow
+
+Survey a wiki as a read-only advisor: run validators, cite evidence, deliver a prioritized findings report. Never edits wiki files unless explicitly asked. Suggest repairs (`wiki fmt`, `wiki link --fix-broken`) only when asked.
+
+See `skills/wiki/references/improve.md`, [Wiki Configuration](Wiki_Configuration.md), and [Design Philosophies](Design_Philosophies.md).
+
+## Deploy workflow
+
+Align `site.base_url`, add `.github/workflows/deploy.yml` from wholesale templates, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions**. Requires **`wiki` on PATH** and an existing wiki config (`wiki.yml`, or legacy `wiki.yaml`).
+
+Workflow assets (embed one template in full; substitute `CONFIG_PATH`, `SITE_BASE_URL`, `ARTIFACT_PATH` only):
+
+- `skills/wiki/references/workflow-template-uv.yml` — uv monorepo
+- `skills/wiki/references/workflow-template-pip.yml` — pip standalone
+- `skills/wiki/references/alignment-checklist.md`
+
+See `skills/wiki/references/deploy.md` and [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md).
 
 ## Repository layout
 

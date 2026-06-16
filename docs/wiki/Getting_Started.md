@@ -104,7 +104,7 @@ See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Act
 
 ## Agent skills
 
-Coding agents can use the consolidated **`wiki`** skill documented in [Wiki Skills](Wiki_Skills.md) and [Wiki Skill](Wiki_Skill.md).
+Coding agents can use the consolidated **`wiki`** skill documented in [Wiki Skills](Wiki_Skills.md).
 
 After upgrading Wiki CLI or when skills behave unexpectedly, refresh agent skills:
 
