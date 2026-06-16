@@ -11,18 +11,13 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from .schemas import DEFAULT_INIT_LAYOUT, InitOptions, ScaffoldResult
+from .schemas import InitOptions, ScaffoldResult
 from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
-    "DEFAULT_INIT_LAYOUT",
     "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
-    "copy_default_logo",
-    "copy_official_init_layout",
-    "copy_packaged_assets",
     "load_packaged_official_layout",
-    "scaffold_logo_svg",
     "render_wiki_yaml",
     "resolve_init_options",
     "scaffold_workspace",
@@ -107,7 +102,6 @@ DOCS_WIKI_INIT_OPTIONS = InitOptions(
     site_url_style=DEFAULT_URL_STYLE,
     graph_content_predicate="schema:articleBody",
     link_style="standard",
-    site_layout="wikipedia",
 )
 
 
@@ -127,8 +121,6 @@ def resolve_init_options(
     graph_implicit_types: list[str] | None = None,
     graph_implicit_types_policy: str | None = None,
     graph_include_file_extension: bool | None = None,
-    site_layout: str | None = None,
-    prompt_site_layout: Callable[[], str] | None = None,
 ) -> InitOptions:
     """Resolve init config from CLI flags, git remote, or interactive prompt."""
     inferred_context_wiki: str | None = None
@@ -143,26 +135,14 @@ def resolve_init_options(
         inferred_context_wiki, inferred_base_url = infer_github_pages_urls(owner, repo_name)
 
     resolved_context_wiki = graph_context_wiki or inferred_context_wiki
-    used_context_prompt = False
     if resolved_context_wiki is None:
         resolved_context_wiki = prompt_context_wiki(DEFAULT_WIKI_BASE)
-        used_context_prompt = True
     resolved_context_wiki = normalize_base_iri(resolved_context_wiki)
 
     resolved_base_url = site_base_url or inferred_base_url or DEFAULT_BASE_URL
     resolved_base_url = normalize_base_url(resolved_base_url)
 
     resolved_url_style = site_url_style or DEFAULT_URL_STYLE
-
-    resolved_site_layout = site_layout
-    if (
-        resolved_site_layout is None
-        and used_context_prompt
-        and prompt_site_layout is not None
-    ):
-        resolved_site_layout = prompt_site_layout()
-    elif resolved_site_layout is None:
-        resolved_site_layout = DEFAULT_INIT_LAYOUT
 
     return InitOptions(
         graph_context_wiki=resolved_context_wiki,
@@ -175,18 +155,15 @@ def resolve_init_options(
         graph_implicit_types=graph_implicit_types,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
-        site_layout=resolved_site_layout,
     )
 
 
 _INIT_TEMPLATE_NAME = "wiki.yml"
-_OFFICIAL_LAYOUTS_DIR = "layouts"
 _OFFICIAL_LAYOUT_FILES = {
-    "wikipedia": "wikipedia.html",
     "minimal": "index.html",
 }
 _PACKAGED_ASSETS_DIR = "assets"
-_PACKAGED_ASSET_FILES = ("wikipedia.css",)
+_PACKAGED_ASSET_FILES = ()
 _JINJA_COMMENT_PREFIX = "{# wiki init scaffold"
 
 
@@ -219,7 +196,7 @@ def load_packaged_official_layout(layout: str) -> str:
     filename = _OFFICIAL_LAYOUT_FILES.get(layout)
     if filename is None:
         raise ValueError(f"Unknown official layout: {layout!r}")
-    return files("wiki").joinpath(f"{_OFFICIAL_LAYOUTS_DIR}/{filename}").read_text(
+    return files("wiki").joinpath(filename).read_text(
         encoding="utf-8"
     )
 
@@ -232,45 +209,11 @@ def copy_official_init_layout(dest: Path, layout: str) -> None:
     dest.write_text(load_packaged_official_layout(layout), encoding="utf-8")
 
 
-def copy_packaged_assets(dest_dir: Path) -> None:
-    """Copy bundled wiki assets (for example wikipedia.css) into a workspace assets/ directory."""
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    for filename in _PACKAGED_ASSET_FILES:
-        text = files("wiki").joinpath(f"{_PACKAGED_ASSETS_DIR}/{filename}").read_text(encoding="utf-8")
-        (dest_dir / filename).write_text(text, encoding="utf-8")
-
-
-def scaffold_logo_svg() -> str:
-    """Return the default sidebar logo SVG for init scaffolding with tweak comments."""
-    from .site.layout_context import build_logo_svg
-
-    svg = build_logo_svg("W")
-    svg = svg.replace(
-        '<linearGradient id="globeGrad"',
-        "<!-- wiki tweak: primary theme — edit globeGrad stops; adjust gridGrad accent to match -->\n"
-        '    <linearGradient id="globeGrad"',
-        1,
-    )
-    svg = svg.replace(
-        "<text ",
-        "<!-- wiki tweak: logo letter (one character) -->\n  <text ",
-        1,
-    )
-    return svg
-
-
-def copy_default_logo(dest: Path) -> None:
-    """Write the default sidebar logo into a workspace."""
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(scaffold_logo_svg(), encoding="utf-8")
-
-
 _README_TEMPLATE = (
     "# My Wiki\n\n"
     "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
     "## Workspace Layout\n\n"
     "- `wiki.yml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
-    "- `assets/logo.svg` — Sidebar logo (served via `wiki.assets`).\n"
     "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
     "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
     "  - `Ethan_Davidson.md` — An example Person document.\n\n"
@@ -350,25 +293,6 @@ def scaffold_workspace(
     config_path.write_text(config_content, encoding="utf-8")
     written.append(config_path)
 
-    layouts_dir = cwd / "layouts"
-    layouts_dir.mkdir(parents=True, exist_ok=True)
-    if init_options.site_layout == "wikipedia":
-        wiki_layout_path = layouts_dir / "wikipedia.html"
-        if not wiki_layout_path.exists():
-            copy_official_init_layout(wiki_layout_path, "wikipedia")
-            written.append(wiki_layout_path)
-
-    assets_dir = cwd / "assets"
-    css_path = assets_dir / "wikipedia.css"
-    if init_options.site_layout == "wikipedia" and not css_path.exists():
-        copy_packaged_assets(assets_dir)
-        written.append(css_path)
-
-    logo_path = cwd / "assets" / "logo.svg"
-    if not logo_path.exists():
-        copy_default_logo(logo_path)
-        written.append(logo_path)
-
     if init_git:
         if shutil.which("git") is None:
             return ScaffoldResult(
@@ -381,13 +305,8 @@ def scaffold_workspace(
             stderr = exc.stderr.strip() if exc.stderr else "unknown git init error"
             return ScaffoldResult(ok=False, error_message=f"git init failed: {stderr}")
 
-    layout_note = (
-        "layouts/wikipedia.html and assets/wikipedia.css"
-        if init_options.site_layout == "wikipedia"
-        else "packaged minimal layout (site.layout unset)"
-    )
     message = (
-        f"Initialized wiki.yml, README.md, wiki/ starter files, assets/logo.svg, and {layout_note}."
+        "Initialized wiki.yml, README.md, and wiki/ starter files."
     )
     if init_git:
         message += " Ran git init."

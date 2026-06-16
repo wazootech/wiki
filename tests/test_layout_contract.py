@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 from typing import Any
 
 from markupsafe import Markup
@@ -104,21 +103,11 @@ def _context_leaf(context: dict[str, Any], path: tuple[str, ...]) -> Any:
 
 
 class TestLayoutContract(unittest.TestCase):
-    def test_packaged_wikipedia_tokens_are_known(self) -> None:
-        template = load_packaged_official_layout("wikipedia")
+    def test_packaged_minimal_tokens_are_known(self) -> None:
+        template = load_packaged_official_layout("minimal")
         tokens = build_layout_token_map(_sample_context())
         unknown = unknown_tokens(template, tokens)
         self.assertEqual(unknown, [], msg=f"Unknown layout slots: {unknown}")
-
-    def test_docs_wikipedia_layout_slots_are_known(self) -> None:
-        docs_layout = Path(__file__).resolve().parents[1] / "docs" / "layouts" / "wikipedia.html"
-        if not docs_layout.is_file():
-            self.skipTest("docs layout not present")
-        template = docs_layout.read_text(encoding="utf-8")
-        tokens = build_layout_token_map(_sample_context())
-        found = sorted(set(_TOKEN_PATTERN.findall(template)))
-        missing = [token for token in found if token not in tokens]
-        self.assertEqual(missing, [])
 
     def test_context_key_tree_matches_layout_model(self) -> None:
         context = _sample_context()

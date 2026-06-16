@@ -23,34 +23,12 @@ from ..links import (
 )
 from ..paths import page_url
 from ..render import strip_sparql_wrappers_for_html
-from ..schemas.metadata import METADATA_VIEWS
 from ..schemas.site import TocItem, VirtualPage
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
 PYGMENTS_FORMATTER = HtmlFormatter(nowrap=True, style="native")
 PYGMENTS_CSS = HtmlFormatter(style="native").get_style_defs(".highlight")
-
-
-def _metadata_format_css() -> str:
-    rules: list[str] = []
-    for view in METADATA_VIEWS:
-        view_id = view.id
-        rules.append(
-            f'.metadata-format-switch:has(.metadata-format-input[value="{view_id}"]:checked) '
-            f".metadata-format-panel-{view_id} {{ display: block; }}"
-        )
-        rules.append(
-            f'.metadata-format-input[value="{view_id}"]:checked + .metadata-format-label '
-            "{ background: #36c; color: #fff; border-color: #36c; }"
-        )
-    return "\n".join(rules)
-
-
-def load_packaged_wikipedia_css() -> str:
-    from importlib.resources import files
-
-    return files("wiki").joinpath("assets/wikipedia.css").read_text(encoding="utf-8")
 
 
 METADATA_HIDDEN_FIELDS = {"@context", "@id", "id", "@type", "type"}

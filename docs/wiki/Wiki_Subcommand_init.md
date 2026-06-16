@@ -6,7 +6,7 @@ description: Scaffold wiki.yml and starter wiki pages interactively.
 
 # `wiki init`
 
-Create a new workspace in the **current directory**: `wiki.yml`, `README.md`, `layouts/`, and starter files under `wiki/`.
+Create a new workspace in the **current directory**: `wiki.yml`, `README.md`, and starter files under `wiki/`.
 
 Does not use loaded Config; safe to run before a config exists. Init runs once per clean directory — if `wiki.yml`, `README.md`, or a non-empty `wiki/` already exist, use a new directory or remove those files before re-running.
 
@@ -17,14 +17,13 @@ wiki init
 wiki init --git
 wiki init --repo wazootech/wiki
 wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywiki
-wiki init --site-layout minimal
 ```
 
 ## Config vs scaffold
 
 **Config flags** write keys into `wiki.yml` via the packaged template ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)).
 
-**Scaffold-only** effects copy files (`README.md`, `wiki/*.md`, layouts, assets) or run `git init`. Branding (logo letter, theme colors, sidebar title) is **not** in `wiki.yml` — edit `<!-- wiki tweak: … -->` comments in `assets/logo.svg` and `layouts/wikipedia.html` after init.
+**Scaffold-only** effects copy files (`README.md`, `wiki/*.md`) or run `git init`.
 
 ## Options
 
@@ -35,7 +34,6 @@ wiki init --site-layout minimal
 | `--graph-context-wiki`           | Override `graph.context.wiki` (overrides `--repo` inference)                                   | `graph.context.wiki`                             |
 | `--site-base-url`                | Override `site.base_url` (default `/wiki` or inferred from `--repo`)                           | `site.base_url`                                  |
 | `--site-url-style`               | Override `site.url_style`: `dir` or `file` (default `dir`)                                     | `site.url_style`                                 |
-| `--site-layout`                  | Page layout: `wikipedia` (Vector UI, default) or `minimal` (omit `site.layout`)                | `site.layout` or omitted                         |
 | `--graph-content-predicate`      | Override `graph.content_predicate` CURIE (e.g. `schema:articleBody`)                           | `graph.content_predicate`                        |
 | `--link-style`                   | Override `link.style`: standard page links (`standard`) or wikilinks (`wikilink`)              | `link.style`                                     |
 | `--wiki-inputs`                  | Override `wiki.inputs` list (can be specified multiple times, default `[wiki]`)                | `wiki.inputs`                                    |
@@ -62,7 +60,7 @@ When no flag or git remote supplies `graph.context.wiki`, init prompts once:
 
 1. **Custom wiki namespace IRI** (default `https://wiki.example.org/`) → `wiki:` in `graph.context`
 
-When the namespace came from that prompt and `--site-layout` was not passed, init also prompts for **Page layout** (`wikipedia` or `minimal`).
+When the namespace came from that prompt, the prompt ends and initialization proceeds.
 
 Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `xsd` prefixes. The `wazoo` URI is fixed in the scaffold (`https://schema.wazoo.dev/`), like the other built-in prefixes.
 
@@ -74,8 +72,6 @@ For every key — schema default, whether init writes it, and which command audi
 
 ## Generated files
 
-- `layouts/wikipedia.html` and `assets/wikipedia.css` — copied when `--site-layout wikipedia` (default) and the paths do not already exist; full Vector layout with linked stylesheet. With `--site-layout minimal`, `site.layout` is omitted and the packaged `index.html` layout applies.
-- `assets/logo.svg` — starter sidebar logo (default letter `W`); edit `<!-- wiki tweak: … -->` comments for the glyph and gradient. Sidebar display name and browser theme color live in `layouts/wikipedia.html` tweak comments.
 - `README.md` — starter workspace overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example (includes a tweak comment to replace with your first page)

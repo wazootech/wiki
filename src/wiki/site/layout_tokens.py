@@ -13,7 +13,6 @@ from markupsafe import Markup
 from ..schemas.layout import LAYOUT_MARKUP_PATHS, LAYOUT_RAW_JSON_PATHS
 
 PACKAGED_MINIMAL_LAYOUT = "index.html"
-PACKAGED_WIKIPEDIA_LAYOUT = "wikipedia.html"
 
 _TOKEN_PATTERN = re.compile(r"%wiki\.[a-z0-9_.]+%", re.IGNORECASE)
 
@@ -85,7 +84,7 @@ def build_token_map(context: dict[str, Any]) -> dict[str, str]:
 
 @lru_cache(maxsize=8)
 def load_packaged_layout_text(name: str) -> str:
-    return files("wiki").joinpath(f"layouts/{name}").read_text(encoding="utf-8")
+    return files("wiki").joinpath(name).read_text(encoding="utf-8")
 
 
 def substitute(template: str, tokens: dict[str, str]) -> str:

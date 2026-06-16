@@ -1,5 +1,6 @@
 # Reference material
 prior-art/
+improve/
 
 # Python caching & compiled files
 __pycache__/

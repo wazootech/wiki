@@ -135,7 +135,7 @@ Default page layout and routing for `wiki build` / `wiki serve`. Branding and ch
 
 ```yaml
 site:  # optional block
-  layout: layouts/wikipedia.html   # unset → packaged index.html; init writes when --site-layout wikipedia
+  layout: index.html   # unset → built-in minimal fallback layout
   base_url: /wiki                   # default /wiki; init writes
   url_style: dir                    # default dir; init writes
 ```
@@ -146,7 +146,7 @@ site:  # optional block
 | `base_url`  | optional               | `/wiki` (`""` allowed for site root)  | writes | routes, layout `%wiki.base_url%`                                                    |
 | `url_style` | optional               | `dir` (`file` → `slug.html`)          | writes | output paths; overridable per CLI run                                               |
 
-`site:` does not carry site name, theme color, favicon, or sidebar logo. Edit `site.layout` and files under `wiki.assets`. Fresh `wiki init` workspaces copy `layouts/wikipedia.html` and `assets/wikipedia.css` (default) and generate `assets/logo.svg`.
+`site:` does not carry site name, theme color, favicon, or sidebar logo. If you want custom styling, write a custom layout template file and place custom assets under the `wiki.assets` directory, then configure `site.layout` to point to it.
 
 CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `site.url_style` for a single run.
 
@@ -290,15 +290,15 @@ When `site.layout` is set, the CLI renders every page through that page layout (
 
 ### Layout strategy
 
-The first-class presentation contract in this repository is layout files under `layouts/` (for example `layouts/wikipedia.html` referenced from `site.layout`).
+The first-class presentation contract in this repository is layout files referenced from `site.layout` (for example `index.html`).
 
 - The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout slot contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
-- Framework-specific sites such as Next.js, Mintlify, or other external docs stacks are better treated as downstream integrations or separate layout repositories unless they need core CLI changes.
+- Advanced themes or framework-specific sites such as Next.js, Mintlify, or other external docs stacks are treated as downstream integrations or separate layout/template repositories.
 
 ### Minimal fallback
 
-Without a configured layout file (or when the path is missing), every page is rendered with the packaged `index.html` layout (`<h1>` + content, linked `assets/wikipedia.css`). It does not include sidebar, tabs, infobox, table of contents, backlinks, or categories. Use `wiki init --site-layout wikipedia` (default) for the full Vector layout.
+Without a configured layout file (or when the path is missing), every page is rendered with the built-in minimal fallback layout (`index.html`), which outputs plain, unstyled HTML containing only `<h1>` and content. It does not link any default CSS or assets and does not include a sidebar, tabs, infobox, table of contents, backlinks, or categories out-of-the-box.
 
 ### Layout slots
 
@@ -337,48 +337,46 @@ Canonical slot list (22 slots):
 
 **Packaged layouts**
 
-| File                     | When used                                                                     | Typical slots                                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `layouts/wikipedia.html` | `site.layout` after `wiki init --site-layout wikipedia` (copied to workspace) | All slots above (Vector chrome + search script)                                                                            |
-| `layouts/index.html`     | `site.layout` unset or missing file                                           | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
+| File         | When used                           | Typical slots                                                                                                              |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
 
-Example excerpt (`layouts/wikipedia.html` after `wiki init`):
+Example excerpt (`index.html`):
 
 ```html
-<link rel="stylesheet" href="%wiki.base_url%/assets/wikipedia.css">
-<link rel="icon" href="%wiki.base_url%/assets/logo.svg">
+<!DOCTYPE html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content=width=device-width,initial-scale=1.0>
 %wiki.head%
-…
-<h1 class="firstHeading" id="firstHeading">%wiki.page.title%</h1>
+</head>
+<body class=%wiki.page.body_class% data-page-kind=%wiki.page.kind%>
+<h1 id=firstHeading>%wiki.page.title%</h1>
 %wiki.page.content%
+</body>
+</html>
 ```
 
 ### Custom CSS
 
-The bundled stylesheet at `assets/wikipedia.css` (copied on `wiki init` and emitted on `wiki build`) covers the default Wikipedia-style layout (navigation, tabs, infobox, TOC, code blocks, metadata format chips, and Pygments). It is not a `wiki.yaml` key. To change how pages look:
+The Wiki CLI does not copy or link a default stylesheet out-of-the-box. To add styling to your pages:
 
-1. **Edit the layout file** — `site.layout` (for example `layouts/wikipedia.html`) is the primary extension point. Add linked stylesheets in `<head>`, or override rules in a local `assets/*.css` file.
-1. **Link wiki assets** — put `.css` files under a directory listed in `wiki.assets`, then reference them from the layout, for example `<link rel="stylesheet" href="%wiki.base_url%/assets/site.css">`. Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
+1. **Edit the layout file** — set `site.layout` in `wiki.yml` to a custom layout file. Link stylesheets in `<head>`, or write inline styles.
+1. **Link wiki assets** — place `.css` files under a directory listed in `wiki.assets`, then reference them from the layout, for example `<link rel="stylesheet" href="%wiki.base_url%/assets/site.css">`. Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
 
 ### Custom logos and icons
 
-Fresh `wiki init` workspaces ship `assets/logo.svg` and `assets/wikipedia.css`, enable `wiki.assets`, and reference both from the copied layout (`href="%wiki.base_url%/assets/logo.svg"`). The scaffold logo defaults to letter `W` with a blue gradient; edit `<!-- wiki tweak: … -->` comments in `assets/logo.svg` for the glyph and colors. Sidebar display name and browser theme color live in tweak comments in `site.layout` (for example `layouts/wikipedia.html`). Replace asset files or edit layout markup directly.
+To customize site logos, icons, favicons, or touch icons:
 
-**Custom sidebar logo**
-
-1. Enable `wiki.assets` (already enabled in the init scaffold, or add an `assets:` directory in `wiki.yaml`).
-1. Place a file under assets, for example `assets/logo.svg` or `assets/logo.png`.
-1. Edit `site.layout` and reference the public URL:
+1. Place your asset files (such as `logo.svg`, `logo.png`, `favicon.ico`) under a directory listed in `wiki.assets`.
+1. Reference the assets from your custom layout file, for example:
 
 ```html
 <img src="%wiki.base_url%/assets/logo.svg" alt="" width="80" height="80">
 ```
 
-You can also embed inline SVG directly in the layout file (no asset copy).
-
-**Favicons and touch icons**
-
-Add `<link rel="icon">`, `<link rel="apple-touch-icon">`, or other `<head>` tags directly in `site.layout`. The packaged default layout includes a favicon link to `%wiki.base_url%/assets/logo.svg`.
+You can also add `<link rel="icon">`, `<link rel="apple-touch-icon">`, or other `<head>` tags directly in your custom layout file.
 
 Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and copied into the build output.
 
@@ -413,7 +411,7 @@ The wiki builder generates these selectors in the rendered page content:
 
 ### JavaScript hooks
 
-The bundled default wiki layout (`layouts/wikipedia.html`) provides:
+Custom layout files can utilize standard JavaScript hooks or customize their own. In premium layouts (such as template repositories), the following JavaScript features can be implemented:
 
 | Function                       | Purpose                                              |
 | ------------------------------ | ---------------------------------------------------- |

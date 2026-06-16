@@ -34,8 +34,7 @@ graph:
 
 # Page layout and URL routing.
 site:
-  # Wikipedia-style page layout (see Wiki Configuration → Page layout).
-  layout: layouts/wikipedia.html
+  # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
   # URL prefix for built and served pages.
   base_url: /wiki
   # dir → slug/index.html; file → slug.html
