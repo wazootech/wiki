@@ -8,12 +8,12 @@ from pathlib import Path
 from .fmt_util import format_markdown
 from .paths import iter_markdown_files, select_markdown_paths
 from .schemas import FmtReport
-from .workspace import Workspace
+from .workspace import Wiki
 
 
 def format_files(
-    workspace: Workspace,
-    files: Sequence[Path] | None,
+    workspace: Wiki,
+    files: Sequence[Path] | None = None,
     *,
     check_only: bool = False,
     verbose: bool = False,

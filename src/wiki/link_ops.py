@@ -16,7 +16,7 @@ from .link_suggest import apply_link_opportunities, find_link_opportunities
 from .links import format_internal_link
 from .paths import routes_from_markdown_files
 from .schemas import LinkReport
-from .workspace import Workspace
+from .workspace import Wiki
 
 
 class LinkOptions(BaseModel):
@@ -28,11 +28,17 @@ class LinkOptions(BaseModel):
     lines: list[str] = Field(default_factory=list)
 
 
-def run_link(workspace: Workspace, files: Sequence[Path] | None, options: LinkOptions) -> LinkReport:
+def run_link(
+    workspace: Wiki,
+    files: Sequence[Path] | None = None,
+    options: LinkOptions | None = None,
+) -> LinkReport:
+    if options is None:
+        options = LinkOptions()
     config = workspace.config
     file_filter = routes_from_markdown_files(config, tuple(files)) if files else None
     report = LinkReport()
-    lines = options.lines
+    lines = report.lines
 
     if options.fix_broken:
         fixes = find_broken_link_fixes(config, file_filter=file_filter)
@@ -55,7 +61,6 @@ def run_link(workspace: Workspace, files: Sequence[Path] | None, options: LinkOp
             report.remaining_broken = len(remaining)
             report.ok = report.remaining_broken == 0
         if not options.apply:
-            options.lines = lines
             return report
 
     opportunities = find_link_opportunities(config, file_filter=file_filter)
@@ -68,12 +73,10 @@ def run_link(workspace: Workspace, files: Sequence[Path] | None, options: LinkOp
         if options.check:
             remaining_opportunities = find_link_opportunities(config, file_filter=file_filter)
             report.ok = len(remaining_opportunities) == 0
-        options.lines = lines
         return report
 
     if not opportunities:
         report.ok = True
-        options.lines = lines
         return report
 
     for item in opportunities:
@@ -84,5 +87,4 @@ def run_link(workspace: Workspace, files: Sequence[Path] | None, options: LinkOp
             f'"{item.matched_text}" -> {target}'
         )
     report.ok = not options.check
-    options.lines = lines
     return report

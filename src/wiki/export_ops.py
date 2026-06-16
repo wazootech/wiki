@@ -11,14 +11,14 @@ from .format import process_rdf_format
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file, select_document_paths
 from .schemas import ExportResult
-from .workspace import Workspace
+from .workspace import Wiki
 
 _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
 def export_documents(
-    workspace: Workspace,
-    files: Sequence[Path] | None,
+    workspace: Wiki,
+    files: Sequence[Path] | None = None,
     *,
     rdf_format: str,
     mode: str,

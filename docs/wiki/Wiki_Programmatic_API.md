@@ -19,48 +19,48 @@ pip install wazootech-wiki
 Import stable symbols from the top-level package:
 
 ```python
-from wiki import Workspace, AuditReport, BuildOptions, build_workspace
+from wiki import Wiki, AuditReport, BuildResult
 ```
 
 Symbols listed in `wiki.__all__` are semver-stable. Other modules (`wiki.site`, `wiki.graph`, …) are internal unless documented here.
 
 The package ships a [PEP 561](https://peps.python.org/pep-0561/) marker (`py.typed`).
 
-## Workspace session
+## Wiki session
 
-`Workspace` wraps a loaded [Config](Wiki_Configuration.md) and graph lifecycle:
+`Wiki` wraps a loaded [Config](Wiki_Configuration.md) and graph lifecycle:
 
 ```python
 from pathlib import Path
-from wiki import Workspace
+from wiki import Wiki
 
-ws = Workspace.load("wiki.yml")
+w = Wiki.load("wiki.yml")
 # or override inputs (same as --wiki-inputs):
-ws = Workspace.load("wiki.yml", wiki_inputs=["docs/wiki"])
+w = Wiki.load("wiki.yml", wiki_inputs=["docs/wiki"])
 
-report = ws.check()
+report = w.check()
 if not report.ok:
     for issue in report.errors:
         print(issue.code, issue.path, issue.message)
 
 # File-scoped check (SHACL + JSON Schema per file; no full-wiki-only rules):
-report = ws.check([Path("docs/wiki/Some_Page.md")])
+report = w.check([Path("docs/wiki/Some_Page.md")])
 
-lint_report = ws.lint()
-preflight = ws.preflight()  # lint merged with check — same as wiki build preflight
+lint_report = w.lint()
+preflight = w.preflight()  # lint merged with check — same as wiki build preflight
 
-graph = ws.graph(infer=True, reload=False)
+graph = w.graph(infer=True, reload=False)
 ```
 
 Runtime overrides (global `-b` / `--url-style`):
 
 ```python
-ws = ws.with_runtime(base_url="/wiki", url_style="dir")
+w = w.with_runtime(base_url="/wiki", url_style="dir")
 ```
 
 ## Validation reports
 
-`run_check`, `run_lint`, and `Workspace.check` / `.lint` return an `AuditReport`:
+`run_check`, `run_lint`, and `Wiki.check` / `.lint` return an `AuditReport`:
 
 | Field      | Meaning                                      |
 | ---------- | -------------------------------------------- |
@@ -82,19 +82,18 @@ merged = report.merge(other_report)
 
 ## Build
 
+Invoke builds directly on the `Wiki` instance using CLI-aligned arguments:
+
 ```python
 from pathlib import Path
-from wiki import Workspace, BuildOptions, build_workspace
+from wiki import Wiki
 
-ws = Workspace.load("wiki.yml")
-result = build_workspace(
-    ws,
-    BuildOptions(
-        output_dir=Path("_site"),
-        render_first=False,
-        skip_preflight=False,
-        verbose=False,
-    ),
+w = Wiki.load("wiki.yml")
+result = w.build(
+    output_dir=Path("_site"),
+    render=False,
+    no_check=False,
+    verbose=False,
 )
 if not result.ok:
     # preflight AuditReport on result.preflight when lint/check failed
@@ -102,29 +101,59 @@ if not result.ok:
 print(result.page_count, result.written_paths)
 ```
 
+Alternatively, use the low-level functional entry point:
+
+```python
+from wiki import BuildOptions, build_workspace
+
+result = build_workspace(w, BuildOptions(output_dir=Path("_site"), skip_preflight=False))
+```
+
 `BuildError` is raised when the output directory overlaps wiki inputs or config root.
 
-## Link, render, export, and format
+## Link, render, export, format, and query
+
+`Wiki` instances expose direct, option-free methods for executing wiki operations matching the CLI parameters:
+
+```python
+# Run on the whole wiki with clean OOP methods:
+link_report = w.link(check=True)
+render_report = w.render(check=True)
+export_result = w.export(format="turtle", mode="expanded")
+fmt_report = w.format(check=True)
+
+# Run a SPARQL query directly:
+query_res = w.query("SELECT ?s WHERE { ?s ?p ?o }")
+
+# Start local server:
+w.serve(port=8080)
+
+# Or target specific files:
+from pathlib import Path
+fmt_report = w.format([Path("docs/wiki/Some_Page.md")])
+```
+
+Alternatively, use functional entry points:
 
 ```python
 from wiki import LinkOptions, run_link, render_workspace, export_documents, format_files
 
-link_report = run_link(ws, None, LinkOptions(check=True))
-render_report = render_workspace(ws, None, check_only=True)
-export_result = export_documents(ws, None, rdf_format="turtle", mode="expanded")
-fmt_report = format_files(ws, None, check_only=True)
+link_report = run_link(w, options=LinkOptions(check=True))
+render_report = render_workspace(w, check_only=True)
+export_result = export_documents(w, rdf_format="turtle", mode="expanded")
+fmt_report = format_files(w, check_only=True)
 ```
 
 ## Scaffold
 
-Init logic is available without Click prompts when options are already resolved:
+Init logic is available as a static helper:
 
 ```python
 from pathlib import Path
-from wiki import InitOptions, scaffold_workspace
+from wiki import Wiki, InitOptions
 
 options = InitOptions(...)  # see wiki.schemas.init
-result = scaffold_workspace(Path.cwd(), options, force=False)
+result = Wiki.init(Path.cwd(), options, git=False)
 print(result.written_paths)
 ```
 
@@ -144,7 +173,7 @@ Page layouts substitute `%wiki.*%` slots. `build_layout_context` validates a typ
 
 ## CLI parity
 
-Library operations mirror subcommands documented under [Wiki CLI](Wiki_CLI.md). The CLI adds silence-on-success, `--strict`, pipe formats, and exit codes. For agent workflows that shell out, prefer `skills/wiki/scripts/audit.sh`; for in-process CI, prefer `Workspace` and typed reports.
+Library operations mirror subcommands documented under [Wiki CLI](Wiki_CLI.md). The CLI adds silence-on-success, `--strict`, pipe formats, and exit codes. For agent workflows that shell out, prefer `skills/wiki/scripts/audit.sh`; for in-process CI, prefer `Wiki` and typed reports.
 
 ## Related
 

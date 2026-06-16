@@ -14,7 +14,7 @@ from wiki.init_scaffold import (
 )
 from wiki.paths import page_output_path
 from wiki.schemas import AuditReport
-from wiki.workspace import Workspace
+from wiki.workspace import Wiki
 
 
 class TestWikiBuild(unittest.TestCase):
@@ -149,8 +149,8 @@ class TestWikiBuild(unittest.TestCase):
             (wiki / "Page.md").write_text("# Page\n\nContent.", encoding="utf-8")
             config = Config(wiki={"inputs": [wiki]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=root)
 
-            with patch("wiki.cli.Workspace.load") as load_mock:
-                load_mock.return_value = Workspace(config)
+            with patch("wiki.cli.Wiki.load") as load_mock:
+                load_mock.return_value = Wiki(config)
                 with patch(
                     "wiki.workspace.run_lint",
                     return_value=AuditReport.empty(),

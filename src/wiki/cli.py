@@ -12,20 +12,11 @@ import click
 from . import upgrade as upgrade_module
 from .cli_output import exit_audit_report, print_check_messages
 from .errors import BuildError, UpgradeError
-from .export_ops import export_documents
-from .fmt_ops import format_files
-from .format import run_query
 from .format_choice import FormatChoice
 from .graph import graph_stats
-from .init_scaffold import parse_github_repo, resolve_init_options, scaffold_workspace
-from .jqfilter import resolve_path
-from .link_ops import LinkOptions, run_link
-from .publish import build_workspace
-from .render_ops import render_workspace
-from .runtime import resolve_runtime_config
-from .schemas import BuildOptions
+from .init_scaffold import parse_github_repo, resolve_init_options
 from .upgrade import PACKAGE_NAME, check_version, perform_upgrade
-from .workspace import Workspace
+from .workspace import Wiki
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
 
@@ -62,13 +53,13 @@ def optional_files_argument(f):
 def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
-        workspace = Workspace.load(
+        wiki = Wiki.load(
             config_path,
             wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    ctx.obj = workspace
+    ctx.obj = wiki
 
 
 @main.command()
@@ -76,10 +67,10 @@ def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: s
 @click.option("-v", "--verbose", is_flag=True, help="Show integrity audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def check(workspace: Workspace, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
+def check(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Integrity checks: SHACL, JSON Schema, routes, collisions, layout (FILE...: SHACL + JSON Schema)."""
     try:
-        report = workspace.check(list(files) if files else None)
+        report = wiki.check(list(files) if files else None, strict=strict)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     exit_audit_report(report, verbose=verbose, strict=strict)
@@ -90,10 +81,10 @@ def check(workspace: Workspace, files: tuple[Path, ...], verbose: bool, strict: 
 @click.option("-v", "--verbose", is_flag=True, help="Show convention audit warnings.")
 @click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
 @click.pass_obj
-def lint(workspace: Workspace, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
+def lint(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Convention audits: links, filenames, headings, and link style."""
     try:
-        report = workspace.lint(list(files) if files else None)
+        report = wiki.lint(list(files) if files else None, strict=strict)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     exit_audit_report(report, verbose=verbose, strict=strict)
@@ -108,7 +99,7 @@ def lint(workspace: Workspace, files: tuple[Path, ...], verbose: bool, strict: b
 @click.option("-v", "--verbose", is_flag=True, help="Show target titles in suggestions; list changed files when applying.")
 @click.pass_obj
 def link(
-    workspace: Workspace,
+    wiki: Wiki,
     files: tuple[Path, ...],
     apply: bool,
     fix_broken: bool,
@@ -118,18 +109,18 @@ def link(
 ) -> None:
     """Suggest or repair internal links for wiki pages."""
     try:
-        options = LinkOptions(
+        report = wiki.link(
+            list(files) if files else None,
             apply=apply,
             fix_broken=fix_broken,
             dry_run=dry_run,
             check=check,
             verbose=verbose,
         )
-        report = run_link(workspace, list(files) if files else None, options)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    for line in options.lines:
+    for line in report.lines:
         click.echo(line)
     if fix_broken and report.fixes and verbose:
         prefix = "would fix" if dry_run else "fixed"
@@ -183,7 +174,7 @@ def link(
 @click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
 @click.pass_obj
 def query(
-    workspace: Workspace,
+    wiki: Wiki,
     query_args: tuple[str, ...],
     output_format: str,
     output: Path | None,
@@ -214,30 +205,24 @@ def query(
             click.echo("Error: --pretty only supports table format (default -f table).", err=True)
             sys.exit(1)
 
-    config = workspace.config
-    graph = workspace.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
-
     if verbose:
+        graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
         stats = graph_stats(graph)
         click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
 
     try:
-        if jq is not None:
-            output_format = "json"
-        result = run_query(
-            graph,
+        result = wiki.query(
             sparql_query,
-            output_format=output_format,
-            base_iri=config.base_iri,
+            format=output_format,
+            no_inference=no_inference,
+            reload=reload,
+            cache=disk_cache,
+            jq=jq,
             pretty=pretty,
         )
         if output:
             output.write_text(result, encoding="utf-8")
             click.echo(f"Written results to {output}")
-        elif jq is not None:
-            matches = resolve_path(json.loads(result), jq)
-            for match in matches:
-                click.echo(match)
         else:
             click.echo(result)
     except (ValueError, SyntaxError, TypeError, RuntimeError) as exc:
@@ -263,7 +248,7 @@ def query(
 @click.option("-v", "--verbose", is_flag=True, help="Print summary of updated files.")
 @click.pass_obj
 def render(
-    workspace: Workspace,
+    wiki: Wiki,
     files: tuple[Path, ...],
     no_inference: bool,
     reload: bool,
@@ -273,12 +258,11 @@ def render(
 ) -> None:
     """Render inline SPARQL blocks in markdown files."""
     try:
-        report = render_workspace(
-            workspace,
+        report = wiki.render(
             list(files) if files else None,
-            check_only=check,
+            check=check,
             reload=reload,
-            disk_cache=disk_cache,
+            cache=disk_cache,
             no_inference=no_inference,
         )
     except ValueError as exc:
@@ -332,7 +316,7 @@ def render(
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
 def build(
-    workspace: Workspace,
+    wiki: Wiki,
     output_dir: Path,
     site_base_url: str | None,
     site_url_style: str | None,
@@ -343,22 +327,22 @@ def build(
     verbose: bool,
 ) -> None:
     """Build static HTML site from wiki documents."""
-    runtime = workspace.with_runtime(base_url=site_base_url, url_style=site_url_style)
-    options = BuildOptions(
-        output_dir=output_dir,
-        render_first=render,
-        reload_graph=reload,
-        disk_cache=disk_cache,
-        skip_preflight=no_check,
-        verbose=verbose,
-    )
     try:
-        result = build_workspace(runtime, options)
+        result = wiki.build(
+            output_dir,
+            base_url=site_base_url,
+            url_style=site_url_style,
+            render=render,
+            reload=reload,
+            cache=disk_cache,
+            no_check=no_check,
+            verbose=verbose,
+        )
     except BuildError as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(1)
 
-    if render and verbose and options.render_first and result.ok:
+    if render and verbose and result.ok:
         click.echo("Rendered SPARQL dynamic blocks before build.")
 
     if not result.ok:
@@ -402,7 +386,7 @@ def build(
 )
 @click.pass_obj
 def export(
-    workspace: Workspace,
+    wiki: Wiki,
     files: tuple[Path, ...],
     output: Path | None,
     rdf_format: str,
@@ -410,10 +394,9 @@ def export(
 ) -> None:
     """Export document frontmatter as RDF or JSON-LD."""
     try:
-        result = export_documents(
-            workspace,
+        result = wiki.export(
             list(files) if files else None,
-            rdf_format=rdf_format,
+            format=rdf_format,
             mode=mode,
         )
     except ValueError as exc:
@@ -458,7 +441,7 @@ def export(
 )
 @click.pass_obj
 def serve(
-    workspace: Workspace,
+    wiki: Wiki,
     host: str,
     port: int,
     site_base_url: str | None,
@@ -466,14 +449,13 @@ def serve(
     watch: bool,
 ) -> None:
     """Start a local HTTP server for browsing the wiki."""
-    from .serve import run_server
-
-    runtime_config = resolve_runtime_config(
-        workspace.config,
+    wiki.serve(
+        host=host,
+        port=port,
         base_url=site_base_url,
         url_style=site_url_style,
+        watch=watch,
     )
-    run_server(runtime_config, host=host, port=port, watch=watch)
 
 
 @main.command()
@@ -610,7 +592,7 @@ def init(
         graph_include_file_extension=graph_include_file_extension,
     )
 
-    result = scaffold_workspace(cwd, init_options, init_git=init_git)
+    result = Wiki.init(cwd, init_options, git=init_git)
     if not result.ok:
         click.echo(f"Error: {result.error_message}", err=True)
         sys.exit(1)
@@ -626,24 +608,23 @@ def init(
 )
 @click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
 @click.pass_obj
-def fmt(workspace: Workspace, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
+def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
     """Format markdown wiki pages using mdformat."""
     from .fmt_util import describe_fmt_source
 
     try:
         if verbose and files:
-            click.echo(f"Using {describe_fmt_source(files[0], workspace.config)}.")
+            click.echo(f"Using {describe_fmt_source(files[0], wiki.config)}.")
         elif verbose and not files:
             from .paths import iter_markdown_files
 
-            markdown_files = iter_markdown_files(workspace.config)
+            markdown_files = iter_markdown_files(wiki.config)
             if markdown_files:
-                click.echo(f"Using {describe_fmt_source(markdown_files[0], workspace.config)}.")
+                click.echo(f"Using {describe_fmt_source(markdown_files[0], wiki.config)}.")
 
-        report = format_files(
-            workspace,
+        report = wiki.format(
             list(files) if files else None,
-            check_only=check,
+            check=check,
             verbose=verbose,
         )
     except ValueError as exc:

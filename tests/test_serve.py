@@ -26,7 +26,7 @@ from wiki.serve import (
     refresh_wiki,
     run_server,
 )
-from wiki.workspace import Workspace
+from wiki.workspace import Wiki
 
 
 def _free_port() -> int:
@@ -727,7 +727,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         runner = CliRunner()
         config = Config(wiki={"inputs": [self.wiki_dir]}, site={"base_url": "/wiki", "url_style": "dir"}, config_root=self.wiki_dir)
 
-        with patch("wiki.cli.Workspace.load", return_value=Workspace(config)), patch(
+        with patch("wiki.cli.Wiki.load", return_value=Wiki(config)), patch(
             "wiki.serve.run_server"
         ) as run_server_mock:
             result = runner.invoke(

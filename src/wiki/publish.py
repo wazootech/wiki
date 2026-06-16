@@ -11,7 +11,7 @@ from .paths import build_page_manifest, detect_output_collisions, page_output_pa
 from .render import render_markdown_files
 from .schemas import BuildOptions, BuildResult
 from .site import build_index_html, build_page_html, build_site
-from .workspace import Workspace
+from .workspace import Wiki
 
 
 def _path_is_same_or_ancestor(ancestor: Path, descendant: Path) -> bool:
@@ -47,7 +47,7 @@ def validate_build_output_dir(page_output_dir: Path, config) -> None:
             )
 
 
-def build_workspace(workspace: Workspace, options: BuildOptions) -> BuildResult:
+def build_workspace(workspace: Wiki, options: BuildOptions) -> BuildResult:
     config = workspace.config
     written_paths: list[Path] = []
 

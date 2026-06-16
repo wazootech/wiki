@@ -12,7 +12,7 @@ Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI 
 
 ## Architecture decision: Library-first API
 
-Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Python library** (`Workspace`, typed `AuditReport` / operation results) with the Click CLI as a thin I/O wrapper. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md). Semver applies to symbols in `wiki.__all__`; audit dict helpers are removed in favor of Pydantic report models.
+Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Python library** (`Wiki`, typed `AuditReport` / operation results) with the Click CLI as a thin I/O wrapper. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md). Semver applies to symbols in `wiki.__all__`; audit dict helpers are removed in favor of Pydantic report models.
 
 ## Language
 

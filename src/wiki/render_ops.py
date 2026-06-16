@@ -8,12 +8,12 @@ from pathlib import Path
 from .paths import select_markdown_paths
 from .render import render_markdown_files
 from .schemas import RenderReport
-from .workspace import Workspace
+from .workspace import Wiki
 
 
 def render_workspace(
-    workspace: Workspace,
-    files: Sequence[Path] | None,
+    workspace: Wiki,
+    files: Sequence[Path] | None = None,
     *,
     check_only: bool = False,
     reload: bool = False,

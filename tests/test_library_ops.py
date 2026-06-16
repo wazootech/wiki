@@ -8,34 +8,36 @@ from tempfile import TemporaryDirectory
 
 from wiki import (
     BuildOptions,
-    Workspace,
+    LinkOptions,
+    Wiki,
     build_workspace,
     export_documents,
     format_files,
     render_workspace,
+    run_link,
 )
 
 
 class TestLibraryOps(unittest.TestCase):
-    def _scaffold(self) -> tuple[Path, Path, Workspace]:
+    def _scaffold(self) -> tuple[Path, Path, Wiki]:
         tmpdir = TemporaryDirectory()
         self.addCleanup(tmpdir.cleanup)
         root = Path(tmpdir.name)
-        wiki = root / "wiki"
-        wiki.mkdir()
+        wiki_dir = root / "wiki"
+        wiki_dir.mkdir()
         (root / "wiki.yaml").write_text("wiki:\n  inputs: [wiki]\n", encoding="utf-8")
-        page = wiki / "Page.md"
+        page = wiki_dir / "Page.md"
         page.write_text(
             "---\ntype: schema:WebPage\nname: Page\n---\n\n# Page\n\nContent.\n",
             encoding="utf-8",
         )
-        return root, page, Workspace.load(root)
+        return root, page, Wiki.load(root)
 
     def test_build_workspace_writes_site(self) -> None:
-        root, _, workspace = self._scaffold()
+        root, _, wiki = self._scaffold()
         output_dir = root / "_site"
         result = build_workspace(
-            workspace,
+            wiki,
             BuildOptions(output_dir=output_dir, skip_preflight=True),
         )
         self.assertTrue(result.ok, result.error_message)
@@ -43,15 +45,15 @@ class TestLibraryOps(unittest.TestCase):
         self.assertTrue((output_dir / "wiki" / "Page" / "index.html").exists())
 
     def test_format_files_check_only(self) -> None:
-        _, _, workspace = self._scaffold()
-        report = format_files(workspace, None, check_only=True)
+        _, _, wiki = self._scaffold()
+        report = format_files(wiki, None, check_only=True)
         self.assertTrue(report.ok)
         self.assertEqual(report.formatted_count, 0)
 
     def test_export_documents_turtle(self) -> None:
-        _, page, workspace = self._scaffold()
+        _, page, wiki = self._scaffold()
         result = export_documents(
-            workspace,
+            wiki,
             [page],
             rdf_format="turtle",
             mode="expanded",
@@ -60,7 +62,54 @@ class TestLibraryOps(unittest.TestCase):
         self.assertTrue(result.output.strip())
 
     def test_render_workspace_check_only(self) -> None:
-        _, _, workspace = self._scaffold()
-        report = render_workspace(workspace, None, check_only=True)
+        _, _, wiki = self._scaffold()
+        report = render_workspace(wiki, None, check_only=True)
         self.assertTrue(report.ok)
         self.assertEqual(report.updated_count, 0)
+
+    def test_functional_defaults_without_files(self) -> None:
+        _, _, wiki = self._scaffold()
+
+        # Test format_files with defaults
+        report_fmt = format_files(wiki, check_only=True)
+        self.assertTrue(report_fmt.ok)
+
+        # Test render_workspace with defaults
+        report_render = render_workspace(wiki, check_only=True)
+        self.assertTrue(report_render.ok)
+
+        # Test export_documents with defaults
+        report_export = export_documents(wiki, rdf_format="turtle", mode="expanded")
+        self.assertTrue(report_export.ok)
+
+        # Test run_link with defaults
+        report_link = run_link(wiki)
+        self.assertTrue(report_link.ok)
+
+    def test_wiki_instance_methods(self) -> None:
+        root, _, wiki = self._scaffold()
+
+        # Test wiki.build
+        output_dir = root / "_site_instance"
+        build_res = wiki.build(output_dir, no_check=True)
+        self.assertTrue(build_res.ok)
+
+        # Test wiki.format
+        report_fmt = wiki.format(check=True)
+        self.assertTrue(report_fmt.ok)
+
+        # Test wiki.render
+        report_render = wiki.render(check=True)
+        self.assertTrue(report_render.ok)
+
+        # Test wiki.export
+        report_export = wiki.export(format="turtle", mode="expanded")
+        self.assertTrue(report_export.ok)
+
+        # Test wiki.link
+        report_link = wiki.link()
+        self.assertTrue(report_link.ok)
+
+        # Test wiki.query
+        query_res = wiki.query("SELECT ?s WHERE { ?s ?p ?o }")
+        self.assertTrue(query_res.strip())

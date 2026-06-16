@@ -23,7 +23,7 @@ from .schemas import (
     RenderReport,
     ScaffoldResult,
 )
-from .workspace import Workspace
+from .workspace import Wiki
 
 __version__ = "0.1.15"
 
@@ -44,7 +44,7 @@ __all__ = [
     "ScaffoldResult",
     "UpgradeError",
     "WikiError",
-    "Workspace",
+    "Wiki",
     "build_workspace",
     "export_documents",
     "format_files",

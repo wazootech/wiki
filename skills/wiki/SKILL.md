@@ -67,6 +67,6 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 | [references/wiki-config-preferences.md](references/wiki-config-preferences.md) | Post-init wiki config edits |
 | [references/style-spot-check.md](references/style-spot-check.md) | Conventions when lint is off |
 | [references/alignment-checklist.md](references/alignment-checklist.md) | Deploy path alignment and audit |
-| [references/programmatic-api.md](references/programmatic-api.md) | In-process Python API (`Workspace`, `AuditReport`) |
+| [references/programmatic-api.md](references/programmatic-api.md) | In-process Python API (`Wiki`, `AuditReport`) |
 
 Human docs: [Wiki Skills](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Skills.md), [Getting Started](https://github.com/wazootech/wiki/blob/main/docs/wiki/Getting_Started.md), [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).

@@ -54,6 +54,7 @@ class LinkReport(BaseModel):
     fixes: int = 0
     changed_paths: list[Path] = Field(default_factory=list)
     remaining_broken: int = 0
+    lines: list[str] = Field(default_factory=list)
 
 
 class RenderReport(BaseModel):
