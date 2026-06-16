@@ -64,7 +64,7 @@ graph:
 
 # Page layout and URL routing.
 site:
-  # layout: layouts/custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
+  # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
   # URL prefix for built and served pages.
   base_url: {{ site_base_url }}
   # dir → slug/index.html; file → slug.html

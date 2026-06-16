@@ -159,7 +159,6 @@ def resolve_init_options(
 
 
 _INIT_TEMPLATE_NAME = "wiki.yml"
-_OFFICIAL_LAYOUTS_DIR = "layouts"
 _OFFICIAL_LAYOUT_FILES = {
     "minimal": "index.html",
 }
@@ -197,7 +196,7 @@ def load_packaged_official_layout(layout: str) -> str:
     filename = _OFFICIAL_LAYOUT_FILES.get(layout)
     if filename is None:
         raise ValueError(f"Unknown official layout: {layout!r}")
-    return files("wiki").joinpath(f"{_OFFICIAL_LAYOUTS_DIR}/{filename}").read_text(
+    return files("wiki").joinpath(filename).read_text(
         encoding="utf-8"
     )
 

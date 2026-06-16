@@ -135,7 +135,7 @@ Default page layout and routing for `wiki build` / `wiki serve`. Branding and ch
 
 ```yaml
 site:  # optional block
-  layout: layouts/index.html   # unset → built-in minimal fallback layout
+  layout: index.html   # unset → built-in minimal fallback layout
   base_url: /wiki                   # default /wiki; init writes
   url_style: dir                    # default dir; init writes
 ```
@@ -290,7 +290,7 @@ When `site.layout` is set, the CLI renders every page through that page layout (
 
 ### Layout strategy
 
-The first-class presentation contract in this repository is layout files referenced from `site.layout` (for example `layouts/index.html`).
+The first-class presentation contract in this repository is layout files referenced from `site.layout` (for example `index.html`).
 
 - The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout slot contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
@@ -337,11 +337,11 @@ Canonical slot list (22 slots):
 
 **Packaged layouts**
 
-| File                 | When used                           | Typical slots                                                                                                              |
-| -------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `layouts/index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
+| File         | When used                           | Typical slots                                                                                                              |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
 
-Example excerpt (`layouts/index.html`):
+Example excerpt (`index.html`):
 
 ```html
 <!DOCTYPE html>

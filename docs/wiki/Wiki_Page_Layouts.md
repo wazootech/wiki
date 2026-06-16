@@ -10,7 +10,7 @@ description: Wiki page layout files for build and serve output.
 
 Wiki CLI builds each article into HTML using a **page layout** file. Two levels apply:
 
-1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `layouts/index.html`)
+1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `index.html`)
 
 1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file (`.html` only)
 
@@ -22,7 +22,7 @@ Set the path in `wiki.yml` (or `wiki.yaml`) relative to the directory that conta
 
 site:
 
-  layout: layouts/index.html
+  layout: index.html
 
 ```
 

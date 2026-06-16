@@ -527,8 +527,8 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
 
                 # Check layout and assets are commented/unused in config
                 self.assertNotIn("manifest:", config_content)
-                self.assertIn("layout: layouts/custom.html", config_content)
-                self.assertIn("# layout: layouts/custom.html", config_content)
+                self.assertIn("layout: custom.html", config_content)
+                self.assertIn("# layout: custom.html", config_content)
                 self.assertIn("assets:", config_content)
                 self.assertIn("- assets", config_content)
                 

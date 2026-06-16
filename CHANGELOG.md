@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 ## Unreleased
 
@@ -14,7 +14,7 @@
 ### Changed
 
 - Init/branding docs: Getting Started branding subsection; clarify tweak-comment workflow ([#107](https://github.com/wazootech/wiki/issues/107)).
-- Page layouts use **`%wiki.*%` layout slots** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `layouts/index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
+- Page layouts use **`%wiki.*%` layout slots** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
 - Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
 - Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
 - Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
