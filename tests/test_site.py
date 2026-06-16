@@ -32,6 +32,10 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 %wiki.nav.toc%
 %wiki.nav.backlinks%
 %wiki.nav.categories%
+%wiki.nav.sidebar%
+%wiki.page.metadata.tab%
+%wiki.page.metadata.tool%
+%wiki.page.metadata.pane%
 </body>
 </html>"""
 
@@ -43,8 +47,8 @@ def _full_test_layout(root: Path) -> Path:
 def _default_layout(root: Path) -> Path:
     return write_layout(
         root,
-        "layouts/wikipedia.html",
-        load_packaged_official_layout("wikipedia"),
+        "layouts/index.html",
+        load_packaged_official_layout("minimal"),
     )
 
 
@@ -258,7 +262,7 @@ name: Project Atlas
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            page_layout = _default_layout(root)
+            page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, default_layout=page_layout)
 
             self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
@@ -372,7 +376,7 @@ name: Project Atlas
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            page_layout = _default_layout(root)
+            page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, default_layout=page_layout)
 
             toc_start = html.index('id="toc"')
@@ -390,14 +394,6 @@ name: Project Atlas
         self.assertIn('data-copy="line &quot;one&quot;', html)
         self.assertIn('line two"', html)
         self.assertIn("<code>&lt;tag&gt;</code>", html)
-
-    def test_seed_template_includes_code_copy_initialization(self) -> None:
-        from wiki.site.layout_tokens import load_packaged_layout_text
-
-        layout = load_packaged_layout_text("wikipedia.html")
-        self.assertIn("initCodeCopyButtons", layout)
-        self.assertIn("pre[data-copy]", layout)
-        self.assertIn("copyPreContent", layout)
 
     def test_build_page_html_highlights_metadata_json(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -419,7 +415,7 @@ specialty: Diagnostics
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
-            page_layout = _default_layout(root)
+            page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, base_url="/wiki", url_style="dir", default_layout=page_layout)
 
             self.assertIn("Metadata</a>", html)
@@ -496,7 +492,7 @@ specialty: Diagnostics
             self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
             self.assertNotIn("<style>", html)
-            self.assertIn("/wiki/assets/wikipedia.css", html)
+            self.assertNotIn("/wiki/assets/wikipedia.css", html)
             self.assertNotIn("infobox page-meta", html)
 
     def test_strip_leading_title_heading_removes_matching_h1(self) -> None:
@@ -579,7 +575,7 @@ specialty: Diagnostics
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
-            self.assertIn("/wiki/assets/wikipedia.css", html)
+            self.assertNotIn("/wiki/assets/wikipedia.css", html)
             self.assertNotIn("infobox page-meta", html)
             self.assertNotIn("Backlinks", html)
             self.assertNotIn("On this page", html)
@@ -598,7 +594,7 @@ specialty: Diagnostics
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, root, default_layout=_default_layout(root))
-            self.assertIn('<h1 class="firstHeading" id="firstHeading">Wiki CLI</h1>', html)
+            self.assertIn('<h1 id=firstHeading>Wiki CLI</h1>', html)
             self.assertNotIn("<h1", page.html)
             self.assertIn("Lead paragraph.", html)
 
@@ -643,7 +639,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root, default_layout=_full_test_layout(root))
+            html = build_page_html(page, site, root, default_layout=_default_layout(root))
             self.assertIn("{metadata_pane_html}", html)
             self.assertNotIn("metadata-format-switch", html)
 
@@ -697,13 +693,7 @@ specialty: Diagnostics
             self.assertIn('data-categories="Person"', article)
             self.assertIn('data-categories=""', article)
 
-    def test_packaged_wikipedia_css_includes_layout_and_highlight_rules(self) -> None:
-        from wiki.site import load_packaged_wikipedia_css
 
-        css = load_packaged_wikipedia_css()
-        self.assertIn("#mw-navigation", css)
-        self.assertIn(".metadata-format-switch", css)
-        self.assertIn(".highlight", css)
 
     def test_build_logo_svg_uses_site_theme_color(self) -> None:
         from wiki.site import _build_logo_svg
@@ -737,25 +727,7 @@ specialty: Diagnostics
             )
             self.assertIn("/wiki/assets/custom-logo.svg", html)
 
-    def test_default_layout_head_includes_theme_color_and_favicon(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
-            config = Config(
-                wiki={"inputs": [wiki]},
-                site={"base_url": "/wiki"},
-                config_root=root,
-            )
-            site = build_site(config)
-            html = build_index_html(site, root, default_layout=_default_layout(root))
-            self.assertIn('<meta name="theme-color" content="#3b82f6">', html)
-            self.assertIn('<meta name="msapplication-TileColor" content="#3b82f6">', html)
-            self.assertIn("/wiki/assets/wikipedia.css", html)
-            self.assertIn('href="/wiki/assets/logo.svg"', html)
-            self.assertNotIn('rel="manifest"', html)
-            self.assertNotIn("manifest.webmanifest", html)
+
 
     def test_build_index_html_emits_literal_theme_color_from_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:

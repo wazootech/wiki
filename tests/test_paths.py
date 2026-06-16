@@ -180,11 +180,9 @@ class TestWikiPaths(unittest.TestCase):
             config = Config(wiki={"assets": [root / "assets"]}, config_root=root)
 
             entries = build_asset_manifest(config, root / "_site" / "wiki", "/wiki")
-            self.assertEqual(len(entries), 2)
+            self.assertEqual(len(entries), 1)
             self.assertEqual(entries[0].output_path, root / "_site" / "wiki" / "assets" / "Pokemon_Diamond_(copy_1)" / "label.jpg")
             self.assertEqual(entries[0].public_url, "/wiki/assets/Pokemon_Diamond_(copy_1)/label.jpg")
-            packaged_css = next(e for e in entries if e.output_path.name == "wikipedia.css")
-            self.assertEqual(packaged_css.output_path, root / "_site" / "wiki" / "assets" / "wikipedia.css")
 
     def test_asset_excludes_control_copied_files(self) -> None:
         with TemporaryDirectory() as tmpdir:

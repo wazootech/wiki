@@ -13,7 +13,6 @@ from markupsafe import Markup
 from ..schemas.layout import LAYOUT_MARKUP_PATHS, LAYOUT_RAW_JSON_PATHS
 
 PACKAGED_MINIMAL_LAYOUT = "index.html"
-PACKAGED_WIKIPEDIA_LAYOUT = "wikipedia.html"
 
 _TOKEN_PATTERN = re.compile(r"%wiki\.[a-z0-9_.]+%", re.IGNORECASE)
 

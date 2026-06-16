@@ -543,13 +543,6 @@ def serve(
     default=None,
     help="Override graph.include_file_extension.",
 )
-@click.option(
-    "--site-layout",
-    "site_layout",
-    type=click.Choice(["wikipedia", "minimal"]),
-    default=None,
-    help="Page layout: wikipedia shell or packaged minimal.",
-)
 def init(
     init_git: bool,
     repo: str | None,
@@ -563,7 +556,6 @@ def init(
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
-    site_layout: str | None,
 ) -> None:
     """Scaffold a new wiki workspace in the current directory."""
     cwd = Path.cwd()
@@ -601,15 +593,6 @@ def init(
     def prompt_context_wiki(default: str) -> str:
         return str(click.prompt("Custom wiki namespace IRI (graph.context.wiki)", default=default))
 
-    def prompt_site_layout() -> str:
-        return str(
-            click.prompt(
-                "Page layout",
-                type=click.Choice(["wikipedia", "minimal"]),
-                default="wikipedia",
-            )
-        )
-
     init_options = resolve_init_options(
         repo=repo,
         graph_context_wiki=graph_context_wiki,
@@ -625,8 +608,6 @@ def init(
         graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
-        site_layout=site_layout,
-        prompt_site_layout=prompt_site_layout if site_layout is None else None,
     )
 
     result = scaffold_workspace(cwd, init_options, init_git=init_git)

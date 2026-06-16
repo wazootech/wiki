@@ -10,7 +10,6 @@ from wiki.cli import main
 from wiki.config import Config
 from wiki.init_scaffold import (
     DOCS_WIKI_INIT_OPTIONS,
-    load_packaged_official_layout,
     render_wiki_yaml,
 )
 from wiki.paths import page_output_path
@@ -344,16 +343,6 @@ about: wiki:Alice_Theory
             built_logo = (output_dir / "wiki" / "assets" / "logo.svg").read_text(encoding="utf-8")
             self.assertIn("<text>A</text>", built_logo)
 
-    def test_seed_template_parity(self) -> None:
-        repo_root = Path(__file__).resolve().parent.parent
-        docs_layout = repo_root / "docs" / "layouts" / "wikipedia.html"
-        expected = load_packaged_official_layout("wikipedia")
-        self.assertTrue(docs_layout.is_file(), f"docs/layouts/wikipedia.html not found at {docs_layout}")
-        self.assertEqual(
-            docs_layout.read_text(encoding="utf-8"),
-            expected,
-            "docs/layouts/wikipedia.html must match the packaged wikipedia layout",
-        )
 
     def test_docs_wiki_yml_matches_init_scaffold(self) -> None:
         repo_root = Path(__file__).resolve().parent.parent

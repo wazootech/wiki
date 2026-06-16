@@ -15,9 +15,7 @@ from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
 from wiki.init_scaffold import (
     InitOptions,
-    load_packaged_official_layout,
     render_wiki_yaml,
-    scaffold_logo_svg,
 )
 
 
@@ -497,8 +495,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                         "init",
                         "--graph-context-wiki",
                         "https://wiki.example.org/",
-                        "--site-layout",
-                        "wikipedia",
                     ],
                     catch_exceptions=False,
                 )
@@ -529,33 +525,21 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("familyName: Davidson", person_content)
                 self.assertNotIn("wazoo:layout:", person_content)
 
-                # Check site layout is configured and seeded
+                # Check layout and assets are commented/unused in config
                 self.assertNotIn("manifest:", config_content)
-                self.assertIn("layout: layouts/wikipedia.html", config_content)
+                self.assertIn("layout: layouts/custom.html", config_content)
+                self.assertIn("# layout: layouts/custom.html", config_content)
                 self.assertIn("assets:", config_content)
                 self.assertIn("- assets", config_content)
-                wiki_layout = Path("layouts") / "wikipedia.html"
-                self.assertTrue(wiki_layout.is_file())
-                expected_layout = load_packaged_official_layout("wikipedia")
-                self.assertEqual(wiki_layout.read_text(encoding="utf-8"), expected_layout)
-                self.assertIn('id="mw-navigation"', expected_layout)
-
-                default_logo = Path("assets") / "logo.svg"
-                self.assertTrue(default_logo.is_file())
-                css_path = Path("assets") / "wikipedia.css"
-                self.assertTrue(css_path.is_file())
-                expected_logo = scaffold_logo_svg()
-                self.assertEqual(default_logo.read_text(encoding="utf-8"), expected_logo)
-                self.assertIn("<svg", expected_logo)
-                self.assertIn("wiki tweak: logo letter", expected_logo)
-                self.assertIn(">W</text>", expected_logo)
-                self.assertIn("wiki tweak: site display name", expected_layout)
-                self.assertIn("wiki tweak: browser theme color", expected_layout)
+                
+                # Ensure no Wikipedia templates or styles were written
+                self.assertFalse((Path("layouts") / "wikipedia.html").exists())
+                self.assertFalse((Path("assets") / "wikipedia.css").exists())
+                self.assertFalse((Path("assets") / "logo.svg").exists())
 
                 expected_content = render_wiki_yaml(
                     InitOptions(
                         graph_context_wiki="https://wiki.example.org/",
-                        site_layout="wikipedia",
                     ),
                 )
                 self.assertEqual(config_content, expected_content)
@@ -593,24 +577,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertIn("base_url: /wiki", config_content)
                 self.assertIn("wazoo: https://schema.wazoo.dev/", config_content)
 
-    def test_cli_init_scaffold_logo_has_tweak_comments(self) -> None:
-        runner = CliRunner()
-        with TemporaryDirectory() as tmpdir:
-            with runner.isolated_filesystem(temp_dir=tmpdir):
-                result = runner.invoke(
-                    main,
-                    ["init", "--graph-context-wiki", "https://wiki.example.org/"],
-                    catch_exceptions=False,
-                )
-                self.assertEqual(result.exit_code, 0)
-                logo_content = Path("assets") / "logo.svg"
-                self.assertTrue(logo_content.is_file())
-                logo_text = logo_content.read_text(encoding="utf-8")
-                self.assertIn("wiki tweak: logo letter", logo_text)
-                self.assertIn("wiki tweak: primary theme", logo_text)
-                self.assertIn(">W</text>", logo_text)
-                config_content = Path("wiki.yml").read_text(encoding="utf-8")
-                self.assertNotIn("manifest:", config_content)
 
     def test_cli_init_implicit_types_policy_append(self) -> None:
         runner = CliRunner()
@@ -709,10 +675,6 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                 self.assertNotEqual(result.exit_code, 0)
                 self.assertIn("Invalid GitHub repo", result.output)
 
-    def test_docs_wikipedia_layout_matches_packaged_template(self) -> None:
-        docs_template = Path("docs/layouts/wikipedia.html").read_text(encoding="utf-8")
-        expected = load_packaged_official_layout("wikipedia")
-        self.assertEqual(docs_template, expected)
 
     def test_config_rejects_unknown_html_template_key(self) -> None:
         with TemporaryDirectory() as tmpdir:

@@ -40,18 +40,12 @@ def audit_assets(config: Config) -> list[str]:
     return warnings
 
 
-_PACKAGED_ASSET_FILENAMES = frozenset({"wikipedia.css"})
+_PACKAGED_ASSET_FILENAMES = frozenset()
 
 
 def write_packaged_asset(filename: str, dest: Path) -> None:
     """Write a bundled asset from the wiki package to dest."""
-    from importlib.resources import files as resource_files
-
-    if filename not in _PACKAGED_ASSET_FILENAMES:
-        raise ValueError(f"Unknown packaged asset: {filename!r}")
-    text = resource_files("wiki").joinpath(f"assets/{filename}").read_text(encoding="utf-8")
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(text, encoding="utf-8")
+    raise ValueError(f"Unknown packaged asset: {filename!r}")
 
 
 def build_asset_manifest(config: Config, owned_output_dir: Path, base_url: str) -> list[OutputEntry]:

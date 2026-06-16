@@ -1,7 +1,7 @@
 """Pydantic schema models for wiki config and domain types."""
 
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
-from .init import DEFAULT_INIT_LAYOUT, InitOptions
+from .init import InitOptions
 from .layout import (
     LAYOUT_MARKUP_PATHS,
     LAYOUT_RAW_JSON_PATHS,
@@ -77,7 +77,6 @@ __all__ = [
     "WikiLayoutContext",
     "VirtualPage",
     "Config",
-    "DEFAULT_INIT_LAYOUT",
     "WikiSite",
     "coerce_severity",
 ]

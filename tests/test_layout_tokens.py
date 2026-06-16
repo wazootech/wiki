@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import Config
-from wiki.site import build_index_html, build_site
+from wiki.site import build_site
 from wiki.site.layout_context import build_layout_context
 from wiki.site.layout_tokens import (
     load_packaged_layout_text,
@@ -23,17 +23,10 @@ class TestLayoutTokens(unittest.TestCase):
         self.assertIn("<title>Hello</title>", html)
         self.assertIn("href='/wiki/'", html)
 
-    def test_packaged_wikipedia_matches_token_contract(self) -> None:
-        layout = load_packaged_layout_text("wikipedia.html")
-        self.assertIn("%wiki.head%", layout)
-        self.assertIn("wikipedia.css", layout)
-        self.assertIn('id="mw-navigation"', layout)
-        self.assertNotIn("%wiki.body%", layout)
-
     def test_packaged_index_is_full_page(self) -> None:
         layout = load_packaged_layout_text("index.html")
         self.assertIn("<!DOCTYPE html>", layout)
-        self.assertIn("wikipedia.css", layout)
+        self.assertIn("%wiki.head%", layout)
         self.assertIn("%wiki.page.content%", layout)
         self.assertNotIn("mw-navigation", layout)
 
@@ -55,29 +48,8 @@ class TestLayoutTokens(unittest.TestCase):
                 layout_class="index",
             )
             html = render_packaged_minimal(context)
-            self.assertIn("/wiki/assets/wikipedia.css", html)
             self.assertIn("<title>All Pages - Wiki CLI</title>", html)
             self.assertNotIn("%wiki.", html)
-
-    def test_wikipedia_layout_renders_vector_chrome(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            wiki = root / "wiki"
-            wiki.mkdir()
-            (wiki / "Page.md").write_text("# Page\n", encoding="utf-8")
-            layout = load_packaged_layout_text("wikipedia.html")
-            (root / "layouts").mkdir()
-            layout_path = root / "layouts" / "wikipedia.html"
-            layout_path.write_text(layout, encoding="utf-8")
-            config = Config(
-                wiki={"inputs": [wiki]},
-                site={"layout": "layouts/wikipedia.html"},
-                config_root=root,
-            )
-            site = build_site(config)
-            html = build_index_html(site, root, default_layout=layout_path)
-            self.assertIn('id="mw-navigation"', html)
-            self.assertIn("/wiki/assets/wikipedia.css", html)
 
 if __name__ == "__main__":
     unittest.main()
