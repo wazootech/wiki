@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from rdflib import Graph
 
@@ -12,7 +12,6 @@ from .audit import merge_results, run_check, run_lint
 from .config import Config
 from .graph import load_graph
 from .paths import routes_from_markdown_files, select_document_paths
-from .runtime import resolve_runtime_config
 from .schemas import (
     AuditReport,
     BuildOptions,
@@ -25,8 +24,19 @@ from .schemas import (
     ScaffoldResult,
 )
 
-if TYPE_CHECKING:
-    from .link_ops import LinkOptions
+
+def _resolve_runtime_config(
+    config: Config,
+    *,
+    base_url: str | None = None,
+    url_style: str | None = None,
+) -> Config:
+    runtime_config = config.model_copy(deep=True)
+    if base_url is not None:
+        runtime_config.site.base_url = base_url.rstrip("/")
+    if url_style is not None:
+        runtime_config.site.url_style = url_style
+    return runtime_config
 
 
 class Wiki:
@@ -56,7 +66,7 @@ class Wiki:
         base_url: str | None = None,
         url_style: str | None = None,
     ) -> Wiki:
-        return Wiki(resolve_runtime_config(self.config, base_url=base_url, url_style=url_style))
+        return Wiki(_resolve_runtime_config(self.config, base_url=base_url, url_style=url_style))
 
     def graph(
         self,
@@ -184,7 +194,7 @@ class Wiki:
         check: bool = False,
         verbose: bool = False,
     ) -> LinkReport:
-        from .link_ops import run_link, LinkOptions
+        from .link_ops import LinkOptions, run_link
         options = LinkOptions(
             apply=apply,
             fix_broken=fix_broken,
@@ -207,7 +217,6 @@ class Wiki:
     ) -> str:
         from .format import run_query
         from .jqfilter import resolve_path
-        import json
 
         graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
         result = run_query(
@@ -233,7 +242,7 @@ class Wiki:
     ) -> None:
         from .serve import run_server
 
-        runtime_config = resolve_runtime_config(
+        runtime_config = _resolve_runtime_config(
             self.config,
             base_url=base_url,
             url_style=url_style,

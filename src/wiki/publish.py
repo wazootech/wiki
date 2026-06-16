@@ -26,7 +26,7 @@ def _path_is_same_or_ancestor(ancestor: Path, descendant: Path) -> bool:
         return False
 
 
-def validate_build_output_dir(page_output_dir: Path, config) -> None:
+def _validate_build_output_dir(page_output_dir: Path, config) -> None:
     page_output_dir = page_output_dir.resolve()
     protected: list[tuple[str, Path]] = [
         ("config root", config.config_root.resolve()),
@@ -95,7 +95,7 @@ def build_workspace(workspace: Wiki, options: BuildOptions) -> BuildResult:
         return BuildResult(ok=False, preflight=preflight)
 
     page_output_dir = page_output_dir.resolve()
-    validate_build_output_dir(page_output_dir, config)
+    _validate_build_output_dir(page_output_dir, config)
 
     if page_output_dir.exists():
         shutil.rmtree(page_output_dir)

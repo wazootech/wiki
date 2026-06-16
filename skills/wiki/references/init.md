@@ -1,4 +1,4 @@
-# Create Wiki
+# Initialize wiki
 
 Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) workspace: `wiki init` (Phase A) plus a tweak step (Phase B). Requires **`wiki` on PATH** (PyPI package `wazootech-wiki`).
 
@@ -6,7 +6,7 @@ This workflow **only** scaffolds or customizes a workspace. When done, summarize
 
 ## Resolve wiki command
 
-Run `bash skills/wiki/scripts/verify-cli.sh` first.
+Run `bash skills/wiki/scripts/verify.sh` first.
 
 Prefer `wiki` on PATH when exit code is `0`. In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale, try `uv run wiki` or `python -m wiki`. If neither works, stop and recommend upgrading **`wazootech-wiki`** (one-liner only).
 
@@ -44,7 +44,7 @@ When context already supplies values, **do not re-prompt**:
 - **`wiki.yml` and `wiki.yaml` absent** → Phase A (init) then Phase B (tweak).
 - **Either config file present** → **Wizard-only** (Phase B). Do not re-init; init requires a clean directory.
 
-### Phase A — Init
+### Phase A: init
 
 1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory**.
 2. **Init options** — Run `wiki init --help` and map answers to **config flags** only. Prefer flags over bare `wiki init`.
@@ -76,15 +76,15 @@ After Phase A succeeds, **default:** run `wiki check --strict` with the resolved
 - **On failure:** report CLI output; do not auto-fix.
 - **Wizard-only mode:** do not run this step.
 
-### Phase B — Tweak
+### Phase B: tweak
 
 Edit scaffold files marked with `<!-- wiki tweak: … -->` comments (with user approval):
 
 | Topic | Action |
 | ----- | ------ |
 | First page | Replace `wiki/Ethan_Davidson.md` (starter includes a tweak comment) or add the user's page |
-| Config extras | Uncomment optional blocks in `wiki.yml` — see [wiki-config-preferences.md](wiki-config-preferences.md) |
-| Lint strictness | Only if user asks — see [wiki-config-preferences.md](wiki-config-preferences.md) |
+| Config extras | Uncomment optional blocks in `wiki.yml` — see the Preferences wizard section below |
+| Lint strictness | Only if user asks — see the Preferences wizard section below |
 
 **Only edit files with explicit user approval.** After markdown or config edits, run `wiki fmt` on changed paths.
 
@@ -111,4 +111,56 @@ Summarize: workspace path, init flags used, post-init `check --strict` result (i
 | `README.md` or non-empty `wiki/` blocks init | New directory or remove conflicting files |
 | Invalid `--repo` | Fix `owner/repo` or use `--graph-context-wiki` |
 | `--git` fails | Report error; init may have completed without git |
-| Interactive prompt during init | Re-run with explicit flags |
+| `interactive` | Interactive prompt during init | Re-run with explicit flags |
+
+## Preferences wizard: wiki config tweaks
+
+Use after `wiki init` when the user approves file edits. Fresh scaffolds write **`wiki.yml`**; legacy **`wiki.yaml`** still loads. Run `wiki fmt` on changed markdown paths.
+
+### Init scaffold defaults
+
+Fresh `wiki init` writes:
+
+| Block | Init content |
+| ----- | ------------ |
+| `site:` | `layout`, `base_url`, `url_style` only |
+| `lint:` | `broken_links`, `filename_pattern`, `link_style` at `warning` |
+| `fmt:` | Inline mapping in `wiki.yml` (wrap, end_of_line, extensions) — init does not write `.mdformat.toml` |
+
+Other `lint.*` keys (e.g. `headings`, `heading_levels`) are valid but init omits them (defaults are `off`).
+
+### Removed / invalid keys (config load fails)
+
+Do not add these to new scaffolds; remove them when upgrading — invalid in the current schema:
+
+- `site.manifest`, `site.title`, `site.theme_color`
+- Jinja `{{ site.manifest.* }}` or `{{ site.* }}` in layouts — use `%wiki.*%` tokens and `%wiki.base_url%/assets/…` in custom page layouts
+- `<link rel="manifest">` and built `manifest.webmanifest` — removed from build/serve
+
+Upgrade steps: CHANGELOG Migration section and [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). No runtime rename hints or `wiki config migrate` shims.
+
+### Site branding
+
+Branding and styling are **not** managed by the CLI out-of-the-box, which outputs plain, unstyled HTML. To customize branding (such as site name, theme color, favicon, and sidebar chrome), write a custom layout template file and place custom assets under the `wiki.assets` directory, then set `site.layout` to point to your layout file path.
+
+### Lint strictness (only if asked)
+
+| Key | Values | Effect |
+| --- | ------ | ------ |
+| `lint.headings` | `off`, `warning`, `error` | Sentence-case H2+ and numbered headings (init omits; default `off`) |
+| `lint.filename_pattern` | severity | Wikipedia-style filenames |
+| `lint.broken_links` | severity | Unresolved internal links |
+| `lint.link_style` | severity | Obsidian wikilinks in body when `link.style: standard` |
+
+Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config load.
+
+### Config lanes (do not confuse)
+
+| Block | Command | Purpose |
+| ----- | ------- | ------- |
+| `fmt:` | `wiki fmt` | Mechanical markdown |
+| `lint:` | `wiki lint` | Conventions |
+| `check:` | `wiki check` | SHACL, JSON Schema, routes, layouts |
+
+Regex belongs in `wiki.filename_pattern`, not under `check:`.
+

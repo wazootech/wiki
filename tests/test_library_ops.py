@@ -8,7 +8,6 @@ from tempfile import TemporaryDirectory
 
 from wiki import (
     BuildOptions,
-    LinkOptions,
     Wiki,
     build_workspace,
     export_documents,

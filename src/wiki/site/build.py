@@ -52,7 +52,7 @@ def build_site(
             or extract_title(body, doc_slug)
         )
         h1_toc = extract_outline(body)
-        wiki_ids = page_wiki_ids(config, doc_slug, frontmatter)
+        wiki_ids = _page_wiki_ids(config, doc_slug, frontmatter)
         layout_path, layout_stem = parse_page_layout(frontmatter, config.config_root)
 
         display_body = strip_leading_title_heading(body, h1_title)
@@ -90,7 +90,7 @@ def parse_page_layout(frontmatter: dict[str, Any], config_root: Path) -> tuple[P
     return parse_layout_from_frontmatter(frontmatter, config_root)
 
 
-def page_wiki_ids(config: Config, route: str, frontmatter: dict[str, Any]) -> list[str]:
+def _page_wiki_ids(config: Config, route: str, frontmatter: dict[str, Any]) -> list[str]:
     values: list[str] = []
     for key in ("@id", "id"):
         raw = frontmatter.get(key)

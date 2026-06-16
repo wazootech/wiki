@@ -201,14 +201,6 @@ def load_packaged_official_layout(layout: str) -> str:
     )
 
 
-def copy_official_init_layout(dest: Path, layout: str) -> None:
-    """Copy an official init layout into a workspace (wikipedia shell; minimal is packaged)."""
-    if layout == "minimal":
-        return
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(load_packaged_official_layout(layout), encoding="utf-8")
-
-
 _README_TEMPLATE = (
     "# My Wiki\n\n"
     "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"

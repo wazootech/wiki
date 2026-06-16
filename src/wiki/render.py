@@ -46,7 +46,7 @@ def has_sparql_blocks(md_file: Path) -> bool:
     return SPARQL_BLOCK_REGEX.search(content) is not None
 
 
-def select_markdown_files_for_render(
+def _select_markdown_files_for_render(
     context: Any,
     *,
     explicit_files: tuple[Path, ...] = (),
@@ -113,7 +113,7 @@ def render_markdown_files(
     error_count = 0
     stale_files: list[str] = []
     render_errors: list[str] = []
-    markdown_files = select_markdown_files_for_render(context, explicit_files=explicit_files)
+    markdown_files = _select_markdown_files_for_render(context, explicit_files=explicit_files)
 
     known_slugs = {pr.route for pr in page_routes(context)}
 

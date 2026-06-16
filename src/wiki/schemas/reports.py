@@ -7,8 +7,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .rules import Severity
-
 IssueSeverity = Literal["error", "warning"]
 
 
@@ -103,7 +101,3 @@ class ScaffoldResult(BaseModel):
     written_paths: list[Path] = Field(default_factory=list)
     message: str = ""
     error_message: str | None = None
-
-
-def severity_for_rule(rules: object, rule_key: str) -> Severity:
-    return getattr(rules, rule_key, "warning")  # type: ignore[no-any-return]

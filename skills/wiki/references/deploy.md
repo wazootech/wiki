@@ -4,7 +4,7 @@ Publish a [Wiki CLI](https://github.com/wazootech/wiki) wiki with GitHub Actions
 
 This workflow **only** sets up GitHub Pages deployment. When done, summarize URLs and paths and **stop**. If the CLI or wiki config is missing, state the blocker and stop.
 
-Run `verify-cli.sh` before editing workflows.
+Run `verify.sh` before editing workflows.
 
 ## Canonical workflow reference
 
@@ -134,6 +134,56 @@ Do not run `wiki serve` or open PRs unless the user asks.
 | Broken asset links | `--site-base-url` in CI must match `site.base_url` |
 | `uv sync` fails in CI | No `pyproject.toml` — use pip template |
 | `uv pip install` / no venv | Standalone repo — use pip template |
-| Wrong namespace IRIs | `graph.context.wiki` should match public site URL |
+| `namespace_iri` | Wrong namespace IRIs | `graph.context.wiki` should match public site URL |
+
+## Deploy alignment checklist
+
+Use these verification rules when wiring or reviewing GitHub Pages for a Wiki CLI workspace:
+
+### Config and CLI
+
+- `-c` points at the wiki config (`wiki.yml`, or legacy `wiki.yaml`)
+- `site.base_url` in wiki config matches the public Pages path
+- `wiki build --site-base-url` in CI uses the **same** value as `site.base_url`
+- `graph.context.wiki` matches the deployed site origin when possible
+
+### Artifact path
+
+Build output layout:
+
+```text
+page_output_dir = _site / site.base_url.strip("/")   # when base_url is non-empty
+page_output_dir = _site                               # when base_url is ""
+```
+
+`upload-pages-artifact` `path` must be `page_output_dir` — the directory that contains `index.html`.
+
+| `site.base_url` | `wiki build` flags | Upload `path` |
+| --------------- | ------------------ | ------------- |
+| `/wiki` | `--output-dir _site --site-base-url /wiki` | `_site/wiki` |
+| `/my-wiki` | `--output-dir _site --site-base-url /my-wiki` | `_site/my-wiki` |
+| `''` | `--output-dir _site --site-base-url ''` | `_site` |
+
+### GitHub settings
+
+- **Pages → Build and deployment → GitHub Actions** (not “Deploy from a branch”)
+- Verify with: `gh api repos/{owner}/{repo}/pages --jq '{build_type, source}'` (expect `build_type: workflow`)
+
+### Audit red flags
+
+- `_site/` or build output committed to `main` branch
+- Workflow uses `peaceiris/actions-gh-pages` or pushes to `gh-pages` branch
+- `publish_dir` or artifact `path` is `_site` while `site.base_url` is `/wiki` (or any non-empty path)
+- GitHub Pages `build_type: legacy` (branch deploy) while an Actions deploy workflow exists
+- `uv sync` in CI but no `pyproject.toml` / `uv.lock` in the repository
+- `astral-sh/setup-uv` + `uv pip install` without `uv venv` or `--system` (CI error: “No virtual environment found”)
+- Hybrid install: `setup-uv` present but `uv sync` replaced with `uv pip install` — use the full pip or uv template instead
+
+### Pipeline order
+
+Typical CI: `check --strict` → `lint --strict` → `build --output-dir _site` → `upload-pages-artifact` → `deploy-pages`.
+
+Local preview: `wiki -c path/to/wiki.yml serve` (URL follows `site.base_url`).
 
 Human docs: [Deploying to GitHub Pages](https://github.com/wazootech/wiki/blob/main/docs/wiki/Deploying_to_GitHub_Pages.md).
+

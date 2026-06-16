@@ -2,14 +2,14 @@
 name: wiki
 description: >-
   Manages Wiki CLI end to end — install and verify wazootech-wiki, scaffold with wiki init,
-  audit vault hygiene (fmt, lint, check, render), and deploy to GitHub Pages. Use whenever
-  the user mentions wiki, Wiki CLI, wazootech-wiki, wiki init, wiki.yml, wiki.yaml, broken links,
+  audit vault hygiene (fmt, lint, check, render), plan and execute vault improvements, and deploy to GitHub Pages.
+  Use whenever the user mentions wiki, Wiki CLI, wazootech-wiki, wiki init, wiki.yml, wiki.yaml, broken links,
   lint/check failures, pre-PR wiki review, GitHub Pages for a wiki, or getting started with
   semantic markdown — even if they do not say "skill". Route to one workflow reference,
   complete that job, and stop.
 ---
 
-# Wiki CLI
+# Wiki CLI Skill
 
 Procedural knowledge for coding agents working with [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command, PyPI **`wazootech-wiki`**).
 
@@ -17,9 +17,9 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 
 ## Principles
 
-1. **Deterministic work belongs in scripts and the CLI** — run `scripts/verify-cli.sh` and `scripts/audit.sh` instead of reimplementing validator pipelines in prose.
+1. **Deterministic work belongs in scripts and the CLI** — run `skills/wiki/scripts/verify.sh` and `skills/wiki/scripts/audit.sh` instead of reimplementing validator pipelines in prose.
 2. **One workflow per turn** — read the matching reference below, finish that job, stop. Do not chain install → create → deploy unless the user asked for the full flow.
-3. **Improve is advisory** — survey and report; never edit wiki files unless the user explicitly asks.
+3. **Advisor-executor model for vault changes** — survey and plan changes as a read-only advisor; dispatch executor subagents to apply edits in isolated worktrees, and review their diffs. Never directly edit user files without approval.
 4. **Deploy uses wholesale templates** — embed [workflow-template-uv.yml](references/workflow-template-uv.yml) or [workflow-template-pip.yml](references/workflow-template-pip.yml) in full; substitute placeholders only.
 5. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
 
@@ -28,17 +28,20 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 | User intent | Read | Stop when |
 | ----------- | ---- | --------- |
 | CLI missing, stale, or verify install | [references/install.md](references/install.md) | CLI verified or blocker reported |
-| New wiki, `wiki init`, tweak step | [references/create.md](references/create.md) | Scaffold summarized |
+| New wiki, `wiki init`, tweak step | [references/init.md](references/init.md) | Scaffold summarized |
 | Audit, improve, pre-PR, lint/check failures | [references/improve.md](references/improve.md) | Findings report delivered |
+| Formatting, linting, check categories detail | [references/audit.md](references/audit.md) | Audit criteria verified |
+| Generate handoff plans, plans layout | [references/plan.md](references/plan.md) | Plan file written |
+| Execute plans, review diff, publish issues | [references/loop.md](references/loop.md) | Executor output verified |
 | GitHub Pages, deploy workflow, CI publish | [references/deploy.md](references/deploy.md) | Workflow + URLs summarized |
 
-When the user asks for multiple intents in one message, pick the **blocking** workflow first (usually install), or the workflow they emphasized. Offer the next step in plain language — do not name removed skill paths.
+When the user asks for multiple intents in one message, pick the **blocking** workflow first (usually install), or the workflow they emphasized. Offer the next step in plain language.
 
 ## Shared CLI resolution
 
 Before any wiki command:
 
-1. Run `bash skills/wiki/scripts/verify-cli.sh` (or `.agents/skills/wiki/scripts/verify-cli.sh` when vendored).
+1. Run `bash skills/wiki/scripts/verify.sh` (or `.agents/skills/wiki/scripts/verify.sh` when vendored).
 2. Exit `0` → use PATH `wiki`.
 3. Exit `2` (stale) → upgrade **`wazootech-wiki`** per [install.md](references/install.md).
 4. Exit `1` (missing) → install or stop with one-line PyPI hint; read [install.md](references/install.md) for paths.
@@ -50,7 +53,7 @@ Zero-install equivalent: `npx wazootech-wiki <args>` or `uvx wazootech-wiki <arg
 ## Deterministic scripts
 
 ```bash
-bash skills/wiki/scripts/verify-cli.sh
+bash skills/wiki/scripts/verify.sh
 bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 ```
 
@@ -60,13 +63,12 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 
 | File | Purpose |
 | ---- | ------- |
-| [references/install.md](references/install.md) | Install and verify CLI |
-| [references/create.md](references/create.md) | `wiki init` + wizard |
-| [references/improve.md](references/improve.md) | Audit report template |
-| [references/deploy.md](references/deploy.md) | GitHub Pages workflow |
-| [references/wiki-config-preferences.md](references/wiki-config-preferences.md) | Post-init wiki config edits |
-| [references/style-spot-check.md](references/style-spot-check.md) | Conventions when lint is off |
-| [references/alignment-checklist.md](references/alignment-checklist.md) | Deploy path alignment and audit |
-| [references/programmatic-api.md](references/programmatic-api.md) | In-process Python API (`Wiki`, `AuditReport`) |
+| [references/install.md](references/install.md) | Install and verify CLI (includes programmatic API) |
+| [references/init.md](references/init.md) | `wiki init` + configuration wizard tweaks |
+| [references/improve.md](references/improve.md) | Recon, audit, vet, and planning workflow |
+| [references/audit.md](references/audit.md) | Audit check categories and style spot-check |
+| [references/plan.md](references/plan.md) | Hand-off plans format and layout |
+| [references/loop.md](references/loop.md) | Running executors, reviewing work, reconciling backlog, publishing issues |
+| [references/deploy.md](references/deploy.md) | GitHub Pages workflow and alignment checklist |
 
 Human docs: [Wiki Skills](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Skills.md), [Getting Started](https://github.com/wazootech/wiki/blob/main/docs/wiki/Getting_Started.md), [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).

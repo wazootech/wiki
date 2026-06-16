@@ -4,7 +4,7 @@ Install and verify the [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` com
 
 This workflow **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest `wiki init`, creating a workspace, or other workflows unless the user asks.
 
-Run `bash skills/wiki/scripts/verify-cli.sh` first (`.agents/skills/wiki/scripts/verify-cli.sh` when vendored).
+Run `bash skills/wiki/scripts/verify.sh` first (`.agents/skills/wiki/scripts/verify.sh` when vendored).
 
 ## Detect
 
@@ -13,12 +13,12 @@ wiki --help
 wiki fmt --help
 ```
 
-If that fails, go to **Install (CLI missing)** or **Stale CLI** below.
+If that fails, go to **Install when CLI is missing** or **Stale CLI** below.
 
 - **Both pass** → confirm briefly, then **`wiki` is on PATH and ready to go.** Exit.
 - **`--help` passes but `fmt` fails** → stale or wrong `wiki` on PATH; go to **Stale CLI** (do not say ready-to-go).
 
-## Install (CLI missing)
+## Install when CLI is missing
 
 Tell the user the CLI was not found. Offer install paths in this order unless the user prefers otherwise:
 
@@ -66,7 +66,7 @@ Use `uv run wiki` only when the current working directory is this checkout and t
 
 ## Verify
 
-After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again, or re-run `verify-cli.sh`.
+After install (user-run or agent-run with approval), run `wiki --help` and `wiki fmt --help` again, or re-run `verify.sh`.
 
 - **Both pass** → **`wiki` is on PATH and ready to go.** Exit.
 - **Failure** → Report the error output. Exit.
@@ -95,3 +95,23 @@ Treat as an outdated or shadowed install — not ready:
 - Auto-run `pip install` without user approval.
 - Say **ready to go** when the capability probe fails.
 - Duplicate full wiki or configuration documentation.
+
+## Programmatic API (Python)
+
+Use the CLI for agent workflows (`audit.sh`, `verify-cli.sh`). Use the library when CI or tests need in-process calls without subprocess overhead.
+
+```python
+from pathlib import Path
+from wiki import Wiki
+
+w = Wiki.load("wiki.yml")
+if not w.preflight().ok:
+    raise SystemExit("preflight failed")
+
+result = w.build(output_dir=Path("_site"))
+```
+
+Stable exports: `Wiki`, `AuditReport`, `Issue`, `build_workspace`, `run_check`, `run_lint`, `scaffold_workspace`, and related report types — see `wiki.__all__`.
+
+Full reference: [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).
+

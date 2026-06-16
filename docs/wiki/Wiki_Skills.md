@@ -41,7 +41,7 @@ When Wiki CLI ships skill fixes (deploy templates, init guidance), re-run:
 npx skills add wazootech/wiki@wiki -g -y
 ```
 
-Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional — they drift from upstream quickly.
+Project-local copies under `.agents/skills/` do not update automatically. Avoid committing vendored skill snapshots unless intentional; they can drift from upstream quickly.
 
 ## Workflows and routing
 
@@ -50,7 +50,7 @@ The single **`wiki`** skill routes to four workflow references:
 | Intent                         | Reference                           | Stop when                        |
 | ------------------------------ | ----------------------------------- | -------------------------------- |
 | CLI missing or stale           | `skills/wiki/references/install.md` | CLI verified or blocker reported |
-| New wiki / `wiki init`         | `skills/wiki/references/create.md`  | Scaffold summarized              |
+| New wiki / `wiki init`         | `skills/wiki/references/init.md`    | Scaffold summarized              |
 | Audit / pre-PR / lint failures | `skills/wiki/references/improve.md` | Findings report delivered        |
 | GitHub Pages / CI deploy       | `skills/wiki/references/deploy.md`  | Workflow + URLs summarized       |
 
@@ -59,11 +59,11 @@ Read one reference per turn unless the user explicitly asked for a multi-step fl
 ## Scripts
 
 ```bash
-bash skills/wiki/scripts/verify-cli.sh
+bash skills/wiki/scripts/verify.sh
 bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 ```
 
-`verify-cli.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
+`verify.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
 
 ## Install workflow
 
@@ -71,11 +71,11 @@ Detect whether `wiki` is on PATH, install **`wazootech-wiki`** when needed, veri
 
 See `skills/wiki/references/install.md`.
 
-## Create workflow
+## Init workflow
 
 Non-interactive `wiki init` for workspace structure (config, starter pages), then a short **tweak** step: replace the starter first page, and optionally uncomment blocks in `wiki.yml`. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
 
-See `skills/wiki/references/create.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
+See `skills/wiki/references/init.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
 
 ## Improve workflow
 
@@ -91,9 +91,8 @@ Workflow assets (embed one template in full; substitute `CONFIG_PATH`, `SITE_BAS
 
 - `skills/wiki/references/workflow-template-uv.yml` — uv monorepo
 - `skills/wiki/references/workflow-template-pip.yml` — pip standalone
-- `skills/wiki/references/alignment-checklist.md`
 
-See `skills/wiki/references/deploy.md` and [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md).
+See `skills/wiki/references/deploy.md` (which includes the Deploy Alignment Checklist) and [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md).
 
 ## Repository layout
 
@@ -101,14 +100,16 @@ See `skills/wiki/references/deploy.md` and [Deploying to GitHub Pages](Deploying
 skills/
   wiki/SKILL.md
   wiki/scripts/audit.sh
-  wiki/scripts/verify-cli.sh
+  wiki/scripts/verify.sh
   wiki/references/install.md
-  wiki/references/create.md
+  wiki/references/init.md
   wiki/references/improve.md
+  wiki/references/audit.md
+  wiki/references/plan.md
+  wiki/references/loop.md
   wiki/references/deploy.md
   wiki/references/workflow-template-uv.yml
   wiki/references/workflow-template-pip.yml
-  wiki/references/alignment-checklist.md
 ```
 
 Human-oriented install and daily workflow: [Getting Started](Getting_Started.md).

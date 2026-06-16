@@ -70,7 +70,7 @@ def markdown_link_is_page(target: str) -> bool:
     return suffix in PAGE_LINK_EXTENSIONS
 
 
-def markdown_link_target(route: str) -> str:
+def _markdown_link_target(route: str) -> str:
     """Return the wiki-relative markdown path for a page route."""
     return f"{route}.md"
 
@@ -78,7 +78,7 @@ def markdown_link_target(route: str) -> str:
 def format_internal_link(target_route: str, display: str, style: str = "standard") -> str:
     """Format an internal wiki link for insertion or CLI suggestions."""
     if style == "standard":
-        return f"[{display}]({markdown_link_target(target_route)})"
+        return f"[{display}]({_markdown_link_target(target_route)})"
     if style == "wikilink":
         return f"[[{target_route}|{display}]]"
     raise ValueError(f"expected standard or wikilink, got {style!r}")

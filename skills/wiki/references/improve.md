@@ -1,85 +1,66 @@
-# Wiki Improve
+# Wiki Improve — Audit, Plan, and Loop Closure
 
-Senior wiki **advisor, not implementer**. Run validators, cite evidence, deliver a prioritized findings report. The user or a later session applies fixes.
+Senior wiki **advisor, not implementer**. Run validators, cite evidence, and deliver a prioritized findings report. Generate structured handoff plans for executor models to perform edits.
+
+The founding rule: **the advisor never directly modifies wiki pages or config files** unless explicitly asked by the user. Plans are written to the `plans/` directory (or `advisor-plans/` when `plans/` is occupied) for a separate executor to carry out.
 
 ## Hard rules
 
-1. **Never edit wiki pages** unless the user explicitly asks.
-2. **Never guess** — cite CLI output or `file:line` for every finding.
-3. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
-4. **Skills are not wiki inputs** — do not index or build `skills/`.
-5. **Stop after the report.** Deploy setup → read [deploy.md](deploy.md) when the user asks (not in the same turn unless they asked for deploy).
-
-## Quick start
-
-```bash
-bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml
-# vendored: bash .agents/skills/wiki/scripts/audit.sh -c path/to/wiki.yml
-```
-
-Run `verify-cli.sh` first if wiki command resolution is unclear. Prefers `wiki` on PATH; checkout fallbacks: `uv run wiki`, `python -m wiki`; else `npx wazootech-wiki`. In **this repo**: `-c docs/wiki.yml`. Legacy `wiki.yaml` also loads when passed to `-c`.
-
-[`scripts/audit.sh`](../scripts/audit.sh) runs fmt → lint → check → render, then `wiki link --check` only when wired in `.github/workflows/`. Stop on first failure; paste relevant CLI output.
-
-| Block | Command | Purpose |
-| ----- | ------- | ------- |
-| `fmt:` | `wiki fmt` | Mechanical markdown |
-| `lint:` | `wiki lint` | Conventions — links, filenames, headings |
-| `check:` | `wiki check` | Integrity — SHACL, JSON Schema, routes, layouts |
-
-Regex belongs in `wiki.filename_pattern`, not under `check:`.
+1. **Never edit wiki files yourself** unless the user explicitly requests immediate inline repairs.
+2. **Never guess** — cite the exact `file:line` or CLI output for every finding.
+3. **No config migration shims** — unknown config keys must fail fast at load; document upgrades in CHANGELOG and docs only.
+4. **Skills are not wiki inputs** — never index, build, or list the `skills/` or `.agents/` folder under `wiki.inputs`.
+5. **No secret values** — if credentials or tokens are discovered, refer to their type and location only. Suggest rotation, never copy the value.
 
 ## Workflow
 
-### Recon
+### Phase 1: recon
 
-Read wiki config (`wiki.yml` or legacy `wiki.yaml`): `wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site:`. Scan `.github/workflows/` for wiki CI and whether `wiki link --check` is wired.
+Understand the specific wiki configuration before auditing:
+- Locate the config file (prefer `wiki.yml`; fallback to legacy `wiki.yaml`).
+- Read configuration settings: `wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site.layout`.
+- Identify resolved commands and environment requirements by running:
+  `bash skills/wiki/scripts/verify.sh`
+- Note project conventions: filename cases, heading structures, links style, and metadata schemas.
 
-When config load fails (unknown keys): report as **`config`** finding with full error text; point to CHANGELOG Migration and [Wiki Configuration](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Configuration.md). Do not suggest runtime rename hints or automated migration commands.
+### Phase 2: audit
 
-Flag removed branding surface as **`config`** findings: `site.manifest`, `site.title`, `site.theme_color`; Jinja `{{ site.manifest.* }}` in layouts; `<link rel="manifest">` expecting `manifest.webmanifest`.
+Run the automated checks and perform spot-checks:
+- Execute the audit script:
+  `bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml`
+- The script runs the standard pipeline: `fmt --check` → `lint --strict` → `check --strict` → `render --check`.
+- Map findings against the categories defined in [references/audit.md](audit.md):
+  1. `integrity` (broken links, schema failures)
+  2. `formatting` / `style` (casing, underlines)
+  3. `config` (invalid settings, deprecated keys)
+  4. `deploy` (base URL, upload artifacts)
+  5. `metadata` (SPARQL, missing RDF types)
+  6. `direction` (missing content, stubs)
+- Audit depth is controlled by the user's focus (e.g. `quick` vs `deep` settings).
 
-### Audit
+### Phase 3: vet and prioritize
 
-Run `audit.sh` (or equivalent commands). For deploy-related pages or CI, read [alignment-checklist.md](alignment-checklist.md). When `lint.*` is off, spot-check [style-spot-check.md](style-spot-check.md).
+Confirm each finding before presenting:
+- Open the cited file and verify the issue. Remove false positives.
+- Filter out standard platform conventions or intentionally designed choices.
+- Format the findings using the standardized finding format from [references/audit.md](audit.md).
+- List rejected findings under the **Considered and rejected** section.
+- Present findings ordered by leverage (impact ÷ effort).
 
-### Vet
+### Phase 4: plan generation
 
-Confirm each finding against cited output. Drop false positives. List rejected candidates under **Considered and rejected**.
+Generate self-contained plans for the chosen findings:
+- Write independent plan files under `plans/NNN-short-slug.md` following the template in [references/plan.md](plan.md).
+- Ensure all context (excerpts, file paths, commands) is fully inlined so the executor requires no external context.
+- Create/update `plans/README.md` containing the execution order and status table.
 
-### Report
+## Invocation variants
 
-Use the template below. Order findings by leverage. Categories: `integrity`, `conventions`, `formatting`, `config`, `deploy`, `docs`, `style`. Impact / effort: `H` / `M` / `L`.
-
-**Repairs (user must ask first):** `wiki fmt`; `wiki link --fix-broken`; `wiki link --apply`.
-
-```markdown
-## Wiki improve — <wiki or path>
-
-**Config:** <wiki.yml path>
-**Date:** <ISO date>
-
-### Automated checks
-| Check | Result | Notes |
-| fmt --check | pass/fail | |
-| lint --strict | pass/fail | |
-| check --strict | pass/fail | |
-| render --check | pass/fail | |
-| link --check | skipped/pass/fail | only if CI wired |
-
-### Config review
-- <wiki config observations>
-
-### Findings
-| # | Finding | Category | Impact | Effort | Evidence |
-| 1 | ... | integrity | H | S | `path:line` or CLI excerpt |
-
-### Considered and rejected
-- <candidate> — <why not reported>
-
-### Direction (optional)
-- <grounded suggestion>
-
-### Recommended next steps
-1. ...
-```
+- **Bare invocation**: Runs full Recon, Audit, and Vet phases, presenting the findings table.
+- **`quick` / `deep`**: Adjusts audit scope (hotspots vs full vault sweep).
+- **Focus arguments** (`integrity`, `conventions`, `deploy`): Restricts audit to that category.
+- **`branch`**: Audits only files changed in the active branch against the default branch base.
+- **`plan <description>`**: Skips the audit; directly researches and writes a single plan for the given task.
+- **`execute <plan>`**: Dispatches a cheaper executor subagent in a worktree, reviews its diff, and verifies the done criteria. (See [references/loop.md](loop.md)).
+- **`reconcile`**: Rechecks the status of existing plans, verifying DONE, refreshing TODO, and identifying BLOCKED items.
+- **`--issues`**: Publishes generated plans as GitHub issues using the `gh` CLI. Warns first if the repository is public.

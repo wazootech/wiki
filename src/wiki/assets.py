@@ -89,7 +89,7 @@ def _packaged_asset_entries(
     return entries
 
 
-def resolve_asset_path(config: Config, current_file: Path, target: str) -> Path | None:
+def _resolve_asset_path(config: Config, current_file: Path, target: str) -> Path | None:
     if is_external_link(target):
         return None
     page_part, _ = split_target(target)
@@ -115,7 +115,7 @@ def resolve_asset_path(config: Config, current_file: Path, target: str) -> Path 
 
 
 def asset_reference_issue(config: Config, current_file: Path, target: str) -> str | None:
-    asset_path = resolve_asset_path(config, current_file, target)
+    asset_path = _resolve_asset_path(config, current_file, target)
     if asset_path is None:
         return f"points outside configured assets: {target}"
     if config.is_excluded(asset_path):
