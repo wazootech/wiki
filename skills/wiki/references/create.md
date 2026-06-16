@@ -55,7 +55,6 @@ When context already supplies values, **do not re-prompt**:
 | Custom namespace | No GitHub / custom site | `--graph-context-wiki https://…/` and optional `--site-base-url` |
 | Git repository | User wants `git init` now | `--git` |
 | Link style | Wikilinks vs standard page links | `--link-style wikilink` |
-| Page layout | Vector UI vs minimal | `--site-layout wikipedia` or `minimal` |
 | Inputs directory | Custom markdown folder | `--wiki-inputs myfolder` |
 | URL style | File vs directory routes | `--site-url-style dir` or `file` |
 | Content predicate | Body text RDF predicate | `--graph-content-predicate schema:articleBody` |
@@ -83,9 +82,6 @@ Edit scaffold files marked with `<!-- wiki tweak: … -->` comments (with user a
 
 | Topic | Action |
 | ----- | ------ |
-| Logo letter | Edit `<!-- wiki tweak: logo letter -->` in `assets/logo.svg` |
-| Theme color | Edit globeGrad/gridGrad stops in `assets/logo.svg`; match `theme-color` meta in layout |
-| Sidebar title | Edit `<!-- wiki tweak: site display name -->` in `layouts/wikipedia.html` (or your `site.layout` file) |
 | First page | Replace `wiki/Ethan_Davidson.md` (starter includes a tweak comment) or add the user's page |
 | Config extras | Uncomment optional blocks in `wiki.yml` — see [wiki-config-preferences.md](wiki-config-preferences.md) |
 | Lint strictness | Only if user asks — see [wiki-config-preferences.md](wiki-config-preferences.md) |
@@ -94,7 +90,7 @@ Edit scaffold files marked with `<!-- wiki tweak: … -->` comments (with user a
 
 ### What init creates
 
-- `wiki.yml`, `layouts/wikipedia.html`, `assets/logo.svg` (with tweak comments)
+- `wiki.yml`
 - `wiki/Person_Shape.md`, `wiki/Ethan_Davidson.md`, `README.md`
 
 ## Post-init hygiene

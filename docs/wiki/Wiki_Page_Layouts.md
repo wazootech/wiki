@@ -10,7 +10,7 @@ description: Wiki page layout files for build and serve output.
 
 Wiki CLI builds each article into HTML using a **page layout** file. Two levels apply:
 
-1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `layouts/wikipedia.html`)
+1. **Site default** — `site.layout` in [Wiki Configuration](Wiki_Configuration.md) (for example `layouts/index.html`)
 
 1. **Per-page override** — optional `wazoo:layout` frontmatter on a single markdown file (`.html` only)
 
@@ -22,11 +22,11 @@ Set the path in `wiki.yml` (or `wiki.yaml`) relative to the directory that conta
 
 site:
 
-  layout: layouts/wikipedia.html
+  layout: layouts/index.html
 
 ```
 
-`wiki init` with `--site-layout wikipedia` (default) copies `layouts/wikipedia.html` and `assets/wikipedia.css` from the packaged bundle. With `--site-layout minimal`, `site.layout` is omitted and Wiki CLI uses the packaged `index.html` layout.
+By default, if `site.layout` is omitted, Wiki CLI uses the built-in minimal fallback `index.html` layout. Set `site.layout` to your custom layout path to configure a customized page shell.
 
 ## `wazoo:layout`
 

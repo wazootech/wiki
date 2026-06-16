@@ -26,7 +26,7 @@ Upgrade steps: CHANGELOG Migration section and [Wiki Configuration](https://gith
 
 ## Site branding
 
-Branding is **not** in wiki config. Edit `site.layout` (e.g. `layouts/wikipedia.html`) and files under `wiki.assets` for site name, theme color, favicon, and sidebar chrome. Init scaffolds `assets/logo.svg` with `<!-- wiki tweak: … -->` comments and references it at `%wiki.base_url%/assets/logo.svg` in the default layout. The packaged `layouts/wikipedia.html` includes tweak comments for sidebar title and `theme-color` meta tags.
+Branding and styling are **not** managed by the CLI out-of-the-box, which outputs plain, unstyled HTML. To customize branding (such as site name, theme color, favicon, and sidebar chrome), write a custom layout template file and place custom assets under the `wiki.assets` directory, then set `site.layout` to point to your layout file path.
 
 ## Lint strictness (only if asked)
 
