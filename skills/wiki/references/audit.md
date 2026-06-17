@@ -1,6 +1,6 @@
 # Wiki Audit Guide
 
-What to check for when auditing a Wiki CLI workspace or vault repository. Use this checklist during the audit phase to identify violations, risks, and improvements.
+What to check for when auditing a Wiki CLI project or vault repository. Use this checklist during the audit phase to identify violations, risks, and improvements.
 
 A finding is only a finding with evidence. Do not guess; cite the exact file path, line number, or CLI tool output.
 

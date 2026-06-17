@@ -6,7 +6,7 @@ description: Scaffold wiki.yml and starter wiki pages interactively.
 
 # `wiki init`
 
-Create a new workspace in the **current directory**: `wiki.yml`, `README.md`, and starter files under `wiki/`.
+Create a new wiki project in the **current directory**: `wiki.yml`, `README.md`, and starter files under `wiki/`.
 
 Does not use loaded Config; safe to run before a config exists. Init runs once per clean directory — if `wiki.yml`, `README.md`, or a non-empty `wiki/` already exist, use a new directory or remove those files before re-running.
 
@@ -66,13 +66,13 @@ Always includes `schema`, `wiki`, `wazoo`, `foaf`, `dc`, `dcterms`, `sh`, and `x
 
 ## Generated config
 
-New workspaces receive a plain `wiki.yml` rendered from [`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml). Jinja variables (such as `graph_context_wiki`, `site_base_url`, `graph_content_predicate`, and `link_style`) map from init CLI flags into nested blocks.
+New wiki projects receive a plain `wiki.yml` rendered from [`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml). Jinja variables (such as `graph_context_wiki`, `site_base_url`, `graph_content_predicate`, and `link_style`) map from init CLI flags into nested blocks.
 
 For every key — schema default, whether init writes it, and which command audits it — see [Wiki Configuration → Overview](Wiki_Configuration.md#overview) and the per-block defaults tables in [Wiki Configuration](Wiki_Configuration.md).
 
 ## Generated files
 
-- `README.md` — starter workspace overview and common commands
+- `README.md` — starter wiki overview and common commands
 - `wiki/Person_Shape.md` — starter `sh:NodeShape` for `schema:Person`
 - `wiki/Ethan_Davidson.md` — starter `schema:Person` example (includes a tweak comment to replace with your first page)
 

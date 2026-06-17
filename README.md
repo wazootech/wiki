@@ -10,7 +10,7 @@
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic workspace). See [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
+Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic wiki project). See [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
 
 
 ## Use cases and integrations
@@ -542,7 +542,7 @@ python -m wiki serve --watch
 When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
 ### `init`
-Interactively scaffold a new wiki workspace (`wiki.yaml` + starter `wiki/` content) in the current directory.
+Interactively scaffold a new wiki project (`wiki.yaml` + starter `wiki/` content) in the current directory.
 
 ```bash
 wiki init
@@ -709,7 +709,7 @@ SELECT ?doc ?content WHERE {
 }
 ```
 
-## Workspace configuration (`Config`)
+## Wiki configuration (`Config`)
 
 The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `wiki`, `graph`, `site`, and `link` blocks (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
 

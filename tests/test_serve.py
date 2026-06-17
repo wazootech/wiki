@@ -26,7 +26,7 @@ from wiki.serve import (
     refresh_wiki,
     run_server,
 )
-from wiki.workspace import Wiki
+from wiki.session import Wiki
 
 
 def _free_port() -> int:

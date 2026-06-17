@@ -20,7 +20,7 @@ __all__ = [
     "load_packaged_official_layout",
     "render_wiki_yaml",
     "resolve_init_options",
-    "_scaffold_workspace",
+    "_scaffold_wiki",
 ]
 
 DEFAULT_BASE_URL = "/wiki"
@@ -204,8 +204,8 @@ def load_packaged_official_layout(layout: str) -> str:
 _README_TEMPLATE = (
     "# My Wiki\n\n"
     "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
-    "## Workspace Layout\n\n"
-    "- `wiki.yml` — Workspace configuration, namespace prefixes, and `fmt` defaults.\n"
+    "## Wiki layout\n\n"
+    "- `wiki.yml` — Wiki configuration, namespace prefixes, and `fmt` defaults.\n"
     "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
     "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
     "  - `Ethan_Davidson.md` — An example Person document.\n\n"
@@ -257,7 +257,7 @@ _EXAMPLE_PERSON_TEMPLATE = (
 )
 
 
-def _scaffold_workspace(
+def _scaffold_wiki(
     cwd: Path,
     init_options: InitOptions,
     *,

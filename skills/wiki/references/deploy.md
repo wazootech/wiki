@@ -50,7 +50,7 @@ wiki fmt --help
 
 If either fails, say **`wiki` on PATH is required** (install **`wazootech-wiki`**) and **stop**.
 
-Locate wiki config (`wiki.yml` preferred; legacy `wiki.yaml` also loads). If absent, say a wiki workspace is required and **stop**.
+Locate wiki config (`wiki.yml` preferred; legacy `wiki.yaml` also loads). If absent, say a wiki project is required and **stop**.
 
 ## Workflow
 
@@ -138,7 +138,7 @@ Do not run `wiki serve` or open PRs unless the user asks.
 
 ## Deploy alignment checklist
 
-Use these verification rules when wiring or reviewing GitHub Pages for a Wiki CLI workspace:
+Use these verification rules when wiring or reviewing GitHub Pages for a Wiki CLI project:
 
 ### Config and CLI
 

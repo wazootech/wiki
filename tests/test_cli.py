@@ -485,7 +485,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
             self.assertEqual(result_clean.exit_code, 0)
             self.assertIn("All dynamic SPARQL blocks are fully up to date", result_clean.output)
 
-    def test_cli_init_scaffolds_workspace_files(self) -> None:
+    def test_cli_init_scaffolds_wiki_files(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             with runner.isolated_filesystem(temp_dir=tmpdir):

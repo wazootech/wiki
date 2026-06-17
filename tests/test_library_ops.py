@@ -1,4 +1,4 @@
-"""Smoke tests for library-first operation entry points."""
+"""Smoke tests for library-first Wiki session methods."""
 
 from __future__ import annotations
 
@@ -6,15 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki import (
-    BuildOptions,
-    Wiki,
-)
-from wiki.export_ops import _export_documents as export_documents
-from wiki.fmt_ops import _format_files as format_files
-from wiki.link_ops import _run_link as run_link
-from wiki.publish import _build_workspace as build_workspace
-from wiki.render_ops import _render_workspace as render_workspace
+from wiki import Wiki
 
 
 class TestLibraryOps(unittest.TestCase):
@@ -32,57 +24,49 @@ class TestLibraryOps(unittest.TestCase):
         )
         return root, page, Wiki.load(root)
 
-    def test_build_workspace_writes_site(self) -> None:
+    def test_wiki_build_writes_site(self) -> None:
         root, _, wiki = self._scaffold()
         output_dir = root / "_site"
-        result = build_workspace(
-            wiki,
-            BuildOptions(output_dir=output_dir, skip_preflight=True),
-        )
+        result = wiki.build(output_dir, no_check=True)
         self.assertTrue(result.ok, result.error_message)
         self.assertGreater(result.page_count, 0)
         self.assertTrue((output_dir / "wiki" / "Page" / "index.html").exists())
 
-    def test_format_files_check_only(self) -> None:
+    def test_wiki_format_check_only(self) -> None:
         _, _, wiki = self._scaffold()
-        report = format_files(wiki, None, check_only=True)
+        report = wiki.format(check=True)
         self.assertTrue(report.ok)
         self.assertEqual(report.formatted_count, 0)
 
-    def test_export_documents_turtle(self) -> None:
+    def test_wiki_export_turtle(self) -> None:
         _, page, wiki = self._scaffold()
-        result = export_documents(
-            wiki,
-            [page],
-            rdf_format="turtle",
-            mode="expanded",
-        )
+        result = wiki.export([page], format="turtle", mode="expanded")
         self.assertTrue(result.ok, result.error_message)
         self.assertTrue(result.output.strip())
 
-    def test_render_workspace_check_only(self) -> None:
+    def test_wiki_render_check_only(self) -> None:
         _, _, wiki = self._scaffold()
-        report = render_workspace(wiki, None, check_only=True)
+        report = wiki.render(check=True)
         self.assertTrue(report.ok)
         self.assertEqual(report.updated_count, 0)
 
-    def test_functional_defaults_without_files(self) -> None:
+    def test_wiki_method_defaults_without_files(self) -> None:
         _, _, wiki = self._scaffold()
 
-        # Test format_files with defaults
-        report_fmt = format_files(wiki, check_only=True)
+        # Test wiki.format with defaults
+        report_fmt = wiki.format(check=True)
         self.assertTrue(report_fmt.ok)
 
-        # Test render_workspace with defaults
-        report_render = render_workspace(wiki, check_only=True)
+        # Test wiki.render with defaults
+        report_render = wiki.render(check=True)
         self.assertTrue(report_render.ok)
 
-        # Test export_documents with defaults
-        report_export = export_documents(wiki, rdf_format="turtle", mode="expanded")
+        # Test wiki.export with defaults
+        report_export = wiki.export(format="turtle", mode="expanded")
         self.assertTrue(report_export.ok)
 
-        # Test run_link with defaults
-        report_link = run_link(wiki)
+        # Test wiki.link with defaults
+        report_link = wiki.link()
         self.assertTrue(report_link.ok)
 
     def test_wiki_instance_methods(self) -> None:

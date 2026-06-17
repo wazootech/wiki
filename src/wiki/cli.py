@@ -14,8 +14,8 @@ from .errors import BuildError, UpgradeError
 from .format_choice import FormatChoice
 from .graph import graph_stats
 from .init_scaffold import parse_github_repo, resolve_init_options
+from .session import Wiki
 from .upgrade import PACKAGE_NAME, check_version, perform_upgrade
-from .workspace import Wiki
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
 
@@ -458,7 +458,7 @@ def serve(
 
 
 @main.command()
-@click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the workspace.")
+@click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the wiki project.")
 @click.option(
     "--repo",
     default=None,
@@ -538,7 +538,7 @@ def init(
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
 ) -> None:
-    """Scaffold a new wiki workspace in the current directory."""
+    """Scaffold a new wiki project in the current directory."""
     cwd = Path.cwd()
     config_path = cwd / "wiki.yml"
     legacy_config_path = cwd / "wiki.yaml"

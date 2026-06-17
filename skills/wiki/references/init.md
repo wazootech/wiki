@@ -1,8 +1,8 @@
 # Initialize wiki
 
-Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) workspace: `wiki init` (Phase A) plus a tweak step (Phase B). Requires **`wiki` on PATH** (PyPI package `wazootech-wiki`).
+Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) project: `wiki init` (Phase A) plus a tweak step (Phase B). Requires **`wiki` on PATH** (PyPI package `wazootech-wiki`).
 
-This workflow **only** scaffolds or customizes a workspace. When done, summarize and **stop**. If the CLI is missing, state the blocker and stop — read [install.md](install.md) only when the user wants install help.
+This workflow **only** scaffolds or customizes a wiki project. When done, summarize and **stop**. If the CLI is missing, state the blocker and stop — read [install.md](install.md) only when the user wants install help.
 
 ## Resolve wiki command
 
@@ -46,7 +46,7 @@ When context already supplies values, **do not re-prompt**:
 
 ### Phase A: init
 
-1. **Directory** — Confirm workspace root. `wiki init` writes to the **current directory**.
+1. **Directory** — Confirm the wiki project root. `wiki init` writes to the **current directory**.
 2. **Init options** — Run `wiki init --help` and map answers to **config flags** only. Prefer flags over bare `wiki init`.
 
 | Topic | When to ask | Flag |
@@ -99,7 +99,7 @@ With user approval, recommend adding `_site/` to `.gitignore`. Do not commit `.a
 
 ## Clean exit
 
-Summarize: workspace path, init flags used, post-init `check --strict` result (if run), tweak edits (if any). For GitHub Pages CI, read [deploy.md](deploy.md) when the user is ready — not part of scaffolding.
+Summarize: project path, init flags used, post-init `check --strict` result (if run), tweak edits (if any). For GitHub Pages CI, read [deploy.md](deploy.md) when the user is ready — not part of scaffolding.
 
 **Do not** run `wiki lint` or `wiki serve` unsolicited. **`wiki check --strict` after new init is the one default exception** (unless the user opts out).
 

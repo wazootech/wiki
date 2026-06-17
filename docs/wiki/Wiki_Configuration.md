@@ -505,7 +505,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 ## Related
 
 - [Wiki CLI](Wiki_CLI.md#global-options) — `-c` and `--wiki-inputs` global options
-- [Wiki Subcommand init](Wiki_Subcommand_init.md) — scaffold a new workspace
+- [Wiki Subcommand init](Wiki_Subcommand_init.md) — scaffold a new wiki project
 - [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity checks
 - [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL

@@ -2,7 +2,7 @@
 
 Install and verify the [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command, PyPI package **`wazootech-wiki`**).
 
-This workflow **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest `wiki init`, creating a workspace, or other workflows unless the user asks.
+This workflow **only** installs and verifies the CLI. When done, say the CLI is ready and **stop**. Do not suggest `wiki init`, creating a wiki project, or other workflows unless the user asks.
 
 Run `bash skills/wiki/scripts/verify.sh` first (`.agents/skills/wiki/scripts/verify.sh` when vendored).
 

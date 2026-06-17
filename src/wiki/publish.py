@@ -10,8 +10,8 @@ from .errors import BuildError
 from .paths import build_page_manifest, detect_output_collisions, page_output_path
 from .render import render_markdown_files
 from .schemas import BuildOptions, BuildResult
+from .session import Wiki
 from .site import build_index_html, build_page_html, build_site
-from .workspace import Wiki
 
 
 def _path_is_same_or_ancestor(ancestor: Path, descendant: Path) -> bool:
@@ -47,22 +47,22 @@ def _validate_build_output_dir(page_output_dir: Path, config) -> None:
             )
 
 
-def _build_workspace(workspace: Wiki, options: BuildOptions) -> BuildResult:
-    config = workspace.config
+def _build_static_site(wiki: Wiki, options: BuildOptions) -> BuildResult:
+    config = wiki.config
     written_paths: list[Path] = []
 
     if options.render_first:
-        graph = workspace.graph(infer=True, reload=options.reload_graph, disk_cache=options.disk_cache)
+        graph = wiki.graph(infer=True, reload=options.reload_graph, disk_cache=options.disk_cache)
         success, _errors, _stale, _render_errors = render_markdown_files(config, graph)
         if options.disk_cache and success > 0:
-            workspace.graph(infer=True, reload=True, disk_cache=True)
+            wiki.graph(infer=True, reload=True, disk_cache=True)
 
     if not any(path.exists() for path in config.wiki.inputs):
         dirs_str = ", ".join(str(path) for path in config.wiki.inputs)
         return BuildResult(ok=False, error_message=f"none of the input directories exist ({dirs_str})")
 
     if not options.skip_preflight:
-        preflight = workspace.preflight()
+        preflight = wiki.preflight()
         if preflight.errors or not preflight.ok:
             return BuildResult(ok=False, preflight=preflight)
 
