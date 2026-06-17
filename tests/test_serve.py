@@ -45,7 +45,7 @@ _RICH_TEMPLATE = """<!DOCTYPE html>
 %wiki.head%
 </head>
 <body>
-%wiki.page.content%
+%wiki.body%
 </body>
 </html>"""
 
@@ -61,7 +61,7 @@ _METADATA_TEMPLATE = """<!DOCTYPE html>
 %wiki.page.metadata.tool%
 %wiki.page.metadata.tab%
 %wiki.page.metadata.pane%
-%wiki.page.content%
+%wiki.body%
 </body>
 </html>"""
 

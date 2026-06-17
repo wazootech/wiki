@@ -435,7 +435,7 @@ knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are `.html` page layouts: use `%wiki.head%`, `%wiki.base_url%`, and `%wiki.page.content%` as listed in [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are `.html` page layouts: use `%wiki.head%`, `%wiki.base_url%`, and `%wiki.body%` as listed in [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots).
 
 In the built site:
 

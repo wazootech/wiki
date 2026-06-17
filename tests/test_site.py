@@ -24,7 +24,7 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
 <article id="article-top">
-%wiki.page.content%
+%wiki.body%
 </article>
 </body>
 </html>"""
@@ -151,7 +151,7 @@ name: Bella Davidson
             layouts = root / "layouts"
             layouts.mkdir()
             custom_shell = """<!DOCTYPE html>
-<html><body><div id="custom-shell">%wiki.page.content%</div></body></html>"""
+<html><body><div id="custom-shell">%wiki.body%</div></body></html>"""
             (layouts / "project.html").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---

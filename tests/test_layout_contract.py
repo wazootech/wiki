@@ -107,7 +107,11 @@ class TestLayoutContract(unittest.TestCase):
             self.assertIn(token, tokens)
             _context_leaf(context, path)
         self.assertIn("%wiki.head%", tokens)
-        self.assertEqual(set(tokens), {"%wiki.head%", "%wiki.base_url%", "%wiki.page.content%"})
+        self.assertEqual(set(tokens), {"%wiki.head%", "%wiki.base_url%", "%wiki.body%"})
+
+    def test_old_page_content_slot_is_unknown(self) -> None:
+        tokens = build_token_map(_sample_context())
+        self.assertEqual(unknown_tokens("%wiki.page.content%", tokens), ["%wiki.page.content%"])
 
 
 def _unwrap_markup(context: dict[str, Any]) -> dict[str, Any]:

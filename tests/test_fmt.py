@@ -120,7 +120,7 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn("-->\n", formatted)
 
     def test_read_view_uses_page_content_slot(self) -> None:
-        seed_template = '<html><body><article id="article-top">%wiki.page.content%</article></body></html>'
+        seed_template = '<html><body><article id="article-top">%wiki.body%</article></body></html>'
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

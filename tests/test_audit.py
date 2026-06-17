@@ -602,7 +602,7 @@ name: Wiki CLI
             layouts = root / "layouts"
             layouts.mkdir()
             wiki.mkdir()
-            (layouts / "plain.html").write_text("<html>%wiki.page.content%</html>", encoding="utf-8")
+            (layouts / "plain.html").write_text("<html>%wiki.body%</html>", encoding="utf-8")
             (wiki / "page.md").write_text(
                 "---\ntype: TechArticle\nwazoo:layout: layouts/plain.html\n---\n",
                 encoding="utf-8",

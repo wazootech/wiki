@@ -27,7 +27,7 @@ class TestLayoutTokens(unittest.TestCase):
         layout = load_packaged_layout_text("index.html")
         self.assertIn("<!DOCTYPE html>", layout)
         self.assertIn("%wiki.head%", layout)
-        self.assertIn("%wiki.page.content%", layout)
+        self.assertIn("%wiki.body%", layout)
         self.assertNotIn("mw-navigation", layout)
 
     def test_minimal_fallback_renders_linked_css(self) -> None:

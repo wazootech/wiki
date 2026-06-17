@@ -31,9 +31,10 @@ class TestLayoutContext(unittest.TestCase):
 
             self.assertIn("site", context)
             self.assertIn("page", context)
+            self.assertIn("body", context)
             self.assertEqual(context["site"]["base_url"], "/wiki")
             self.assertEqual(context["page"]["title"], "All Pages")
-            self.assertIsInstance(context["page"]["content"], Markup)
+            self.assertIsInstance(context["body"], Markup)
 
     def test_article_context_includes_slug(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -53,10 +54,10 @@ class TestLayoutContext(unittest.TestCase):
             )
 
             self.assertEqual(context["page"]["title"], "Bob")
-            self.assertEqual(context["page"]["content"], page.html)
+            self.assertEqual(context["body"], page.html)
 
     def test_markup_paths_include_content(self) -> None:
-        self.assertIn(("page", "content"), LAYOUT_CONTEXT_MARKUP_PATHS)
+        self.assertIn(("body",), LAYOUT_CONTEXT_MARKUP_PATHS)
 
 
 if __name__ == "__main__":

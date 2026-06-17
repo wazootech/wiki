@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 # Leaf paths wrapped as Markup before slot substitution (shared by layout_context + layout_tokens).
 LAYOUT_MARKUP_PATHS: frozenset[tuple[str, ...]] = frozenset(
     {
-        ("page", "content"),
+        ("body",),
     }
 )
 
@@ -25,7 +25,6 @@ class PageLayoutContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str
-    content: str
 
 
 class LayoutContext(BaseModel):
@@ -33,3 +32,4 @@ class LayoutContext(BaseModel):
 
     site: SiteLayoutContext
     page: PageLayoutContext
+    body: str

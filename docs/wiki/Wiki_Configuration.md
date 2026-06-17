@@ -308,17 +308,17 @@ Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_lay
 
 Canonical slot list (3 slots):
 
-| Slot                  | Source                 | Substitution                                                  |
-| --------------------- | ---------------------- | ------------------------------------------------------------- |
-| `%wiki.base_url%`     | `site.base_url`        | HTML-escaped text (`/wiki`, or `""` for site root)            |
-| `%wiki.head%`         | built per page         | `<title>{page title} - Wiki CLI</title>` (title HTML-escaped) |
-| `%wiki.page.content%` | rendered markdown body | Pre-built HTML (not escaped)                                  |
+| Slot              | Source                 | Substitution                                                  |
+| ----------------- | ---------------------- | ------------------------------------------------------------- |
+| `%wiki.base_url%` | `site.base_url`        | HTML-escaped text (`/wiki`, or `""` for site root)            |
+| `%wiki.head%`     | built per page         | `<title>{page title} - Wiki CLI</title>` (title HTML-escaped) |
+| `%wiki.body%`     | rendered markdown body | Pre-built HTML (not escaped)                                  |
 
 **Packaged layouts**
 
-| File         | When used                           | Typical slots                        |
-| ------------ | ----------------------------------- | ------------------------------------ |
-| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.page.content%` |
+| File         | When used                           | Typical slots                |
+| ------------ | ----------------------------------- | ---------------------------- |
+| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.body%` |
 
 Example excerpt (`index.html`):
 
@@ -331,7 +331,7 @@ Example excerpt (`index.html`):
 %wiki.head%
 </head>
 <body>
-%wiki.page.content%
+%wiki.body%
 </body>
 </html>
 ```

@@ -197,7 +197,7 @@ class TestWikiBuild(unittest.TestCase):
 </head>
 <body>
 %wiki.nav.infobox%
-%wiki.page.content%
+%wiki.body%
 </body>
 </html>"""
             (root / "wiki.yaml").write_text(
@@ -253,7 +253,7 @@ name: Bella Davidson
 %wiki.head%
 </head>
 <body>
-%wiki.page.content%
+%wiki.body%
 %wiki.page.metadata.pane%
 </body>
 </html>"""
@@ -301,7 +301,7 @@ about: wiki:Alice_Theory
         runner = CliRunner()
         template = """<!DOCTYPE html>
 <html><head>%wiki.head%</head>
-<body><img src="%wiki.base_url%/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>%wiki.page.content%</body></html>"""
+<body><img src="%wiki.base_url%/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>%wiki.body%</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"

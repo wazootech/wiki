@@ -105,8 +105,8 @@ def build_layout_context(
         "site": _site_context(base_url=base_url),
         "page": {
             "title": title,
-            "content": content,
         },
+        "body": content,
     }
     LayoutContext.model_validate(raw)
     return _apply_markup(raw)
