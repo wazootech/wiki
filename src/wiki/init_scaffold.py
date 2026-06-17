@@ -20,7 +20,7 @@ __all__ = [
     "load_packaged_official_layout",
     "render_wiki_yaml",
     "resolve_init_options",
-    "scaffold_workspace",
+    "_scaffold_workspace",
 ]
 
 DEFAULT_BASE_URL = "/wiki"
@@ -257,7 +257,7 @@ _EXAMPLE_PERSON_TEMPLATE = (
 )
 
 
-def scaffold_workspace(
+def _scaffold_workspace(
     cwd: Path,
     init_options: InitOptions,
     *,

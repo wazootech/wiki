@@ -11,7 +11,7 @@ from .schemas import FmtReport
 from .workspace import Wiki
 
 
-def format_files(
+def _format_files(
     workspace: Wiki,
     files: Sequence[Path] | None = None,
     *,

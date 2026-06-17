@@ -152,10 +152,10 @@ class TestWikiBuild(unittest.TestCase):
             with patch("wiki.cli.Wiki.load") as load_mock:
                 load_mock.return_value = Wiki(config)
                 with patch(
-                    "wiki.workspace.run_lint",
+                    "wiki.workspace._run_lint",
                     return_value=AuditReport.empty(),
                 ) as run_lint_mock, patch(
-                    "wiki.workspace.run_check",
+                    "wiki.workspace._run_check",
                     return_value=AuditReport.empty(),
                 ) as run_check_mock:
                     result = runner.invoke(

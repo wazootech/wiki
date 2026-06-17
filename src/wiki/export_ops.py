@@ -16,7 +16,7 @@ from .workspace import Wiki
 _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
-def export_documents(
+def _export_documents(
     workspace: Wiki,
     files: Sequence[Path] | None = None,
     *,

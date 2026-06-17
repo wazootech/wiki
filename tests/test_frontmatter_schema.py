@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 from urllib.error import HTTPError
 
-from wiki.audit import run_check
+from wiki.audit import _run_check as run_check
 from wiki.config import Config
 from wiki.frontmatter_schema import (
     JSON_SCHEMA_KEY,

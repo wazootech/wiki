@@ -8,7 +8,7 @@ from pathlib import Path
 
 from rdflib import Graph
 
-from .audit import merge_results, run_check, run_lint
+from .audit import _merge_results, _run_check, _run_lint
 from .config import Config
 from .graph import load_graph
 from .paths import routes_from_markdown_files, select_document_paths
@@ -97,9 +97,9 @@ class Wiki:
     ) -> AuditReport:
         file_filter, file_paths = self._file_filter(files)
         if file_paths is not None:
-            report = run_check(self.config, file_filter=file_filter, file_paths=file_paths)
+            report = _run_check(self.config, file_filter=file_filter, file_paths=file_paths)
         else:
-            report = run_check(self.config, file_filter=file_filter)
+            report = _run_check(self.config, file_filter=file_filter)
         if strict:
             report = report.apply_strict()
         return report
@@ -111,13 +111,13 @@ class Wiki:
         strict: bool = False,
     ) -> AuditReport:
         file_filter, _ = self._file_filter(files)
-        report = run_lint(self.config, file_filter=file_filter)
+        report = _run_lint(self.config, file_filter=file_filter)
         if strict:
             report = report.apply_strict()
         return report
 
     def preflight(self) -> AuditReport:
-        return merge_results(self.lint(), self.check())
+        return _merge_results(self.lint(), self.check())
 
     def build(
         self,
@@ -131,7 +131,7 @@ class Wiki:
         no_check: bool = False,
         verbose: bool = False,
     ) -> BuildResult:
-        from .publish import build_workspace
+        from .publish import _build_workspace
         wiki = self
         if base_url is not None or url_style is not None:
             wiki = self.with_runtime(base_url=base_url, url_style=url_style)
@@ -143,7 +143,7 @@ class Wiki:
             skip_preflight=no_check,
             verbose=verbose,
         )
-        return build_workspace(wiki, options)
+        return _build_workspace(wiki, options)
 
     def format(
         self,
@@ -152,8 +152,8 @@ class Wiki:
         check: bool = False,
         verbose: bool = False,
     ) -> FmtReport:
-        from .fmt_ops import format_files
-        return format_files(self, files, check_only=check, verbose=verbose)
+        from .fmt_ops import _format_files
+        return _format_files(self, files, check_only=check, verbose=verbose)
 
     def render(
         self,
@@ -164,8 +164,8 @@ class Wiki:
         cache: bool = False,
         no_inference: bool = False,
     ) -> RenderReport:
-        from .render_ops import render_workspace
-        return render_workspace(
+        from .render_ops import _render_workspace
+        return _render_workspace(
             self,
             files,
             check_only=check,
@@ -181,8 +181,8 @@ class Wiki:
         format: str = "dict",
         mode: str = "expanded",
     ) -> ExportResult:
-        from .export_ops import export_documents
-        return export_documents(self, files, rdf_format=format, mode=mode)
+        from .export_ops import _export_documents
+        return _export_documents(self, files, rdf_format=format, mode=mode)
 
     def link(
         self,
@@ -194,7 +194,7 @@ class Wiki:
         check: bool = False,
         verbose: bool = False,
     ) -> LinkReport:
-        from .link_ops import LinkOptions, run_link
+        from .link_ops import LinkOptions, _run_link
         options = LinkOptions(
             apply=apply,
             fix_broken=fix_broken,
@@ -202,7 +202,7 @@ class Wiki:
             check=check,
             verbose=verbose,
         )
-        return run_link(self, files, options)
+        return _run_link(self, files, options)
 
     def query(
         self,
@@ -257,5 +257,5 @@ class Wiki:
         *,
         git: bool = False,
     ) -> ScaffoldResult:
-        from .init_scaffold import scaffold_workspace
-        return scaffold_workspace(Path(target_dir), options, init_git=git)
+        from .init_scaffold import _scaffold_workspace
+        return _scaffold_workspace(Path(target_dir), options, init_git=git)

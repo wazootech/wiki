@@ -460,7 +460,7 @@ def check_layout_frontmatter(
     return missing
 
 
-def run_check(
+def _run_check(
     config: Config,
     file_filter: set[str] | None = None,
     *,
@@ -560,7 +560,7 @@ def run_check(
     return report
 
 
-def run_lint(config: Config, file_filter: set[str] | None = None) -> AuditReport:
+def _run_lint(config: Config, file_filter: set[str] | None = None) -> AuditReport:
     """Run lint rules: broken links, filename pattern, heading style, and link style."""
     report = AuditReport.empty()
 
@@ -597,6 +597,6 @@ def run_lint(config: Config, file_filter: set[str] | None = None) -> AuditReport
     return report
 
 
-def merge_results(first: AuditReport, second: AuditReport) -> AuditReport:
+def _merge_results(first: AuditReport, second: AuditReport) -> AuditReport:
     """Merge two audit reports from run_check and run_lint."""
     return first.merge(second)

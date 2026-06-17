@@ -9,12 +9,12 @@ from tempfile import TemporaryDirectory
 from wiki import (
     BuildOptions,
     Wiki,
-    build_workspace,
-    export_documents,
-    format_files,
-    render_workspace,
-    run_link,
 )
+from wiki.export_ops import _export_documents as export_documents
+from wiki.fmt_ops import _format_files as format_files
+from wiki.link_ops import _run_link as run_link
+from wiki.publish import _build_workspace as build_workspace
+from wiki.render_ops import _render_workspace as render_workspace
 
 
 class TestLibraryOps(unittest.TestCase):

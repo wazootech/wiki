@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.audit import run_lint
+from wiki.audit import _run_lint as run_lint
 from wiki.config import Config
 from wiki.schemas import AuditReport, Issue
 

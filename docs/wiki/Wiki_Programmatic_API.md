@@ -4,9 +4,9 @@ headline: Wiki Programmatic API
 description: Stable Python library entry points for loading a wiki, validating, building, and scaffolding without subprocess CLI.
 ---
 
-# Wiki Programmatic API
+# Wiki Python Library
 
-Wiki CLI (`wazootech-wiki`) exposes a **library-first** Python API for CI pipelines, tests, and agent automation. The `wiki` command remains the primary user surface; library calls return typed results and raise domain exceptions instead of printing or exiting.
+The **Wiki** package (`wazootech-wiki` on PyPI) exposes a **library-first** Python API for CI pipelines, tests, and agent automation. The `wiki` command (Wiki CLI) remains the primary user surface; library calls return typed results and raise domain exceptions instead of printing or exiting.
 
 See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. Semver applies to symbols in `wiki.__all__` (listed below); other `wiki.*` modules are internal unless documented on this page.
 
@@ -60,7 +60,7 @@ w = w.with_runtime(base_url="/wiki", url_style="dir")
 
 ## Validation reports
 
-`run_check`, `run_lint`, and `Wiki.check` / `.lint` return an `AuditReport`:
+Validation operations (`Wiki.check` and `Wiki.lint`) return an `AuditReport`:
 
 | Field      | Meaning                                      |
 | ---------- | -------------------------------------------- |
@@ -71,10 +71,11 @@ w = w.with_runtime(base_url="/wiki", url_style="dir")
 Each `Issue` has a stable machine-readable `code` (aligned with config rule keys such as `broken_links`, `shacl_violation`, `frontmatter_schema`) and a human `message` for CLI-style output.
 
 ```python
-from wiki import run_check, Config
+from pathlib import Path
+from wiki import Wiki
 
-config = Config.load(Path("wiki.yml"))
-report = run_check(config)
+w = Wiki.load("wiki.yml")
+report = w.check()
 strict = report.apply_strict()  # promote warnings to errors
 errors, warnings = report.messages()
 merged = report.merge(other_report)
@@ -101,14 +102,6 @@ if not result.ok:
 print(result.page_count, result.written_paths)
 ```
 
-Alternatively, use the low-level functional entry point:
-
-```python
-from wiki import BuildOptions, build_workspace
-
-result = build_workspace(w, BuildOptions(output_dir=Path("_site"), skip_preflight=False))
-```
-
 `BuildError` is raised when the output directory overlaps wiki inputs or config root.
 
 ## Link, render, export, format, and query
@@ -131,17 +124,6 @@ w.serve(port=8080)
 # Or target specific files:
 from pathlib import Path
 fmt_report = w.format([Path("docs/wiki/Some_Page.md")])
-```
-
-Alternatively, use functional entry points:
-
-```python
-from wiki import LinkOptions, run_link, render_workspace, export_documents, format_files
-
-link_report = run_link(w, options=LinkOptions(check=True))
-render_report = render_workspace(w, check_only=True)
-export_result = export_documents(w, rdf_format="turtle", mode="expanded")
-fmt_report = format_files(w, check_only=True)
 ```
 
 ## Scaffold

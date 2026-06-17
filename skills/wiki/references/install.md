@@ -111,7 +111,7 @@ if not w.preflight().ok:
 result = w.build(output_dir=Path("_site"))
 ```
 
-Stable exports: `Wiki`, `AuditReport`, `Issue`, `build_workspace`, `run_check`, `run_lint`, `scaffold_workspace`, and related report types — see `wiki.__all__`.
+Stable exports: `Wiki`, `AuditReport`, `Issue`, and related report and options types — see `wiki.__all__`.
 
 Full reference: [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).
 

@@ -47,7 +47,7 @@ def _validate_build_output_dir(page_output_dir: Path, config) -> None:
             )
 
 
-def build_workspace(workspace: Wiki, options: BuildOptions) -> BuildResult:
+def _build_workspace(workspace: Wiki, options: BuildOptions) -> BuildResult:
     config = workspace.config
     written_paths: list[Path] = []
 

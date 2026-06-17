@@ -3,6 +3,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.audit import (
+    _run_lint as run_lint,
+)
+from wiki.audit import (
     check_layout_frontmatter,
     check_shacl_all,
     check_shacl_file,
@@ -14,7 +17,6 @@ from wiki.audit import (
     lint_link_style,
     lint_thematic_breaks,
     load_shapes,
-    run_lint,
 )
 from wiki.config import Config
 

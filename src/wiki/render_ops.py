@@ -11,7 +11,7 @@ from .schemas import RenderReport
 from .workspace import Wiki
 
 
-def render_workspace(
+def _render_workspace(
     workspace: Wiki,
     files: Sequence[Path] | None = None,
     *,

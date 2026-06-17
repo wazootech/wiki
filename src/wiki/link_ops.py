@@ -28,7 +28,7 @@ class LinkOptions(BaseModel):
     lines: list[str] = Field(default_factory=list)
 
 
-def run_link(
+def _run_link(
     workspace: Wiki,
     files: Sequence[Path] | None = None,
     options: LinkOptions | None = None,

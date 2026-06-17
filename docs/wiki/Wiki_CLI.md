@@ -49,7 +49,7 @@ Humans and agents keep writing where they already write. `wiki` makes that conte
 
 ## Memory layer and ingestion
 
-Rather than owning your editor or data store, the Wiki CLI functions as a **read-only memory layer** over your wiki. It parses, indexes, and queries the Markdown documents on your filesystem without mutating them or locking you into a proprietary format.
+Rather than owning your editor or data store, **Wiki** functions as a **read-only memory layer** over your wiki. It parses, indexes, and queries the Markdown documents on your filesystem without mutating them or locking you into a proprietary format.
 
 - **Ingestion:** The CLI reads YAML/JSON frontmatter and HTML microdata from your files, compiling them into an in-memory RDF graph that can be queried with SPARQL or verified against SHACL shapes and JSON Schema bindings.
 - **Watching:** Running `wiki serve --watch` instructs the CLI to watch the wiki directory. Any edits you make in your preferred editor are immediately processed, updating the graph in the background and keeping your preview server synchronized.
@@ -62,7 +62,7 @@ Rather than owning your editor or data store, the Wiki CLI functions as a **read
 | Wiki CLI semantic layer | Compile wiki → RDF graph; check, lint, fmt; query; render; build/serve | `wiki check`, `wiki query`, `wiki build`                    |
 | Outputs                 | Deployable artifacts                                                   | GitHub Pages HTML, export files, `/api/sparql` when enabled |
 
-This separation is intentional: the strongest differentiator is the **machine layer** (SHACL, OWL-RL, SPARQL, typed HTML) that most note apps do not provide. Wiki CLI avoids competing with editor-centric tools while making incremental adoption obvious.
+This separation is intentional: the strongest differentiator is the **machine layer** (SHACL, OWL-RL, SPARQL, typed HTML) that most note apps do not provide. **Wiki** avoids competing with editor-centric tools while making incremental adoption obvious.
 
 ## Interop-first workflows
 
@@ -228,7 +228,7 @@ Enforcing schemas on text databases can become problematic as structures evolve.
 
 ## Design
 
-The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For in-process use (CI, tests, agents), see [Wiki Programmatic API](Wiki_Programmatic_API.md).
+The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For in-process use (CI, tests, agents), see [Wiki Python Library](Wiki_Programmatic_API.md).
 
 ## Pattern context
 
