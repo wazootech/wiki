@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import html as html_module
-import json
 from typing import Any
 
 from markupsafe import Markup
 
-from ..config import DEFAULT_URL_STYLE
 from ..schemas.layout import LAYOUT_MARKUP_PATHS, LayoutContext
 from ..schemas.site import VirtualPage, WikiSite
 
@@ -74,10 +72,9 @@ def build_logo_svg(letter: str, theme_color: str | None = None) -> str:
 </svg>"""
 
 
-def _site_context(*, base_url: str, url_style: str) -> dict[str, Any]:
+def _site_context(*, base_url: str) -> dict[str, Any]:
     return {
         "base_url": base_url,
-        "url_style": url_style,
     }
 
 
@@ -97,62 +94,18 @@ def build_layout_context(
     *,
     site: WikiSite,
     base_url: str,
-    url_style: str = DEFAULT_URL_STYLE,
     page: VirtualPage | None = None,
     content: str,
-    body_class: str,
-    kind: str,
-    slug: str = "",
-    slug_json: str | None = None,
-    layout_class: str = "default",
-    layout_label: str = "",
-    type_label: str = "",
-    source: str = "",
-    nav_infobox: str = "",
-    nav_toc: str = "",
-    nav_backlinks: str = "",
-    nav_categories: str = "",
-    nav_sidebar: str = "",
-    metadata_tool: str = "",
-    metadata_tab: str = "",
-    metadata_pane: str = "",
 ) -> dict[str, Any]:
     """Build nested layout template context for index or article pages."""
-    pages_data = [{"slug": p.full_slug, "title": p.title} for p in site.pages]
-    pages_json = json.dumps(pages_data, default=str)
+    _ = site
     title = page.title if page is not None else "All Pages"
-    resolved_slug_json = slug_json if slug_json is not None else json.dumps(slug)
 
     raw: dict[str, Any] = {
-        "site": _site_context(base_url=base_url, url_style=url_style),
+        "site": _site_context(base_url=base_url),
         "page": {
             "title": title,
-            "kind": kind,
-            "body_class": body_class,
             "content": content,
-            "source": source,
-            "slug": slug,
-            "slug_json": resolved_slug_json,
-            "layout": {
-                "class": layout_class,
-                "label": layout_label,
-            },
-            "type_label": type_label,
-            "nav": {
-                "infobox": nav_infobox,
-                "toc": nav_toc,
-                "backlinks": nav_backlinks,
-                "categories": nav_categories,
-                "sidebar": nav_sidebar,
-            },
-            "metadata": {
-                "tool": metadata_tool,
-                "tab": metadata_tab,
-                "pane": metadata_pane,
-            },
-        },
-        "wiki": {
-            "pages_json": pages_json,
         },
     }
     LayoutContext.model_validate(raw)

@@ -18,14 +18,6 @@ class TocItem(BaseModel):
     level: int
 
 
-class InfoboxRow(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    label: str
-    text: str
-    html: str
-
-
 class VirtualPage(BaseModel):
     model_config = ConfigDict(extra="ignore")
 

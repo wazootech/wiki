@@ -26,20 +26,14 @@ class TestLayoutContext(unittest.TestCase):
             context = build_layout_context(
                 site=site,
                 base_url="/wiki",
-                url_style="dir",
                 content="<ul></ul>",
-                body_class="wiki-index",
-                kind="index",
-                layout_class="index",
             )
 
             self.assertIn("site", context)
             self.assertIn("page", context)
-            self.assertIn("wiki", context)
             self.assertEqual(context["site"]["base_url"], "/wiki")
             self.assertEqual(context["page"]["title"], "All Pages")
-            self.assertEqual(context["page"]["kind"], "index")
-            self.assertIsInstance(context["wiki"]["pages_json"], Markup)
+            self.assertIsInstance(context["page"]["content"], Markup)
 
     def test_article_context_includes_slug(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -54,18 +48,12 @@ class TestLayoutContext(unittest.TestCase):
             context = build_layout_context(
                 site=site,
                 base_url="/wiki",
-                url_style="dir",
                 page=page,
                 content=page.html,
-                body_class="wiki-page layout-default",
-                kind="article",
-                slug=page.full_slug,
-                layout_class="default",
             )
 
             self.assertEqual(context["page"]["title"], "Bob")
-            self.assertEqual(context["page"]["slug"], "Bob")
-            self.assertIn("Bob", context["page"]["slug_json"])
+            self.assertEqual(context["page"]["content"], page.html)
 
     def test_markup_paths_include_content(self) -> None:
         self.assertIn(("page", "content"), LAYOUT_CONTEXT_MARKUP_PATHS)

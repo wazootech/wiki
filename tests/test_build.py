@@ -181,7 +181,7 @@ class TestWikiBuild(unittest.TestCase):
             self.assertEqual(run_check_mock.call_args[0][0].site.base_url, "/custom")
             self.assertEqual(run_check_mock.call_args[0][0].site.url_style, "file")
 
-    def test_build_renders_infobox_links_for_typed_pages(self) -> None:
+    def test_build_leaves_removed_infobox_slot_literal(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -193,10 +193,9 @@ class TestWikiBuild(unittest.TestCase):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>%wiki.page.title%</title>
+%wiki.head%
 </head>
 <body>
-<h1>%wiki.page.title%</h1>
 %wiki.nav.infobox%
 %wiki.page.content%
 </body>
@@ -236,13 +235,10 @@ name: Bella Davidson
 
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Gregory_Davidson" / "index.html").read_text(encoding="utf-8")
-            self.assertIn('class="infobox page-meta"', html)
-            self.assertIn('>Ethan Davidson</a>', html)
-            self.assertIn('>Bella Davidson</a>', html)
-            self.assertIn('href="/wiki/Bella_Davidson/"', html)
-            self.assertIn('href="https://example.com/gregory-davidson"', html)
+            self.assertIn("%wiki.nav.infobox%", html)
+            self.assertNotIn('class="infobox page-meta"', html)
 
-    def test_build_embeds_all_metadata_format_views(self) -> None:
+    def test_build_leaves_removed_metadata_slot_literal(self) -> None:
         runner = CliRunner()
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -254,10 +250,9 @@ name: Bella Davidson
 <head>
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
-<title>%wiki.page.title%</title>
+%wiki.head%
 </head>
 <body>
-<h1>%wiki.page.title%</h1>
 %wiki.page.content%
 %wiki.page.metadata.pane%
 </body>
@@ -282,14 +277,8 @@ about: wiki:Alice_Theory
 
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("metadata-format-heading", html)
-            self.assertIn("Format</span>", html)
-            self.assertIn('metadata-format-panel-json-ld-compacted', html)
-            self.assertNotIn('metadata-format-panel-json-ld-expanded', html)
-            self.assertIn('metadata-format-panel-turtle', html)
-            self.assertIn('metadata-format-panel-xml', html)
-            self.assertIn('value="json-ld-compacted" checked="checked"', html)
-            self.assertIn('value="turtle"', html)
+            self.assertIn("%wiki.page.metadata.pane%", html)
+            self.assertNotIn("metadata-format-heading", html)
 
     def test_missing_configured_template_falls_back_silently(self) -> None:
         runner = CliRunner()
@@ -305,14 +294,13 @@ about: wiki:Alice_Theory
             result = runner.invoke(main, ["--config", str(root), "build", "--output-dir", str(output_dir)])
             self.assertEqual(result.exit_code, 0, result.output)
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
-            self.assertIn("id=firstHeading>Page</h1>", html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
 
     def test_build_layout_uses_base_url_asset_path(self) -> None:
         runner = CliRunner()
         template = """<!DOCTYPE html>
-<html><head><title>%wiki.page.title% - Acme Docs</title></head>
+<html><head>%wiki.head%</head>
 <body><img src="%wiki.base_url%/assets/logo.svg" alt=""><span class="logo-text">Acme Docs</span>%wiki.page.content%</body></html>"""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -339,7 +327,7 @@ about: wiki:Alice_Theory
             html = (output_dir / "wiki" / "Page" / "index.html").read_text(encoding="utf-8")
             self.assertIn('src="/wiki/assets/logo.svg"', html)
             self.assertIn('<span class="logo-text">Acme Docs</span>', html)
-            self.assertIn("<title>Page - Acme Docs</title>", html)
+            self.assertIn("<title>Page - Wiki CLI</title>", html)
             built_logo = (output_dir / "wiki" / "assets" / "logo.svg").read_text(encoding="utf-8")
             self.assertIn("<text>A</text>", built_logo)
 

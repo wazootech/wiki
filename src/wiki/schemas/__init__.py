@@ -7,11 +7,7 @@ from .layout import (
     LAYOUT_RAW_JSON_PATHS,
     LayoutContext,
     PageLayoutContext,
-    PageLayoutPart,
-    PageMetadataContext,
-    PageNavContext,
     SiteLayoutContext,
-    WikiLayoutContext,
 )
 from .metadata import METADATA_VIEWS, MetadataView
 from .reports import (
@@ -26,7 +22,7 @@ from .reports import (
     ScaffoldResult,
 )
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
-from .site import InfoboxRow, TocItem, VirtualPage, WikiSite
+from .site import TocItem, VirtualPage, WikiSite
 from .wiki_config import (
     Config,
     FmtConfig,
@@ -52,7 +48,6 @@ __all__ = [
     "CheckConfig",
     "FmtConfig",
     "GraphConfig",
-    "InfoboxRow",
     "InitOptions",
     "LAYOUT_MARKUP_PATHS",
     "LAYOUT_RAW_JSON_PATHS",
@@ -61,9 +56,6 @@ __all__ = [
     "LinkOpportunity",
     "LintConfig",
     "PageLayoutContext",
-    "PageLayoutPart",
-    "PageMetadataContext",
-    "PageNavContext",
     "METADATA_VIEWS",
     "MetadataView",
     "OutputEntry",
@@ -74,7 +66,6 @@ __all__ = [
     "SparqlServiceConfig",
     "TocItem",
     "WikiConfig",
-    "WikiLayoutContext",
     "VirtualPage",
     "Config",
     "WikiSite",

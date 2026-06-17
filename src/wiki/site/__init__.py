@@ -1,13 +1,12 @@
 """Site-building logic for compiling raw Markdown wikis into HTML virtual structures."""
 
-from ..schemas.site import InfoboxRow, TocItem, VirtualPage, WikiSite
+from ..schemas.site import TocItem, VirtualPage, WikiSite
 from .build import build_site
 
 # Test-only / internal exports kept for compatibility
 from .html import (
     _build_logo_svg,  # noqa: F401
     build_index_html,
-    build_infobox_rows,
     build_page_html,
 )
 from .layout_context import build_layout_context, build_logo_svg
@@ -24,14 +23,12 @@ from .markdown import (
 
 __all__ = [
     "PACKAGED_MINIMAL_LAYOUT",
-    "InfoboxRow",
     "TocItem",
     "VirtualPage",
     "WikiSite",
     "build_layout_context",
     "build_logo_svg",
     "build_index_html",
-    "build_infobox_rows",
     "build_page_html",
     "build_site",
     "extract_title",

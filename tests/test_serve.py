@@ -42,15 +42,10 @@ _RICH_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>%wiki.page.title%</title>
+%wiki.head%
 </head>
 <body>
-<h1>%wiki.page.title%</h1>
-%wiki.nav.infobox%
 %wiki.page.content%
-%wiki.nav.toc%
-%wiki.nav.backlinks%
-%wiki.nav.categories%
 </body>
 </html>"""
 
@@ -60,10 +55,9 @@ _METADATA_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>%wiki.page.title%</title>
+%wiki.head%
 </head>
 <body>
-<h1>%wiki.page.title%</h1>
 %wiki.page.metadata.tool%
 %wiki.page.metadata.tab%
 %wiki.page.metadata.pane%
@@ -213,13 +207,13 @@ class TestServe(unittest.TestCase):
         for port in _serve_with_template(self.wiki_dir):
             status, body = self._get(port, "/wiki/doc")
         self.assertEqual(status, 200)
-        self.assertIn("On this page", body)
+        self.assertNotIn("On this page", body)
         self.assertIn("Sub A", body)
         self.assertIn("Sub B", body)
         self.assertIn("SubSub", body)
-        self.assertIn("#sub-a", body)
-        self.assertIn("#sub-b", body)
-        self.assertIn("#subsub", body)
+        self.assertIn('id="sub-a"', body)
+        self.assertIn('id="sub-b"', body)
+        self.assertIn('id="subsub"', body)
 
     def test_backlinks(self) -> None:
         self._write("alpha.md", "# Alpha\n\nLinks to [[beta]].")
@@ -227,8 +221,8 @@ class TestServe(unittest.TestCase):
         for port in _serve_with_template(self.wiki_dir):
             status, body = self._get(port, "/wiki/beta")
         self.assertEqual(status, 200)
-        self.assertIn("Backlinks", body)
-        self.assertIn("Alpha", body)
+        self.assertNotIn("Backlinks", body)
+        self.assertNotIn("Alpha", body)
 
     def test_frontmatter_metadata(self) -> None:
         self._write("page.md", "---\ntitle: My Page\ntype: Article\n---\n\n# My Page\n\nContent.")
@@ -236,8 +230,7 @@ class TestServe(unittest.TestCase):
             status, body = self._get(port, "/wiki/page")
         self.assertEqual(status, 200)
         self.assertIn("My Page", body)
-        self.assertIn("My Page", body)
-        self.assertIn("Article", body)
+        self.assertNotIn("Article", body)
 
     def test_metadata_json_ld_defaults_to_compacted_view(self) -> None:
         self._write("page.md", "---\ntype: Article\nname: My Page\nabout: wiki:My_Page\n---\n\n# My Page\n")
@@ -247,11 +240,10 @@ class TestServe(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertEqual(compact_status, 200)
-        self.assertNotIn('value="json-ld-expanded"', body)
-        self.assertIn('value="json-ld-compacted" checked="checked"', body)
-        self.assertIn('value="json-ld-compacted" checked="checked"', compacted)
-        self.assertIn('&quot;@context&quot;', body)
-        self.assertIn('schema:about', body)
+        self.assertIn("%wiki.page.metadata.pane%", body)
+        self.assertIn("%wiki.page.metadata.pane%", compacted)
+        self.assertNotIn('value="json-ld-compacted" checked="checked"', body)
+        self.assertNotIn('&quot;@context&quot;', body)
 
     def test_metadata_format_query_selects_turtle_view(self) -> None:
         self._write("page.md", "---\ntype: schema:Person\nname: My Page\n---\n\n# My Page\n")
@@ -259,8 +251,8 @@ class TestServe(unittest.TestCase):
             status, body = self._get(port, "/wiki/page?metadata_format=turtle")
 
         self.assertEqual(status, 200)
-        self.assertIn('value="turtle" checked="checked"', body)
-        self.assertIn('metadata-format-panel-turtle', body)
+        self.assertIn("%wiki.page.metadata.pane%", body)
+        self.assertNotIn('metadata-format-panel-turtle', body)
 
     def test_404(self) -> None:
         self._write("exists.md", "# Exists")
@@ -290,7 +282,7 @@ class TestServe(unittest.TestCase):
         self._write("style-test.md", "# Style")
         for port in _serve_in_thread(self.wiki_dir):
             _, body = self._get(port, "/")
-        self.assertIn("id=firstHeading>All Pages</h1>", body)
+        self.assertIn("All Pages - Wiki CLI", body)
         self.assertNotIn("<style>", body)
 
         for port in _serve_in_thread(self.wiki_dir):

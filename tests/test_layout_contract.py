@@ -45,22 +45,8 @@ def _sample_context() -> dict[str, Any]:
     return build_layout_context(
         site=site,
         base_url="/wiki",
-        url_style="dir",
         page=site.pages[0],
         content="<p>Body</p>",
-        body_class="wiki-page",
-        kind="article",
-        slug="Sample",
-        layout_label="<span>custom</span>",
-        type_label="<span>Article</span>",
-        nav_infobox="<div>infobox</div>",
-        nav_toc="<nav>toc</nav>",
-        nav_backlinks="<ul>back</ul>",
-        nav_categories="<ul>cat</ul>",
-        nav_sidebar="<aside>side</aside>",
-        metadata_tool="<div>tool</div>",
-        metadata_tab="<div>tab</div>",
-        metadata_pane="<div>pane</div>",
     )
 
 
@@ -105,7 +91,7 @@ class TestLayoutContract(unittest.TestCase):
         from wiki.site import layout_tokens as layout_tokens_module
 
         self.assertIs(layout_context_module.LAYOUT_CONTEXT_MARKUP_PATHS, LAYOUT_MARKUP_PATHS)
-        self.assertEqual(len(LAYOUT_MARKUP_PATHS), 12)
+        self.assertEqual(len(LAYOUT_MARKUP_PATHS), 1)
 
         for path in LAYOUT_MARKUP_PATHS:
             context = _sample_context()
@@ -121,6 +107,7 @@ class TestLayoutContract(unittest.TestCase):
             self.assertIn(token, tokens)
             _context_leaf(context, path)
         self.assertIn("%wiki.head%", tokens)
+        self.assertEqual(set(tokens), {"%wiki.head%", "%wiki.base_url%", "%wiki.page.content%"})
 
 
 def _unwrap_markup(context: dict[str, Any]) -> dict[str, Any]:

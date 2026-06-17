@@ -4,7 +4,6 @@ from tempfile import TemporaryDirectory
 
 from layout_helpers import write_layout
 from wiki.config import Config
-from wiki.format import METADATA_VIEWS
 from wiki.init_scaffold import load_packaged_official_layout
 from wiki.site import (
     build_index_html,
@@ -21,21 +20,12 @@ _FULL_TEST_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>%wiki.page.title%</title>
+%wiki.head%
 </head>
 <body>
-%wiki.page.type_label%
 <article id="article-top">
-%wiki.nav.infobox%
 %wiki.page.content%
 </article>
-%wiki.nav.toc%
-%wiki.nav.backlinks%
-%wiki.nav.categories%
-%wiki.nav.sidebar%
-%wiki.page.metadata.tab%
-%wiki.page.metadata.tool%
-%wiki.page.metadata.pane%
 </body>
 </html>"""
 
@@ -73,9 +63,8 @@ class TestWikiSite(unittest.TestCase):
             html = build_page_html(
                 page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
             )
-            self.assertIn('class="toc"', html)
-            self.assertIn('href="#early-life"', html)
-            self.assertIn('href="#firstHeading"', html)
+            self.assertIn('id="early-life"', html)
+            self.assertIn('id="early-life-1"', html)
 
     def test_title_falls_back_to_humanized_route(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -108,7 +97,7 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn("place", page_by_slug)
             self.assertEqual(page_by_slug["place"].title, "Princeton")
 
-    def test_build_page_html_uses_person_template_and_clickable_infobox_links(self) -> None:
+    def test_build_page_html_renders_tiny_layout_without_infobox_chrome(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -150,17 +139,9 @@ name: Bella Davidson
 
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
-            self.assertIn('class="infobox page-meta"', html)
-            self.assertIn('>Ethan Davidson</a>', html)
-            self.assertIn('>Bella Davidson</a>', html)
-            self.assertNotIn('>wiki:Ethan_Davidson</a>', html)
-            self.assertNotIn('>wiki:Bella_Davidson</a>', html)
-            self.assertIn('href="/wiki/Ethan_Davidson/"', html)
-            self.assertIn('href="/wiki/Bella_Davidson/"', html)
-            self.assertIn('href="https://example.com/gregory-davidson"', html)
-            self.assertIn('<dt>softwareVersion</dt>', html)
-            self.assertNotIn('<dt>Softwareversion</dt>', html)
-            self.assertIn("Infobox", html)
+            self.assertIn("Gregory Davidson", html)
+            self.assertNotIn('class="infobox page-meta"', html)
+            self.assertNotIn("Infobox", html)
 
     def test_wazoo_layout_frontmatter_loads_custom_shell(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -170,7 +151,7 @@ name: Bella Davidson
             layouts = root / "layouts"
             layouts.mkdir()
             custom_shell = """<!DOCTYPE html>
-<html><body><div id="custom-shell">%wiki.page.title%%wiki.nav.infobox%%wiki.page.content%</div></body></html>"""
+<html><body><div id="custom-shell">%wiki.page.content%</div></body></html>"""
             (layouts / "project.html").write_text(custom_shell, encoding="utf-8")
             (wiki / "project.md").write_text(
                 """---
@@ -202,9 +183,8 @@ name: Project Atlas Record
             self.assertEqual(page.layout_path, (layouts / "project.html").resolve())
             self.assertEqual(page.layout_stem, "project")
             self.assertIn('id="custom-shell"', html)
-            self.assertIn('class="infobox page-meta"', html)
-            self.assertIn("<dt>wazoo:layout</dt>", html)
-            self.assertIn('href="/wiki/Project_Atlas/"', html)
+            self.assertNotIn('class="infobox page-meta"', html)
+            self.assertNotIn("<dt>wazoo:layout</dt>", html)
 
     def test_template_frontmatter_does_not_select_layout(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -234,9 +214,9 @@ name: Project Atlas
             self.assertEqual(page.layout_stem, "default")
             self.assertNotIn('id="custom-shell"', html)
             self.assertIn('id="article-top"', html)
-            self.assertIn('class="layout-label">CreativeWork</div>', html)
-            self.assertIn("<dt>template</dt>", html)
-            self.assertIn("<dt>wiki:template</dt>", html)
+            self.assertNotIn('class="layout-label"', html)
+            self.assertNotIn("<dt>template</dt>", html)
+            self.assertNotIn("<dt>wiki:template</dt>", html)
 
     def test_render_outline_title_renders_inline_code(self) -> None:
         html = render_outline_title("`Accept`")
@@ -265,12 +245,10 @@ name: Project Atlas
             page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, default_layout=page_layout)
 
-            self.assertIn('<a href="#accept"><code>Accept</code></a>', html)
-            self.assertIn('<span class="wikilink">semantic web</span>', html)
-            sidebar_start = html.index('id="p-contents"')
-            sidebar_html = html[sidebar_start:sidebar_start + 1500]
-            self.assertNotIn("`Accept`", sidebar_html)
-            self.assertNotIn("[[Semantic_Web|semantic web]]", sidebar_html)
+            self.assertIn('<h3 id="accept"><code>Accept</code></h3>', html)
+            self.assertIn('<a class="wikilink" href="/wiki/Semantic_Web/">semantic web</a>', html)
+            self.assertNotIn('id="p-contents"', html)
+            self.assertNotIn('id="toc"', html)
 
     def test_render_adds_github_heading_ids_to_all_heading_levels(self) -> None:
         html = render_wiki_markdown("# Title\n\n### API: read/write?\n")
@@ -364,7 +342,7 @@ name: Project Atlas
         self.assertNotIn("<img", html)
         self.assertIn("&lt;img", html)
 
-    def test_build_page_html_escapes_raw_html_in_toc_and_sidebar_headings(self) -> None:
+    def test_build_page_html_escapes_raw_html_in_headings(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -379,14 +357,10 @@ name: Project Atlas
             page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, default_layout=page_layout)
 
-            toc_start = html.index('id="toc"')
-            sidebar_start = html.index('id="p-contents"')
-            toc_html = html[toc_start:toc_start + 800]
-            sidebar_html = html[sidebar_start:sidebar_start + 800]
-            self.assertNotIn("<script>", toc_html)
-            self.assertNotIn("<script>", sidebar_html)
-            self.assertIn("&lt;script&gt;", toc_html)
-            self.assertIn("&lt;script&gt;", sidebar_html)
+            self.assertNotIn("<script>", html)
+            self.assertIn("&lt;script&gt;", html)
+            self.assertNotIn('id="toc"', html)
+            self.assertNotIn('id="p-contents"', html)
 
     def test_render_copyable_pre_escapes_attribute_text(self) -> None:
         html = render_copyable_pre('line "one"\nline two', "&lt;tag&gt;")
@@ -395,7 +369,7 @@ name: Project Atlas
         self.assertIn('line two"', html)
         self.assertIn("<code>&lt;tag&gt;</code>", html)
 
-    def test_build_page_html_highlights_metadata_json(self) -> None:
+    def test_build_page_html_does_not_embed_metadata_panel(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -418,43 +392,10 @@ specialty: Diagnostics
             page_layout = _full_test_layout(root)
             html = build_page_html(page, site, root, base_url="/wiki", url_style="dir", default_layout=page_layout)
 
-            self.assertIn("Metadata</a>", html)
-            self.assertIn('href="#view-metadata-content"', html)
-            self.assertIn('metadata-format-panel-json-ld-compacted', html)
-            self.assertNotIn('metadata-format-panel-json-ld-expanded', html)
-            self.assertIn('metadata-format-panel-turtle', html)
-            self.assertIn('value="json-ld-compacted" checked="checked"', html)
-            self.assertIn('class="language-json"', html)
-            self.assertIn('class="language-turtle"', html)
-            self.assertIn('class="highlight"', html)
-            self.assertIn('data-copy="', html)
-            self.assertIn('&quot;@context&quot;', html)
-            self.assertGreater(html.count('data-copy="'), 1)
-            self.assertIn("<span", html)
-            self.assertIn('&quot;@id&quot;', html)
-            self.assertIn('&quot;@type&quot;', html)
-            self.assertNotIn('&quot;type&quot;', html)
-            self.assertLess(html.index('&quot;@context&quot;'), html.index('&quot;@id&quot;'))
-            self.assertLess(html.index('&quot;@id&quot;'), html.index('&quot;@type&quot;'))
-            self.assertIn('&quot;@context&quot;', html)
-            self.assertIn('schema:Person', html)
-            self.assertIn('schema:givenName', html)
-
-            for view in METADATA_VIEWS:
-                panel_marker = f'<div class="metadata-format-panel metadata-format-panel-{view.id}">'
-                panel_start = html.index(panel_marker)
-                panel_end = html.index("</div>", panel_start)
-                panel_html = html[panel_start:panel_end]
-                self.assertIn(
-                    "<span",
-                    panel_html,
-                    msg=f"metadata panel {view.id} should be syntax-highlighted",
-                )
-                self.assertIn(
-                    f'class="language-{view.lexer}"',
-                    panel_html,
-                    msg=f"metadata panel {view.id} should keep language-{view.lexer} class",
-                )
+            self.assertNotIn("Metadata</a>", html)
+            self.assertNotIn('href="#view-metadata-content"', html)
+            self.assertNotIn('metadata-format-panel-json-ld-compacted', html)
+            self.assertNotIn('metadata-format-panel-turtle', html)
 
     def test_obsidian_wikilinks_resolve_relative_to_current_file(self) -> None:
         html = render_wiki_markdown(
@@ -488,7 +429,6 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             html = build_index_html(site, root)
-            self.assertIn("id=firstHeading>All Pages</h1>", html)
             self.assertIn('<ul class="pages-list">', html)
             self.assertIn("Alice", html)
             self.assertNotIn("<style>", html)
@@ -533,7 +473,7 @@ specialty: Diagnostics
             self.assertNotIn("<h1", page.html)
             self.assertIn("# Content negotiation", page.markdown)
 
-    def test_infobox_links_about_wiki_curie(self) -> None:
+    def test_markdown_links_leave_wiki_curie_as_route_text(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -544,7 +484,7 @@ specialty: Diagnostics
                 encoding="utf-8",
             )
             (wiki / "Farzapedia.md").write_text(
-                "---\ntype: TechArticle\nheadline: Farzapedia\nabout: wiki:Wiki_CLI\n---\n\nBody.\n",
+                "---\ntype: TechArticle\nheadline: Farzapedia\nabout: wiki:Wiki_CLI\n---\n\n[Wiki CLI](wiki:Wiki_CLI)\n",
                 encoding="utf-8",
             )
             (wiki / "Wiki_CLI.md").write_text(
@@ -557,9 +497,8 @@ specialty: Diagnostics
             html = build_page_html(
                 page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
             )
-            self.assertIn('href="/wiki/Wiki_CLI/"', html)
+            self.assertIn('href="/wiki/wiki%3AWiki_CLI/"', html)
             self.assertIn(">Wiki CLI</a>", html)
-            self.assertNotIn(">wiki:Wiki_CLI</a>", html)
 
     def test_fallback_article_uses_minimal_template(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -571,7 +510,6 @@ specialty: Diagnostics
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, root)
-            self.assertIn("id=firstHeading>My Article</h1>", html)
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
@@ -594,7 +532,6 @@ specialty: Diagnostics
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, root, default_layout=_default_layout(root))
-            self.assertIn('<h1 id=firstHeading>Wiki CLI</h1>', html)
             self.assertNotIn("<h1", page.html)
             self.assertIn("Lead paragraph.", html)
 
@@ -664,7 +601,7 @@ specialty: Diagnostics
             self.assertIn('href="/wiki/alice.html"', file_index)
             self.assertIn('href="/wiki/bob.html"', file_index)
 
-    def test_build_index_html_substitutes_empty_type_label(self) -> None:
+    def test_build_index_html_uses_tiny_layout_contract(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -673,7 +610,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             html = build_index_html(site, root, default_layout=_full_test_layout(root))
-            self.assertNotIn("{page.type_label}", html)
+            self.assertNotIn("%wiki.", html)
             self.assertNotIn('class="layout-label"', html)
 
     def test_build_index_html_emits_pages_list_with_categories(self) -> None:

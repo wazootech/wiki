@@ -21,25 +21,7 @@ _RAW_JSON_LEAVES = LAYOUT_RAW_JSON_PATHS
 # Token spellings -> context leaf paths. %wiki.head% is synthesized per page.
 LAYOUT_TOKEN_CONTEXT_PATHS: dict[str, tuple[str, ...]] = {
     "%wiki.base_url%": ("site", "base_url"),
-    "%wiki.site.url_style%": ("site", "url_style"),
-    "%wiki.page.title%": ("page", "title"),
     "%wiki.page.content%": ("page", "content"),
-    "%wiki.page.source%": ("page", "source"),
-    "%wiki.page.body_class%": ("page", "body_class"),
-    "%wiki.page.kind%": ("page", "kind"),
-    "%wiki.page.type_label%": ("page", "type_label"),
-    "%wiki.page.layout.class%": ("page", "layout", "class"),
-    "%wiki.page.layout.label%": ("page", "layout", "label"),
-    "%wiki.nav.infobox%": ("page", "nav", "infobox"),
-    "%wiki.nav.toc%": ("page", "nav", "toc"),
-    "%wiki.nav.backlinks%": ("page", "nav", "backlinks"),
-    "%wiki.nav.categories%": ("page", "nav", "categories"),
-    "%wiki.nav.sidebar%": ("page", "nav", "sidebar"),
-    "%wiki.page.metadata.tool%": ("page", "metadata", "tool"),
-    "%wiki.page.metadata.tab%": ("page", "metadata", "tab"),
-    "%wiki.page.metadata.pane%": ("page", "metadata", "pane"),
-    "%wiki.wiki.pages_json%": ("wiki", "pages_json"),
-    "%wiki.page.slug_json%": ("page", "slug_json"),
 }
 
 

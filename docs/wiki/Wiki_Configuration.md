@@ -306,39 +306,19 @@ Layout files use `%wiki.*%` slot substitution (not Jinja). On each page render, 
 
 Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_layout_token_map` as the single boundary for slot production. See [Wiki Programmatic API](Wiki_Programmatic_API.md#layout-slot-contract).
 
-Canonical slot list (21 slots):
+Canonical slot list (3 slots):
 
-| Slot                        | Source                   | Substitution                                                  |
-| --------------------------- | ------------------------ | ------------------------------------------------------------- |
-| `%wiki.base_url%`           | `site.base_url`          | HTML-escaped text (`/wiki`, or `""` for site root)            |
-| `%wiki.site.url_style%`     | `site.url_style`         | HTML-escaped text (`dir` or `file`)                           |
-| `%wiki.head%`               | built per page           | `<title>{page title} - Wiki CLI</title>` (title HTML-escaped) |
-| `%wiki.page.title%`         | page title               | HTML-escaped text (`All Pages` on the index route)            |
-| `%wiki.page.content%`       | rendered markdown body   | Pre-built HTML (not escaped)                                  |
-| `%wiki.page.source%`        | raw markdown source      | HTML-escaped text                                             |
-| `%wiki.page.body_class%`    | layout body class        | HTML-escaped text (`wiki-index` or `wiki-page layout-{stem}`) |
-| `%wiki.page.kind%`          | page kind                | HTML-escaped text (`index` or `article`)                      |
-| `%wiki.page.type_label%`    | RDF type badge           | Pre-built HTML (empty when no type label)                     |
-| `%wiki.page.layout.class%`  | layout file stem         | HTML-escaped text (e.g. `wikipedia`, `article`)               |
-| `%wiki.page.layout.label%`  | custom layout badge      | Pre-built HTML (empty for default layout)                     |
-| `%wiki.nav.infobox%`        | typed frontmatter table  | Pre-built HTML                                                |
-| `%wiki.nav.toc%`            | table of contents        | Pre-built HTML                                                |
-| `%wiki.nav.backlinks%`      | backlinks section        | Pre-built HTML                                                |
-| `%wiki.nav.categories%`     | category links           | Pre-built HTML                                                |
-| `%wiki.nav.sidebar%`        | extra sidebar portals    | Pre-built HTML                                                |
-| `%wiki.page.metadata.tool%` | metadata tools menu item | Pre-built HTML                                                |
-| `%wiki.page.metadata.tab%`  | metadata tab link        | Pre-built HTML                                                |
-| `%wiki.page.metadata.pane%` | metadata RDF panes       | Pre-built HTML                                                |
-| `%wiki.wiki.pages_json%`    | all pages for search JS  | Raw JSON array (`[{slug, title}, …]`)                         |
-| `%wiki.page.slug_json%`     | current page slug        | Raw JSON string (for client-side talk notes)                  |
-
-**Pre-built HTML** slots are assembled by the site builder (infobox, TOC, metadata panes, and so on). Treat them as trusted markup from Wiki CLI, not as user-authored template fragments.
+| Slot                  | Source                 | Substitution                                                  |
+| --------------------- | ---------------------- | ------------------------------------------------------------- |
+| `%wiki.base_url%`     | `site.base_url`        | HTML-escaped text (`/wiki`, or `""` for site root)            |
+| `%wiki.head%`         | built per page         | `<title>{page title} - Wiki CLI</title>` (title HTML-escaped) |
+| `%wiki.page.content%` | rendered markdown body | Pre-built HTML (not escaped)                                  |
 
 **Packaged layouts**
 
-| File         | When used                           | Typical slots                                                                                                              |
-| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.base_url%`, `%wiki.page.body_class%`, `%wiki.page.kind%`, `%wiki.page.title%`, `%wiki.page.content%` |
+| File         | When used                           | Typical slots                        |
+| ------------ | ----------------------------------- | ------------------------------------ |
+| `index.html` | `site.layout` unset or missing file | `%wiki.head%`, `%wiki.page.content%` |
 
 Example excerpt (`index.html`):
 
@@ -350,8 +330,7 @@ Example excerpt (`index.html`):
 <meta name=viewport content=width=device-width,initial-scale=1.0>
 %wiki.head%
 </head>
-<body class=%wiki.page.body_class% data-page-kind=%wiki.page.kind%>
-<h1 id=firstHeading>%wiki.page.title%</h1>
+<body>
 %wiki.page.content%
 </body>
 </html>

@@ -46,11 +46,11 @@ familyName: Davidson
 
 When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must exist and end in `.html`. `wiki check` reports missing `wazoo:layout` paths as errors.
 
-`wazoo:layout` is ordinary frontmatter: it appears in the RDF graph, infobox, and metadata pane like other properties.
+`wazoo:layout` is ordinary frontmatter: it appears in the RDF graph like other properties.
 
 ## Layout slots
 
-Layout files use `%wiki.*%` slot substitution (not Jinja). The **canonical reference** is [Layout slots](Wiki_Configuration.md#layout-slots) in Wiki Configuration — a full table of every `%wiki.*%` slot, its source field, and whether the value is HTML-escaped, pre-built markup, or raw JSON.
+Layout files use `%wiki.*%` slot substitution (not Jinja). The **canonical reference** is [Layout slots](Wiki_Configuration.md#layout-slots) in Wiki Configuration.
 
 Custom logos and favicons are layout markup plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 

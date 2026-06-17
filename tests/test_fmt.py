@@ -119,8 +119,8 @@ class TestWikiFmt(unittest.TestCase):
             self.assertIn("```sparql", formatted)
             self.assertIn("-->\n", formatted)
 
-    def test_read_view_type_label_badge(self) -> None:
-        seed_template = '<html><body>%wiki.page.type_label%<article id="article-top">%wiki.page.content%</article></body></html>'
+    def test_read_view_uses_page_content_slot(self) -> None:
+        seed_template = '<html><body><article id="article-top">%wiki.page.content%</article></body></html>'
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
@@ -133,8 +133,6 @@ class TestWikiFmt(unittest.TestCase):
             site = build_site(config)
             page = site.pages[0]
             html = build_page_html(page, site, root, default_layout=write_layout(root, "layouts/fmt.html", seed_template))
-            self.assertIn('class="layout-label">TechArticle</div>', html)
-            self.assertNotIn('class="firstHeading"', html)
             self.assertIn('id="shelf-layout">Shelf layout</h1>', page.html)
             self.assertIn("Body.", html)
 

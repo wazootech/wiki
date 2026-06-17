@@ -18,8 +18,8 @@ from wiki.site.layout_tokens import (
 
 class TestLayoutTokens(unittest.TestCase):
     def test_substitute_replaces_tokens(self) -> None:
-        tokens = {"%wiki.page.title%": "Hello", "%wiki.base_url%": "/wiki"}
-        html = substitute("<title>%wiki.page.title%</title><a href='%wiki.base_url%/'>", tokens)
+        tokens = {"%wiki.head%": "<title>Hello</title>", "%wiki.base_url%": "/wiki"}
+        html = substitute("%wiki.head%<a href='%wiki.base_url%/'>", tokens)
         self.assertIn("<title>Hello</title>", html)
         self.assertIn("href='/wiki/'", html)
 
@@ -41,11 +41,7 @@ class TestLayoutTokens(unittest.TestCase):
             context = build_layout_context(
                 site=site,
                 base_url="/wiki",
-                url_style="dir",
                 content="<ul></ul>",
-                body_class="wiki-index",
-                kind="index",
-                layout_class="index",
             )
             html = render_packaged_minimal(context)
             self.assertIn("<title>All Pages - Wiki CLI</title>", html)

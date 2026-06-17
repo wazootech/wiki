@@ -145,7 +145,9 @@ class TestRenderWikiYaml(TestCase):
 
     def test_load_packaged_official_layout_minimal(self) -> None:
         rendered = load_packaged_official_layout("minimal")
-        self.assertIn("%wiki.page.title%", rendered)
+        self.assertIn("%wiki.head%", rendered)
+        self.assertIn("%wiki.page.content%", rendered)
+        self.assertNotIn("%wiki.page.title%", rendered)
         self.assertNotIn("wikipedia.css", rendered)
         self.assertNotIn("mw-navigation", rendered)
 

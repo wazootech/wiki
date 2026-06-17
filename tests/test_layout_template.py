@@ -20,7 +20,7 @@ class TestLayoutTemplate(unittest.TestCase):
             root = Path(tmpdir)
             layout = root / "layouts" / "default.html"
             layout.parent.mkdir(parents=True)
-            layout.write_text("<html>%wiki.page.title%</html>", encoding="utf-8")
+            layout.write_text("<html>%wiki.page.content%</html>", encoding="utf-8")
             self.assertTrue(layout_file_is_valid(layout, root))
 
 
