@@ -58,7 +58,6 @@ def build_token_map(context: dict[str, Any]) -> dict[str, str]:
 
     return {
         "%wiki.base_url%": _format_leaf(site["base_url"], path=("site", "base_url")),
-        "%wiki.assets%": _format_leaf(site["base_url"], path=("site", "base_url")),
         "%wiki.site.url_style%": _format_leaf(site["url_style"], path=("site", "url_style")),
         "%wiki.page.title%": _format_leaf(page["title"], path=("page", "title")),
         "%wiki.page.content%": _format_leaf(page["content"], path=("page", "content")),

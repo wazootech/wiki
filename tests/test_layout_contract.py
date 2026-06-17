@@ -32,7 +32,6 @@ _FORBIDDEN_TOP_LEVEL_KEYS = frozenset(
 # Token spellings → context leaf paths (%wiki.head% is synthesized; not a context leaf).
 _TOKEN_CONTEXT_PATHS: dict[str, tuple[str, ...]] = {
     "%wiki.base_url%": ("site", "base_url"),
-    "%wiki.assets%": ("site", "base_url"),
     "%wiki.site.url_style%": ("site", "url_style"),
     "%wiki.page.title%": ("page", "title"),
     "%wiki.page.content%": ("page", "content"),
