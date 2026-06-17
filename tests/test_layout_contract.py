@@ -13,6 +13,7 @@ from wiki.schemas.layout import LAYOUT_MARKUP_PATHS, LayoutContext
 from wiki.schemas.site import VirtualPage, WikiSite
 from wiki.site.layout_context import build_layout_context
 from wiki.site.layout_tokens import (
+    LAYOUT_TOKEN_CONTEXT_PATHS,
     build_layout_token_map,
     build_token_map,
     unknown_tokens,
@@ -28,31 +29,6 @@ _FORBIDDEN_TOP_LEVEL_KEYS = frozenset(
         "manifest_json",
     }
 )
-
-# Token spellings → context leaf paths (%wiki.head% is synthesized; not a context leaf).
-_TOKEN_CONTEXT_PATHS: dict[str, tuple[str, ...]] = {
-    "%wiki.base_url%": ("site", "base_url"),
-    "%wiki.site.url_style%": ("site", "url_style"),
-    "%wiki.page.title%": ("page", "title"),
-    "%wiki.page.content%": ("page", "content"),
-    "%wiki.page.source%": ("page", "source"),
-    "%wiki.page.body_class%": ("page", "body_class"),
-    "%wiki.page.kind%": ("page", "kind"),
-    "%wiki.page.type_label%": ("page", "type_label"),
-    "%wiki.page.layout.class%": ("page", "layout", "class"),
-    "%wiki.page.layout.label%": ("page", "layout", "label"),
-    "%wiki.nav.infobox%": ("page", "nav", "infobox"),
-    "%wiki.nav.toc%": ("page", "nav", "toc"),
-    "%wiki.nav.backlinks%": ("page", "nav", "backlinks"),
-    "%wiki.nav.categories%": ("page", "nav", "categories"),
-    "%wiki.nav.sidebar%": ("page", "nav", "sidebar"),
-    "%wiki.page.metadata.tool%": ("page", "metadata", "tool"),
-    "%wiki.page.metadata.tab%": ("page", "metadata", "tab"),
-    "%wiki.page.metadata.pane%": ("page", "metadata", "pane"),
-    "%wiki.wiki.pages_json%": ("wiki", "pages_json"),
-    "%wiki.page.slug_json%": ("page", "slug_json"),
-}
-
 
 def _sample_context() -> dict[str, Any]:
     site = WikiSite(
@@ -141,7 +117,7 @@ class TestLayoutContract(unittest.TestCase):
     def test_token_map_covers_documented_context_paths(self) -> None:
         context = _sample_context()
         tokens = build_token_map(context)
-        for token, path in _TOKEN_CONTEXT_PATHS.items():
+        for token, path in LAYOUT_TOKEN_CONTEXT_PATHS.items():
             self.assertIn(token, tokens)
             _context_leaf(context, path)
         self.assertIn("%wiki.head%", tokens)

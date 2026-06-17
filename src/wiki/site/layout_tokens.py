@@ -18,6 +18,30 @@ _TOKEN_PATTERN = re.compile(r"%wiki\.[a-z0-9_.]+%", re.IGNORECASE)
 
 _RAW_JSON_LEAVES = LAYOUT_RAW_JSON_PATHS
 
+# Token spellings -> context leaf paths. %wiki.head% is synthesized per page.
+LAYOUT_TOKEN_CONTEXT_PATHS: dict[str, tuple[str, ...]] = {
+    "%wiki.base_url%": ("site", "base_url"),
+    "%wiki.site.url_style%": ("site", "url_style"),
+    "%wiki.page.title%": ("page", "title"),
+    "%wiki.page.content%": ("page", "content"),
+    "%wiki.page.source%": ("page", "source"),
+    "%wiki.page.body_class%": ("page", "body_class"),
+    "%wiki.page.kind%": ("page", "kind"),
+    "%wiki.page.type_label%": ("page", "type_label"),
+    "%wiki.page.layout.class%": ("page", "layout", "class"),
+    "%wiki.page.layout.label%": ("page", "layout", "label"),
+    "%wiki.nav.infobox%": ("page", "nav", "infobox"),
+    "%wiki.nav.toc%": ("page", "nav", "toc"),
+    "%wiki.nav.backlinks%": ("page", "nav", "backlinks"),
+    "%wiki.nav.categories%": ("page", "nav", "categories"),
+    "%wiki.nav.sidebar%": ("page", "nav", "sidebar"),
+    "%wiki.page.metadata.tool%": ("page", "metadata", "tool"),
+    "%wiki.page.metadata.tab%": ("page", "metadata", "tab"),
+    "%wiki.page.metadata.pane%": ("page", "metadata", "pane"),
+    "%wiki.wiki.pages_json%": ("wiki", "pages_json"),
+    "%wiki.page.slug_json%": ("page", "slug_json"),
+}
+
 
 def _context_leaf(context: dict[str, Any], path: tuple[str, ...]) -> Any:
     node: Any = context
@@ -49,36 +73,12 @@ def build_layout_token_map(context: dict[str, Any]) -> dict[str, str]:
 
 def build_token_map(context: dict[str, Any]) -> dict[str, str]:
     """Flatten layout context into %wiki.*% replacement strings."""
-    site = context["site"]
-    page = context["page"]
-    wiki = context["wiki"]
-    nav = page["nav"]
-    metadata = page["metadata"]
-    layout = page["layout"]
-
-    return {
-        "%wiki.base_url%": _format_leaf(site["base_url"], path=("site", "base_url")),
-        "%wiki.site.url_style%": _format_leaf(site["url_style"], path=("site", "url_style")),
-        "%wiki.page.title%": _format_leaf(page["title"], path=("page", "title")),
-        "%wiki.page.content%": _format_leaf(page["content"], path=("page", "content")),
-        "%wiki.page.source%": _format_leaf(page["source"], path=("page", "source")),
-        "%wiki.page.body_class%": _format_leaf(page["body_class"], path=("page", "body_class")),
-        "%wiki.page.kind%": _format_leaf(page["kind"], path=("page", "kind")),
-        "%wiki.page.type_label%": _format_leaf(page["type_label"], path=("page", "type_label")),
-        "%wiki.page.layout.class%": _format_leaf(layout["class"], path=("page", "layout", "class")),
-        "%wiki.page.layout.label%": _format_leaf(layout["label"], path=("page", "layout", "label")),
-        "%wiki.nav.infobox%": _format_leaf(nav["infobox"], path=("page", "nav", "infobox")),
-        "%wiki.nav.toc%": _format_leaf(nav["toc"], path=("page", "nav", "toc")),
-        "%wiki.nav.backlinks%": _format_leaf(nav["backlinks"], path=("page", "nav", "backlinks")),
-        "%wiki.nav.categories%": _format_leaf(nav["categories"], path=("page", "nav", "categories")),
-        "%wiki.nav.sidebar%": _format_leaf(nav["sidebar"], path=("page", "nav", "sidebar")),
-        "%wiki.page.metadata.tool%": _format_leaf(metadata["tool"], path=("page", "metadata", "tool")),
-        "%wiki.page.metadata.tab%": _format_leaf(metadata["tab"], path=("page", "metadata", "tab")),
-        "%wiki.page.metadata.pane%": _format_leaf(metadata["pane"], path=("page", "metadata", "pane")),
-        "%wiki.wiki.pages_json%": _format_leaf(wiki["pages_json"], path=("wiki", "pages_json")),
-        "%wiki.page.slug_json%": _format_leaf(page["slug_json"], path=("page", "slug_json")),
-        "%wiki.head%": build_head_markup(context),
+    tokens = {
+        token: _format_leaf(_context_leaf(context, path), path=path)
+        for token, path in LAYOUT_TOKEN_CONTEXT_PATHS.items()
     }
+    tokens["%wiki.head%"] = build_head_markup(context)
+    return tokens
 
 
 @lru_cache(maxsize=8)
