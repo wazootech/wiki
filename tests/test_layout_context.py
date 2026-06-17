@@ -20,11 +20,8 @@ class TestLayoutContext(unittest.TestCase):
             wiki = root / "wiki"
             wiki.mkdir()
             (wiki / "page.md").write_text("# Page\n", encoding="utf-8")
-            config = Config(wiki={"inputs": [wiki]}, config_root=root)
-            site = build_site(config)
 
             context = build_layout_context(
-                site=site,
                 base_url="/wiki",
                 content="<ul></ul>",
             )
@@ -47,7 +44,6 @@ class TestLayoutContext(unittest.TestCase):
             page = site.pages[0]
 
             context = build_layout_context(
-                site=site,
                 base_url="/wiki",
                 page=page,
                 content=page.html,

@@ -60,9 +60,7 @@ class TestWikiSite(unittest.TestCase):
             self.assertIn('id="early-life"', page.html)
             self.assertIn('id="early-life-1"', page.html)
             self.assertEqual([item.slug for item in page.outline], ["early-life", "early-life-1"])
-            html = build_page_html(
-                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
-            )
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
             self.assertIn('id="early-life"', html)
             self.assertIn('id="early-life-1"', html)
 
@@ -133,9 +131,7 @@ name: Bella Davidson
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "Gregory_Davidson")
-            html = build_page_html(
-                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
-            )
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
 
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
@@ -176,9 +172,7 @@ name: Project Atlas Record
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(
-                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
-            )
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
 
             self.assertEqual(page.layout_path, (layouts / "project.html").resolve())
             self.assertEqual(page.layout_stem, "project")
@@ -206,9 +200,7 @@ name: Project Atlas
 
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "project")
-            html = build_page_html(
-                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
-            )
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
 
             self.assertIsNone(page.layout_path)
             self.assertEqual(page.layout_stem, "default")
@@ -243,7 +235,7 @@ name: Project Atlas
             site = build_site(config)
             page = site.pages[0]
             page_layout = _full_test_layout(root)
-            html = build_page_html(page, site, root, default_layout=page_layout)
+            html = build_page_html(page, root, default_layout=page_layout)
 
             self.assertIn('<h3 id="accept"><code>Accept</code></h3>', html)
             self.assertIn('<a class="wikilink" href="/wiki/Semantic_Web/">semantic web</a>', html)
@@ -355,7 +347,7 @@ name: Project Atlas
             site = build_site(config)
             page = site.pages[0]
             page_layout = _full_test_layout(root)
-            html = build_page_html(page, site, root, default_layout=page_layout)
+            html = build_page_html(page, root, default_layout=page_layout)
 
             self.assertNotIn("<script>", html)
             self.assertIn("&lt;script&gt;", html)
@@ -390,7 +382,7 @@ specialty: Diagnostics
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(page for page in site.pages if page.full_slug == "person")
             page_layout = _full_test_layout(root)
-            html = build_page_html(page, site, root, base_url="/wiki", url_style="dir", default_layout=page_layout)
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=page_layout)
 
             self.assertNotIn("Metadata</a>", html)
             self.assertNotIn('href="#view-metadata-content"', html)
@@ -494,9 +486,7 @@ specialty: Diagnostics
             config = Config.load(root / "wiki.yaml")
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(p for p in site.pages if p.full_slug == "Farzapedia")
-            html = build_page_html(
-                page, site, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root)
-            )
+            html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
             self.assertIn('href="/wiki/wiki%3AWiki_CLI/"', html)
             self.assertIn(">Wiki CLI</a>", html)
 
@@ -509,7 +499,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root)
+            html = build_page_html(page, root)
             self.assertNotIn("<h1>My Article</h1>", page.html)
             self.assertIn("Content.", html)
             self.assertNotIn("<style>", html)
@@ -531,7 +521,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root, default_layout=_default_layout(root))
+            html = build_page_html(page, root, default_layout=_default_layout(root))
             self.assertNotIn("<h1", page.html)
             self.assertIn("Lead paragraph.", html)
 
@@ -544,7 +534,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root, default_layout=_default_layout(root))
+            html = build_page_html(page, root, default_layout=_default_layout(root))
             self.assertNotIn("From Wiki CLI, the semantic knowledge base", html)
 
     def test_fallback_has_page_kind(self) -> None:
@@ -558,7 +548,7 @@ specialty: Diagnostics
             index_html = build_index_html(site, root)
             self.assertIn("All Pages", index_html)
             page = site.pages[0]
-            article_html = build_page_html(page, site, root)
+            article_html = build_page_html(page, root)
             self.assertIn("Page", article_html)
 
     def test_page_content_does_not_expand_documented_placeholder_tokens(self) -> None:
@@ -576,7 +566,7 @@ specialty: Diagnostics
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root, default_layout=_default_layout(root))
+            html = build_page_html(page, root, default_layout=_default_layout(root))
             self.assertIn("{metadata_pane_html}", html)
             self.assertNotIn("metadata-format-switch", html)
 
@@ -629,18 +619,6 @@ specialty: Diagnostics
             self.assertIn('<ul class="pages-list">', article)
             self.assertIn('data-categories="Person"', article)
             self.assertIn('data-categories=""', article)
-
-
-
-    def test_build_logo_svg_uses_site_theme_color(self) -> None:
-        from wiki.site import _build_logo_svg
-
-        default = _build_logo_svg("W")
-        themed = _build_logo_svg("W", "#6366f1")
-        self.assertIn('stop-color="#3b82f6"', default)
-        self.assertIn('stop-color="#6366f1"', themed)
-        self.assertNotIn('stop-color="#3b82f6"', themed)
-
     def test_build_index_html_uses_base_url_for_asset_paths(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

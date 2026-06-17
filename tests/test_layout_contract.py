@@ -43,7 +43,6 @@ def _sample_context() -> dict[str, Any]:
         ]
     )
     return build_layout_context(
-        site=site,
         base_url="/wiki",
         page=site.pages[0],
         content="<p>Body</p>",

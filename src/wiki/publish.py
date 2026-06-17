@@ -122,7 +122,6 @@ def _build_static_site(wiki: Wiki, options: BuildOptions) -> BuildResult:
         file_path.write_text(
             build_page_html(
                 page,
-                site,
                 config_root,
                 base_url=base_url,
                 url_style=url_style,

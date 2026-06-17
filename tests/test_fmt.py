@@ -132,7 +132,7 @@ class TestWikiFmt(unittest.TestCase):
             config = Config(wiki={"inputs": [wiki]}, config_root=root)
             site = build_site(config)
             page = site.pages[0]
-            html = build_page_html(page, site, root, default_layout=write_layout(root, "layouts/fmt.html", seed_template))
+            html = build_page_html(page, root, default_layout=write_layout(root, "layouts/fmt.html", seed_template))
             self.assertIn('id="shelf-layout">Shelf layout</h1>', page.html)
             self.assertIn("Body.", html)
 

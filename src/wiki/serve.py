@@ -18,8 +18,6 @@ from .config import Config
 from .format import (
     detect_query_form,
     is_sparql_update,
-    normalize_metadata_format,
-    normalize_metadata_mode,
     run_query,
 )
 from .graph import load_graph
@@ -59,7 +57,6 @@ class WikiHandler(BaseHTTPRequestHandler):
         base = state.base_url
         parsed_url = urlsplit(self.path)
         parsed = parsed_url.path
-        query_params = parse_qs(parsed_url.query, keep_blank_values=True)
         if parsed.rstrip("/") == state.sparql_service_path.rstrip("/"):
             self._handle_sparql_request("GET", parsed_url.query)
             return
@@ -94,18 +91,13 @@ class WikiHandler(BaseHTTPRequestHandler):
             slug = parsed[len(base) + 1:]
             target = self._find_page(slug)
             if target:
-                metadata_mode = normalize_metadata_mode(query_params.get("metadata_mode", ["compacted"])[-1])
-                metadata_format = normalize_metadata_format(query_params.get("metadata_format", ["json-ld"])[-1])
                 self._send_html(
                     build_page_html(
                         target,
-                        state.site,
                         state.config.config_root,
                         base_url=base,
                         url_style=state.url_style,
                         default_layout=state.default_layout,
-                        metadata_mode=metadata_mode,
-                        metadata_format=metadata_format,
                     )
                 )
             elif self._serve_asset(parsed[len(base) + 1:]):

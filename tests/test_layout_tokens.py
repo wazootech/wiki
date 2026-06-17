@@ -6,8 +6,6 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from wiki.config import Config
-from wiki.site import build_site
 from wiki.site.layout_context import build_layout_context
 from wiki.site.layout_tokens import (
     load_packaged_layout_text,
@@ -36,10 +34,7 @@ class TestLayoutTokens(unittest.TestCase):
             wiki = root / "wiki"
             wiki.mkdir()
             (wiki / "Page.md").write_text("# Page\n", encoding="utf-8")
-            config = Config(wiki={"inputs": [wiki]}, config_root=root)
-            site = build_site(config)
             context = build_layout_context(
-                site=site,
                 base_url="/wiki",
                 content="<ul></ul>",
             )

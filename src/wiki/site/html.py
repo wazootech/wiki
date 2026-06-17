@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ..config import DEFAULT_URL_STYLE
 from ..schemas.site import VirtualPage, WikiSite
-from .layout_context import build_layout_context, build_logo_svg
+from .layout_context import build_layout_context
 from .layout_template import get_layout_renderer
 from .markdown import _get_page_categories, page_href
 
@@ -32,7 +32,6 @@ def build_index_html(
     page_content = f'<ul class="pages-list">\n{links_html}</ul>'
 
     context = build_layout_context(
-        site=site,
         base_url=base_url,
         content=page_content,
     )
@@ -43,19 +42,15 @@ def build_index_html(
 
 def build_page_html(
     page: VirtualPage,
-    site: WikiSite,
     config_root: Path,
     base_url: str = "/wiki",
     url_style: str = DEFAULT_URL_STYLE,
     default_layout: Path | None = None,
-    metadata_mode: str = "compacted",
-    metadata_format: str = "json-ld",
 ) -> str:
     """Compile individual page HTML."""
-    _ = (url_style, metadata_mode, metadata_format)
+    _ = url_style
 
     context = build_layout_context(
-        site=site,
         base_url=base_url,
         page=page,
         content=page.html,
@@ -64,7 +59,4 @@ def build_page_html(
     template_path = page.layout_path if page.layout_path is not None else default_layout
     renderer = get_layout_renderer(config_root)
     return renderer.render(template_path, context)
-
-
-_build_logo_svg = build_logo_svg
 

@@ -232,27 +232,15 @@ class TestServe(unittest.TestCase):
         self.assertIn("My Page", body)
         self.assertNotIn("Article", body)
 
-    def test_metadata_json_ld_defaults_to_compacted_view(self) -> None:
+    def test_removed_metadata_slot_stays_literal(self) -> None:
         self._write("page.md", "---\ntype: Article\nname: My Page\nabout: wiki:My_Page\n---\n\n# My Page\n")
         for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
-            status, body = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=expanded")
-            compact_status, compacted = self._get(port, "/wiki/page?metadata_format=json-ld&metadata_mode=compacted")
+            status, body = self._get(port, "/wiki/page")
 
         self.assertEqual(status, 200)
-        self.assertEqual(compact_status, 200)
         self.assertIn("%wiki.page.metadata.pane%", body)
-        self.assertIn("%wiki.page.metadata.pane%", compacted)
         self.assertNotIn('value="json-ld-compacted" checked="checked"', body)
         self.assertNotIn('&quot;@context&quot;', body)
-
-    def test_metadata_format_query_selects_turtle_view(self) -> None:
-        self._write("page.md", "---\ntype: schema:Person\nname: My Page\n---\n\n# My Page\n")
-        for port in _serve_with_template(self.wiki_dir, template=_METADATA_TEMPLATE):
-            status, body = self._get(port, "/wiki/page?metadata_format=turtle")
-
-        self.assertEqual(status, 200)
-        self.assertIn("%wiki.page.metadata.pane%", body)
-        self.assertNotIn('metadata-format-panel-turtle', body)
 
     def test_404(self) -> None:
         self._write("exists.md", "# Exists")

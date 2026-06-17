@@ -2,14 +2,8 @@
 
 from ..schemas.site import TocItem, VirtualPage, WikiSite
 from .build import build_site
-
-# Test-only / internal exports kept for compatibility
-from .html import (
-    _build_logo_svg,  # noqa: F401
-    build_index_html,
-    build_page_html,
-)
-from .layout_context import build_layout_context, build_logo_svg
+from .html import build_index_html, build_page_html
+from .layout_context import build_layout_context
 from .layout_tokens import PACKAGED_MINIMAL_LAYOUT
 from .markdown import (
     extract_title,
@@ -27,7 +21,6 @@ __all__ = [
     "VirtualPage",
     "WikiSite",
     "build_layout_context",
-    "build_logo_svg",
     "build_index_html",
     "build_page_html",
     "build_site",
