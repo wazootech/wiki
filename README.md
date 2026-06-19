@@ -92,6 +92,21 @@ uvx wazootech-wiki --help
 
 After `npm install -g wazootech-wiki`, use `wiki` instead of the `npx` prefix (for example `wiki check`).
 
+The npm package also exposes a type-safe Node API that binds to the same Python engine:
+
+```js
+const { Wiki } = require("wazootech-wiki");
+
+const wiki = Wiki.load({ config: "docs/wiki.yml" });
+
+await wiki.check({ strict: true });
+
+const results = await wiki.query({
+  query: "SELECT ?s WHERE { ?s ?p ?o }",
+  format: "json",
+});
+```
+
 ### Standalone binary (no Python required)
 
 Pre-built executables ship on [GitHub Releases](https://github.com/wazootech/wiki/releases) for Linux (x64), macOS (arm64 and x64), and Windows (x64). Each release includes a `SHA256SUMS` file.
