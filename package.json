@@ -23,7 +23,7 @@
     "wiki": "npm/bin/wiki.js"
   },
   "scripts": {
-    "build": "tsup npm/src/index.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims",
+    "build": "tsup npm/src/index.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims --silent",
     "prepack": "npm run build",
     "postinstall": "node npm/setup.js",
     "preuninstall": "node npm/uninstall.js",
