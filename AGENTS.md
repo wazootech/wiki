@@ -35,8 +35,6 @@ Use Markdown links for all internal and external URLs.
 - **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
 - **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki Subcommand lint](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
 
----
-
 ## Developer notes
 
 ### Scope boundaries
