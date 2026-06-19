@@ -24,6 +24,8 @@ wiki --help
 
 This installs **`wiki`** on PATH. The npm package creates a private Python virtual environment and installs the matching PyPI **`wazootech-wiki`** release. Python 3.12 or newer is required on the machine.
 
+The npm package also exposes a type-safe TypeScript SDK for Node projects. See [Wiki Programmatic API](Wiki_Programmatic_API.md#typescript-sdk) for SDK installation and usage.
+
 Zero-install (no global install):
 
 ```bash
