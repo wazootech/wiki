@@ -90,22 +90,7 @@ npx wazootech-wiki -c docs/wiki.yml check
 uvx wazootech-wiki --help
 ```
 
-After `npm install -g wazootech-wiki`, use `wiki` instead of the `npx` prefix (for example `wiki check`).
-
-The npm package also exposes a type-safe Node API that binds to the same Python engine:
-
-```js
-const { Wiki } = require("wazootech-wiki");
-
-const wiki = Wiki.load({ config: "docs/wiki.yml" });
-
-await wiki.check({ strict: true });
-
-const results = await wiki.query({
-  query: "SELECT ?s WHERE { ?s ?p ?o }",
-  format: "json",
-});
-```
+After `npm install -g wazootech-wiki`, use `wiki` instead of the `npx` prefix (for example `wiki check`). For library usage from Node or TypeScript, see [Programmatic APIs](#programmatic-apis).
 
 ### Standalone binary (no Python required)
 
@@ -147,6 +132,55 @@ uv pip install -e /path/to/wiki
 ```
 
 Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
+
+## Programmatic APIs
+
+### Python library
+
+Python callers can use the in-process `Wiki` class for typed reports without spawning the CLI:
+
+```python
+from wiki import Wiki
+
+wiki = Wiki.load("docs/wiki.yml")
+
+report = wiki.check(strict=True)
+if not report.ok:
+    raise SystemExit(report.messages()[0])
+
+result = wiki.query("SELECT ?s WHERE { ?s ?p ?o }", format="json")
+```
+
+See [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md) for the full Python API.
+
+### TypeScript SDK
+
+The npm package also ships a type-safe TypeScript SDK. It is a thin binding over the same Python CLI engine installed by the npm package, not a second Wiki implementation.
+
+```bash
+npm install wazootech-wiki
+```
+
+```ts
+import { Wiki } from "wazootech-wiki";
+
+const wiki = Wiki.load({ config: "docs/wiki.yml" });
+
+await wiki.check({ strict: true });
+
+const results = await wiki.query({
+  query: "SELECT ?s WHERE { ?s ?p ?o }",
+  format: "json",
+});
+```
+
+CommonJS is supported too:
+
+```js
+const { Wiki } = require("wazootech-wiki");
+```
+
+Methods mirror the CLI surface (`check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `serve`, `init`, and `upgrade`) with camelCase TypeScript options. Report-producing commands return command results today; JSON-capable commands such as `query --format json` and JSON exports can return parsed data.
 
 ## Local development
 
