@@ -9,13 +9,23 @@
   "homepage": "https://github.com/wazootech/wiki",
   "bugs": "https://github.com/wazootech/wiki/issues",
   "license": "MIT",
+  "main": "npm/cjs/index.js",
+  "types": "npm/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./npm/cjs/index.d.ts",
+      "require": "./npm/cjs/index.js"
+    }
+  },
   "bin": {
     "wiki": "npm/bin/wiki.js"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "postinstall": "node npm/setup.js",
     "preuninstall": "node npm/uninstall.js",
-    "setup": "node npm/setup.js"
+    "setup": "node npm/setup.js",
+    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
   },
   "files": [
     "npm/",
@@ -25,6 +35,10 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0"
   },
   "publishConfig": {
     "access": "public"
