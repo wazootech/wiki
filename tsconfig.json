@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "exactOptionalPropertyTypes": true,
     "lib": ["ES2022"],
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "outDir": "npm/cjs",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
     "rootDir": "npm/src",
     "strict": true,
-    "target": "ES2022"
+    "target": "ES2022",
+    "useUnknownInCatchVariables": true,
+    "verbatimModuleSyntax": true
   },
   "include": ["npm/src/**/*.ts"]
 }

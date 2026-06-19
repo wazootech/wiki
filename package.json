@@ -9,26 +9,33 @@
   "homepage": "https://github.com/wazootech/wiki",
   "bugs": "https://github.com/wazootech/wiki/issues",
   "license": "MIT",
-  "main": "npm/cjs/index.js",
-  "types": "npm/cjs/index.d.ts",
+  "main": "./npm/dist/index.js",
+  "module": "./npm/dist/index.mjs",
+  "types": "./npm/dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./npm/cjs/index.d.ts",
-      "require": "./npm/cjs/index.js"
+      "types": "./npm/dist/index.d.ts",
+      "import": "./npm/dist/index.mjs",
+      "require": "./npm/dist/index.js"
     }
   },
   "bin": {
     "wiki": "npm/bin/wiki.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup npm/src/index.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims",
+    "prepack": "npm run build",
     "postinstall": "node npm/setup.js",
     "preuninstall": "node npm/uninstall.js",
     "setup": "node npm/setup.js",
     "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
   },
   "files": [
-    "npm/",
+    "npm/bin/",
+    "npm/dist/",
+    "npm/python.js",
+    "npm/setup.js",
+    "npm/uninstall.js",
     "package.json",
     "README.md",
     "LICENSE"
@@ -38,7 +45,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "esbuild": "0.28.1",
+    "tsup": "^8.3.0",
     "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   },
   "publishConfig": {
     "access": "public"

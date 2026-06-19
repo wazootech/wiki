@@ -47,10 +47,10 @@ function parseJsonOutput<T>(result: WikiCommandResult): ExportResult<T> {
 }
 
 export class Wiki {
-  readonly config?: string;
+  readonly config: string | undefined;
   readonly wikiInputs: readonly string[];
-  readonly cwd?: string;
-  readonly env?: NodeJS.ProcessEnv;
+  readonly cwd: string | undefined;
+  readonly env: NodeJS.ProcessEnv | undefined;
   readonly runtime: RuntimeOptions;
 
   constructor(options: WikiLoadOptions & { runtime?: RuntimeOptions } = {}) {
@@ -66,13 +66,14 @@ export class Wiki {
   }
 
   withRuntime(options: RuntimeOptions): Wiki {
-    return new Wiki({
-      config: this.config,
+    const loadOptions: WikiLoadOptions & { runtime?: RuntimeOptions } = {
       wikiInputs: this.wikiInputs,
-      cwd: this.cwd,
-      env: this.env,
       runtime: { ...this.runtime, ...options },
-    });
+    };
+    if (this.config !== undefined) loadOptions.config = this.config;
+    if (this.cwd !== undefined) loadOptions.cwd = this.cwd;
+    if (this.env !== undefined) loadOptions.env = this.env;
+    return new Wiki(loadOptions);
   }
 
   args(subcommand: string, subcommandArgs: readonly string[] = []): string[] {
@@ -84,14 +85,14 @@ export class Wiki {
   }
 
   run(args: readonly string[], options: RunOptions = {}): Promise<WikiCommandResult> {
-    return runWiki(args, {
-      cwd: options.cwd ?? this.cwd,
-      env: { ...this.env, ...options.env },
-      stdin: options.stdin,
-      timeoutMs: options.timeoutMs,
-      throwOnError: options.throwOnError,
-      signal: options.signal,
-    });
+    const runOptions: RunOptions = { env: { ...this.env, ...options.env } };
+    const cwd = options.cwd ?? this.cwd;
+    if (cwd !== undefined) runOptions.cwd = cwd;
+    if (options.stdin !== undefined) runOptions.stdin = options.stdin;
+    if (options.timeoutMs !== undefined) runOptions.timeoutMs = options.timeoutMs;
+    if (options.throwOnError !== undefined) runOptions.throwOnError = options.throwOnError;
+    if (options.signal !== undefined) runOptions.signal = options.signal;
+    return runWiki(args, runOptions);
   }
 
   check(options: CheckOptions = {}): Promise<WikiCommandResult> {
