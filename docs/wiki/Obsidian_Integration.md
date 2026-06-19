@@ -20,6 +20,18 @@ Use the community **Shell Commands** plugin to run `wiki` against your wiki root
 
 Point the plugin’s working directory at the folder containing `wiki.yaml`.
 
+## Boundary with Obsidian CLI
+
+### Use Obsidian CLI for
+
+Use Obsidian CLI for Obsidian-native authoring and app automation: daily notes, creating or appending notes, reading the current file, vault search, task and tag workflows, plugin reloads, DevTools, screenshots, DOM/CSS inspection, and Obsidian Sync/headless sync.
+
+### Use Wiki CLI for
+
+Use Wiki CLI for semantic wiki workflows: SHACL and JSON Schema validation, route-safe publishing checks, RDF/JSON-LD export, SPARQL queries, inline SPARQL render blocks, static HTML builds, local preview, and the optional read-only SPARQL endpoint.
+
+Wiki CLI remains compatible with Obsidian-authored Markdown, but it should not duplicate Obsidian CLI's app-control surface.
+
 ## Internal links
 
 This wiki uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) wikis may use wikilinks (`[[Page]]`); the [Wiki CLI](Wiki_CLI.md) still resolves them when filenames follow wiki route rules, and `lint.broken_links` validates that each link resolves.
