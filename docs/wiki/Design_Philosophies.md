@@ -61,6 +61,17 @@ Subcommands are top-level (`wiki check`, not `wiki wiki check`). Global options 
 
 Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). Daily notes, note templates, vault search, task/tag dashboards, plugin reloads, DevTools, screenshots, DOM/CSS inspection, and sync belong to Obsidian CLI or Obsidian plugins. History and collaboration belong to Git. The wiki tool focuses on graph construction, validation, and site generation. [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) and editor integrations stay at the edges; core scope is the semantic layer — see [Wiki CLI](Wiki_CLI.md#toolchain-vs-authoring-surface).
 
+## Why RDF and SPARQL
+
+While Labeled Property Graphs (LPGs) and query languages like Cypher are popular for structured databases, the semantic stack (RDF, SPARQL, and SHACL) is uniquely suited as the abstraction layer for personal knowledge and agentic memory:
+
+- **Open-world flexibility**: RDF operates on the Open-World Assumption (OWA). Agents can dynamically define new relationships (predicates) and classes on the fly without needing to alter database schemas or validate against rigid table columns.
+- **Global namespace and seamless merging**: Because entities and predicates are identified by global URIs, graphs compiled from separate directories, vaults, or distinct agents can be merged mathematically into a single model with zero identity conflicts or custom mapping logic.
+- **Edge-native execution**: The RDF ecosystem provides highly optimized, standard query engines (like Comunica) that execute queries directly in client-side runtimes (browsers, local shells, edge functions) over embedded formats. Translating property graph queries (like Cypher) locally requires heavy external database engines, defeating the lightweight, offline-first design of the toolchain.
+
 ## Related
 
 - [Wiki CLI](Wiki_CLI.md)
+- [RDF](RDF.md)
+- [SPARQL](SPARQL.md)
+- [LLM Wiki](LLM_Wiki.md)
