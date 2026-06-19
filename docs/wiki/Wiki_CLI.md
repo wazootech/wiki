@@ -237,7 +237,7 @@ Enforcing schemas on text databases can become problematic as structures evolve.
 
 ## Design
 
-The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For in-process use (CI, tests, agents), see [Wiki Python Library](Wiki_Programmatic_API.md).
+The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For programmatic use from Python or TypeScript, see [Wiki Programmatic API](Wiki_Programmatic_API.md).
 
 ## Pattern context
 

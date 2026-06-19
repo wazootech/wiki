@@ -28,6 +28,9 @@ MANIFEST
 
 # Environment & Dependencies
 .venv/
+node_modules/
+npm/dist/
+npm/cjs/
 venv/
 ENV/
 env/

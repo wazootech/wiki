@@ -35,8 +35,6 @@ Use Markdown links for all internal and external URLs.
 - **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
 - **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki Subcommand lint](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
 
----
-
 ## Developer notes
 
 ### Scope boundaries
@@ -54,6 +52,10 @@ Do not add Wiki CLI features that duplicate existing primitives unless there is 
 - Use static-site templates or downstream apps for custom publish surfaces; Wiki CLI owns the artifact contract, not every frontend.
 
 Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, and render Obsidian-authored Markdown, including wikilinks, but should not become an Obsidian automation layer. Prefer standard Markdown links in this docs wiki.
+
+### TypeScript bindings
+
+The npm TypeScript API is a thin binding over the Python CLI, not a second implementation. When changing `src/wiki/cli.py` subcommands, flags, choices, or positional arguments, update `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same PR. Run `npm run test:npm` before landing those changes.
 
 ### Running validations
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:

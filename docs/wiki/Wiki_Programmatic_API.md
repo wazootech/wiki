@@ -1,16 +1,20 @@
 ---
 type: TechArticle
 headline: Wiki Programmatic API
-description: Stable Python library entry points for loading a wiki, validating, building, and scaffolding without subprocess CLI.
+description: Stable Python and TypeScript entry points for loading a wiki, validating, building, and querying from code.
 ---
 
-# Wiki Python Library
+# Wiki Programmatic API
 
-The **Wiki** package (`wazootech-wiki` on PyPI) exposes a **library-first** Python API for CI pipelines, tests, and agent automation. The `wiki` command (Wiki CLI) remains the primary user surface; library calls return typed results and raise domain exceptions instead of printing or exiting.
+The **Wiki** package exposes programmatic APIs for CI pipelines, tests, application code, and agent automation. The `wiki` command (Wiki CLI) remains the primary user surface; programmatic callers can use either the in-process Python library or the type-safe TypeScript SDK shipped by the npm package.
 
-See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. Semver applies to symbols in `wiki.__all__` (listed below); other `wiki.*` modules are internal unless documented on this page.
+See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. The Python engine remains the source of truth; the TypeScript SDK is a thin binding over the Python CLI, not a second implementation.
 
-## Install and imports
+## Python library
+
+The **Wiki** package (`wazootech-wiki` on PyPI) exposes a **library-first** Python API. Python calls return typed results and raise domain exceptions instead of printing or exiting. Semver applies to symbols in `wiki.__all__` (listed below); other `wiki.*` modules are internal unless documented on this page.
+
+### Install and imports
 
 ```bash
 pip install wazootech-wiki
@@ -26,7 +30,7 @@ Symbols listed in `wiki.__all__` are semver-stable. Other modules (`wiki.site`, 
 
 The package ships a [PEP 561](https://peps.python.org/pep-0561/) marker (`py.typed`).
 
-## Wiki session
+### Wiki session
 
 `Wiki` wraps a loaded [Config](Wiki_Configuration.md) and graph lifecycle:
 
@@ -58,7 +62,7 @@ Runtime overrides (global `-b` / `--url-style`):
 w = w.with_runtime(base_url="/wiki", url_style="dir")
 ```
 
-## Validation reports
+### Validation reports
 
 Validation operations (`Wiki.check` and `Wiki.lint`) return an `AuditReport`:
 
@@ -81,7 +85,7 @@ errors, warnings = report.messages()
 merged = report.merge(other_report)
 ```
 
-## Build
+### Build
 
 Invoke builds directly on the `Wiki` instance using CLI-aligned arguments:
 
@@ -104,7 +108,7 @@ print(result.page_count, result.written_paths)
 
 `BuildError` is raised when the output directory overlaps wiki inputs or config root.
 
-## Link, render, export, format, and query
+### Link, render, export, format, and query
 
 `Wiki` instances expose direct, option-free methods for executing wiki operations matching the CLI parameters:
 
@@ -126,7 +130,7 @@ from pathlib import Path
 fmt_report = w.format([Path("docs/wiki/Some_Page.md")])
 ```
 
-## Scaffold
+### Scaffold
 
 Init logic is available as a static helper:
 
@@ -140,6 +144,41 @@ print(result.written_paths)
 ```
 
 Interactive `wiki init` still owns prompts, `--git`, and preflight guards in the CLI.
+
+## TypeScript SDK
+
+The npm package ships a type-safe TypeScript SDK for Node projects. It uses the same private Python environment as the npm `wiki` command and shells out to the Python CLI with safe argv arrays.
+
+```bash
+npm install wazootech-wiki
+```
+
+ESM usage:
+
+```ts
+import { Wiki } from "wazootech-wiki";
+
+const wiki = Wiki.load({ config: "docs/wiki.yml" });
+
+await wiki.check({ strict: true });
+
+const results = await wiki.query({
+  query: "SELECT ?s WHERE { ?s ?p ?o }",
+  format: "json",
+});
+```
+
+CommonJS usage:
+
+```js
+const { Wiki } = require("wazootech-wiki");
+```
+
+The SDK exposes methods that mirror the CLI surface: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `serve`, `init`, and `upgrade`. Options use TypeScript-friendly camelCase names and map to the corresponding CLI flags.
+
+Most report-producing methods return a `WikiCommandResult` containing `ok`, `exitCode`, `stdout`, `stderr`, and the executed command argv. JSON-capable commands can parse structured output: `query({ format: "json" })` returns parsed JSON by default, and `export({ format: "dict" })` or `export({ format: "json-ld" })` includes parsed `data`.
+
+Because the SDK is a thin binding, updates to `src/wiki/cli.py` subcommands or flags must be reflected in `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same change.
 
 ## Layout slot contract
 
