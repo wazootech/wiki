@@ -55,6 +55,10 @@ Do not add Wiki CLI features that duplicate existing primitives unless there is 
 
 Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, and render Obsidian-authored Markdown, including wikilinks, but should not become an Obsidian automation layer. Prefer standard Markdown links in this docs wiki.
 
+### TypeScript bindings
+
+The npm TypeScript API is a thin binding over the Python CLI, not a second implementation. When changing `src/wiki/cli.py` subcommands, flags, choices, or positional arguments, update `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same PR. Run `npm run test:npm` before landing those changes.
+
 ### Running validations
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
