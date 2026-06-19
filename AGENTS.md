@@ -39,6 +39,22 @@ Use Markdown links for all internal and external URLs.
 
 ## Developer notes
 
+### Scope boundaries
+
+Wiki CLI aims to be a one-stop semantic Markdown wiki toolchain, similar in spirit to Go/Deno-style batteries-included tooling for its domain. Keep core scope focused on trust (`check`, `lint`, `fmt`), intelligence (`query`, `render`, `export`), and publish/preview (`build`, `serve`) workflows: graph construction, SHACL and JSON Schema validation, RDF/JSON-LD export, SPARQL query/render workflows, static HTML build, local preview, and CI-friendly checks.
+
+Before adding a subcommand, ask whether it strengthens the semantic Markdown wiki toolchain. If it belongs to validation, graph construction, RDF/JSON-LD/SPARQL interoperability, static publishing, local preview, or CI checks, it may belong in Wiki CLI. If it is generic authoring, Obsidian app control, vault search, daily notes, task/tag dashboards, sync, history, PDF/print conversion, or generic file/process automation, use or document existing primitives instead.
+
+Do not add Wiki CLI features that duplicate existing primitives unless there is a clear semantic-wiki reason:
+
+- Use Obsidian CLI or Obsidian plugins for app/vault authoring workflows: daily notes, append/read current note, templates, task lists, tag dashboards, vault search, plugin reload, DevTools, screenshots, DOM/CSS inspection, and sync.
+- Use shell tools for generic file operations, printing, process composition, text filtering, and one-off automation.
+- Use Git for history, diff, branching, sync, and collaboration workflows.
+- Use Pandoc or dedicated document tools for PDF/print/export formats outside Wiki CLI's semantic RDF/static HTML outputs.
+- Use static-site templates or downstream apps for custom publish surfaces; Wiki CLI owns the artifact contract, not every frontend.
+
+Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, and render Obsidian-authored Markdown, including wikilinks, but should not become an Obsidian automation layer. Prefer standard Markdown links in this docs wiki.
+
 ### Running validations
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
@@ -65,7 +81,7 @@ wiki -c docs/wiki.yml check -v
 wiki -c docs/wiki.yml lint -v
 ```
 
-`wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. Run it manually before commit (`wiki link --apply` to insert suggestions); CI gates link hygiene only if `wiki link --check` is wired in.
+`wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
 For library-level validation and build in Python (without subprocess), see [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md). Unit tests target `Wiki` class methods under `tests/`.
 

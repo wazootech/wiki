@@ -38,12 +38,16 @@ See [Getting Started](Getting_Started.md) for a full walkthrough.
 
 Adoption path: `wiki init` → `wiki check` → `wiki serve`, then add `lint`, `query`, `render`, and `build` as the wiki matures.
 
+Wiki CLI is intentionally batteries-included for semantic Markdown wikis: validation, formatting, querying, rendering, exporting, building, and local preview belong together. The boundary is not "minimal CLI only"; the boundary is "semantic wiki toolchain, not editor/app automation."
+
 ## What wiki is not
 
 - The **primary editor** or daily note-taking surface
 - A **replacement** for Obsidian, Logseq, or another wiki UI
 - A **note app clone**, CMS, or authenticated multi-user web product
 - An **auth layer** — local-first CLI and static publish; see deferred scope in [Wiki CLI templates](#ecosystem-templates) below
+- A vault automation CLI for daily notes, note append/read workflows, task lists, tags, plugin development, or Obsidian app control
+- A replacement for shell tools, Git, Pandoc, or editor-native commands
 
 Humans and agents keep writing where they already write. `wiki` makes that content **trustworthy** (SHACL, JSON Schema, and conventions), **searchable** (SPARQL + OWL-RL), and **publishable** (static HTML, JSON-LD, Turtle, optional read-only SPARQL over `wiki serve`).
 
@@ -58,11 +62,16 @@ Rather than owning your editor or data store, **Wiki** functions as a **read-onl
 
 | Layer                   | Role                                                                   | Examples                                                    |
 | ----------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Authoring surface       | Create and edit Markdown                                               | Obsidian, agent-driven LLM wiki, VS Code, any editor        |
+| Authoring surface       | Create, edit, search, and organize notes                               | Obsidian CLI, Obsidian, VS Code, shell                      |
 | Wiki CLI semantic layer | Compile wiki → RDF graph; check, lint, fmt; query; render; build/serve | `wiki check`, `wiki query`, `wiki build`                    |
-| Outputs                 | Deployable artifacts                                                   | GitHub Pages HTML, export files, `/api/sparql` when enabled |
+| Existing primitives     | History, sync, print/PDF, and generic text processing                  | Git, shell tools, Pandoc                                    |
+| Outputs                 | Deployable semantic artifacts                                          | GitHub Pages HTML, export files, `/api/sparql` when enabled |
 
 This separation is intentional: the strongest differentiator is the **machine layer** (SHACL, OWL-RL, SPARQL, typed HTML) that most note apps do not provide. **Wiki** avoids competing with editor-centric tools while making incremental adoption obvious.
+
+When an existing primitive already owns a workflow, Wiki CLI integrates rather than replaces it. Obsidian CLI owns Obsidian app/vault automation; Git owns history and collaboration; shell tools own generic file/process composition; Pandoc and document tools own non-semantic document conversion.
+
+`wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility.
 
 ## Interop-first workflows
 
@@ -118,7 +127,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 
 - **Check** — SHACL and JSON Schema integrity, route safety, layout frontmatter ([Wiki Subcommand check](Wiki_Subcommand_check.md))
 - **Lint** — broken links, filename pattern, and heading conventions ([Wiki Subcommand lint](Wiki_Subcommand_lint.md))
-- **Link** — suggest missing wikilinks and repair broken internal links ([Wiki Subcommand link](Wiki_Subcommand_link.md))
+- **Link** — repair broken internal links and optionally insert suggested links as wiki-gardening ([Wiki Subcommand link](Wiki_Subcommand_link.md))
 - **Fmt** — mdformat for markdown ([Wiki Subcommand fmt](Wiki_Subcommand_fmt.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki Subcommand query](Wiki_Subcommand_query.md), [Graph Cache](Graph_Cache.md))
 - **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
