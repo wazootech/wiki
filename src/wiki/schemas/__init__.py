@@ -1,17 +1,17 @@
 """Pydantic schema models for wiki config, CLI options, and domain types."""
 
-from .cli import (
-    BuildOptions as CliBuildOptions,
-    CheckOptions as CliCheckOptions,
+from .cli import (  # noqa: I001 — ruff splits aliased imports, making this worse
     COMMAND_MODELS,
     EXPORT_FORMATS,
+    QUERY_FORMATS,
+    BuildOptions as CliBuildOptions,
+    CheckOptions as CliCheckOptions,
     ExportOptions as CliExportOptions,
     FmtOptions as CliFmtOptions,
     InitOptions as CliInitOptions,
     LinkOptions as CliLinkOptions,
     LintOptions as CliLintOptions,
     MainOptions as CliMainOptions,
-    QUERY_FORMATS,
     QueryOptions as CliQueryOptions,
     RenderOptions as CliRenderOptions,
     ServeOptions as CliServeOptions,
