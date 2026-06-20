@@ -25,11 +25,25 @@
     },
     "format": {
       "default": "dict",
+      "enum": [
+        "dict",
+        "json-ld",
+        "turtle",
+        "xml",
+        "n3",
+        "nt",
+        "trig",
+        "nquads"
+      ],
       "title": "Format",
       "type": "string"
     },
     "mode": {
       "default": "expanded",
+      "enum": [
+        "expanded",
+        "compacted"
+      ],
       "title": "Mode",
       "type": "string"
     }

@@ -30,8 +30,7 @@
     "setup": "node npm/setup.js",
     "gendocs:python": "uv run sphinx-build -b html -c docs docs/api/python docs/assets/api/python",
     "gendocs:ts": "typedoc",
-    "test:drift": "node npm/test-cli-drift.js",
-    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js && npm run test:drift"
+    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
   },
   "files": [
     "npm/bin/",

@@ -12,6 +12,7 @@ property name (camelCase for TS consumers).  Click decorators in
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -68,7 +69,11 @@ class QueryOptions(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     query_args: tuple[str, ...] = Field(default=(), alias="query")
-    output_format: str = Field(default="table", alias="format")
+    output_format: str = Field(
+        default="table",
+        alias="format",
+        json_schema_extra={"enum": QUERY_FORMATS},
+    )
     output: Path | None = Field(default=None, alias="output")
     no_inference: bool = Field(default=False, alias="noInference")
     reload: bool = Field(default=False, alias="reload")
@@ -97,7 +102,9 @@ class BuildOptions(BaseModel):
 
     output_dir: str = Field(default="_site", alias="outputDir")
     site_base_url: str | None = Field(default=None, alias="baseUrl")
-    site_url_style: str | None = Field(default=None, alias="urlStyle")
+    site_url_style: Literal["dir", "file"] | None = Field(
+        default=None, alias="urlStyle"
+    )
     render: bool = Field(default=False, alias="render")
     reload: bool = Field(default=False, alias="reload")
     disk_cache: bool = Field(default=False, alias="cache")
@@ -113,8 +120,14 @@ EXPORT_FORMATS = ["dict", "json-ld", "turtle", "xml", "n3", "nt", "trig", "nquad
 
 class ExportOptions(FileOptions):
     output: Path | None = Field(default=None, alias="output")
-    rdf_format: str = Field(default="dict", alias="format")
-    mode: str = Field(default="expanded", alias="mode")
+    rdf_format: str = Field(
+        default="dict",
+        alias="format",
+        json_schema_extra={"enum": EXPORT_FORMATS},
+    )
+    mode: Literal["expanded", "compacted"] = Field(
+        default="expanded", alias="mode"
+    )
 
 
 # ── serve ──
@@ -126,7 +139,9 @@ class ServeOptions(BaseModel):
     host: str = Field(default="127.0.0.1", alias="host")
     port: int = Field(default=8080, alias="port")
     site_base_url: str | None = Field(default=None, alias="baseUrl")
-    site_url_style: str | None = Field(default=None, alias="urlStyle")
+    site_url_style: Literal["dir", "file"] | None = Field(
+        default=None, alias="urlStyle"
+    )
     watch: bool = Field(default=False, alias="watch")
 
 
@@ -142,11 +157,13 @@ class InitOptions(BaseModel):
         default=None, alias="graphContextWiki"
     )
     site_base_url: str | None = Field(default=None, alias="baseUrl")
-    site_url_style: str | None = Field(default=None, alias="urlStyle")
+    site_url_style: Literal["dir", "file"] | None = Field(
+        default=None, alias="urlStyle"
+    )
     graph_content_predicate: str | None = Field(
         default=None, alias="graphContentPredicate"
     )
-    link_style: str | None = Field(
+    link_style: Literal["standard", "wikilink"] | None = Field(
         default=None, alias="linkStyle"
     )
     wiki_inputs: tuple[str, ...] | None = Field(
@@ -158,7 +175,7 @@ class InitOptions(BaseModel):
     graph_implicit_types: tuple[str, ...] | None = Field(
         default=None, alias="graphImplicitTypes"
     )
-    graph_implicit_types_policy: str | None = Field(
+    graph_implicit_types_policy: Literal["fallback", "append"] | None = Field(
         default=None, alias="graphImplicitTypesPolicy"
     )
     graph_include_file_extension: bool | None = Field(

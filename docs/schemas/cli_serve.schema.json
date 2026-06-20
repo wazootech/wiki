@@ -26,6 +26,10 @@
     "urlStyle": {
       "anyOf": [
         {
+          "enum": [
+            "dir",
+            "file"
+          ],
           "type": "string"
         },
         {

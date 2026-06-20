@@ -45,6 +45,10 @@
     "urlStyle": {
       "anyOf": [
         {
+          "enum": [
+            "dir",
+            "file"
+          ],
           "type": "string"
         },
         {
@@ -69,6 +73,10 @@
     "linkStyle": {
       "anyOf": [
         {
+          "enum": [
+            "standard",
+            "wikilink"
+          ],
           "type": "string"
         },
         {
@@ -123,6 +131,10 @@
     "graphImplicitTypesPolicy": {
       "anyOf": [
         {
+          "enum": [
+            "fallback",
+            "append"
+          ],
           "type": "string"
         },
         {
