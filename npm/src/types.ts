@@ -212,10 +212,10 @@ export interface InitOptions {
   repo?: string;
   /** Override ``graph.context.wiki`` IRI. */
   graphContextWiki?: string;
-  /** Override ``site.base_url``. */
-  siteBaseUrl?: string;
-  /** Override ``site.url_style``. */
-  siteUrlStyle?: UrlStyle;
+  /** Override ``site.base_url`` (default ``/wiki`` or inferred from ``--repo``). */
+  baseUrl?: string;
+  /** Override ``site.url_style`` (``"file"`` or ``"dir"``). */
+  urlStyle?: UrlStyle;
   /** Override ``graph.content_predicate``. */
   graphContentPredicate?: string;
   /** Override ``link.style`` (``"standard"`` or ``"wikilink"``). */

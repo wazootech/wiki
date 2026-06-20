@@ -302,8 +302,8 @@ export class Wiki {
     pushFlag(args, "--git", options.git);
     pushFlag(args, "--repo", options.repo);
     pushFlag(args, "--graph-context-wiki", options.graphContextWiki);
-    pushFlag(args, "--site-base-url", options.siteBaseUrl);
-    pushFlag(args, "--site-url-style", options.siteUrlStyle);
+    pushFlag(args, "--site-base-url", options.baseUrl);
+    pushFlag(args, "--site-url-style", options.urlStyle);
     pushFlag(args, "--graph-content-predicate", options.graphContentPredicate);
     pushFlag(args, "--link-style", options.linkStyle);
     pushRepeated(args, "--wiki-inputs", options.wikiInputs);

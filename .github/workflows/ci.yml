@@ -80,7 +80,7 @@ jobs:
       with:
         enable-cache: true
 
-    - name: Install Python dependencies (needed for CLI manifest drift check)
+    - name: Install Python dependencies
       run: uv sync
 
     - name: Install npm dependencies
@@ -99,6 +99,12 @@ jobs:
         node -e "require('./npm/python')"
         node -e "require('./npm/setup')"
         node npm/test-setup-argv.js
+
+    - name: Build TypeScript
+      run: npm run build
+
+    - name: Verify CLI drift — Python/TypeScript alignment
+      run: node npm/test-cli-drift.js
 
     - name: Run npm API tests
       run: npm run test:npm

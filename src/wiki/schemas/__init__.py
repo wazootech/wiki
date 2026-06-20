@@ -1,5 +1,6 @@
-"""Pydantic schema models for wiki config and domain types."""
+"""Pydantic schema models for wiki config, CLI options, and domain types."""
 
+from .cli import COMMAND_MODELS, EXPORT_FORMATS, QUERY_FORMATS
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import InitOptions
 from .layout import (
@@ -35,6 +36,9 @@ from .wiki_config import (
 
 __all__ = [
     "AuditReport",
+    "COMMAND_MODELS",
+    "EXPORT_FORMATS",
+    "QUERY_FORMATS",
     "BuildOptions",
     "BuildResult",
     "ExportResult",
