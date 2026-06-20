@@ -219,20 +219,7 @@ COMMAND_MODELS: dict[str, type[BaseModel]] = {
 }
 
 __all__ = [
-    "BuildOptions",
-    "CheckOptions",
     "COMMAND_MODELS",
     "EXPORT_FORMATS",
-    "ExportOptions",
-    "FileOptions",
-    "FmtOptions",
-    "InitOptions",
-    "LinkOptions",
-    "LintOptions",
-    "MainOptions",
     "QUERY_FORMATS",
-    "QueryOptions",
-    "RenderOptions",
-    "ServeOptions",
-    "UpgradeOptions",
 ]

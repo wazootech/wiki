@@ -1,22 +1,6 @@
 """Pydantic schema models for wiki config, CLI options, and domain types."""
 
-from .cli import (  # noqa: I001 — ruff splits aliased imports, making this worse
-    COMMAND_MODELS,
-    EXPORT_FORMATS,
-    QUERY_FORMATS,
-    BuildOptions as CliBuildOptions,
-    CheckOptions as CliCheckOptions,
-    ExportOptions as CliExportOptions,
-    FmtOptions as CliFmtOptions,
-    InitOptions as CliInitOptions,
-    LinkOptions as CliLinkOptions,
-    LintOptions as CliLintOptions,
-    MainOptions as CliMainOptions,
-    QueryOptions as CliQueryOptions,
-    RenderOptions as CliRenderOptions,
-    ServeOptions as CliServeOptions,
-    UpgradeOptions as CliUpgradeOptions,
-)
+from .cli import COMMAND_MODELS, EXPORT_FORMATS, QUERY_FORMATS
 from .domain import BrokenLink, BrokenLinkFix, LinkOpportunity, OutputEntry, PageRoute
 from .init import InitOptions
 from .layout import (
@@ -52,18 +36,6 @@ from .wiki_config import (
 
 __all__ = [
     "AuditReport",
-    "CliBuildOptions",
-    "CliCheckOptions",
-    "CliExportOptions",
-    "CliFmtOptions",
-    "CliInitOptions",
-    "CliLinkOptions",
-    "CliLintOptions",
-    "CliMainOptions",
-    "CliQueryOptions",
-    "CliRenderOptions",
-    "CliServeOptions",
-    "CliUpgradeOptions",
     "COMMAND_MODELS",
     "EXPORT_FORMATS",
     "QUERY_FORMATS",
