@@ -1,3 +1,15 @@
+/**
+ * TypeScript SDK for the wazootech-wiki CLI.
+ *
+ * Each method shells out to the Python CLI and returns typed results.
+ * Options use camelCase names mapped to the corresponding CLI flags.
+ *
+ * ```ts
+ * import { Wiki } from "wazootech-wiki";
+ * const wiki = Wiki.load({ config: "docs/wiki.yml" });
+ * await wiki.check({ strict: true });
+ * ```
+ */
 import type { ChildProcess } from "node:child_process";
 import { runWiki, spawnWiki } from "./runner";
 import type {
@@ -46,13 +58,23 @@ function parseJsonOutput<T>(result: WikiCommandResult): ExportResult<T> {
   return { ...result, data: JSON.parse(result.stdout) as T };
 }
 
+/** Loaded wiki configuration binding for TypeScript consumers.
+ *
+ * Create via {@link Wiki.load}, then call methods that mirror the CLI surface.
+ */
 export class Wiki {
+  /** Path to the ``wiki.yml`` config file (or directory). */
   readonly config: string | undefined;
+  /** Overridden ``wiki.inputs`` paths. */
   readonly wikiInputs: readonly string[];
+  /** Working directory for CLI subprocesses. */
   readonly cwd: string | undefined;
+  /** Extra environment variables. */
   readonly env: NodeJS.ProcessEnv | undefined;
+  /** Runtime URL overrides. */
   readonly runtime: RuntimeOptions;
 
+  /** @internal Use {@link Wiki.load} to construct. */
   constructor(options: WikiLoadOptions & { runtime?: RuntimeOptions } = {}) {
     this.config = options.config;
     this.wikiInputs = options.wikiInputs ?? [];
@@ -61,10 +83,18 @@ export class Wiki {
     this.runtime = options.runtime ?? {};
   }
 
+  /** Create a new Wiki instance from load options.
+   *
+   * @param options - Load options (config path, inputs, working directory).
+   */
   static load(options: WikiLoadOptions = {}): Wiki {
     return new Wiki(options);
   }
 
+  /** Return a new Wiki with merged runtime overrides.
+   *
+   * @param options - Runtime overrides (baseUrl, urlStyle).
+   */
   withRuntime(options: RuntimeOptions): Wiki {
     const loadOptions: WikiLoadOptions & { runtime?: RuntimeOptions } = {
       wikiInputs: this.wikiInputs,
@@ -76,6 +106,13 @@ export class Wiki {
     return new Wiki(loadOptions);
   }
 
+  /** Build the argv array for a subcommand.
+   *
+   * Prepends ``--wiki-inputs`` and ``--config`` from the instance state.
+   *
+   * @param subcommand - CLI subcommand name (e.g. ``"check"``).
+   * @param subcommandArgs - Additional arguments for the subcommand.
+   */
   args(subcommand: string, subcommandArgs: readonly string[] = []): string[] {
     const args: string[] = [];
     pushRepeated(args, "--wiki-inputs", this.wikiInputs);
@@ -84,6 +121,11 @@ export class Wiki {
     return args;
   }
 
+  /** Run arbitrary CLI arguments against the wiki Python binary.
+   *
+   * @param args - Full argument list.
+   * @param options - Run options (cwd, env, timeout, stdin).
+   */
   run(args: readonly string[], options: RunOptions = {}): Promise<WikiCommandResult> {
     const runOptions: RunOptions = { env: { ...this.env, ...options.env } };
     const cwd = options.cwd ?? this.cwd;
@@ -95,6 +137,10 @@ export class Wiki {
     return runWiki(args, runOptions);
   }
 
+  /** Run integrity checks: SHACL, JSON Schema, routes, collisions, layout.
+   *
+   * @param options - Check options (strict, verbose, file filter).
+   */
   check(options: CheckOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--verbose", options.verbose);
@@ -103,6 +149,10 @@ export class Wiki {
     return this.run(this.args("check", args));
   }
 
+  /** Run convention audits: links, filenames, headings, link style.
+   *
+   * @param options - Lint options (strict, verbose, file filter).
+   */
   lint(options: LintOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--verbose", options.verbose);
@@ -111,12 +161,20 @@ export class Wiki {
     return this.run(this.args("lint", args));
   }
 
+  /** Run lint then check sequentially and return a merged report.
+   *
+   * @param options - Preflight options (strict, verbose).
+   */
   async preflight(options: PreflightOptions = {}): Promise<PreflightResult> {
     const lint = await this.lint(options);
     const check = await this.check(options);
     return { lint, check };
   }
 
+  /** Build a static HTML site from wiki documents.
+   *
+   * @param options - Build options (outputDir, baseUrl, urlStyle, render, etc.).
+   */
   build(options: BuildOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--output-dir", options.outputDir);
@@ -130,6 +188,10 @@ export class Wiki {
     return this.run(this.args("build", args));
   }
 
+  /** Format markdown wiki pages using mdformat.
+   *
+   * @param options - Format options (check, verbose, file filter).
+   */
   fmt(options: FmtOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--check", options.check);
@@ -138,10 +200,15 @@ export class Wiki {
     return this.run(this.args("fmt", args));
   }
 
+  /** Alias for {@link fmt}. */
   format(options: FmtOptions = {}): Promise<WikiCommandResult> {
     return this.fmt(options);
   }
 
+  /** Render inline SPARQL blocks in markdown files.
+   *
+   * @param options - Render options (check, reload, cache, noInference, file filter).
+   */
   render(options: RenderOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--no-inference", options.noInference);
@@ -153,6 +220,10 @@ export class Wiki {
     return this.run(this.args("render", args));
   }
 
+  /** Export document frontmatter as RDF or JSON-LD.
+   *
+   * @param options - Export options (format, mode, output, file filter).
+   */
   async export<T = unknown>(options: ExportOptions = {}): Promise<ExportResult<T>> {
     const args: string[] = [];
     pushFlag(args, "--output", options.output);
@@ -167,6 +238,10 @@ export class Wiki {
     return result;
   }
 
+  /** Suggest or repair internal links for wiki pages.
+   *
+   * @param options - Link options (apply, fixBroken, dryRun, check, verbose, file filter).
+   */
   link(options: LinkOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--apply", options.apply);
@@ -178,6 +253,10 @@ export class Wiki {
     return this.run(this.args("link", args));
   }
 
+  /** Run a SPARQL query against the wiki's RDF graph.
+   *
+   * @param options - Query options (query string, format, jq, etc.).
+   */
   async query<T = unknown>(options: QueryOptions): Promise<string | T> {
     const args: string[] = [];
     pushFlag(args, "--format", options.format);
@@ -196,6 +275,11 @@ export class Wiki {
     return result.stdout;
   }
 
+  /** Start a local HTTP server for browsing the wiki.
+   *
+   * @param options - Serve options (host, port, baseUrl, urlStyle, watch).
+   * @returns The spawned child process (not a Promise).
+   */
   serve(options: ServeOptions = {}): ChildProcess {
     const args: string[] = [];
     pushFlag(args, "--host", options.host);
@@ -209,6 +293,10 @@ export class Wiki {
     });
   }
 
+  /** Scaffold a new wiki project in an empty directory.
+   *
+   * @param options - Init options (git, repo, wiki inputs, graph settings).
+   */
   init(options: InitOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--git", options.git);
@@ -228,6 +316,10 @@ export class Wiki {
     return this.run(this.args("init", args));
   }
 
+  /** Check for updates and upgrade the wiki CLI.
+   *
+   * @param options - Upgrade options (check, yes, verbose).
+   */
   upgrade(options: UpgradeOptions = {}): Promise<WikiCommandResult> {
     const args: string[] = [];
     pushFlag(args, "--check", options.check);

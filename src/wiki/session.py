@@ -73,6 +73,15 @@ class Wiki:
         *,
         wiki_inputs: Sequence[str] | None = None,
     ) -> Wiki:
+        """Load a wiki from a config file or directory.
+
+        Args:
+            config_path: Path to ``wiki.yml`` or a directory containing it.
+            wiki_inputs: Override ``wiki.inputs`` from the config file.
+
+        Returns:
+            A new ``Wiki`` instance backed by the loaded config.
+        """
         config = Config.load(Path(config_path))
         if wiki_inputs:
             config.wiki.inputs = [
@@ -87,6 +96,15 @@ class Wiki:
         base_url: str | None = None,
         url_style: str | None = None,
     ) -> Wiki:
+        """Return a copy of this Wiki with runtime overrides applied.
+
+        Args:
+            base_url: Override ``site.base_url`` for this session.
+            url_style: Override ``site.url_style`` (``"file"`` or ``"dir"``).
+
+        Returns:
+            A new ``Wiki`` with a deep-copied config.
+        """
         return Wiki(_resolve_runtime_config(self.config, base_url=base_url, url_style=url_style))
 
     def graph(
@@ -96,6 +114,16 @@ class Wiki:
         reload: bool = False,
         disk_cache: bool = False,
     ) -> Graph:
+        """Load or return the cached RDF graph for this wiki.
+
+        Args:
+            infer: Apply OWL-RL inference to expand the graph.
+            reload: Discard any cached graph and rebuild from source.
+            disk_cache: Persist the compiled graph to ``.wiki/cache/``.
+
+        Returns:
+            An ``rdflib.Graph`` with the wiki's RDF triples.
+        """
         return load_graph(
             self.config,
             infer=infer,
@@ -116,6 +144,15 @@ class Wiki:
         *,
         strict: bool = False,
     ) -> AuditReport:
+        """Run integrity checks: SHACL, JSON Schema, routes, collisions, layout.
+
+        Args:
+            files: Subset of files to check. ``None`` checks the whole wiki.
+            strict: Elevate all warnings to errors, exit code 1.
+
+        Returns:
+            An ``AuditReport`` with messages grouped by severity.
+        """
         file_filter, file_paths = self._file_filter(files)
         if file_paths is not None:
             report = _run_check(self.config, file_filter=file_filter, file_paths=file_paths)
@@ -131,6 +168,15 @@ class Wiki:
         *,
         strict: bool = False,
     ) -> AuditReport:
+        """Run convention audits: links, filenames, headings, link style.
+
+        Args:
+            files: Subset of files to lint. ``None`` lints the whole wiki.
+            strict: Elevate all warnings to errors, exit code 1.
+
+        Returns:
+            An ``AuditReport`` with convention violations.
+        """
         file_filter, _ = self._file_filter(files)
         report = _run_lint(self.config, file_filter=file_filter)
         if strict:
@@ -138,6 +184,11 @@ class Wiki:
         return report
 
     def preflight(self) -> AuditReport:
+        """Run lint then check sequentially and return a merged report.
+
+        Returns:
+            A merged ``AuditReport`` covering both convention and integrity issues.
+        """
         return _merge_results(self.lint(), self.check())
 
     def build(
@@ -152,6 +203,21 @@ class Wiki:
         no_check: bool = False,
         verbose: bool = False,
     ) -> BuildResult:
+        """Build a static HTML site from wiki documents.
+
+        Args:
+            output_dir: Target directory for generated site files.
+            base_url: Override ``site.base_url`` for this build.
+            url_style: Override ``site.url_style`` (``"file"`` or ``"dir"``).
+            render: Render inline SPARQL blocks before building.
+            reload: Rebuild the graph before rendering.
+            cache: Persist the graph to disk.
+            no_check: Skip the lint + check preflight.
+            verbose: Print paths of generated files.
+
+        Returns:
+            A ``BuildResult`` with page count, asset count, and written paths.
+        """
         from .publish import _build_static_site
         wiki = self
         if base_url is not None or url_style is not None:
@@ -173,6 +239,16 @@ class Wiki:
         check: bool = False,
         verbose: bool = False,
     ) -> FmtReport:
+        """Format markdown wiki pages using mdformat.
+
+        Args:
+            files: Subset of files to format. ``None`` formats the whole wiki.
+            check: Report formatting issues without modifying files.
+            verbose: Print per-file formatting status.
+
+        Returns:
+            A ``FmtReport`` listing formatted and stale files.
+        """
         config = self.config
         if files:
             target_files = select_markdown_paths(config, tuple(files))
@@ -210,6 +286,18 @@ class Wiki:
         cache: bool = False,
         no_inference: bool = False,
     ) -> RenderReport:
+        """Render inline SPARQL blocks in markdown files.
+
+        Args:
+            files: Subset of files to render. ``None`` renders the whole wiki.
+            check: Detect stale blocks without modifying files.
+            reload: Rebuild the graph before rendering.
+            cache: Persist the graph to disk.
+            no_inference: Skip OWL-RL inference during rendering.
+
+        Returns:
+            A ``RenderReport`` with update and error counts.
+        """
         config = self.config
         explicit_files: tuple[Path, ...] = ()
         if files:
@@ -246,6 +334,17 @@ class Wiki:
         format: str = "dict",
         mode: str = "expanded",
     ) -> ExportResult:
+        """Export document frontmatter as RDF or JSON-LD.
+
+        Args:
+            files: Subset of documents to export. ``None`` exports all.
+            format: Output format — ``"dict"``, ``"json-ld"``, ``"turtle"``,
+                ``"xml"``, ``"n3"``, ``"nt"``, ``"trig"``, ``"nquads"``.
+            mode: JSON-LD serialization mode — ``"expanded"`` or ``"compacted"``.
+
+        Returns:
+            An ``ExportResult`` containing the serialized output string.
+        """
         config = self.config
         result_payload: Any
 
@@ -319,6 +418,19 @@ class Wiki:
         check: bool = False,
         verbose: bool = False,
     ) -> LinkReport:
+        """Suggest or repair internal links for wiki pages.
+
+        Args:
+            files: Subset of pages to process. ``None`` processes all.
+            apply: Insert suggested internal links.
+            fix_broken: Repair unambiguous broken internal links.
+            dry_run: Preview changes without writing files.
+            check: Exit with code 1 if link opportunities or broken links remain.
+            verbose: Show target titles; list changed files when applying.
+
+        Returns:
+            A ``LinkReport`` with suggestions, fixes, and changed paths.
+        """
         config = self.config
         file_filter = routes_from_markdown_files(config, tuple(files)) if files else None
         report = LinkReport()
@@ -384,6 +496,21 @@ class Wiki:
         jq: str | None = None,
         pretty: bool = False,
     ) -> str:
+        """Run a SPARQL query against the wiki's RDF graph.
+
+        Args:
+            sparql_query: The SPARQL query string.
+            format: Output format — ``"table"``, ``"json"``, ``"csv"``,
+                ``"tsv"``, ``"turtle"``, ``"n3"``, ``"markdown"``.
+            no_inference: Skip OWL-RL inference.
+            reload: Rebuild the graph before querying.
+            cache: Persist the graph to disk.
+            jq: Key-path filter for JSON output (implies ``format="json"``).
+            pretty: Render a rich table (stdout only).
+
+        Returns:
+            The query result as a formatted string.
+        """
         from .format import run_query
         from .jqfilter import resolve_path
 
@@ -409,6 +536,15 @@ class Wiki:
         url_style: str | None = None,
         watch: bool = False,
     ) -> None:
+        """Start a local HTTP server for browsing the wiki.
+
+        Args:
+            host: Host to bind the server to.
+            port: Port to serve on.
+            base_url: Override ``site.base_url``.
+            url_style: Override ``site.url_style`` (``"file"`` or ``"dir"``).
+            watch: Rebuild graph, SPARQL blocks, and site on file changes.
+        """
         from .serve import run_server
 
         runtime_config = _resolve_runtime_config(
@@ -426,6 +562,16 @@ class Wiki:
         *,
         git: bool = False,
     ) -> ScaffoldResult:
+        """Scaffold a new wiki project in an empty directory.
+
+        Args:
+            target_dir: Directory to scaffold into (must be empty or new).
+            options: Initialisation options (frontmatter settings, namespaces).
+            git: Run ``git init`` after scaffolding.
+
+        Returns:
+            A ``ScaffoldResult`` with a status message.
+        """
         from .init_scaffold import _scaffold_wiki
 
         return _scaffold_wiki(Path(target_dir), options, init_git=git)

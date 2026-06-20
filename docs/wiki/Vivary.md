@@ -136,6 +136,7 @@ The operating loop in `AGENTS.md`:
 
 - **Retrieve** with `tropo graph` / `tropo blast` — the graph is the first source of truth.
 - **Verify** with `tropo check` + `ozone review` before a gate.
+- **Learn** — distill verification results and gate outcomes back into memory, skills, or the graph. See [Learning Systems](Learning_Systems.md) for the distinction between continual and recursive learning.
 - **Gate** — name blast radius (`ozone impact`) for risky changes; stop at human gates (memory writes, publishing, installs, git push/PR, destructive ops).
 
 Visible state surfaces: `STATE.md` (Focus / Status / Next), `SOUL.md` (principles), gitignored `USER.md` and `MEMORY.md` for private identity and durable memory.

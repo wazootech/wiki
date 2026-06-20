@@ -36,7 +36,21 @@ jobs:
       
       - name: Install Dependencies
         run: uv sync
-      
+
+      - name: Install docs dependencies
+        run: uv pip install -r docs/requirements-docs.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate Python API docs
+        run: uv run sphinx-build -b html -c docs docs/api/python docs/assets/api/python
+
+      - name: Generate TypeScript API docs
+        run: npm install && npm run gendocs:ts
+
       - name: Run Docs Wiki Integrity Audits
         run: uv run wiki -c docs/wiki.yml check --strict -v
 
@@ -46,10 +60,16 @@ jobs:
       - name: Build Static Site
         run: uv run wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
 
+      - name: Copy API docs into site output
+        run: |
+          mkdir -p _site/assets/api
+          cp -r docs/assets/api/python _site/assets/api/
+          cp -r docs/assets/api/ts _site/assets/api/
+
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site/wiki"
+          path: "_site"
 
       - name: Deploy to GitHub Pages
         id: deployment

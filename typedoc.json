@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./npm/src/index.ts"],
+  "out": "./docs/assets/api/ts",
+  "name": "wazootech-wiki TypeScript API",
+  "includeVersion": true,
+  "tsconfig": "./tsconfig.json",
+  "highlightLanguages": ["typescript", "javascript", "bash", "json", "yaml", "markdown", "html", "python", "sparql", "powershell"]
+}

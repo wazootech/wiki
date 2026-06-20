@@ -28,7 +28,10 @@
     "postinstall": "node npm/setup.js",
     "preuninstall": "node npm/uninstall.js",
     "setup": "node npm/setup.js",
-    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
+    "gendocs:python": "uv run sphinx-build -b html -c docs docs/api/python docs/assets/api/python",
+    "gendocs:ts": "typedoc",
+    "test:drift": "node npm/test-cli-drift.js",
+    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js && npm run test:drift"
   },
   "files": [
     "npm/bin/",
@@ -47,6 +50,7 @@
     "@types/node": "^24.0.0",
     "esbuild": "0.28.1",
     "tsup": "^8.3.0",
+    "typedoc": "^0.27.0",
     "typescript": "^5.8.0"
   },
   "overrides": {

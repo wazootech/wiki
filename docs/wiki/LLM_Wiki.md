@@ -32,7 +32,7 @@ Developer **Farza** (founder of buildspace) created [Farzapedia](Farzapedia.md) 
 
 ## Integrating the LLM Wiki in this wiki
 
-This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. It enforces:
+This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. The wiki grows through two complementary learning modalities — **continual** (temporal accumulation) and **recursive** (iterative self-refinement) — documented in [Learning Systems](Learning_Systems.md). It enforces:
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 
@@ -45,6 +45,7 @@ This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of t
 ## Related
 
 - [Wiki CLI](Wiki_CLI.md) — including [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) ([llm-wiki-template](https://github.com/wazootech/llm-wiki-template))
+- [Learning Systems](Learning_Systems.md) — continual versus recursive learning
 - [Declarative Knowledge](Declarative_Knowledge.md)
 - [Procedural Knowledge](Procedural_Knowledge.md)
 - [Farzapedia](Farzapedia.md)

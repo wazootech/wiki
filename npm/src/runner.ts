@@ -8,6 +8,7 @@ import type { RunOptions, WikiCommandResult } from "./types";
 const packageRoot = path.resolve(__dirname, "..", "..");
 const venvDir = path.join(packageRoot, ".venv");
 
+/** Resolve the path to the Python interpreter inside the project's virtual environment. */
 export function getVenvPython(): string {
   const exeName = process.platform === "win32" ? "python.exe" : "python";
   const scriptsDir = process.platform === "win32" ? "Scripts" : "bin";
@@ -24,6 +25,11 @@ function venvIsReady(): boolean {
   return result.status === 0;
 }
 
+/** Verify that the Python venv is ready, attempting setup if needed.
+ *
+ * @returns Path to the Python interpreter.
+ * @throws {@link WikiSetupError} if the environment cannot be prepared.
+ */
 export function ensurePythonReady(): string {
   if (venvIsReady()) return getVenvPython();
 
@@ -42,6 +48,14 @@ export function ensurePythonReady(): string {
   return getVenvPython();
 }
 
+/** Execute a wiki CLI command and collect its output.
+ *
+ * Spawns ``python -m wiki <args>``, buffers stdout/stderr, and returns
+ * a typed result. Errors and timeouts produce a {@link WikiCommandError}.
+ *
+ * @param args - Arguments to pass to the wiki CLI.
+ * @param options - Execution options (cwd, env, timeout, stdin, signal).
+ */
 export function runWiki(args: readonly string[], options: RunOptions = {}): Promise<WikiCommandResult> {
   const pythonExe = ensurePythonReady();
   const command = [pythonExe, "-m", "wiki", ...args];
@@ -98,6 +112,16 @@ export function runWiki(args: readonly string[], options: RunOptions = {}): Prom
   });
 }
 
+/** Spawn a wiki CLI command with inherited stdio.
+ *
+ * Unlike {@link runWiki} the child's stdio is connected to the parent
+ * process, making it suitable for long-running commands such as
+ * ``wiki serve``.
+ *
+ * @param args - Arguments to pass to the wiki CLI.
+ * @param options - Spawn options (cwd, env).
+ * @returns The spawned child process.
+ */
 export function spawnWiki(args: readonly string[], options: SpawnOptions = {}): ChildProcess {
   const pythonExe = ensurePythonReady();
   return spawn(pythonExe, ["-m", "wiki", ...args], {

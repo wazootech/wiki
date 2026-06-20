@@ -14,6 +14,8 @@ See [Design Philosophies](Design_Philosophies.md) for the CLI vs library split. 
 
 The **Wiki** package (`wazootech-wiki` on PyPI) exposes a **library-first** Python API. Python calls return typed results and raise domain exceptions instead of printing or exiting. Semver applies to symbols in `wiki.__all__` (listed below); other `wiki.*` modules are internal unless documented on this page.
 
+Generated reference docs are available at [Python API Reference](Python_API_Reference.md).
+
 ### Install and imports
 
 ```bash
@@ -177,6 +179,8 @@ const { Wiki } = require("wazootech-wiki");
 The SDK exposes methods that mirror the CLI surface: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `serve`, `init`, and `upgrade`. Options use TypeScript-friendly camelCase names and map to the corresponding CLI flags.
 
 Most report-producing methods return a `WikiCommandResult` containing `ok`, `exitCode`, `stdout`, `stderr`, and the executed command argv. JSON-capable commands can parse structured output: `query({ format: "json" })` returns parsed JSON by default, and `export({ format: "dict" })` or `export({ format: "json-ld" })` includes parsed `data`.
+
+Generated reference docs are available at [TypeScript API Reference](TypeScript_API_Reference.md).
 
 Because the SDK is a thin binding, updates to `src/wiki/cli.py` subcommands or flags must be reflected in `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same change.
 
