@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "default": [],
+      "items": {
+        "format": "path",
+        "type": "string"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "verbose": {
+      "default": false,
+      "title": "Verbose",
+      "type": "boolean"
+    },
+    "strict": {
+      "default": false,
+      "title": "Strict",
+      "type": "boolean"
+    }
+  },
+  "title": "LintOptions",
+  "type": "object"
+}

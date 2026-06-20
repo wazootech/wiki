@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "default": [],
+      "items": {
+        "format": "path",
+        "type": "string"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "apply": {
+      "default": false,
+      "title": "Apply",
+      "type": "boolean"
+    },
+    "fixBroken": {
+      "default": false,
+      "title": "Fixbroken",
+      "type": "boolean"
+    },
+    "dryRun": {
+      "default": false,
+      "title": "Dryrun",
+      "type": "boolean"
+    },
+    "check": {
+      "default": false,
+      "title": "Check",
+      "type": "boolean"
+    },
+    "verbose": {
+      "default": false,
+      "title": "Verbose",
+      "type": "boolean"
+    }
+  },
+  "title": "LinkOptions",
+  "type": "object"
+}

@@ -1,0 +1,35 @@
+{
+  "properties": {
+    "ok": {
+      "default": true,
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "updated_count": {
+      "default": 0,
+      "title": "Updated Count",
+      "type": "integer"
+    },
+    "error_count": {
+      "default": 0,
+      "title": "Error Count",
+      "type": "integer"
+    },
+    "stale_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Stale Files",
+      "type": "array"
+    },
+    "render_errors": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Render Errors",
+      "type": "array"
+    }
+  },
+  "title": "RenderReport",
+  "type": "object"
+}

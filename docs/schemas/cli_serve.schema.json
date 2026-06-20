@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "host": {
+      "default": "127.0.0.1",
+      "title": "Host",
+      "type": "string"
+    },
+    "port": {
+      "default": 8080,
+      "title": "Port",
+      "type": "integer"
+    },
+    "baseUrl": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseurl"
+    },
+    "urlStyle": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Urlstyle"
+    },
+    "watch": {
+      "default": false,
+      "title": "Watch",
+      "type": "boolean"
+    }
+  },
+  "title": "ServeOptions",
+  "type": "object"
+}

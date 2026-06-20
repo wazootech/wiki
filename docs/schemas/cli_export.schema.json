@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "files": {
+      "default": [],
+      "items": {
+        "format": "path",
+        "type": "string"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "output": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output"
+    },
+    "format": {
+      "default": "dict",
+      "title": "Format",
+      "type": "string"
+    },
+    "mode": {
+      "default": "expanded",
+      "title": "Mode",
+      "type": "string"
+    }
+  },
+  "title": "ExportOptions",
+  "type": "object"
+}

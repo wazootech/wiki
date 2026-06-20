@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "ok": {
+      "default": true,
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "stale_files": {
+      "items": {
+        "format": "path",
+        "type": "string"
+      },
+      "title": "Stale Files",
+      "type": "array"
+    },
+    "formatted_count": {
+      "default": 0,
+      "title": "Formatted Count",
+      "type": "integer"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Message"
+    },
+    "verbose_lines": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Verbose Lines",
+      "type": "array"
+    }
+  },
+  "title": "FmtReport",
+  "type": "object"
+}

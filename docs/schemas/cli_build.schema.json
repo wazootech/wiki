@@ -1,0 +1,61 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "outputDir": {
+      "default": "_site",
+      "title": "Outputdir",
+      "type": "string"
+    },
+    "baseUrl": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseurl"
+    },
+    "urlStyle": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Urlstyle"
+    },
+    "render": {
+      "default": false,
+      "title": "Render",
+      "type": "boolean"
+    },
+    "reload": {
+      "default": false,
+      "title": "Reload",
+      "type": "boolean"
+    },
+    "cache": {
+      "default": false,
+      "title": "Cache",
+      "type": "boolean"
+    },
+    "noCheck": {
+      "default": false,
+      "title": "Nocheck",
+      "type": "boolean"
+    },
+    "verbose": {
+      "default": false,
+      "title": "Verbose",
+      "type": "boolean"
+    }
+  },
+  "title": "BuildOptions",
+  "type": "object"
+}
