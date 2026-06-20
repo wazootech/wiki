@@ -62,14 +62,14 @@ jobs:
 
       - name: Copy API docs into site output
         run: |
-          mkdir -p _site/assets/api
-          cp -r docs/assets/api/python _site/assets/api/
-          cp -r docs/assets/api/ts _site/assets/api/
+          mkdir -p _site/wiki/assets/api
+          cp -r docs/assets/api/python _site/wiki/assets/api/
+          cp -r docs/assets/api/ts _site/wiki/assets/api/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "_site"
+          path: "_site/wiki"
 
       - name: Deploy to GitHub Pages
         id: deployment
