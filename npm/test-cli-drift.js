@@ -31,7 +31,7 @@ const EXPECTED_OPTIONS = {
   query: ["query", "format", "output", "noInference", "reload", "cache", "jq", "pretty", "verbose", "parseJson"],
   serve: ["host", "port", "baseUrl", "urlStyle", "watch"],
   init: [
-    "git", "repo", "graphContextWiki", "siteBaseUrl", "siteUrlStyle",
+    "git", "repo", "graphContextWiki", "baseUrl", "urlStyle",
     "graphContentPredicate", "linkStyle", "wikiInputs", "graphBaseIri",
     "graphImplicitTypes", "graphImplicitTypesPolicy", "graphIncludeFileExtension",
   ],
@@ -61,8 +61,8 @@ const RENAME_MAP = {
   serve: { site_base_url: "baseUrl", site_url_style: "urlStyle" },
   init: {
     init_git: "git",
-    site_base_url: "siteBaseUrl",
-    site_url_style: "siteUrlStyle",
+    site_base_url: "baseUrl",
+    site_url_style: "urlStyle",
   },
   query: { output_format: "format", query_args: "query" },
   export: { rdf_format: "format" },
