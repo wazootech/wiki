@@ -9,12 +9,24 @@ import argparse
 import html as html_module
 import json
 import shutil
-import sys
+from dataclasses import dataclass
 from pathlib import Path
 
+import pygments
 from jinja2 import Template
+from pygments.util import ClassNotFound
 
+from wiki.assets import build_asset_manifest
 from wiki.config import Config
+from wiki.format import (
+    process_rdf_format,
+    resolve_metadata_pygments_lexer,
+    resolve_metadata_view,
+)
+from wiki.links import is_external_link, resolve_page_route
+from wiki.paths import page_output_path
+from wiki.schemas.metadata import METADATA_VIEWS
+from wiki.schemas.site import VirtualPage, WikiSite
 from wiki.site.build import build_site, expand_known_curie
 from wiki.site.markdown import (
     METADATA_HIDDEN_FIELDS,
@@ -24,20 +36,6 @@ from wiki.site.markdown import (
     render_copyable_pre,
     render_outline_title,
 )
-from wiki.format import (
-    process_rdf_format,
-    resolve_metadata_pygments_lexer,
-    resolve_metadata_view,
-)
-from wiki.schemas.metadata import METADATA_VIEWS
-from wiki.schemas.site import VirtualPage, WikiSite
-from wiki.assets import build_asset_manifest
-from wiki.links import is_external_link, resolve_page_route
-from wiki.paths import page_output_path, page_url
-
-import pygments
-from pygments.util import ClassNotFound
-from dataclasses import dataclass
 
 
 @dataclass
