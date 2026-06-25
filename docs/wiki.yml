@@ -34,7 +34,8 @@ graph:
 
 # Page layout and URL routing.
 site:
-  layout: index.html
+  # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
+  # Build with: python docs/build.py
   # URL prefix for built and served pages.
   base_url: /wiki
   # dir → slug/index.html; file → slug.html
