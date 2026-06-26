@@ -102,6 +102,7 @@ DOCS_WIKI_INIT_OPTIONS = InitOptions(
     site_url_style=DEFAULT_URL_STYLE,
     graph_content_predicate="schema:articleBody",
     link_style="standard",
+    site_layout="layouts/wikipedia.html",
 )
 
 
@@ -111,6 +112,7 @@ def resolve_init_options(
     graph_context_wiki: str | None,
     site_base_url: str | None,
     site_url_style: str | None,
+    site_layout: str | None = None,
     graph_content_predicate: str | None,
     link_style: str | None,
     cwd: Path,
@@ -148,6 +150,7 @@ def resolve_init_options(
         graph_context_wiki=resolved_context_wiki,
         site_base_url=resolved_base_url,
         site_url_style=resolved_url_style,
+        site_layout=site_layout,
         graph_content_predicate=graph_content_predicate,
         link_style=link_style,
         wiki_inputs=wiki_inputs,

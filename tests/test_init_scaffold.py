@@ -205,6 +205,7 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_context_wiki": ("graph", "context", "wiki"),
     "site_base_url": ("site", "base_url"),
     "site_url_style": ("site", "url_style"),
+    "site_layout": ("site", "layout"),
     "graph_content_predicate": ("graph", "content_predicate"),
     "link_style": ("link", "style"),
     "wiki_inputs": ("wiki", "inputs"),
