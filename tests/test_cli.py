@@ -11,6 +11,7 @@ from urllib.request import urlopen
 import yaml
 from click.testing import CliRunner
 
+from wiki import __version__
 from wiki.cli import FILE_COMMANDS, main
 from wiki.config import Config
 from wiki.init_scaffold import (
@@ -44,6 +45,12 @@ name: Invalid Page
             self.assertEqual(result_strict.exit_code, 1)
             self.assertIn("Errors:", result_strict.output)
             self.assertIn("spaces are not allowed", result_strict.output)
+
+    def test_cli_version_flag(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(main, ["--version"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.output, f"wiki, version {__version__}\n")
 
     def test_cli_lint_reports_filename_pattern(self) -> None:
         runner = CliRunner()

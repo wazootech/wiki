@@ -4,6 +4,7 @@
 
 ### Added
 
+- `wiki --version` flag prints the installed version ([#132](https://github.com/wazootech/wiki/issues/132)).
 - **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Wiki` session, typed `AuditReport` / `Issue` and operation result models, direct `Wiki.build`, `Wiki.init`, `Wiki.link`, `Wiki.render`, `Wiki.export`, and `Wiki.format` methods, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
 - Typed **layout context** models (`LayoutContext`) validated at `build_layout_context` with expanded layout slot contract tests ([#106](https://github.com/wazootech/wiki/issues/106)).
 
