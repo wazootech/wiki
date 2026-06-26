@@ -126,8 +126,6 @@ def _build_static_site(wiki: Wiki, options: BuildOptions) -> BuildResult:
                 base_url=base_url,
                 url_style=url_style,
                 default_layout=default_layout,
-                site=site,
-                config=config,
             ),
             encoding="utf-8",
         )
@@ -138,7 +136,7 @@ def _build_static_site(wiki: Wiki, options: BuildOptions) -> BuildResult:
         entry.output_path.parent.mkdir(parents=True, exist_ok=True)
         if entry.source is not None:
             shutil.copy2(entry.source, entry.output_path)
-        else:
+        elif entry.output_path.name.endswith(".css"):
             write_packaged_asset(entry.output_path.name, entry.output_path)
         written_paths.append(entry.output_path.relative_to(output_dir))
 

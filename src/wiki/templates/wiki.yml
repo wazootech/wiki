@@ -1,4 +1,4 @@
-{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_layout, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension, site_layout #}
+{# wiki init scaffold — variables: graph_context_wiki, site_base_url, site_url_style, site_layout, graph_content_predicate, link_style, wiki_inputs, graph_base_iri, graph_implicit_types, graph_implicit_types_policy, graph_include_file_extension #}
 
 # Wiki paths, assets, and filename policy (wiki check / wiki lint).
 wiki:
@@ -64,11 +64,7 @@ graph:
 
 # Page layout and URL routing.
 site:
-{% if site_layout %}
-  layout: {{ site_layout }}
-{% else %}
   # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
-{% endif %}
   # URL prefix for built and served pages.
   base_url: {{ site_base_url }}
   # dir → slug/index.html; file → slug.html
