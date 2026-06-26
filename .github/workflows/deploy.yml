@@ -58,7 +58,7 @@ jobs:
         run: uv run wiki -c docs/wiki.yml lint --strict -v
 
       - name: Build Static Site
-        run: uv run wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
+        run: uv run python docs/build.py --output-dir _site
 
       - name: Copy API docs into site output
         run: |
