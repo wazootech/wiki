@@ -98,6 +98,8 @@ class WikiHandler(BaseHTTPRequestHandler):
                         base_url=base,
                         url_style=state.url_style,
                         default_layout=state.default_layout,
+                        site=state.site,
+                        config=state.config,
                     )
                 )
             elif self._serve_asset(parsed[len(base) + 1:]):

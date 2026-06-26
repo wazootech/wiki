@@ -35,7 +35,7 @@ wikilink = "wiki.mdformat_wikilink"
 [tool.setuptools]
 package-dir = {"" = "src"}
 packages = {find = {where = ["src"], include = ["wiki*"]}}
-package-data = {"wiki" = ["templates/*", "templates/schemas/*", "layouts/*", "assets/*"]}
+package-data = {"wiki" = ["templates/*", "templates/schemas/*", "layouts/*", "assets/*", "*.html"]}
 
 [dependency-groups]
 dev = [

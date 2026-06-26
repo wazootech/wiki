@@ -14,6 +14,7 @@ class InitOptions(BaseModel):
     graph_context_wiki: str
     site_base_url: str = "/wiki"
     site_url_style: str = "dir"
+    site_layout: str | None = None
     graph_content_predicate: str | None = None
     link_style: str | None = None
     wiki_inputs: list[str] | None = None
