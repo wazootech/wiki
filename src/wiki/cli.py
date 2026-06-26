@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 
+from . import __version__
 from . import upgrade as upgrade_module
 from .cli_output import exit_audit_report, print_check_messages
 from .errors import BuildError, UpgradeError
@@ -34,6 +35,7 @@ def optional_files_argument(f):
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name="wiki")
 @click.option(
     "--wiki-inputs",
     "wiki_inputs",
