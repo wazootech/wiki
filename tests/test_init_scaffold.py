@@ -205,7 +205,6 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_context_wiki": ("graph", "context", "wiki"),
     "site_base_url": ("site", "base_url"),
     "site_url_style": ("site", "url_style"),
-    "site_layout": ("site", "layout"),
     "graph_content_predicate": ("graph", "content_predicate"),
     "link_style": ("link", "style"),
     "wiki_inputs": ("wiki", "inputs"),
@@ -215,8 +214,8 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
     "graph_include_file_extension": ("graph", "include_file_extension"),
 }
 
-# InitOptions fields that are set programmatically (no CLI --flag).
-INIT_ONLY_OPTIONS: frozenset[str] = frozenset({"site_layout"})
+# Init-only CLI flags with no InitOptions field (none currently).
+INIT_ONLY_OPTIONS: frozenset[str] = frozenset()
 
 
 class TestInitLockstep(TestCase):
@@ -225,8 +224,6 @@ class TestInitLockstep(TestCase):
         from wiki.cli import init as init_cmd
         cli_option_names = {opt.opts[0] for opt in init_cmd.params if opt.opts}
         for field in InitOptions.model_fields.keys():
-            if field in INIT_ONLY_OPTIONS:
-                continue
             expected_opt = "--" + field.replace("_", "-")
             # We allow options with both / and without / (e.g. --graph-include-file-extension/--no-graph-include-file-extension)
             # Click splits these but let's check prefix or inclusion

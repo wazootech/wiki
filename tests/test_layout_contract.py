@@ -90,13 +90,11 @@ class TestLayoutContract(unittest.TestCase):
         from wiki.site import layout_tokens as layout_tokens_module
 
         self.assertIs(layout_context_module.LAYOUT_CONTEXT_MARKUP_PATHS, LAYOUT_MARKUP_PATHS)
-        self.assertEqual(len(LAYOUT_MARKUP_PATHS), 8)
+        self.assertEqual(len(LAYOUT_MARKUP_PATHS), 1)
 
         for path in LAYOUT_MARKUP_PATHS:
             context = _sample_context()
             value = _context_leaf(context, path)
-            if not value:
-                continue  # empty optional fields are not wrapped
             self.assertIsInstance(value, Markup, msg=f"expected Markup at {path}")
             formatted = layout_tokens_module._format_leaf(value, path=path)
             self.assertEqual(formatted, str(value), msg=f"markup path should pass through at {path}")
@@ -108,8 +106,7 @@ class TestLayoutContract(unittest.TestCase):
             self.assertIn(token, tokens)
             _context_leaf(context, path)
         self.assertIn("%wiki.head%", tokens)
-        expected = set(LAYOUT_TOKEN_CONTEXT_PATHS.keys()) | {"%wiki.head%"}
-        self.assertEqual(set(tokens), expected)
+        self.assertEqual(set(tokens), {"%wiki.head%", "%wiki.base_url%", "%wiki.body%"})
 
     def test_old_page_content_slot_is_unknown(self) -> None:
         tokens = build_token_map(_sample_context())
