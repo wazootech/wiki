@@ -486,6 +486,12 @@ def serve(
     help="Override site.url_style.",
 )
 @click.option(
+    "--site-layout",
+    "site_layout",
+    default=None,
+    help="Override site.layout.",
+)
+@click.option(
     "--graph-content-predicate",
     "graph_content_predicate",
     default=None,
@@ -532,6 +538,7 @@ def init(
     graph_context_wiki: str | None,
     site_base_url: str | None,
     site_url_style: str | None,
+    site_layout: str | None,
     graph_content_predicate: str | None,
     link_style: str | None,
     wiki_inputs: tuple[str, ...],
@@ -581,6 +588,7 @@ def init(
         graph_context_wiki=graph_context_wiki,
         site_base_url=site_base_url,
         site_url_style=site_url_style,
+        site_layout=site_layout,
         graph_content_predicate=graph_content_predicate,
         link_style=link_style,
         cwd=cwd,
