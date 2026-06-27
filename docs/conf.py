@@ -8,10 +8,12 @@ from pathlib import Path
 # Make the source package importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+import wiki
+
 project = "wazootech-wiki"
 copyright = "2026, wazootech"
 author = "wazootech"
-release = "0.1.15"
+release = wiki.__version__
 
 extensions = [
     "sphinx.ext.autodoc",
