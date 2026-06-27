@@ -11,9 +11,9 @@ This repository publishes `docs/wiki/` using `docs/wiki.yml`. The workflow lives
 ## Pipeline
 
 1. `uv sync` — install dependencies
-1. `wiki -c docs/wiki.yml check --strict -v` — SHACL, JSON Schema, routes, layout
-1. `wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki` — static HTML
-1. Upload `_site/wiki` as the Pages artifact
+1. `uv run wiki -c docs/wiki.yml check --strict -v` — SHACL, JSON Schema, routes, layout
+1. `uv run python docs/build.py --output-dir _site` — static HTML
+1. Upload `_site` as the Pages artifact
 1. `deploy-pages` — publish
 
 Enable **GitHub Pages → Build and deployment → GitHub Actions** in repository settings.
