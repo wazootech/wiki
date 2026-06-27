@@ -79,7 +79,7 @@ Presets share the same agent-OS shell and differ only by starter graph:
 
 ## tropo — the typed knowledge graph
 
-**tropo** is the elegant successor to [Loam](Loam.md) and frontmatter-only typecheckers such as [Braincheck](Braincheck.md). The filesystem *is* the schema: a document's type is the folder it lives in; metadata is only what cannot be derived from path, git, or the first `# H1`.
+**tropo** is the typed knowledge graph layer. The filesystem *is* the schema: a document's type is the folder it lives in; metadata is only what cannot be derived from path, git, or the first `# H1`.
 
 ```
 people/jeff.md           →  type = person   (the folder says so)
@@ -182,21 +182,21 @@ Most workspaces never need exo. Single-agent setups stop at **tropo + strato**.
 - **No lock-in.** Plain Markdown + YAML; [Obsidian](Obsidian.md), Claude Code, Codex, or no editor at all.
 - **Medium-agnostic.** The same graph and review serve code and prose.
 
-## Vivary vs [Wiki CLI](Wiki_CLI.md) vs [Braincheck](Braincheck.md)
+## Vivary vs [Wiki CLI](Wiki_CLI.md)
 
-| Dimension       | Vivary (tropo)                                 | [Braincheck](Braincheck.md)               | [Wiki CLI](Wiki_CLI.md)                  |
-| --------------- | ---------------------------------------------- | ----------------------------------------- | ---------------------------------------- |
-| Primary goal    | Standardized **agent workspace**               | Frontmatter **typecheck**                 | Semantic wiki **toolchain**              |
-| Schema model    | Folder-as-type + `tropo.toml` packs            | `schema.yaml` base + per-`type`           | SHACL, JSON Schema, `wiki.yaml`          |
-| Metadata style  | Derive type, dates, title; minimal frontmatter | Explicit `type:` and fields in every file | YAML-LD frontmatter + shapes             |
-| Graph           | Typed nodes/edges from `ref` fields            | None                                      | Full RDF compile + [SPARQL](SPARQL.md)   |
-| Validation      | `tropo check` (strict gate)                    | `braincheck check`                        | `wiki check`, `wiki lint`                |
-| Review / impact | `ozone review`, `ozone impact`, `tropo blast`  | None                                      | Link graph, SHACL, broken-link lint      |
-| Agent loop      | strato templates + skills (`AGENTS.md`, loop)  | None                                      | [Wiki Skills](Wiki_Skills.md) (optional) |
-| Publishing      | Not the focus (workspace OS)                   | None                                      | `wiki build`, static HTML, RDF export    |
-| Dependencies    | Zero on core engines                           | Zero (single-file Python)                 | PyPI `wazootech-wiki`                    |
+| Dimension       | Vivary (tropo)                                 | [Wiki CLI](Wiki_CLI.md)                  |
+| --------------- | ---------------------------------------------- | ---------------------------------------- |
+| Primary goal    | Standardized **agent workspace**               | Semantic wiki **toolchain**              |
+| Schema model    | Folder-as-type + `tropo.toml` packs            | SHACL, JSON Schema, `wiki.yaml`          |
+| Metadata style  | Derive type, dates, title; minimal frontmatter | YAML-LD frontmatter + shapes             |
+| Graph           | Typed nodes/edges from `ref` fields            | Full RDF compile + [SPARQL](SPARQL.md)   |
+| Validation      | `tropo check` (strict gate)                    | `wiki check`, `wiki lint`                |
+| Review / impact | `ozone review`, `ozone impact`, `tropo blast`  | Link graph, SHACL, broken-link lint      |
+| Agent loop      | strato templates + skills (`AGENTS.md`, loop)  | [Wiki Skills](Wiki_Skills.md) (optional) |
+| Publishing      | Not the focus (workspace OS)                   | `wiki build`, static HTML, RDF export    |
+| Dependencies    | Zero on core engines                           | PyPI `wazootech-wiki`                    |
 
-**Braincheck**, [Loam](Loam.md), and tropo share an author lineage; tropo extends loam with graph emission, blast radius, and the Vivary workspace stack. **Wiki CLI** targets wikis that become queryable, publishable [semantic web](Semantic_Web.md) artifacts; Vivary targets the **agent-native workspace** pattern in the [LLM Wiki](LLM_Wiki.md) era — compounding loop + typed graph + human gates — without RDF compilation.
+**Wiki CLI** targets wikis that become queryable, publishable [semantic web](Semantic_Web.md) artifacts; Vivary targets the **agent-native workspace** pattern in the [LLM Wiki](LLM_Wiki.md) era — compounding loop + typed graph + human gates — without RDF compilation.
 
 The stacks can complement each other: Vivary for day-to-day agent workspace hygiene; Wiki CLI when the same Markdown should become a validated public wiki with SPARQL and static site output.
 
@@ -204,15 +204,13 @@ The stacks can complement each other: Vivary for day-to-day agent workspace hygi
 
 Vivary composes ideas from [Jeff Kazzee](Jeff_Kazzee.md)'s earlier tools:
 
-- **[Braincheck](Braincheck.md) → [Loam](Loam.md) → tropo** — knowledge-layer typechecking, evolving toward folder-as-type and graph edges
+- **braincheck → loam → tropo** — knowledge-layer validation lineage evolving from frontmatter-everywhere to folder-as-type to typed graph edges
 - **throughline + flywheel → strato** — self-improving loop at turn speed and heartbeat speed
 - **ozone, exo** — graph-native review and coordination (new in Vivary)
 
 ## Related
 
 - [Jeff Kazzee](Jeff_Kazzee.md) — author and tool lineage
-- [Loam](Loam.md) — folder-as-type predecessor to tropo
-- [Braincheck](Braincheck.md) — frontmatter-only typechecker (earliest predecessor)
 - [Wiki CLI](Wiki_CLI.md) — semantic compiler for Markdown wikis
 - [LLM Wiki](LLM_Wiki.md) — compounding agent-maintained knowledge pattern
 - [Agent Memory Filesystems](Agent_Memory_Filesystems.md) — filesystem-metaphor memory tools compared

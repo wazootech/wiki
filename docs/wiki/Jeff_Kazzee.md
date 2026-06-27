@@ -10,15 +10,13 @@ familyName: Kazzee
 
 ## Software in this wiki
 
-| Tool                        | Role                                                                                |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| [Braincheck](Braincheck.md) | Frontmatter typechecker (`schema.yaml`, explicit `type:` per file)                  |
-| [Loam](Loam.md)             | Folder-as-type typed knowledge layer; derives metadata from path, git, and H1       |
-| [Vivary](Vivary.md)         | Agent workspace standard — tropo graph, strato loop, ozone review, exo coordination |
+| Tool                | Role                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| [Vivary](Vivary.md) | Agent workspace standard — tropo graph, strato loop, ozone review, exo coordination |
 
 ## Lineage
 
-- **braincheck → loam → tropo** — knowledge-layer validation evolving from frontmatter-everywhere to folder-as-type to typed graph edges ([Vivary](Vivary.md))
+- **braincheck → loam → tropo** — knowledge-layer validation lineage evolving to typed graph edges in [Vivary](Vivary.md)
 - **throughline + flywheel → strato** — self-improving loop at turn speed and heartbeat speed, fused inside Vivary workspace templates
 
 ## Other repositories
@@ -33,8 +31,6 @@ familyName: Kazzee
 
 ## Related
 
-- [Braincheck](Braincheck.md)
-- [Loam](Loam.md)
 - [Vivary](Vivary.md)
 - [Wiki CLI](Wiki_CLI.md) — semantic wiki toolchain (different stack, complementary)
 - [LLM Wiki](LLM_Wiki.md) — compounding agent-maintained knowledge pattern
