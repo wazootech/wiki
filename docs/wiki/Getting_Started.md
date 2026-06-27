@@ -121,6 +121,7 @@ Do not commit `.agents/skills/` to your wiki repo unless you intentionally vendo
 - [Wiki CLI](Wiki_CLI.md) — command reference home
 - [Wiki Configuration](Wiki_Configuration.md) — tune `wiki`, `graph`, `site`, `link`, and check severities
 - [Style Guide](Style_Guide.md) — document types, shapes, and wikilinks
+- [Linked Markdown](Linked_Markdown.md) — the wazootech/linked-markdown protocol specification
 - [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity validation and CI checks
 - [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits (broken links, filenames, headings)
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL from the terminal
