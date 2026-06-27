@@ -70,7 +70,7 @@ site:
   # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).
 {% endif %}
   # URL prefix for built and served pages.
-  base_url: {{ site_base_url }}
+  base_url: {{ '""' if site_base_url == "" else site_base_url }}
   # dir → slug/index.html; file → slug.html
   url_style: {{ site_url_style }}
 

@@ -98,7 +98,7 @@ def detect_origin_repo(cwd: Path) -> str | None:
 # Init options for this repository's docs/ wiki (parity with docs/wiki.yml).
 DOCS_WIKI_INIT_OPTIONS = InitOptions(
     graph_context_wiki="https://wazootech.github.io/wiki/",
-    site_base_url="/wiki",
+    site_base_url="",
     site_url_style=DEFAULT_URL_STYLE,
     graph_content_predicate="schema:articleBody",
     link_style="standard",

@@ -361,7 +361,7 @@ def build(output_dir: Path) -> None:
     config = Config.load(config_path)
     site = build_site(config)
 
-    base_url = config.site.base_url or "/wiki"
+    base_url = config.site.base_url if config.site.base_url is not None else "/wiki"
     url_style = config.site.url_style or "dir"
     base_path = base_url.strip("/")
 
