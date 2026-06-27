@@ -240,7 +240,6 @@ a:hover {
   cursor: pointer;
   transition: all 0.15s ease;
   margin-bottom: -1px;
-  white-space: nowrap;
 }
 
 .vector-tabs li.selected a {
