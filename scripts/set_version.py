@@ -6,10 +6,11 @@ Usage:
     python scripts/set_version.py --check
 """
 
-import sys
 import json
 import re
+import sys
 from pathlib import Path
+
 
 def get_repo_root() -> Path:
     return Path(__file__).resolve().parent.parent

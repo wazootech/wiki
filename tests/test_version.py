@@ -1,12 +1,13 @@
+import sys
 import unittest
 from pathlib import Path
-import sys
 
 # Make the scripts directory importable
 repo_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(repo_root / "scripts"))
 
-import set_version
+import set_version  # noqa: E402
+
 
 class TestVersionSync(unittest.TestCase):
     def test_version_strings_are_in_sync(self) -> None:
@@ -20,7 +21,7 @@ class TestVersionSync(unittest.TestCase):
         self.assertEqual(
             len(unique_versions), 
             1, 
-            f"Version mismatch detected in codebase!\n" + "\n".join(f"  {k}: {v}" for k, v in versions.items())
+            "Version mismatch detected in codebase!\n" + "\n".join(f"  {k}: {v}" for k, v in versions.items())
         )
 
 if __name__ == "__main__":
