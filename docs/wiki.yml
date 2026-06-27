@@ -36,7 +36,7 @@ graph:
 site:
   layout: layouts/wikipedia.html
   # URL prefix for built and served pages.
-  base_url: /wiki
+  base_url: ""
   # dir → slug/index.html; file → slug.html
   url_style: dir
 
