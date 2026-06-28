@@ -87,6 +87,23 @@ wiki -c docs/wiki.yml lint -v
 
 For library-level validation and build in Python (without subprocess), see [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md). Unit tests target `Wiki` class methods under `tests/`.
 
+### Release workflow
+
+To ship a new version across PyPI and npm:
+
+1. **Bump version** in all three places: `pyproject.toml`, `package.json`, `src/wiki/__init__.py` (they must match — CI verifies this).
+2. **Update `CHANGELOG.md`** with the new version's entries.
+3. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
+4. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
+5. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
+
+The release workflow is at `.github/workflows/release.yml`. It is the **only** path for publishing to registries — do not `npm publish` or `uv publish` by hand.
+
+Workflow inputs (all optional):
+- `skip_pypi` — skip PyPI publish
+- `skip_npm` — skip npm publish
+- `skip_binaries` — skip standalone binaries and GitHub Release
+
 ### Config schema changes
 
 When changing `wiki.yaml` schema or rejecting invalid keys:
