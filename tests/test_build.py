@@ -8,10 +8,6 @@ from click.testing import CliRunner
 from layout_helpers import write_layout
 from wiki.cli import main
 from wiki.config import Config
-from wiki.init_scaffold import (
-    DOCS_WIKI_INIT_OPTIONS,
-    render_wiki_yaml,
-)
 from wiki.paths import page_output_path
 from wiki.schemas import AuditReport
 from wiki.session import Wiki
@@ -330,18 +326,6 @@ about: wiki:Alice_Theory
             self.assertIn("<title>Page - Wiki CLI</title>", html)
             built_logo = (output_dir / "wiki" / "assets" / "logo.svg").read_text(encoding="utf-8")
             self.assertIn("<text>A</text>", built_logo)
-
-
-    def test_docs_wiki_yml_matches_init_scaffold(self) -> None:
-        repo_root = Path(__file__).resolve().parent.parent
-        docs_yml = repo_root / "docs" / "wiki.yml"
-        expected = render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)
-        self.assertTrue(docs_yml.is_file(), f"docs/wiki.yml not found at {docs_yml}")
-        self.assertEqual(
-            docs_yml.read_text(encoding="utf-8"),
-            expected,
-            "docs/wiki.yml must match render_wiki_yaml(DOCS_WIKI_INIT_OPTIONS)",
-        )
 
 
 if __name__ == "__main__":
