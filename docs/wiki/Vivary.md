@@ -3,6 +3,7 @@ type: schema:SoftwareApplication
 name: Vivary
 softwareVersion: 0.1.0
 description: A standard and scaffolder for agent-native workspaces — typed knowledge graph, self-improving loop, graph-aware review, and blast-radius impact.
+codeRepository: https://github.com/Jeff-Kazzee/vivary
 ---
 
 # Vivary
