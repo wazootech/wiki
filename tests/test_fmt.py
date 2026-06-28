@@ -21,19 +21,19 @@ class TestWikiFmt(unittest.TestCase):
         """Test that mdformat with our plugin preserves Obsidian-style wikilinks."""
         # Simple wikilink
         content = "See [[Wiki_CLI]] for details."
-        formatted = mdformat.text(content, extensions=["wikilink", "frontmatter", "gfm"])
+        formatted = mdformat.text(content, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
         self.assertEqual(formatted.strip(), "See [[Wiki_CLI]] for details.")
 
         # Wikilink with alias/display name
         content_alias = "See [[Wiki_CLI|the CLI]] for details."
-        formatted_alias = mdformat.text(content_alias, extensions=["wikilink", "frontmatter", "gfm"])
+        formatted_alias = mdformat.text(content_alias, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
         self.assertEqual(formatted_alias.strip(), "See [[Wiki_CLI|the CLI]] for details.")
 
     def test_mdformat_aligns_tables(self) -> None:
         """Test that mdformat aligns and pads markdown tables with spaces."""
         unaligned = "| LongHeader | Short |\n|---|---|\n| cell | verylongcell |\n"
         expected = "| LongHeader | Short        |\n| ---------- | ------------ |\n| cell       | verylongcell |\n"
-        formatted = mdformat.text(unaligned, extensions=["wikilink", "frontmatter", "gfm"])
+        formatted = mdformat.text(unaligned, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
         self.assertEqual(formatted, expected)
 
     def test_cli_fmt_in_place(self) -> None:

@@ -19,12 +19,12 @@ from mdformat._conf import (
 
 from .config import Config
 
-DEFAULT_FMT_EXTENSIONS = ("wikilink", "frontmatter", "gfm")
+DEFAULT_FMT_EXTENSIONS = ("wikilink", "frontmatter", "gfm", "toc", "footnote")
 
 DEFAULT_FMT_OPTS: dict[str, Any] = {
     "wrap": "no",
     "end_of_line": "lf",
-    "extensions": ["gfm", "frontmatter", "wikilink"],
+    "extensions": ["gfm", "frontmatter", "wikilink", "toc", "footnote"],
 }
 
 

@@ -260,7 +260,7 @@ Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed —
 fmt:  # optional block — inline mapping (init writes)
   wrap: "no"
   end_of_line: lf
-  extensions: [gfm, frontmatter, wikilink]
+  extensions: [gfm, frontmatter, wikilink, toc, footnote]
 
 # Pointer mode (optional alternative):
 # fmt: .mdformat.toml
@@ -270,10 +270,10 @@ fmt:  # optional block — inline mapping (init writes)
 | ------------- | ----------------- | -------------------------------- | ----------------- | ---------- |
 | `wrap`        | optional (inline) | `"no"`                           | writes            | `wiki fmt` |
 | `end_of_line` | optional (inline) | `lf`                             | writes            | `wiki fmt` |
-| `extensions`  | optional (inline) | `[gfm, frontmatter, wikilink]`   | writes            | `wiki fmt` |
+| `extensions`  | optional (inline) | `[gfm, frontmatter, wikilink, toc, footnote]`   | writes            | `wiki fmt` |
 | TOML path     | optional          | unset — see fallback chain below | omits (commented) | `wiki fmt` |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (same as inline defaults above). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`, `toc`, `footnote`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
 
 | Shape          | Example               | When to use                                 |
 | -------------- | --------------------- | ------------------------------------------- |
