@@ -289,10 +289,7 @@ class GraphConfig(BaseModel):
     implicit_types: list[str] = Field(default_factory=list)
     implicit_types_policy: str = IMPLICIT_TYPES_POLICY
     context: dict[str, str | None] | None = Field(
-        default_factory=lambda: {
-            "@vocab": "https://schema.org/",
-            "schema": "https://schema.org/",
-        },
+        default=None,
         validation_alias=AliasChoices("context", "@context"),
     )
 

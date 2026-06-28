@@ -40,8 +40,10 @@ class Context:
     ) -> None:
         self.namespaces = DEFAULT_NAMESPACES.copy()
         self.base_iri = base_iri
-        self.vocab: str | None = None
-        if namespaces is not None:
+        if namespaces is None:
+            self.vocab: str | None = "https://schema.org/"
+        else:
+            self.vocab = None
             namespaces_copy = namespaces.copy()
             if "@vocab" in namespaces_copy:
                 val = namespaces_copy["@vocab"]

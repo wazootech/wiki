@@ -4,22 +4,17 @@ from __future__ import annotations
 
 import logging
 import re
-import warnings
 from pathlib import Path
 from typing import Any
 
-from bs4 import BeautifulSoup, Tag, XMLParsedAsHTMLWarning
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
-from rdflib.parser import InputSource, Parser, StringInputSource
-from rdflib.plugin import register
 
 from .config import Config, Context
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file
 
 logger = logging.getLogger(__name__)
-DEFAULT_MICRODATA_VOCAB = "https://schema.org/"
 
 
 def kebab_case(s: str) -> str:
@@ -240,148 +235,6 @@ def frontmatter_to_graph(
     return graph
 
 
-
-class MicrodataParser(Parser):
-    """Custom RDFLib parser wrapper enabling native `format='microdata'` support via BeautifulSoup."""
-    def parse(self, source: Any, graph: Graph, **kwargs: Any) -> None:
-        content = ""
-        if isinstance(source, StringInputSource):
-            raw = source.getByteStream().read()
-            content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
-        elif isinstance(source, InputSource):
-            stream = source.getByteStream()
-            if stream is not None:
-                raw = stream.read()
-                content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
-        elif hasattr(source, "read"):
-            raw = source.read()
-            content = raw.decode("utf-8") if isinstance(raw, bytes) else raw
-        else:
-            # Attempt fallback loading
-            try:
-                content = str(source)
-            except Exception:
-                return
-        
-        if isinstance(content, bytes):
-            content = content.decode("utf-8", errors="ignore")
-            
-        try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
-                soup = BeautifulSoup(content, "html.parser")
-        except Exception as e:
-            logger.warning("Failed to parse HTML: %s", e)
-            return
-
-        namespace_map = {prefix: str(namespace) for prefix, namespace in graph.namespaces()}
-        default_vocab = getattr(graph, "_vocab", "https://schema.org/")
-
-        def process_scope(elem: Tag, parent_subject: Any = None, incoming_predicate: Any = None) -> None:
-            if elem.has_attr("itemid"):
-                subject = URIRef(_expand_microdata_identifier(str(elem["itemid"]), namespace_map))
-            else:
-                subject = BNode()
-            
-            if elem.has_attr("itemtype"):
-                graph.add((subject, RDF.type, URIRef(_expand_microdata_identifier(str(elem["itemtype"]), namespace_map))))
-                
-            if parent_subject and incoming_predicate:
-                graph.add((parent_subject, incoming_predicate, subject))
-
-            def gather_props(node: Any, direct_props: list[Tag]) -> None:
-                for child in node.children:
-                    if not isinstance(child, Tag):
-                        continue
-                    if child.has_attr("itemprop"):
-                        direct_props.append(child)
-                    if not child.has_attr("itemscope"):
-                        gather_props(child, direct_props)
-
-            properties: list[Tag] = []
-            gather_props(elem, properties)
-
-            for prop_elem in properties:
-                prop_names = str(prop_elem.get("itemprop", "")).split()
-                preds = []
-                for p in prop_names:
-                    pred_uri = _expand_microdata_predicate(p, namespace_map, default_vocab)
-                    if pred_uri:
-                        preds.append(URIRef(pred_uri))
-                
-                if prop_elem.has_attr("itemscope"):
-                    for pred in preds:
-                        process_scope(prop_elem, parent_subject=subject, incoming_predicate=pred)
-                else:
-                    tag_name = prop_elem.name.lower()
-                    if tag_name in ("a", "link", "area"):
-                        val = prop_elem.get("href", "")
-                        expanded = _expand_microdata_identifier(val, namespace_map)
-                        obj = URIRef(expanded) if expanded else Literal(val)
-                    elif tag_name in ("audio", "embed", "iframe", "img", "source", "track", "video"):
-                        val = prop_elem.get("src", "")
-                        expanded = _expand_microdata_identifier(val, namespace_map)
-                        obj = URIRef(expanded) if expanded else Literal(val)
-                    elif tag_name == "meta":
-                        obj = Literal(prop_elem.get("content", ""))
-                    elif tag_name == "time":
-                        obj = Literal(prop_elem.get("datetime") or prop_elem.get_text().strip())
-                    else:
-                        obj = Literal(prop_elem.get_text().strip())
-                    for pred in preds:
-                        graph.add((subject, pred, obj))
-
-        all_scopes = soup.find_all(attrs={"itemscope": True})
-        for s in all_scopes:
-            parent = s.parent
-            is_nested = False
-            while parent:
-                if isinstance(parent, Tag) and parent.has_attr("itemscope"):
-                    is_nested = True
-                    break
-                parent = parent.parent
-            if not is_nested:
-                process_scope(s)
-
-
-def _expand_microdata_identifier(value: str, namespace_map: dict[str | None, str]) -> str:
-    value = value.strip()
-    if not value:
-        return value
-    if _is_absolute_iri(value):
-        return value
-    return _expand_bound_curie(value, namespace_map) or value
-
-
-def _expand_microdata_predicate(value: str, namespace_map: dict[str | None, str], default_vocab: str | None) -> str | None:
-    value = value.strip()
-    if not value:
-        return None
-    if _is_absolute_iri(value):
-        return value
-    if ":" in value:
-        return _expand_bound_curie(value, namespace_map) or value
-    if default_vocab:
-        return f"{default_vocab}{value}"
-    return None
-
-
-def _expand_bound_curie(value: str, namespace_map: dict[str | None, str]) -> str | None:
-    prefix, local = value.split(":", 1)
-    namespace = namespace_map.get(prefix)
-    if namespace is None:
-        return None
-    return f"{namespace}{local}"
-
-
-def _is_absolute_iri(value: str) -> bool:
-    lowered = value.lower()
-    return lowered.startswith(("http://", "https://", "urn:"))
-
-# Dynamically register our custom parser to unlock native `format="microdata"` support globally
-register("microdata", Parser, "wiki.graph", "MicrodataParser")
-
-
 def _process_document_file(graph: Graph, file_path: Path, context: Config) -> None:
     """Parse a supported wiki document into the graph."""
     data = document_data_from_path(file_path)
@@ -407,11 +260,6 @@ def _process_document_file(graph: Graph, file_path: Path, context: Config) -> No
 
     content = file_path.read_text(encoding="utf-8")
 
-    try:
-        graph.parse(data=content, format="microdata")
-    except Exception as e:
-        logger.warning("Failed to parse microdata in %s: %s", file_path.name, e)
-
     turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
     for block in turtle_blocks:
         try:
@@ -429,8 +277,6 @@ _EXT_FORMAT_MAP = {
     ".rdf": "xml",
     ".xml": "xml",
     ".jsonld": "json-ld",
-    ".html": "microdata",
-    ".htm": "microdata",
 }
 
 

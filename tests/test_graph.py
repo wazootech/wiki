@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from rdflib import RDF, Graph, Literal, URIRef
+from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from wiki.config import Config
@@ -65,7 +65,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         )
 
         # Context with NO default vocab
-        no_vocab_context = Context()
+        no_vocab_context = Context(namespaces={})
         self.assertIsNone(resolve_predicate("givenName", no_vocab_context))
         self.assertIsNone(resolve_predicate("headline", no_vocab_context))
         self.assertIsNone(resolve_predicate("label", no_vocab_context))
@@ -139,7 +139,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         blank_nodes = list(graph.objects(subject, address_pred))
         self.assertEqual(len(blank_nodes), 1)
         blank = blank_nodes[0]
-        self.assertTrue(isinstance(blank, URIRef) and str(blank).startswith("_:blank"))
+        self.assertIsInstance(blank, BNode)
         
         # Verify properties on the blank node
         street_pred = self.context.namespaces["schema"]["street"]
@@ -148,63 +148,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertTrue((blank, street_pred, Literal("123 Main St")) in graph)
         self.assertTrue((blank, city_pred, Literal("Seattle")) in graph)
 
-    def test_native_microdata_parsing(self) -> None:
-        """Test that the dynamically registered microdata parser extracts triples via format='microdata'."""
-        html_content = """
-        <div itemscope itemtype="https://schema.org/Person">
-            <span itemprop="givenName">John Microdata</span>
-            <a itemprop="url" href="https://microdata.io">Page</a>
-        </div>
-        """
-        g = Graph()
-        # Invoke native plugin
-        g.parse(data=html_content, format="microdata")
-        
-        # Verify contents were extracted
-        self.assertGreater(len(g), 0)
-        found_name = False
-        for s, p, o in g:
-            if str(p) == "https://schema.org/givenName" and str(o) == "John Microdata":
-                found_name = True
-            if str(p) == "https://schema.org/url":
-                self.assertEqual(str(o), "https://microdata.io")
-        
-        self.assertTrue(found_name, "Failed to find Microdata name literal in graph.")
 
-    def test_microdata_curies_expand_using_bound_namespaces(self) -> None:
-        html_content = """
-        <div itemscope itemtype="schema:Person" itemid="wiki:john_microdata">
-            <span itemprop="schema:givenName">John Microdata</span>
-            <span itemprop="unknown:role">Tester</span>
-        </div>
-        """
-        g = Graph()
-        g.bind("schema", "https://schema.org/")
-        g.bind("wiki", "https://wiki.example.org/")
-        g.parse(data=html_content, format="microdata")
-
-        subject = URIRef("https://wiki.example.org/john_microdata")
-        self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-        self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("John Microdata")) in g)
-        self.assertTrue((subject, URIRef("unknown:role"), Literal("Tester")) in g)
-
-    def test_microdata_href_expands_curies(self) -> None:
-        html_content = """
-        <div itemscope itemtype="https://schema.org/Person" itemid="https://wiki.example.org/alice">
-            <link itemprop="url" href="wiki:Ethan_Davidson">
-            <a itemprop="sameAs" href="wiki:Bob_Smith">Bob</a>
-        </div>
-        """
-        g = Graph()
-        g.bind("schema", "https://schema.org/")
-        g.bind("wiki", "https://wiki.example.org/")
-        g.parse(data=html_content, format="microdata")
-
-        subject = URIRef("https://wiki.example.org/alice")
-        ethan = URIRef("https://wiki.example.org/Ethan_Davidson")
-        bob = URIRef("https://wiki.example.org/Bob_Smith")
-        self.assertTrue((subject, URIRef("https://schema.org/url"), ethan) in g)
-        self.assertTrue((subject, URIRef("https://schema.org/sameAs"), bob) in g)
 
     def test_nested_typed_dict_creates_typed_blank_node(self) -> None:
         """Test that a nested dictionary with @type creates a typed blank node."""
@@ -500,49 +444,7 @@ name: Good Page
             self.assertGreater(len(g), 0)
 
 
-    def test_html_microdata_loaded_as_data(self) -> None:
-        """Test that .html files are loaded as microdata via _EXT_FORMAT_MAP."""
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            html_file = wiki_dir / "data.html"
-            html_file.write_text("""<html><body>
-<div itemscope itemtype="https://schema.org/Person">
-    <span itemprop="givenName">HTML Person</span>
-    <span itemprop="email">html@example.org</span>
-</div>
-</body></html>""", encoding="utf-8")
 
-            config = Config(wiki={"inputs": [wiki_dir]})
-            g = load_graph(config, infer=False)
-            self.assertGreater(len(g), 0)
-            found = any(
-                str(o) == "HTML Person"
-                for s, p, o in g
-                if str(p) == "https://schema.org/givenName"
-            )
-            self.assertTrue(found, "Microdata from .html file not found in graph")
-
-    def test_html_microdata_curies_use_configured_context(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            html_file = wiki_dir / "data.html"
-            html_file.write_text("""<html><body>
-<div itemscope itemtype="schema:Person" itemid="wiki:Bella_Davidson">
-    <span itemprop="schema:givenName">Bella Davidson</span>
-</div>
-</body></html>""", encoding="utf-8")
-
-            config = Config(
-                wiki={"inputs": [wiki_dir]},
-                graph={
-                    "context": {"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"},
-                },
-            )
-            g = load_graph(config, infer=False)
-
-            subject = URIRef("https://example.test/wiki/Bella_Davidson")
-            self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-            self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("Bella Davidson")) in g)
 
     def test_load_graph_reads_yaml_and_json_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
