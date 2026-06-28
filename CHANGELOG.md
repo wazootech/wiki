@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.17 — 2026-06-28
 
 ### Added
 
@@ -23,9 +23,6 @@
 - Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
 - Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
 - Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-
-### Changed
-
 - `wiki init` removes `--force`, `--site-name`, and `--site-theme-color`. Init requires a clean directory; re-scaffold in a new directory or remove existing scaffold files manually. Branding uses `<!-- wiki tweak: … -->` comments in scaffolded `assets/logo.svg` and `layouts/wikipedia.html`.
 
 ### Migration
