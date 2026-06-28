@@ -2,10 +2,11 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from rdflib import RDF, Graph, Literal, URIRef
+from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from wiki.config import Config
+from wiki.context import Context
 from wiki.graph import (
     frontmatter_to_graph,
     kebab_case,
@@ -28,36 +29,50 @@ class TestRDFFrontmatter(unittest.TestCase):
 
     def test_resolve_predicate(self) -> None:
         """Test resolve_predicate handles various prefixes and fallback mappings."""
+        # Context with schema.org default vocab
+        schema_context = Context(namespaces={"@vocab": "https://schema.org/"})
+
         # Custom namespace prefix
         self.assertEqual(
-            resolve_predicate("foaf:name", self.context),
-            self.context.namespaces["foaf"]["name"]
+            resolve_predicate("foaf:name", schema_context),
+            schema_context.namespaces["foaf"]["name"]
         )
         # Wiki prefix
         self.assertEqual(
-            resolve_predicate("wiki.gregory", self.context),
-            self.context.namespaces["wiki"]["gregory"]
+            resolve_predicate("wiki.gregory", schema_context),
+            schema_context.namespaces["wiki"]["gregory"]
         )
         # Unregistered prefix or default falls back to schema
         self.assertEqual(
-            resolve_predicate("givenName", self.context),
-            self.context.namespaces["schema"]["givenName"]
+            resolve_predicate("givenName", schema_context),
+            schema_context.namespaces["schema"]["givenName"]
         )
         self.assertEqual(
-            resolve_predicate("headline", self.context),
-            self.context.namespaces["schema"]["headline"]
+            resolve_predicate("headline", schema_context),
+            schema_context.namespaces["schema"]["headline"]
         )
         self.assertEqual(
-            resolve_predicate("rdfs:label", self.context),
-            self.context.namespaces["rdfs"]["label"]
+            resolve_predicate("rdfs:label", schema_context),
+            schema_context.namespaces["rdfs"]["label"]
         )
         self.assertEqual(
-            resolve_predicate("label", self.context),
-            self.context.namespaces["schema"]["label"]
+            resolve_predicate("label", schema_context),
+            schema_context.namespaces["schema"]["label"]
         )
         self.assertEqual(
-            resolve_predicate("unregistered:prop", self.context),
-            self.context.namespaces["schema"]["unregistered:prop"]
+            resolve_predicate("unregistered:prop", schema_context),
+            schema_context.namespaces["schema"]["unregistered:prop"]
+        )
+
+        # Context with NO default vocab
+        no_vocab_context = Context(namespaces={})
+        self.assertIsNone(resolve_predicate("givenName", no_vocab_context))
+        self.assertIsNone(resolve_predicate("headline", no_vocab_context))
+        self.assertIsNone(resolve_predicate("label", no_vocab_context))
+        # Prefixed keys should still resolve
+        self.assertEqual(
+            resolve_predicate("foaf:name", no_vocab_context),
+            no_vocab_context.namespaces["foaf"]["name"]
         )
 
     def test_resolve_object_datatypes(self) -> None:
@@ -124,7 +139,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         blank_nodes = list(graph.objects(subject, address_pred))
         self.assertEqual(len(blank_nodes), 1)
         blank = blank_nodes[0]
-        self.assertTrue(isinstance(blank, URIRef) and str(blank).startswith("_:blank"))
+        self.assertIsInstance(blank, BNode)
         
         # Verify properties on the blank node
         street_pred = self.context.namespaces["schema"]["street"]
@@ -133,63 +148,7 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertTrue((blank, street_pred, Literal("123 Main St")) in graph)
         self.assertTrue((blank, city_pred, Literal("Seattle")) in graph)
 
-    def test_native_microdata_parsing(self) -> None:
-        """Test that the dynamically registered microdata parser extracts triples via format='microdata'."""
-        html_content = """
-        <div itemscope itemtype="https://schema.org/Person">
-            <span itemprop="givenName">John Microdata</span>
-            <a itemprop="url" href="https://microdata.io">Page</a>
-        </div>
-        """
-        g = Graph()
-        # Invoke native plugin
-        g.parse(data=html_content, format="microdata")
-        
-        # Verify contents were extracted
-        self.assertGreater(len(g), 0)
-        found_name = False
-        for s, p, o in g:
-            if str(p) == "https://schema.org/givenName" and str(o) == "John Microdata":
-                found_name = True
-            if str(p) == "https://schema.org/url":
-                self.assertEqual(str(o), "https://microdata.io")
-        
-        self.assertTrue(found_name, "Failed to find Microdata name literal in graph.")
 
-    def test_microdata_curies_expand_using_bound_namespaces(self) -> None:
-        html_content = """
-        <div itemscope itemtype="schema:Person" itemid="wiki:john_microdata">
-            <span itemprop="schema:givenName">John Microdata</span>
-            <span itemprop="unknown:role">Tester</span>
-        </div>
-        """
-        g = Graph()
-        g.bind("schema", "https://schema.org/")
-        g.bind("wiki", "https://wiki.example.org/")
-        g.parse(data=html_content, format="microdata")
-
-        subject = URIRef("https://wiki.example.org/john_microdata")
-        self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-        self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("John Microdata")) in g)
-        self.assertTrue((subject, URIRef("unknown:role"), Literal("Tester")) in g)
-
-    def test_microdata_href_expands_curies(self) -> None:
-        html_content = """
-        <div itemscope itemtype="https://schema.org/Person" itemid="https://wiki.example.org/alice">
-            <link itemprop="url" href="wiki:Ethan_Davidson">
-            <a itemprop="sameAs" href="wiki:Bob_Smith">Bob</a>
-        </div>
-        """
-        g = Graph()
-        g.bind("schema", "https://schema.org/")
-        g.bind("wiki", "https://wiki.example.org/")
-        g.parse(data=html_content, format="microdata")
-
-        subject = URIRef("https://wiki.example.org/alice")
-        ethan = URIRef("https://wiki.example.org/Ethan_Davidson")
-        bob = URIRef("https://wiki.example.org/Bob_Smith")
-        self.assertTrue((subject, URIRef("https://schema.org/url"), ethan) in g)
-        self.assertTrue((subject, URIRef("https://schema.org/sameAs"), bob) in g)
 
     def test_nested_typed_dict_creates_typed_blank_node(self) -> None:
         """Test that a nested dictionary with @type creates a typed blank node."""
@@ -347,7 +306,10 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
     def test_base_iri_override_differs_from_context_wiki(self) -> None:
         config = Config(
             graph={
-                "context": {"wiki": "https://example.test/wiki/"},
+                "context": {
+                    "@vocab": "https://schema.org/",
+                    "wiki": "https://example.test/wiki/",
+                },
                 "base_iri": "https://example.test/docs/",
             }
         )
@@ -482,49 +444,7 @@ name: Good Page
             self.assertGreater(len(g), 0)
 
 
-    def test_html_microdata_loaded_as_data(self) -> None:
-        """Test that .html files are loaded as microdata via _EXT_FORMAT_MAP."""
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            html_file = wiki_dir / "data.html"
-            html_file.write_text("""<html><body>
-<div itemscope itemtype="https://schema.org/Person">
-    <span itemprop="givenName">HTML Person</span>
-    <span itemprop="email">html@example.org</span>
-</div>
-</body></html>""", encoding="utf-8")
 
-            config = Config(wiki={"inputs": [wiki_dir]})
-            g = load_graph(config, infer=False)
-            self.assertGreater(len(g), 0)
-            found = any(
-                str(o) == "HTML Person"
-                for s, p, o in g
-                if str(p) == "https://schema.org/givenName"
-            )
-            self.assertTrue(found, "Microdata from .html file not found in graph")
-
-    def test_html_microdata_curies_use_configured_context(self) -> None:
-        with TemporaryDirectory() as tmpdir:
-            wiki_dir = Path(tmpdir)
-            html_file = wiki_dir / "data.html"
-            html_file.write_text("""<html><body>
-<div itemscope itemtype="schema:Person" itemid="wiki:Bella_Davidson">
-    <span itemprop="schema:givenName">Bella Davidson</span>
-</div>
-</body></html>""", encoding="utf-8")
-
-            config = Config(
-                wiki={"inputs": [wiki_dir]},
-                graph={
-                    "context": {"schema": "https://schema.org/", "wiki": "https://example.test/wiki/"},
-                },
-            )
-            g = load_graph(config, infer=False)
-
-            subject = URIRef("https://example.test/wiki/Bella_Davidson")
-            self.assertTrue((subject, RDF.type, URIRef("https://schema.org/Person")) in g)
-            self.assertTrue((subject, URIRef("https://schema.org/givenName"), Literal("Bella Davidson")) in g)
 
     def test_load_graph_reads_yaml_and_json_documents(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -572,6 +492,62 @@ name: Test Page
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/person.yaml")
             self.assertTrue((expected, None, None) in g)
+
+    def test_vocab_null_ignores_unprefixed_keys(self) -> None:
+        """Test that configuring @vocab as None/null causes unprefixed keys and types to be ignored."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "alice.md").write_text("""---
+type: Person
+givenName: Alice
+schema:familyName: Smith
+---
+""", encoding="utf-8")
+
+            config = Config(
+                wiki={"inputs": [wiki_dir]},
+                graph={
+                    "context": {
+                        "@vocab": None,
+                        "schema": "https://schema.org/",
+                    }
+                }
+            )
+            g = load_graph(config, infer=False)
+            
+            # The subject URI should still exist
+            alice_uri = URIRef("https://wiki.example.org/alice")
+            
+            # The unprefixed type and givenName should not be in the graph
+            self.assertFalse((alice_uri, RDF.type, None) in g)
+            self.assertFalse((alice_uri, URIRef("https://schema.org/givenName"), None) in g)
+            
+            # The prefixed schema:familyName should be in the graph
+            self.assertTrue((alice_uri, URIRef("https://schema.org/familyName"), Literal("Smith")) in g)
+
+    def test_vocab_custom_resolves_unprefixed_keys(self) -> None:
+        """Test that configuring @vocab as a custom URI resolves unprefixed keys to that URI."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "alice.md").write_text("""---
+type: CustomPerson
+name: Alice
+---
+""", encoding="utf-8")
+
+            config = Config(
+                wiki={"inputs": [wiki_dir]},
+                graph={
+                    "context": {
+                        "@vocab": "https://custom.example.org/vocab/",
+                    }
+                }
+            )
+            g = load_graph(config, infer=False)
+            
+            alice_uri = URIRef("https://wiki.example.org/alice")
+            self.assertTrue((alice_uri, RDF.type, URIRef("https://custom.example.org/vocab/CustomPerson")) in g)
+            self.assertTrue((alice_uri, URIRef("https://custom.example.org/vocab/name"), Literal("Alice")) in g)
 
 
 if __name__ == "__main__":

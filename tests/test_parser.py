@@ -66,13 +66,14 @@ Hello World
         data = {"givenName": "Gregory"}
         updated = ensure_context(data)
         self.assertIn("@context", updated)
-        self.assertEqual(updated["@context"]["@vocab"], "https://schema.org/")
+        self.assertNotIn("@vocab", updated["@context"])
+        self.assertEqual(updated["@context"]["wiki"], "https://wiki.example.org/")
         
         # Partial existing context dict
         data_partial = {"@context": {"custom": "http://custom.org/"}}
         updated_partial = ensure_context(data_partial)
         self.assertEqual(updated_partial["@context"]["custom"], "http://custom.org/")
-        self.assertEqual(updated_partial["@context"]["@vocab"], "https://schema.org/")
+        self.assertNotIn("@vocab", updated_partial["@context"])
         
         # Scalar non-dict @context remains untouched
         data_scalar = {"@context": "schema.org"}

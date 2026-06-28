@@ -21,7 +21,7 @@ Under the Linked Markdown protocol:
 - **Documents as subjects** — Each Markdown document is a node (resource subject) in the RDF graph. Its IRI is determined by the document's file path.
 - **Frontmatter as predicates** — YAML or JSON frontmatter at the top of a document maps directly to properties (predicates) and values (objects).
 - **Links as semantic edges** — Markdown links and WikiLinks act as semantic relationships, connecting document subjects in the graph.
-- **Prose microdata** — HTML Microdata (`itemscope`, `itemprop`, `itemtype`) embeds structured nodes directly within the document body.
+- **Prose microdata** — HTML Microdata embeds structured nodes directly within the document body (supported in a future specification).
 
 ## Subject URI resolution
 
@@ -85,25 +85,7 @@ In the compiled RDF graph, these links are stored as directional relations allow
 
 ## HTML microdata in prose
 
-For fine-grained structured data inside the body, the protocol supports parsing HTML5 Microdata attributes:
-
-```html
-<p itemscope itemtype="schema:Book" itemid="example:books/The_Hobbit">
-  Alice is reading <span itemprop="name">The Hobbit</span> by
-  <span itemprop="author">J.R.R. Tolkien</span>.
-</p>
-```
-
-This compiles to:
-
-```turtle
-@prefix books: <https://wiki.example.org/books/> .
-@prefix schema: <https://schema.org/> .
-
-books:The_Hobbit a schema:Book ;
-    schema:name "The Hobbit" ;
-    schema:author "J.R.R. Tolkien" .
-```
+For now, the Linked Markdown protocol does not officially support HTML microdata inside the document body, but there are plans to define and support it in future specifications.
 
 ## Validation and schema compliance
 

@@ -51,8 +51,9 @@ graph:
 {% else %}
   # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki
 {% endif %}
-  # CURIE prefix map for frontmatter and microdata.
+  # CURIE prefix map for frontmatter.
   context:
+    "@vocab": https://schema.org/
     schema: https://schema.org/
     wiki: {{ graph_context_wiki }}
     wazoo: https://schema.wazoo.dev/

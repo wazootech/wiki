@@ -40,9 +40,20 @@ class Context:
     ) -> None:
         self.namespaces = DEFAULT_NAMESPACES.copy()
         self.base_iri = base_iri
-        if namespaces is not None:
-            for prefix, uri in namespaces.items():
-                if isinstance(uri, str):
+        if namespaces is None:
+            self.vocab: str | None = "https://schema.org/"
+        else:
+            self.vocab = None
+            namespaces_copy = namespaces.copy()
+            if "@vocab" in namespaces_copy:
+                val = namespaces_copy["@vocab"]
+                self.vocab = str(val) if val else None
+                del namespaces_copy["@vocab"]
+            for prefix, uri in namespaces_copy.items():
+                if uri is None:
+                    if prefix in self.namespaces:
+                        del self.namespaces[prefix]
+                elif isinstance(uri, str):
                     self.namespaces[prefix] = Namespace(uri)
                 else:
                     self.namespaces[prefix] = uri
