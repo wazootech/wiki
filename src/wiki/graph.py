@@ -86,7 +86,9 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         elif "@type" in value:
             blank = BNode()
             graph.add((subject, pred, blank))
-            graph.add((blank, RDF.type, URIRef(f"{context.namespaces['schema']}{value['@type']}")))
+            resolved_type = resolve_type(value["@type"], context)
+            if resolved_type:
+                graph.add((blank, RDF.type, resolved_type))
             for k, v in value.items():
                 if not k.startswith("@"):
                     resolve_object(k, v, graph, blank, context)

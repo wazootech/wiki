@@ -2,9 +2,11 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pyshacl
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
+from wiki.audit import load_shapes
 from wiki.config import Config
 from wiki.context import Context
 from wiki.graph import (
@@ -170,6 +172,31 @@ class TestRDFFrontmatter(unittest.TestCase):
         expected_type = self.context.namespaces["schema"]["PostalAddress"]
         self.assertTrue((blank, type_pred, expected_type) in graph)
 
+    def test_nested_typed_dict_respects_custom_vocab(self) -> None:
+        """Test that typed nested blank nodes resolve @type through @vocab (not hardcoded schema:)."""
+        custom_context = Context(namespaces={
+            "@vocab": "https://custom.example.org/vocab/",
+            "wiki": "https://wiki.example.org/",
+        })
+        data = {
+            "@type": "Document",
+            "@id": "wiki:doc",
+            "embed": {
+                "@type": "CustomEmbed",
+                "name": "test",
+            }
+        }
+        graph = frontmatter_to_graph(data, custom_context)
+        subject = URIRef(custom_context.namespaces["wiki"]["doc"])
+        embed_pred = URIRef("https://custom.example.org/vocab/embed")
+        blank = list(graph.objects(subject, embed_pred))[0]
+
+        expected_type = URIRef("https://custom.example.org/vocab/CustomEmbed")
+        self.assertTrue((blank, RDF.type, expected_type) in graph)
+        # It should NOT have the schema.org type
+        schema_type = URIRef("https://schema.org/CustomEmbed")
+        self.assertFalse((blank, RDF.type, schema_type) in graph)
+
     def test_nested_referenced_dict_creates_uri_ref(self) -> None:
         """Test that a nested dictionary with @id maps directly to a URI reference."""
         data = {
@@ -246,6 +273,39 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "givenName": "Alice", "familyName": "Smith"}, self.config)), 0)
         self.assertEqual(len(frontmatter_to_graph({"@type": "WebPage", "givenName": "Some Page"}, self.config)), 0)
         self.assertEqual(len(frontmatter_to_graph({"@type": "Person", "givenName": "Cher"}, self.config)), 0)
+
+
+    def test_blank_node_uniqueness_across_documents(self) -> None:
+        """Test that identical nested frontmatter from different files get unique blank nodes (regression for #144).
+
+        Python's id(value) was reused by the GC across files, causing blank node
+        collisions when graphs were combined. BNode() avoids this entirely.
+        """
+        data1 = {
+            "@type": "sh:NodeShape",
+            "@id": "wiki:person-shape",
+            "sh:property": [{"sh:path": "schema:name", "sh:datatype": "xsd:string"}],
+        }
+        data2 = {
+            "@type": "sh:NodeShape",
+            "@id": "wiki:pet-shape",
+            "sh:property": [{"sh:path": "schema:name", "sh:datatype": "xsd:string"}],
+        }
+
+        g1 = frontmatter_to_graph(data1, self.context)
+        g2 = frontmatter_to_graph(data2, self.context)
+
+        # Combine graphs the same way _process_document_file does
+        combined = g1 + g2
+
+        sh_property_pred = self.context.namespaces["sh"]["property"]
+        blanks = list(combined.objects(None, sh_property_pred))
+
+        # Each document has 1 property shape -> 2 distinct blank nodes
+        self.assertEqual(len(blanks), 2)
+        self.assertEqual(len(set(blanks)), 2)
+        for blank in blanks:
+            self.assertIsInstance(blank, BNode)
 
 
 class TestRDFLoadingAndResolution(unittest.TestCase):
@@ -524,6 +584,52 @@ schema:familyName: Smith
             
             # The prefixed schema:familyName should be in the graph
             self.assertTrue((alice_uri, URIRef("https://schema.org/familyName"), Literal("Smith")) in g)
+
+    def test_shacl_multi_shape_no_blank_node_collision(self) -> None:
+        """End-to-end regression test: two shape files with identical property shapes must not collide.
+
+        Before the BNode() fix, id(value) reuse caused blank node collisions between
+        property shapes across files, producing a ShapeLoadError ("An implicit PropertyShape
+        cannot have more than one 'sh:path' predicate").
+        """
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+
+            # Two shape files with identical property shape structures
+            (wiki_dir / "Person_Shape.md").write_text("""---
+type: sh:NodeShape
+sh:targetClass: schema:Person
+sh:property:
+  - sh:path: schema:name
+    sh:minCount: 1
+    sh:datatype: xsd:string
+---
+""", encoding="utf-8")
+
+            (wiki_dir / "Pet_Shape.md").write_text("""---
+type: sh:NodeShape
+sh:targetClass: schema:Pet
+sh:property:
+  - sh:path: schema:name
+    sh:minCount: 1
+    sh:datatype: xsd:string
+---
+""", encoding="utf-8")
+
+            config = Config(wiki={"inputs": [wiki_dir]})
+            data_graph = load_graph(config, infer=True)
+            shapes_graph = load_shapes(data_graph)
+
+            # This must not raise ShapeLoadError
+            conforms, _, results_text = pyshacl.validate(
+                data_graph,
+                shacl_graph=shapes_graph,
+                inference="rdfs",
+                abort_on_first=False,
+            )
+            self.assertTrue(conforms, f"SHACL validation failed:\n{results_text}")
 
     def test_vocab_custom_resolves_unprefixed_keys(self) -> None:
         """Test that configuring @vocab as a custom URI resolves unprefixed keys to that URI."""
