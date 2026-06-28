@@ -41,13 +41,11 @@ def ensure_context(data: dict[str, Any]) -> dict[str, Any]:
     """Ensure JSON-LD @context is present with default required namespaces."""
     if "@context" not in data:
         data["@context"] = {
-            "@vocab": "https://schema.org/",
             "wiki": "https://wiki.example.org/",
             "foaf": "http://xmlns.com/foaf/0.1/",
         }
     elif isinstance(data["@context"], dict):
         for k, v in {
-            "@vocab": "https://schema.org/",
             "wiki": "https://wiki.example.org/",
             "foaf": "http://xmlns.com/foaf/0.1/",
         }.items():

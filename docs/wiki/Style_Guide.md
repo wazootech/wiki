@@ -174,6 +174,7 @@ For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve
 
 ## Related
 
+- [Linked Markdown](Linked_Markdown.md) — protocol specification
 - [SHACL](SHACL.md) — shapes language background
 - [SPARQL](SPARQL.md) — query language background
 - [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL

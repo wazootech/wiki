@@ -16,7 +16,6 @@ from .document import (
     protected_inline_code_spans,
     span_overlaps,
     split_frontmatter_text,
-    strip_inline_code,
 )
 from .headings import parse_headings
 from .links import (
@@ -29,12 +28,6 @@ from .links import (
 from .parser import document_data_from_path
 from .paths import iter_document_files, route_for_document_file
 from .schemas import BrokenLink
-
-# Microdata attributes that may hold wiki: CURIE entity references.
-MICRODATA_WIKI_CURIE_ATTR = re.compile(
-    r'(?:itemid|href|src)\s*=\s*["\'](wiki:[^"\']+)["\']',
-    re.IGNORECASE,
-)
 
 WIKI_CURIE_RE = re.compile(r"^wiki:[^\s]+$")
 
@@ -173,11 +166,7 @@ class LinkIndex:
                                     )
                                 )
 
-                    link_scan = strip_inline_code(body)
-                    for curie in MICRODATA_WIKI_CURIE_ATTR.findall(link_scan):
-                        _append_wiki_curie_issue(
-                            issues, self._existing_routes, file_slug, file_path, curie, "Microdata reference"
-                        )
+
 
                 for curie in _wiki_curies_in_metadata(data or {}):
                     _append_wiki_curie_issue(

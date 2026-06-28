@@ -47,7 +47,12 @@ SELECT ?givenName WHERE {
             config = Config(
                 wiki={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
-                graph={"context": {"wiki": "https://wiki.example.org/"}},
+                graph={
+                    "context": {
+                        "@vocab": "https://schema.org/",
+                        "wiki": "https://wiki.example.org/",
+                    }
+                },
             )
             graph = load_graph(config, infer=False)
 
@@ -88,7 +93,12 @@ SELECT ?givenName WHERE {
             config = Config(
                 wiki={"inputs": [wiki_dir]},
                 config_root=wiki_dir,
-                graph={"context": {"wiki": "https://wiki.example.org/"}},
+                graph={
+                    "context": {
+                        "@vocab": "https://schema.org/",
+                        "wiki": "https://wiki.example.org/",
+                    }
+                },
             )
             graph = load_graph(config, infer=False)
 

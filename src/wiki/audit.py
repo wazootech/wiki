@@ -165,7 +165,7 @@ def collect_broken_links(config: Config, file_filter: set[str] | None = None) ->
 
 
 def lint_broken_links(config: Config, file_filter: set[str] | None = None) -> list[str]:
-    """Lint wikilinks, markdown links, assets, and wiki: CURIE references in metadata and microdata.
+    """Lint wikilinks, markdown links, assets, and wiki: CURIE references in metadata.
 
     If file_filter is set, only check files whose route is in the set.
 
