@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `wiki install` command — fetch and lock external git sources declared in `sources:` block of `wiki.yml`. With a URL argument, adds the source to wiki.yml first. Supports `#ref` pinning. ([#148](https://github.com/wazootech/wiki/issues/148), [#164](https://github.com/wazootech/wiki/pull/164))
+- `wiki remove` command — remove a source from wiki.yml, its `.wiki/sources/` cache, and wiki.lock. ([#164](https://github.com/wazootech/wiki/pull/164))
+- `sources:` config block in wiki.yml — declare external git repos with optional `ref` (branch/tag/commit) and `path` (subdirectory). Validated with `extra=forbid` like all other blocks. ([#148](https://github.com/wazootech/wiki/issues/148))
+- `wiki.lock` lockfile — machine-authored JSON recording resolved commit SHAs for reproducible builds. ([#148](https://github.com/wazootech/wiki/issues/148))
+- Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so graph, check, and build pipelines pick them up transparently.
+
+### Dependency
+
+- Added `ruamel.yaml` for comment-preserving YAML writes when `wiki install`/`wiki remove` edits wiki.yml.
+
 ## 0.1.18 — 2026-06-28
 
 ### Fixed

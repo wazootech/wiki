@@ -54,6 +54,7 @@ Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitra
 | `link:`           | `wiki link` apply format and rename repair map        | `wiki link`                       | optional | yes               |
 | `check:`          | Integrity severities                                  | `wiki check`                      | optional | yes               |
 | `lint:`           | Convention severities                                 | `wiki lint`                       | optional | yes               |
+| `sources:`        | External data sources (git repos)                     | `wiki install`, `wiki remove`     | optional | commented example |
 | `sparql_service:` | Opt-in SPARQL HTTP on `wiki serve`                    | `wiki serve`                      | optional | commented example |
 | `fmt:`            | Mechanical markdown via mdformat                      | `wiki fmt`                        | optional | inline mapping    |
 
@@ -220,6 +221,50 @@ lint:  # optional block
 ATX heading syntax is also enforced by **`wiki fmt`** (mdformat); Setext underlines are converted on format.
 
 When `link.style` is `standard`, set `lint.link_style: off` to allow wikilinks in prose, or set `link.style: wikilink` for an Obsidian-style wiki.
+
+## External data sources (`sources:`)
+
+<!-- wiki:anchor external-data-sources-sources -->
+
+Declare external git repositories that contribute wiki pages or RDF data to the graph. After adding a source, run `wiki install` to clone it and pin the resolved commit in `wiki.lock`.
+
+```yaml
+sources:  # optional block
+  - name: shared-taxonomy
+    type: git
+    url: https://github.com/example/taxonomy.wiki.git
+    ref: v1.2.0       # optional — branch, tag, or commit
+    path: wiki        # optional — subdirectory within the repo
+  - name: community-pages
+    type: git
+    url: https://github.com/example/community.wiki.git
+```
+
+| Key    | Required | Default   | Init              | Command(s)     |
+| ------ | -------- | --------- | ----------------- | -------------- |
+| `name` | required | —         | omits (commented) | `wiki install` |
+| `type` | required | `git`     | omits (commented) | `wiki install` |
+| `url`  | required | —         | omits (commented) | `wiki install` |
+| `ref`  | optional | `HEAD`    | omits (commented) | `wiki install` |
+| `path` | optional | repo root | omits (commented) | `wiki install` |
+
+Each source must have a unique `name`. The `type` field is currently limited to `git`. Unknown keys and unsupported types are rejected at config load time.
+
+Run `wiki install` to fetch all declared sources and write `wiki.lock`. Check `wiki.lock` into version control for reproducible builds. The resolved source paths are automatically appended to `wiki.inputs` so the existing graph, check, and build pipeline picks them up.
+
+To add a source without editing the config file by hand:
+
+```bash
+wiki install https://github.com/example/taxonomy.wiki.git#v1.2.0
+```
+
+To remove a source:
+
+```bash
+wiki remove shared-taxonomy
+```
+
+See [Wiki Subcommand install](Wiki_Subcommand_install.md) and [Wiki Subcommand remove](Wiki_Subcommand_remove.md).
 
 ## Serve API
 
