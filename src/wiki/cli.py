@@ -660,6 +660,55 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
         click.echo(f"Format complete. Reformatted {report.formatted_count} files.")
 
 
+@main.group()
+def source() -> None:
+    """Manage external data sources (fetch, lock, status)."""
+
+
+@source.command("update")
+@click.pass_obj
+def source_update(wiki: Wiki) -> None:
+    """Fetch and lock all declared sources."""
+    from .sources import update as update_sources
+
+    try:
+        lockfile = update_sources(wiki.config)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    count = len(lockfile.sources)
+    click.echo(f"Locked {count} source{'s' if count != 1 else ''}.")
+    for name, locked in lockfile.sources.items():
+        click.echo(f"  {name}: {locked.resolved_ref[:12]} ({locked.fetched_at})")
+
+
+@source.command("status")
+@click.pass_obj
+def source_status(wiki: Wiki) -> None:
+    """Show the current status of each declared source."""
+    from .sources import status as source_status_fn
+
+    results = source_status_fn(wiki.config)
+    if not results:
+        click.echo("No sources declared.")
+        return
+
+    for entry in results:
+        ref = entry["declared_ref"] or "HEAD (default)"
+        locked = entry["locked_ref"] or "-"
+        state = "locked" if entry["is_pinned"] else "unlocked"
+        if entry["is_dirty"]:
+            state = "dirty (run wiki source update)"
+        elif not entry["cached"]:
+            state = "not cached (run wiki source update)"
+        click.echo(f"{entry['name']} ({entry['type']})")
+        click.echo(f"  url:    {entry['url']}")
+        click.echo(f"  ref:    {ref}")
+        click.echo(f"  locked: {locked}")
+        click.echo(f"  state:  {state}")
+        click.echo()
+
+
 @main.command()
 @click.option("-c", "--check", "check_only", is_flag=True, help="Check for updates without upgrading.")
 @click.option("-y", "--yes", "auto_yes", is_flag=True, help="Skip confirmation prompt and upgrade immediately.")
