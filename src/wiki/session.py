@@ -42,6 +42,7 @@ from .schemas import (
     RenderReport,
     ScaffoldResult,
 )
+from .sources import resolve as resolve_sources
 
 _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
@@ -88,6 +89,12 @@ class Wiki:
                 Path(entry) if Path(entry).is_absolute() else config.config_root / entry
                 for entry in wiki_inputs
             ]
+        resolved = resolve_sources(config)
+        if resolved:
+            existing = set(config.wiki.inputs)
+            for path in resolved:
+                if path not in existing:
+                    config.wiki.inputs.append(path)
         return cls(config)
 
     def with_runtime(
