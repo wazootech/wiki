@@ -24,7 +24,13 @@ from .reports import (
 )
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import TocItem, VirtualPage, WikiSite
-from .sources import LOCKFILE_FILENAME, LOCKFILE_VERSION, LockedSource, Lockfile, SourceConfig
+from .sources import (
+    LOCKFILE_FILENAME,
+    LOCKFILE_VERSION,
+    LockedSource,
+    Lockfile,
+    SourceConfig,
+)
 from .wiki_config import (
     Config,
     FmtConfig,
