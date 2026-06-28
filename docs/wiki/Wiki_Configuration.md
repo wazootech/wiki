@@ -230,14 +230,11 @@ Declare external git repositories that contribute wiki pages or RDF data to the 
 
 ```yaml
 sources:  # optional block
-  - name: shared-taxonomy
+  - name: solar-system
     type: git
-    url: https://github.com/example/taxonomy.wiki.git
-    ref: v1.2.0       # optional — branch, tag, or commit
+    url: https://github.com/EthanThatOneKid/solar-system-wiki.git
+    ref: v0.1.0       # optional — branch, tag, or commit
     path: wiki        # optional — subdirectory within the repo
-  - name: community-pages
-    type: git
-    url: https://github.com/example/community.wiki.git
 ```
 
 | Key    | Required | Default   | Init              | Command(s)     |
@@ -255,13 +252,13 @@ Run `wiki install` to fetch all declared sources and write `wiki.lock`. Check `w
 To add a source without editing the config file by hand:
 
 ```bash
-wiki install https://github.com/example/taxonomy.wiki.git#v1.2.0
+wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git
 ```
 
-To remove a source:
+The name is inferred from the URL (`solar-system`). To remove it:
 
 ```bash
-wiki remove shared-taxonomy
+wiki remove solar-system
 ```
 
 See [Wiki Subcommand install](Wiki_Subcommand_install.md) and [Wiki Subcommand remove](Wiki_Subcommand_remove.md).

@@ -12,8 +12,8 @@ Fetch external data sources (git repositories with wiki pages or RDF data), reso
 
 ```bash
 wiki install
-wiki install https://github.com/example/taxonomy.wiki.git
-wiki install https://github.com/example/taxonomy.wiki.git#v1.2.0
+wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git
+wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git#v0.1.0
 ```
 
 ## Options
