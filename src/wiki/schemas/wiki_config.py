@@ -288,8 +288,11 @@ class GraphConfig(BaseModel):
     include_file_extension: bool = False
     implicit_types: list[str] = Field(default_factory=list)
     implicit_types_policy: str = IMPLICIT_TYPES_POLICY
-    context: dict[str, str] | None = Field(
-        default=None,
+    context: dict[str, str | None] | None = Field(
+        default_factory=lambda: {
+            "@vocab": "https://schema.org/",
+            "schema": "https://schema.org/",
+        },
         validation_alias=AliasChoices("context", "@context"),
     )
 
@@ -458,10 +461,11 @@ class Config(BaseModel):
 
     @property
     def context(self) -> Context:
-        prefixes: dict[str, str] | None = None
+        prefixes: dict[str, str | None] | None = None
         if self.graph.context:
             prefixes = {
-                k: v for k, v in self.graph.context.items() if not k.startswith("@") and isinstance(v, str)
+                k: v for k, v in self.graph.context.items()
+                if (not k.startswith("@") or k == "@vocab") and (v is None or isinstance(v, str))
             }
         return Context(prefixes, base_iri=self.base_iri)
 

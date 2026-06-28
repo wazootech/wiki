@@ -53,6 +53,7 @@ graph:
 {% endif %}
   # CURIE prefix map for frontmatter and microdata.
   context:
+    "@vocab": https://schema.org/
     schema: https://schema.org/
     wiki: {{ graph_context_wiki }}
     wazoo: https://schema.wazoo.dev/

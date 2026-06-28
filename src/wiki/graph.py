@@ -45,11 +45,10 @@ def _file_slug(file_path: Path, input_dirs: list[Path]) -> str:
     return _slugify_path(file_path)
 
 
-def resolve_predicate(key: str, context: Context) -> URIRef:
+def resolve_predicate(key: str, context: Context) -> URIRef | None:
     """Map a frontmatter key to an RDF predicate URI using managed namespaces.
 
-    Resolution order: CURIE (prefix:localName) → wiki.* dotted keys → schema: default.
-    Non-schema vocabulary must use an explicit prefix (for example rdfs:label).
+    Resolution order: CURIE (prefix:localName) → wiki.* dotted keys → vocab: default.
     """
     if ":" in key:
         prefix, name = key.split(":", 1)
@@ -57,23 +56,29 @@ def resolve_predicate(key: str, context: Context) -> URIRef:
             return context.namespaces[prefix][name]
     if key.startswith("wiki."):
         return context.namespaces["wiki"][key[5:]]
-    return context.namespaces["schema"][key]
+    if context.vocab:
+        return URIRef(f"{str(context.vocab)}{key}")
+    return None
 
 
-def resolve_type(t: Any, context: Context) -> URIRef:
+def resolve_type(t: Any, context: Context) -> URIRef | None:
     """Map a frontmatter type to an RDF type URI using managed namespaces."""
     if isinstance(t, str):
         if ":" in t:
             prefix, name = t.split(":", 1)
             if prefix in context.namespaces:
                 return context.namespaces[prefix][name]
-        return context.namespaces["schema"][t]
+        if context.vocab:
+            return URIRef(f"{str(context.vocab)}{t}")
+        return None
     return URIRef(str(t))
 
 
 def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context: Context) -> None:
     """Add a predicate-object pair to the graph, recursively handling nested structures."""
     pred = resolve_predicate(key, context)
+    if pred is None:
+        return
 
     if isinstance(value, dict):
         if "@id" in value:
@@ -84,14 +89,14 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
                     uri = str(context.namespaces[prefix][name])
             graph.add((subject, pred, URIRef(uri)))
         elif "@type" in value:
-            blank = URIRef(f"_:blank-{kebab_case(key)}-{id(value)}")
+            blank = BNode()
             graph.add((subject, pred, blank))
             graph.add((blank, RDF.type, URIRef(f"{context.namespaces['schema']}{value['@type']}")))
             for k, v in value.items():
                 if not k.startswith("@"):
                     resolve_object(k, v, graph, blank, context)
         else:
-            blank = URIRef(f"_:blank-{kebab_case(key)}-{id(value)}")
+            blank = BNode()
             graph.add((subject, pred, blank))
             for k, v in value.items():
                 if not k.startswith("@"):
@@ -168,7 +173,10 @@ def _effective_types(data: dict[str, Any], context: Context | Config) -> list[An
     seen: set[str] = set()
     merged: list[Any] = []
     for item in fm_types + implicit_types:
-        resolved = str(resolve_type(item, rdf_ctx))
+        res = resolve_type(item, rdf_ctx)
+        if res is None:
+            continue
+        resolved = str(res)
         if resolved in seen:
             continue
         seen.add(resolved)
@@ -191,6 +199,7 @@ def frontmatter_to_graph(
         content_predicate = default_predicate
     graph = Graph()
     rdf_ctx.bind_namespaces(graph)
+    graph._vocab = rdf_ctx.vocab
 
     effective_types = _effective_types(data, context)
     if not data or not effective_types:
@@ -211,7 +220,9 @@ def frontmatter_to_graph(
     subject = URIRef(doc_id)
 
     for t in effective_types:
-        graph.add((subject, RDF.type, resolve_type(t, rdf_ctx)))
+        resolved_t = resolve_type(t, rdf_ctx)
+        if resolved_t:
+            graph.add((subject, RDF.type, resolved_t))
 
     skip_keys = {"id", "type", "@type"}
     for key, value in data.items():
@@ -264,6 +275,7 @@ class MicrodataParser(Parser):
             return
 
         namespace_map = {prefix: str(namespace) for prefix, namespace in graph.namespaces()}
+        default_vocab = getattr(graph, "_vocab", "https://schema.org/")
 
         def process_scope(elem: Tag, parent_subject: Any = None, incoming_predicate: Any = None) -> None:
             if elem.has_attr("itemid"):
@@ -293,7 +305,9 @@ class MicrodataParser(Parser):
                 prop_names = str(prop_elem.get("itemprop", "")).split()
                 preds = []
                 for p in prop_names:
-                    preds.append(URIRef(_expand_microdata_predicate(p, namespace_map)))
+                    pred_uri = _expand_microdata_predicate(p, namespace_map, default_vocab)
+                    if pred_uri:
+                        preds.append(URIRef(pred_uri))
                 
                 if prop_elem.has_attr("itemscope"):
                     for pred in preds:
@@ -339,15 +353,17 @@ def _expand_microdata_identifier(value: str, namespace_map: dict[str | None, str
     return _expand_bound_curie(value, namespace_map) or value
 
 
-def _expand_microdata_predicate(value: str, namespace_map: dict[str | None, str]) -> str:
+def _expand_microdata_predicate(value: str, namespace_map: dict[str | None, str], default_vocab: str | None) -> str | None:
     value = value.strip()
     if not value:
-        return value
+        return None
     if _is_absolute_iri(value):
         return value
     if ":" in value:
         return _expand_bound_curie(value, namespace_map) or value
-    return f"{namespace_map.get('schema', DEFAULT_MICRODATA_VOCAB)}{value}"
+    if default_vocab:
+        return f"{default_vocab}{value}"
+    return None
 
 
 def _expand_bound_curie(value: str, namespace_map: dict[str | None, str]) -> str | None:
@@ -422,6 +438,7 @@ def _build_graph_from_wiki(context: Config) -> Graph:
     """Load asserted triples from all wiki sources without OWL-RL inference."""
     graph = Graph()
     context.bind_namespaces(graph)
+    graph._vocab = context.context.vocab
 
     document_files = set(iter_document_files(context))
 

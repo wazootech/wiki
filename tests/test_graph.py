@@ -6,6 +6,7 @@ from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from wiki.config import Config
+from wiki.context import Context
 from wiki.graph import (
     frontmatter_to_graph,
     kebab_case,
@@ -28,36 +29,50 @@ class TestRDFFrontmatter(unittest.TestCase):
 
     def test_resolve_predicate(self) -> None:
         """Test resolve_predicate handles various prefixes and fallback mappings."""
+        # Context with schema.org default vocab
+        schema_context = Context(namespaces={"@vocab": "https://schema.org/"})
+
         # Custom namespace prefix
         self.assertEqual(
-            resolve_predicate("foaf:name", self.context),
-            self.context.namespaces["foaf"]["name"]
+            resolve_predicate("foaf:name", schema_context),
+            schema_context.namespaces["foaf"]["name"]
         )
         # Wiki prefix
         self.assertEqual(
-            resolve_predicate("wiki.gregory", self.context),
-            self.context.namespaces["wiki"]["gregory"]
+            resolve_predicate("wiki.gregory", schema_context),
+            schema_context.namespaces["wiki"]["gregory"]
         )
         # Unregistered prefix or default falls back to schema
         self.assertEqual(
-            resolve_predicate("givenName", self.context),
-            self.context.namespaces["schema"]["givenName"]
+            resolve_predicate("givenName", schema_context),
+            schema_context.namespaces["schema"]["givenName"]
         )
         self.assertEqual(
-            resolve_predicate("headline", self.context),
-            self.context.namespaces["schema"]["headline"]
+            resolve_predicate("headline", schema_context),
+            schema_context.namespaces["schema"]["headline"]
         )
         self.assertEqual(
-            resolve_predicate("rdfs:label", self.context),
-            self.context.namespaces["rdfs"]["label"]
+            resolve_predicate("rdfs:label", schema_context),
+            schema_context.namespaces["rdfs"]["label"]
         )
         self.assertEqual(
-            resolve_predicate("label", self.context),
-            self.context.namespaces["schema"]["label"]
+            resolve_predicate("label", schema_context),
+            schema_context.namespaces["schema"]["label"]
         )
         self.assertEqual(
-            resolve_predicate("unregistered:prop", self.context),
-            self.context.namespaces["schema"]["unregistered:prop"]
+            resolve_predicate("unregistered:prop", schema_context),
+            schema_context.namespaces["schema"]["unregistered:prop"]
+        )
+
+        # Context with NO default vocab
+        no_vocab_context = Context()
+        self.assertIsNone(resolve_predicate("givenName", no_vocab_context))
+        self.assertIsNone(resolve_predicate("headline", no_vocab_context))
+        self.assertIsNone(resolve_predicate("label", no_vocab_context))
+        # Prefixed keys should still resolve
+        self.assertEqual(
+            resolve_predicate("foaf:name", no_vocab_context),
+            no_vocab_context.namespaces["foaf"]["name"]
         )
 
     def test_resolve_object_datatypes(self) -> None:
@@ -347,7 +362,10 @@ class TestRDFLoadingAndResolution(unittest.TestCase):
     def test_base_iri_override_differs_from_context_wiki(self) -> None:
         config = Config(
             graph={
-                "context": {"wiki": "https://example.test/wiki/"},
+                "context": {
+                    "@vocab": "https://schema.org/",
+                    "wiki": "https://example.test/wiki/",
+                },
                 "base_iri": "https://example.test/docs/",
             }
         )
@@ -572,6 +590,62 @@ name: Test Page
             g = load_graph(config, infer=False)
             expected = URIRef("https://wiki.example.org/person.yaml")
             self.assertTrue((expected, None, None) in g)
+
+    def test_vocab_null_ignores_unprefixed_keys(self) -> None:
+        """Test that configuring @vocab as None/null causes unprefixed keys and types to be ignored."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "alice.md").write_text("""---
+type: Person
+givenName: Alice
+schema:familyName: Smith
+---
+""", encoding="utf-8")
+
+            config = Config(
+                wiki={"inputs": [wiki_dir]},
+                graph={
+                    "context": {
+                        "@vocab": None,
+                        "schema": "https://schema.org/",
+                    }
+                }
+            )
+            g = load_graph(config, infer=False)
+            
+            # The subject URI should still exist
+            alice_uri = URIRef("https://wiki.example.org/alice")
+            
+            # The unprefixed type and givenName should not be in the graph
+            self.assertFalse((alice_uri, RDF.type, None) in g)
+            self.assertFalse((alice_uri, URIRef("https://schema.org/givenName"), None) in g)
+            
+            # The prefixed schema:familyName should be in the graph
+            self.assertTrue((alice_uri, URIRef("https://schema.org/familyName"), Literal("Smith")) in g)
+
+    def test_vocab_custom_resolves_unprefixed_keys(self) -> None:
+        """Test that configuring @vocab as a custom URI resolves unprefixed keys to that URI."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "alice.md").write_text("""---
+type: CustomPerson
+name: Alice
+---
+""", encoding="utf-8")
+
+            config = Config(
+                wiki={"inputs": [wiki_dir]},
+                graph={
+                    "context": {
+                        "@vocab": "https://custom.example.org/vocab/",
+                    }
+                }
+            )
+            g = load_graph(config, infer=False)
+            
+            alice_uri = URIRef("https://wiki.example.org/alice")
+            self.assertTrue((alice_uri, RDF.type, URIRef("https://custom.example.org/vocab/CustomPerson")) in g)
+            self.assertTrue((alice_uri, URIRef("https://custom.example.org/vocab/name"), Literal("Alice")) in g)
 
 
 if __name__ == "__main__":
