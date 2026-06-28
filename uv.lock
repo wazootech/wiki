@@ -224,17 +224,18 @@ wheels = [
 ]
 
 [[package]]
-name = "mdformat-frontmatter"
-version = "2.1.2"
+name = "mdformat-front-matters"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mdformat" },
     { name = "mdit-py-plugins" },
     { name = "ruamel-yaml" },
+    { name = "toml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4d/90/ae8a3d20066295367d9048ad480bcde3afe694eb592fec9c35bbdb7d68eb/mdformat_frontmatter-2.1.2.tar.gz", hash = "sha256:9c9c3159c38407f47e567202749c74ce7680017516cd158c82400f015c6a01d1", size = 9425, upload-time = "2026-05-23T05:14:26.324Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/53/008805510d3006d9aec6c602fa40305750cb96daba8ea9abae477149909b/mdformat_front_matters-2.0.0.tar.gz", hash = "sha256:46efabe93707699120c67d4b33b51fdb4cfe0e040acfb0f8212eb33c9a3e8a9a", size = 12576, upload-time = "2025-12-04T11:44:52.265Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/53/a0/20b6f53593139d8b64fa8e7f750033fbb580c096c241cd551b59907e6abe/mdformat_frontmatter-2.1.2-py3-none-any.whl", hash = "sha256:bcbb1dd7e35ce4387603acd32f2c092dd4518bbfaa2a4b801a0f29a4e69bf2ca", size = 4927, upload-time = "2026-05-23T05:14:24.747Z" },
+    { url = "https://files.pythonhosted.org/packages/00/05/4c197c000dab41f1f58290221a4c02bd57804ff42e9374d3dd0f5408aa40/mdformat_front_matters-2.0.0-py3-none-any.whl", hash = "sha256:8ea92d23d1e9427fe6548b9044e5fbf7bcf6c217941f1a9442e0efd8b0a76e61", size = 13411, upload-time = "2025-12-04T11:44:51.209Z" },
 ]
 
 [[package]]
@@ -752,6 +753,15 @@ wheels = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -784,7 +794,7 @@ dependencies = [
     { name = "markdown-it-py" },
     { name = "mdformat" },
     { name = "mdformat-footnote" },
-    { name = "mdformat-frontmatter" },
+    { name = "mdformat-front-matters" },
     { name = "mdformat-gfm" },
     { name = "mdformat-toc" },
     { name = "owlrl" },
@@ -813,7 +823,7 @@ requires-dist = [
     { name = "markdown-it-py", specifier = ">=3.0.0" },
     { name = "mdformat", specifier = ">=0.7.19" },
     { name = "mdformat-footnote", specifier = ">=0.1.3" },
-    { name = "mdformat-frontmatter", specifier = ">=2.0.1" },
+    { name = "mdformat-front-matters", specifier = ">=2.0.0" },
     { name = "mdformat-gfm", specifier = ">=1.0.0,<2" },
     { name = "mdformat-toc", specifier = ">=0.5.0" },
     { name = "owlrl", specifier = ">=6.0.2" },

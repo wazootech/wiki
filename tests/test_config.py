@@ -408,7 +408,7 @@ class TestConfig(unittest.TestCase):
                         "wiki": {"inputs": "wiki"},
                         "fmt": {
                             "wrap": "no",
-                            "extensions": ["gfm", "frontmatter", "wikilink"],
+                            "extensions": ["gfm", "front_matters", "wikilink"],
                         },
                     }
                 ),
@@ -472,7 +472,7 @@ class TestConfig(unittest.TestCase):
                         "wiki": {"inputs": ["wiki"]},
                         "fmt": {
                             "wrap": "no",
-                            "extensions": ["gfm", "frontmatter", "wikilink"],
+                            "extensions": ["gfm", "front_matters", "wikilink"],
                         },
                     }
                 ),
@@ -480,7 +480,7 @@ class TestConfig(unittest.TestCase):
             )
             config = Config.load(base_path)
             self.assertIsInstance(config.fmt, FmtConfig)
-            self.assertEqual(config.fmt.options["extensions"], ["gfm", "frontmatter", "wikilink"])
+            self.assertEqual(config.fmt.options["extensions"], ["gfm", "front_matters", "wikilink"])
 
     def test_check_remote_schema_policy(self) -> None:
         config = Config.for_root(
