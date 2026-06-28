@@ -1,4 +1,4 @@
-# PyInstaller spec for standalone wiki CLI. Invoked by scripts/build-standalone.py.
+# PyInstaller spec for standalone wiki CLI. Invoked by scripts/build_standalone.py.
 
 import sys
 from pathlib import Path

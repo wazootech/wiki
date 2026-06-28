@@ -183,9 +183,9 @@ jobs:
       - name: Build standalone archive
         run: |
           if [ "${{ matrix.smoke_check }}" = "true" ]; then
-            uv run python scripts/build-standalone.py --smoke-check
+            uv run python scripts/build_standalone.py --smoke-check
           else
-            uv run python scripts/build-standalone.py
+            uv run python scripts/build_standalone.py
           fi
         shell: bash
 
