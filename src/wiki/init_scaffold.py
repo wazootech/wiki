@@ -15,7 +15,6 @@ from .schemas import InitOptions, ScaffoldResult
 from .schemas.wiki_config import DEFAULT_WIKI_BASE, normalize_base_iri
 
 __all__ = [
-    "DOCS_WIKI_INIT_OPTIONS",
     "InitOptions",
     "load_packaged_official_layout",
     "render_wiki_yaml",
@@ -93,17 +92,6 @@ def detect_origin_repo(cwd: Path) -> str | None:
     except ValueError:
         return None
     return f"{owner}/{repo}"
-
-
-# Init options for this repository's docs/ wiki (parity with docs/wiki.yml).
-DOCS_WIKI_INIT_OPTIONS = InitOptions(
-    graph_context_wiki="https://wazootech.github.io/wiki/",
-    site_base_url="",
-    site_url_style=DEFAULT_URL_STYLE,
-    graph_content_predicate="schema:articleBody",
-    link_style="standard",
-    site_layout="layouts/wikipedia.html",
-)
 
 
 def resolve_init_options(

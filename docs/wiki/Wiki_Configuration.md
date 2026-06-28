@@ -478,7 +478,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## This repository
 
-`docs/wiki.yml` is the dogfood wiki config: the same structure, block order, and Init columns as `wiki init` ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)), plus dogfood overrides — `graph.context.wiki` for GitHub Pages and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
+`docs/wiki.yml` is the dogfood wiki config for this repository. It follows the same block order as the packaged scaffold, but with project-specific overrides — `graph.context.wiki` for GitHub Pages and `graph.content_predicate: schema:articleBody` for SPARQL full-text.
 
 ## Related
 
