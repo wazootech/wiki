@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.18 — 2026-06-28
+
+### Fixed
+
+- `wiki upgrade` no longer fails when `wiki.yml` contains legacy `link.style: markdown` or `link.style: obsidian`. Old values are now accepted and automatically mapped to `standard` and `wikilink` respectively, with a deprecation warning. ([#134](https://github.com/wazootech/wiki/issues/134))
+
 ## 0.1.17 — 2026-06-28
 
 ### Added

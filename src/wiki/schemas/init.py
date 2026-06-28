@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+
 from pydantic import BaseModel, ConfigDict, field_validator
 
-_LINK_STYLES = frozenset({"standard", "wikilink"})
+logger = logging.getLogger(__name__)
+
+_LINK_STYLES = frozenset({"standard", "wikilink", "markdown", "obsidian"})
+_LEGACY_LINK_STYLE_MAP = {"markdown": "standard", "obsidian": "wikilink"}
 _VALID_URL_STYLES = frozenset({"dir", "file"})
 
 
@@ -40,6 +45,15 @@ class InitOptions(BaseModel):
         if not isinstance(value, str):
             raise ValueError(f"expected standard or wikilink, got {value!r}")
         normalized = value.strip().lower()
+        if normalized in _LEGACY_LINK_STYLE_MAP:
+            new_style = _LEGACY_LINK_STYLE_MAP[normalized]
+            logger.warning(
+                "link_style: '%s' is deprecated, use '%s' instead "
+                "(edit wiki.yml link.style and re-run)",
+                normalized,
+                new_style,
+            )
+            return new_style
         if normalized not in _LINK_STYLES:
             raise ValueError(f"expected standard or wikilink, got {value!r}")
         return normalized

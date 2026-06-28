@@ -26,7 +26,8 @@ from .rules import CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
 
-_LINK_STYLES = frozenset({"standard", "wikilink"})
+_LINK_STYLES = frozenset({"standard", "wikilink", "markdown", "obsidian"})
+_LEGACY_LINK_STYLE_MAP = {"markdown": "standard", "obsidian": "wikilink"}
 DEFAULT_LINK_STYLE = "standard"
 DEFAULT_BASE_URL = "/wiki"
 DEFAULT_URL_STYLE = "dir"
@@ -340,6 +341,15 @@ class LinkConfig(BaseModel):
         if not isinstance(value, str):
             raise ValueError(f"expected standard or wikilink, got {value!r}")
         normalized = value.strip().lower()
+        if normalized in _LEGACY_LINK_STYLE_MAP:
+            new_style = _LEGACY_LINK_STYLE_MAP[normalized]
+            logger.warning(
+                "link.style: '%s' is deprecated, use '%s' instead "
+                "(edit wiki.yml link.style and re-run)",
+                normalized,
+                new_style,
+            )
+            return new_style
         if normalized not in _LINK_STYLES:
             raise ValueError(f"expected standard or wikilink, got {value!r}")
         return normalized
