@@ -266,12 +266,12 @@ fmt:  # optional block — inline mapping (init writes)
 # fmt: .mdformat.toml
 ```
 
-| Key / shape   | Required          | Default                          | Init              | Audited by |
-| ------------- | ----------------- | -------------------------------- | ----------------- | ---------- |
-| `wrap`        | optional (inline) | `"no"`                           | writes            | `wiki fmt` |
-| `end_of_line` | optional (inline) | `lf`                             | writes            | `wiki fmt` |
-| `extensions`  | optional (inline) | `[gfm, frontmatter, wikilink, toc, footnote]`   | writes            | `wiki fmt` |
-| TOML path     | optional          | unset — see fallback chain below | omits (commented) | `wiki fmt` |
+| Key / shape   | Required          | Default                                       | Init              | Audited by |
+| ------------- | ----------------- | --------------------------------------------- | ----------------- | ---------- |
+| `wrap`        | optional (inline) | `"no"`                                        | writes            | `wiki fmt` |
+| `end_of_line` | optional (inline) | `lf`                                          | writes            | `wiki fmt` |
+| `extensions`  | optional (inline) | `[gfm, frontmatter, wikilink, toc, footnote]` | writes            | `wiki fmt` |
+| TOML path     | optional          | unset — see fallback chain below              | omits (commented) | `wiki fmt` |
 
 Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `frontmatter`, `wikilink`, `toc`, `footnote`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
 
