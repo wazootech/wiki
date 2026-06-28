@@ -1,4 +1,3 @@
-import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -6,7 +5,7 @@ from tempfile import TemporaryDirectory
 import yaml
 
 from wiki.config import Config
-from wiki.schemas.sources import LOCKFILE_FILENAME, LockedSource, Lockfile, SourceConfig
+from wiki.schemas.sources import LockedSource, Lockfile, SourceConfig
 
 
 class TestSourceConfig(unittest.TestCase):
