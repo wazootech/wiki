@@ -192,13 +192,13 @@ class TestConfig(unittest.TestCase):
         config = Config(link={"style": "wikilink"})
         self.assertEqual(config.link.style, "wikilink")
 
-    def test_Config_rejects_legacy_markdown_link_style(self) -> None:
-        with self.assertRaises(ValidationError):
-            Config(link={"style": "markdown"})
+    def test_Config_accepts_legacy_markdown_link_style(self) -> None:
+        config = Config(link={"style": "markdown"})
+        self.assertEqual(config.link.style, "standard")
 
-    def test_Config_rejects_legacy_obsidian_link_style(self) -> None:
-        with self.assertRaises(ValidationError):
-            Config(link={"style": "obsidian"})
+    def test_Config_accepts_legacy_obsidian_link_style(self) -> None:
+        config = Config(link={"style": "obsidian"})
+        self.assertEqual(config.link.style, "wikilink")
 
     def test_Config_rejects_invalid_link_style(self) -> None:
         with self.assertRaises(ValidationError):
