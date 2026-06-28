@@ -108,7 +108,7 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("frontmatter_schema: error", rendered)
         self.assertIn("missing_schema_ref: error", rendered)
         self.assertIn('wrap: "no"', rendered)
-        self.assertIn("extensions: [gfm, frontmatter, wikilink]", rendered)
+        self.assertIn("extensions: [gfm, frontmatter, wikilink, toc, footnote]", rendered)
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
         self.assertIn("layout: custom.html", rendered)
