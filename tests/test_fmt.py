@@ -21,19 +21,19 @@ class TestWikiFmt(unittest.TestCase):
         """Test that mdformat with our plugin preserves Obsidian-style wikilinks."""
         # Simple wikilink
         content = "See [[Wiki_CLI]] for details."
-        formatted = mdformat.text(content, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
+        formatted = mdformat.text(content, extensions=["wikilink", "front_matters", "gfm", "toc", "footnote"])
         self.assertEqual(formatted.strip(), "See [[Wiki_CLI]] for details.")
 
         # Wikilink with alias/display name
         content_alias = "See [[Wiki_CLI|the CLI]] for details."
-        formatted_alias = mdformat.text(content_alias, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
+        formatted_alias = mdformat.text(content_alias, extensions=["wikilink", "front_matters", "gfm", "toc", "footnote"])
         self.assertEqual(formatted_alias.strip(), "See [[Wiki_CLI|the CLI]] for details.")
 
     def test_mdformat_aligns_tables(self) -> None:
         """Test that mdformat aligns and pads markdown tables with spaces."""
         unaligned = "| LongHeader | Short |\n|---|---|\n| cell | verylongcell |\n"
         expected = "| LongHeader | Short        |\n| ---------- | ------------ |\n| cell       | verylongcell |\n"
-        formatted = mdformat.text(unaligned, extensions=["wikilink", "frontmatter", "gfm", "toc", "footnote"])
+        formatted = mdformat.text(unaligned, extensions=["wikilink", "front_matters", "gfm", "toc", "footnote"])
         self.assertEqual(formatted, expected)
 
     def test_cli_fmt_in_place(self) -> None:
@@ -144,7 +144,7 @@ class TestWikiFmt(unittest.TestCase):
             file_path.write_text("# Title\n", encoding="utf-8")
             config = Config(
                 config_root=root,
-                fmt={"wrap": "no", "extensions": ["gfm", "frontmatter", "wikilink"]},
+                fmt={"wrap": "no", "extensions": ["gfm", "front_matters", "wikilink"]},
             )
             self.assertEqual(describe_fmt_source(file_path, config), "inline fmt in wiki config")
 
@@ -152,7 +152,7 @@ class TestWikiFmt(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             (root / ".mdformat.toml").write_text(
-                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                'wrap = "no"\nextensions = ["gfm", "front_matters", "wikilink"]\n',
                 encoding="utf-8",
             )
             file_path = root / "page.md"
@@ -165,7 +165,7 @@ class TestWikiFmt(unittest.TestCase):
             root = Path(tmpdir)
             custom = root / "custom.toml"
             custom.write_text(
-                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                'wrap = "no"\nextensions = ["gfm", "front_matters", "wikilink"]\n',
                 encoding="utf-8",
             )
             file_path = root / "page.md"
@@ -202,7 +202,7 @@ class TestWikiFmt(unittest.TestCase):
             nested.mkdir(parents=True)
             toml_path = wiki / ".mdformat.toml"
             toml_path.write_text(
-                'wrap = "no"\nextensions = ["gfm", "frontmatter", "wikilink"]\n',
+                'wrap = "no"\nextensions = ["gfm", "front_matters", "wikilink"]\n',
                 encoding="utf-8",
             )
             file_path = nested / "page.md"
@@ -216,7 +216,7 @@ class TestWikiFmt(unittest.TestCase):
         toml = (
             'wrap = "no"\n'
             'end_of_line = "lf"\n'
-            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+            'extensions = ["gfm", "front_matters", "wikilink"]\n'
         )
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -237,7 +237,7 @@ class TestWikiFmt(unittest.TestCase):
         toml = (
             'wrap = "no"\n'
             'end_of_line = "lf"\n'
-            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+            'extensions = ["gfm", "front_matters", "wikilink"]\n'
         )
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -255,7 +255,7 @@ class TestWikiFmt(unittest.TestCase):
         toml = (
             'wrap = "no"\n'
             'end_of_line = "lf"\n'
-            'extensions = ["gfm", "frontmatter", "wikilink"]\n'
+            'extensions = ["gfm", "front_matters", "wikilink"]\n'
         )
         original = "# Title\n\nSome text  \n"
         with TemporaryDirectory() as tmpdir:
@@ -268,7 +268,7 @@ class TestWikiFmt(unittest.TestCase):
                 fmt={
                     "wrap": "no",
                     "end_of_line": "lf",
-                    "extensions": ["gfm", "frontmatter", "wikilink"],
+                    "extensions": ["gfm", "front_matters", "wikilink"],
                 },
             )
             inline_out = format_markdown(original, file_path, inline_cfg)
@@ -298,7 +298,7 @@ class TestWikiFmt(unittest.TestCase):
             base_path = Path(tmpdir)
             (base_path / "wiki.yaml").write_text(
                 "wiki:\n  inputs: [wiki]\nfmt:\n  wrap: no\n  end_of_line: lf\n"
-                '  extensions: ["gfm", "frontmatter", "wikilink"]\n',
+                '  extensions: ["gfm", "front_matters", "wikilink"]\n',
                 encoding="utf-8",
             )
             config = Config.load(base_path)

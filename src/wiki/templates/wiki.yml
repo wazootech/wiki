@@ -117,7 +117,7 @@ fmt:
   # Line ending style (lf or crlf).
   end_of_line: lf
   # mdformat extensions enabled for wiki markdown.
-  extensions: [gfm, frontmatter, wikilink, toc, footnote]
+  extensions: [gfm, front_matters, wikilink, toc, footnote]
 
 # Pointer mode (optional TOML file relative to this file):
 # fmt: .mdformat.toml

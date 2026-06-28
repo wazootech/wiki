@@ -8,11 +8,11 @@ sh:property:
     sh:minCount: 1
     sh:maxCount: 1
     sh:datatype: xsd:string
-    sh:message: "TechArticle must have exactly one headline."
+    sh:message: TechArticle must have exactly one headline.
   - sh:path: schema:description
     sh:minCount: 1
     sh:datatype: xsd:string
-    sh:message: "TechArticle must have a description summary."
+    sh:message: TechArticle must have a description summary.
 ---
 
 # TechArticle Validation Shape

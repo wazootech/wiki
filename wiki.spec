@@ -15,7 +15,7 @@ hiddenimports += collect_submodules("pyshacl")
 hiddenimports += collect_submodules("owlrl")
 hiddenimports += [
     "wiki.mdformat_wikilink",
-    "mdformat_frontmatter",
+    "mdformat_front_matters",
     "mdformat_gfm",
     "pygments.lexers",
     "pygments.formatters",
