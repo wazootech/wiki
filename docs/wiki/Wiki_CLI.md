@@ -202,7 +202,7 @@ ORDER BY ?command
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yml and starter wiki pages interactively. |
-| [Wiki_Subcommand_install](Wiki_Subcommand_install.md) | Fetch and lock external data sources. |
+| [Wiki_Subcommand_install](Wiki_Subcommand_install.md) | Fetch and lock external data sources declared in wiki.yml. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the wiki graph. |
