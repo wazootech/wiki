@@ -129,7 +129,11 @@ def _render_metadata_value_parts(value, page, site, base_url, url_style):
     if isinstance(value, (int, float)):
         text = str(value)
         return text, html_module.escape(text)
-    return _render_link_like(str(value), str(value), page, site, base_url, url_style)
+    text = str(value)
+    if is_external_link(text) or ":" in text:
+        return _render_link_like(text, text, page, site, base_url, url_style)
+    escaped = html_module.escape(text)
+    return text, escaped
 
 
 def _infobox_list_item_html(html: str) -> str:
