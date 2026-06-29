@@ -10,6 +10,7 @@ import logging
 import re
 import shutil
 import subprocess
+from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -226,6 +227,96 @@ def install(config: Config, url: str | None = None) -> Lockfile:
 
     _save_lockfile(config, lockfile)
     return lockfile
+
+
+@dataclass
+class SourceUpdate:
+    """Result of checking a single source for updates."""
+
+    name: str
+    url: str
+    previous_ref: str
+    current_ref: str
+    updated: bool
+
+
+@dataclass
+class UpdateResult:
+    """Aggregate result of ``update()``."""
+
+    updates: list[SourceUpdate] = field(default_factory=list)
+
+    @property
+    def count(self) -> int:
+        return len(self.updates)
+
+    @property
+    def changed(self) -> list[SourceUpdate]:
+        return [u for u in self.updates if u.updated]
+
+
+def update(config: Config, name: str | None = None, *, dry_run: bool = False) -> UpdateResult:
+    """Check locked sources for newer commits.
+
+    Fetches each source's remote, resolves the current HEAD (or pinned ref),
+    and compares against the locked SHA. With ``dry_run=True``, reports
+    what would change without modifying wiki.lock.
+
+    Returns an ``UpdateResult`` with per-source ``SourceUpdate`` entries.
+    """
+    lockfile = _load_lockfile(config)
+    result = UpdateResult()
+
+    sources = [s for s in config.sources if name is None or s.name == name]
+    if not sources:
+        if name:
+            logger.warning("Source %r not found in wiki.yml.", name)
+        return result
+
+    for source in sources:
+        locked = lockfile.sources.get(source.name)
+        if locked is None:
+            logger.warning("Source %r is not locked. Run 'wiki install' first.", source.name)
+            continue
+
+        cache_dir = _source_cache_dir(config, source.name)
+        repo_dir = _git_clone_or_fetch(source, cache_dir)
+
+        ref_to_check = source.ref or "HEAD"
+        if ref_to_check != "HEAD":
+            subprocess.run(
+                ["git", "checkout", ref_to_check, "--"],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                check=True,
+            )
+
+        current_ref = _git_resolve_ref("HEAD", repo_dir)
+        previous_ref = locked.resolved_ref
+        updated = current_ref != previous_ref
+
+        if updated and not dry_run:
+            lockfile.sources[source.name] = LockedSource(
+                url=source.url,
+                resolved_ref=current_ref,
+                ref=source.ref,
+                path=source.path,
+                fetched_at=Lockfile.timestamp(),
+            )
+
+        result.updates.append(SourceUpdate(
+            name=source.name,
+            url=source.url,
+            previous_ref=previous_ref[:12] if previous_ref else "",
+            current_ref=current_ref[:12],
+            updated=updated,
+        ))
+
+    if not dry_run and result.changed:
+        _save_lockfile(config, lockfile)
+
+    return result
 
 
 def remove(config: Config, name: str) -> None:

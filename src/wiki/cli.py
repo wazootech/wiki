@@ -690,6 +690,41 @@ def install(wiki: Wiki, url: str | None) -> None:
 
 
 @main.command()
+@click.argument("name", required=False, default=None)
+@click.option("-n", "--dry-run", is_flag=True, help="Show what would update without modifying wiki.lock.")
+@click.pass_obj
+def update(wiki: Wiki, name: str | None, dry_run: bool) -> None:
+    """Check locked sources for newer commits and update wiki.lock.
+
+    Fetches each source, resolves the current HEAD (or pinned ref), and
+    compares against the locked SHA. With --dry-run, reports what would
+    change without writing. With a NAME argument, checks only that source.
+    """
+    from .sources import update as update_sources
+
+    try:
+        result = update_sources(wiki.config, name, dry_run=dry_run)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if not result.updates:
+        click.echo("No sources to update.")
+        return
+
+    changed = result.changed
+    if not changed:
+        click.echo("All sources are up to date.")
+        return
+
+    for u in changed:
+        action = "would update" if dry_run else "updated"
+        click.echo(f"{action} {u.name}: {u.previous_ref} -> {u.current_ref}")
+
+    if not dry_run:
+        click.echo(f"Updated {len(changed)} source{'s' if len(changed) != 1 else ''} in wiki.lock.")
+
+
+@main.command()
 @click.argument("name")
 @click.pass_obj
 def remove(wiki: Wiki, name: str) -> None:
