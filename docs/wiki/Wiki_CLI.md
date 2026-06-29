@@ -90,12 +90,12 @@ No Obsidian or agent stack required. `wiki init` scaffolds a wiki; conventions a
 
 ## Three capabilities of the CLI
 
-| Capability   | Commands                         | Value                                            |
-| ------------ | -------------------------------- | ------------------------------------------------ |
-| Trust        | `check`, `lint`, `fmt`           | Integrity contracts and authoring conventions    |
-| Intelligence | `query`, `render`, `export`      | SPARQL, inline result blocks, RDF serializations |
-| Publish      | `build`, `serve`, `link`         | Static site, local preview, wikilink hygiene     |
-| Sources      | `install`, `update`, `remove`    | Fetch, lock, update, and manage external sources |
+| Capability   | Commands                      | Value                                            |
+| ------------ | ----------------------------- | ------------------------------------------------ |
+| Trust        | `check`, `lint`, `fmt`        | Integrity contracts and authoring conventions    |
+| Intelligence | `query`, `render`, `export`   | SPARQL, inline result blocks, RDF serializations |
+| Publish      | `build`, `serve`, `link`      | Static site, local preview, wikilink hygiene     |
+| Sources      | `install`, `update`, `remove` | Fetch, lock, update, and manage external sources |
 
 Design rationale for silence, pipes, and flat subcommands: [Design philosophies](Design_Philosophies.md).
 
