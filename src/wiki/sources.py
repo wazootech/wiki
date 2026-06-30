@@ -65,6 +65,11 @@ def _save_lockfile(config: Config, lockfile: Lockfile) -> None:
     lockfile.save(_lockfile_path(config))
 
 
+def _is_full_sha(ref: str) -> bool:
+    """Return True if *ref* looks like a full 40-character commit SHA."""
+    return bool(re.fullmatch(r"[0-9a-f]{40}", ref))
+
+
 def _git_resolve_ref(ref: str, repo_dir: Path) -> str:
     result = subprocess.run(
         ["git", "rev-parse", ref],
@@ -112,10 +117,30 @@ def _git_clone_or_fetch(source: SourceConfig, cache_dir: Path) -> Path:
             raise RuntimeError(
                 f"Failed to fetch {source.url}: {result.stderr.strip()}"
             )
+
+        # Pinned commit SHAs may not be reachable in a shallow repo —
+        # unshallow so the checkout in _git_prepare_ref can find them.
+        if source.ref and _is_full_sha(source.ref):
+            shallow_check = subprocess.run(
+                ["git", "rev-parse", "--is-shallow-repository"],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+            )
+            if shallow_check.stdout.strip() == "true":
+                subprocess.run(
+                    ["git", "fetch", "--unshallow", "origin"],
+                    capture_output=True,
+                    text=True,
+                    cwd=repo_dir,
+                    check=True,
+                )
     else:
         cache_dir.mkdir(parents=True, exist_ok=True)
+        # Full clone for pinned commit SHAs; shallow is fine for branch/tag refs
+        depth_args = [] if (source.ref and _is_full_sha(source.ref)) else ["--depth", "1"]
         result = subprocess.run(
-            ["git", "clone", "--depth", "1", source.url, str(repo_dir)],
+            ["git", "clone", *depth_args, source.url, str(repo_dir)],
             capture_output=True,
             text=True,
         )
