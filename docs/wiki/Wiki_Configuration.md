@@ -249,10 +249,14 @@ Each source must have a unique `name`. The `type` field is currently limited to 
 
 Run `wiki install` to fetch all declared sources and write `wiki.lock`. Check `wiki.lock` into version control for reproducible builds. The resolved source paths are automatically appended to `wiki.inputs` so the existing graph, check, and build pipeline picks them up.
 
+The `.wiki/` source cache directory is not committed — `wiki init` scaffolds a `.gitignore` that excludes it (alongside the `_site/` build output).
+
 To add a source without editing the config file by hand:
 
 ```bash
 wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git
+# GitHub shorthand also works:
+wiki install EthanThatOneKid/solar-system-wiki
 ```
 
 The name is inferred from the URL (`solar-system`). To remove it:

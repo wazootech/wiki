@@ -14,6 +14,7 @@ from wiki.config import Config
 from wiki.fmt_util import DEFAULT_FMT_OPTS
 from wiki.init_scaffold import (
     InitOptions,
+    _scaffold_wiki,
     detect_origin_repo,
     infer_github_pages_urls,
     load_packaged_official_layout,
@@ -272,3 +273,33 @@ class TestInitLockstep(TestCase):
             if field in INIT_ONLY_OPTIONS:
                 continue
             self.assertIn(field, INIT_OPTIONS_TO_CONFIG_PATH, f"InitOptions field '{field}' is not mapped in INIT_OPTIONS_TO_CONFIG_PATH.")
+
+
+class TestScaffoldGitignore(TestCase):
+    def test_scaffold_creates_gitignore(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            result = _scaffold_wiki(
+                root,
+                InitOptions(graph_context_wiki="https://example.org/wiki/"),
+            )
+            self.assertTrue(result.ok)
+            gitignore = root / ".gitignore"
+            self.assertTrue(gitignore.exists())
+            content = gitignore.read_text(encoding="utf-8")
+            self.assertIn(".wiki/", content)
+            self.assertIn("_site/", content)
+
+    def test_scaffold_skips_existing_gitignore(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            existing = root / ".gitignore"
+            existing.write_text("# custom\n.env/\n", encoding="utf-8")
+            result = _scaffold_wiki(
+                root,
+                InitOptions(graph_context_wiki="https://example.org/wiki/"),
+            )
+            self.assertTrue(result.ok)
+            content = existing.read_text(encoding="utf-8")
+            self.assertIn(".env/", content)
+            self.assertNotIn(".wiki/", content)

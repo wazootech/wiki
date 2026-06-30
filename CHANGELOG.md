@@ -10,6 +10,8 @@
 - `sources:` config block in wiki.yml — declare external git repos with optional `ref` (branch/tag/commit) and `path` (subdirectory). Validated with `extra=forbid` like all other blocks. ([#148](https://github.com/wazootech/wiki/issues/148))
 - `wiki.lock` lockfile — machine-authored JSON recording resolved commit SHAs for reproducible builds. ([#148](https://github.com/wazootech/wiki/issues/148))
 - Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so graph, check, and build pipelines pick them up transparently.
+- `wiki install` now accepts GitHub `owner/repo` shorthand — `wiki install EthanThatOneKid/solar-system-wiki` expands to the full `https://github.com/EthanThatOneKid/solar-system-wiki.git` URL automatically.
+- `wiki init` now scaffolds a `.gitignore` that excludes `.wiki/` (source cache) and `_site/` (build output).
 
 ### Dependency
 

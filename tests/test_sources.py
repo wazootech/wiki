@@ -6,6 +6,7 @@ import yaml
 
 from wiki.config import Config
 from wiki.schemas.sources import LockedSource, Lockfile, SourceConfig
+from wiki.sources import _expand_source_url
 
 
 class TestSourceConfig(unittest.TestCase):
@@ -142,6 +143,40 @@ class TestConfigSources(unittest.TestCase):
     def test_sources_rejects_dict_syntax(self) -> None:
         with self.assertRaises(ValueError):
             Config(config_root=Path("."), sources={"src1": {"type": "git", "url": "https://x.com"}})
+
+
+class TestExpandSourceUrl(unittest.TestCase):
+    def test_owner_repo_shorthand(self) -> None:
+        self.assertEqual(
+            _expand_source_url("EthanThatOneKid/solar-system-wiki"),
+            "https://github.com/EthanThatOneKid/solar-system-wiki.git",
+        )
+
+    def test_owner_repo_with_dot_git(self) -> None:
+        self.assertEqual(
+            _expand_source_url("EthanThatOneKid/solar-system-wiki.git"),
+            "https://github.com/EthanThatOneKid/solar-system-wiki.git",
+        )
+
+    def test_full_https_url_passthrough(self) -> None:
+        url = "https://github.com/EthanThatOneKid/solar-system-wiki.git"
+        self.assertEqual(_expand_source_url(url), url)
+
+    def test_ssh_url_passthrough(self) -> None:
+        url = "git@github.com:EthanThatOneKid/solar-system-wiki.git"
+        self.assertEqual(_expand_source_url(url), url)
+
+    def test_third_party_url_passthrough(self) -> None:
+        url = "https://gitlab.com/owner/repo.git"
+        self.assertEqual(_expand_source_url(url), url)
+
+    def test_single_word_no_slash_passthrough(self) -> None:
+        url = "myrepo"
+        self.assertEqual(_expand_source_url(url), url)
+
+    def test_triple_path_segment_passthrough(self) -> None:
+        url = "a/b/c"
+        self.assertEqual(_expand_source_url(url), url)
 
 
 if __name__ == "__main__":

@@ -8,12 +8,15 @@ description: Fetch and lock external data sources declared in wiki.yml.
 
 Fetch external data sources (git repositories with wiki pages or RDF data), resolve commit SHAs, and pin them in `wiki.lock`. Without arguments, installs all sources declared in the `sources:` block of `wiki.yml`. With a URL, adds the source to `wiki.yml` first, then fetches and locks it.
 
+You can use GitHub `owner/repo` shorthand instead of a full URL — `EthanThatOneKid/solar-system-wiki` expands to `https://github.com/EthanThatOneKid/solar-system-wiki.git` automatically.
+
 ## Usage
 
 ```bash
 wiki install
 wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git
 wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git#v0.1.0
+wiki install EthanThatOneKid/solar-system-wiki
 ```
 
 ## Options
@@ -29,6 +32,10 @@ wiki install https://github.com/EthanThatOneKid/solar-system-wiki.git#v0.1.0
 ## Source cache
 
 Cloned repositories are cached under `.wiki/sources/<name>/repo/` relative to the wiki config root. `wiki install` always fetches the latest remote refs (shallow clone, `--depth 1`) so it stays fast.
+
+## `.gitignore`
+
+The `.wiki/` source cache directory (and the `_site/` build output) should not be committed to version control. `wiki init` scaffolds a `.gitignore` that includes both directories.
 
 ## Related
 

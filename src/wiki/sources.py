@@ -25,6 +25,21 @@ logger = logging.getLogger(__name__)
 _yaml = YAML()
 _yaml.indent(mapping=2, sequence=4, offset=2)
 
+_OWNER_REPO_SHORTHAND = re.compile(
+    r"^(?P<owner>[a-zA-Z0-9._-]+)/(?P<repo>[a-zA-Z0-9._-]+?)(?:\.git)?$"
+)
+
+
+def _expand_source_url(url: str) -> str:
+    """Expand ``owner/repo`` shorthand to ``https://github.com/owner/repo.git``.
+
+    Full URLs (HTTPS, SSH) and non-GitHub URLs pass through unchanged.
+    """
+    match = _OWNER_REPO_SHORTHAND.match(url)
+    if match:
+        return f"https://github.com/{match.group('owner')}/{match.group('repo')}.git"
+    return url
+
 
 def _lockfile_path(config: Config) -> Path:
     return config.config_root / LOCKFILE_FILENAME
@@ -63,8 +78,28 @@ def _git_resolve_ref(ref: str, repo_dir: Path) -> str:
 def _git_clone_or_fetch(source: SourceConfig, cache_dir: Path) -> Path:
     repo_dir = cache_dir / "repo"
     if repo_dir.exists():
+        url_result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+        )
+        if url_result.returncode == 0 and url_result.stdout.strip() != source.url:
+            subprocess.run(
+                ["git", "remote", "set-url", "origin", source.url],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+                check=True,
+            )
+            logger.info(
+                "Updated remote URL for source from %s to %s",
+                url_result.stdout.strip(),
+                source.url,
+            )
+
         result = subprocess.run(
-            ["git", "fetch", "--tags", "--force", "origin"],
+            ["git", "fetch", "--tags", "--force", "origin", "+refs/heads/*:refs/heads/*"],
             capture_output=True,
             text=True,
             cwd=repo_dir,
@@ -86,6 +121,47 @@ def _git_clone_or_fetch(source: SourceConfig, cache_dir: Path) -> Path:
                 f"Failed to clone {source.url}: {result.stderr.strip()}"
             )
     return repo_dir
+
+
+def _git_prepare_ref(source: SourceConfig, repo_dir: Path) -> None:
+    """After fetch, ensure the repo is checked out at the right ref.
+
+    For pinned refs (branch, tag, or commit), checks out that ref.
+    For unpinned sources (no ref), gets on a local branch if detached
+    HEAD (handles switching from a pinned tag to an unpinned default).
+    """
+    ref = source.ref
+    if ref is not None:
+        subprocess.run(
+            ["git", "checkout", ref, "--"],
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+            check=True,
+        )
+    else:
+        branch_result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=repo_dir,
+        )
+        if branch_result.stdout.strip() == "HEAD":
+            sym_result = subprocess.run(
+                ["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=repo_dir,
+            )
+            if sym_result.returncode == 0:
+                default_branch = sym_result.stdout.strip().removeprefix("refs/remotes/origin/")
+                subprocess.run(
+                    ["git", "checkout", default_branch, "--"],
+                    capture_output=True,
+                    text=True,
+                    cwd=repo_dir,
+                    check=True,
+                )
 
 
 def _source_resolved_path(source: SourceConfig, repo_dir: Path) -> Path:
@@ -152,9 +228,7 @@ def _remove_from_wiki_yml(config: Config, name: str) -> None:
         return
 
     raw = config_path.read_text(encoding="utf-8")
-    data = _yaml.load(raw)
-    if data is None:
-        return
+    data = _yaml.load(raw) or {}
 
     sources = data.get("sources")
     if not isinstance(sources, list):
@@ -183,13 +257,14 @@ def install(config: Config, url: str | None = None) -> Lockfile:
     """
     if url:
         clean_url, ref = _parse_url_ref(url)
+        clean_url = _expand_source_url(clean_url)
         name = _infer_name_from_url(clean_url)
         source = SourceConfig(name=name, type="git", url=clean_url, ref=ref)
         _add_to_wiki_yml(config, source)
         config.sources = list(config.sources) + [source]
     elif not config.sources:
         logger.info("No sources declared in wiki.yml.")
-        return _load_lockfile(config)
+        return Lockfile()
 
     lockfile = _load_lockfile(config)
 
@@ -197,16 +272,7 @@ def install(config: Config, url: str | None = None) -> Lockfile:
         logger.info("Installing source %r from %s", source.name, source.url)
         cache_dir = _source_cache_dir(config, source.name)
         repo_dir = _git_clone_or_fetch(source, cache_dir)
-
-        ref_to_check = source.ref or "HEAD"
-        if ref_to_check != "HEAD":
-            subprocess.run(
-                ["git", "checkout", ref_to_check, "--"],
-                capture_output=True,
-                text=True,
-                cwd=repo_dir,
-                check=True,
-            )
+        _git_prepare_ref(source, repo_dir)
 
         resolved_ref = _git_resolve_ref("HEAD", repo_dir)
         resolved_path = _source_resolved_path(source, repo_dir)
@@ -281,16 +347,7 @@ def update(config: Config, name: str | None = None, *, dry_run: bool = False) ->
 
         cache_dir = _source_cache_dir(config, source.name)
         repo_dir = _git_clone_or_fetch(source, cache_dir)
-
-        ref_to_check = source.ref or "HEAD"
-        if ref_to_check != "HEAD":
-            subprocess.run(
-                ["git", "checkout", ref_to_check, "--"],
-                capture_output=True,
-                text=True,
-                cwd=repo_dir,
-                check=True,
-            )
+        _git_prepare_ref(source, repo_dir)
 
         current_ref = _git_resolve_ref("HEAD", repo_dir)
         previous_ref = locked.resolved_ref
@@ -359,6 +416,10 @@ def resolve(config: Config) -> list[Path]:
             logger.warning("Source %r is not cached. Run 'wiki install' first.", source.name)
             continue
 
-        resolved.append(_source_resolved_path(source, repo_dir))
+        try:
+            resolved.append(_source_resolved_path(source, repo_dir))
+        except RuntimeError as exc:
+            logger.warning("Source %r: %s", source.name, exc)
+            continue
 
     return resolved
