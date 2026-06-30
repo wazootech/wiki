@@ -261,7 +261,17 @@ def _discover_sources(repo_dir: Path) -> list[SourceConfig]:
                 raw = config_file.read_text(encoding="utf-8")
                 data = _yaml.load(raw)
                 if isinstance(data, dict) and isinstance(data.get("sources"), list):
-                    return [SourceConfig(**s) for s in data["sources"]]
+                    result: list[SourceConfig] = []
+                    for s in data["sources"]:
+                        try:
+                            result.append(SourceConfig(**s))
+                        except Exception as exc:
+                            logger.warning(
+                                "Skipping invalid source entry in %s: %s",
+                                config_file,
+                                exc,
+                            )
+                    return result
             except Exception as exc:
                 logger.warning(
                     "Failed to read sources from %s: %s", config_file, exc
