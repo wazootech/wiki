@@ -249,6 +249,12 @@ Each source must have a unique `name`. The `type` field is currently limited to 
 
 Run `wiki install` to fetch all declared sources and write `wiki.lock`. Check `wiki.lock` into version control for reproducible builds. The resolved source paths are automatically appended to `wiki.inputs` so the existing graph, check, and build pipeline picks them up.
 
+**Transitive dependencies** are resolved recursively. After cloning each source, `wiki install` reads the source's own `wiki.yml` (or `wiki.yaml`/`wiki.json`) to discover its `sources:` block. Those transitive sources are fetched and locked too, forming a dependency tree. Circular dependency chains are detected and reported as errors. If two sources declare the same dependency name with different URLs or refs, install fails with a conflict error.
+
+When a source is removed with `wiki remove`, transitive sources that are no longer needed by any remaining top-level source are automatically cleaned up (cache and lockfile entry removed).
+
+After `wiki update`, newly declared transitive sources are installed, and orphaned sources are reported (but not auto-removed — run `wiki remove` to clean up).
+
 The `.wiki/` source cache directory is not committed — `wiki init` scaffolds a `.gitignore` that excludes it (alongside the `_site/` build output).
 
 To add a source without editing the config file by hand:

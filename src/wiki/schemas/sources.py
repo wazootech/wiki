@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-LOCKFILE_VERSION = 1
+LOCKFILE_VERSION = 2
 LOCKFILE_FILENAME = "wiki.lock"
 
 
@@ -25,13 +25,19 @@ class SourceConfig(BaseModel):
 
 
 class LockedSource(BaseModel):
-    """A pinned source entry in wiki.lock."""
+    """A pinned source entry in wiki.lock.
+
+    ``required_by`` lists the names of sources (or ``"root"`` for top-level
+    entries declared directly in the root ``wiki.yml``) that depend on this
+    source. An empty list means the source is a top-level root entry.
+    """
 
     url: str
     resolved_ref: str = ""
     ref: str | None = None
     path: str | None = None
     fetched_at: str = ""
+    required_by: list[str] = Field(default_factory=list)
 
 
 class Lockfile(BaseModel):

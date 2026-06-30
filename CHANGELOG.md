@@ -12,6 +12,10 @@
 - Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so graph, check, and build pipelines pick them up transparently.
 - `wiki install` now accepts GitHub `owner/repo` shorthand — `wiki install EthanThatOneKid/solar-system-wiki` expands to the full `https://github.com/EthanThatOneKid/solar-system-wiki.git` URL automatically.
 - `wiki init` now scaffolds a `.gitignore` that excludes `.wiki/` (source cache) and `_site/` (build output).
+- **Recursive (transitive) dependency resolution** — `wiki install` reads each cloned source's `wiki.yml` to discover its own `sources:` block, recursively fetching and locking transitive dependencies. Circular dependency chains are detected and raise an error. Name-and-ref conflicts are detected and raise an error.
+- **Lockfile v2** — `LockedSource` now tracks `required_by: list[str]` recording which sources depend on each entry (empty for top-level sources declared in the root `wiki.yml`). Backward-compatible: v1 lockfiles load with `required_by` defaulting to `[]`.
+- **Orphan cleanup on `wiki remove`** — when a source is removed, transitive sources that are no longer required by any remaining top-level source are automatically cleaned up (cache and lockfile entry removed), cascading through the dependency tree.
+- **Transitive re-sync on `wiki update`** — after fetching new commits, `wiki update` re-discovers each source's declared transitive dependencies. Newly declared sources are installed and locked; orphaned sources are reported as warnings (not auto-removed).
 
 ### Dependency
 

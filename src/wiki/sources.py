@@ -17,7 +17,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from .config import Config
+from .config import CONFIG_FILENAMES, Config
 from .schemas.sources import LOCKFILE_FILENAME, LockedSource, Lockfile, SourceConfig
 
 logger = logging.getLogger(__name__)
@@ -246,12 +246,117 @@ def _remove_from_wiki_yml(config: Config, name: str) -> None:
     config_path.write_text(_yaml_dump(data), encoding="utf-8")
 
 
+def _discover_sources(repo_dir: Path) -> list[SourceConfig]:
+    """Read ``wiki.yml`` (or ``wiki.yaml``/``wiki.json``) from a cloned
+    source repo to discover its declared transitive dependencies.
+
+    Only the ``sources:`` block is read — graph, check, and lint config
+    from transitive deps are not merged.  Returns ``[]`` when no config
+    file or no ``sources:`` block exists (leaf source).
+    """
+    for name in CONFIG_FILENAMES:
+        config_file = repo_dir / name
+        if config_file.exists():
+            try:
+                raw = config_file.read_text(encoding="utf-8")
+                data = _yaml.load(raw)
+                if isinstance(data, dict) and isinstance(data.get("sources"), list):
+                    return [SourceConfig(**s) for s in data["sources"]]
+            except Exception as exc:
+                logger.warning(
+                    "Failed to read sources from %s: %s", config_file, exc
+                )
+            break  # found a config file, even if malformed
+    return []
+
+
+def _install_tree(
+    config: Config,
+    sources: list[SourceConfig],
+    lockfile: Lockfile,
+    *,
+    parent: str | None,
+    visited: set[str],
+    path: list[str],
+) -> None:
+    """Recursive dependency-tree walker.
+
+    * ``parent`` — name of the source that declared these deps, or
+      ``None`` for top-level entries.
+    * ``visited`` — set of already-processed source names (shared
+      across the whole install run).
+    * ``path`` — ancestor chain for cycle detection.
+    """
+    for source in sources:
+        # ---- cycle detection ---------------------------------------------------
+        if source.name in path:
+            cycle = " -> ".join(path + [source.name])
+            raise RuntimeError(f"Circular dependency detected: {cycle}")
+
+        # ---- deduplication / conflict check ------------------------------------
+        if source.name in visited:
+            existing = lockfile.sources[source.name]
+            if existing.url != source.url or existing.ref != source.ref:
+                raise RuntimeError(
+                    f"Source {source.name!r} conflict: "
+                    f"already locked as {existing.url}@{existing.ref or 'HEAD'}, "
+                    f"but {parent or 'root'} declares "
+                    f"{source.url}@{source.ref or 'HEAD'}"
+                )
+            if parent is not None and parent not in existing.required_by:
+                existing.required_by.append(parent)
+            continue
+
+        visited.add(source.name)
+
+        # ---- clone / fetch / checkout ------------------------------------------
+        logger.info("Installing source %r from %s", source.name, source.url)
+        cache_dir = _source_cache_dir(config, source.name)
+        repo_dir = _git_clone_or_fetch(source, cache_dir)
+        _git_prepare_ref(source, repo_dir)
+
+        resolved_ref = _git_resolve_ref("HEAD", repo_dir)
+        resolved_path = _source_resolved_path(source, repo_dir)
+
+        lockfile.sources[source.name] = LockedSource(
+            url=source.url,
+            resolved_ref=resolved_ref,
+            ref=source.ref,
+            path=source.path,
+            fetched_at=Lockfile.timestamp(),
+            required_by=[parent] if parent is not None else [],
+        )
+        logger.info(
+            "Locked source %r at %s -> %s",
+            source.name,
+            resolved_ref[:12],
+            resolved_path,
+        )
+
+        # ---- recurse into transitive dependencies ------------------------------
+        transitive = _discover_sources(repo_dir)
+        if transitive:
+            _install_tree(
+                config,
+                transitive,
+                lockfile,
+                parent=source.name,
+                visited=visited,
+                path=path + [source.name],
+            )
+
+
 def install(config: Config, url: str | None = None) -> Lockfile:
     """Fetch and lock sources.
 
     With no url, fetches all sources from wiki.yml and updates wiki.lock.
     With a url, adds a new source to wiki.yml, fetches it, and updates
     wiki.lock.
+
+    Transitive dependencies are resolved recursively: each source's own
+    ``wiki.yml`` is checked for a ``sources:`` block, and those sources
+    are fetched and locked too.  Circular dependency chains are detected
+    and raise ``RuntimeError``.
 
     Returns the updated Lockfile.
     """
@@ -267,29 +372,16 @@ def install(config: Config, url: str | None = None) -> Lockfile:
         return Lockfile()
 
     lockfile = _load_lockfile(config)
+    visited: set[str] = set(lockfile.sources.keys())
 
-    for source in config.sources:
-        logger.info("Installing source %r from %s", source.name, source.url)
-        cache_dir = _source_cache_dir(config, source.name)
-        repo_dir = _git_clone_or_fetch(source, cache_dir)
-        _git_prepare_ref(source, repo_dir)
-
-        resolved_ref = _git_resolve_ref("HEAD", repo_dir)
-        resolved_path = _source_resolved_path(source, repo_dir)
-
-        lockfile.sources[source.name] = LockedSource(
-            url=source.url,
-            resolved_ref=resolved_ref,
-            ref=source.ref,
-            path=source.path,
-            fetched_at=Lockfile.timestamp(),
-        )
-        logger.info(
-            "Locked source %r at %s -> %s",
-            source.name,
-            resolved_ref[:12],
-            resolved_path,
-        )
+    _install_tree(
+        config,
+        config.sources,
+        lockfile,
+        parent=None,
+        visited=visited,
+        path=[],
+    )
 
     _save_lockfile(config, lockfile)
     return lockfile
@@ -321,12 +413,41 @@ class UpdateResult:
         return [u for u in self.updates if u.updated]
 
 
-def update(config: Config, name: str | None = None, *, dry_run: bool = False) -> UpdateResult:
+def _report_orphans(config: Config, lockfile: Lockfile) -> None:
+    """Warn about transitive sources that are no longer declared by any
+    parent but still exist in the lockfile.
+
+    This is a read-only diagnostic — no lockfile or cache changes are
+    made.  Users should run ``wiki remove <name>`` to clean up orphans.
+    """
+    remaining_top_level = {s.name for s in config.sources}
+
+    for name, entry in lockfile.sources.items():
+        if name not in remaining_top_level and entry.required_by:
+            logger.warning(
+                "Source %r (required_by=%r) may be orphaned. "
+                "Run 'wiki remove %s' to clean up.",
+                name,
+                entry.required_by,
+                name,
+            )
+
+
+def update(
+    config: Config,
+    name: str | None = None,
+    *,
+    dry_run: bool = False,
+) -> UpdateResult:
     """Check locked sources for newer commits.
 
     Fetches each source's remote, resolves the current HEAD (or pinned ref),
     and compares against the locked SHA. With ``dry_run=True``, reports
     what would change without modifying wiki.lock.
+
+    After updating commits, transitive dependencies are re-synced:
+    newly-declared sources are installed; orphaned sources are reported
+    (not auto-removed).
 
     Returns an ``UpdateResult`` with per-source ``SourceUpdate`` entries.
     """
@@ -342,7 +463,10 @@ def update(config: Config, name: str | None = None, *, dry_run: bool = False) ->
     for source in sources:
         locked = lockfile.sources.get(source.name)
         if locked is None:
-            logger.warning("Source %r is not locked. Run 'wiki install' first.", source.name)
+            logger.warning(
+                "Source %r is not locked. Run 'wiki install' first.",
+                source.name,
+            )
             continue
 
         cache_dir = _source_cache_dir(config, source.name)
@@ -360,6 +484,7 @@ def update(config: Config, name: str | None = None, *, dry_run: bool = False) ->
                 ref=source.ref,
                 path=source.path,
                 fetched_at=Lockfile.timestamp(),
+                required_by=locked.required_by,
             )
 
         result.updates.append(SourceUpdate(
@@ -370,14 +495,78 @@ def update(config: Config, name: str | None = None, *, dry_run: bool = False) ->
             updated=updated,
         ))
 
-    if not dry_run and result.changed:
-        _save_lockfile(config, lockfile)
+    if not dry_run:
+        if result.changed:
+            _save_lockfile(config, lockfile)
+
+        # ---- re-sync transitive dependency tree --------------------------------
+        visited: set[str] = set(lockfile.sources.keys())
+        for source in config.sources:
+            repo_dir = _source_cache_dir(config, source.name) / "repo"
+            if repo_dir.exists():
+                transitive = _discover_sources(repo_dir)
+                if transitive:
+                    _install_tree(
+                        config,
+                        transitive,
+                        lockfile,
+                        parent=source.name,
+                        visited=visited,
+                        path=[],
+                    )
+        if visited != set(lockfile.sources.keys()):
+            _save_lockfile(config, lockfile)
+
+        _report_orphans(config, lockfile)
 
     return result
 
 
+def _remove_orphans(
+    config: Config, lockfile: Lockfile, removed_name: str
+) -> None:
+    """Recursively remove transitive sources that are no longer needed.
+
+    After ``removed_name`` is deleted, walk all remaining lockfile entries
+    and remove ``removed_name`` from their ``required_by`` lists.  Any
+    entry whose ``required_by`` becomes empty and is **not** a top-level
+    source (declared in the root ``wiki.yml``) is an orphan — delete its
+    cache, remove it from the lockfile, and recurse in case *its*
+    dependants become orphans too.
+    """
+    remaining_top_level = {s.name for s in config.sources}
+
+    for entry in lockfile.sources.values():
+        if removed_name in entry.required_by:
+            entry.required_by = [r for r in entry.required_by if r != removed_name]
+
+    orphaned = [
+        n
+        for n, e in lockfile.sources.items()
+        if not e.required_by and n not in remaining_top_level
+    ]
+
+    for orphan in orphaned:
+        cache_dir = _source_cache_dir(config, orphan)
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+            logger.info("Removed cache for orphaned transitive source %r", orphan)
+        del lockfile.sources[orphan]
+        logger.info(
+            "Removed orphaned transitive source %r from lockfile", orphan
+        )
+        _remove_orphans(config, lockfile, orphan)  # cascade
+
+
 def remove(config: Config, name: str) -> None:
-    """Remove a source from wiki.yml, its cache, and wiki.lock."""
+    """Remove a source from wiki.yml, its cache, and wiki.lock.
+
+    Transitive dependencies that are no longer required by any remaining
+    top-level source are automatically cleaned up (cache and lockfile
+    entry removed).
+    """
+    _remove_from_wiki_yml(config, name)
+
     cache_dir = _source_cache_dir(config, name)
     if cache_dir.exists():
         shutil.rmtree(cache_dir)
@@ -386,40 +575,46 @@ def remove(config: Config, name: str) -> None:
     lockfile = _load_lockfile(config)
     if name in lockfile.sources:
         del lockfile.sources[name]
+        _remove_orphans(config, lockfile, name)
         _save_lockfile(config, lockfile)
         logger.info("Removed lock entry for source %r", name)
 
-    _remove_from_wiki_yml(config, name)
-    logger.info("Removed source %r from wiki.yml", name)
-
 
 def resolve(config: Config) -> list[Path]:
-    """Return resolved local paths for all locked sources.
+    """Return resolved local paths for all locked sources (including
+    transitive dependencies).
 
-    Reads wiki.lock and returns the local paths of cached sources.
+    Reads ``wiki.lock`` and returns the local paths of all cached sources
+    — both top-level (declared in the root ``wiki.yml``) and transitive
+    (declared by those sources' own ``wiki.yml`` files).
+
     Does NOT fetch — use ``install()`` to ensure sources are up to date.
     """
-    if not config.sources:
+    lockfile = _load_lockfile(config)
+    if not lockfile.sources:
         return []
 
-    lockfile = _load_lockfile(config)
     resolved: list[Path] = []
 
-    for source in config.sources:
-        locked = lockfile.sources.get(source.name)
-        if locked is None:
-            logger.warning("Source %r is not locked. Run 'wiki install' first.", source.name)
-            continue
-
-        repo_dir = _source_cache_dir(config, source.name) / "repo"
+    for name, locked in lockfile.sources.items():
+        repo_dir = _source_cache_dir(config, name) / "repo"
         if not repo_dir.exists():
-            logger.warning("Source %r is not cached. Run 'wiki install' first.", source.name)
+            logger.warning(
+                "Source %r is not cached. Run 'wiki install' first.", name
+            )
             continue
 
+        source = SourceConfig(
+            name=name,
+            type="git",
+            url=locked.url,
+            ref=locked.ref,
+            path=locked.path,
+        )
         try:
             resolved.append(_source_resolved_path(source, repo_dir))
         except RuntimeError as exc:
-            logger.warning("Source %r: %s", source.name, exc)
+            logger.warning("Source %r: %s", name, exc)
             continue
 
     return resolved

@@ -10,6 +10,8 @@ Fetch external data sources (git repositories with wiki pages or RDF data), reso
 
 You can use GitHub `owner/repo` shorthand instead of a full URL — `EthanThatOneKid/solar-system-wiki` expands to `https://github.com/EthanThatOneKid/solar-system-wiki.git` automatically.
 
+**Transitive dependencies** are resolved recursively. `wiki install` reads each cloned source's own `wiki.yml` to discover its `sources:` block, fetches those transitive sources, and locks them too — forming a dependency tree. Circular dependency chains are detected and raise an error. If two sources declare the same dependency name with different URLs or refs, install fails with a conflict error.
+
 ## Usage
 
 ```bash

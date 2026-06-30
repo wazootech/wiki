@@ -10,6 +10,8 @@ Fetch each locked source, resolve the current HEAD (or the configured ref), and 
 
 This is the incremental counterpart to `wiki install` — it only writes the lockfile when something actually changed, and reports what updated.
 
+**Transitive dependency re-sync:** after updating commits, `wiki update` re-discovers each source's declared transitive dependencies. Newly declared sources are automatically installed and locked. Orphaned sources (transitive deps that were dropped by a source's new commit) are reported as warnings but not automatically removed — run `wiki remove <name>` to clean up.
+
 ## Usage
 
 ```bash
