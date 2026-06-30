@@ -166,6 +166,33 @@ def _git_prepare_ref(source: SourceConfig, repo_dir: Path) -> None:
                     cwd=repo_dir,
                     check=True,
                 )
+            else:
+                branch_r_result = subprocess.run(
+                    ["git", "branch", "-r"],
+                    capture_output=True,
+                    text=True,
+                    cwd=repo_dir,
+                )
+                if branch_r_result.returncode == 0:
+                    refs = [
+                        b.strip().removeprefix("origin/")
+                        for b in branch_r_result.stdout.strip().splitlines()
+                        if b.strip().startswith("origin/")
+                    ]
+                    preferred = None
+                    for candidate in ("main", "master"):
+                        if candidate in refs:
+                            preferred = candidate
+                            break
+                    default_branch = preferred or (refs[0] if refs else None)
+                    if default_branch:
+                        subprocess.run(
+                            ["git", "checkout", default_branch, "--"],
+                            capture_output=True,
+                            text=True,
+                            cwd=repo_dir,
+                            check=True,
+                        )
 
 
 def _source_resolved_path(source: SourceConfig, repo_dir: Path) -> Path:
