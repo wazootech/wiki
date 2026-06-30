@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-**Wiki CLI** is a command-line toolchain and compiler for Markdown wikis. It compiles a directory of Markdown documents with structured metadata (YAML or JSON frontmatter) into a queryable semantic graph, validating data integrity with SHACL and JSON Schema, executing queries with SPARQL, and building static websites. It operates as an independent semantic layer underneath your markdown files, meaning you can keep writing in Obsidian, VS Code, or any other editor without changing your tools.
+**Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in Obsidian, VS Code, or any editor — the CLI validates your documents, runs queries against them, and builds static sites. Drop a `wiki.yaml` in your folder and you're set.
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
@@ -15,7 +15,7 @@ Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (g
 
 ## Use cases and integrations
 
-Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside your existing wiki without owning the editor.
+Wiki CLI is **interop-first**: it runs beside your existing wiki without owning the editor.
 
 - **Obsidian & PKM** — Validate links and run queries inside your personal wiki. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
 - **Static Documentation & Wikis** — Auto-generate styled HTML documentation pages, tables of contents, and sidebar infoboxes for publishing to GitHub Pages or static hosts.
@@ -26,7 +26,7 @@ Wiki CLI is **interop-first**: a general-purpose semantic layer that runs beside
 
 While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory wiki optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
 - **Farzapedia** is a specific *content wiki* containing diary entries, notes, and messages.
-- **Wiki CLI** is a *utility* for *any* wiki. It compiles Markdown files, enforces structure (SHACL and JSON Schema), queries data (SPARQL), and builds static websites.
+- **Wiki CLI** is a *utility* for *any* wiki. It validates structure, runs queries, and builds static websites from a folder of Markdown files.
 
 Adoption path: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs wiki.
 
@@ -36,11 +36,11 @@ Three capabilities, one toolchain:
 
 | Capability | Commands | What you get |
 |------------|----------|--------------|
-| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | SHACL and JSON Schema integrity, wiki conventions, mechanical Markdown layout |
-| **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | OWL-RL inference, inline SPARQL tables, JSON-LD and RDF serializations |
-| **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata pane, local preview, optional read-only SPARQL endpoint, wikilink hygiene |
+| **Trust** | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt) | Integrity checks (SHACL, JSON Schema), wiki conventions, automated formatting |
+| **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | Semantic queries (SPARQL), live inline tables, data exports (JSON-LD, Turtle) |
+| **Publish** | [`build`](#build), [`serve`](#serve), [`link`](#link) | Static HTML with infoboxes and metadata viewer, local preview, wikilink hygiene |
 
-Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich tables in the terminal; YAML/JSON frontmatter and HTML microdata map into the same RDF graph; per-page layouts via `wazoo:layout`.
+Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich tables in the terminal; YAML and JSON frontmatter feed into the same queryable model; per-page layouts via `wazoo:layout`.
 
 ## Ecosystem templates
 
@@ -238,10 +238,10 @@ wiki init
 # Also initialize a Git repository explicitly
 wiki init --git
 
-# Run integrity checks (silent on success)
+# Validate document structure (silent on success)
 wiki check
 
-# Run convention audits (silent on success)
+# Check conventions (links, filenames, headings)
 wiki lint
 
 # Start a local server (default: http://127.0.0.1:8080/wiki/)
@@ -680,14 +680,14 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your wiki using the **Shell Commands** community plugin.
 
 Recommended workflows:
-* **Check on save**: Bind `wiki check` to execute whenever a file is modified to receive instant feedback on SHACL, JSON Schema, and layout validation.
-* **Trigger re-rendering**: Map a hotkey or command palette item to `wiki render` to automatically update all dynamic SPARQL blocks in the wiki.
+* **Check on save**: Bind `wiki check` to run whenever a file is modified — catch validation errors immediately.
+* **Trigger re-rendering**: Map a hotkey to `wiki render` to refresh live query tables in your documents.
 
-### Declarative modeling & full-text SPARQL
+### Validation rules and queries
 
-The Wiki CLI natively turns your folder of Markdown files into an active logical ontology and validation graph.
+The Wiki CLI turns your folder of Markdown files into a structured, queryable knowledge base.
 
-#### Defining OWL classes and SHACL shapes recursively in frontmatter
+#### Define validation rules in frontmatter
 Because our frontmatter parser natively supports nested dictionary conversion to RDF blank nodes, you can define complete validation shapes and ontological classes inside any document's frontmatter:
 
 ```yaml
@@ -706,25 +706,8 @@ sh:property:
 Requires that all `wiki:Dog` documents must declare a name.
 ```
 
-#### Native microdata via HTML attributes
-You are not limited to YAML headers! For rich semantic embedding directly inside your content flow, you can simply use standard **HTML5 Microdata** (`itemscope`, `itemtype`, `itemprop`) anywhere in your markdown body. The CLI parses the DOM tree via `BeautifulSoup` and injects assertions natively into the graph pool. Prefixed CURIEs in `itemtype`, `itemid`, `itemprop`, `href`, and `src` expand through the same `context` bindings as frontmatter (for example `schema:Product`, `wiki:Gregory_Davidson`).
-
-````markdown
-# Product X Overview
-Product X is state-of-the-art.
-
-<div itemscope itemtype="schema:Product" itemid="wiki:Product_X">
-  Our latest model is the <span itemprop="schema:name">Quantum Processor X</span>.
-  
-  <div itemprop="schema:offers" itemscope itemtype="schema:Offer">
-    Price: <span itemprop="schema:price">999.99</span> 
-    Currency: <meta itemprop="schema:priceCurrency" content="USD" />
-  </div>
-</div>
-````
-
-#### Decentralized OWL inference
-Because the tool integrates a full `owlrl` engine over the entire wiki graph, you can scatter ontological rules across disparate markdown pages and the CLI will automatically compute the logical closure. 
+#### Class hierarchies and automatic inference
+Define class relationships in one document and declare instances in another — the CLI automatically connects them when you run queries. 
 
 Define a class hierarchy inside a shape file:
 ```yaml
@@ -758,7 +741,7 @@ SELECT ?given ?family WHERE {
 }
 ```
 
-#### Opt-in full-text SPARQL over markdown content
+#### Full-text search with SPARQL
 By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article wikis). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
 
 ```sparql
