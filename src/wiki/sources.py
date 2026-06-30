@@ -50,6 +50,10 @@ def _source_cache_dir(config: Config, source_name: str) -> Path:
 
 
 def _config_path(config: Config) -> Path:
+    for name in CONFIG_FILENAMES:
+        candidate = config.config_root / name
+        if candidate.exists():
+            return candidate
     return config.config_root / "wiki.yml"
 
 
@@ -195,7 +199,7 @@ def _yaml_dump(data: object) -> str:
 def _add_to_wiki_yml(config: Config, source: SourceConfig) -> None:
     config_path = _config_path(config)
     if not config_path.exists():
-        raise RuntimeError("wiki.yml not found")
+        raise RuntimeError("No wiki config file found")
 
     raw = config_path.read_text(encoding="utf-8")
     data = _yaml.load(raw) or {}
