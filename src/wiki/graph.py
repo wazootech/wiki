@@ -113,7 +113,9 @@ def resolve_object(key: str, value: Any, graph: Graph, subject: URIRef, context:
         graph.add((subject, pred, Literal(value, datatype=XSD.boolean)))
     elif isinstance(value, (int, float)):
         graph.add((subject, pred, Literal(value)))
-    elif hasattr(value, "isoformat") and hasattr(value, "year"): # Check for datetime/date
+    elif hasattr(value, "hour"):
+        graph.add((subject, pred, Literal(value, datatype=XSD.dateTime)))
+    elif hasattr(value, "isoformat") and hasattr(value, "year"):
         graph.add((subject, pred, Literal(value, datatype=XSD.date)))
     elif value is not None:
         graph.add((subject, pred, Literal(str(value))))
