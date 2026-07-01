@@ -103,10 +103,14 @@ class TestRDFFrontmatter(unittest.TestCase):
         self.assertEqual(len(list(graph.objects(subject, nothing_pred))), 0)
 
         # 4. Datetime object mapping
-        from datetime import date
+        from datetime import date, datetime
         bday_pred = self.context.namespaces["schema"]["birthDate"]
         resolve_object("birthDate", date(1990, 1, 1), graph, subject, self.context)
         self.assertTrue((subject, bday_pred, Literal(date(1990, 1, 1), datatype=XSD.date)) in graph)
+
+        resolved_pred = self.context.namespaces["schema"]["resolvedAt"]
+        resolve_object("resolvedAt", datetime(2025, 6, 15, 14, 30, 0), graph, subject, self.context)
+        self.assertTrue((subject, resolved_pred, Literal(datetime(2025, 6, 15, 14, 30, 0), datatype=XSD.dateTime)) in graph)
 
         # 5. String with unregistered prefix (falls back to Literal)
         unreg_pred = self.context.namespaces["schema"]["unregistered"]
