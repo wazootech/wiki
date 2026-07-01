@@ -6,10 +6,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 LOCKFILE_VERSION = 2
 LOCKFILE_FILENAME = "wiki.lock"
+
+
+_PATH_TRAVERSAL_CHARS = frozenset("/\\")
 
 
 class SourceConfig(BaseModel):
@@ -22,6 +25,17 @@ class SourceConfig(BaseModel):
     url: str
     ref: str | None = None
     path: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def name_must_be_safe(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Source name must not be empty")
+        if ".." in v:
+            raise ValueError(f"Source name {v!r} must not contain '..' (path traversal)")
+        if _PATH_TRAVERSAL_CHARS & set(v):
+            raise ValueError(f"Source name {v!r} must not contain path separators")
+        return v
 
 
 class LockedSource(BaseModel):
