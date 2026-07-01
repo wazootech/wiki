@@ -26,7 +26,7 @@ from .rules import CheckConfig, LintConfig
 
 logger = logging.getLogger(__name__)
 
-_LINK_STYLES = frozenset({"standard", "wikilink", "markdown", "obsidian"})
+_LINK_STYLES = frozenset({"standard", "wikilink"})
 _LEGACY_LINK_STYLE_MAP = {"markdown": "standard", "obsidian": "wikilink"}
 DEFAULT_LINK_STYLE = "standard"
 DEFAULT_BASE_URL = "/wiki"
