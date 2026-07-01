@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json"}
 DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json"}
@@ -72,7 +75,8 @@ def document_data_from_path(path: Path, content_predicate: str | None = None) ->
         if not isinstance(data, dict):
             return None
         return ensure_context(data)
-    except Exception:
+    except Exception as exc:
+        logger.debug("document_data_from_path(%s): %s", path, exc)
         return None
 
 
@@ -96,7 +100,8 @@ def frontmatter_from_path(path: Path, content_predicate: str | None = None) -> d
                     data[content_predicate] = body
                     
         return data
-    except Exception:
+    except Exception as exc:
+        logger.debug("frontmatter_from_path(%s): %s", path, exc)
         return None
 
 
@@ -120,7 +125,8 @@ def split_document_body(path: Path) -> tuple[dict[str, Any] | None, str]:
     if suffix == ".md":
         try:
             return split_frontmatter_body(path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception as exc:
+            logger.debug("split_document_body(%s): %s", path, exc)
             return None, ""
 
     data = document_data_from_path(path)
