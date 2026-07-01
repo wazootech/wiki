@@ -6,11 +6,15 @@ import logging
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-logger = logging.getLogger(__name__)
+from .wiki_config import (
+    _LEGACY_LINK_STYLE_MAP,
+    _LINK_STYLES,
+)
+from .wiki_config import (
+    VALID_URL_STYLES as _VALID_URL_STYLES,
+)
 
-_LINK_STYLES = frozenset({"standard", "wikilink", "markdown", "obsidian"})
-_LEGACY_LINK_STYLE_MAP = {"markdown": "standard", "obsidian": "wikilink"}
-_VALID_URL_STYLES = frozenset({"dir", "file"})
+logger = logging.getLogger(__name__)
 
 
 class InitOptions(BaseModel):
