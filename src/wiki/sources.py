@@ -360,12 +360,13 @@ def install(config: Config, url: str | None = None) -> Lockfile:
 
     Returns the updated Lockfile.
     """
+    added_source: SourceConfig | None = None
     if url:
         clean_url, ref = _parse_url_ref(url)
         clean_url = _expand_source_url(clean_url)
         name = _infer_name_from_url(clean_url)
         source = SourceConfig(name=name, type="git", url=clean_url, ref=ref)
-        _add_to_wiki_yml(config, source)
+        added_source = source
         config.sources = list(config.sources) + [source]
     elif not config.sources:
         logger.info("No sources declared in wiki.yml.")
@@ -384,6 +385,10 @@ def install(config: Config, url: str | None = None) -> Lockfile:
     )
 
     _save_lockfile(config, lockfile)
+
+    if added_source is not None:
+        _add_to_wiki_yml(config, added_source)
+
     return lockfile
 
 
