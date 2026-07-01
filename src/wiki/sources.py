@@ -423,7 +423,7 @@ def _report_orphans(config: Config, lockfile: Lockfile) -> None:
     remaining_top_level = {s.name for s in config.sources}
 
     for name, entry in lockfile.sources.items():
-        if name not in remaining_top_level and entry.required_by:
+        if name not in remaining_top_level:
             logger.warning(
                 "Source %r (required_by=%r) may be orphaned. "
                 "Run 'wiki remove %s' to clean up.",
