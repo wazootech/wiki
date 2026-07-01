@@ -131,7 +131,7 @@ def _git_prepare_ref(source: SourceConfig, repo_dir: Path) -> None:
     HEAD (handles switching from a pinned tag to an unpinned default).
     """
     ref = source.ref
-    if ref is not None:
+    if ref:
         subprocess.run(
             ["git", "checkout", ref, "--"],
             capture_output=True,
