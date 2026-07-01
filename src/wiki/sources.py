@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 from .config import CONFIG_FILENAMES, Config
 from .schemas.sources import LOCKFILE_FILENAME, LockedSource, Lockfile, SourceConfig
@@ -262,7 +263,7 @@ def _discover_sources(repo_dir: Path) -> list[SourceConfig]:
                 data = _yaml.load(raw)
                 if isinstance(data, dict) and isinstance(data.get("sources"), list):
                     return [SourceConfig(**s) for s in data["sources"]]
-            except Exception as exc:
+            except (YAMLError, ValueError, TypeError) as exc:
                 logger.warning(
                     "Failed to read sources from %s: %s", config_file, exc
                 )
