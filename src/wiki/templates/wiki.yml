@@ -105,6 +105,14 @@ lint:
   # Wikilinks in body when link.style is standard.
   link_style: warning
 
+# External data sources (git repos with wiki pages / RDF data to merge).
+# Run 'wiki install' to fetch and lock declared sources.
+# sources:
+#   - name: shared-taxonomy
+#     type: git
+#     url: https://github.com/example/taxonomy.wiki.git
+#     ref: v1.2.0
+
 # Optional SPARQL HTTP endpoint on wiki serve (opt-in).
 # sparql_service:
 #   enabled: false

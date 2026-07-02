@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `wiki install` command — fetch and lock external git sources declared in `sources:` block of `wiki.yml`. With a URL argument, adds the source to wiki.yml first. Supports `#ref` pinning. ([#148](https://github.com/wazootech/wiki/issues/148), [#164](https://github.com/wazootech/wiki/pull/164))
+- `wiki remove` command — remove a source from wiki.yml, its `.wiki/sources/` cache, and wiki.lock. ([#164](https://github.com/wazootech/wiki/pull/164))
+- `wiki update` command — check locked sources for newer commits and update wiki.lock. Supports `--dry-run` and per-source filtering. ([#164](https://github.com/wazootech/wiki/pull/164))
+- `sources:` config block in wiki.yml — declare external git repos with optional `ref` (branch/tag/commit) and `path` (subdirectory). Validated with `extra=forbid` like all other blocks. ([#148](https://github.com/wazootech/wiki/issues/148))
+- `wiki.lock` lockfile — machine-authored JSON recording resolved commit SHAs for reproducible builds. ([#148](https://github.com/wazootech/wiki/issues/148))
+- Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so graph, check, and build pipelines pick them up transparently.
+- `wiki install` now accepts GitHub `owner/repo` shorthand — `wiki install EthanThatOneKid/solar-system-wiki` expands to the full `https://github.com/EthanThatOneKid/solar-system-wiki.git` URL automatically.
+- `wiki init` now scaffolds a `.gitignore` that excludes `.wiki/` (source cache) and `_site/` (build output).
+- **Recursive (transitive) dependency resolution** — `wiki install` reads each cloned source's `wiki.yml` to discover its own `sources:` block, recursively fetching and locking transitive dependencies. Circular dependency chains are detected and raise an error. Name-and-ref conflicts are detected and raise an error.
+- **Lockfile v2** — `LockedSource` now tracks `required_by: list[str]` recording which sources depend on each entry (empty for top-level sources declared in the root `wiki.yml`). Backward-compatible: v1 lockfiles load with `required_by` defaulting to `[]`.
+- **Orphan cleanup on `wiki remove`** — when a source is removed, transitive sources that are no longer required by any remaining top-level source are automatically cleaned up (cache and lockfile entry removed), cascading through the dependency tree.
+- **Transitive re-sync on `wiki update`** — after fetching new commits, `wiki update` re-discovers each source's declared transitive dependencies. Newly declared sources are installed and locked; orphaned sources are reported as warnings (not auto-removed).
+
+### Dependency
+
+- Added `ruamel.yaml` for comment-preserving YAML writes when `wiki install`/`wiki remove` edits wiki.yml.
+
 ## 0.1.18 — 2026-06-28
 
 ### Fixed

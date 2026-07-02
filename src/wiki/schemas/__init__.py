@@ -24,6 +24,13 @@ from .reports import (
 )
 from .rules import CheckConfig, LintConfig, Severity, coerce_severity
 from .site import TocItem, VirtualPage, WikiSite
+from .sources import (
+    LOCKFILE_FILENAME,
+    LOCKFILE_VERSION,
+    LockedSource,
+    Lockfile,
+    SourceConfig,
+)
 from .wiki_config import (
     Config,
     FmtConfig,
@@ -59,6 +66,10 @@ __all__ = [
     "LinkConfig",
     "LinkOpportunity",
     "LintConfig",
+    "LOCKFILE_FILENAME",
+    "LOCKFILE_VERSION",
+    "LockedSource",
+    "Lockfile",
     "PageLayoutContext",
     "METADATA_VIEWS",
     "MetadataView",
@@ -67,6 +78,7 @@ __all__ = [
     "Severity",
     "SiteConfig",
     "SiteLayoutContext",
+    "SourceConfig",
     "SparqlServiceConfig",
     "TocItem",
     "WikiConfig",

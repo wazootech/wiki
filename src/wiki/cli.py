@@ -661,6 +661,85 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
 
 
 @main.command()
+@click.argument("url", required=False, default=None)
+@click.pass_obj
+def install(wiki: Wiki, url: str | None) -> None:
+    """Fetch and lock external data sources.
+
+    With no arguments, installs all sources declared in wiki.yml and
+    updates wiki.lock.
+
+    With a URL, adds a new git source to wiki.yml, fetches it, and
+    locks it. Append \x23<ref> to pin a branch, tag, or commit.
+    """
+    from .sources import install as install_sources
+
+    try:
+        lockfile = install_sources(wiki.config, url)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    count = len(lockfile.sources)
+    if count == 0:
+        click.echo("No sources to install.")
+        return
+
+    click.echo(f"Locked {count} source{'s' if count != 1 else ''}.")
+    for name, locked in lockfile.sources.items():
+        click.echo(f"  {name}: {locked.resolved_ref[:12]} ({locked.fetched_at})")
+
+
+@main.command()
+@click.argument("name", required=False, default=None)
+@click.option("-n", "--dry-run", is_flag=True, help="Show what would update without modifying wiki.lock.")
+@click.pass_obj
+def update(wiki: Wiki, name: str | None, dry_run: bool) -> None:
+    """Check locked sources for newer commits and update wiki.lock.
+
+    Fetches each source, resolves the current HEAD (or pinned ref), and
+    compares against the locked SHA. With --dry-run, reports what would
+    change without writing. With a NAME argument, checks only that source.
+    """
+    from .sources import update as update_sources
+
+    try:
+        result = update_sources(wiki.config, name, dry_run=dry_run)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if not result.updates:
+        click.echo("No sources to update.")
+        return
+
+    changed = result.changed
+    if not changed:
+        click.echo("All sources are up to date.")
+        return
+
+    for u in changed:
+        action = "would update" if dry_run else "updated"
+        click.echo(f"{action} {u.name}: {u.previous_ref} -> {u.current_ref}")
+
+    if not dry_run:
+        click.echo(f"Updated {len(changed)} source{'s' if len(changed) != 1 else ''} in wiki.lock.")
+
+
+@main.command()
+@click.argument("name")
+@click.pass_obj
+def remove(wiki: Wiki, name: str) -> None:
+    """Remove a source from wiki.yml, its cache, and wiki.lock."""
+    from .sources import remove as remove_source
+
+    try:
+        remove_source(wiki.config, name)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"Removed source {name!r}.")
+
+
+@main.command()
 @click.option("-c", "--check", "check_only", is_flag=True, help="Check for updates without upgrading.")
 @click.option("-y", "--yes", "auto_yes", is_flag=True, help="Skip confirmation prompt and upgrade immediately.")
 @click.option("-v", "--verbose", is_flag=True, help="Show pip install output.")

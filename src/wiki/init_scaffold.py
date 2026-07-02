@@ -236,6 +236,14 @@ _PERSON_SHAPE_TEMPLATE = (
     "Defines validation rules for Person profiles in this wiki.\n"
 )
 
+_GITIGNORE_TEMPLATE = (
+    "# Source cache (fetched repos)\n"
+    ".wiki/\n"
+    "\n"
+    "# Build output\n"
+    "_site/\n"
+)
+
 _EXAMPLE_PERSON_TEMPLATE = (
     "<!-- wiki tweak: replace with your first page -->\n"
     "---\n"
@@ -263,6 +271,10 @@ def _scaffold_wiki(
     wiki_dir = cwd / "wiki"
 
     wiki_dir.mkdir(parents=True, exist_ok=True)
+    gitignore_path = cwd / ".gitignore"
+    if not gitignore_path.exists():
+        gitignore_path.write_text(_GITIGNORE_TEMPLATE, encoding="utf-8")
+        written.append(gitignore_path)
     readme_path.write_text(_README_TEMPLATE, encoding="utf-8")
     written.extend([readme_path, wiki_dir])
 

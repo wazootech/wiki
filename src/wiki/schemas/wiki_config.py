@@ -23,6 +23,7 @@ from pydantic import (
 
 from ..context import Context
 from .rules import CheckConfig, LintConfig
+from .sources import SourceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ _BLOCK_LABELS = {
     "link": "link",
     "check": "check",
     "lint": "lint",
+    "sources": "sources",
     "sparql_service": "sparql_service",
 }
 
@@ -393,9 +395,31 @@ class Config(BaseModel):
     link: LinkConfig = Field(default_factory=LinkConfig)
     check: CheckConfig = Field(default_factory=CheckConfig)
     lint: LintConfig = Field(default_factory=LintConfig)
+    sources: list[SourceConfig] = Field(default_factory=list)
     fmt: FmtConfig | dict[str, Any] | str | Path | None = None
     sparql_service: SparqlServiceConfig = Field(default_factory=SparqlServiceConfig)
     config_root: Path = Field(default_factory=Path.cwd)
+
+    @field_validator("sources", mode="before")
+    @classmethod
+    def _validate_sources(cls, value: object) -> list[SourceConfig]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            seen: set[str] = set()
+            result = []
+            for item in value:
+                if not isinstance(item, dict):
+                    raise ValueError("each source must be a mapping")
+                if "name" not in item:
+                    raise ValueError("each source must have a name")
+                name = item["name"]
+                if name in seen:
+                    raise ValueError(f"Duplicate source name: {name!r}")
+                seen.add(name)
+                result.append(SourceConfig(**item))
+            return result
+        raise ValueError("sources must be a list")
 
     @field_validator("fmt", mode="before")
     @classmethod

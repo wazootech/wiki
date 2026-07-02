@@ -90,11 +90,12 @@ No Obsidian or agent stack required. `wiki init` scaffolds a wiki; conventions a
 
 ## Three capabilities of the CLI
 
-| Capability   | Commands                    | Value                                            |
-| ------------ | --------------------------- | ------------------------------------------------ |
-| Trust        | `check`, `lint`, `fmt`      | Integrity contracts and authoring conventions    |
-| Intelligence | `query`, `render`, `export` | SPARQL, inline result blocks, RDF serializations |
-| Publish      | `build`, `serve`, `link`    | Static site, local preview, wikilink hygiene     |
+| Capability   | Commands                      | Value                                            |
+| ------------ | ----------------------------- | ------------------------------------------------ |
+| Trust        | `check`, `lint`, `fmt`        | Integrity contracts and authoring conventions    |
+| Intelligence | `query`, `render`, `export`   | SPARQL, inline result blocks, RDF serializations |
+| Publish      | `build`, `serve`, `link`      | Static site, local preview, wikilink hygiene     |
+| Sources      | `install`, `update`, `remove` | Fetch, lock, update, and manage external sources |
 
 Design rationale for silence, pipes, and flat subcommands: [Design philosophies](Design_Philosophies.md).
 
@@ -134,6 +135,9 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 - **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
 - **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki Subcommand build](Wiki_Subcommand_build.md), [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 - **Export** — JSON-LD and RDF serializations ([Wiki Subcommand export](Wiki_Subcommand_export.md))
+- **Install** — fetch and lock external data sources ([Wiki Subcommand install](Wiki_Subcommand_install.md))
+- **Update** — check locked sources for newer commits ([Wiki Subcommand update](Wiki_Subcommand_update.md))
+- **Remove** — delete a source from wiki.yml, cache, and lockfile ([Wiki Subcommand remove](Wiki_Subcommand_remove.md))
 - **Init** — scaffold `wiki.yml` ([Wiki Subcommand init](Wiki_Subcommand_init.md))
 - **Upgrade** — PyPI updates ([Wiki Subcommand upgrade](Wiki_Subcommand_upgrade.md))
 
@@ -151,7 +155,7 @@ Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/w
 
 ## Global Options
 
-These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`). `init` and `upgrade` do not load a config file.
+These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`, `install`, `remove`). `init` and `upgrade` do not load a config file.
 
 ### `-c, --config PATH`
 
@@ -199,11 +203,14 @@ ORDER BY ?command
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yml and starter wiki pages interactively. |
+| [Wiki_Subcommand_install](Wiki_Subcommand_install.md) | Fetch and lock external data sources declared in wiki.yml. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the wiki graph. |
+| [Wiki_Subcommand_remove](Wiki_Subcommand_remove.md) | Remove a data source from wiki.yml, its cache, and wiki.lock. |
 | [Wiki_Subcommand_render](Wiki_Subcommand_render.md) | Update inline SPARQL result tables in markdown files. |
 | [Wiki_Subcommand_serve](Wiki_Subcommand_serve.md) | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint. |
+| [Wiki_Subcommand_update](Wiki_Subcommand_update.md) | Check locked sources for newer commits and update wiki.lock. |
 | [Wiki_Subcommand_upgrade](Wiki_Subcommand_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki. |
 
 <!-- sparql:end -->
