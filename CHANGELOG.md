@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.1.19 — 2026-07-01
+
+### Fixed
+
+- `datetime.datetime` values are now correctly serialized as `xsd:dateTime` instead of `xsd:date`. ([#172](https://github.com/wazootech/wiki/issues/172), [#176](https://github.com/wazootech/wiki/pull/176))
+- Removed redundant `"markdown"` / `"obsidian"` values from `_LINK_STYLES` (legacy aliases remain supported via `_LEGACY_LINK_STYLE_MAP`). ([#174](https://github.com/wazootech/wiki/issues/174), [#178](https://github.com/wazootech/wiki/pull/178))
+- Deduplicated `_LINK_STYLES` and `_LEGACY_LINK_STYLE_MAP` constants between `wiki_config.py` and `init.py` — the latter now imports from the former. ([#171](https://github.com/wazootech/wiki/issues/171), [#178](https://github.com/wazootech/wiki/pull/178))
+- Silently swallowed exceptions in `parser.py` (`document_data_from_path`, `frontmatter_from_path`, `split_document_body`) now log at debug level. ([#173](https://github.com/wazootech/wiki/issues/173), [#179](https://github.com/wazootech/wiki/pull/179))
+- `InitOptions.graph_implicit_types_policy` now validates against `{"fallback", "append"}` instead of accepting any string. ([#175](https://github.com/wazootech/wiki/issues/175), [#180](https://github.com/wazootech/wiki/pull/180))
+
 ### Added
 
 - `wiki install` command — fetch and lock external git sources declared in `sources:` block of `wiki.yml`. With a URL argument, adds the source to wiki.yml first. Supports `#ref` pinning. ([#148](https://github.com/wazootech/wiki/issues/148), [#164](https://github.com/wazootech/wiki/pull/164))
