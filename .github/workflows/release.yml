@@ -93,7 +93,7 @@ jobs:
 
   publish-npm:
     name: Publish npm
-    needs: verify
+    needs: [verify, publish-pypi]
     if: >-
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
       || (github.event_name == 'workflow_dispatch' && !inputs.skip_npm)
