@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from .wiki_config import (
     _LEGACY_LINK_STYLE_MAP,
     _LINK_STYLES,
+    IMPLICIT_TYPES_POLICIES,
 )
 from .wiki_config import (
     VALID_URL_STYLES as _VALID_URL_STYLES,
@@ -60,4 +61,14 @@ class InitOptions(BaseModel):
             return new_style
         if normalized not in _LINK_STYLES:
             raise ValueError(f"expected standard or wikilink, got {value!r}")
+        return normalized
+
+    @field_validator("graph_implicit_types_policy", mode="before")
+    @classmethod
+    def _validate_implicit_types_policy(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if normalized not in IMPLICIT_TYPES_POLICIES:
+            raise ValueError(f"expected fallback or append, got {value!r}")
         return normalized
