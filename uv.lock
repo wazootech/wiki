@@ -123,9 +123,13 @@ wheels = [
 [[package]]
 name = "linked-markdown"
 version = "0.1.0"
-source = { git = "https://github.com/wazootech/linked-markdown-py.git#cf6c6b2d53c76363121c491b0c2a75076cac6679" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/f0/551b8c0642d17ba9921442d47161d4936a1614cc6be8372241e717404089/linked_markdown-0.1.0.tar.gz", hash = "sha256:53d866230794c0be468fb287fcad9f606c01fd6f881249f80f8da14aeff56f97", size = 2855, upload-time = "2026-07-06T01:36:44.718Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/72/d98295f3b056916aa0b7e4cae474e3945835fa6cc87c164fffcbf24f5f9c/linked_markdown-0.1.0-py3-none-any.whl", hash = "sha256:b0c7464038ffa61b92dbbf4e1e27bced18c39cd68e05611ed6dfa57b9cbebeb8", size = 4251, upload-time = "2026-07-06T01:36:43.658Z" },
 ]
 
 [[package]]
@@ -865,7 +869,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "jinja2", specifier = ">=3.1.0" },
     { name = "jsonschema", specifier = ">=4.23" },
-    { name = "linked-markdown", git = "https://github.com/wazootech/linked-markdown-py.git" },
+    { name = "linked-markdown" },
     { name = "markdown-it-py", specifier = ">=3.0.0" },
     { name = "mdformat", specifier = ">=0.7.19" },
     { name = "mdformat-footnote", specifier = ">=0.1.3" },
