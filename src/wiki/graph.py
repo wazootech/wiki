@@ -12,7 +12,7 @@ from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from .config import Config, Context
-from .parser import document_data_from_path
+from .parser import document_data_from_path, ensure_context
 from .paths import iter_document_files, route_for_document_file
 
 logger = logging.getLogger(__name__)
@@ -242,36 +242,43 @@ def frontmatter_to_graph(
 
 def _process_document_file(graph: Graph, file_path: Path, context: Config) -> None:
     """Parse a supported wiki document into the graph."""
+    suffix = file_path.suffix.lower()
+
+    if suffix == ".md":
+        content = file_path.read_text(encoding="utf-8")
+        try:
+            result = extract(content)
+        except LinkedMarkdownError:
+            result = None
+
+        if result and result.attrs:
+            data = ensure_context(result.attrs)
+            body = result.body.strip() if context.graph.content_predicate else None
+            graph += frontmatter_to_graph(
+                data,
+                context,
+                file_id=route_for_document_file(context, file_path),
+                body=body,
+                include_file_extension=context.graph.include_file_extension,
+                file_ext=suffix,
+            )
+
+        for block in re.findall(r"```turtle\s*([\s\S]*?)```", content):
+            try:
+                graph.parse(data=block.strip(), format="turtle")
+            except Exception as e:
+                logger.warning("Failed to parse turtle block in %s: %s", file_path.name, e)
+        return
+
     data = document_data_from_path(file_path)
     if data:
-        body = None
-        if file_path.suffix.lower() == ".md" and context.graph.content_predicate:
-            content = file_path.read_text(encoding="utf-8")
-            try:
-                body = extract(content).body.strip()
-            except LinkedMarkdownError:
-                pass
-        file_id = route_for_document_file(context, file_path)
         graph += frontmatter_to_graph(
             data,
             context,
-            file_id=file_id,
-            body=body,
+            file_id=route_for_document_file(context, file_path),
             include_file_extension=context.graph.include_file_extension,
-            file_ext=file_path.suffix.lower(),
+            file_ext=suffix,
         )
-
-    if file_path.suffix.lower() != ".md":
-        return
-
-    content = file_path.read_text(encoding="utf-8")
-
-    turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
-    for block in turtle_blocks:
-        try:
-            graph.parse(data=block.strip(), format="turtle")
-        except Exception as e:
-            logger.warning("Failed to parse turtle block in %s: %s", file_path.name, e)
 
 
 # Map file extensions to rdflib format names
