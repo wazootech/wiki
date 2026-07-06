@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from linked_markdown_py import LMD_NO_FRONTMATTER, LinkedMarkdownError, extract
+from linked_markdown import LMD_NO_FRONTMATTER, LinkedMarkdownError, extract
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from linked_markdown_py import LinkedMarkdownError, extract
+from linked_markdown import LinkedMarkdownError, extract
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 

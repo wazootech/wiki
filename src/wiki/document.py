@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from linked_markdown_py import LinkedMarkdownError, extract
+from linked_markdown import LinkedMarkdownError, extract
 
 # WikiLink pattern: [[slug]] or [[slug|display]]
 WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")

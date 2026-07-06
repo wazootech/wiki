@@ -27,7 +27,7 @@ dependencies = [
     "pydantic>=2.0",
     "jsonschema>=4.23",
     "ruamel.yaml>=0.18.0",
-    "linked-markdown-py",
+    "linked-markdown",
 ]
 
 [project.scripts]
@@ -44,6 +44,7 @@ package-data = {"wiki" = ["templates/*", "templates/schemas/*", "layouts/*", "as
 [dependency-groups]
 dev = [
     "ruff>=0.9.0",
+    "pytest>=8.0",
 ]
 standalone = ["pyinstaller>=6.0"]
 
@@ -51,7 +52,7 @@ standalone = ["pyinstaller>=6.0"]
 package = true
 
 [tool.uv.sources]
-linked-markdown-py = { git = "https://github.com/wazootech/linked-markdown-py.git" }
+linked-markdown = { git = "https://github.com/wazootech/linked-markdown-py.git" }
 
 [tool.ruff]
 target-version = "py312"
