@@ -112,6 +112,14 @@ wheels = [
 ]
 
 [[package]]
+name = "linked-markdown-py"
+version = "0.1.0"
+source = { git = "https://github.com/wazootech/linked-markdown-py.git#1021045f17ba32e4194846ab17b598bb0d671684" }
+dependencies = [
+    { name = "pyyaml" },
+]
+
+[[package]]
 name = "macholib"
 version = "1.16.4"
 source = { registry = "https://pypi.org/simple" }
@@ -791,6 +799,7 @@ dependencies = [
     { name = "click" },
     { name = "jinja2" },
     { name = "jsonschema" },
+    { name = "linked-markdown-py" },
     { name = "markdown-it-py" },
     { name = "mdformat" },
     { name = "mdformat-footnote" },
@@ -821,6 +830,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "jinja2", specifier = ">=3.1.0" },
     { name = "jsonschema", specifier = ">=4.23" },
+    { name = "linked-markdown-py", git = "https://github.com/wazootech/linked-markdown-py.git" },
     { name = "markdown-it-py", specifier = ">=3.0.0" },
     { name = "mdformat", specifier = ">=0.7.19" },
     { name = "mdformat-footnote", specifier = ">=0.1.3" },

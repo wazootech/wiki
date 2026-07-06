@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from .parser import parse_frontmatter
+from linked_markdown_py import LinkedMarkdownError, extract
 
 # WikiLink pattern: [[slug]] or [[slug|display]]
 WIKILINK_REGEX = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")
@@ -37,9 +37,16 @@ def split_frontmatter_text(content: str) -> FrontmatterSplit:
             return FrontmatterSplit(
                 prefix=f"---{parts[1]}---",
                 body=parts[2],
-                data=parse_frontmatter(content),
+                data=_extract_attrs(content),
             )
     return FrontmatterSplit(prefix="", body=content, data=None)
+
+
+def _extract_attrs(content: str) -> dict[str, Any] | None:
+    try:
+        return extract(content).attrs
+    except LinkedMarkdownError:
+        return None
 
 
 def markdown_body(content: str) -> str:
