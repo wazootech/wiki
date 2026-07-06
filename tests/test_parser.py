@@ -117,20 +117,25 @@ Body with --- dashes --- in text"""
             yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
             json_file = root / "person.json"
+            toml_file = root / "person.toml"
             yml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
             yaml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
             json_file.write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8")
+            toml_file.write_text('type = "Person"\ngivenName = "Bob"\n', encoding="utf-8")
 
             yml_data = document_data_from_path(yml_file)
             yaml_data = document_data_from_path(yaml_file)
             json_data = document_data_from_path(json_file)
+            toml_data = document_data_from_path(toml_file)
 
             self.assertEqual(yml_data["givenName"], "Gregory")
             self.assertEqual(yaml_data["givenName"], "Gregory")
             self.assertEqual(json_data["givenName"], "Alice")
+            self.assertEqual(toml_data["givenName"], "Bob")
             self.assertIn("@context", yml_data)
             self.assertIn("@context", yaml_data)
             self.assertIn("@context", json_data)
+            self.assertIn("@context", toml_data)
 
     def test_document_data_rejects_non_mapping_data_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -138,24 +143,30 @@ Body with --- dashes --- in text"""
             yml_file = root / "items.yml"
             yaml_file = root / "items.yaml"
             json_file = root / "items.json"
+            toml_file = root / "items.toml"
             yml_file.write_text('- one\n- two\n', encoding="utf-8")
             yaml_file.write_text('- one\n- two\n', encoding="utf-8")
             json_file.write_text('[1, 2, 3]', encoding="utf-8")
+            toml_file.write_text('x = broken\n', encoding="utf-8")
 
             self.assertIsNone(document_data_from_path(yml_file))
             self.assertIsNone(document_data_from_path(yaml_file))
             self.assertIsNone(document_data_from_path(json_file))
+            self.assertIsNone(document_data_from_path(toml_file))
 
     def test_split_document_body_returns_empty_body_for_data_files(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             yml_file = root / "person.yml"
             yaml_file = root / "person.yaml"
+            toml_file = root / "person.toml"
             yml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
             yaml_file.write_text('type: Person\ngivenName: Gregory\n', encoding="utf-8")
+            toml_file.write_text('type = "Person"\ngivenName = "Bob"\n', encoding="utf-8")
 
             yml_data, yml_body = split_document_body(yml_file)
             yaml_data, yaml_body = split_document_body(yaml_file)
+            toml_data, toml_body = split_document_body(toml_file)
 
             self.assertIsNotNone(yml_data)
             self.assertEqual(yml_data["givenName"], "Gregory")
@@ -163,6 +174,9 @@ Body with --- dashes --- in text"""
             self.assertIsNotNone(yaml_data)
             self.assertEqual(yaml_data["givenName"], "Gregory")
             self.assertEqual(yaml_body, "")
+            self.assertIsNotNone(toml_data)
+            self.assertEqual(toml_data["givenName"], "Bob")
+            self.assertEqual(toml_body, "")
 
 
 if __name__ == "__main__":

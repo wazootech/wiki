@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -12,8 +13,8 @@ from linked_markdown import LMD_NO_FRONTMATTER, LinkedMarkdownError, extract
 
 logger = logging.getLogger(__name__)
 
-DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json"}
-DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json"}
+DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json", ".toml"}
+DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json", ".toml"}
 
 
 def parse_frontmatter(content: str) -> dict[str, Any] | None:
@@ -48,6 +49,8 @@ def document_data_from_path(path: Path, content_predicate: str | None = None) ->
         content = path.read_text(encoding="utf-8")
         if suffix == ".json":
             data = json.loads(content)
+        elif suffix == ".toml":
+            data = tomllib.loads(content)
         elif suffix in DATA_DOCUMENT_EXTENSIONS:
             data = yaml.safe_load(content)
         else:
