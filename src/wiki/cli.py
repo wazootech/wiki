@@ -41,14 +41,14 @@ def optional_files_argument(f):
     "wiki_inputs",
     multiple=True,
     default=None,
-    help="Override wiki.inputs from wiki.yml (.md, .yaml, .json; repeatable).",
+    help="Override wiki.inputs from config file (.md, .yaml, .json, .toml; repeatable).",
 )
 @click.option(
     "-c",
     "--config",
     "config_path",
     default=".",
-    help="Path to wiki.yml or directory containing wiki.yml/wiki.yaml/wiki.json (default: current directory).",
+    help="Path to wiki config file or directory containing wiki.yml/wiki.yaml/wiki.json/wiki.toml (default: current directory).",
 )
 @click.pass_context
 def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
@@ -93,7 +93,7 @@ def lint(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> No
 
 @main.command()
 @optional_files_argument
-@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in wiki.yml).")
+@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in config file).")
 @click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
 @click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
 @click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
@@ -550,13 +550,17 @@ def init(
     """Scaffold a new wiki project in the current directory."""
     cwd = Path.cwd()
     config_path = cwd / "wiki.yml"
-    legacy_config_path = cwd / "wiki.yaml"
+    legacy_config_paths = (
+        cwd / "wiki.yaml",
+        cwd / "wiki.json",
+        cwd / "wiki.toml",
+    )
     readme_path = cwd / "README.md"
     wiki_dir = cwd / "wiki"
 
-    if config_path.exists() or legacy_config_path.exists():
+    if config_path.exists() or any(p.exists() for p in legacy_config_paths):
         click.echo(
-            "Error: wiki.yml or wiki.yaml already exists. Use a new directory or remove the config file.",
+            "Error: wiki.yml/wiki.yaml/wiki.json/wiki.toml already exists. Use a new directory or remove the config file.",
             err=True,
         )
         sys.exit(1)
@@ -666,11 +670,11 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
 def install(wiki: Wiki, url: str | None) -> None:
     """Fetch and lock external data sources.
 
-    With no arguments, installs all sources declared in wiki.yml and
+    With no arguments, installs all sources declared in the config file and
     updates wiki.lock.
 
-    With a URL, adds a new git source to wiki.yml, fetches it, and
-    locks it. Append \x23<ref> to pin a branch, tag, or commit.
+    With a URL, adds a new git source to the config file, fetches it,
+    and locks it. Append \x23<ref> to pin a branch, tag, or commit.
     """
     from .sources import install as install_sources
 
@@ -728,7 +732,7 @@ def update(wiki: Wiki, name: str | None, dry_run: bool) -> None:
 @click.argument("name")
 @click.pass_obj
 def remove(wiki: Wiki, name: str) -> None:
-    """Remove a source from wiki.yml, its cache, and wiki.lock."""
+    """Remove a source from the config file, its cache, and wiki.lock."""
     from .sources import remove as remove_source
 
     try:

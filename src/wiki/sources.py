@@ -1,15 +1,17 @@
 """External source resolution and lockfile management.
 
-wiki.yml declares desired sources; wiki.lock records the exact resolved
+The config file declares desired sources; wiki.lock records the exact resolved
 state. ``wiki install`` fetches and locks; ``wiki remove`` deletes.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import shutil
 import subprocess
+import tomllib
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
@@ -55,6 +57,21 @@ def _config_path(config: Config) -> Path:
         if candidate.exists():
             return candidate
     return config.config_root / "wiki.yml"
+
+
+def _load_data_file(path: Path) -> dict[str, Any]:
+    """Load a YAML, JSON, or TOML file and return the parsed dict."""
+    raw = path.read_text(encoding="utf-8")
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        data = json.loads(raw)
+    elif suffix == ".toml":
+        data = tomllib.loads(raw)
+    else:
+        data = _yaml.load(raw)
+    if not isinstance(data, dict):
+        raise RuntimeError(f"{path.name}: top-level content must be a mapping")
+    return data
 
 
 def _load_lockfile(config: Config) -> Lockfile:
@@ -250,6 +267,11 @@ def _yaml_dump(data: object) -> str:
 
 def _add_to_wiki_yml(config: Config, source: SourceConfig) -> None:
     config_path = _config_path(config)
+    if config_path.suffix.lower() == ".toml":
+        raise RuntimeError(
+            "Source management requires a YAML config file. "
+            "Edit wiki.toml manually or use wiki.yml for source management."
+        )
     if not config_path.exists():
         raise RuntimeError("No wiki config file found")
 
@@ -262,11 +284,11 @@ def _add_to_wiki_yml(config: Config, source: SourceConfig) -> None:
         data["sources"] = sources
 
     if not isinstance(sources, list):
-        raise RuntimeError("wiki.yml sources must be a list")
+        raise RuntimeError("sources must be a list in the config file")
 
     for existing in sources:
         if isinstance(existing, dict) and existing.get("name") == source.name:
-            raise RuntimeError(f"Source {source.name!r} already exists in wiki.yml")
+            raise RuntimeError(f"Source {source.name!r} already exists in the config file")
 
     entry: dict[str, Any] = {"name": source.name, "type": "git", "url": source.url}
     if source.ref:
@@ -280,6 +302,11 @@ def _add_to_wiki_yml(config: Config, source: SourceConfig) -> None:
 
 def _remove_from_wiki_yml(config: Config, name: str) -> None:
     config_path = _config_path(config)
+    if config_path.suffix.lower() == ".toml":
+        raise RuntimeError(
+            "Source management requires a YAML config file. "
+            "Edit wiki.toml manually or use wiki.yml for source management."
+        )
     if not config_path.exists():
         return
 
@@ -292,7 +319,7 @@ def _remove_from_wiki_yml(config: Config, name: str) -> None:
 
     new_sources = [s for s in sources if not (isinstance(s, dict) and s.get("name") == name)]
     if len(new_sources) == len(sources):
-        raise RuntimeError(f"Source {name!r} not found in wiki.yml")
+        raise RuntimeError(f"Source {name!r} not found in config file")
 
     if new_sources:
         data["sources"] = new_sources
@@ -303,8 +330,8 @@ def _remove_from_wiki_yml(config: Config, name: str) -> None:
 
 
 def _discover_sources(repo_dir: Path) -> list[SourceConfig]:
-    """Read ``wiki.yml`` (or ``wiki.yaml``/``wiki.json``) from a cloned
-    source repo to discover its declared transitive dependencies.
+    """Read the config file from a cloned source repo to discover its
+    declared transitive dependencies.
 
     Only the ``sources:`` block is read — graph, check, and lint config
     from transitive deps are not merged.  Returns ``[]`` when no config
@@ -314,8 +341,7 @@ def _discover_sources(repo_dir: Path) -> list[SourceConfig]:
         config_file = repo_dir / name
         if config_file.exists():
             try:
-                raw = config_file.read_text(encoding="utf-8")
-                data = _yaml.load(raw)
+                data = _load_data_file(config_file)
                 if isinstance(data, dict) and isinstance(data.get("sources"), list):
                     result: list[SourceConfig] = []
                     for s in data["sources"]:
@@ -415,12 +441,12 @@ def _install_tree(
 def install(config: Config, url: str | None = None) -> Lockfile:
     """Fetch and lock sources.
 
-    With no url, fetches all sources from wiki.yml and updates wiki.lock.
-    With a url, adds a new source to wiki.yml, fetches it, and updates
+    With no url, fetches all sources declared in the config and updates wiki.lock.
+    With a url, adds a new source to the config file, fetches it, and updates
     wiki.lock.
 
     Transitive dependencies are resolved recursively: each source's own
-    ``wiki.yml`` is checked for a ``sources:`` block, and those sources
+    config file is checked for a ``sources:`` block, and those sources
     are fetched and locked too.  Circular dependency chains are detected
     and raise ``RuntimeError``.
 
@@ -434,7 +460,7 @@ def install(config: Config, url: str | None = None) -> Lockfile:
         _add_to_wiki_yml(config, source)
         config.sources = list(config.sources) + [source]
     elif not config.sources:
-        logger.info("No sources declared in wiki.yml.")
+        logger.info("No sources declared in config file.")
         return Lockfile()
 
     lockfile = _load_lockfile(config)
@@ -523,7 +549,7 @@ def update(
     sources = [s for s in config.sources if name is None or s.name == name]
     if not sources:
         if name:
-            logger.warning("Source %r not found in wiki.yml.", name)
+            logger.warning("Source %r not found in config file.", name)
         return result
 
     for source in sources:

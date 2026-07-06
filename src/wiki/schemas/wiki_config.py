@@ -1,10 +1,11 @@
-"""Unified Config model matching wiki.yaml nested block structure."""
+"""Unified Config model matching the wiki config file nested block structure."""
 
 from __future__ import annotations
 
 import fnmatch
 import json
 import logging
+import tomllib
 from pathlib import Path
 from typing import Any, Self
 
@@ -42,7 +43,7 @@ def normalize_base_iri(value: str) -> str:
 IMPLICIT_TYPES_POLICIES = frozenset({"fallback", "append"})
 IMPLICIT_TYPES_POLICY = "fallback"
 
-CONFIG_FILENAMES = ("wiki.yml", "wiki.yaml", "wiki.json")
+CONFIG_FILENAMES = ("wiki.yml", "wiki.yaml", "wiki.json", "wiki.toml")
 
 _BLOCK_LABELS = {
     "wiki": "wiki",
@@ -347,7 +348,7 @@ class LinkConfig(BaseModel):
             new_style = _LEGACY_LINK_STYLE_MAP[normalized]
             logger.warning(
                 "link.style: '%s' is deprecated, use '%s' instead "
-                "(edit wiki.yml link.style and re-run)",
+                "(edit config file link.style and re-run)",
                 normalized,
                 new_style,
             )
@@ -539,6 +540,8 @@ class Config(BaseModel):
                     content = config_path.read_text(encoding="utf-8")
                     if config_path.suffix == ".json":
                         data = json.loads(content)
+                    elif config_path.suffix == ".toml":
+                        data = tomllib.loads(content)
                     else:
                         data = yaml.safe_load(content)
 

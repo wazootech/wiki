@@ -77,7 +77,7 @@ class Wiki:
         """Load a wiki from a config file or directory.
 
         Args:
-            config_path: Path to ``wiki.yml`` or a directory containing it.
+            config_path: Path to wiki config file or a directory containing one.
             wiki_inputs: Override ``wiki.inputs`` from the config file.
 
         Returns:

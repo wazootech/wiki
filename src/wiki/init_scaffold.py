@@ -196,7 +196,7 @@ _README_TEMPLATE = (
     "# My Wiki\n\n"
     "A semantic markdown knowledge base powered by the Wiki CLI.\n\n"
     "## Wiki layout\n\n"
-    "- `wiki.yml` — Wiki configuration, namespace prefixes, and `fmt` defaults.\n"
+    "- `wiki.yml` (or `wiki.toml`) — Wiki configuration, namespace prefixes, and `fmt` defaults.\n"
     "- `wiki/` — Contains markdown files with semantic frontmatter.\n"
     "  - `Person_Shape.md` — SHACL shape for Person documents.\n"
     "  - `Ethan_Davidson.md` — An example Person document.\n\n"
@@ -301,7 +301,7 @@ def _scaffold_wiki(
             return ScaffoldResult(ok=False, error_message=f"git init failed: {stderr}")
 
     message = (
-        "Initialized wiki.yml, README.md, and wiki/ starter files."
+        "Initialized wiki config, README.md, and wiki/ starter files."
     )
     if init_git:
         message += " Ran git init."

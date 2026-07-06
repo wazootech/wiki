@@ -563,7 +563,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     ],
                 )
                 self.assertNotEqual(result2.exit_code, 0)
-                self.assertIn("wiki.yml or wiki.yaml already exists", result2.output)
+                self.assertIn("already exists", result2.output)
 
                 self.assertFalse((Path(".git")).exists())
 
@@ -672,7 +672,7 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
                     ["init", "--graph-context-wiki", "https://wiki.example.org/"],
                 )
                 self.assertNotEqual(result.exit_code, 0)
-                self.assertIn("wiki.yml or wiki.yaml already exists", result.output)
+                self.assertIn("already exists", result.output)
 
     def test_cli_init_invalid_repo_exits(self) -> None:
         runner = CliRunner()

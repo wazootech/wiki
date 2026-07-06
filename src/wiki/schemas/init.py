@@ -54,7 +54,7 @@ class InitOptions(BaseModel):
             new_style = _LEGACY_LINK_STYLE_MAP[normalized]
             logger.warning(
                 "link_style: '%s' is deprecated, use '%s' instead "
-                "(edit wiki.yml link.style and re-run)",
+                "(edit config file link.style and re-run)",
                 normalized,
                 new_style,
             )
