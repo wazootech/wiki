@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from linked_markdown import LMD_NO_FRONTMATTER, LinkedMarkdownError, extract
 
 logger = logging.getLogger(__name__)
 
@@ -16,32 +17,13 @@ DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json"}
 
 
 def parse_frontmatter(content: str) -> dict[str, Any] | None:
-    """Parse YAML or JSON frontmatter block from a markdown content string."""
-    if not content.startswith("---"):
-        return None
-
-    parts = content.split("---", 2)
-    if len(parts) < 2:
-        return None
-
-    frontmatter_text = parts[1].strip()
-
-    if frontmatter_text.startswith("{"):
-        try:
-            data = json.loads(frontmatter_text)
-            return data if isinstance(data, dict) else None
-        except json.JSONDecodeError:
-            return None
-
     try:
-        data = yaml.safe_load(frontmatter_text)
-        return data if isinstance(data, dict) else None
-    except yaml.YAMLError:
+        return extract(content).attrs
+    except LinkedMarkdownError:
         return None
 
 
 def ensure_context(data: dict[str, Any]) -> dict[str, Any]:
-    """Ensure JSON-LD @context is present with default required namespaces."""
     if "@context" not in data:
         data["@context"] = {
             "wiki": "https://wiki.example.org/",
@@ -58,7 +40,6 @@ def ensure_context(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def document_data_from_path(path: Path, content_predicate: str | None = None) -> dict[str, Any] | None:
-    """Read a supported wiki document file and return its parsed data dict with context."""
     try:
         suffix = path.suffix.lower()
         if suffix == ".md":
@@ -81,46 +62,35 @@ def document_data_from_path(path: Path, content_predicate: str | None = None) ->
 
 
 def frontmatter_from_path(path: Path, content_predicate: str | None = None) -> dict[str, Any] | None:
-    """Read a markdown file and return its parsed frontmatter dict with context.
-    
-    Optionally appends the text content of the body using the provided predicate key.
-    """
     try:
         content = path.read_text(encoding="utf-8")
-        data = parse_frontmatter(content)
-        if data is None:
-            return None
-        data = ensure_context(data)
-        
+        result = extract(content)
+        data = ensure_context(result.attrs)
+
         if content_predicate:
-            parts = content.split("---", 2)
-            if len(parts) > 2:
-                body = parts[2].strip()
-                if body:
-                    data[content_predicate] = body
-                    
+            body = result.body.strip()
+            if body:
+                data[content_predicate] = body
+
         return data
+    except LinkedMarkdownError:
+        return None
     except Exception as exc:
         logger.debug("frontmatter_from_path(%s): %s", path, exc)
         return None
 
 
 def split_frontmatter_body(content: str) -> tuple[dict[str, Any] | None, str]:
-    """Split markdown content into (frontmatter_dict, body_text).
-
-    Returns (None, content) if no valid frontmatter is found.
-    The body is the markdown text after the closing --- (or the full content if no frontmatter).
-    """
-    from .document import split_frontmatter_text
-
-    split = split_frontmatter_text(content)
-    if split.data is None:
+    try:
+        result = extract(content)
+        return result.attrs, result.body.strip()
+    except LinkedMarkdownError as e:
+        if e.code == LMD_NO_FRONTMATTER:
+            return None, content
         return None, content
-    return split.data, split.body.strip()
 
 
 def split_document_body(path: Path) -> tuple[dict[str, Any] | None, str]:
-    """Split a supported wiki document into (data, body_text)."""
     suffix = path.suffix.lower()
     if suffix == ".md":
         try:

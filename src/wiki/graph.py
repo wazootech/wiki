@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from linked_markdown import LinkedMarkdownError, extract
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
@@ -246,9 +247,10 @@ def _process_document_file(graph: Graph, file_path: Path, context: Config) -> No
         body = None
         if file_path.suffix.lower() == ".md" and context.graph.content_predicate:
             content = file_path.read_text(encoding="utf-8")
-            parts = content.split("---", 2)
-            if len(parts) > 2:
-                body = parts[2].strip()
+            try:
+                body = extract(content).body.strip()
+            except LinkedMarkdownError:
+                pass
         file_id = route_for_document_file(context, file_path)
         graph += frontmatter_to_graph(
             data,
