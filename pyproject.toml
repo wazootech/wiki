@@ -51,9 +51,6 @@ standalone = ["pyinstaller>=6.0"]
 [tool.uv]
 package = true
 
-[tool.uv.sources]
-linked-markdown = { git = "https://github.com/wazootech/linked-markdown-py.git" }
-
 [tool.ruff]
 target-version = "py312"
 src = ["src", "tests", "scripts"]
