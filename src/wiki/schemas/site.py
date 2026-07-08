@@ -26,6 +26,7 @@ class VirtualPage(BaseModel):
     markdown: str
     html: str
     frontmatter: dict[str, Any]
+    source_path: Path | None = None
     layout_path: Path | None = None
     layout_stem: str = "default"
     wiki_ids: list[str] = Field(default_factory=list)
