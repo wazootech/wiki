@@ -11,6 +11,7 @@ import argparse
 import html as html_module
 import json
 import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -311,7 +312,8 @@ def _build_categories_html(page: VirtualPage, base_url: str) -> str:
 
 def _build_token_map(page, site, base_url, url_style, pages_json, toc_html, infobox_html, backlinks_html,
                       categories_html, metadata_pane_html, metadata_tool_html, metadata_tab_html,
-                      type_label_html, layout_label_html, slug_json, page_kind, layout_stem, body_html, page_source):
+                      type_label_html, layout_label_html, slug_json, page_kind, layout_stem, body_html,
+                      page_source, edit_link_html):
     return {
         "%wiki.base_url%": base_url,
         "%wiki.url_style%": url_style,
@@ -331,6 +333,7 @@ def _build_token_map(page, site, base_url, url_style, pages_json, toc_html, info
         "%wiki.metadata_tab%": metadata_tab_html,
         "%wiki.type_label%": type_label_html,
         "%wiki.layout_label%": layout_label_html,
+        "%wiki.edit_link%": edit_link_html,
         "%wiki.head%": f"<title>{html_module.escape(page.title if page else 'All Pages')} - Wiki</title>",
     }
 
@@ -352,9 +355,23 @@ def _build_index_page(site, base_url, url_style, pages_json, layout_text):
         categories_html="", metadata_pane_html="", metadata_tool_html="",
         metadata_tab_html="", type_label_html="", layout_label_html="",
         slug_json=slug_json, page_kind="index", layout_stem="index",
-        body_html=body_html, page_source="",
+        body_html=body_html, page_source="", edit_link_html="",
     )
     return substitute(layout_text, tokens)
+
+
+GITHUB_REPO = "wazootech/wiki"
+GITHUB_BRANCH = "main"
+
+
+def _page_edit_url(page: VirtualPage, repo_root: Path | None) -> str:
+    if repo_root is None or page.source_path is None:
+        return ""
+    try:
+        rel = page.source_path.resolve().relative_to(repo_root).as_posix()
+    except ValueError:
+        return ""
+    return f"https://github.com/{GITHUB_REPO}/blob/{GITHUB_BRANCH}/{rel}"
 
 
 def build(output_dir: Path) -> None:
@@ -364,6 +381,11 @@ def build(output_dir: Path) -> None:
 
     config = Config.load(config_path)
     site = build_site(config)
+
+    try:
+        repo_root = Path(subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        repo_root = None
 
     base_url = config.site.base_url if config.site.base_url is not None else "/wiki"
     url_style = config.site.url_style or "dir"
@@ -413,6 +435,12 @@ def build(output_dir: Path) -> None:
         slug_json = json.dumps(page.full_slug)
         layout_stem = page.layout_stem
 
+        edit_url = _page_edit_url(page, repo_root)
+        edit_link_html = (
+            f'<li id="ca-edit"><a href="{html_module.escape(edit_url)}" target="_blank">Edit this page</a></li>'
+            if edit_url else ""
+        )
+
         tokens = _build_token_map(
             page=page, site=site, base_url=base_url, url_style=url_style,
             pages_json=pages_json, toc_html=toc_html, infobox_html=infobox_html,
@@ -422,6 +450,7 @@ def build(output_dir: Path) -> None:
             layout_label_html=layout_label_html, slug_json=slug_json,
             page_kind="article", layout_stem=layout_stem,
             body_html=page.html, page_source=page.markdown,
+            edit_link_html=edit_link_html,
         )
 
         html = substitute(layout_text, tokens)

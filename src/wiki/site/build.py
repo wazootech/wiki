@@ -73,6 +73,7 @@ def build_site(
             wiki_ids=wiki_ids,
             outline=h1_toc,
             backlink_slugs=link_index.backlinks_to(doc_slug),
+            source_path=file_path,
         ))
 
     pages_by_route = {page.file_slug: page for page in pages}
