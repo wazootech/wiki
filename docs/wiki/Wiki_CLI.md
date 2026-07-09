@@ -141,6 +141,54 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 - **Init** — scaffold `wiki.yml` ([Wiki Subcommand init](Wiki_Subcommand_init.md))
 - **Upgrade** — PyPI updates ([Wiki Subcommand upgrade](Wiki_Subcommand_upgrade.md))
 
+## Supported file formats
+
+### Input pipelines
+
+Wiki CLI processes files through two distinct pipelines. Files in `wiki.inputs` are classified as either **documents** (frontmatter parsed, IRI derived from file path, link-checked) or **raw RDF sources** (loaded directly via rdflib, no document processing):
+
+| Category            | Extensions                                               | Pipeline             | Key behavior                                                                                  |
+| ------------------- | -------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- |
+| Wiki documents      | `.md`, `.yaml`, `.yml`, `.json`, `.toml`                 | Frontmatter → graph  | Parsed for frontmatter/data; document IRI derived from file path; link-checked and exportable |
+| Data-only documents | `.yaml`, `.yml`, `.json`, `.toml`                        | Frontmatter → graph  | Subset of wiki documents without a markdown body — entire file is the data dict               |
+| Raw RDF sources     | `.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld` | rdflib parse → graph | Loaded as raw triples; no route, no link checking, no frontmatter pipeline                    |
+| Inline Turtle       | Inside `.md` as ```` ```turtle ```` blocks               | rdflib parse → graph | Fenced turtle blocks inside markdown files are parsed and merged into the graph               |
+
+### Document pipeline
+
+Markdown files are parsed via the [Linked Markdown](Linked_Markdown.md) protocol: the YAML/JSON frontmatter between `---` delimiters is extracted as the data dict, and the body text is optionally added to the graph via `content_predicate`. Data-only documents (`.yaml`, `.yml`, `.json`, `.toml`) skip the body split — the entire file is the data.
+
+All document formats have their `@context` auto-populated with `wiki:` and `foaf:` default prefixes if none is present. An explicit `@id` or `id` key in frontmatter overrides the file-path-based IRI ([Linked Markdown](Linked_Markdown.md#subject-uri-resolution)).
+
+### Raw RDF pipeline
+
+Files with raw RDF extensions are parsed directly by rdflib using the format mapped from their extension. They bypass all document processing — no route registration, no link validation, no frontmatter coercion. They contribute triples to the same graph but are invisible to `wiki export` (which operates on documents) and `wiki link`.
+
+**Important nuance:** `.jsonld` is raw RDF (rdflib `json-ld` format) — it is NOT a wiki document. It does not get a document IRI, does not go through `ensure_context()`, and is not subject to link checking. A `.json` file with the same content *is* a wiki document and follows the frontmatter pipeline. These are disjoint processing paths.
+
+### Output formats
+
+| Context                                   | Formats                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------- |
+| `wiki export`                             | `dict` (default), `json-ld`, `turtle`, `xml`, `n3`, `nt`, `trig`, `nquads` |
+| `wiki query`                              | `table` (default), `json`, `csv`, `tsv`, `turtle`, `n3`, `markdown`        |
+| `wiki serve` / `wiki build` metadata view | `json-ld`, `turtle`, `n3`, `xml`, `nt`, `trig`, `nquads`                   |
+
+### Key nuances
+
+- **`.jsonld` vs `.json`** — Different pipelines for the same data shape. See raw RDF pipeline note above.
+- **N3 is output-only** — Notation3 (`.n3`) is available for `wiki export` and `wiki query` CONSTRUCT results but is not recognized as an input graph source extension.
+- **`@context` auto-injection** — Document files that lack an `@context` key get default `wiki:` and `foaf:` prefixes injected. If `@context` is present as a dict, those defaults are merged in.
+- **Only `.md` carries body text** — Data-only formats cannot carry a body literal in the graph; the entire file content is the data dict.
+- **Inline ```` ```turtle ``` ```` blocks** — Any fenced code block with `turtle` language inside a `.md` file is parsed as Turtle RDF and merged into the wiki graph. This is separate from SPARQL result blocks.
+- **`.toml` is a document format** — TOML files under `wiki.inputs` are treated as data-only wiki documents, subject to `@context` injection and route generation.
+
+### Related
+
+- [Linked Markdown](Linked_Markdown.md) — document-to-RDF protocol and IRI resolution
+- [RDF](RDF.md) — RDF data model and serialization references
+- Individual format pages: [Turtle](Turtle.md), [TriG](TriG.md), [N-Triples](N_Triples.md), [N-Quads](N_Quads.md), [RDF/XML](RDF_XML.md), [Notation3](Notation3.md), [JSON-LD](JSON_LD.md)
+
 ## Agent skills
 
 Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/wiki/` in the repository).
