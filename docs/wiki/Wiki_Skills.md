@@ -6,11 +6,11 @@ description: Procedural knowledge for coding agents — install, scaffold, impro
 
 # Wiki CLI Agent Skills
 
-[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. One consolidated **`wiki`** skill routes to focused workflow references. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
+[Procedural Knowledge](Procedural_Knowledge.md) for coding agents lives in the Wiki CLI repository under `skills/`. The **`wiki`** skill routes operational workflows to focused references, and **`wiki-feedback`** handles integration proposal feedback. Skills are **not** wiki pages — do not add `skills/` to `wiki.inputs`.
 
 Onboarding workflows are **independent modules** with no required order. Each completes its job and stops unless the user asks for the next step in the same turn.
 
-Canonical skill file: [`skills/wiki/SKILL.md`](https://github.com/wazootech/wiki/blob/main/skills/wiki/SKILL.md).
+Canonical operational skill file: [`skills/wiki/SKILL.md`](https://github.com/wazootech/wiki/blob/main/skills/wiki/SKILL.md). Integration proposal feedback lives in [`skills/wiki-feedback/SKILL.md`](https://github.com/wazootech/wiki/blob/main/skills/wiki-feedback/SKILL.md).
 
 ## Install via skills.sh
 
@@ -26,6 +26,7 @@ Install agent skills with the [Skills CLI](https://github.com/vercel-labs/skills
 
 ```bash
 npx skills add wazootech/wiki@wiki -g -y
+npx skills add wazootech/wiki@wiki-feedback -g -y
 
 # List skills without installing
 npx skills add wazootech/wiki --list
@@ -45,7 +46,7 @@ Project-local copies under `.agents/skills/` do not update automatically. Avoid 
 
 ## Workflows and routing
 
-The single **`wiki`** skill routes to four workflow references:
+The **`wiki`** skill routes operational workflows to focused references:
 
 | Intent                         | Reference                           | Stop when                        |
 | ------------------------------ | ----------------------------------- | -------------------------------- |
@@ -55,6 +56,8 @@ The single **`wiki`** skill routes to four workflow references:
 | GitHub Pages / CI deploy       | `skills/wiki/references/deploy.md`  | Workflow + URLs summarized       |
 
 Read one reference per turn unless the user explicitly asked for a multi-step flow (for example install → create → deploy).
+
+The **`wiki-feedback`** skill handles ecosystem feedback and integration proposals. Use it when comparing an external tool with Wiki CLI, drafting a `wiki-*-template` issue, or turning an integration idea into a repeatable GitHub issue. It reviews existing `template` issues first, preserves the boundary between Wiki CLI and downstream integrations, and recommends `.github/ISSUE_TEMPLATE/integration-template.yml` for final filing.
 
 ## Scripts
 
@@ -110,6 +113,7 @@ skills/
   wiki/references/deploy.md
   wiki/references/workflow-template-uv.yml
   wiki/references/workflow-template-pip.yml
+  wiki-feedback/SKILL.md
 ```
 
 Human-oriented install and daily workflow: [Getting Started](Getting_Started.md).
