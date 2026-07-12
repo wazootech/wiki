@@ -1,0 +1,218 @@
+name: Wiki integration template proposal
+description: Propose a new Wiki CLI ecosystem template or integration pattern.
+title: "Create wiki-<integration>-template for <use case>"
+labels:
+  - template
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to propose a new `wazootech/wiki-*-template` repository or integration pattern.
+
+        Good proposals make the boundary explicit: Wiki CLI owns the semantic Markdown source layer, validation, querying, export, and publishing. The integration should own a distinct downstream role such as an agent workflow, memory runtime, retrieval index, docs surface, domain model, or work-management bridge.
+
+  - type: input
+    id: integration
+    attributes:
+      label: Integration name
+      description: Name of the external tool, platform, domain, or workflow.
+      placeholder: Open SWE, Mempalace, Qdrant, Linear, healthcare, etc.
+    validations:
+      required: true
+
+  - type: input
+    id: proposed_repo
+    attributes:
+      label: Proposed template repository
+      description: Use the `wiki-<integration>-template` naming pattern unless there is a strong reason not to.
+      placeholder: wazootech/wiki-open-swe-template
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Integration category
+      options:
+        - Agent workflow / coding agent
+        - Runtime memory / retrieval
+        - Static site / publishing surface
+        - Issue tracker / work management
+        - Domain-specific knowledgebase
+        - Ontology / linked data
+        - RAG / GraphRAG / search
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should this template demonstrate?
+      placeholder: |
+        Create `wazootech/wiki-...-template`: a template showing how ... integrates with Wiki CLI to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this matters
+      description: Explain the user problem and why this belongs in the Wiki ecosystem.
+      placeholder: |
+        Wiki CLI already provides...
+        The integration provides...
+        Together, they help users avoid...
+    validations:
+      required: true
+
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Boundary between Wiki CLI and the integration
+      description: Make the product boundary explicit. What does each system own?
+      placeholder: |
+        | Responsibility | Wiki CLI | Integration |
+        |---|---|---|
+        | Source of truth | Markdown Wiki corpus | Derived/runtime state |
+        | Validation | SHACL, JSON Schema, lint, fmt | ... |
+        | Retrieval | SPARQL / RDF graph | ... |
+        | Publishing | Static HTML / RDF exports | ... |
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture
+    attributes:
+      label: Recommended architecture
+      description: Show the intended data/control flow.
+      placeholder: |
+        ```text
+        Wiki Markdown + wiki.yml
+          -> wiki fmt / lint / check / render
+          -> RDF / JSON-LD / static site / query output
+          -> integration-specific runtime or workflow
+          -> cited outputs / PRs / retrieval / reports
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: template_contents
+    attributes:
+      label: Template contents
+      description: List the files, pages, scripts, configs, fixtures, and examples the template should include.
+      placeholder: |
+        Suggested structure:
+
+        ```text
+        .
+        +-- README.md
+        +-- AGENTS.md
+        +-- wiki.yml
+        +-- docs/wiki/
+        +-- queries/
+        +-- scripts/
+        +-- .github/workflows/wiki.yml
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: wiki_corpus
+    attributes:
+      label: Wiki corpus examples
+      description: What starter pages, frontmatter, shapes, schemas, and SPARQL reports should be included?
+      placeholder: |
+        Include pages for:
+        - integration overview
+        - durable decisions
+        - runbooks / procedures
+        - provenance examples
+        - validation shapes
+        - rendered SPARQL reports
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation and CI
+      description: What deterministic checks should pass without private credentials?
+      value: |
+        ```bash
+        wiki -c wiki.yml fmt --check
+        wiki -c wiki.yml lint --strict
+        wiki -c wiki.yml check --strict
+        wiki -c wiki.yml render --check
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: readme_positioning
+    attributes:
+      label: README positioning
+      description: Explain when to use Wiki CLI alone, the integration alone, and both together.
+      placeholder: |
+        Use Wiki CLI alone for...
+        Use the integration alone for...
+        Use both together when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What should this template explicitly not do?
+      placeholder: |
+        - Do not make Wiki CLI depend on the integration.
+        - Do not make derived runtime state the source of truth.
+        - Do not require private credentials in CI.
+        - Do not duplicate existing template scope.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete checklist for when the template is done.
+      placeholder: |
+        - [ ] New `wazootech/wiki-...-template` repository exists.
+        - [ ] README explains the Wiki CLI / integration boundary.
+        - [ ] Template includes a working Wiki corpus.
+        - [ ] `wiki fmt --check` passes.
+        - [ ] `wiki lint --strict` passes.
+        - [ ] `wiki check --strict` passes.
+        - [ ] `wiki render --check` passes or no render blocks are included.
+        - [ ] Example queries work against the included corpus.
+        - [ ] CI validates without private credentials.
+    validations:
+      required: true
+
+  - type: textarea
+    id: open_questions
+    attributes:
+      label: Open questions
+      description: What decisions are still unresolved?
+      placeholder: |
+        1. Should this be standalone or folded into an existing template?
+        2. What is the minimal local demo?
+        3. Which credentials or external services should be optional?
+    validations:
+      required: false
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related issues and references
+      description: Link related Wiki issues, templates, and primary external docs.
+      placeholder: |
+        - Related Wiki issue:
+        - Existing template:
+        - External docs:
+    validations:
+      required: false
