@@ -50,7 +50,7 @@ _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
 def _uses_named_graphs(sparql_query: str) -> bool:
-    return re.search(r"\bGRAPH\b", sparql_query, flags=re.IGNORECASE) is not None
+    return re.search(r"(?<![?$A-Za-z0-9_:-])GRAPH\s+", sparql_query, flags=re.IGNORECASE) is not None
 
 
 def _resolve_runtime_config(

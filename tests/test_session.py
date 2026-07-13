@@ -15,6 +15,7 @@ class TestNamedGraphDetection(unittest.TestCase):
         self.assertTrue(_uses_named_graphs("SELECT ?s WHERE { GRAPH ?g { ?s ?p ?o } }"))
 
     def test_ignores_graph_substrings(self) -> None:
+        self.assertFalse(_uses_named_graphs("SELECT ?graph WHERE { ?s ?p ?graph }"))
         self.assertFalse(_uses_named_graphs("SELECT ?graphCount WHERE { ?s ?p ?graphCount }"))
         self.assertFalse(_uses_named_graphs("SELECT ?s WHERE { ?s ?p <https://example.org/graphs/root> }"))
 

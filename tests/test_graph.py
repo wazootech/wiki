@@ -640,6 +640,24 @@ name: Source Doc
             self.assertEqual(source.resolved_ref, "abcdef1234567890")
             self.assertEqual(source.required_by, ["root"])
 
+    def test_graph_descriptors_warn_when_cache_exists_without_lockfile_sources(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+
+            config = Config(config_root=root, wiki={"inputs": [wiki_dir, source_dir]})
+            with self.assertLogs("wiki.graph", level="WARNING") as log_cm:
+                descriptors = graph_descriptors(config)
+
+            self.assertEqual([descriptor.kind for descriptor in descriptors], ["root"])
+            self.assertTrue(
+                any("Source cache exists" in record.getMessage() for record in log_cm.records),
+                [record.getMessage() for record in log_cm.records],
+            )
+
     def test_load_graph_preserves_title_case_file_uri_refs(self) -> None:
         """Title-cased filename URIs must match title-cased wiki: CURIE references."""
         with TemporaryDirectory() as tmpdir:

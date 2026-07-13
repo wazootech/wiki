@@ -39,6 +39,12 @@ def source_graph_uri(config: Config, source_name: str) -> str:
 def graph_descriptors(config: Config) -> list[GraphDescriptor]:
     """Describe root and installed source graphs without mutating source state."""
     lockfile = Lockfile.load(config.config_root / "wiki.lock")
+    cache_root = config.config_root / ".wiki" / "sources"
+    if not lockfile.sources and cache_root.exists() and any(cache_root.iterdir()):
+        logger.warning(
+            "Source cache exists under %s but wiki.lock has no sources; source graph provenance is unavailable.",
+            cache_root,
+        )
     source_paths: dict[Path, GraphDescriptor] = {}
 
     for name, locked in lockfile.sources.items():
@@ -509,7 +515,7 @@ def load_graph(
     return graph
 
 
-def graph_stats(graph: Graph) -> dict[str, int]:
+def graph_stats(graph: Graph | Dataset) -> dict[str, int]:
     """Return basic statistics about the loaded graph."""
     return {
         "triples": len(graph),
