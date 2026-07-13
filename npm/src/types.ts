@@ -6,6 +6,8 @@ export type UrlStyle = "dir" | "file";
 export type LinkStyle = "standard" | "wikilink";
 /** Output formats for SPARQL query results. */
 export type QueryFormat = "table" | "json" | "csv" | "tsv" | "turtle" | "n3" | "markdown";
+/** MCP server transport mode. */
+export type McpMode = "stdio";
 /** Output formats for RDF export. */
 export type ExportFormat = "dict" | "json-ld" | "turtle" | "xml" | "n3" | "nt" | "trig" | "nquads";
 /** JSON-LD serialization mode. */
@@ -196,6 +198,18 @@ export interface ServeOptions {
   env?: NodeJS.ProcessEnv;
 }
 
+/** Options for ``Wiki.mcp()``. */
+export interface McpOptions {
+  /** MCP transport mode (default ``"stdio"``). */
+  mode?: McpMode;
+  /** Persist graph under ``.wiki/cache`` across MCP launches. */
+  cache?: boolean;
+  /** Working directory for the subprocess. */
+  cwd?: string;
+  /** Extra environment variables. */
+  env?: NodeJS.ProcessEnv;
+}
+
 /** Runtime overrides applied to a Wiki session (immutable config copy). */
 export interface RuntimeOptions {
   /** Override ``site.base_url`` for this session. */
@@ -252,3 +266,5 @@ export interface PreflightResult {
 
 /** The child process returned by ``Wiki.serve()``. */
 export type ServeProcess = ChildProcess;
+/** The child process returned by ``Wiki.mcp()``. */
+export type McpProcess = ChildProcess;

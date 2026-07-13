@@ -10,7 +10,7 @@ from typing import Any
 from rdflib import Dataset, Graph
 
 from .audit import _merge_results, _run_check, _run_lint
-from .config import Config
+from .config import Config, find_config_path
 from .fmt_util import format_markdown
 from .format import process_rdf_format
 from .graph import (
@@ -75,8 +75,9 @@ def _resolve_runtime_config(
 class Wiki:
     """Loaded wiki configuration and graph session for library operations."""
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, config_path: Path | None = None) -> None:
         self.config = config
+        self.config_path = config_path
 
     @classmethod
     def load(
@@ -94,7 +95,9 @@ class Wiki:
         Returns:
             A new ``Wiki`` instance backed by the loaded config.
         """
-        config = Config.load(Path(config_path))
+        load_path = Path(config_path)
+        resolved_config_path = find_config_path(load_path)
+        config = Config.load(load_path)
         if wiki_inputs:
             config.wiki.inputs = [
                 Path(entry) if Path(entry).is_absolute() else config.config_root / entry
@@ -106,7 +109,7 @@ class Wiki:
             for path in resolved:
                 if path not in existing:
                     config.wiki.inputs.append(path)
-        return cls(config)
+        return cls(config, resolved_config_path)
 
     def with_runtime(
         self,
@@ -123,7 +126,7 @@ class Wiki:
         Returns:
             A new ``Wiki`` with a deep-copied config.
         """
-        return Wiki(_resolve_runtime_config(self.config, base_url=base_url, url_style=url_style))
+        return Wiki(_resolve_runtime_config(self.config, base_url=base_url, url_style=url_style), self.config_path)
 
     def graph(
         self,
