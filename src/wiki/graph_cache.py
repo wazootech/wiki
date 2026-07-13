@@ -13,13 +13,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from rdflib import Graph
+from rdflib import Dataset, Graph
 
 from . import __version__
 from .config import Config
 
-# In-process graph cache: (wiki_fingerprint, infer) -> Graph
-_process_graph_cache: dict[tuple[str, bool], Graph] = {}
+# In-process graph cache: (wiki_fingerprint, infer) -> graph object
+_process_graph_cache: dict[tuple[str, bool, str], Graph | Dataset] = {}
 
 
 def cache_dir(config: Config) -> Path:
@@ -89,12 +89,13 @@ def wiki_fingerprint(config: Config) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def _cache_key(config: Config, infer: bool) -> tuple[str, bool]:
-    return (wiki_fingerprint(config), infer)
+def _cache_key(config: Config, infer: bool, kind: str = "graph") -> tuple[str, bool, str]:
+    return (wiki_fingerprint(config), infer, kind)
 
 
-def _disk_cache_prefix(infer: bool) -> str:
-    return "graph-infer" if infer else "graph-asserted"
+def _disk_cache_prefix(infer: bool, kind: str = "graph") -> str:
+    prefix = "dataset" if kind == "dataset" else "graph"
+    return f"{prefix}-infer" if infer else f"{prefix}-asserted"
 
 
 def disk_cache_path(config: Config, infer: bool) -> Path:
@@ -103,9 +104,22 @@ def disk_cache_path(config: Config, infer: bool) -> Path:
     return cache_dir(config) / f"{_disk_cache_prefix(infer)}-{fp}.nt"
 
 
+def dataset_cache_path(config: Config, infer: bool) -> Path:
+    """Path to the persisted named-graph dataset for the current wiki fingerprint."""
+    fp = wiki_fingerprint(config)
+    return cache_dir(config) / f"{_disk_cache_prefix(infer, 'dataset')}-{fp}.nq"
+
+
 def get_process_graph(config: Config, infer: bool) -> Graph | None:
     """Return the in-memory graph for this wiki fingerprint and infer mode, if loaded."""
-    return _process_graph_cache.get(_cache_key(config, infer))
+    graph = _process_graph_cache.get(_cache_key(config, infer))
+    return graph if isinstance(graph, Graph) and not isinstance(graph, Dataset) else None
+
+
+def get_process_dataset(config: Config, infer: bool) -> Dataset | None:
+    """Return the in-memory dataset for this wiki fingerprint and infer mode, if loaded."""
+    graph = _process_graph_cache.get(_cache_key(config, infer, "dataset"))
+    return graph if isinstance(graph, Dataset) else None
 
 
 def get_disk_graph(config: Config, infer: bool) -> Graph | None:
@@ -125,13 +139,39 @@ def get_disk_graph(config: Config, infer: bool) -> Graph | None:
         return None
 
 
+def get_disk_dataset(config: Config, infer: bool) -> Dataset | None:
+    """Return a persisted named-graph dataset for this wiki fingerprint, if present."""
+    cache_path = dataset_cache_path(config, infer)
+    if not cache_path.exists():
+        return None
+    try:
+        dataset = Dataset(default_union=True)
+        dataset.parse(cache_path, format="nquads")
+        return dataset
+    except Exception:
+        try:
+            cache_path.unlink()
+        except OSError:
+            pass
+        return None
+
+
 def set_process_graph(config: Config, infer: bool, graph: Graph) -> None:
     """Store a graph in the in-process cache, dropping stale entries for the same infer mode."""
     fp = wiki_fingerprint(config)
-    stale_keys = [key for key in _process_graph_cache if key[1] == infer and key[0] != fp]
+    stale_keys = [key for key in _process_graph_cache if key[1] == infer and key[2] == "graph" and key[0] != fp]
     for key in stale_keys:
         del _process_graph_cache[key]
-    _process_graph_cache[(fp, infer)] = graph
+    _process_graph_cache[(fp, infer, "graph")] = graph
+
+
+def set_process_dataset(config: Config, infer: bool, dataset: Dataset) -> None:
+    """Store a dataset in the in-process cache, dropping stale dataset entries."""
+    fp = wiki_fingerprint(config)
+    stale_keys = [key for key in _process_graph_cache if key[1] == infer and key[2] == "dataset" and key[0] != fp]
+    for key in stale_keys:
+        del _process_graph_cache[key]
+    _process_graph_cache[(fp, infer, "dataset")] = dataset
 
 
 def set_disk_graph(config: Config, infer: bool, graph: Graph) -> None:
@@ -148,15 +188,42 @@ def set_disk_graph(config: Config, infer: bool, graph: Graph) -> None:
     cache_path.write_text(graph.serialize(format="nt"), encoding="utf-8")
 
 
+def set_disk_dataset(config: Config, infer: bool, dataset: Dataset) -> None:
+    """Persist a named-graph dataset for reuse across one-shot CLI invocations."""
+    root = cache_dir(config)
+    root.mkdir(parents=True, exist_ok=True)
+    cache_path = dataset_cache_path(config, infer)
+    for stale in root.glob(f"{_disk_cache_prefix(infer, 'dataset')}-*.nq"):
+        if stale != cache_path:
+            try:
+                stale.unlink()
+            except OSError:
+                pass
+    cache_path.write_text(dataset.serialize(format="nquads"), encoding="utf-8")
+
+
 def clear_process_graph(config: Config, infer: bool) -> None:
     """Drop the in-process graph entry for the current wiki fingerprint."""
     _process_graph_cache.pop(_cache_key(config, infer), None)
+
+
+def clear_process_dataset(config: Config, infer: bool) -> None:
+    """Drop the in-process dataset entry for the current wiki fingerprint."""
+    _process_graph_cache.pop(_cache_key(config, infer, "dataset"), None)
 
 
 def clear_disk_graph(config: Config, infer: bool) -> None:
     """Drop the persisted graph entry for the current wiki fingerprint."""
     try:
         disk_cache_path(config, infer).unlink()
+    except OSError:
+        pass
+
+
+def clear_disk_dataset(config: Config, infer: bool) -> None:
+    """Drop the persisted dataset entry for the current wiki fingerprint."""
+    try:
+        dataset_cache_path(config, infer).unlink()
     except OSError:
         pass
 

@@ -7,7 +7,17 @@ from unittest.mock import patch
 
 from wiki.config import Config
 from wiki.schemas import AuditReport, Issue
-from wiki.session import Wiki
+from wiki.session import Wiki, _uses_named_graphs
+
+
+class TestNamedGraphDetection(unittest.TestCase):
+    def test_detects_graph_clause(self) -> None:
+        self.assertTrue(_uses_named_graphs("SELECT ?s WHERE { GRAPH ?g { ?s ?p ?o } }"))
+
+    def test_ignores_graph_substrings(self) -> None:
+        self.assertFalse(_uses_named_graphs("SELECT ?graph WHERE { ?s ?p ?graph }"))
+        self.assertFalse(_uses_named_graphs("SELECT ?graphCount WHERE { ?s ?p ?graphCount }"))
+        self.assertFalse(_uses_named_graphs("SELECT ?s WHERE { ?s ?p <https://example.org/graphs/root> }"))
 
 
 class TestWiki(unittest.TestCase):

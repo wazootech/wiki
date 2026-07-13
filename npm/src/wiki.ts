@@ -275,6 +275,11 @@ export class Wiki {
     return result.stdout;
   }
 
+  /** List read-only RDF named graphs for root and installed source provenance. */
+  graphList(): Promise<WikiCommandResult> {
+    return this.run(this.args("graph", ["list"]));
+  }
+
   /** Start a local HTTP server for browsing the wiki.
    *
    * @param options - Serve options (host, port, baseUrl, urlStyle, watch).

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .assets import build_asset_manifest, write_packaged_asset
 from .errors import BuildError
+from .graph import load_query_graph
 from .paths import build_page_manifest, detect_output_collisions, page_output_path
 from .render import render_markdown_files
 from .schemas import BuildOptions, BuildResult
@@ -52,10 +53,18 @@ def _build_static_site(wiki: Wiki, options: BuildOptions) -> BuildResult:
     written_paths: list[Path] = []
 
     if options.render_first:
-        graph = wiki.graph(infer=True, reload=options.reload_graph, disk_cache=options.disk_cache)
-        success, _errors, _stale, _render_errors = render_markdown_files(config, graph)
+        reload_next = options.reload_graph
+
+        def query_graph(sparql_query: str):
+            nonlocal reload_next
+            graph = load_query_graph(config, sparql_query, infer=True, reload=reload_next, disk_cache=options.disk_cache)
+            reload_next = False
+            return graph
+
+        success, _errors, _stale, _render_errors = render_markdown_files(config, query_graph=query_graph)
         if options.disk_cache and success > 0:
             wiki.graph(infer=True, reload=True, disk_cache=True)
+            wiki.dataset(infer=True, reload=True, disk_cache=True)
 
     if not any(path.exists() for path in config.wiki.inputs):
         dirs_str = ", ".join(str(path) for path in config.wiki.inputs)

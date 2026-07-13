@@ -15,7 +15,7 @@ from .errors import BuildError, UpgradeError
 from .format_choice import FormatChoice
 from .graph import graph_stats
 from .init_scaffold import parse_github_repo, resolve_init_options
-from .session import Wiki
+from .session import Wiki, _uses_named_graphs
 from .upgrade import PACKAGE_NAME, check_version, perform_upgrade
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
@@ -143,6 +143,38 @@ def link(
     sys.exit(1 if check else 0)
 
 
+@main.group()
+def graph() -> None:
+    """Inspect read-only RDF named graph provenance."""
+
+
+@graph.command(name="list")
+@click.pass_obj
+def graph_list(wiki: Wiki) -> None:
+    """List named graphs available to SPARQL GRAPH queries."""
+    descriptors = wiki.graphs()
+    rows = [
+        (
+            descriptor.name,
+            descriptor.kind,
+            descriptor.uri,
+            descriptor.resolved_ref[:12] if descriptor.resolved_ref else "",
+            ",".join(descriptor.required_by) if descriptor.required_by else "",
+        )
+        for descriptor in descriptors
+    ]
+    headers = ("name", "kind", "uri", "commit", "required_by")
+    widths = [len(header) for header in headers]
+    for row in rows:
+        for idx, value in enumerate(row):
+            widths[idx] = max(widths[idx], len(value))
+
+    click.echo("  ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers)))
+    click.echo("  ".join("-" * width for width in widths))
+    for row in rows:
+        click.echo("  ".join(value.ljust(widths[idx]) for idx, value in enumerate(row)))
+
+
 @main.command()
 @click.argument("query_args", nargs=-1, required=False)
 @click.option(
@@ -207,7 +239,10 @@ def query(
             sys.exit(1)
 
     if verbose:
-        graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+        if _uses_named_graphs(sparql_query):
+            graph = wiki.dataset(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+        else:
+            graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
         stats = graph_stats(graph)
         click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
 

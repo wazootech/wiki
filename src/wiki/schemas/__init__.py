@@ -27,6 +27,7 @@ from .site import TocItem, VirtualPage, WikiSite
 from .sources import (
     LOCKFILE_FILENAME,
     LOCKFILE_VERSION,
+    GraphDescriptor,
     LockedSource,
     Lockfile,
     SourceConfig,
@@ -59,6 +60,7 @@ __all__ = [
     "CheckConfig",
     "FmtConfig",
     "GraphConfig",
+    "GraphDescriptor",
     "InitOptions",
     "LAYOUT_MARKUP_PATHS",
     "LAYOUT_RAW_JSON_PATHS",

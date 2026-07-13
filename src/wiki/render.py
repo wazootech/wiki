@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -101,9 +102,10 @@ def _sparql_table_matches(existing: str, rendered: str) -> bool:
 
 def render_markdown_files(
     context: Any,
-    graph: Any,
+    graph: Any | None = None,
     dry_run: bool = False,
     explicit_files: tuple[Path, ...] = (),
+    query_graph: Callable[[str], Any] | None = None,
 ) -> tuple[int, int, list[str], list[str]]:
     """Iterate over markdown files, parse and replace dynamic SPARQL sections inline.
 
@@ -116,6 +118,8 @@ def render_markdown_files(
     markdown_files = _select_markdown_files_for_render(context, explicit_files=explicit_files)
 
     known_slugs = {pr.route for pr in page_routes(context)}
+    if graph is None and query_graph is None:
+        raise ValueError("render_markdown_files requires graph or query_graph")
 
     for md_file in markdown_files:
         content = md_file.read_text(encoding="utf-8")
@@ -126,8 +130,9 @@ def render_markdown_files(
             nonlocal modified, file_errors
             query = match.group("query").strip()
             try:
+                target_graph = query_graph(query) if query_graph is not None else graph
                 rendered_markdown = run_query(
-                    graph,
+                    target_graph,
                     query,
                     output_format="markdown",
                     base_iri=context.base_iri,

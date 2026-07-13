@@ -21,6 +21,8 @@ OWL-RL expansion runs when inference is enabled (default for most commands; use 
 - The persisted graph is reused only when the wiki fingerprint still matches.
 - `--reload` forces a fresh build and refreshes the current cache entry.
 
+Queries that use SPARQL `GRAPH` clauses build a named-graph dataset instead of the compatibility union graph. Those dataset cache entries are stored separately as N-Quads so source graph boundaries are preserved.
+
 ## Long-lived workflows
 
 [Wiki Subcommand serve](Wiki_Subcommand_serve.md) with `--watch` keeps one process alive. On file changes it rebuilds the graph, re-runs SPARQL rendering, and reloads the browser.

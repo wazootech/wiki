@@ -96,6 +96,7 @@ No Obsidian or agent stack required. `wiki init` scaffolds a wiki; conventions a
 | Intelligence | `query`, `render`, `export`   | SPARQL, inline result blocks, RDF serializations |
 | Publish      | `build`, `serve`, `link`      | Static site, local preview, wikilink hygiene     |
 | Sources      | `install`, `update`, `remove` | Fetch, lock, update, and manage external sources |
+| Provenance   | `graph list`                  | Inspect read-only named graph boundaries         |
 
 Design rationale for silence, pipes, and flat subcommands: [Design philosophies](Design_Philosophies.md).
 
@@ -132,6 +133,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 - **Link** — repair broken internal links and optionally insert suggested links as wiki-gardening ([Wiki Subcommand link](Wiki_Subcommand_link.md))
 - **Fmt** — mdformat for markdown ([Wiki Subcommand fmt](Wiki_Subcommand_fmt.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki Subcommand query](Wiki_Subcommand_query.md), [Graph Cache](Graph_Cache.md))
+- **Graph list** — inspect root and source named graphs for SPARQL `GRAPH` provenance ([Wiki Subcommand graph](Wiki_Subcommand_graph.md))
 - **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
 - **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki Subcommand build](Wiki_Subcommand_build.md), [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 - **Export** — JSON-LD and RDF serializations ([Wiki Subcommand export](Wiki_Subcommand_export.md))
@@ -250,6 +252,7 @@ ORDER BY ?command
 | [Wiki_Subcommand_check](Wiki_Subcommand_check.md) | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
 | [Wiki_Subcommand_export](Wiki_Subcommand_export.md) | Export document frontmatter as RDF or JSON-LD. |
 | [Wiki_Subcommand_fmt](Wiki_Subcommand_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
+| [Wiki_Subcommand_graph](Wiki_Subcommand_graph.md) | List read-only RDF named graphs for root and installed source provenance. |
 | [Wiki_Subcommand_init](Wiki_Subcommand_init.md) | Scaffold wiki.yml and starter wiki pages interactively. |
 | [Wiki_Subcommand_install](Wiki_Subcommand_install.md) | Fetch and lock external data sources declared in wiki.yml. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |

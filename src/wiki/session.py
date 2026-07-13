@@ -7,13 +7,19 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from rdflib import Graph
+from rdflib import Dataset, Graph
 
 from .audit import _merge_results, _run_check, _run_lint
 from .config import Config
 from .fmt_util import format_markdown
 from .format import process_rdf_format
-from .graph import load_graph
+from .graph import (
+    graph_descriptors,
+    load_dataset,
+    load_graph,
+    load_query_graph,
+    uses_named_graphs,
+)
 from .link_fix import (
     apply_broken_link_fixes,
     find_broken_link_fixes,
@@ -37,6 +43,7 @@ from .schemas import (
     BuildResult,
     ExportResult,
     FmtReport,
+    GraphDescriptor,
     InitOptions,
     LinkReport,
     RenderReport,
@@ -45,6 +52,10 @@ from .schemas import (
 from .sources import resolve as resolve_sources
 
 _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
+
+
+def _uses_named_graphs(sparql_query: str) -> bool:
+    return uses_named_graphs(sparql_query)
 
 
 def _resolve_runtime_config(
@@ -137,6 +148,25 @@ class Wiki:
             reload=reload,
             disk_cache=disk_cache,
         )
+
+    def dataset(
+        self,
+        *,
+        infer: bool = True,
+        reload: bool = False,
+        disk_cache: bool = False,
+    ) -> Dataset:
+        """Load a read-only RDF dataset with stable named graphs."""
+        return load_dataset(
+            self.config,
+            infer=infer,
+            reload=reload,
+            disk_cache=disk_cache,
+        )
+
+    def graphs(self) -> list[GraphDescriptor]:
+        """Return named graph descriptors for the root corpus and installed sources."""
+        return graph_descriptors(self.config)
 
     def _file_filter(self, files: Sequence[Path] | None) -> tuple[set[str] | None, list[Path] | None]:
         if not files:
@@ -311,19 +341,29 @@ class Wiki:
             select_markdown_paths(config, tuple(files))
             explicit_files = tuple(files)
 
-        graph = self.graph(
-            infer=not no_inference,
-            reload=reload,
-            disk_cache=cache,
-        )
+        reload_next = reload
+
+        def query_graph(sparql_query: str) -> Graph | Dataset:
+            nonlocal reload_next
+            graph = load_query_graph(
+                config,
+                sparql_query,
+                infer=not no_inference,
+                reload=reload_next,
+                disk_cache=cache,
+            )
+            reload_next = False
+            return graph
+
         success_count, error_count, stale_files, render_errors = render_markdown_files(
             config,
-            graph,
+            query_graph=query_graph,
             dry_run=check,
             explicit_files=explicit_files,
         )
         if cache and not check and success_count > 0:
             self.graph(infer=not no_inference, reload=True, disk_cache=True)
+            self.dataset(infer=not no_inference, reload=True, disk_cache=True)
 
         ok = not stale_files if check else error_count == 0
         return RenderReport(
@@ -521,7 +561,13 @@ class Wiki:
         from .format import run_query
         from .jqfilter import resolve_path
 
-        graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
+        graph = load_query_graph(
+            self.config,
+            sparql_query,
+            infer=not no_inference,
+            reload=reload,
+            disk_cache=cache,
+        )
         result = run_query(
             graph,
             sparql_query,
