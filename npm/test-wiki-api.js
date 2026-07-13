@@ -80,6 +80,16 @@ async function main() {
     'list',
   ]);
 
+  assert.deepStrictEqual(wiki.args('mcp', ['--mode', 'stdio']), [
+    '--wiki-inputs',
+    'docs/wiki',
+    '--config',
+    'docs/wiki.yml',
+    'mcp',
+    '--mode',
+    'stdio',
+  ]);
+
   const initWiki = new TestWiki();
   await initWiki.init({
     git: true,

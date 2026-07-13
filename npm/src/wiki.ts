@@ -21,6 +21,7 @@ import type {
   InitOptions,
   LinkOptions,
   LintOptions,
+  McpOptions,
   PreflightOptions,
   PreflightResult,
   QueryOptions,
@@ -293,6 +294,20 @@ export class Wiki {
     pushFlag(args, "--site-url-style", options.urlStyle ?? this.runtime.urlStyle);
     pushFlag(args, "--watch", options.watch);
     return spawnWiki(this.args("serve", args), {
+      cwd: options.cwd ?? this.cwd,
+      env: { ...this.env, ...options.env },
+    });
+  }
+
+  /** Start a read-only MCP server for the wiki graph.
+   *
+   * @param options - MCP options (mode, cwd, env).
+   * @returns The spawned child process (not a Promise).
+   */
+  mcp(options: McpOptions = {}): ChildProcess {
+    const args: string[] = [];
+    pushFlag(args, "--mode", options.mode);
+    return spawnWiki(this.args("mcp", args), {
       cwd: options.cwd ?? this.cwd,
       env: { ...this.env, ...options.env },
     });
