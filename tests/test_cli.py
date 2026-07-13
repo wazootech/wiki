@@ -1100,6 +1100,39 @@ name: TestDoc
             self.assertIn("<", res.output, msg="N-Quads output should contain URIs")
             self.assertIn('"TestDoc"', res.output, msg="N-Quads output should contain the literal value")
 
+    def test_cli_graph_list(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+            (root / "wiki.yml").write_text("""wiki:
+  inputs:
+    - wiki
+""", encoding="utf-8")
+            (root / "wiki.lock").write_text(json.dumps({
+                "version": 2,
+                "sources": {
+                    "brain": {
+                        "url": "https://example.com/brain.git",
+                        "resolved_ref": "abcdef1234567890",
+                        "path": "wiki",
+                        "fetched_at": "2026-01-01T00:00:00+00:00",
+                        "required_by": ["root"],
+                    }
+                },
+            }), encoding="utf-8")
+
+            res = runner.invoke(main, ["-c", str(root), "graph", "list"])
+
+            self.assertEqual(res.exit_code, 0)
+            self.assertIn("graphs/root", res.output)
+            self.assertIn("brain", res.output)
+            self.assertIn("graphs/source/brain", res.output)
+            self.assertIn("abcdef123456", res.output)
+
     def test_cli_build(self) -> None:
         """Test that wiki build generates static HTML site with clean directory URLs by default."""
         runner = CliRunner()

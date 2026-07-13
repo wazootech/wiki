@@ -143,6 +143,38 @@ def link(
     sys.exit(1 if check else 0)
 
 
+@main.group()
+def graph() -> None:
+    """Inspect read-only RDF named graph provenance."""
+
+
+@graph.command(name="list")
+@click.pass_obj
+def graph_list(wiki: Wiki) -> None:
+    """List named graphs available to SPARQL GRAPH queries."""
+    descriptors = wiki.graphs()
+    rows = [
+        (
+            descriptor.name,
+            descriptor.kind,
+            descriptor.uri,
+            descriptor.resolved_ref[:12] if descriptor.resolved_ref else "",
+            ",".join(descriptor.required_by) if descriptor.required_by else "",
+        )
+        for descriptor in descriptors
+    ]
+    headers = ("name", "kind", "uri", "commit", "required_by")
+    widths = [len(header) for header in headers]
+    for row in rows:
+        for idx, value in enumerate(row):
+            widths[idx] = max(widths[idx], len(value))
+
+    click.echo("  ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers)))
+    click.echo("  ".join("-" * width for width in widths))
+    for row in rows:
+        click.echo("  ".join(value.ljust(widths[idx]) for idx, value in enumerate(row)))
+
+
 @main.command()
 @click.argument("query_args", nargs=-1, required=False)
 @click.option(

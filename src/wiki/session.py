@@ -7,13 +7,13 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from rdflib import Graph
+from rdflib import Dataset, Graph
 
 from .audit import _merge_results, _run_check, _run_lint
 from .config import Config
 from .fmt_util import format_markdown
 from .format import process_rdf_format
-from .graph import load_graph
+from .graph import graph_descriptors, load_dataset, load_graph
 from .link_fix import (
     apply_broken_link_fixes,
     find_broken_link_fixes,
@@ -37,6 +37,7 @@ from .schemas import (
     BuildResult,
     ExportResult,
     FmtReport,
+    GraphDescriptor,
     InitOptions,
     LinkReport,
     RenderReport,
@@ -137,6 +138,14 @@ class Wiki:
             reload=reload,
             disk_cache=disk_cache,
         )
+
+    def dataset(self, *, infer: bool = True) -> Dataset:
+        """Load a read-only RDF dataset with stable named graphs."""
+        return load_dataset(self.config, infer=infer)
+
+    def graphs(self) -> list[GraphDescriptor]:
+        """Return named graph descriptors for the root corpus and installed sources."""
+        return graph_descriptors(self.config)
 
     def _file_filter(self, files: Sequence[Path] | None) -> tuple[set[str] | None, list[Path] | None]:
         if not files:
@@ -521,7 +530,7 @@ class Wiki:
         from .format import run_query
         from .jqfilter import resolve_path
 
-        graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
+        graph = self.dataset(infer=not no_inference)
         result = run_query(
             graph,
             sparql_query,

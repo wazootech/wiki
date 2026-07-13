@@ -24,6 +24,24 @@ class SourceConfig(BaseModel):
     path: str | None = None
 
 
+class GraphDescriptor(BaseModel):
+    """Read-only description of a graph participating in a composed wiki."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    uri: str
+    kind: Literal["root", "source"]
+    source_name: str | None = None
+    source_type: Literal["git"] | None = None
+    url: str | None = None
+    ref: str | None = None
+    resolved_ref: str | None = None
+    path: str | None = None
+    local_path: Path | None = None
+    required_by: list[str] = Field(default_factory=list)
+
+
 class LockedSource(BaseModel):
     """A pinned source entry in wiki.lock.
 

@@ -11,11 +11,15 @@ from wiki.config import Config
 from wiki.context import Context
 from wiki.graph import (
     frontmatter_to_graph,
+    graph_descriptors,
     kebab_case,
+    load_dataset,
     load_graph,
     resolve_object,
     resolve_predicate,
+    source_graph_uri,
 )
+from wiki.schemas.sources import LockedSource, Lockfile
 
 
 class TestRDFFrontmatter(unittest.TestCase):
@@ -530,6 +534,76 @@ name: Good Page
             self.assertTrue((bob_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((gregory_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((alice_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
+
+    def test_load_dataset_preserves_root_and_source_graphs(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+
+            (wiki_dir / "Root.md").write_text("""---
+type: Thing
+name: Root Doc
+---
+""", encoding="utf-8")
+            (source_dir / "Source.md").write_text("""---
+type: Thing
+name: Source Doc
+---
+""", encoding="utf-8")
+            Lockfile(sources={
+                "brain": LockedSource(
+                    url="https://example.com/brain.git",
+                    resolved_ref="abcdef1234567890",
+                    path="wiki",
+                    fetched_at="2026-01-01T00:00:00+00:00",
+                    required_by=["root"],
+                )
+            }).save(root / "wiki.lock")
+
+            config = Config(config_root=root, wiki={"inputs": [wiki_dir, source_dir]})
+            dataset = load_dataset(config, infer=False)
+            source_uri = source_graph_uri(config, "brain")
+
+            result = dataset.query(
+                f'SELECT ?name WHERE {{ GRAPH <{source_uri}> {{ ?s <https://schema.org/name> ?name }} }}'
+            )
+
+            self.assertEqual([str(row.name) for row in result], ["Source Doc"])
+            union_result = dataset.query("SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name")
+            self.assertEqual([str(row.name) for row in union_result], ["Root Doc", "Source Doc"])
+
+    def test_graph_descriptors_include_locked_source_metadata(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+            Lockfile(sources={
+                "brain": LockedSource(
+                    url="https://example.com/brain.git",
+                    ref="main",
+                    resolved_ref="abcdef1234567890",
+                    path="wiki",
+                    fetched_at="2026-01-01T00:00:00+00:00",
+                    required_by=["root"],
+                )
+            }).save(root / "wiki.lock")
+
+            config = Config(config_root=root, wiki={"inputs": [wiki_dir, source_dir]})
+            descriptors = graph_descriptors(config)
+
+            self.assertEqual(descriptors[0].kind, "root")
+            source = descriptors[1]
+            self.assertEqual(source.name, "brain")
+            self.assertEqual(source.kind, "source")
+            self.assertEqual(source.url, "https://example.com/brain.git")
+            self.assertEqual(source.ref, "main")
+            self.assertEqual(source.resolved_ref, "abcdef1234567890")
+            self.assertEqual(source.required_by, ["root"])
 
     def test_load_graph_preserves_title_case_file_uri_refs(self) -> None:
         """Title-cased filename URIs must match title-cased wiki: CURIE references."""
