@@ -48,6 +48,10 @@ from .sources import resolve as resolve_sources
 _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
+def _uses_named_graphs(sparql_query: str) -> bool:
+    return "GRAPH" in sparql_query.upper()
+
+
 def _resolve_runtime_config(
     config: Config,
     *,
@@ -530,7 +534,10 @@ class Wiki:
         from .format import run_query
         from .jqfilter import resolve_path
 
-        graph = self.dataset(infer=not no_inference)
+        if _uses_named_graphs(sparql_query):
+            graph = self.dataset(infer=not no_inference)
+        else:
+            graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
         result = run_query(
             graph,
             sparql_query,
