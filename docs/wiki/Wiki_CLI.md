@@ -90,13 +90,13 @@ No Obsidian or agent stack required. `wiki init` scaffolds a wiki; conventions a
 
 ## Three capabilities of the CLI
 
-| Capability   | Commands                      | Value                                            |
-| ------------ | ----------------------------- | ------------------------------------------------ |
-| Trust        | `check`, `lint`, `fmt`        | Integrity contracts and authoring conventions    |
-| Intelligence | `query`, `render`, `export`   | SPARQL, inline result blocks, RDF serializations |
-| Publish      | `build`, `serve`, `link`      | Static site, local preview, wikilink hygiene     |
-| Sources      | `install`, `update`, `remove` | Fetch, lock, update, and manage external sources |
-| Provenance   | `graph list`                  | Inspect read-only named graph boundaries         |
+| Capability   | Commands                           | Value                                                              |
+| ------------ | ---------------------------------- | ------------------------------------------------------------------ |
+| Trust        | `check`, `lint`, `fmt`             | Integrity contracts and authoring conventions                      |
+| Intelligence | `query`, `mcp`, `render`, `export` | SPARQL, MCP graph access, inline result blocks, RDF serializations |
+| Publish      | `build`, `serve`, `link`           | Static site, local preview, wikilink hygiene                       |
+| Sources      | `install`, `update`, `remove`      | Fetch, lock, update, and manage external sources                   |
+| Provenance   | `graph list`                       | Inspect read-only named graph boundaries                           |
 
 Design rationale for silence, pipes, and flat subcommands: [Design philosophies](Design_Philosophies.md).
 
@@ -134,6 +134,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-yasgui-templ
 - **Fmt** — mdformat for markdown ([Wiki Subcommand fmt](Wiki_Subcommand_fmt.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([Wiki Subcommand query](Wiki_Subcommand_query.md), [Graph Cache](Graph_Cache.md))
 - **Graph list** — inspect root and source named graphs for SPARQL `GRAPH` provenance ([Wiki Subcommand graph](Wiki_Subcommand_graph.md))
+- **MCP** — read-only query-first MCP server for local agents ([Wiki Subcommand mcp](Wiki_Subcommand_mcp.md))
 - **Render** — live tables from inline SPARQL ([Wiki Subcommand render](Wiki_Subcommand_render.md))
 - **Build / serve** — static site, local preview, and optional read-only SPARQL endpoint ([Wiki Subcommand build](Wiki_Subcommand_build.md), [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
 - **Export** — JSON-LD and RDF serializations ([Wiki Subcommand export](Wiki_Subcommand_export.md))
@@ -205,7 +206,7 @@ Procedural knowledge for coding agents: [Wiki Skills](Wiki_Skills.md) (`skills/w
 
 ## Global Options
 
-These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `render`, `build`, `export`, `serve`, `fmt`, `install`, `remove`). `init` and `upgrade` do not load a config file.
+These options apply to config-loading subcommands (`check`, `lint`, `link`, `query`, `mcp`, `render`, `build`, `export`, `serve`, `fmt`, `install`, `remove`). `init` and `upgrade` do not load a config file.
 
 ### `-c, --config PATH`
 
@@ -257,6 +258,7 @@ ORDER BY ?command
 | [Wiki_Subcommand_install](Wiki_Subcommand_install.md) | Fetch and lock external data sources declared in wiki.yml. |
 | [Wiki_Subcommand_link](Wiki_Subcommand_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
 | [Wiki_Subcommand_lint](Wiki_Subcommand_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
+| [Wiki_Subcommand_mcp](Wiki_Subcommand_mcp.md) | Run a read-only MCP server for querying the wiki graph. |
 | [Wiki_Subcommand_query](Wiki_Subcommand_query.md) | Run SPARQL SELECT or CONSTRUCT against the wiki graph. |
 | [Wiki_Subcommand_remove](Wiki_Subcommand_remove.md) | Remove a data source from wiki.yml, its cache, and wiki.lock. |
 | [Wiki_Subcommand_render](Wiki_Subcommand_render.md) | Update inline SPARQL result tables in markdown files. |
