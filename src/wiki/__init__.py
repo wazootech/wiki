@@ -18,7 +18,7 @@ from .schemas import (
 )
 from .session import Wiki
 
-__version__ = "0.1.20"
+__version__ = "0.1.21"
 
 __all__ = [
     "__version__",

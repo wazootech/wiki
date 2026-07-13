@@ -86,7 +86,7 @@ ORDER BY ?name
 | [Linked_Markdown](Linked_Markdown.md) | Linked Markdown |  |
 | [Obsidian](Obsidian.md) | Obsidian |  |
 | [Vivary](Vivary.md) | Vivary | 0.1.0 |
-| [Wiki_CLI](Wiki_CLI.md) | Wiki CLI | 0.1.20 |
+| [Wiki_CLI](Wiki_CLI.md) | Wiki CLI | 0.1.21 |
 <!-- sparql:end -->
 
 ### More query patterns
