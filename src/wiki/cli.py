@@ -274,13 +274,19 @@ def query(
     show_default=True,
     help="MCP transport mode.",
 )
+@click.option(
+    "--cache",
+    "disk_cache",
+    is_flag=True,
+    help="Persist graph under .wiki/cache for faster reuse across MCP launches.",
+)
 @click.pass_obj
-def mcp(wiki: Wiki, mode: str) -> None:
+def mcp(wiki: Wiki, mode: str, disk_cache: bool) -> None:
     """Start a read-only MCP server for the wiki graph."""
     from .mcp import run_mcp_server
 
     try:
-        run_mcp_server(wiki, mode=mode.lower())
+        run_mcp_server(wiki, mode=mode.lower(), disk_cache=disk_cache)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 

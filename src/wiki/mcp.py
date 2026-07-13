@@ -79,9 +79,9 @@ def vocabulary_summary(graph: Graph, *, class_limit: int = 25, predicate_limit: 
     }
 
 
-def describe_wiki(wiki: Wiki) -> dict[str, Any]:
+def describe_wiki(wiki: Wiki, *, disk_cache: bool = False) -> dict[str, Any]:
     """Return factual graph context for agents writing SPARQL queries."""
-    graph = wiki.graph(infer=True, reload=False)
+    graph = wiki.graph(infer=True, reload=False, disk_cache=disk_cache)
     config = wiki.config
     root = config.config_root
     return {
@@ -104,6 +104,7 @@ def query_sparql(
     format: str = "json",
     inference: bool = True,
     reload: bool = False,
+    cache: bool = False,
 ) -> dict[str, str]:
     """Execute an allowlisted SPARQL query against the configured wiki graph."""
     if is_sparql_update(query):
@@ -117,7 +118,7 @@ def query_sparql(
         format=output_format,
         no_inference=not inference,
         reload=reload,
-        cache=False,
+        cache=cache,
     )
     return {
         "format": output_format,
@@ -126,24 +127,24 @@ def query_sparql(
     }
 
 
-def info_resource(wiki: Wiki) -> str:
+def info_resource(wiki: Wiki, *, disk_cache: bool = False) -> str:
     """Return wiki info as an application/json resource body."""
-    return json.dumps(describe_wiki(wiki), indent=2, sort_keys=True)
+    return json.dumps(describe_wiki(wiki, disk_cache=disk_cache), indent=2, sort_keys=True)
 
 
-def namespaces_resource(wiki: Wiki) -> str:
+def namespaces_resource(wiki: Wiki, *, disk_cache: bool = False) -> str:
     """Return graph namespace bindings as an application/json resource body."""
-    graph = wiki.graph(infer=True, reload=False)
+    graph = wiki.graph(infer=True, reload=False, disk_cache=disk_cache)
     return json.dumps(_namespace_map(graph), indent=2, sort_keys=True)
 
 
-def graph_ttl_resource(wiki: Wiki) -> str:
+def graph_ttl_resource(wiki: Wiki, *, disk_cache: bool = False) -> str:
     """Return the inferred graph serialized as Turtle."""
-    graph = wiki.graph(infer=True, reload=False)
+    graph = wiki.graph(infer=True, reload=False, disk_cache=disk_cache)
     return graph.serialize(format="turtle")
 
 
-def create_mcp_server(wiki: Wiki):
+def create_mcp_server(wiki: Wiki, *, disk_cache: bool = False):
     """Create the FastMCP server. Imported lazily so tests can avoid protocol startup."""
     from mcp.server.fastmcp import FastMCP
 
@@ -157,33 +158,33 @@ def create_mcp_server(wiki: Wiki):
         reload: bool = False,
     ) -> dict[str, str]:
         """Execute SPARQL SELECT, ASK, CONSTRUCT, or DESCRIBE against the wiki graph."""
-        return query_sparql(wiki, query, format=format, inference=inference, reload=reload)
+        return query_sparql(wiki, query, format=format, inference=inference, reload=reload, cache=disk_cache)
 
     @server.tool(name="describe_wiki", structured_output=True)
     def describe_wiki_tool() -> dict[str, Any]:
         """Return config, namespaces, graph stats, and observed vocabulary."""
-        return describe_wiki(wiki)
+        return describe_wiki(wiki, disk_cache=disk_cache)
 
     @server.resource("wiki://info", mime_type="application/json")
     def wiki_info_resource() -> str:
         """Version, config path, inputs, graph settings, stats, and vocabulary."""
-        return info_resource(wiki)
+        return info_resource(wiki, disk_cache=disk_cache)
 
     @server.resource("wiki://namespaces", mime_type="application/json")
     def wiki_namespaces_resource() -> str:
         """Prefix map for SPARQL authoring."""
-        return namespaces_resource(wiki)
+        return namespaces_resource(wiki, disk_cache=disk_cache)
 
     @server.resource("wiki://graph.ttl", mime_type="text/turtle")
     def wiki_graph_resource() -> str:
         """Current inferred wiki graph serialized as Turtle."""
-        return graph_ttl_resource(wiki)
+        return graph_ttl_resource(wiki, disk_cache=disk_cache)
 
     return server
 
 
-def run_mcp_server(wiki: Wiki, *, mode: str = "stdio") -> None:
+def run_mcp_server(wiki: Wiki, *, mode: str = "stdio", disk_cache: bool = False) -> None:
     """Run the MCP server over the requested transport."""
     if mode != "stdio":
         raise ValueError(f"Unsupported MCP mode: {mode}")
-    create_mcp_server(wiki).run(transport="stdio")
+    create_mcp_server(wiki, disk_cache=disk_cache).run(transport="stdio")

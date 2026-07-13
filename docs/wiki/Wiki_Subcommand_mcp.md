@@ -15,6 +15,7 @@ wiki mcp
 wiki -c docs/wiki.yml mcp
 wiki --wiki-inputs docs/wiki mcp
 wiki mcp --mode stdio
+wiki mcp --cache
 ```
 
 `stdio` is the default and only transport in the first version.
@@ -35,9 +36,10 @@ wiki -c docs/wiki.yml mcp
 
 ## Options
 
-| Flag     | Default | Description         |
-| -------- | ------- | ------------------- |
-| `--mode` | `stdio` | MCP transport mode. |
+| Flag      | Default | Description                                                  |
+| --------- | ------- | ------------------------------------------------------------ |
+| `--mode`  | `stdio` | MCP transport mode.                                          |
+| `--cache` | off     | Persist graph artifacts under `.wiki/cache` across launches. |
 
 ## Tools
 
@@ -133,7 +135,7 @@ Vocabulary limits are intentionally compact: top 25 classes by `rdf:type` usage 
 - No Obsidian automation
 - No SPARQL Update
 
-The command reuses the same in-process graph cache behavior as other Wiki CLI operations. `reload=true` on `query_sparql` rebuilds the in-memory graph before executing the query.
+The command reuses the same graph cache behavior as other Wiki CLI operations: in-process caching is always used within one running MCP server, and `--cache` enables filesystem persistence under `.wiki/cache` for faster reuse across MCP launches. `reload=true` on `query_sparql` rebuilds the in-memory graph before executing the query; with `--cache`, the rebuilt graph is also written back to the filesystem cache.
 
 ## Related
 

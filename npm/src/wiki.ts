@@ -301,12 +301,13 @@ export class Wiki {
 
   /** Start a read-only MCP server for the wiki graph.
    *
-   * @param options - MCP options (mode, cwd, env).
+   * @param options - MCP options (mode, cache, cwd, env).
    * @returns The spawned child process (not a Promise).
    */
   mcp(options: McpOptions = {}): ChildProcess {
     const args: string[] = [];
     pushFlag(args, "--mode", options.mode);
+    pushFlag(args, "--cache", options.cache);
     return spawnWiki(this.args("mcp", args), {
       cwd: options.cwd ?? this.cwd,
       env: { ...this.env, ...options.env },

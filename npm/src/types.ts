@@ -202,6 +202,8 @@ export interface ServeOptions {
 export interface McpOptions {
   /** MCP transport mode (default ``"stdio"``). */
   mode?: McpMode;
+  /** Persist graph under ``.wiki/cache`` across MCP launches. */
+  cache?: boolean;
   /** Working directory for the subprocess. */
   cwd?: string;
   /** Extra environment variables. */

@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 from click.testing import CliRunner
 
 from wiki.cli import main
+from wiki.graph_cache import cache_dir
 from wiki.mcp import (
     describe_wiki,
     graph_ttl_resource,
@@ -88,6 +89,29 @@ class TestWikiMcp(unittest.TestCase):
         self.assertEqual(person["curie"], "schema:Person")
         self.assertEqual(person["count"], 1)
 
+    def test_describe_wiki_can_persist_graph_cache(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki = self._make_wiki(tmpdir)
+            describe_wiki(wiki, disk_cache=True)
+
+            cache_files = list(cache_dir(wiki.config).glob("graph-infer-*.nt"))
+
+        self.assertEqual(len(cache_files), 1)
+
+    def test_query_sparql_can_persist_graph_cache(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            wiki = self._make_wiki(tmpdir)
+            query_sparql(
+                wiki,
+                "SELECT ?given WHERE { ?s <https://schema.org/givenName> ?given }",
+                inference=False,
+                cache=True,
+            )
+
+            cache_files = list(cache_dir(wiki.config).glob("graph-asserted-*.nt"))
+
+        self.assertEqual(len(cache_files), 1)
+
     def test_resources_return_json_and_turtle_bodies(self) -> None:
         with TemporaryDirectory() as tmpdir:
             wiki = self._make_wiki(tmpdir)
@@ -105,6 +129,7 @@ class TestWikiMcp(unittest.TestCase):
         self.assertEqual(result.exit_code, 0, msg=result.output)
         self.assertIn("Start a read-only MCP server", result.output)
         self.assertIn("--mode", result.output)
+        self.assertIn("--cache", result.output)
 
 
 if __name__ == "__main__":
