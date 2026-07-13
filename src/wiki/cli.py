@@ -267,6 +267,25 @@ def query(
 
 
 @main.command()
+@click.option(
+    "--mode",
+    type=click.Choice(["stdio"], case_sensitive=False),
+    default="stdio",
+    show_default=True,
+    help="MCP transport mode.",
+)
+@click.pass_obj
+def mcp(wiki: Wiki, mode: str) -> None:
+    """Start a read-only MCP server for the wiki graph."""
+    from .mcp import run_mcp_server
+
+    try:
+        run_mcp_server(wiki, mode=mode.lower())
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+@main.command()
 @optional_files_argument
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
 @click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources before rendering.")

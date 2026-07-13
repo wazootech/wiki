@@ -28,6 +28,7 @@ dependencies = [
     "jsonschema>=4.23",
     "ruamel.yaml>=0.18.0",
     "linked-markdown",
+    "mcp>=1.27,<2",
 ]
 
 [project.scripts]
