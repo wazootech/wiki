@@ -390,13 +390,43 @@ def _build_graph_from_wiki(context: Config) -> Graph:
     return graph
 
 
-def load_dataset(context: Config, infer: bool = True) -> Dataset:
+def load_dataset(
+    context: Config,
+    infer: bool = True,
+    *,
+    use_cache: bool = True,
+    reload: bool = False,
+    disk_cache: bool = False,
+) -> Dataset:
     """Load wiki sources into a read-only Dataset with stable named graphs.
 
     The dataset uses ``default_union=True`` so unscoped SPARQL queries preserve
     the existing umbrella/union behavior while ``GRAPH`` clauses can inspect
     source boundaries.
     """
+    from .graph_cache import (
+        clear_disk_dataset,
+        clear_process_dataset,
+        get_disk_dataset,
+        get_process_dataset,
+        set_disk_dataset,
+        set_process_dataset,
+    )
+
+    if reload:
+        clear_process_dataset(context, infer)
+        if disk_cache:
+            clear_disk_dataset(context, infer)
+    elif use_cache:
+        cached = get_process_dataset(context, infer)
+        if cached is not None:
+            return cached
+        if disk_cache:
+            cached_disk = get_disk_dataset(context, infer)
+            if cached_disk is not None:
+                set_process_dataset(context, infer, cached_disk)
+                return cached_disk
+
     dataset = Dataset(default_union=True)
     context.bind_namespaces(dataset)
     dataset._vocab = context.context.vocab
@@ -421,6 +451,11 @@ def load_dataset(context: Config, infer: bool = True) -> Dataset:
         from .infer import apply_inference
         for graph in dataset.graphs():
             apply_inference(graph, context)
+
+    if use_cache:
+        set_process_dataset(context, infer, dataset)
+    if disk_cache:
+        set_disk_dataset(context, infer, dataset)
 
     return dataset
 

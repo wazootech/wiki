@@ -575,6 +575,41 @@ name: Source Doc
             union_result = dataset.query("SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name")
             self.assertEqual([str(row.name) for row in union_result], ["Root Doc", "Source Doc"])
 
+    def test_load_dataset_disk_cache_preserves_named_graphs(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+
+            (source_dir / "Source.md").write_text("""---
+type: Thing
+name: Source Doc
+---
+""", encoding="utf-8")
+            Lockfile(sources={
+                "brain": LockedSource(
+                    url="https://example.com/brain.git",
+                    resolved_ref="abcdef1234567890",
+                    path="wiki",
+                    fetched_at="2026-01-01T00:00:00+00:00",
+                    required_by=["root"],
+                )
+            }).save(root / "wiki.lock")
+
+            config = Config(config_root=root, wiki={"inputs": [wiki_dir, source_dir]})
+            source_uri = source_graph_uri(config, "brain")
+            load_dataset(config, infer=False, disk_cache=True)
+            cached = load_dataset(config, infer=False, disk_cache=True)
+
+            result = cached.query(
+                f'SELECT ?name WHERE {{ GRAPH <{source_uri}> {{ ?s <https://schema.org/name> ?name }} }}'
+            )
+
+            self.assertEqual([str(row.name) for row in result], ["Source Doc"])
+            self.assertTrue(list((root / ".wiki" / "cache").glob("dataset-asserted-*.nq")))
+
     def test_graph_descriptors_include_locked_source_metadata(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -15,7 +15,7 @@ from .errors import BuildError, UpgradeError
 from .format_choice import FormatChoice
 from .graph import graph_stats
 from .init_scaffold import parse_github_repo, resolve_init_options
-from .session import Wiki
+from .session import Wiki, _uses_named_graphs
 from .upgrade import PACKAGE_NAME, check_version, perform_upgrade
 
 FILE_COMMANDS = ("check", "lint", "link", "render", "export", "fmt")
@@ -239,7 +239,10 @@ def query(
             sys.exit(1)
 
     if verbose:
-        graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+        if _uses_named_graphs(sparql_query):
+            graph = wiki.dataset(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+        else:
+            graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
         stats = graph_stats(graph)
         click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
 

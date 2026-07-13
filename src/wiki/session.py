@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -49,7 +50,7 @@ _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
 def _uses_named_graphs(sparql_query: str) -> bool:
-    return "GRAPH" in sparql_query.upper()
+    return re.search(r"\bGRAPH\b", sparql_query, flags=re.IGNORECASE) is not None
 
 
 def _resolve_runtime_config(
@@ -143,9 +144,20 @@ class Wiki:
             disk_cache=disk_cache,
         )
 
-    def dataset(self, *, infer: bool = True) -> Dataset:
+    def dataset(
+        self,
+        *,
+        infer: bool = True,
+        reload: bool = False,
+        disk_cache: bool = False,
+    ) -> Dataset:
         """Load a read-only RDF dataset with stable named graphs."""
-        return load_dataset(self.config, infer=infer)
+        return load_dataset(
+            self.config,
+            infer=infer,
+            reload=reload,
+            disk_cache=disk_cache,
+        )
 
     def graphs(self) -> list[GraphDescriptor]:
         """Return named graph descriptors for the root corpus and installed sources."""
@@ -535,7 +547,7 @@ class Wiki:
         from .jqfilter import resolve_path
 
         if _uses_named_graphs(sparql_query):
-            graph = self.dataset(infer=not no_inference)
+            graph = self.dataset(infer=not no_inference, reload=reload, disk_cache=cache)
         else:
             graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
         result = run_query(
