@@ -64,6 +64,14 @@ def check_versions() -> dict[str, str]:
         if match:
             versions["docs/wiki/Wiki_CLI.md"] = match.group(1)
 
+    # 6. uv.lock
+    uv_lock_path = root / "uv.lock"
+    if uv_lock_path.exists():
+        content = uv_lock_path.read_text(encoding="utf-8")
+        match = re.search(r'(?m)^name = "wazootech-wiki"\nversion = "([^"]+)"', content)
+        if match:
+            versions["uv.lock"] = match.group(1)
+
     return versions
 
 def update_versions(new_version: str) -> None:
@@ -121,6 +129,19 @@ def update_versions(new_version: str) -> None:
         if count > 0:
             wiki_cli_path.write_text(new_content, encoding="utf-8")
             print(f"Updated docs/wiki/Wiki_CLI.md -> {new_version}")
+
+    # 6. uv.lock
+    uv_lock_path = root / "uv.lock"
+    if uv_lock_path.exists():
+        content = uv_lock_path.read_text(encoding="utf-8")
+        new_content, count = re.subn(
+            r'(?m)^(name = "wazootech-wiki"\n)version = "[^"]+"',
+            rf'\g<1>version = "{new_version}"',
+            content,
+        )
+        if count > 0:
+            uv_lock_path.write_text(new_content, encoding="utf-8")
+            print(f"Updated uv.lock -> {new_version}")
 
 def main() -> None:
     if len(sys.argv) < 2:

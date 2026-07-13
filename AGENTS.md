@@ -91,11 +91,22 @@ For library-level validation and build in Python (without subprocess), see [Wiki
 
 To ship a new version across PyPI and npm:
 
-1. **Bump version** in all three places: `pyproject.toml`, `package.json`, `src/wiki/__init__.py` (they must match — CI verifies this).
+Use the release helper for the normal path:
+
+```bash
+uv run python scripts/release.py patch --message "Fix graph URI resolution" --issue 215 --full --push --watch
+```
+
+The helper bumps all enforced version surfaces (`pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/Wiki_CLI.md`), updates `CHANGELOG.md`, regenerates inline SPARQL result blocks, formats docs, runs validation, commits, tags, pushes, and optionally watches GitHub Actions.
+
+Manual fallback:
+
+1. **Bump version** in all enforced places: `pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/Wiki_CLI.md` (they must match — CI verifies this).
 2. **Update `CHANGELOG.md`** with the new version's entries.
-3. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
-4. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
-5. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
+3. **Regenerate docs outputs** with `wiki -c docs/wiki.yml render`, then run `wiki -c docs/wiki.yml fmt` on touched docs.
+4. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
+5. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
+6. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
 
 The release workflow is at `.github/workflows/release.yml`. It is the **only** path for publishing to registries — do not `npm publish` or `uv publish` by hand.
 
