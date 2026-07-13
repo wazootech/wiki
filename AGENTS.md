@@ -87,6 +87,13 @@ wiki -c docs/wiki.yml lint -v
 
 For library-level validation and build in Python (without subprocess), see [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md). Unit tests target `Wiki` class methods under `tests/`.
 
+### Deploy configuration
+
+- Platform: GitHub Pages
+- Production URL: https://wiki.wazoo.dev
+- Deploy workflow: `.github/workflows/deploy.yml`
+- Verification: after landing docs/site changes, wait for the **Deploy Wiki to Pages** workflow and verify the production URL loads.
+
 ### Release workflow
 
 To ship a new version across PyPI and npm:
