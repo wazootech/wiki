@@ -531,6 +531,30 @@ name: Good Page
             self.assertTrue((gregory_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
             self.assertTrue((alice_uri, RDF.type, config.context.namespaces["schema"]["Person"]) in g)
 
+    def test_load_graph_preserves_title_case_file_uri_refs(self) -> None:
+        """Title-cased filename URIs must match title-cased wiki: CURIE references."""
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            (wiki_dir / "Pokemon_Cartridge_Case.md").write_text("""---
+type: schema:Place
+name: Pokemon Cartridge Case
+---
+""", encoding="utf-8")
+            (wiki_dir / "FindAction_2026-05-30_Pokemon_Diamond_(copy_1).md").write_text("""---
+type: schema:FindAction
+schema:location: wiki:Pokemon_Cartridge_Case
+---
+""", encoding="utf-8")
+
+            config = Config(wiki={"inputs": [wiki_dir]})
+            g = load_graph(config, infer=False)
+
+            place_uri = URIRef("https://wiki.example.org/Pokemon_Cartridge_Case")
+            action_uri = URIRef("https://wiki.example.org/FindAction_2026-05-30_Pokemon_Diamond_(copy_1)")
+            schema = config.context.namespaces["schema"]
+            self.assertTrue((place_uri, RDF.type, schema["Place"]) in g)
+            self.assertTrue((action_uri, schema["location"], place_uri) in g)
+
     def test_include_file_extension_config_appends_md(self) -> None:
         """Test that include_file_extension=True produces .md in auto-generated page URIs."""
         with TemporaryDirectory() as tmpdir:

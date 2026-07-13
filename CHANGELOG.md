@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.20 — 2026-07-12
+
+### Fixed
+
+- Preserve title-cased file-derived graph URIs so `wiki:` CURIE references match Wikipedia-style filenames, and keep nested frontmatter blank nodes collision-safe with RDFLib `BNode` instances. ([#215](https://github.com/wazootech/wiki/issues/215))
+
 ## 0.1.19 — 2026-07-01
 
 ### Fixed

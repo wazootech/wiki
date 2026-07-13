@@ -28,7 +28,7 @@ def kebab_case(s: str) -> str:
 
 def _slugify_path(p: Path) -> str:
     """Compute a stable nested slug (posix, no extension) for wiki files."""
-    return p.with_suffix("").as_posix().strip("/").lower()
+    return p.with_suffix("").as_posix().strip("/")
 
 
 def _file_slug(file_path: Path, input_dirs: list[Path]) -> str:
