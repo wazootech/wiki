@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -14,7 +13,13 @@ from .audit import _merge_results, _run_check, _run_lint
 from .config import Config
 from .fmt_util import format_markdown
 from .format import process_rdf_format
-from .graph import graph_descriptors, load_dataset, load_graph
+from .graph import (
+    graph_descriptors,
+    load_dataset,
+    load_graph,
+    load_query_graph,
+    uses_named_graphs,
+)
 from .link_fix import (
     apply_broken_link_fixes,
     find_broken_link_fixes,
@@ -50,7 +55,7 @@ _RAW_FORMATS = frozenset({"turtle", "xml", "n3", "nt", "trig", "nquads"})
 
 
 def _uses_named_graphs(sparql_query: str) -> bool:
-    return re.search(r"(?<![?$A-Za-z0-9_:-])GRAPH\s+", sparql_query, flags=re.IGNORECASE) is not None
+    return uses_named_graphs(sparql_query)
 
 
 def _resolve_runtime_config(
@@ -336,19 +341,29 @@ class Wiki:
             select_markdown_paths(config, tuple(files))
             explicit_files = tuple(files)
 
-        graph = self.graph(
-            infer=not no_inference,
-            reload=reload,
-            disk_cache=cache,
-        )
+        reload_next = reload
+
+        def query_graph(sparql_query: str) -> Graph | Dataset:
+            nonlocal reload_next
+            graph = load_query_graph(
+                config,
+                sparql_query,
+                infer=not no_inference,
+                reload=reload_next,
+                disk_cache=cache,
+            )
+            reload_next = False
+            return graph
+
         success_count, error_count, stale_files, render_errors = render_markdown_files(
             config,
-            graph,
+            query_graph=query_graph,
             dry_run=check,
             explicit_files=explicit_files,
         )
         if cache and not check and success_count > 0:
             self.graph(infer=not no_inference, reload=True, disk_cache=True)
+            self.dataset(infer=not no_inference, reload=True, disk_cache=True)
 
         ok = not stale_files if check else error_count == 0
         return RenderReport(
@@ -546,10 +561,13 @@ class Wiki:
         from .format import run_query
         from .jqfilter import resolve_path
 
-        if _uses_named_graphs(sparql_query):
-            graph = self.dataset(infer=not no_inference, reload=reload, disk_cache=cache)
-        else:
-            graph = self.graph(infer=not no_inference, reload=reload, disk_cache=cache)
+        graph = load_query_graph(
+            self.config,
+            sparql_query,
+            infer=not no_inference,
+            reload=reload,
+            disk_cache=cache,
+        )
         result = run_query(
             graph,
             sparql_query,

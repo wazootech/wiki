@@ -20,7 +20,7 @@ from .format import (
     is_sparql_update,
     run_query,
 )
-from .graph import load_graph
+from .graph import load_graph, load_query_graph
 from .site import (
     VirtualPage,
     WikiSite,
@@ -266,7 +266,7 @@ class WikiHandler(BaseHTTPRequestHandler):
             if query_form not in {"SELECT", "ASK", "CONSTRUCT", "DESCRIBE"}:
                 self._send_error(405, f"Unsupported SPARQL query form: {query_form}")
                 return
-            graph = load_graph(state.config, infer=infer, reload=reload_graph)
+            graph = load_query_graph(state.config, sparql_query, infer=infer, reload=reload_graph)
             result = run_query(graph, sparql_query, output_format=output_format, base_iri=state.config.base_iri)
             body = result.encode("utf-8") if isinstance(result, str) else result
             self._send_bytes(200, body, _response_content_type(query_form, output_format))
@@ -286,24 +286,29 @@ def refresh_wiki(
     url_style: str | None = None,
 ) -> WikiSite:
     """Rebuild in-memory graph, refresh SPARQL blocks, and rebuild the site."""
-    from .graph import load_graph
     from .render import has_sparql_blocks, render_markdown_files
 
     resolved_base_url = config.site.base_url if base_url is None else base_url
     resolved_url_style = config.site.url_style if url_style is None else url_style
 
-    graph = load_graph(config, infer=True, reload=True)
+    reload_next = True
+
+    def query_graph(sparql_query: str):
+        nonlocal reload_next
+        graph = load_query_graph(config, sparql_query, infer=True, reload=reload_next)
+        reload_next = False
+        return graph
 
     if changed_paths is None:
-        render_markdown_files(config, graph)
+        render_markdown_files(config, query_graph=query_graph)
     else:
         non_md_changed = any(path.suffix.lower() != ".md" for path in changed_paths)
         if non_md_changed:
-            render_markdown_files(config, graph)
+            render_markdown_files(config, query_graph=query_graph)
         else:
             for path in sorted(changed_paths):
                 if path.suffix.lower() == ".md" and path.is_file() and has_sparql_blocks(path):
-                    render_markdown_files(config, graph, explicit_files=(path,))
+                    render_markdown_files(config, query_graph=query_graph, explicit_files=(path,))
 
     return build_site(config, base_url=resolved_base_url, url_style=resolved_url_style)
 

@@ -20,6 +20,25 @@ from .sources import _source_cache_dir, _source_resolved_path
 logger = logging.getLogger(__name__)
 
 
+def uses_named_graphs(sparql_query: str) -> bool:
+    """Return true when a SPARQL query uses an explicit GRAPH clause."""
+    return re.search(r"(?<![?$A-Za-z0-9_:-])GRAPH\s+", sparql_query, flags=re.IGNORECASE) is not None
+
+
+def load_query_graph(
+    config: Config,
+    sparql_query: str,
+    *,
+    infer: bool = True,
+    reload: bool = False,
+    disk_cache: bool = False,
+) -> Graph | Dataset:
+    """Load the right RDF query target for plain or named-graph SPARQL."""
+    if uses_named_graphs(sparql_query):
+        return load_dataset(config, infer=infer, reload=reload, disk_cache=disk_cache)
+    return load_graph(config, infer=infer, reload=reload, disk_cache=disk_cache)
+
+
 def _graph_base(config: Config) -> str:
     return str(config.context.namespaces.get("wiki") or config.base_iri).rstrip("/")
 
@@ -47,7 +66,11 @@ def graph_descriptors(config: Config) -> list[GraphDescriptor]:
         )
     source_paths: dict[Path, GraphDescriptor] = {}
 
+    direct_source_names = {source.name for source in config.sources}
     for name, locked in lockfile.sources.items():
+        required_by = list(locked.required_by)
+        if not required_by and name in direct_source_names:
+            required_by = ["root"]
         repo_dir = _source_cache_dir(config, name) / "repo"
         if not repo_dir.exists():
             continue
@@ -73,7 +96,7 @@ def graph_descriptors(config: Config) -> list[GraphDescriptor]:
             resolved_ref=locked.resolved_ref,
             path=locked.path,
             local_path=local_path,
-            required_by=list(locked.required_by),
+            required_by=required_by,
         )
 
     root_inputs = []

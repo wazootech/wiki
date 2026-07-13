@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import socket
 import threading
 import unittest
@@ -463,6 +464,60 @@ SELECT ?givenName WHERE { ?s <https://schema.org/givenName> ?givenName }
         self.assertEqual(resp.status, 200)
         self.assertEqual(resp.getheader("Content-Type"), "application/sparql-results+json; charset=utf-8")
         self.assertIn("Alice", body)
+
+    def test_sparql_endpoint_named_graph_query_uses_dataset(self) -> None:
+        root = self.wiki_dir
+        wiki_dir = root / "wiki"
+        source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+        wiki_dir.mkdir()
+        source_dir.mkdir(parents=True)
+        (wiki_dir / "root.md").write_text("---\ntype: Person\nname: Root Person\n---\n", encoding="utf-8")
+        (source_dir / "source.md").write_text("---\ntype: Person\nname: Source Person\n---\n", encoding="utf-8")
+        (root / "wiki.lock").write_text(json.dumps({
+            "version": 2,
+            "sources": {
+                "brain": {
+                    "url": "https://example.com/brain.git",
+                    "resolved_ref": "abcdef1234567890",
+                    "path": "wiki",
+                    "fetched_at": "2026-01-01T00:00:00+00:00",
+                    "required_by": ["root"],
+                }
+            },
+        }), encoding="utf-8")
+        config = Config(
+            wiki={"inputs": [wiki_dir, source_dir]},
+            sparql_service={"enabled": True},
+            config_root=root,
+        )
+        port = _free_port()
+        server = create_server(config, host="127.0.0.1", port=port)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        for _ in range(100):
+            try:
+                conn = HTTPConnection("127.0.0.1", port, timeout=1)
+                conn.request("GET", "/")
+                conn.getresponse()
+                conn.close()
+                break
+            except ConnectionRefusedError:
+                sleep(0.05)
+        conn = HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request(
+            "POST",
+            "/api/sparql",
+            body="SELECT ?graph ?name WHERE { GRAPH ?graph { ?s <https://schema.org/name> ?name } }",
+            headers={"Content-Type": "application/sparql-query", "Accept": "application/sparql-results+json"},
+        )
+        resp = conn.getresponse()
+        body = resp.read().decode("utf-8")
+        conn.close()
+        server.shutdown()
+        server.server_close()
+
+        self.assertEqual(resp.status, 200, body)
+        self.assertIn("Source Person", body)
+        self.assertIn("graphs/source/brain", body)
 
     def test_sparql_endpoint_post_construct_turtle(self) -> None:
         self._write("person.md", "---\ntype: Person\ngivenName: Alice\n---\n")

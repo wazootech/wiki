@@ -1111,7 +1111,49 @@ name: TestDoc
             (root / "wiki.yml").write_text("""wiki:
   inputs:
     - wiki
+    - .wiki/sources/brain/repo/wiki
+sources:
+  - name: brain
+    type: git
+    url: https://example.com/brain.git
 """, encoding="utf-8")
+            (root / "wiki.lock").write_text(json.dumps({
+                "version": 2,
+                "sources": {
+                    "brain": {
+                        "url": "https://example.com/brain.git",
+                        "resolved_ref": "abcdef1234567890",
+                        "path": "wiki",
+                        "fetched_at": "2026-01-01T00:00:00+00:00",
+                        "required_by": [],
+                    }
+                },
+            }), encoding="utf-8")
+
+            res = runner.invoke(main, ["-c", str(root), "graph", "list"])
+
+            self.assertEqual(res.exit_code, 0)
+            self.assertIn("graphs/root", res.output)
+            self.assertIn("brain", res.output)
+            self.assertIn("graphs/source/brain", res.output)
+            self.assertIn("abcdef123456", res.output)
+            self.assertIn("root", res.output)
+
+    def test_cli_build_with_render_named_graph_query(self) -> None:
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            wiki_dir.mkdir()
+            source_dir.mkdir(parents=True)
+            (root / "wiki.yaml").write_text(
+                yaml.dump({
+                    "wiki": {"inputs": ["wiki", ".wiki/sources/brain/repo/wiki"]},
+                    "site": {"base_url": "/wiki"},
+                }),
+                encoding="utf-8",
+            )
             (root / "wiki.lock").write_text(json.dumps({
                 "version": 2,
                 "sources": {
@@ -1124,14 +1166,28 @@ name: TestDoc
                     }
                 },
             }), encoding="utf-8")
+            page = wiki_dir / "report.md"
+            page.write_text(
+                """# Report
+<!-- sparql:start -->
+```sparql
+SELECT ?graph ?name WHERE { GRAPH ?graph { ?s <https://schema.org/name> ?name } }
+```
+<!-- sparql:end -->
+""",
+                encoding="utf-8",
+            )
+            (source_dir / "source.md").write_text("---\ntype: Person\nname: Source Person\n---\n", encoding="utf-8")
 
-            res = runner.invoke(main, ["-c", str(root), "graph", "list"])
+            result = runner.invoke(
+                main,
+                ["-c", str(root), "build", "--output-dir", str(root / "_site"), "--render", "--no-check"],
+            )
 
-            self.assertEqual(res.exit_code, 0)
-            self.assertIn("graphs/root", res.output)
-            self.assertIn("brain", res.output)
-            self.assertIn("graphs/source/brain", res.output)
-            self.assertIn("abcdef123456", res.output)
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn("Source Person", page.read_text(encoding="utf-8"))
+            html = (root / "_site" / "wiki" / "report" / "index.html").read_text(encoding="utf-8")
+            self.assertIn("Source Person", html)
 
     def test_cli_build(self) -> None:
         """Test that wiki build generates static HTML site with clean directory URLs by default."""

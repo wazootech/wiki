@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -638,6 +639,35 @@ name: Source Doc
             self.assertEqual(source.url, "https://example.com/brain.git")
             self.assertEqual(source.ref, "main")
             self.assertEqual(source.resolved_ref, "abcdef1234567890")
+            self.assertEqual(source.required_by, ["root"])
+
+    def test_graph_descriptors_marks_direct_source_required_by_root(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            source_dir.mkdir(parents=True)
+            (root / "wiki.lock").write_text(json.dumps({
+                "version": 2,
+                "sources": {
+                    "brain": {
+                        "url": "https://example.com/brain.git",
+                        "resolved_ref": "abcdef1234567890",
+                        "path": "wiki",
+                        "fetched_at": "2026-01-01T00:00:00+00:00",
+                        "required_by": [],
+                    }
+                },
+            }), encoding="utf-8")
+
+            config = Config(
+                config_root=root,
+                wiki={"inputs": [wiki_dir, source_dir]},
+                sources=[{"name": "brain", "type": "git", "url": "https://example.com/brain.git"}],
+            )
+
+            source = next(descriptor for descriptor in graph_descriptors(config) if descriptor.name == "brain")
             self.assertEqual(source.required_by, ["root"])
 
     def test_graph_descriptors_warn_when_cache_exists_without_lockfile_sources(self) -> None:

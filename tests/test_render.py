@@ -7,7 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from wiki.config import Config
-from wiki.graph import load_graph
+from wiki.graph import load_graph, load_query_graph
 from wiki.render import _sparql_table_matches, render_markdown_files
 
 
@@ -114,6 +114,43 @@ SELECT ?givenName WHERE {
 
             _, _, stale, _ = render_markdown_files(config, graph, dry_run=True, explicit_files=(page,))
             self.assertEqual(stale, [])
+
+    def test_render_named_graph_query_uses_dataset(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki_dir = root / "wiki"
+            source_dir = root / ".wiki" / "sources" / "brain" / "repo" / "wiki"
+            wiki_dir.mkdir()
+            source_dir.mkdir(parents=True)
+            page = wiki_dir / "report.md"
+            page.write_text(
+                """# Report
+<!-- sparql:start -->
+```sparql
+SELECT ?graph ?name WHERE { GRAPH ?graph { ?s <https://schema.org/name> ?name } }
+```
+<!-- sparql:end -->
+""",
+                encoding="utf-8",
+            )
+            (source_dir / "source.md").write_text("---\ntype: Person\nname: Source Person\n---\n", encoding="utf-8")
+            (root / "wiki.lock").write_text(
+                '{"version":2,"sources":{"brain":{"url":"https://example.com/brain.git",'
+                '"resolved_ref":"abcdef123456","path":"wiki","fetched_at":"2026-01-01T00:00:00+00:00",'
+                '"required_by":["root"]}}}',
+                encoding="utf-8",
+            )
+            config = Config(config_root=root, wiki={"inputs": [wiki_dir, source_dir]})
+
+            render_markdown_files(
+                config,
+                query_graph=lambda query: load_query_graph(config, query, infer=False),
+                explicit_files=(page,),
+            )
+
+            rendered = page.read_text(encoding="utf-8")
+            self.assertIn("Source Person", rendered)
+            self.assertIn("graphs/source/brain", rendered)
 
 
 if __name__ == "__main__":
