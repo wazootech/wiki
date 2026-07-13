@@ -70,6 +70,16 @@ async function main() {
   const queryResult = await queryWiki.query({ query: 'SELECT ?s WHERE { ?s ?p ?o }', format: 'json' });
   assert.deepStrictEqual(queryResult, { head: {}, results: {} });
 
+  await wiki.graphList();
+  assert.deepStrictEqual(wiki.calls.at(-1), [
+    '--wiki-inputs',
+    'docs/wiki',
+    '--config',
+    'docs/wiki.yml',
+    'graph',
+    'list',
+  ]);
+
   const initWiki = new TestWiki();
   await initWiki.init({
     git: true,

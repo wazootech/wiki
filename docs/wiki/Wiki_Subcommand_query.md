@@ -6,7 +6,7 @@ description: Run SPARQL SELECT or CONSTRUCT against the wiki graph.
 
 # `wiki query`
 
-Execute **SPARQL** against the loaded wiki graph (with OWL-RL inference unless `--no-inference`).
+Execute **SPARQL** against the loaded wiki graph (with OWL-RL inference unless `--no-inference`). Unscoped queries read the union of root content and installed sources. Use native SPARQL `GRAPH` clauses when you need source boundaries.
 
 ## Usage
 
@@ -47,6 +47,36 @@ wiki query --pretty "SELECT ?property ?value WHERE {
 
 See [Graph Cache](Graph_Cache.md) — one graph per process unless `--reload`, plus optional cross-process warm-start via `--cache`.
 
+## Source provenance
+
+Installed sources are exposed as read-only RDF named graphs. Discover graph URIs with [Wiki Subcommand graph](Wiki_Subcommand_graph.md):
+
+```bash
+wiki graph list
+```
+
+Then scope a query with native SPARQL:
+
+```sparql
+SELECT ?name WHERE {
+  GRAPH <https://example.org/wiki/graphs/source/company-brain> {
+    ?s schema:name ?name .
+  }
+}
+```
+
+Or ask which graph supplied each binding:
+
+```sparql
+SELECT ?g ?s WHERE {
+  GRAPH ?g {
+    ?s a schema:Thing .
+  }
+}
+```
+
+This is read-only provenance. It does not mutate installed sources or implement SPARQL Update.
+
 ## HTTP endpoint
 
 The same query engine backs an optional read-only SPARQL HTTP route when `sparql_service.enabled` is on in `wiki.yaml`. Configure keys and path collision rules in [Wiki Configuration](Wiki_Configuration.md#serve-api); request forms and `Accept` negotiation in [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
@@ -54,5 +84,6 @@ The same query engine backs an optional read-only SPARQL HTTP route when `sparql
 ## Related
 
 - [SPARQL](SPARQL.md)
+- [Wiki Subcommand graph](Wiki_Subcommand_graph.md)
 - [Wiki Subcommand render](Wiki_Subcommand_render.md)
 - [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint)

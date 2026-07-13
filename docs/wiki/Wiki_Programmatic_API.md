@@ -58,6 +58,15 @@ preflight = w.preflight()  # lint merged with check — same as wiki build prefl
 graph = w.graph(infer=True, reload=False)
 ```
 
+`Wiki.graph()` returns the compatibility union graph. For read-only provenance across installed sources, inspect named graph descriptors:
+
+```python
+for graph in w.graphs():
+    print(graph.name, graph.kind, graph.uri, graph.resolved_ref)
+```
+
+SPARQL `GRAPH` clauses are supported through `Wiki.query()` and the CLI query command. Unscoped queries continue to read the default union view.
+
 Runtime overrides (global `-b` / `--url-style`):
 
 ```python
@@ -176,7 +185,7 @@ CommonJS usage:
 const { Wiki } = require("wazootech-wiki");
 ```
 
-The SDK exposes methods that mirror the CLI surface: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `serve`, `init`, and `upgrade`. Options use TypeScript-friendly camelCase names and map to the corresponding CLI flags.
+The SDK exposes methods that mirror the CLI surface: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `graphList`, `serve`, `init`, and `upgrade`. Options use TypeScript-friendly camelCase names and map to the corresponding CLI flags.
 
 Most report-producing methods return a `WikiCommandResult` containing `ok`, `exitCode`, `stdout`, `stderr`, and the executed command argv. JSON-capable commands can parse structured output: `query({ format: "json" })` returns parsed JSON by default, and `export({ format: "dict" })` or `export({ format: "json-ld" })` includes parsed `data`.
 

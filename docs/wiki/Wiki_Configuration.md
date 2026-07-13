@@ -228,6 +228,8 @@ When `link.style` is `standard`, set `lint.link_style: off` to allow wikilinks i
 
 Declare external git repositories that contribute wiki pages or RDF data to the graph. After adding a source, run `wiki install` to clone it and pin the resolved commit in `wiki.lock`.
 
+Sources are read-only inputs during graph construction. Wiki composes root content and installed sources into one default query view, while preserving each installed source as a stable RDF named graph for provenance and SPARQL `GRAPH` clauses.
+
 ```yaml
 sources:  # optional block
   - name: solar-system
@@ -248,6 +250,13 @@ sources:  # optional block
 Each source must have a unique `name`. The `type` field is currently limited to `git`. Unknown keys and unsupported types are rejected at config load time.
 
 Run `wiki install` to fetch all declared sources and write `wiki.lock`. Check `wiki.lock` into version control for reproducible builds. The resolved source paths are automatically appended to `wiki.inputs` so the existing graph, check, and build pipeline picks them up.
+
+Use `wiki graph list` to inspect the root graph and installed source graph URIs. Source graph URIs are derived from `graph.context.wiki`:
+
+- Root corpus: `{graph.context.wiki}graphs/root`
+- Installed source: `{graph.context.wiki}graphs/source/{source-name}`
+
+Requested refs, resolved commits, source URLs, cache paths, and direct/transitive dependency metadata remain source metadata; they are not embedded in graph URIs.
 
 **Transitive dependencies** are resolved recursively. After cloning each source, `wiki install` reads the source's own `wiki.yml` (or `wiki.yaml`/`wiki.json`) to discover its `sources:` block. Those transitive sources are fetched and locked too, forming a dependency tree. Circular dependency chains are detected and reported as errors. If two sources declare the same dependency name with different URLs or refs, install fails with a conflict error.
 
@@ -272,6 +281,8 @@ wiki remove solar-system
 ```
 
 See [Wiki Subcommand install](Wiki_Subcommand_install.md) and [Wiki Subcommand remove](Wiki_Subcommand_remove.md).
+
+For the product framing behind recursive source composition, see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
 
 ## Serve API
 

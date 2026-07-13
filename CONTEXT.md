@@ -18,7 +18,7 @@ Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Py
 
 **Wiki**: An LLM-managed knowledge base of markdown files containing structured frontmatter. _Avoid_: Book, repository, database.
 
-**Wiki** (or **Wiki corpus**): The markdown corpus the CLI loads from `wiki.inputs` (paths relative to the config file, usually beside `wiki.yml`). It is the on-disk home of **Documents**, shapes, and embedded SPARQL; the CLI compiles it into the RDF graph. In this repository, `docs/wiki/`. _Avoid_: Workspace, content root, repo.
+**Wiki** (or **Wiki corpus**): The semantic corpus the CLI loads from `wiki.inputs` plus installed read-only `sources:` when present. It is the on-disk home of **Documents**, shapes, raw RDF, and embedded SPARQL; the CLI compiles it into the RDF graph. A composed Wiki can feel like one corpus while preserving source boundaries as RDF named graphs. In this repository, `docs/wiki/`. _Avoid_: Book, generic database.
 
 **Document**: An individual Markdown page in the wiki containing a metadata block. _Avoid_: Page, post, wiki page.
 
@@ -46,6 +46,8 @@ Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Py
 
 **Graph cache**: The in-process RDF graph held for the lifetime of a CLI run so multiple SPARQL queries and renders share one **Wiki** build. _Avoid_: Disk cache, pickle store.
 
+**Source graph**: A read-only RDF named graph for an installed source. Source graph URIs are stable handles for SPARQL `GRAPH` clauses and provenance inspection; they do not imply writable source mutation.
+
 **Checking**: Integrity validation on the **Wiki** via `wiki check` — SHACL, JSON Schema frontmatter, route safety, collisions, and layout frontmatter.
 
 **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
@@ -62,8 +64,8 @@ Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Py
 
 ## Relationships
 
-- A **Wiki** (the wiki corpus) is the filesystem corpus of **Documents** (and related assets) listed by `wiki.inputs`
-- A **Wiki** is composed of the **Documents** in a **Wiki**, compiled semantically at runtime
+- A **Wiki** (the wiki corpus) is the filesystem corpus of **Documents** and raw RDF listed by `wiki.inputs`, plus installed read-only source inputs resolved from `wiki.lock`
+- A **Wiki** is composed of root corpus content and optional source graphs, compiled semantically at runtime
 - A **Document** contains exactly one **Frontmatter** block
 - The **CLI** manages, validates, and queries the **Wiki** using **Config**, which contains the **Context** and **Namespaces**
 - **Inference** uses custom **Axioms** to expand the semantic RDF graph of the **Wiki**
