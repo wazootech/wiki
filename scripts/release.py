@@ -18,11 +18,11 @@ from pathlib import Path
 import set_version
 
 ROOT = Path(__file__).resolve().parent.parent
-DOCS_TO_FORMAT = ["docs/wiki/Wiki_CLI.md", "docs/wiki/Wiki_Subcommand_render.md"]
+DOCS_TO_FORMAT = ["docs/wiki/wiki.md", "docs/wiki/wiki_render.md"]
 RELEASE_FILES = [
     "CHANGELOG.md",
-    "docs/wiki/Wiki_CLI.md",
-    "docs/wiki/Wiki_Subcommand_render.md",
+    "docs/wiki/wiki.md",
+    "docs/wiki/wiki_render.md",
     "package-lock.json",
     "package.json",
     "pyproject.toml",

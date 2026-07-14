@@ -95,5 +95,5 @@ SELECT ?g ?s ?name WHERE {
 
 - [Second Brain](Second_Brain.md)
 - [Wiki Configuration](Wiki_Configuration.md#external-data-sources-sources)
-- [Wiki Subcommand graph](Wiki_Subcommand_graph.md)
-- [Wiki Subcommand query](Wiki_Subcommand_query.md)
+- [wiki graph](wiki_graph.md)
+- [wiki query](wiki_query.md)

@@ -25,7 +25,7 @@ This is parsed as a typed graph triple (`wiki:gregory wiki:owns wiki:bella`), al
 
 ### Built-in structural correctness
 
-Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The [Wiki CLI](Wiki_CLI.md) uses **SHACL shapes** and optional **JSON Schema** bindings (`wazoo:jsonSchema`) to audit your notes automatically. This ensures your [second brain](Second_Brain.md) remains consistently structured and complete.
+Traditional notes suffer from "schema drift" where you forget to add fields like dates or tags. The [wiki](wiki.md) uses **SHACL shapes** and optional **JSON Schema** bindings (`wazoo:jsonSchema`) to audit your notes automatically. This ensures your [second brain](Second_Brain.md) remains consistently structured and complete.
 
 ### Infinite dynamic synthesis (SPARQL)
 

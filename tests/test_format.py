@@ -98,7 +98,7 @@ class CompactJsonLdContextTest(unittest.TestCase):
             }
             compacted = process_rdf_format(
                 frontmatter,
-                "Wiki_Subcommand_query",
+                "wiki_query",
                 config.context,
                 "json-ld",
                 mode="compacted",

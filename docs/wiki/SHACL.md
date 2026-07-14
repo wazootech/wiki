@@ -8,7 +8,7 @@ description: Shapes Constraint Language for validating RDF graphs.
 
 The **Shapes Constraint Language (SHACL)** is a W3C recommendation for validating [RDF](RDF.md) graphs against a set of conditions. These conditions are provided as shapes and other constructs expressed in the form of an RDF graph itself.
 
-In this wiki, SHACL is used to enforce structure via the [Wiki CLI](Wiki_CLI.md) validation engine.
+In this wiki, SHACL is used to enforce structure via the [wiki](wiki.md) validation engine.
 
 ## Defining custom SHACL shapes (validation)
 
@@ -69,8 +69,8 @@ Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is liste
 
 ## Related
 
-- [Wiki Subcommand check](Wiki_Subcommand_check.md) — PySHACL and JSON Schema frontmatter validation
-- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — prose and link conventions (separate from shapes)
+- [wiki check](wiki_check.md) — PySHACL and JSON Schema frontmatter validation
+- [wiki lint](wiki_lint.md) — prose and link conventions (separate from shapes)
 - [Style Guide](Style_Guide.md) — shape authoring and filenames
 - [Software Application Shape](Software_Application_Shape.md) — example `sh:NodeShape`
 - [Wiki Configuration](Wiki_Configuration.md) — `wiki.inputs` and shapes layout

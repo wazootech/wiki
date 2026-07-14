@@ -476,10 +476,10 @@ specialty: Diagnostics
                 encoding="utf-8",
             )
             (wiki / "Farzapedia.md").write_text(
-                "---\ntype: TechArticle\nheadline: Farzapedia\nabout: wiki:Wiki_CLI\n---\n\n[Wiki CLI](wiki:Wiki_CLI)\n",
+                "---\ntype: TechArticle\nheadline: Farzapedia\nabout: wiki:wiki\n---\n\n[wiki](wiki:wiki)\n",
                 encoding="utf-8",
             )
-            (wiki / "Wiki_CLI.md").write_text(
+            (wiki / "wiki.md").write_text(
                 "---\ntype: TechArticle\nname: Wiki CLI\n---\n\n# Wiki CLI\n",
                 encoding="utf-8",
             )
@@ -487,8 +487,8 @@ specialty: Diagnostics
             site = build_site(config, base_url="/wiki", url_style="dir")
             page = next(p for p in site.pages if p.full_slug == "Farzapedia")
             html = build_page_html(page, root, base_url="/wiki", url_style="dir", default_layout=_full_test_layout(root))
-            self.assertIn('href="/wiki/wiki%3AWiki_CLI/"', html)
-            self.assertIn(">Wiki CLI</a>", html)
+            self.assertIn('href="/wiki/wiki%3Awiki/"', html)
+            self.assertIn(">wiki</a>", html)
 
     def test_fallback_article_uses_minimal_template(self) -> None:
         with TemporaryDirectory() as tmpdir:
@@ -513,7 +513,7 @@ specialty: Diagnostics
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text(
+            (wiki / "wiki.md").write_text(
                 "---\ntype: schema:SoftwareApplication\nname: Wiki CLI\n---\n\n"
                 "# Wiki CLI\n\nLead paragraph.\n",
                 encoding="utf-8",

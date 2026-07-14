@@ -10,7 +10,7 @@
 
 Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
 
-Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic wiki project). See [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
+Starter template: [wiki-template](https://github.com/wazootech/wiki-template) (generic wiki project). See [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 
 ## Use cases and integrations
@@ -28,7 +28,7 @@ While inspired by personal digital gardens like **Farzapedia** (a subjective, fi
 - **Farzapedia** is a specific *content wiki* containing diary entries, notes, and messages.
 - **Wiki CLI** is a *utility* for *any* wiki. It validates structure, runs queries, and builds static websites from a folder of Markdown files.
 
-Adoption path: [Wiki CLI](docs/wiki/Wiki_CLI.md) in the docs wiki.
+Adoption path: [Wiki CLI](docs/wiki/wiki.md) in the docs wiki.
 
 ## Key features
 
@@ -59,7 +59,7 @@ Use these GitHub template repos to kickstart a new wiki or preview one of Wiki C
 
 Also see [wiki-wikipedia-template](https://github.com/wazootech/wiki-wikipedia-template) — a standalone Jinja2 Wikipedia-themed layout using the Wiki Python API (not a GitHub template, but a reference implementation).
 
-All templates are in the [wazootech](https://github.com/wazootech) organization. Full details: [Wiki CLI templates](docs/wiki/Wiki_CLI.md#ecosystem-templates).
+All templates are in the [wazootech](https://github.com/wazootech) organization. Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 
 ## Installation
@@ -287,7 +287,7 @@ link:
   style: standard
 ```
 
-**Wikipedia-style** names (for example `Gregory_Davidson.md`, `Wiki_CLI.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
+**Wikipedia-style** names (for example `Gregory_Davidson.md`, `LLM_Wiki.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
 
 ### `link`
 Suggest missing wikilinks for plain-text page mentions, or repair unambiguous broken internal links. Report-only by default.

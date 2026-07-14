@@ -45,8 +45,24 @@ site:
 link:
   # standard page links or wikilinks (wiki link --apply).
   style: standard
-  # renames:
-  #   Old_Page_Name: New_Page_Name
+  renames:
+    Wiki_CLI: wiki
+    Wiki_Subcommand_build: wiki_build
+    Wiki_Subcommand_check: wiki_check
+    Wiki_Subcommand_export: wiki_export
+    Wiki_Subcommand_fmt: wiki_fmt
+    Wiki_Subcommand_graph: wiki_graph
+    Wiki_Subcommand_init: wiki_init
+    Wiki_Subcommand_install: wiki_install
+    Wiki_Subcommand_link: wiki_link
+    Wiki_Subcommand_lint: wiki_lint
+    Wiki_Subcommand_mcp: wiki_mcp
+    Wiki_Subcommand_query: wiki_query
+    Wiki_Subcommand_remove: wiki_remove
+    Wiki_Subcommand_render: wiki_render
+    Wiki_Subcommand_serve: wiki_serve
+    Wiki_Subcommand_update: wiki_update
+    Wiki_Subcommand_upgrade: wiki_upgrade
 
 # Integrity severities (wiki check): SHACL, JSON Schema, routes, layout files.
 check:
@@ -82,3 +98,4 @@ fmt:
 
 # Pointer mode (optional TOML file relative to this file):
 # fmt: .mdformat.toml
+

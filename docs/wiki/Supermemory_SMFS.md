@@ -41,9 +41,9 @@ Files under configured **memory paths** (for example `user.md`, `memory.md`, or 
 - **`profile.md`** — Virtual root file: a live, token-lean digest of the container the agent can `cat` instead of walking every subtree.
 - **Multi-modal** — PDFs, images, and other types can be ingested; text representations become searchable through the same shell tools.
 
-## Comparison with [Wiki CLI](Wiki_CLI.md) and [Letta MemFS](Letta_MemFS.md)
+## Comparison with [wiki](wiki.md) and [Letta MemFS](Letta_MemFS.md)
 
-Choose SMFS when you want **semantic search hidden behind bash**, multi-platform sync, integrations, and managed scale without maintaining a wiki toolchain. Choose the [Wiki CLI](Wiki_CLI.md) when you want **explicit, inspectable [Declarative Knowledge](Declarative_Knowledge.md)**, [Procedural Knowledge](Procedural_Knowledge.md) via `wiki check` / `wiki render`, and a compounding markdown codebase under your control.
+Choose SMFS when you want **semantic search hidden behind bash**, multi-platform sync, integrations, and managed scale without maintaining a wiki toolchain. Choose the [wiki](wiki.md) when you want **explicit, inspectable [Declarative Knowledge](Declarative_Knowledge.md)**, [Procedural Knowledge](Procedural_Knowledge.md) via `wiki check` / `wiki render`, and a compounding markdown codebase under your control.
 
 For the full cross-tool comparison, see [Agent Memory Filesystems](Agent_Memory_Filesystems.md).
 

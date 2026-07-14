@@ -8,11 +8,11 @@ description: Standard query language and protocol for RDF.
 
 **SPARQL** (Recursive acronym for SPARQL Protocol and RDF Query Language) is an [RDF](RDF.md) query language—that is, a semantic query language for databases—able to retrieve and manipulate data stored in RDF format.
 
-In the [Wiki CLI](Wiki_CLI.md), SPARQL powers [Wiki Subcommand query](Wiki_Subcommand_query.md), inline tables refreshed by [Wiki Subcommand render](Wiki_Subcommand_render.md), and (when enabled) a read-only HTTP endpoint on [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+In the [wiki](wiki.md), SPARQL powers [wiki query](wiki_query.md), inline tables refreshed by [wiki render](wiki_render.md), and (when enabled) a read-only HTTP endpoint on [wiki serve](wiki_serve.md#sparql-endpoint).
 
 ## Common prefixes
 
-The [Wiki CLI](Wiki_CLI.md) automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
+The [wiki](wiki.md) automatically binds your namespace prefixes dynamically from the `wiki.yaml` file. The primary prefix mappings are:
 
 - **`schema:`** `https://schema.org/` (Standard schema vocabulary)
 - **`wiki:`** `https://wazootech.github.io/wiki/wiki/` (Your local wiki namespace)
@@ -76,10 +76,10 @@ ORDER BY ?class
 
 ## Related
 
-- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc queries from the terminal
-- [Wiki Subcommand render](Wiki_Subcommand_render.md) — refresh inline SPARQL result tables in markdown
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
-- [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) — external YASGUI template repository ([Wiki CLI templates](Wiki_CLI.md#ecosystem-templates))
+- [wiki query](wiki_query.md) — ad-hoc queries from the terminal
+- [wiki render](wiki_render.md) — refresh inline SPARQL result tables in markdown
+- [wiki serve](wiki_serve.md#sparql-endpoint) — optional read-only HTTP endpoint on `wiki serve`
+- [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template) — external YASGUI template repository ([Wiki CLI templates](wiki.md#ecosystem-templates))
 - [Style Guide](Style_Guide.md) — `sparql:start` / `sparql:end` block conventions
 
 ## References

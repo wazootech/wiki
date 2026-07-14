@@ -28,7 +28,7 @@ By adding semantic metadata to content, search engines and agents can perform re
 ## Related
 
 - [LLM Wiki](LLM_Wiki.md) — applied pattern in this repository
-- [Wiki CLI](Wiki_CLI.md) — wiki tooling built on this stack
+- [wiki](wiki.md) — wiki tooling built on this stack
 
 ## References
 

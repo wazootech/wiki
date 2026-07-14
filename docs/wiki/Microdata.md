@@ -14,7 +14,7 @@ Prefixed CURIEs (`schema:Thing`, `wiki:Page_Name`) in `itemtype`, `itemid`, `ite
 
 ## Examples
 
-The [Wiki CLI](Wiki_CLI.md) extracts this format directly from wiki documents into the unified RDF pool:
+The [wiki](wiki.md) extracts this format directly from wiki documents into the unified RDF pool:
 
 <div itemscope itemtype="schema:TechArticle" itemid="wiki:Microdata#example">
   <span itemprop="schema:headline">Microdata in LLM Wiki</span>

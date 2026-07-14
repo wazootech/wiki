@@ -1643,7 +1643,7 @@ name: ConfigTest
         with TemporaryDirectory() as tmpdir:
             wiki_dir = Path(tmpdir) / "wiki"
             wiki_dir.mkdir()
-            (wiki_dir / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki_dir / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             guide = wiki_dir / "Guide.md"
             guide.write_text("# Guide\n\nRead the Wiki CLI guide.\n", encoding="utf-8")
 
@@ -1653,7 +1653,7 @@ name: ConfigTest
 
             apply_result = runner.invoke(main, ["--wiki-inputs", str(wiki_dir), "link", "--apply"])
             self.assertEqual(apply_result.exit_code, 0)
-            self.assertIn("[Wiki CLI](Wiki_CLI.md)", guide.read_text(encoding="utf-8"))
+            self.assertIn("[Wiki CLI](wiki.md)", guide.read_text(encoding="utf-8"))
 
             clean = runner.invoke(main, ["--wiki-inputs", str(wiki_dir), "link", "--check"])
             self.assertEqual(clean.exit_code, 0)

@@ -10,13 +10,13 @@ description: JavaScript Object Notation for Linked Data.
 
 It is a standard derived from [JSON](JSON.md) that provides a way to serialize [RDF](RDF.md) in JSON format.
 
-The [Wiki CLI](Wiki_CLI.md) can compile wiki contents into JSON-LD using [Wiki Subcommand export](Wiki_Subcommand_export.md).
+The [wiki](wiki.md) can compile wiki contents into JSON-LD using [wiki export](wiki_export.md).
 
 ## Related
 
 - [RDF](RDF.md)
-- [Wiki Subcommand export](Wiki_Subcommand_export.md)
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#metadata-view) — JSON-LD metadata chip on built pages
+- [wiki export](wiki_export.md)
+- [wiki serve](wiki_serve.md#metadata-view) — JSON-LD metadata chip on built pages
 
 ## References
 

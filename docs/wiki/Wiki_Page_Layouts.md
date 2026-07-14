@@ -56,8 +56,8 @@ Custom logos and favicons are layout markup plus `wiki.assets` overrides; see [C
 
 ## Related
 
-- [Wiki Subcommand build](Wiki_Subcommand_build.md)
+- [wiki build](wiki_build.md)
 
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md)
+- [wiki serve](wiki_serve.md)
 
 - [Style Guide](Style_Guide.md)

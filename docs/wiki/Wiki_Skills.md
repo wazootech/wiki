@@ -78,7 +78,7 @@ See `skills/wiki/references/install.md`.
 
 Non-interactive `wiki init` for wiki project structure (config, starter pages), then a short **tweak** step: replace the starter first page, and optionally uncomment blocks in `wiki.yml`. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
 
-See `skills/wiki/references/init.md` and [Wiki Subcommand init](Wiki_Subcommand_init.md).
+See `skills/wiki/references/init.md` and [wiki init](wiki_init.md).
 
 ## Improve workflow
 
@@ -122,4 +122,4 @@ Human-oriented install and daily workflow: [Getting Started](Getting_Started.md)
 
 - [LLM Wiki](LLM_Wiki.md)
 - [Procedural Knowledge](Procedural_Knowledge.md)
-- [Wiki CLI](Wiki_CLI.md)
+- [wiki](wiki.md)

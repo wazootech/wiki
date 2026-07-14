@@ -13,7 +13,7 @@ class TestLinkSuggest(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             (wiki / "Getting_Started.md").write_text(
                 "# Getting started\n\nRead the Wiki CLI guide before you begin.\n",
                 encoding="utf-8",
@@ -25,7 +25,7 @@ class TestLinkSuggest(unittest.TestCase):
             self.assertEqual(len(opportunities), 1)
             item = opportunities[0]
             self.assertEqual(item.source_route, "Getting_Started")
-            self.assertEqual(item.target_route, "Wiki_CLI")
+            self.assertEqual(item.target_route, "wiki")
             self.assertEqual(item.matched_text, "Wiki CLI")
 
     def test_skips_existing_wikilinks_and_code(self) -> None:
@@ -33,7 +33,7 @@ class TestLinkSuggest(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             (wiki / "Guide.md").write_text(
                 "# Guide\n\nAlready linked [[Wiki_CLI]] and literal `Wiki CLI` in code.\n",
                 encoding="utf-8",
@@ -84,7 +84,7 @@ class TestLinkSuggest(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             guide = wiki / "Getting_Started.md"
             guide.write_text(
                 "# Getting started\n\nRead the Wiki CLI guide before you begin.\n",
@@ -96,7 +96,7 @@ class TestLinkSuggest(unittest.TestCase):
             changed = apply_link_opportunities(config, opportunities, dry_run=False)
 
             self.assertEqual(changed, [guide])
-            self.assertIn("[Wiki CLI](Wiki_CLI.md)", guide.read_text(encoding="utf-8"))
+            self.assertIn("[Wiki CLI](wiki.md)", guide.read_text(encoding="utf-8"))
             self.assertEqual(find_link_opportunities(config), [])
             self.assertEqual(lint_broken_links(config), [])
 
@@ -105,7 +105,7 @@ class TestLinkSuggest(unittest.TestCase):
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             page = wiki / "Guide.md"
             page.write_text(
                 "---\ntype: TechArticle\n---\n\nInstall the Wiki CLI first.\n",
@@ -117,14 +117,14 @@ class TestLinkSuggest(unittest.TestCase):
 
             content = page.read_text(encoding="utf-8")
             self.assertTrue(content.startswith("---\ntype: TechArticle\n---\n\n"))
-            self.assertIn("[Wiki CLI](Wiki_CLI.md)", content)
+            self.assertIn("[Wiki CLI](wiki.md)", content)
 
     def test_apply_uses_wikilinks_when_link_style_configured(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             wiki = root / "wiki"
             wiki.mkdir()
-            (wiki / "Wiki_CLI.md").write_text("# Wiki CLI\n", encoding="utf-8")
+            (wiki / "wiki.md").write_text("# Wiki CLI\n", encoding="utf-8")
             guide = wiki / "Getting_Started.md"
             guide.write_text(
                 "# Getting started\n\nRead the Wiki CLI guide before you begin.\n",
@@ -135,7 +135,7 @@ class TestLinkSuggest(unittest.TestCase):
             opportunities = find_link_opportunities(config)
             apply_link_opportunities(config, opportunities, dry_run=False)
 
-            self.assertIn("[[Wiki_CLI|Wiki CLI]]", guide.read_text(encoding="utf-8"))
+            self.assertIn("[[wiki|Wiki CLI]]", guide.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

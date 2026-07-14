@@ -12,7 +12,7 @@ import set_version  # noqa: E402
 class TestVersionSync(unittest.TestCase):
     def test_version_strings_are_in_sync(self) -> None:
         """Verify that all version strings across pyproject.toml, package.json, package-lock.json,
-        src/wiki/__init__.py, and docs/wiki/Wiki_CLI.md are identical.
+        src/wiki/__init__.py, and docs/wiki/wiki.md are identical.
         """
         versions = set_version.check_versions()
         self.assertTrue(len(versions) > 0, "No version strings were parsed from the codebase.")

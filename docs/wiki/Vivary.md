@@ -183,9 +183,9 @@ Most workspaces never need exo. Single-agent setups stop at **tropo + strato**.
 - **No lock-in.** Plain Markdown + YAML; [Obsidian](Obsidian.md), Claude Code, Codex, or no editor at all.
 - **Medium-agnostic.** The same graph and review serve code and prose.
 
-## Vivary vs [Wiki CLI](Wiki_CLI.md)
+## Vivary vs [wiki](wiki.md)
 
-| Dimension       | Vivary (tropo)                                 | [Wiki CLI](Wiki_CLI.md)                  |
+| Dimension       | Vivary (tropo)                                 | [wiki](wiki.md)                          |
 | --------------- | ---------------------------------------------- | ---------------------------------------- |
 | Primary goal    | Standardized **agent workspace**               | Semantic wiki **toolchain**              |
 | Schema model    | Folder-as-type + `tropo.toml` packs            | SHACL, JSON Schema, `wiki.yaml`          |
@@ -212,7 +212,7 @@ Vivary composes ideas from [Jeff Kazzee](Jeff_Kazzee.md)'s earlier tools:
 ## Related
 
 - [Jeff Kazzee](Jeff_Kazzee.md) — author and tool lineage
-- [Wiki CLI](Wiki_CLI.md) — semantic compiler for Markdown wikis
+- [wiki](wiki.md) — semantic compiler for Markdown wikis
 - [LLM Wiki](LLM_Wiki.md) — compounding agent-maintained knowledge pattern
 - [Agent Memory Filesystems](Agent_Memory_Filesystems.md) — filesystem-metaphor memory tools compared
 - [Obsidian](Obsidian.md) — optional authoring surface (`create-vivary init --obsidian`)

@@ -22,7 +22,7 @@ This expresses the RDF statement:
 - predicate: `https://schema.org/givenName`
 - object: `Alice`
 
-## In [Wiki CLI](Wiki_CLI.md)
+## In [wiki](wiki.md)
 
 Use `wiki export -f nt` when you want RDF serialized as N-Triples. Built pages also expose this view in the Metadata panel under the **NT** chip.
 
@@ -33,7 +33,7 @@ Use `wiki export -f nt` when you want RDF serialized as N-Triples. Built pages a
 - [TriG](TriG.md)
 - [N Quads](N_Quads.md)
 - [JSON LD](JSON_LD.md)
-- [Wiki Subcommand export](Wiki_Subcommand_export.md)
+- [wiki export](wiki_export.md)
 
 ## References
 

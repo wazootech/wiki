@@ -39,15 +39,15 @@ In a [Semantic Web](Semantic_Web.md) compliant system, URIs identifying real-wor
 
 ## In this wiki
 
-The [Wiki CLI](Wiki_CLI.md) applies content negotiation in two places:
+The [wiki](wiki.md) applies content negotiation in two places:
 
-- **Page metadata view** on [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
-- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint))
+- **Page metadata view** on [wiki build](wiki_build.md) and [wiki serve](wiki_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
+- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([wiki serve](wiki_serve.md#sparql-endpoint))
 
 ## Related
 
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md)
-- [Wiki Subcommand build](Wiki_Subcommand_build.md)
+- [wiki serve](wiki_serve.md)
+- [wiki build](wiki_build.md)
 - [RDF](RDF.md)
 - [JSON LD](JSON_LD.md)
 - [Turtle](Turtle.md)

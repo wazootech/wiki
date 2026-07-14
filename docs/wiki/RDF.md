@@ -27,7 +27,7 @@ RDF extends the linking structure of the Web to use URIs to name the relationshi
 
 ## In this wiki
 
-The [Wiki CLI](Wiki_CLI.md) compiles markdown frontmatter into an RDF graph. Dump serializations with [Wiki Subcommand export](Wiki_Subcommand_export.md) or inspect triples per page in the build/serve metadata view ([Wiki Subcommand serve](Wiki_Subcommand_serve.md#metadata-view)).
+The [wiki](wiki.md) compiles markdown frontmatter into an RDF graph. Dump serializations with [wiki export](wiki_export.md) or inspect triples per page in the build/serve metadata view ([wiki serve](wiki_serve.md#metadata-view)).
 
 ## References
 

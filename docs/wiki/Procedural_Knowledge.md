@@ -12,8 +12,8 @@ In a semantic [Personal Knowledge](Personal_Knowledge.md) wiki, procedural knowl
 
 - [Wiki Skills](Wiki_Skills.md) — agent `SKILL.md` workflows for install, scaffold, and wiki audit (repository `skills/`, not indexed as wiki pages)
 - [SHACL](SHACL.md) shapes and JSON Schema bindings that enforce how pages must be written
-- [SPARQL](SPARQL.md) blocks and [Wiki Subcommand render](Wiki_Subcommand_render.md) that refresh tables from the graph
-- [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand render](Wiki_Subcommand_render.md) pipelines that automate hygiene and synthesis
+- [SPARQL](SPARQL.md) blocks and [wiki render](wiki_render.md) that refresh tables from the graph
+- [wiki check](wiki_check.md) and [wiki render](wiki_render.md) pipelines that automate hygiene and synthesis
 
 An [LLM Wiki](LLM_Wiki.md) pairs declarative frontmatter (facts in the graph) with this procedural layer so notes stay structured and self-updating.
 
@@ -21,8 +21,8 @@ An [LLM Wiki](LLM_Wiki.md) pairs declarative frontmatter (facts in the graph) wi
 
 - [Wiki Skills](Wiki_Skills.md)
 - [Declarative Knowledge](Declarative_Knowledge.md)
-- [Wiki Subcommand query](Wiki_Subcommand_query.md)
-- [Wiki Subcommand render](Wiki_Subcommand_render.md)
-- [Wiki Subcommand check](Wiki_Subcommand_check.md)
+- [wiki query](wiki_query.md)
+- [wiki render](wiki_render.md)
+- [wiki check](wiki_check.md)
 - [SHACL](SHACL.md)
 - [SPARQL](SPARQL.md)

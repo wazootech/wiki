@@ -33,7 +33,7 @@ Use Markdown links for all internal and external URLs.
 
 ### Formatting (`wiki fmt`)
 - **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
-- **Enforcer:** `wiki fmt --check` in CI (same order as [Wiki Subcommand lint](docs/wiki/Wiki_Subcommand_lint.md): fmt → lint → check).
+- **Enforcer:** `wiki fmt --check` in CI (same order as [wiki lint](docs/wiki/wiki_lint.md): fmt → lint → check).
 
 ## Developer notes
 
@@ -104,11 +104,11 @@ Use the release helper for the normal path:
 uv run python scripts/release.py patch --message "Fix graph URI resolution" --issue 215 --full --push --watch
 ```
 
-The helper bumps all enforced version surfaces (`pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/Wiki_CLI.md`), updates `CHANGELOG.md`, regenerates inline SPARQL result blocks, formats docs, runs validation, commits, tags, pushes, and optionally watches GitHub Actions.
+The helper bumps all enforced version surfaces (`pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/wiki.md`), updates `CHANGELOG.md`, regenerates inline SPARQL result blocks, formats docs, runs validation, commits, tags, pushes, and optionally watches GitHub Actions.
 
 Manual fallback:
 
-1. **Bump version** in all enforced places: `pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/Wiki_CLI.md` (they must match — CI verifies this).
+1. **Bump version** in all enforced places: `pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/wiki.md` (they must match — CI verifies this).
 2. **Update `CHANGELOG.md`** with the new version's entries.
 3. **Regenerate docs outputs** with `wiki -c docs/wiki.yml render`, then run `wiki -c docs/wiki.yml fmt` on touched docs.
 4. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
