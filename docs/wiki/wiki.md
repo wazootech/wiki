@@ -1,6 +1,7 @@
 ---
 type: schema:SoftwareApplication
 name: Wiki CLI
+headline: wiki
 softwareVersion: 0.1.21
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 codeRepository: https://github.com/wazootech/wiki
