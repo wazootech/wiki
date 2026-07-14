@@ -6,14 +6,14 @@ description: Canonical rules for wiki filenames, links, prose, frontmatter, shap
 
 # Style Guide
 
-This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) wiki. [Wiki Subcommand check](Wiki_Subcommand_check.md) and [Wiki Subcommand lint](Wiki_Subcommand_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
+This is the **canonical style guide** for authoring pages in an [LLM Wiki](LLM_Wiki.md) wiki. [wiki check](wiki_check.md) and [wiki lint](wiki_lint.md) enforce the machine-checkable rules; prose conventions below are documented for contributors and agents alike.
 
 In **this repository**, [AGENTS.md](https://github.com/wazootech/wiki/blob/main/AGENTS.md) is a thin companion: it maps rules to `check:*` / `lint:*` auditors, lists architecture notes for the CLI codebase, and shows CI commands. Do not duplicate wiki-authoring prose here—link here instead.
 
 ## File layout
 
 - Put pages under directories listed in `wiki.inputs` (usually `wiki/`).
-- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `Wiki_CLI.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `wiki.filename_pattern`.
+- **Prefer Wikipedia-style filenames** — preserved capitalization and underscores, for example `Gregory_Davidson.md`, `LLM_Wiki.md`, and `JSON_LD.md`. Do not use lowercase kebab-case such as `gregory-house.md` unless your project explicitly chooses that convention in `wiki.filename_pattern`.
 - Avoid spaces and other unsafe route characters in page paths.
 - Use `index.md` only for folder index routes (for example `wiki/games/index.md` → `/wiki/games/`).
 - Filenames are the source of truth for page IDs — no explicit `id:` frontmatter is required unless you intentionally override routing.
@@ -97,7 +97,7 @@ Inline SPARQL blocks use `&lt;!-- sparql:start --&gt;` … `&lt;!-- sparql:end -
 
 ## SHACL shapes
 
-Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this wiki). Shapes in the wiki are loaded into the validation graph; [Wiki Subcommand check](Wiki_Subcommand_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
+Define constraints in frontmatter with `type: sh:NodeShape` (see `wiki init`'s `Person_Shape.md` or [Software Application Shape](Software_Application_Shape.md) in this wiki). Shapes in the wiki are loaded into the validation graph; [wiki check](wiki_check.md) runs PySHACL against every document. Background: [SHACL](SHACL.md).
 
 Optionally bind a **JSON Schema** on the same shape document with `wazoo:jsonSchema` (local path under the wiki config root or remote `http(s)` URL). Type-level schemas apply to every page whose effective `type` matches `sh:targetClass`. Pages may append extra schemas with their own `wazoo:jsonSchema` key (scalar or YAML list); all bound schemas must pass.
 
@@ -162,7 +162,7 @@ ORDER BY ?class
 
 <!-- sparql:end -->
 
-Use `wiki render --check` in CI to fail when blocks are stale. See [Wiki Subcommand render](Wiki_Subcommand_render.md) and [Graph Cache](Graph_Cache.md).
+Use `wiki render --check` in CI to fail when blocks are stale. See [wiki render](wiki_render.md) and [Graph Cache](Graph_Cache.md).
 
 ## HTML [microdata](Microdata.md)
 
@@ -170,14 +170,14 @@ The parser reads `itemscope` / `itemtype` / `itemprop` in markdown bodies and ad
 
 ## Page layouts (HTML)
 
-For [Wiki Subcommand build](Wiki_Subcommand_build.md) and [Wiki Subcommand serve](Wiki_Subcommand_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yml` or `wiki.yaml`. See [Wiki Page Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
+For [wiki build](wiki_build.md) and [wiki serve](wiki_serve.md), set `wazoo:layout` to a page layout path (for example `layouts/article.html`) to override the site default for that page. Omit it to use `site.layout` from `wiki.yml` or `wiki.yaml`. See [Wiki Page Layouts](Wiki_Page_Layouts.md). Infobox values like `wiki:Other_Page` still link when that page exists.
 
 ## Related
 
 - [Linked Markdown](Linked_Markdown.md) — protocol specification
 - [SHACL](SHACL.md) — shapes language background
 - [SPARQL](SPARQL.md) — query language background
-- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
-- [Wiki Subcommand render](Wiki_Subcommand_render.md) — inline SPARQL tables
-- [Wiki Subcommand export](Wiki_Subcommand_export.md) — dump frontmatter as RDF
+- [wiki query](wiki_query.md) — ad-hoc SPARQL
+- [wiki render](wiki_render.md) — inline SPARQL tables
+- [wiki export](wiki_export.md) — dump frontmatter as RDF
 - [Design Philosophies](Design_Philosophies.md) — CLI output conventions (not wiki prose)

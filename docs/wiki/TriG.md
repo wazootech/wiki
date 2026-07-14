@@ -24,7 +24,7 @@ GRAPH <https://example.org/graphs/provenance> {
 
 The first triple lives in the default graph; the second appears in the named graph `https://example.org/graphs/provenance`.
 
-## In [Wiki CLI](Wiki_CLI.md)
+## In [wiki](wiki.md)
 
 Use `wiki export -f trig` when you want RDF serialized as TriG. Built pages also expose this view in the Metadata panel under the **TriG** chip.
 
@@ -35,7 +35,7 @@ Use `wiki export -f trig` when you want RDF serialized as TriG. Built pages also
 - [N Triples](N_Triples.md)
 - [N Quads](N_Quads.md)
 - [Notation3](Notation3.md)
-- [Wiki Subcommand export](Wiki_Subcommand_export.md)
+- [wiki export](wiki_export.md)
 
 ## References
 

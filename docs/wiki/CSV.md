@@ -13,8 +13,8 @@ While traditionally non-semantic, tabular results from [SPARQL](SPARQL.md) SELEC
 ## Related
 
 - [SPARQL](SPARQL.md)
-- [Wiki Subcommand query](Wiki_Subcommand_query.md) — `-f csv`
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `Accept: text/csv`
+- [wiki query](wiki_query.md) — `-f csv`
+- [wiki serve](wiki_serve.md#sparql-endpoint) — `Accept: text/csv`
 
 ## References
 

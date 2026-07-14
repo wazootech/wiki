@@ -6,7 +6,7 @@ description: Query and visualize your semantic markdown files in Obsidian using 
 
 # Dataview Integration
 
-The [Wiki CLI](Wiki_CLI.md) and Obsidian's community **Dataview** plugin can be used together on the same Markdown wiki. Because both tools operate on plain text Markdown files and standard YAML/JSON frontmatter, they interoperate naturally without needing any data migration or conversion.
+The [wiki](wiki.md) and Obsidian's community **Dataview** plugin can be used together on the same Markdown wiki. Because both tools operate on plain text Markdown files and standard YAML/JSON frontmatter, they interoperate naturally without needing any data migration or conversion.
 
 ## How they complement each other
 
@@ -85,6 +85,6 @@ dv.table(
 ## Related
 
 - [Obsidian Integration](Obsidian_Integration.md) — executing CLI commands from Obsidian
-- [Wiki CLI](Wiki_CLI.md) — command reference home
+- [wiki](wiki.md) — command reference home
 - [SPARQL](SPARQL.md) — semantic web query background
 ```

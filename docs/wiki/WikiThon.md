@@ -23,7 +23,7 @@ It rode the same cultural moment as the [LLM Wiki](LLM_Wiki.md) pattern (Andrej 
 
 Participants were asked to build systems that reason over **long context**, **memory**, and **workflows**—not shallow prompt wrappers. The sponsored substrate was [HydraDB](https://docs.hydradb.com/get-started/introduction), a unified context layer for agents (ingest documents and memories, recall ranked context via APIs such as `full_recall`, then ground an LLM on the result).
 
-That complements file-first wikis like those described in [Personal Knowledge](Personal_Knowledge.md): HydraDB emphasizes managed recall and graph-backed context, while the [Wiki CLI](Wiki_CLI.md) supports markdown + RDF + [SHACL](SHACL.md) and JSON Schema validation for static, inspectable wikis.
+That complements file-first wikis like those described in [Personal Knowledge](Personal_Knowledge.md): HydraDB emphasizes managed recall and graph-backed context, while the [wiki](wiki.md) supports markdown + RDF + [SHACL](SHACL.md) and JSON Schema validation for static, inspectable wikis.
 
 ## Prizes and community
 
@@ -32,5 +32,5 @@ The [Luma page](https://luma.com/6pybuh79) advertised roughly **$800** in prizes
 ## See also
 
 - [LLM Wiki](LLM_Wiki.md) — design pattern and primary sources
-- [Farzapedia](Farzapedia.md) — reference personal [wiki build](Wiki_Subcommand_build.md)
+- [Farzapedia](Farzapedia.md) — reference personal [wiki build](wiki_build.md)
 - [Obsidian Integration](Obsidian_Integration.md) — common viewer for markdown wikis

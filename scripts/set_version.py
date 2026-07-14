@@ -56,13 +56,13 @@ def check_versions() -> dict[str, str]:
         if match:
             versions["src/wiki/__init__.py"] = match.group(1)
 
-    # 5. docs/wiki/Wiki_CLI.md
-    wiki_cli_path = root / "docs" / "wiki" / "Wiki_CLI.md"
+    # 5. docs/wiki/wiki.md
+    wiki_cli_path = root / "docs" / "wiki" / "wiki.md"
     if wiki_cli_path.exists():
         content = wiki_cli_path.read_text(encoding="utf-8")
         match = re.search(r'(?m)^softwareVersion:\s*(\S+)', content)
         if match:
-            versions["docs/wiki/Wiki_CLI.md"] = match.group(1)
+            versions["docs/wiki/wiki.md"] = match.group(1)
 
     # 6. uv.lock
     uv_lock_path = root / "uv.lock"
@@ -121,14 +121,14 @@ def update_versions(new_version: str) -> None:
             init_path.write_text(new_content, encoding="utf-8")
             print(f"Updated src/wiki/__init__.py -> {new_version}")
 
-    # 5. docs/wiki/Wiki_CLI.md
-    wiki_cli_path = root / "docs" / "wiki" / "Wiki_CLI.md"
+    # 5. docs/wiki/wiki.md
+    wiki_cli_path = root / "docs" / "wiki" / "wiki.md"
     if wiki_cli_path.exists():
         content = wiki_cli_path.read_text(encoding="utf-8")
         new_content, count = re.subn(r'(?m)^softwareVersion:\s*\S+', f'softwareVersion: {new_version}', content)
         if count > 0:
             wiki_cli_path.write_text(new_content, encoding="utf-8")
-            print(f"Updated docs/wiki/Wiki_CLI.md -> {new_version}")
+            print(f"Updated docs/wiki/wiki.md -> {new_version}")
 
     # 6. uv.lock
     uv_lock_path = root / "uv.lock"

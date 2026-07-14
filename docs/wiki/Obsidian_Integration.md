@@ -34,7 +34,7 @@ Wiki CLI remains compatible with Obsidian-authored Markdown, but it should not d
 
 ## Internal links
 
-This wiki uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) wikis may use wikilinks (`[[Page]]`); the [Wiki CLI](Wiki_CLI.md) still resolves them when filenames follow wiki route rules, and `lint.broken_links` validates that each link resolves.
+This wiki uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) wikis may use wikilinks (`[[Page]]`); the [wiki](wiki.md) still resolves them when filenames follow wiki route rules, and `lint.broken_links` validates that each link resolves.
 
 ## Related
 
@@ -42,7 +42,7 @@ This wiki uses Markdown links (`Page_Name.md`). [Obsidian](Obsidian.md) wikis ma
 - [Dataview Integration](Dataview_Integration.md)
 - [Getting Started](Getting_Started.md)
 - [Style Guide](Style_Guide.md)
-- [Wiki Subcommand check](Wiki_Subcommand_check.md)
-- [Wiki Subcommand lint](Wiki_Subcommand_lint.md)
-- [Wiki Subcommand render](Wiki_Subcommand_render.md)
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md) — preview with `--watch`
+- [wiki check](wiki_check.md)
+- [wiki lint](wiki_lint.md)
+- [wiki render](wiki_render.md)
+- [wiki serve](wiki_serve.md) — preview with `--watch`

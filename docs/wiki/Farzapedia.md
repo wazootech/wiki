@@ -2,7 +2,7 @@
 type: TechArticle
 headline: Farzapedia
 description: An interlinked digital garden serving as an example for the LLM Wiki pattern.
-about: wiki:Wiki_CLI
+about: wiki:wiki
 ---
 
 # Farzapedia
@@ -28,7 +28,7 @@ Farzapedia champions four crucial properties of modern knowledge engineering:
 
 ## Dynamic querying in this wiki
 
-The [Wiki CLI](Wiki_CLI.md) is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful [SPARQL](SPARQL.md) queries with [Wiki Subcommand query](Wiki_Subcommand_query.md) and refresh live indexes with [Wiki Subcommand render](Wiki_Subcommand_render.md)—fulfilling the dream of a queryable, self-updating mind map.
+The [wiki](wiki.md) is a fully realized software pipeline built to make the Farzapedia pattern deterministic. By treating Markdown frontmatter as a queryable RDF knowledge graph, you can run powerful [SPARQL](SPARQL.md) queries with [wiki query](wiki_query.md) and refresh live indexes with [wiki render](wiki_render.md)—fulfilling the dream of a queryable, self-updating mind map.
 
 ## References
 
@@ -37,8 +37,8 @@ The [Wiki CLI](Wiki_CLI.md) is a fully realized software pipeline built to make 
 ## Related
 
 - [LLM Wiki](LLM_Wiki.md)
-- [Wiki CLI](Wiki_CLI.md)
+- [wiki](wiki.md)
 - [SPARQL](SPARQL.md)
-- [Wiki Subcommand query](Wiki_Subcommand_query.md)
-- [Wiki Subcommand render](Wiki_Subcommand_render.md)
+- [wiki query](wiki_query.md)
+- [wiki render](wiki_render.md)
 - [Getting Started](Getting_Started.md)

@@ -32,11 +32,11 @@ Developer **Farza** (founder of buildspace) created [Farzapedia](Farzapedia.md) 
 
 ## Integrating the LLM Wiki in this wiki
 
-This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of the LLM Wiki design pattern. The wiki grows through two complementary learning modalities — **continual** (temporal accumulation) and **recursive** (iterative self-refinement) — documented in [Learning Systems](Learning_Systems.md). It enforces:
+This [wiki](wiki.md) repository is built directly on the principles of the LLM Wiki design pattern. The wiki grows through two complementary learning modalities — **continual** (temporal accumulation) and **recursive** (iterative self-refinement) — documented in [Learning Systems](Learning_Systems.md). It enforces:
 
 1. **Declarative Frontmatter**: Structuring YAML-LD metadata to make pages machine-readable.
 
-1. **Procedural Automation**: Using subcommands like [Wiki Subcommand check](Wiki_Subcommand_check.md) to validate SHACL shapes and JSON Schema frontmatter, and [Wiki Subcommand render](Wiki_Subcommand_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
+1. **Procedural Automation**: Using subcommands like [wiki check](wiki_check.md) to validate SHACL shapes and JSON Schema frontmatter, and [wiki render](wiki_render.md) to execute [SPARQL](SPARQL.md) queries dynamically, compiling the graph's intelligence back into static Markdown.
 
 ## References
 
@@ -44,7 +44,7 @@ This [Wiki CLI](Wiki_CLI.md) repository is built directly on the principles of t
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md) — including [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) ([llm-wiki-template](https://github.com/wazootech/llm-wiki-template))
+- [wiki](wiki.md) — including [Wiki CLI templates](wiki.md#ecosystem-templates) ([llm-wiki-template](https://github.com/wazootech/llm-wiki-template))
 - [Learning Systems](Learning_Systems.md) — continual versus recursive learning
 - [Declarative Knowledge](Declarative_Knowledge.md)
 - [Procedural Knowledge](Procedural_Knowledge.md)

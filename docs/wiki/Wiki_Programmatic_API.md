@@ -207,10 +207,10 @@ Page layouts substitute `%wiki.*%` slots. `build_layout_context` validates a typ
 
 ## CLI parity
 
-Library operations mirror subcommands documented under [Wiki CLI](Wiki_CLI.md). The CLI adds silence-on-success, `--strict`, pipe formats, and exit codes. For agent workflows that shell out, prefer `skills/wiki/scripts/audit.sh`; for in-process CI, prefer `Wiki` and typed reports.
+Library operations mirror subcommands documented under [wiki](wiki.md). The CLI adds silence-on-success, `--strict`, pipe formats, and exit codes. For agent workflows that shell out, prefer `skills/wiki/scripts/audit.sh`; for in-process CI, prefer `Wiki` and typed reports.
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md) — command reference
+- [wiki](wiki.md) — command reference
 - [Wiki Configuration](Wiki_Configuration.md) — config semantics
 - [Design Philosophies](Design_Philosophies.md) — silent success, composable stdout

@@ -33,7 +33,7 @@ For your own wiki, copy the workflow and change:
 - `--site-base-url` to match your Pages path (`/wiki`, `/my-wiki`, or `''` for root)
 - `path` in `upload-pages-artifact` to the directory that contains your built `index.html`
 
-See [Wiki Subcommand build](Wiki_Subcommand_build.md) for `site.url_style`, `wiki.assets`, and collision checks.
+See [wiki build](wiki_build.md) for `site.url_style`, `wiki.assets`, and collision checks.
 
 ## Avoid these mistakes
 

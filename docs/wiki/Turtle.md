@@ -19,7 +19,7 @@ It is a subset of [Notation3](Notation3.md) and a superset of the minimal [N Tri
 - [Notation3](Notation3.md)
 - [TriG](TriG.md)
 - [JSON LD](JSON_LD.md)
-- [Wiki Subcommand export](Wiki_Subcommand_export.md)
+- [wiki export](wiki_export.md)
 
 ## References
 

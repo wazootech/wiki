@@ -32,6 +32,6 @@ familyName: Kazzee
 ## Related
 
 - [Vivary](Vivary.md)
-- [Wiki CLI](Wiki_CLI.md) — semantic wiki toolchain (different stack, complementary)
+- [wiki](wiki.md) — semantic wiki toolchain (different stack, complementary)
 - [LLM Wiki](LLM_Wiki.md) — compounding agent-maintained knowledge pattern
 - [Agent Memory Filesystems](Agent_Memory_Filesystems.md) — filesystem-metaphor memory tools compared

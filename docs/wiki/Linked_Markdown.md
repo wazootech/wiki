@@ -97,7 +97,7 @@ The compiled graph can be checked using shape definitions in the wiki:
 ## Related
 
 - [Style Guide](Style_Guide.md)
-- [Wiki CLI](Wiki_CLI.md)
+- [wiki](wiki.md)
 - [Wiki Configuration](Wiki_Configuration.md)
 - [SHACL](SHACL.md)
 - [RDF](RDF.md)

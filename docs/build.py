@@ -342,6 +342,8 @@ def _build_index_page(site, base_url, url_style, pages_json, layout_text):
     links_html = ""
     seen_files: set[str] = set()
     for page in site.pages:
+        if page.frontmatter.get("redirect_to"):
+            continue
         if page.file_slug not in seen_files:
             seen_files.add(page.file_slug)
             cats = _get_page_categories(page)
@@ -452,6 +454,13 @@ def build(output_dir: Path) -> None:
             body_html=page.html, page_source=page.markdown,
             edit_link_html=edit_link_html,
         )
+
+        redirect_to = page.frontmatter.get("redirect_to")
+        if redirect_to:
+            tokens["%wiki.redirect_url%"] = page_href(base_url, redirect_to, url_style)
+            layout_text = (script_dir / "layouts" / "redirect.html").read_text(encoding="utf-8")
+        else:
+            tokens["%wiki.redirect_url%"] = ""
 
         html = substitute(layout_text, tokens)
 

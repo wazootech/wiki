@@ -280,7 +280,7 @@ The name is inferred from the URL (`solar-system`). To remove it:
 wiki remove solar-system
 ```
 
-See [Wiki Subcommand install](Wiki_Subcommand_install.md) and [Wiki Subcommand remove](Wiki_Subcommand_remove.md).
+See [wiki install](wiki_install.md) and [wiki remove](wiki_remove.md).
 
 For the product framing behind recursive source composition, see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
 
@@ -309,7 +309,7 @@ sparql_service:
   path: /api/sparql
 ```
 
-The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use. HTTP request forms, supported query types, and `Accept` negotiation are documented in [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint).
+The endpoint reuses the same SPARQL engine as `wiki query`. It is read-only and intended for local or development-oriented use. HTTP request forms, supported query types, and `Accept` negotiation are documented in [wiki serve](wiki_serve.md#sparql-endpoint).
 
 It is **opt-in by default** because enabling it exposes raw graph-query access in addition to HTML preview.
 
@@ -336,7 +336,7 @@ fmt:  # optional block — inline mapping (init writes)
 | `extensions`  | optional (inline) | `[gfm, front_matters, wikilink, toc, footnote]` | writes            | `wiki fmt` |
 | TOML path     | optional          | unset — see fallback chain below                | omits (commented) | `wiki fmt` |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`). See [wiki fmt](wiki_fmt.md) for the full resolution order.
 
 | Shape          | Example               | When to use                                 |
 | -------------- | --------------------- | ------------------------------------------- |
@@ -355,7 +355,7 @@ When `site.layout` is set, the CLI renders every page through that page layout (
 
 The first-class presentation contract in this repository is layout files referenced from `site.layout` (for example `index.html`).
 
-- The [Wiki CLI](Wiki_CLI.md) owns the semantic markdown-to-HTML pipeline and layout slot contract.
+- The [wiki](wiki.md) owns the semantic markdown-to-HTML pipeline and layout slot contract.
 - Wiki page layout files are the primary built-in extension point for presentation.
 - Advanced themes or framework-specific sites such as Next.js, Mintlify, or other external docs stacks are treated as downstream integrations or separate layout/template repositories.
 
@@ -501,7 +501,7 @@ Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed —
 | Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
 | Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`). See [Wiki Subcommand fmt](Wiki_Subcommand_fmt.md) for the full resolution order.
+Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`). See [wiki fmt](wiki_fmt.md) for the full resolution order.
 
 Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
 
@@ -545,12 +545,12 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md#global-options) — `-c` and `--wiki-inputs` global options
-- [Wiki Subcommand init](Wiki_Subcommand_init.md) — scaffold a new wiki project
-- [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity checks
-- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits
-- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL
-- [Wiki Subcommand render](Wiki_Subcommand_render.md) — inline SPARQL tables
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md#sparql-endpoint) — `#serve-api` config block
+- [wiki](wiki.md#global-options) — `-c` and `--wiki-inputs` global options
+- [wiki init](wiki_init.md) — scaffold a new wiki project
+- [wiki check](wiki_check.md) — integrity checks
+- [wiki lint](wiki_lint.md) — convention audits
+- [wiki query](wiki_query.md) — ad-hoc SPARQL
+- [wiki render](wiki_render.md) — inline SPARQL tables
+- [wiki serve](wiki_serve.md#sparql-endpoint) — `#serve-api` config block
 - [Graph Cache](Graph_Cache.md) — `--cache` and graph reuse
 - [Style Guide](Style_Guide.md) — shapes and frontmatter

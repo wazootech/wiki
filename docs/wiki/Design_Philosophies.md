@@ -8,7 +8,7 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 ## Silence is golden
 
-[Wiki Subcommand check](Wiki_Subcommand_check.md), [Wiki Subcommand lint](Wiki_Subcommand_lint.md), [Wiki Subcommand render](Wiki_Subcommand_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
+[wiki check](wiki_check.md), [wiki lint](wiki_lint.md), [wiki render](wiki_render.md), and similar commands exit **0 with no output** on success. Use `-v` / `--verbose` when you want summaries. In CI, combine `check --strict -v` and `lint --strict -v` so warnings fail loudly.
 
 ## Check, lint, fmt, and link
 
@@ -37,7 +37,7 @@ To format page margins and headers before sending directly to a connected printe
 # Print a document
 cat wiki/Getting_Started.md | pr -h "Getting Started" | lp
 
-# Print SPARQL query results ([Wiki Subcommand query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
+# Print SPARQL query results ([wiki query](wiki_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | pr -h "Wiki People" | lp
 ```
 
@@ -49,17 +49,17 @@ To stream content directly to your default Windows printer:
 # Print a document
 Get-Content wiki/Getting_Started.md | Out-Printer
 
-# Print SPARQL query results ([Wiki Subcommand query](Wiki_Subcommand_query.md), [SPARQL](SPARQL.md))
+# Print SPARQL query results ([wiki query](wiki_query.md), [SPARQL](SPARQL.md))
 wiki query "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; schema:familyName ?family }" | Out-Printer
 ```
 
 ## Flat command surface
 
-Subcommands are top-level (`wiki check`, not `wiki wiki check`). Global options [Wiki CLI](Wiki_CLI.md#global-options) apply everywhere.
+Subcommands are top-level (`wiki check`, not `wiki wiki check`). Global options [wiki](wiki.md#global-options) apply everywhere.
 
 ## Userland over platform lock-in
 
-Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). Daily notes, note templates, vault search, task/tag dashboards, plugin reloads, DevTools, screenshots, DOM/CSS inspection, and sync belong to Obsidian CLI or Obsidian plugins. History and collaboration belong to Git. The wiki tool focuses on graph construction, validation, and site generation. [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates) and editor integrations stay at the edges; core scope is the semantic layer — see [Wiki CLI](Wiki_CLI.md#toolchain-vs-authoring-surface).
+Printing, PDF, and heavy formatting stay in your shell (`pr`, `lp`, Pandoc, etc.). Daily notes, note templates, vault search, task/tag dashboards, plugin reloads, DevTools, screenshots, DOM/CSS inspection, and sync belong to Obsidian CLI or Obsidian plugins. History and collaboration belong to Git. The wiki tool focuses on graph construction, validation, and site generation. [Wiki CLI templates](wiki.md#ecosystem-templates) and editor integrations stay at the edges; core scope is the semantic layer — see [wiki](wiki.md#toolchain-vs-authoring-surface).
 
 ## Why RDF and SPARQL
 
@@ -71,7 +71,7 @@ While Labeled Property Graphs (LPGs) and query languages like Cypher are popular
 
 ## Related
 
-- [Wiki CLI](Wiki_CLI.md)
+- [wiki](wiki.md)
 - [RDF](RDF.md)
 - [SPARQL](SPARQL.md)
 - [LLM Wiki](LLM_Wiki.md)

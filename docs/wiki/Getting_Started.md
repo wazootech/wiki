@@ -55,13 +55,13 @@ wiki init --repo wazootech/wiki
 wiki init --git
 ```
 
-`wiki init` writes `wiki.yml`, `README.md`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. Init requires a clean directory (no existing `wiki.yml`, `README.md`, or non-empty `wiki/`). See [Wiki Subcommand init](Wiki_Subcommand_init.md) for all flags.
+`wiki init` writes `wiki.yml`, `README.md`, and a starter `wiki/` folder (`Person_Shape.md`, `Ethan_Davidson.md`). Use `--repo owner/repo` to infer GitHub Pages URLs without a prompt, or pass `--graph-context-wiki` / `--site-base-url` explicitly. By default it does not create a Git repository; use `--git` if you want that explicitly. Init requires a clean directory (no existing `wiki.yml`, `README.md`, or non-empty `wiki/`). See [wiki init](wiki_init.md) for all flags.
 
 ### Branding
 
-Styling and branding (such as site name, theme color, logo, and favicon) are not managed by the CLI out-of-the-box, which outputs plain, unstyled HTML. To add custom styling, write a custom layout template file and place custom assets under the `wiki.assets` directory, then configure `site.layout` in your `wiki.yml`. See [Wiki Configuration — Custom CSS](Wiki_Configuration.md#custom-css) and [Wiki Subcommand init](Wiki_Subcommand_init.md).
+Styling and branding (such as site name, theme color, logo, and favicon) are not managed by the CLI out-of-the-box, which outputs plain, unstyled HTML. To add custom styling, write a custom layout template file and place custom assets under the `wiki.assets` directory, then configure `site.layout` in your `wiki.yml`. See [Wiki Configuration — Custom CSS](Wiki_Configuration.md#custom-css) and [wiki init](wiki_init.md).
 
-Alternatively, start from a GitHub template: [wiki-template](https://github.com/wazootech/wiki-template) (generic wiki project) or the [LLM Wiki](LLM_Wiki.md) starter [llm-wiki-template](https://github.com/wazootech/llm-wiki-template). See [Wiki CLI templates](Wiki_CLI.md#ecosystem-templates).
+Alternatively, start from a GitHub template: [wiki-template](https://github.com/wazootech/wiki-template) (generic wiki project) or the [LLM Wiki](LLM_Wiki.md) starter [llm-wiki-template](https://github.com/wazootech/llm-wiki-template). See [Wiki CLI templates](wiki.md#ecosystem-templates).
 
 ## Daily workflow
 
@@ -118,14 +118,14 @@ Do not commit `.agents/skills/` to your wiki repo unless you intentionally vendo
 
 ## Next steps
 
-- [Wiki CLI](Wiki_CLI.md) — command reference home
+- [wiki](wiki.md) — command reference home
 - [Wiki Configuration](Wiki_Configuration.md) — tune `wiki`, `graph`, `site`, `link`, and check severities
 - [Style Guide](Style_Guide.md) — document types, shapes, and wikilinks
 - [Linked Markdown](Linked_Markdown.md) — the wazootech/linked-markdown protocol specification
-- [Wiki Subcommand check](Wiki_Subcommand_check.md) — integrity validation and CI checks
-- [Wiki Subcommand lint](Wiki_Subcommand_lint.md) — convention audits (broken links, filenames, headings)
-- [Wiki Subcommand query](Wiki_Subcommand_query.md) — ad-hoc SPARQL from the terminal
-- [Wiki Subcommand render](Wiki_Subcommand_render.md) — refresh inline SPARQL tables
-- [Wiki Subcommand serve](Wiki_Subcommand_serve.md) — local preview and optional SPARQL endpoint
-- [Wiki Subcommand build](Wiki_Subcommand_build.md) — static HTML for deployment
+- [wiki check](wiki_check.md) — integrity validation and CI checks
+- [wiki lint](wiki_lint.md) — convention audits (broken links, filenames, headings)
+- [wiki query](wiki_query.md) — ad-hoc SPARQL from the terminal
+- [wiki render](wiki_render.md) — refresh inline SPARQL tables
+- [wiki serve](wiki_serve.md) — local preview and optional SPARQL endpoint
+- [wiki build](wiki_build.md) — static HTML for deployment
 - [Graph Cache](Graph_Cache.md) — graph reuse and `--cache`

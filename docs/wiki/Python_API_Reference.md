@@ -15,4 +15,4 @@ The [Wiki Programmatic API](Wiki_Programmatic_API.md) page provides usage exampl
 ## Related
 
 - [Wiki Programmatic API](Wiki_Programmatic_API.md) — usage guide
-- [Wiki CLI](Wiki_CLI.md) — command reference
+- [wiki](wiki.md) — command reference

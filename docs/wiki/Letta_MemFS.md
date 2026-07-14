@@ -39,9 +39,9 @@ description: Coding preferences learned during /init
 - **Agent-driven hierarchy** — Unlike SMFS’s heavier background graph updates, MemFS relies on the agent (and you, in an editor) to curate structure over time.
 - **Human-in-the-loop** — Open the memory folder in VS Code or Cursor and edit markdown directly; Git history provides audit and rollback.
 
-## Comparison with [Wiki CLI](Wiki_CLI.md) and [Supermemory SMFS](Supermemory_SMFS.md)
+## Comparison with [wiki](wiki.md) and [Supermemory SMFS](Supermemory_SMFS.md)
 
-Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [Wiki CLI](Wiki_CLI.md) when you want a **shared, schema-checked wiki** with [Second Brain](Second_Brain.md)-style linking and [semantic web](Semantic_Web.md) tooling independent of a single agent runtime.
+Choose MemFS when you run **Letta Code** and want Git-auditable, human-editable agent memory with a crisp hot/cold split and an always-on `system/` slice. Choose the [wiki](wiki.md) when you want a **shared, schema-checked wiki** with [Second Brain](Second_Brain.md)-style linking and [semantic web](Semantic_Web.md) tooling independent of a single agent runtime.
 
 For the full cross-tool comparison, see [Agent Memory Filesystems](Agent_Memory_Filesystems.md).
 

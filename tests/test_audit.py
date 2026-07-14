@@ -69,7 +69,7 @@ And a valid Markdown link [Target](target-page.md) and a broken Markdown link [B
         """Frontmatter wiki: CURIEs must resolve to an existing document route."""
         with TemporaryDirectory() as tmpdir:
             config = Config(wiki={"inputs": [tmpdir]})
-            Path(tmpdir, "Wiki_CLI.md").write_text("---\ntype: SoftwareApplication\n---\n", encoding="utf-8")
+            Path(tmpdir, "wiki.md").write_text("---\ntype: SoftwareApplication\n---\n", encoding="utf-8")
             Path(tmpdir, "Farzapedia.md").write_text(
                 "---\ntype: TechArticle\nabout: wiki:wiki-cli\n---\n",
                 encoding="utf-8",
@@ -364,7 +364,7 @@ type: schema:WebPage
             config = Config(wiki={"inputs": [tmpdir]})
             Path(tmpdir, "Compare.md").write_text(
                 "---\ntype: TechArticle\n---\n"
-                "## Comparison with [Wiki CLI](Wiki_CLI.md) and [Letta MemFS](Letta_MemFS.md)\n",
+                "## Comparison with [Wiki CLI](wiki.md) and [Letta MemFS](Letta_MemFS.md)\n",
                 encoding="utf-8",
             )
             warnings = lint_headings(config)
