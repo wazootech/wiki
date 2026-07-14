@@ -399,7 +399,8 @@ def build(output_dir: Path) -> None:
     )
 
     layout_path = script_dir / "layouts" / "wikipedia.html"
-    layout_text = layout_path.read_text(encoding="utf-8")
+    default_layout_text = layout_path.read_text(encoding="utf-8")
+    redirect_layout_text = (script_dir / "layouts" / "redirect.html").read_text(encoding="utf-8")
 
     selected_view = resolve_metadata_view("json-ld", "compacted")
 
@@ -409,7 +410,7 @@ def build(output_dir: Path) -> None:
     wiki_output = output_dir / base_path if base_path else output_dir
     wiki_output.mkdir(parents=True, exist_ok=True)
 
-    index_html = _build_index_page(site, base_url, url_style, pages_json, layout_text)
+    index_html = _build_index_page(site, base_url, url_style, pages_json, default_layout_text)
     index_out = wiki_output / "index.html"
     index_out.parent.mkdir(parents=True, exist_ok=True)
     index_out.write_text(index_html, encoding="utf-8")
@@ -458,11 +459,12 @@ def build(output_dir: Path) -> None:
         redirect_to = page.frontmatter.get("redirect_to")
         if redirect_to:
             tokens["%wiki.redirect_url%"] = page_href(base_url, redirect_to, url_style)
-            layout_text = (script_dir / "layouts" / "redirect.html").read_text(encoding="utf-8")
+            page_layout_text = redirect_layout_text
         else:
             tokens["%wiki.redirect_url%"] = ""
+            page_layout_text = default_layout_text
 
-        html = substitute(layout_text, tokens)
+        html = substitute(page_layout_text, tokens)
 
         out = page_output_path(wiki_output, page.full_slug, url_style)
         out.parent.mkdir(parents=True, exist_ok=True)
