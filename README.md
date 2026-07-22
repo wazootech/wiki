@@ -55,6 +55,7 @@ Use these GitHub template repos to kickstart a new wiki or preview one of Wiki C
 | [wiki-astro-template](https://github.com/wazootech/wiki-astro-template)       | **Astro SSG** — consuming wiki export JSON-LD                                                     |
 | [wiki-nextjs-template](https://github.com/wazootech/wiki-nextjs-template)     | **Next.js SSG** — consuming wiki export JSON-LD                                                   |
 | [wiki-quartz-template](https://github.com/wazootech/wiki-quartz-template)     | **Quartz publish** — digital garden with Wiki CLI CI checks                                       |
+| [wiki-cocoindex-template](https://github.com/wazootech/wiki-cocoindex-template) | **CocoIndex sidecar** — incremental agent memory and hybrid retrieval over Wiki-derived chunks ([#201](https://github.com/wazootech/wiki/issues/201)) |
 | [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)     | **YASGUI SPARQL** — query UI explorer ([demo](https://wazootech.github.io/wiki-yasgui-template/)) |
 
 Also see [wiki-wikipedia-template](https://github.com/wazootech/wiki-wikipedia-template) — a standalone Jinja2 Wikipedia-themed layout using the Wiki Python API (not a GitHub template, but a reference implementation).
