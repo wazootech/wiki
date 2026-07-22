@@ -49,6 +49,7 @@ Use these GitHub template repos to kickstart a new wiki or preview one of Wiki C
 | Template                                                                      | Description                                                                                       |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | [wiki-template](https://github.com/wazootech/wiki-template)                   | **Generic starter** — `wiki init` parity, deploy config, CI checks, best practices                |
+| [wiki-camunda-template](https://github.com/wazootech/wiki-camunda-template)   | **Camunda process/rules** — BPMN, DMN, FEEL, workers, connectors, and governance dashboards      |
 | [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)           | **LLM Wiki** — agent gardening vault with SHACL shapes and SPARQL indexes                         |
 | [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template) | **Mintlify/Holocron** — MDX docs site powered by Wiki CLI vault                                   |
 | [wiki-holocron-template](https://github.com/wazootech/wiki-holocron-template) | **Holocron** — Holocron docs site from a Wiki CLI-compatible vault                                |
