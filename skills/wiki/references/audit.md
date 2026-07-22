@@ -63,14 +63,14 @@ Roadmap suggestions grounded in the specific repository:
 
 Use these guidelines when `lint.*` rules are `off` but conventions still matter (canonical details are defined in the docs wiki style guide):
 
-| Area | Convention |
-| ---- | ---------- |
-| **Filenames** | Wikipedia-style (`Page_Name.md`); `index.md` only for folder routes |
-| **Headings** | Title-case H1; sentence-case H2+; no numbered headings; ATX `#` only |
-| **Links** | Markdown `[text](Page.md)` when `link.style: standard`; Obsidian `[[Page]]` when `wikilink` |
-| **Frontmatter** | `type` / shapes aligned; CURIEs use `graph.context` |
-| **SPARQL** | People → `givenName`/`familyName`; TechArticle → `headline`/`description` |
-| **Prose** | No `---` thematic breaks in body; `## References` on standard pages |
+| Area            | Convention                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| **Filenames**   | Wikipedia-style (`Page_Name.md`); `index.md` only for folder routes                         |
+| **Headings**    | Title-case H1; sentence-case H2+; no numbered headings; ATX `#` only                        |
+| **Links**       | Markdown `[text](Page.md)` when `link.style: standard`; Obsidian `[[Page]]` when `wikilink` |
+| **Frontmatter** | `type` / shapes aligned; CURIEs use `graph.context`                                         |
+| **SPARQL**      | People → `givenName`/`familyName`; TechArticle → `headline`/`description`                   |
+| **Prose**       | No `---` thematic breaks in body; `## References` on standard pages                         |
 
 ## Finding format
 
@@ -90,7 +90,8 @@ Every audit finding must be reported in the following format:
 ## Prioritization rubric
 
 Order findings by **leverage = impact ÷ effort, discounted by confidence and fix-risk**.
+
 1. **Correctness/Integrity** findings that fail the strict build/check rules float to the top.
-2. **Deploy/CI alignment** issues that block publishing float next.
-3. **Style/Formatting** nits follow.
-4. "Not worth doing" items are omitted but listed under **Considered and rejected**.
+1. **Deploy/CI alignment** issues that block publishing float next.
+1. **Style/Formatting** nits follow.
+1. "Not worth doing" items are omitted but listed under **Considered and rejected**.

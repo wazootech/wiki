@@ -5,6 +5,7 @@ Welcome! This document outlines the style, hygiene, and design guidelines for ma
 This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **`-c docs/wiki.yml`** on wiki commands here so local runs match CI.
 
 ### Product naming
+
 - **Wiki** — overall product name in prose (docs, skills, CHANGELOG).
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Wiki Library** (or **Wiki Python API**) — specifically for the Python API/Library.
@@ -15,23 +16,28 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 ## Wiki rules
 
 ### Clean filenames
+
 - **Rule:** Default user-facing examples should prefer **Wikipedia-style** filenames for ordinary pages (e.g., `Opal_Security.md`, `Gregory_Davidson.md`) — preserved capitalization and underscores. Do not default to lowercase kebab-case (`opal-security.md`). Reserve `index.md` only for folder index routes. Avoid spaces and other unsafe route characters.
 - **Enforcer:** `lint.filename_pattern` in `wiki.yaml` (warning by default). Route safety (spaces, unsafe URL characters) always fails as an error in `wiki check`.
 
 ### Internal links
+
 - **Rule:** Use standard Markdown links to other wiki pages (`Page_Name.md`). GFM relative links are also accepted. Do not use Obsidian-style `[[slug]]` wikilinks in this wiki. Ensure internal links point at existing documents.
 - **Enforcer:** `lint.broken_links` (warning by default) — wikilinks, markdown page links, heading fragments, assets, and `wiki:` CURIEs in frontmatter and microdata. `lint.link_style` (warning by default) flags wikilinks in body prose when `link.style` is `standard`. Repair with `wiki link --fix-broken`; suggest missing links with `wiki link` / `wiki link --apply` (separate from check/lint — see [Design Philosophies](docs/wiki/Design_Philosophies.md)).
 
 ### Style guidelines
+
 - **Rule:** Use ATX `#` headings only (no Setext underlines); wiki tooling does not index underlined headings for title, TOC, or fragment links.
 - **Rule:** Use title-case H1 headings (page title; align with `headline` frontmatter). Use sentence-case H2+ headings (capitalize only the first word and proper nouns). Avoid numbered headings; keep headings concise and clear.
 - **Rule:** Avoid using horizontal rules (`---`) for thematic breaks within page bodies.
 - **Enforcer:** `wiki fmt` converts Setext underlines to ATX `#` headings. `lint.headings` (off by default; set to `warning` or `error` in `wiki.yaml`) flags sentence-case H2+ and numbered headings — not ATX syntax.
 
 ### Markdown flavor
+
 Use Markdown links for all internal and external URLs.
 
 ### Formatting (`wiki fmt`)
+
 - **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
 - **Enforcer:** `wiki fmt --check` in CI (same order as [wiki lint](docs/wiki/wiki_lint.md): fmt → lint → check).
 
@@ -58,6 +64,7 @@ Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, a
 The npm TypeScript API is a thin binding over the Python CLI, not a second implementation. When changing `src/wiki/cli.py` subcommands, flags, choices, or positional arguments, update `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same PR. Run `npm run test:npm` before landing those changes.
 
 ### Running validations
+
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
 ```bash
@@ -109,15 +116,16 @@ The helper bumps all enforced version surfaces (`pyproject.toml`, `package.json`
 Manual fallback:
 
 1. **Bump version** in all enforced places: `pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/wiki.md` (they must match — CI verifies this).
-2. **Update `CHANGELOG.md`** with the new version's entries.
-3. **Regenerate docs outputs** with `wiki -c docs/wiki.yml render`, then run `wiki -c docs/wiki.yml fmt` on touched docs.
-4. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
-5. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
-6. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
+1. **Update `CHANGELOG.md`** with the new version's entries.
+1. **Regenerate docs outputs** with `wiki -c docs/wiki.yml render`, then run `wiki -c docs/wiki.yml fmt` on touched docs.
+1. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
+1. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
+1. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
 
 The release workflow is at `.github/workflows/release.yml`. It is the **only** path for publishing to registries — do not `npm publish` or `uv publish` by hand.
 
 Workflow inputs (all optional):
+
 - `skip_pypi` — skip PyPI publish
 - `skip_npm` — skip npm publish
 - `skip_binaries` — skip standalone binaries and GitHub Release
@@ -134,4 +142,5 @@ When changing `wiki.yaml` schema or rejecting invalid keys:
 Upgrade narrative belongs in docs and release notes, not in runtime error strings. **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yml fmt` on that file** (tables and long sections drift easily).
 
 ### Architecture
+
 See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).

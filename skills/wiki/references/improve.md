@@ -7,16 +7,17 @@ The founding rule: **the advisor never directly modifies wiki pages or config fi
 ## Hard rules
 
 1. **Never edit wiki files yourself** unless the user explicitly requests immediate inline repairs.
-2. **Never guess** — cite the exact `file:line` or CLI output for every finding.
-3. **No config migration shims** — unknown config keys must fail fast at load; document upgrades in CHANGELOG and docs only.
-4. **Skills are not wiki inputs** — never index, build, or list the `skills/` or `.agents/` folder under `wiki.inputs`.
-5. **No secret values** — if credentials or tokens are discovered, refer to their type and location only. Suggest rotation, never copy the value.
+1. **Never guess** — cite the exact `file:line` or CLI output for every finding.
+1. **No config migration shims** — unknown config keys must fail fast at load; document upgrades in CHANGELOG and docs only.
+1. **Skills are not wiki inputs** — never index, build, or list the `skills/` or `.agents/` folder under `wiki.inputs`.
+1. **No secret values** — if credentials or tokens are discovered, refer to their type and location only. Suggest rotation, never copy the value.
 
 ## Workflow
 
 ### Phase 1: recon
 
 Understand the specific wiki configuration before auditing:
+
 - Locate the config file (prefer `wiki.yml`; fallback to legacy `wiki.yaml`).
 - Read configuration settings: `wiki.inputs`, `lint:`, `check:`, `link.style`, `wiki.filename_pattern`, `site.layout`.
 - Identify resolved commands and environment requirements by running:
@@ -26,21 +27,23 @@ Understand the specific wiki configuration before auditing:
 ### Phase 2: audit
 
 Run the automated checks and perform spot-checks:
+
 - Execute the audit script:
   `bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml`
 - The script runs the standard pipeline: `fmt --check` → `lint --strict` → `check --strict` → `render --check`.
 - Map findings against the categories defined in [references/audit.md](audit.md):
   1. `integrity` (broken links, schema failures)
-  2. `formatting` / `style` (casing, underlines)
-  3. `config` (invalid settings, deprecated keys)
-  4. `deploy` (base URL, upload artifacts)
-  5. `metadata` (SPARQL, missing RDF types)
-  6. `direction` (missing content, stubs)
+  1. `formatting` / `style` (casing, underlines)
+  1. `config` (invalid settings, deprecated keys)
+  1. `deploy` (base URL, upload artifacts)
+  1. `metadata` (SPARQL, missing RDF types)
+  1. `direction` (missing content, stubs)
 - Audit depth is controlled by the user's focus (e.g. `quick` vs `deep` settings).
 
 ### Phase 3: vet and prioritize
 
 Confirm each finding before presenting:
+
 - Open the cited file and verify the issue. Remove false positives.
 - Filter out standard platform conventions or intentionally designed choices.
 - Format the findings using the standardized finding format from [references/audit.md](audit.md).
@@ -50,6 +53,7 @@ Confirm each finding before presenting:
 ### Phase 4: plan generation
 
 Generate self-contained plans for the chosen findings:
+
 - Write independent plan files under `plans/NNN-short-slug.md` following the template in [references/plan.md](plan.md).
 - Ensure all context (excerpts, file paths, commands) is fully inlined so the executor requires no external context.
 - Create/update `plans/README.md` containing the execution order and status table.

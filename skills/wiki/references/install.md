@@ -76,18 +76,18 @@ After install (user-run or agent-run with approval), run `wiki --help` and `wiki
 Treat as an outdated or shadowed install — not ready:
 
 1. Recommend `pip install --upgrade wazootech-wiki` or `python3 -m pip install --upgrade wazootech-wiki` (with user approval).
-2. When the package is installed: `wiki upgrade --check` then `wiki upgrade --yes` (unless standalone binary — use GitHub Releases).
-3. On Windows, multiple `wiki.exe` on PATH can shadow the upgraded install — run `where wiki` (or `which wiki`) and align PATH with the Python environment that owns `wazootech-wiki`.
-4. Re-run capability probe before saying ready-to-go.
+1. When the package is installed: `wiki upgrade --check` then `wiki upgrade --yes` (unless standalone binary — use GitHub Releases).
+1. On Windows, multiple `wiki.exe` on PATH can shadow the upgraded install — run `where wiki` (or `which wiki`) and align PATH with the Python environment that owns `wazootech-wiki`.
+1. Re-run capability probe before saying ready-to-go.
 
 ## Install troubleshooting
 
-| Issue | Response |
-| ----- | -------- |
-| `wiki --help` works but `fmt` missing | Stale or wrong `wiki` on PATH — upgrade/reinstall per **Stale CLI** |
-| npm venv broken or incomplete | `npm rebuild -g wazootech-wiki` (or reinstall the npm package) |
-| `pip install` fails | Confirm Python 3.12+; retry `python3 -m pip install wazootech-wiki`; optional `pipx install wazootech-wiki` |
-| IDE pip tool fails on macOS | Prefer **`python3 -m pip install wazootech-wiki` in the user's shell** |
+| Issue                                 | Response                                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `wiki --help` works but `fmt` missing | Stale or wrong `wiki` on PATH — upgrade/reinstall per **Stale CLI**                                         |
+| npm venv broken or incomplete         | `npm rebuild -g wazootech-wiki` (or reinstall the npm package)                                              |
+| `pip install` fails                   | Confirm Python 3.12+; retry `python3 -m pip install wazootech-wiki`; optional `pipx install wazootech-wiki` |
+| IDE pip tool fails on macOS           | Prefer **`python3 -m pip install wazootech-wiki` in the user's shell**                                      |
 
 ## Do not
 
@@ -114,4 +114,3 @@ result = w.build(output_dir=Path("_site"))
 Stable exports: `Wiki`, `AuditReport`, `Issue`, and related report and options types — see `wiki.__all__`.
 
 Full reference: [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md).
-

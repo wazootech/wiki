@@ -19,7 +19,7 @@ Spawn **one** executor subagent with `isolation: "worktree"`.
 The subagent prompt must contain:
 
 1. **The full plan file text, inlined.**
-2. The executor preamble:
+1. The executor preamble:
 
 > You are the executor for the implementation plan below. Follow it step by
 > step. Run every verification command and confirm the expected result before
@@ -51,18 +51,18 @@ Review like a tech lead reviewing a PR against the spec — never fix anything y
    `wiki -c <config> fmt --check`
    `wiki -c <config> lint --strict`
    `wiki -c <config> check --strict`
-2. **Scope compliance**: `git -C <worktree> diff --stat` against the plan's in-scope list. Any file outside scope fails review.
-3. **Read the full diff.** Judge it against the intent (does it actually resolve the markdown or config error?) and conventions (Wikipedia-style names, heading cases, standard links).
+1. **Scope compliance**: `git -C <worktree> diff --stat` against the plan's in-scope list. Any file outside scope fails review.
+1. **Read the full diff.** Judge it against the intent (does it actually resolve the markdown or config error?) and conventions (Wikipedia-style names, heading cases, standard links).
 
 ### Verdict
 
-| Verdict | When | Action |
-|---|---|---|
+| Verdict     | When                                      | Action                                                                                                                                                                              |
+| ----------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **APPROVE** | Criteria pass, scope clean, quality holds | Update index status to DONE. Present to the user: diff summary, worktree path/branch, and notes. **Merging is the user's decision — never merge, push, or commit to their branch.** |
-| **REVISE** | Fixable gaps | Send feedback to the same executor with specific instructions. Max 2 revision rounds, then BLOCK. |
-| **BLOCK** | STOP condition hit or revisions exhausted | Mark BLOCKED in the index with the reason. Refine or rewrite the plan with what was learned. |
+| **REVISE**  | Fixable gaps                              | Send feedback to the same executor with specific instructions. Max 2 revision rounds, then BLOCK.                                                                                   |
+| **BLOCK**   | STOP condition hit or revisions exhausted | Mark BLOCKED in the index with the reason. Refine or rewrite the plan with what was learned.                                                                                        |
 
----
+______________________________________________________________________
 
 ## Reconcile: keep plans alive
 
@@ -78,7 +78,7 @@ Process changes since the last session. Read `plans/README.md` and every plan fi
 Only run with the user's explicit authorization (the `--issues` flag).
 
 1. Preflight: `gh auth status` succeeds and the repo has a GitHub remote.
-2. Visibility check: `gh repo view --json visibility`. If the repo is **public**, warn the user before publishing plans describing security or configuration vulnerabilities.
-3. Show the list of titles about to become issues; confirm once.
-4. Per plan: `gh issue create --title "<plan title>" --body-file <plan file> --label improve`.
-5. Record each issue URL in the plan's Status block and the index.
+1. Visibility check: `gh repo view --json visibility`. If the repo is **public**, warn the user before publishing plans describing security or configuration vulnerabilities.
+1. Show the list of titles about to become issues; confirm once.
+1. Per plan: `gh issue create --title "<plan title>" --body-file <plan file> --label improve`.
+1. Record each issue URL in the plan's Status block and the index.

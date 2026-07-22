@@ -10,14 +10,14 @@ Run `verify.sh` before editing workflows.
 
 The **working** deploy workflow in the Wiki CLI repository is [`.github/workflows/deploy.yml`](https://github.com/wazootech/wiki/blob/main/.github/workflows/deploy.yml). **Embed a template wholesale** — same permissions, action versions, and step order — then substitute placeholders only. Do **not** hybridize install steps.
 
-| Step | Dogfood value | Why |
-| ---- | ------------- | --- |
-| Permissions | `contents: read`, `pages: write`, `id-token: write` | Official Pages Actions model |
-| Install | `uv sync` + `uv run wiki` | Monorepo has `pyproject.toml` + `uv.lock` |
-| Config | `-c docs/wiki.yml` | Nested wiki in monorepo |
-| Build | `build --output-dir _site --site-base-url /wiki` | Explicit base URL in CI |
-| Artifact | `path: "_site/wiki"` | Matches `site.base_url: /wiki` |
-| Deploy | `upload-pages-artifact@v3` → `deploy-pages@v4` | Not branch push |
+| Step        | Dogfood value                                       | Why                                       |
+| ----------- | --------------------------------------------------- | ----------------------------------------- |
+| Permissions | `contents: read`, `pages: write`, `id-token: write` | Official Pages Actions model              |
+| Install     | `uv sync` + `uv run wiki`                           | Monorepo has `pyproject.toml` + `uv.lock` |
+| Config      | `-c docs/wiki.yml`                                  | Nested wiki in monorepo                   |
+| Build       | `build --output-dir _site --site-base-url /wiki`    | Explicit base URL in CI                   |
+| Artifact    | `path: "_site/wiki"`                                | Matches `site.base_url: /wiki`            |
+| Deploy      | `upload-pages-artifact@v3` → `deploy-pages@v4`      | Not branch push                           |
 
 Templates mirror that file:
 
@@ -31,13 +31,13 @@ Pick **one** template. Copy it in full.
 Do **not**:
 
 1. Commit `_site/` or other build output to `main` / `gh-pages`
-2. Tell the user **Settings → Pages → Deploy from a branch** when using `upload-pages-artifact` + `deploy-pages`
-3. Use `peaceiris/actions-gh-pages` or branch-push deploy actions
-4. Set artifact `path` to `_site` when `site.base_url` is non-empty (e.g. `/wiki` → **`_site/wiki`**)
-5. Run `uv sync` / `uv run wiki` without `pyproject.toml` + `uv.lock`
-6. Run `uv pip install` on standalone repos without venv — use pip template
-7. Omit `--site-base-url` in CI
-8. Hybridize install (e.g. `setup-uv` + `uv pip install` instead of full template)
+1. Tell the user **Settings → Pages → Deploy from a branch** when using `upload-pages-artifact` + `deploy-pages`
+1. Use `peaceiris/actions-gh-pages` or branch-push deploy actions
+1. Set artifact `path` to `_site` when `site.base_url` is non-empty (e.g. `/wiki` → **`_site/wiki`**)
+1. Run `uv sync` / `uv run wiki` without `pyproject.toml` + `uv.lock`
+1. Run `uv pip install` on standalone repos without venv — use pip template
+1. Omit `--site-base-url` in CI
+1. Hybridize install (e.g. `setup-uv` + `uv pip install` instead of full template)
 
 Recommend `_site/` in `.gitignore` when build output is not already ignored.
 
@@ -58,11 +58,11 @@ Ask **one decision at a time** with a short explainer.
 
 ### Pages URL shape
 
-| Site type | `site.base_url` | Example live URL |
-| --------- | --------------- | ---------------- |
-| Project site | `/{repo}` | `https://owner.github.io/my-wiki/` |
-| Nested path | `/wiki` | `https://owner.github.io/wiki/` |
-| User/org root | `''` | `https://owner.github.io/` |
+| Site type     | `site.base_url` | Example live URL                   |
+| ------------- | --------------- | ---------------------------------- |
+| Project site  | `/{repo}`       | `https://owner.github.io/my-wiki/` |
+| Nested path   | `/wiki`         | `https://owner.github.io/wiki/`    |
+| User/org root | `''`            | `https://owner.github.io/`         |
 
 Read `site.base_url` from wiki config. Align **both** wiki config and workflow `wiki build --site-base-url` (edit config only with user approval).
 
@@ -77,10 +77,10 @@ See [alignment-checklist.md](alignment-checklist.md).
 
 ### Install strategy in CI
 
-| Repo signal | Template | Install |
-| ----------- | -------- | ------- |
-| `uv.lock` + `pyproject.toml` | [workflow-template-uv.yml](workflow-template-uv.yml) | `uv sync` + `uv run wiki` |
-| Otherwise | [workflow-template-pip.yml](workflow-template-pip.yml) | `pip install wazootech-wiki` + `wiki` |
+| Repo signal                  | Template                                               | Install                               |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| `uv.lock` + `pyproject.toml` | [workflow-template-uv.yml](workflow-template-uv.yml)   | `uv sync` + `uv run wiki`             |
+| Otherwise                    | [workflow-template-pip.yml](workflow-template-pip.yml) | `pip install wazootech-wiki` + `wiki` |
 
 Use Python **3.12+**.
 
@@ -127,14 +127,14 @@ Do not run `wiki serve` or open PRs unless the user asks.
 
 ## Troubleshooting
 
-| Issue | Response |
-| ----- | -------- |
-| 404 on GitHub Pages | `ARTIFACT_PATH` wrong — must be `_site/<base>` not `_site` when `site.base_url` is set |
-| Site shows repo files | Pages source still “Deploy from a branch” — switch to GitHub Actions |
-| Broken asset links | `--site-base-url` in CI must match `site.base_url` |
-| `uv sync` fails in CI | No `pyproject.toml` — use pip template |
-| `uv pip install` / no venv | Standalone repo — use pip template |
-| `namespace_iri` | Wrong namespace IRIs | `graph.context.wiki` should match public site URL |
+| Issue                      | Response                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| 404 on GitHub Pages        | `ARTIFACT_PATH` wrong — must be `_site/<base>` not `_site` when `site.base_url` is set |
+| Site shows repo files      | Pages source still “Deploy from a branch” — switch to GitHub Actions                   |
+| Broken asset links         | `--site-base-url` in CI must match `site.base_url`                                     |
+| `uv sync` fails in CI      | No `pyproject.toml` — use pip template                                                 |
+| `uv pip install` / no venv | Standalone repo — use pip template                                                     |
+| `namespace_iri`            | Wrong namespace IRIs                                                                   |
 
 ## Deploy alignment checklist
 
@@ -158,11 +158,11 @@ page_output_dir = _site                               # when base_url is ""
 
 `upload-pages-artifact` `path` must be `page_output_dir` — the directory that contains `index.html`.
 
-| `site.base_url` | `wiki build` flags | Upload `path` |
-| --------------- | ------------------ | ------------- |
-| `/wiki` | `--output-dir _site --site-base-url /wiki` | `_site/wiki` |
-| `/my-wiki` | `--output-dir _site --site-base-url /my-wiki` | `_site/my-wiki` |
-| `''` | `--output-dir _site --site-base-url ''` | `_site` |
+| `site.base_url` | `wiki build` flags                            | Upload `path`   |
+| --------------- | --------------------------------------------- | --------------- |
+| `/wiki`         | `--output-dir _site --site-base-url /wiki`    | `_site/wiki`    |
+| `/my-wiki`      | `--output-dir _site --site-base-url /my-wiki` | `_site/my-wiki` |
+| `''`            | `--output-dir _site --site-base-url ''`       | `_site`         |
 
 ### GitHub settings
 
@@ -186,4 +186,3 @@ Typical CI: `check --strict` → `lint --strict` → `build --output-dir _site` 
 Local preview: `wiki -c path/to/wiki.yml serve` (URL follows `site.base_url`).
 
 Human docs: [Deploying to GitHub Pages](https://github.com/wazootech/wiki/blob/main/docs/wiki/Deploying_to_GitHub_Pages.md).
-

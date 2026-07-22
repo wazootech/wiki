@@ -6,8 +6,8 @@ One agent skill for [Wiki CLI](https://github.com/wazootech/wiki): install the C
 
 Typical flow: **install** → **create** → **deploy** → **improve** (each optional; route to one workflow per turn).
 
-| Skill | Purpose |
-| ----- | ------- |
+| Skill                 | Purpose                                                                  |
+| --------------------- | ------------------------------------------------------------------------ |
 | [wiki](wiki/SKILL.md) | Install, `wiki init`, audit (fmt/lint/check/render), GitHub Pages deploy |
 
 ## Install

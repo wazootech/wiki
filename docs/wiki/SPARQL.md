@@ -66,11 +66,11 @@ SELECT DISTINCT ?class WHERE {
 ORDER BY ?class
 ```
 
-| class |
-| --- |
-| https://schema.org/Person |
+| class                                  |
+| -------------------------------------- |
+| https://schema.org/Person              |
 | https://schema.org/SoftwareApplication |
-| https://schema.org/TechArticle |
+| https://schema.org/TechArticle         |
 
 <!-- sparql:end -->
 

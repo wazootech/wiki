@@ -5,8 +5,8 @@ Every implementation plan is written for an executor model that has **zero conte
 Three properties make a plan executable by a weaker model:
 
 1. **Self-contained context** — everything needed is in the file: paths, configuration snippets, and page frontmatter.
-2. **Verification gates** — every step ends with a command and its expected result. The executor never has to guess if a step succeeded.
-3. **Hard boundaries and escape hatches** — explicit out-of-scope list and "STOP and report" conditions.
+1. **Verification gates** — every step ends with a command and its expected result. The executor never has to guess if a step succeeded.
+1. **Hard boundaries and escape hatches** — explicit out-of-scope list and "STOP and report" conditions.
 
 File naming: `plans/NNN-short-slug.md`, numbered in recommended execution order.
 

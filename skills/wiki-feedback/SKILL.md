@@ -23,7 +23,7 @@ Every integration proposal must make the boundary explicit:
 ## Workflow
 
 1. Review existing open issues with label `template`.
-2. Classify the proposed integration:
+1. Classify the proposed integration:
    - Agent workflow / coding agent
    - Runtime memory / retrieval
    - Static site / publishing surface
@@ -31,28 +31,28 @@ Every integration proposal must make the boundary explicit:
    - Domain-specific knowledgebase
    - Ontology / linked data
    - RAG / GraphRAG / search
-3. Identify nearby existing issues and avoid duplicate scope.
-4. Draft the proposal using `.github/ISSUE_TEMPLATE/integration-template.yml`.
-5. Recommend filing through the GitHub issue form when the user wants durable feedback.
-6. If asked to execute, create the issue with label `template`.
+1. Identify nearby existing issues and avoid duplicate scope.
+1. Draft the proposal using `.github/ISSUE_TEMPLATE/integration-template.yml`.
+1. Recommend filing through the GitHub issue form when the user wants durable feedback.
+1. If asked to execute, create the issue with label `template`.
 
 ## Proposal sections
 
 Use these sections when drafting by hand:
 
 1. Goal
-2. Why this matters
-3. Boundary between Wiki CLI and the integration
-4. Recommended architecture
-5. Template repository
-6. Template contents
-7. Wiki corpus examples
-8. Validation and CI
-9. README positioning
-10. Non-goals
-11. Acceptance criteria
-12. Open questions
-13. Related issues and references
+1. Why this matters
+1. Boundary between Wiki CLI and the integration
+1. Recommended architecture
+1. Template repository
+1. Template contents
+1. Wiki corpus examples
+1. Validation and CI
+1. README positioning
+1. Non-goals
+1. Acceptance criteria
+1. Open questions
+1. Related issues and references
 
 ## Quality bar
 

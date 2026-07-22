@@ -74,13 +74,21 @@
 - **Library API:** If you imported audit dict helpers or relied on `run_check` / `run_lint` returning `dict[str, Any]`, switch to `AuditReport` and `Issue` (`report.ok`, `report.errors`, `issue.code`). Prefer `from wiki import Wiki, AuditReport` for new integrations.
 
 - Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI. To customize logo letter or theme after init, edit tweak comments in `assets/logo.svg` and `layouts/wikipedia.html` instead.
+
 - Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` slots (see [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
+
 - Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually to `wiki.yml` or remove before re-init. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
+
 - Projects that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Use monolithic page layouts with `%wiki.body%` for rendered page content.
+
 - Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
+
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
+
 - Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
+
 - Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill pages removed
+
 - In `link:` rename `style: markdown` → `style: standard` and `style: obsidian` → `style: wikilink`:
 
 ```yaml
@@ -166,18 +174,29 @@ link:
 ### Changed (breaking)
 
 - Layout template context uses nested namespaces (`site.*`, `page.*`, `wiki.*`) instead of flat keys (`page_title`, `site_manifest_name`, …); update custom `.html.j2` layouts (see Migration)
+
 - `wiki-best-practices` agent skill renamed to `wiki-improve` — reinstall with `npx skills add wazootech/wiki@wiki-improve -g -y`; improve-style advisor framing and prioritized findings report; `audit.sh` pipeline unchanged
+
 - Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
+
 - Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
+
 - Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
+
 - Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
 
 - **CLI flags** align with `wiki.yaml` block paths: `--wiki-inputs` (was `--vault-inputs`, was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
+
 - Rename `wiki.input_dirs` → `wiki.inputs` and `wiki.asset_dirs` → `wiki.assets` (was `vault.xxx` before the top-level block rename)
+
 - Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
+
 - **Unified Config:** remove the flat runtime `Config` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.wiki.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `Config.for_root()`.
+
 - Rename root loader type `WikiConfig` → `Config` (`from wiki.config import Config`); **`WikiConfig`** reserved for a future `wiki:` yaml section
+
 - Rename exported section types: `VaultBlock` → `VaultConfig` → `WikiConfig`, …; add `FmtConfig` for `Config.fmt` (`.options` / `.toml`)
+
 - Rename `DEFAULT_CHECK_RULES` / `DEFAULT_LINT_RULES` → `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG`
 
 ### Changed
@@ -201,44 +220,44 @@ link:
 - Agent skill `wiki-best-practices` → `wiki-improve`: `npx skills add wazootech/wiki@wiki-improve -g -y` (remove stale `wiki-best-practices` from `~/.agents/skills/` or project `.agents/skills/` if present). Wiki doc page renamed to [Wiki Skill improve](docs/wiki/Wiki_Skill_improve.md).
 - **Layout template variables (breaking):** flat keys removed; use nested paths in custom `.html.j2` files:
 
-| Flat (remove) | Nested (use) |
-| --- | --- |
-| `site_base_url` | `site.base_url` |
-| `site_url_style` | `site.url_style` |
-| `site_manifest_name` | `site.manifest.name` |
-| `site_manifest_theme_color` | `site.manifest.theme_color` |
-| `site_manifest_url` | `site.manifest.url` |
-| `manifest_json` | `site.manifest.json` |
-| `logo_svg` | `site.logo_svg` |
-| `inline_css` | `site.inline_css` |
-| `page_title` | `page.title` |
-| `page_content` | `page.content` |
-| `page_kind` | `page.kind` |
-| `body_class` | `page.body_class` |
-| `layout_class` / `layout_label` | `page.layout.class` / `page.layout.label` |
-| `type_label` | `page.type_label` |
-| `infobox_html` / `toc_html` / … | `page.nav.infobox` / `page.nav.toc` / … |
-| `metadata_*_html` | `page.metadata.tool` / `.tab` / `.pane` |
-| `source_markdown` | `page.source` |
-| `all_pages_json` | `wiki.pages_json` |
-| `current_slug_json` | `page.slug_json` (plus new `page.slug` string) |
+| Flat (remove)                   | Nested (use)                                   |
+| ------------------------------- | ---------------------------------------------- |
+| `site_base_url`                 | `site.base_url`                                |
+| `site_url_style`                | `site.url_style`                               |
+| `site_manifest_name`            | `site.manifest.name`                           |
+| `site_manifest_theme_color`     | `site.manifest.theme_color`                    |
+| `site_manifest_url`             | `site.manifest.url`                            |
+| `manifest_json`                 | `site.manifest.json`                           |
+| `logo_svg`                      | `site.logo_svg`                                |
+| `inline_css`                    | `site.inline_css`                              |
+| `page_title`                    | `page.title`                                   |
+| `page_content`                  | `page.content`                                 |
+| `page_kind`                     | `page.kind`                                    |
+| `body_class`                    | `page.body_class`                              |
+| `layout_class` / `layout_label` | `page.layout.class` / `page.layout.label`      |
+| `type_label`                    | `page.type_label`                              |
+| `infobox_html` / `toc_html` / … | `page.nav.infobox` / `page.nav.toc` / …        |
+| `metadata_*_html`               | `page.metadata.tool` / `.tab` / `.pane`        |
+| `source_markdown`               | `page.source`                                  |
+| `all_pages_json`                | `wiki.pages_json`                              |
+| `current_slug_json`             | `page.slug_json` (plus new `page.slug` string) |
 
 See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#template-variables).
 
 1. In `wiki:` rename path keys:
    - `input_dirs` → `inputs`
    - `asset_dirs` → `assets`
-2. In `graph:` rename keys:
+1. In `graph:` rename keys:
    - `uri_ext` → `include_file_extension`
    - `default_types` → `implicit_types`
    - `default_types_policy` → `implicit_types_policy`
    - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when document IRIs must differ from the `wiki:` namespace)
-3. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`WikiConfig` (was `VaultConfig`), `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
-4. In `site:` move branding into `manifest:`:
+1. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`WikiConfig` (was `VaultConfig`), `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
+1. In `site:` move branding into `manifest:`:
    - `title` → `manifest.name`
    - `theme_color` → `manifest.theme_color`
-5. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
-6. Page layouts:
+1. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
+1. Page layouts:
    - Rename `site.layout` and `wazoo:layout` paths from `*.html` to `*.html.j2`
    - Replace flat template keys with nested Jinja paths (`{{ page.title }}`, `{{ site.manifest.name }}`, …; see [Template variables](docs/wiki/Wiki_Configuration.md#template-variables))
 
@@ -273,24 +292,27 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
    - `site_title`, `wiki_page_layout` / `page_layout`, `base_url`, `url_style` → `site:` (`title`, `layout`, `base_url`, `url_style`)
    - `link_renames`, `link_style` → `link:` (`renames`, `style`)
    - `serve_api` → `sparql_service`
-2. Move `check.broken_links` to `lint.broken_links`
-3. Move `check.filename_pattern` and `check.headings` to `lint:` if still present
-4. Add `\.md` to your `vault.filename_pattern` regex
-5. Run `wiki lint` then `wiki check` in CI
+1. Move `check.broken_links` to `lint.broken_links`
+1. Move `check.filename_pattern` and `check.headings` to `lint:` if still present
+1. Add `\.md` to your `vault.filename_pattern` regex
+1. Run `wiki lint` then `wiki check` in CI
 
 ## 0.1.8 — 2026-06-05
 
 ### Changed
+
 - Require `snake_case` config keys only for top-level `wiki.yaml` settings
 - Require `snake_case` nested `check` rule keys: `filename_pattern`, `broken_links`, and `headings`
 - Fail fast on invalid config files, unknown keys, removed aliases, and malformed nested config blocks
 
 ### Fixed
+
 - Surface config-load errors consistently through the CLI instead of silently falling back to defaults
 
 ## 0.1.7 — 2026-06-05
 
 ### Added
+
 - `wiki fmt` subcommand for formatting wiki content
 - Optional disk-backed graph cache support
 - Configurable HTML template scaffolding for generated sites
@@ -298,16 +320,19 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
 - Expanded docs and generated site content for CLI subcommands and wiki concepts
 
 ### Changed
+
 - Simplified `wiki init` scaffolding and prompts
 - Refined site generation and HTML template extraction
 
 ### Fixed
+
 - Markdown link and microdata CURIE scanning in link audits
 - Flaky SPARQL query ordering in docs checks
 
 ## 0.1.5 — 2026-06-01
 
 ### Added
+
 - `wiki view <file>` command for terminal document rendering with Rich
 - Rich dependency for ASCII-safe terminal output
 - YAML, YML, and JSON document support alongside Markdown
@@ -317,12 +342,15 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
 - `wiki serve --watch` rebuilds the in-memory graph and SPARQL blocks when vault files change
 
 ### Changed
+
 - Replaced on-disk graph cache (`.wiki/cache/`) and incremental render-state with runtime-only caching
 
 ### Fixed
+
 - Linkify only known document slugs in SPARQL results
 - Regenerate stale SPARQL blocks in docs
 
 ### Removed
+
 - Loose blank node resolution keyed on name/givenName+familyName (`build_person_name_map`, `resolve_blank_nodes`)
 - `--all`, `--rebuild-cache`, and `--no-cache` flags

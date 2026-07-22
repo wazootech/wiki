@@ -46,6 +46,7 @@ See [Style Guide](Style_Guide.md) for the `sparql:start` / `sparql:end` wrapper 
 The default visible block style shows the query in published HTML so readers can see and learn from it.
 
 <!-- sparql:start -->
+
 ```sparql
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX schema: <https://schema.org/>
@@ -58,10 +59,11 @@ SELECT ?person ?givenName ?familyName WHERE {
 ORDER BY ?familyName
 ```
 
-| person | givenName | familyName |
-| --- | --- | --- |
-| [Jeff_Kazzee](Jeff_Kazzee.md) | Jeff | Kazzee |
-| https://wiki.example.org/people/Alice_Smith | Alice | Smith |
+| person                                      | givenName | familyName |
+| ------------------------------------------- | --------- | ---------- |
+| [Jeff_Kazzee](Jeff_Kazzee.md)               | Jeff      | Kazzee     |
+| https://wiki.example.org/people/Alice_Smith | Alice     | Smith      |
+
 <!-- sparql:end -->
 
 ### List all software applications (hidden query)
@@ -81,12 +83,14 @@ SELECT ?app ?name ?version WHERE {
 ORDER BY ?name
 ```
 -->
-| app | name | version |
-| --- | --- | --- |
-| [Linked_Markdown](Linked_Markdown.md) | Linked Markdown |  |
-| [Obsidian](Obsidian.md) | Obsidian |  |
-| [Vivary](Vivary.md) | Vivary | 0.1.0 |
-| [wiki](wiki.md) | Wiki CLI | 0.1.21 |
+
+| app                                   | name            | version |
+| ------------------------------------- | --------------- | ------- |
+| [Linked_Markdown](Linked_Markdown.md) | Linked Markdown |         |
+| [Obsidian](Obsidian.md)               | Obsidian        |         |
+| [Vivary](Vivary.md)                   | Vivary          | 0.1.0   |
+| [wiki](wiki.md)                       | Wiki CLI        | 0.1.21  |
+
 <!-- sparql:end -->
 
 ### More query patterns
