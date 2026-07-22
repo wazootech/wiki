@@ -46,16 +46,17 @@ Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich 
 
 Use these GitHub template repos to kickstart a new wiki or preview one of Wiki CLI's integrations:
 
-| Template                                                                      | Description                                                                                       |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [wiki-template](https://github.com/wazootech/wiki-template)                   | **Generic starter** — `wiki init` parity, deploy config, CI checks, best practices                |
-| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)           | **LLM Wiki** — agent gardening vault with SHACL shapes and SPARQL indexes                         |
-| [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template) | **Mintlify/Holocron** — MDX docs site powered by Wiki CLI vault                                   |
-| [wiki-holocron-template](https://github.com/wazootech/wiki-holocron-template) | **Holocron** — Holocron docs site from a Wiki CLI-compatible vault                                |
-| [wiki-astro-template](https://github.com/wazootech/wiki-astro-template)       | **Astro SSG** — consuming wiki export JSON-LD                                                     |
-| [wiki-nextjs-template](https://github.com/wazootech/wiki-nextjs-template)     | **Next.js SSG** — consuming wiki export JSON-LD                                                   |
-| [wiki-quartz-template](https://github.com/wazootech/wiki-quartz-template)     | **Quartz publish** — digital garden with Wiki CLI CI checks                                       |
-| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)     | **YASGUI SPARQL** — query UI explorer ([demo](https://wazootech.github.io/wiki-yasgui-template/)) |
+| Template                                                                        | Description                                                                                                                                                       |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [wiki-template](https://github.com/wazootech/wiki-template)                     | **Generic starter** — `wiki init` parity, deploy config, CI checks, best practices                                                                                |
+| [llm-wiki-template](https://github.com/wazootech/llm-wiki-template)             | **LLM Wiki** — agent gardening vault with SHACL shapes and SPARQL indexes                                                                                         |
+| [wiki-mintlify-template](https://github.com/wazootech/wiki-mintlify-template)   | **Mintlify/Holocron** — MDX docs site powered by Wiki CLI vault                                                                                                   |
+| [wiki-holocron-template](https://github.com/wazootech/wiki-holocron-template)   | **Holocron** — Holocron docs site from a Wiki CLI-compatible vault                                                                                                |
+| [wiki-astro-template](https://github.com/wazootech/wiki-astro-template)         | **Astro SSG** — consuming wiki export JSON-LD                                                                                                                     |
+| [wiki-nextjs-template](https://github.com/wazootech/wiki-nextjs-template)       | **Next.js SSG** — consuming wiki export JSON-LD                                                                                                                   |
+| [wiki-quartz-template](https://github.com/wazootech/wiki-quartz-template)       | **Quartz publish** — digital garden with Wiki CLI CI checks                                                                                                       |
+| [wiki-cocoindex-template](https://github.com/wazootech/wiki-cocoindex-template) | **CocoIndex sidecar** — incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes ([#201](https://github.com/wazootech/wiki/issues/201)) |
+| [wiki-yasgui-template](https://github.com/wazootech/wiki-yasgui-template)       | **YASGUI SPARQL** — query UI explorer ([demo](https://wazootech.github.io/wiki-yasgui-template/))                                                                 |
 
 Also see [wiki-wikipedia-template](https://github.com/wazootech/wiki-wikipedia-template) — a standalone Jinja2 Wikipedia-themed layout using the Wiki Python API (not a GitHub template, but a reference implementation).
 
