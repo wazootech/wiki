@@ -111,6 +111,7 @@ def resolve_init_options(
     graph_implicit_types: list[str] | None = None,
     graph_implicit_types_policy: str | None = None,
     graph_include_file_extension: bool | None = None,
+    template: str | None = None,
 ) -> InitOptions:
     """Resolve init config from CLI flags, git remote, or interactive prompt."""
     inferred_context_wiki: str | None = None
@@ -122,7 +123,9 @@ def resolve_init_options(
 
     if graph_context_wiki is None and repo_slug is not None:
         owner, repo_name = parse_github_repo(repo_slug)
-        inferred_context_wiki, inferred_base_url = infer_github_pages_urls(owner, repo_name)
+        inferred_context_wiki, inferred_base_url = infer_github_pages_urls(
+            owner, repo_name
+        )
 
     resolved_context_wiki = graph_context_wiki or inferred_context_wiki
     if resolved_context_wiki is None:
@@ -135,6 +138,7 @@ def resolve_init_options(
     resolved_url_style = site_url_style or DEFAULT_URL_STYLE
 
     return InitOptions(
+        template=template,
         graph_context_wiki=resolved_context_wiki,
         site_base_url=resolved_base_url,
         site_url_style=resolved_url_style,
@@ -178,7 +182,11 @@ def _strip_scaffold_comment(text: str) -> str:
 
 def render_wiki_yaml(opts: InitOptions) -> str:
     """Render the packaged wiki.yml scaffold into wiki.yml content."""
-    rendered = _init_template_env().get_template(_INIT_TEMPLATE_NAME).render(**opts.model_dump())
+    rendered = (
+        _init_template_env()
+        .get_template(_INIT_TEMPLATE_NAME)
+        .render(**opts.model_dump())
+    )
     return _strip_scaffold_comment(rendered)
 
 
@@ -187,9 +195,7 @@ def load_packaged_official_layout(layout: str) -> str:
     filename = _OFFICIAL_LAYOUT_FILES.get(layout)
     if filename is None:
         raise ValueError(f"Unknown official layout: {layout!r}")
-    return files("wiki").joinpath(filename).read_text(
-        encoding="utf-8"
-    )
+    return files("wiki").joinpath(filename).read_text(encoding="utf-8")
 
 
 _README_TEMPLATE = (
@@ -237,11 +243,7 @@ _PERSON_SHAPE_TEMPLATE = (
 )
 
 _GITIGNORE_TEMPLATE = (
-    "# Source cache (fetched repos)\n"
-    ".wiki/\n"
-    "\n"
-    "# Build output\n"
-    "_site/\n"
+    "# Source cache (fetched repos)\n.wiki/\n\n# Build output\n_site/\n"
 )
 
 _EXAMPLE_PERSON_TEMPLATE = (
@@ -256,6 +258,68 @@ _EXAMPLE_PERSON_TEMPLATE = (
 )
 
 
+def _download_and_extract_template(cwd: Path, template: str) -> list[Path]:
+    import io
+    import urllib.request
+    import zipfile
+
+    url = "https://github.com/wazootech/wiki-templates/archive/refs/heads/main.zip"
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            zip_data = response.read()
+    except Exception as exc:
+        raise RuntimeError(f"Failed to download templates zip from {url}: {exc}")
+
+    written_paths: list[Path] = []
+    with zipfile.ZipFile(io.BytesIO(zip_data)) as zip_ref:
+        namelist = zip_ref.namelist()
+        if not namelist:
+            raise RuntimeError("Downloaded zip file is empty")
+
+        prefix = namelist[0].split("/")[0] + "/"
+        template_prefix = f"{prefix}{template}/"
+
+        # Check if the template exists in the zip
+        template_exists = any(name.startswith(template_prefix) for name in namelist)
+        if not template_exists:
+            # Let's list all valid templates: folders directly inside `prefix/`
+            valid_templates = set()
+            for name in namelist:
+                if name.startswith(prefix) and name != prefix:
+                    parts = name[len(prefix) :].split("/")
+                    if parts:
+                        folder_name = parts[0]
+                        is_dir = (len(parts) > 1) or name.endswith("/")
+                        if (
+                            is_dir
+                            and folder_name
+                            and not folder_name.startswith(".")
+                            and folder_name not in ("worktrees",)
+                        ):
+                            valid_templates.add(folder_name)
+            valid_list = sorted(list(valid_templates))
+            raise ValueError(
+                f"Unknown template: {template!r}. Available templates: {', '.join(valid_list)}"
+            )
+
+        # Extract only the template's files
+        for name in zip_ref.namelist():
+            if name.startswith(template_prefix) and name != template_prefix:
+                rel_path_str = name[len(template_prefix) :]
+                if not rel_path_str:
+                    continue
+                target_path = cwd / rel_path_str
+                if name.endswith("/"):
+                    target_path.mkdir(parents=True, exist_ok=True)
+                else:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    data = zip_ref.read(name)
+                    target_path.write_bytes(data)
+                    written_paths.append(target_path)
+
+    return written_paths
+
+
 def _scaffold_wiki(
     cwd: Path,
     init_options: InitOptions,
@@ -264,6 +328,53 @@ def _scaffold_wiki(
 ) -> ScaffoldResult:
     """Write wiki.yml, starter pages, assets, and optional layout files."""
     import shutil
+
+    if init_options.template:
+        try:
+            written = _download_and_extract_template(cwd, init_options.template)
+        except ValueError as exc:
+            return ScaffoldResult(
+                ok=False,
+                error_message=str(exc),
+            )
+        except Exception as exc:
+            return ScaffoldResult(
+                ok=False,
+                error_message=f"Failed to bootstrap template {init_options.template!r}: {exc}",
+            )
+
+        config_path = cwd / "wiki.yml"
+        for p in written:
+            if p.name in ("wiki.yml", "wiki.yaml", "wiki.json", "wiki.toml"):
+                config_path = p
+                break
+
+        if init_git:
+            if shutil.which("git") is None:
+                return ScaffoldResult(
+                    ok=False,
+                    error_message="git was requested with --git, but no git executable was found on PATH.",
+                )
+            try:
+                subprocess.run(
+                    ["git", "init"], cwd=cwd, check=True, capture_output=True, text=True
+                )
+            except subprocess.CalledProcessError as exc:
+                stderr = exc.stderr.strip() if exc.stderr else "unknown git init error"
+                return ScaffoldResult(
+                    ok=False, error_message=f"git init failed: {stderr}"
+                )
+
+        message = f"Initialized wiki project from template {init_options.template!r}."
+        if init_git:
+            message += " Ran git init."
+
+        return ScaffoldResult(
+            ok=True,
+            config_path=config_path,
+            written_paths=written,
+            message=message,
+        )
 
     written: list[Path] = []
     config_path = cwd / "wiki.yml"
@@ -295,14 +406,14 @@ def _scaffold_wiki(
                 error_message="git was requested with --git, but no git executable was found on PATH.",
             )
         try:
-            subprocess.run(["git", "init"], cwd=cwd, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "init"], cwd=cwd, check=True, capture_output=True, text=True
+            )
         except subprocess.CalledProcessError as exc:
             stderr = exc.stderr.strip() if exc.stderr else "unknown git init error"
             return ScaffoldResult(ok=False, error_message=f"git init failed: {stderr}")
 
-    message = (
-        "Initialized wiki config, README.md, and wiki/ starter files."
-    )
+    message = "Initialized wiki config, README.md, and wiki/ starter files."
     if init_git:
         message += " Ran git init."
 

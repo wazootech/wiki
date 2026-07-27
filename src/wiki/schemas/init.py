@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 class InitOptions(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    template: str | None = None
     graph_context_wiki: str
     site_base_url: str = "/wiki"
     site_url_style: str = "dir"
@@ -32,7 +33,6 @@ class InitOptions(BaseModel):
     graph_implicit_types: list[str] | None = None
     graph_implicit_types_policy: str | None = None
     graph_include_file_extension: bool | None = None
-
 
     @field_validator("site_url_style", mode="before")
     @classmethod

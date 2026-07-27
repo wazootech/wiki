@@ -51,7 +51,9 @@ def optional_files_argument(f):
     help="Path to wiki config file or directory containing wiki.yml/wiki.yaml/wiki.json/wiki.toml (default: current directory).",
 )
 @click.pass_context
-def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str) -> None:
+def main(
+    ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: str
+) -> None:
     """Query, validate, and manage your semantic LLM wiki."""
     try:
         wiki = Wiki.load(
@@ -66,7 +68,11 @@ def main(ctx: click.Context, wiki_inputs: tuple[str, ...] | None, config_path: s
 @main.command()
 @optional_files_argument
 @click.option("-v", "--verbose", is_flag=True, help="Show integrity audit warnings.")
-@click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Elevate all warnings to errors and exit with code 1.",
+)
 @click.pass_obj
 def check(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Integrity checks: SHACL, JSON Schema, routes, collisions, layout (FILE...: SHACL + JSON Schema)."""
@@ -80,7 +86,11 @@ def check(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> N
 @main.command()
 @optional_files_argument
 @click.option("-v", "--verbose", is_flag=True, help="Show convention audit warnings.")
-@click.option("--strict", is_flag=True, help="Elevate all warnings to errors and exit with code 1.")
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Elevate all warnings to errors and exit with code 1.",
+)
 @click.pass_obj
 def lint(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> None:
     """Convention audits: links, filenames, headings, and link style."""
@@ -93,11 +103,32 @@ def lint(wiki: Wiki, files: tuple[Path, ...], verbose: bool, strict: bool) -> No
 
 @main.command()
 @optional_files_argument
-@click.option("--apply", is_flag=True, help="Insert suggested internal links (format from link.style in config file).")
-@click.option("--fix-broken", is_flag=True, help="Repair unambiguous broken internal links.")
-@click.option("-n", "--dry-run", is_flag=True, help="Preview apply/fix changes without writing files.")
-@click.option("-c", "--check", is_flag=True, help="Exit 1 if link opportunities or broken links remain.")
-@click.option("-v", "--verbose", is_flag=True, help="Show target titles in suggestions; list changed files when applying.")
+@click.option(
+    "--apply",
+    is_flag=True,
+    help="Insert suggested internal links (format from link.style in config file).",
+)
+@click.option(
+    "--fix-broken", is_flag=True, help="Repair unambiguous broken internal links."
+)
+@click.option(
+    "-n",
+    "--dry-run",
+    is_flag=True,
+    help="Preview apply/fix changes without writing files.",
+)
+@click.option(
+    "-c",
+    "--check",
+    is_flag=True,
+    help="Exit 1 if link opportunities or broken links remain.",
+)
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Show target titles in suggestions; list changed files when applying.",
+)
 @click.pass_obj
 def link(
     wiki: Wiki,
@@ -169,7 +200,9 @@ def graph_list(wiki: Wiki) -> None:
         for idx, value in enumerate(row):
             widths[idx] = max(widths[idx], len(value))
 
-    click.echo("  ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers)))
+    click.echo(
+        "  ".join(header.ljust(widths[idx]) for idx, header in enumerate(headers))
+    )
     click.echo("  ".join("-" * width for width in widths))
     for row in rows:
         click.echo("  ".join(value.ljust(widths[idx]) for idx, value in enumerate(row)))
@@ -189,22 +222,35 @@ def graph_list(wiki: Wiki) -> None:
     show_default=True,
     help="Output format for query results.",
 )
-@click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to specified file.")
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(path_type=Path),
+    help="Write output to specified file.",
+)
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources.")
+@click.option(
+    "--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources."
+)
 @click.option(
     "--cache",
     "disk_cache",
     is_flag=True,
     help="Persist the graph under .wiki/cache for faster reuse across new CLI processes.",
 )
-@click.option("--jq", default=None, help="Extract values from JSON output using a key-path filter (implies -f json).")
+@click.option(
+    "--jq",
+    default=None,
+    help="Extract values from JSON output using a key-path filter (implies -f json).",
+)
 @click.option(
     "--pretty",
     is_flag=True,
     help="Rich table for SELECT results (stdout only; not with -o or --jq).",
 )
-@click.option("-v", "--verbose", is_flag=True, help="Print graph statistics before query results.")
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Print graph statistics before query results."
+)
 @click.pass_obj
 def query(
     wiki: Wiki,
@@ -229,22 +275,34 @@ def query(
 
     if pretty:
         if output is not None:
-            click.echo("Error: --pretty writes to stdout only; do not use -o/--output.", err=True)
+            click.echo(
+                "Error: --pretty writes to stdout only; do not use -o/--output.",
+                err=True,
+            )
             sys.exit(1)
         if jq is not None:
             click.echo("Error: --pretty is incompatible with --jq.", err=True)
             sys.exit(1)
         if output_format != "table":
-            click.echo("Error: --pretty only supports table format (default -f table).", err=True)
+            click.echo(
+                "Error: --pretty only supports table format (default -f table).",
+                err=True,
+            )
             sys.exit(1)
 
     if verbose:
         if _uses_named_graphs(sparql_query):
-            graph = wiki.dataset(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+            graph = wiki.dataset(
+                infer=not no_inference, reload=reload, disk_cache=disk_cache
+            )
         else:
-            graph = wiki.graph(infer=not no_inference, reload=reload, disk_cache=disk_cache)
+            graph = wiki.graph(
+                infer=not no_inference, reload=reload, disk_cache=disk_cache
+            )
         stats = graph_stats(graph)
-        click.echo(f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n")
+        click.echo(
+            f"Graph stats: {stats['triples']} triples, {stats['subjects']} subjects\n"
+        )
 
     try:
         result = wiki.query(
@@ -294,7 +352,11 @@ def mcp(wiki: Wiki, mode: str, disk_cache: bool) -> None:
 @main.command()
 @optional_files_argument
 @click.option("--no-inference", is_flag=True, help="Skip OWL-RL inference.")
-@click.option("--reload", is_flag=True, help="Rebuild the in-memory graph from wiki sources before rendering.")
+@click.option(
+    "--reload",
+    is_flag=True,
+    help="Rebuild the in-memory graph from wiki sources before rendering.",
+)
 @click.option(
     "--cache",
     "disk_cache",
@@ -334,7 +396,10 @@ def render(
 
     if check:
         if report.stale_files:
-            click.echo("Error: Inline SPARQL blocks are out of date in the following files:", err=True)
+            click.echo(
+                "Error: Inline SPARQL blocks are out of date in the following files:",
+                err=True,
+            )
             for stale in report.stale_files:
                 click.echo(f"  - {stale}", err=True)
             sys.exit(1)
@@ -370,10 +435,23 @@ def render(
     default=None,
     help="Override site.url_style: <slug>.html (file) or <slug>/index.html (dir).",
 )
-@click.option("--render", is_flag=True, help="Render inline SPARQL blocks before building.")
-@click.option("--reload", is_flag=True, help="Rebuild graph before --render (no effect without --render).")
-@click.option("--cache", "disk_cache", is_flag=True, help="Persist graph under .wiki/cache when using --render.")
-@click.option("--no-check", is_flag=True, help="Skip lint and check preflight before building.")
+@click.option(
+    "--render", is_flag=True, help="Render inline SPARQL blocks before building."
+)
+@click.option(
+    "--reload",
+    is_flag=True,
+    help="Rebuild graph before --render (no effect without --render).",
+)
+@click.option(
+    "--cache",
+    "disk_cache",
+    is_flag=True,
+    help="Persist graph under .wiki/cache when using --render.",
+)
+@click.option(
+    "--no-check", is_flag=True, help="Skip lint and check preflight before building."
+)
 @click.option("-v", "--verbose", is_flag=True, help="Print generated file paths.")
 @click.pass_obj
 def build(
@@ -425,7 +503,12 @@ def build(
 
 @main.command()
 @optional_files_argument
-@click.option("-o", "--output", type=click.Path(path_type=Path), help="File to write serialized RDF output.")
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(path_type=Path),
+    help="File to write serialized RDF output.",
+)
 @click.option(
     "-f",
     "--format",
@@ -480,8 +563,12 @@ def export(
 
 
 @main.command()
-@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind the server to.")
-@click.option("--port", default=8080, type=int, show_default=True, help="Port to serve on.")
+@click.option(
+    "--host", default="127.0.0.1", show_default=True, help="Host to bind the server to."
+)
+@click.option(
+    "--port", default=8080, type=int, show_default=True, help="Port to serve on."
+)
 @click.option(
     "--site-base-url",
     "site_base_url",
@@ -520,7 +607,12 @@ def serve(
 
 
 @main.command()
-@click.option("--git", "init_git", is_flag=True, help="Run git init after scaffolding the wiki project.")
+@click.option(
+    "--git",
+    "init_git",
+    is_flag=True,
+    help="Run git init after scaffolding the wiki project.",
+)
 @click.option(
     "--repo",
     default=None,
@@ -571,7 +663,9 @@ def serve(
     default=None,
     help="Override wiki.inputs (repeatable).",
 )
-@click.option("--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri.")
+@click.option(
+    "--graph-base-iri", "graph_base_iri", default=None, help="Override graph.base_iri."
+)
 @click.option(
     "--graph-implicit-types",
     "graph_implicit_types",
@@ -592,6 +686,11 @@ def serve(
     default=None,
     help="Override graph.include_file_extension.",
 )
+@click.option(
+    "--template",
+    default=None,
+    help="Ecosystem template to bootstrap from (e.g. nextjs, mintlify, generic).",
+)
 def init(
     init_git: bool,
     repo: str | None,
@@ -606,6 +705,7 @@ def init(
     graph_implicit_types: tuple[str, ...],
     graph_implicit_types_policy: str | None,
     graph_include_file_extension: bool | None,
+    template: str | None,
 ) -> None:
     """Scaffold a new wiki project in the current directory."""
     cwd = Path.cwd()
@@ -645,7 +745,11 @@ def init(
             sys.exit(1)
 
     def prompt_context_wiki(default: str) -> str:
-        return str(click.prompt("Custom wiki namespace IRI (graph.context.wiki)", default=default))
+        return str(
+            click.prompt(
+                "Custom wiki namespace IRI (graph.context.wiki)", default=default
+            )
+        )
 
     init_options = resolve_init_options(
         repo=repo,
@@ -660,9 +764,12 @@ def init(
         prompt_context_wiki=prompt_context_wiki,
         wiki_inputs=list(wiki_inputs) if wiki_inputs else None,
         graph_base_iri=graph_base_iri,
-        graph_implicit_types=list(graph_implicit_types) if graph_implicit_types else None,
+        graph_implicit_types=list(graph_implicit_types)
+        if graph_implicit_types
+        else None,
         graph_implicit_types_policy=graph_implicit_types_policy,
         graph_include_file_extension=graph_include_file_extension,
+        template=template,
     )
 
     result = Wiki.init(cwd, init_options, git=init_git)
@@ -679,7 +786,12 @@ def init(
     is_flag=True,
     help="Check formatting without writing files back. Exits with code 1 if any files would change.",
 )
-@click.option("-v", "--verbose", is_flag=True, help="Print fmt config source and formatted file names.")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Print fmt config source and formatted file names.",
+)
 @click.pass_obj
 def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None:
     """Format markdown wiki pages using mdformat."""
@@ -693,7 +805,9 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
 
             markdown_files = iter_markdown_files(wiki.config)
             if markdown_files:
-                click.echo(f"Using {describe_fmt_source(markdown_files[0], wiki.config)}.")
+                click.echo(
+                    f"Using {describe_fmt_source(markdown_files[0], wiki.config)}."
+                )
 
         report = wiki.format(
             list(files) if files else None,
@@ -708,7 +822,9 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
 
     if check:
         if report.stale_files:
-            click.echo("Error: The following files are not correctly formatted:", err=True)
+            click.echo(
+                "Error: The following files are not correctly formatted:", err=True
+            )
             for stale in report.stale_files:
                 click.echo(f"  - {stale.name}", err=True)
             sys.exit(1)
@@ -755,7 +871,12 @@ def install(wiki: Wiki, url: str | None) -> None:
 
 @main.command()
 @click.argument("name", required=False, default=None)
-@click.option("-n", "--dry-run", is_flag=True, help="Show what would update without modifying wiki.lock.")
+@click.option(
+    "-n",
+    "--dry-run",
+    is_flag=True,
+    help="Show what would update without modifying wiki.lock.",
+)
 @click.pass_obj
 def update(wiki: Wiki, name: str | None, dry_run: bool) -> None:
     """Check locked sources for newer commits and update wiki.lock.
@@ -785,7 +906,9 @@ def update(wiki: Wiki, name: str | None, dry_run: bool) -> None:
         click.echo(f"{action} {u.name}: {u.previous_ref} -> {u.current_ref}")
 
     if not dry_run:
-        click.echo(f"Updated {len(changed)} source{'s' if len(changed) != 1 else ''} in wiki.lock.")
+        click.echo(
+            f"Updated {len(changed)} source{'s' if len(changed) != 1 else ''} in wiki.lock."
+        )
 
 
 @main.command()
@@ -804,8 +927,20 @@ def remove(wiki: Wiki, name: str) -> None:
 
 
 @main.command()
-@click.option("-c", "--check", "check_only", is_flag=True, help="Check for updates without upgrading.")
-@click.option("-y", "--yes", "auto_yes", is_flag=True, help="Skip confirmation prompt and upgrade immediately.")
+@click.option(
+    "-c",
+    "--check",
+    "check_only",
+    is_flag=True,
+    help="Check for updates without upgrading.",
+)
+@click.option(
+    "-y",
+    "--yes",
+    "auto_yes",
+    is_flag=True,
+    help="Skip confirmation prompt and upgrade immediately.",
+)
 @click.option("-v", "--verbose", is_flag=True, help="Show pip install output.")
 def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
     """Check for updates and upgrade the wiki CLI."""
@@ -813,7 +948,9 @@ def upgrade(check_only: bool, auto_yes: bool, verbose: bool) -> None:
     path_warning = upgrade_module.get_windows_path_mismatch_warning()
 
     if current is None:
-        click.echo("Error: cannot determine current version (package not found?).", err=True)
+        click.echo(
+            "Error: cannot determine current version (package not found?).", err=True
+        )
         sys.exit(1)
 
     if latest is None:

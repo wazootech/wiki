@@ -61,7 +61,9 @@ class TestInferGithubPagesUrls(TestCase):
 
 class TestNormalize(TestCase):
     def test_base_iri_trailing_slash(self) -> None:
-        self.assertEqual(normalize_base_iri("https://example.org/wiki"), "https://example.org/wiki/")
+        self.assertEqual(
+            normalize_base_iri("https://example.org/wiki"), "https://example.org/wiki/"
+        )
 
     def test_base_url_leading_slash(self) -> None:
         self.assertEqual(normalize_base_url("wiki"), "/wiki")
@@ -78,7 +80,10 @@ class TestDetectOriginRepo(TestCase):
             root = Path(tmpdir)
             (root / ".git").mkdir()
             run_mock.return_value = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="https://github.com/wazootech/wiki.git\n", stderr=""
+                args=[],
+                returncode=0,
+                stdout="https://github.com/wazootech/wiki.git\n",
+                stderr="",
             )
             self.assertEqual(detect_origin_repo(root), "wazootech/wiki")
 
@@ -109,7 +114,9 @@ class TestRenderWikiYaml(TestCase):
         self.assertIn("frontmatter_schema: error", rendered)
         self.assertIn("missing_schema_ref: error", rendered)
         self.assertIn('wrap: "no"', rendered)
-        self.assertIn("extensions: [gfm, front_matters, wikilink, toc, footnote]", rendered)
+        self.assertIn(
+            "extensions: [gfm, front_matters, wikilink, toc, footnote]", rendered
+        )
         self.assertIn("assets:", rendered)
         self.assertIn("- assets", rendered)
         self.assertIn("layout: custom.html", rendered)
@@ -120,7 +127,9 @@ class TestRenderWikiYaml(TestCase):
         self.assertNotIn("__", rendered)
 
     def test_rendered_fmt_matches_default_fmt_opts(self) -> None:
-        rendered = render_wiki_yaml(InitOptions(graph_context_wiki="https://wiki.example.org/"))
+        rendered = render_wiki_yaml(
+            InitOptions(graph_context_wiki="https://wiki.example.org/")
+        )
         parsed = yaml.safe_load(rendered)
         self.assertEqual(parsed["fmt"], DEFAULT_FMT_OPTS)
 
@@ -135,12 +144,16 @@ class TestRenderWikiYaml(TestCase):
         with TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir) / "wiki.yaml"
             config_path.write_text(
-                render_wiki_yaml(InitOptions(graph_context_wiki="https://wiki.example.org/")),
+                render_wiki_yaml(
+                    InitOptions(graph_context_wiki="https://wiki.example.org/")
+                ),
                 encoding="utf-8",
             )
             parsed = yaml.safe_load(config_path.read_text(encoding="utf-8"))
             self.assertNotIn("wiki_base", parsed["graph"])
-            self.assertEqual(parsed["graph"]["context"]["wiki"], "https://wiki.example.org/")
+            self.assertEqual(
+                parsed["graph"]["context"]["wiki"], "https://wiki.example.org/"
+            )
             config = Config.load(config_path)
             self.assertEqual(config.base_iri, "https://wiki.example.org/")
 
@@ -217,13 +230,14 @@ INIT_OPTIONS_TO_CONFIG_PATH = {
 }
 
 # Init-only CLI flags with no InitOptions field (none currently).
-INIT_ONLY_OPTIONS: frozenset[str] = frozenset()
+INIT_ONLY_OPTIONS: frozenset[str] = frozenset(["template"])
 
 
 class TestInitLockstep(TestCase):
     def test_init_options_fields_match_cli_options(self) -> None:
         """Ensure every field in InitOptions has a matching --kebab-case Click CLI option."""
         from wiki.cli import init as init_cmd
+
         cli_option_names = {opt.opts[0] for opt in init_cmd.params if opt.opts}
         for field in InitOptions.model_fields.keys():
             expected_opt = "--" + field.replace("_", "-")
@@ -236,7 +250,7 @@ class TestInitLockstep(TestCase):
                     break
             self.assertTrue(
                 found,
-                f"InitOptions field '{field}' is missing a matching CLI option '{expected_opt}' in click 'init' command."
+                f"InitOptions field '{field}' is missing a matching CLI option '{expected_opt}' in click 'init' command.",
             )
 
     def test_init_options_map_to_valid_config_paths(self) -> None:
@@ -244,16 +258,25 @@ class TestInitLockstep(TestCase):
         from typing import Union, get_args, get_origin
 
         from pydantic import BaseModel
+
         for field, path in INIT_OPTIONS_TO_CONFIG_PATH.items():
-            self.assertIn(field, InitOptions.model_fields, f"Mapped field '{field}' is not in InitOptions.")
-            
+            self.assertIn(
+                field,
+                InitOptions.model_fields,
+                f"Mapped field '{field}' is not in InitOptions.",
+            )
+
             current_model = Config
             for part in path:
                 if hasattr(current_model, "model_fields"):
-                    self.assertIn(part, current_model.model_fields, f"Path part '{part}' for field '{field}' is not a valid field in {current_model.__name__}.")
+                    self.assertIn(
+                        part,
+                        current_model.model_fields,
+                        f"Path part '{part}' for field '{field}' is not a valid field in {current_model.__name__}.",
+                    )
                     field_info = current_model.model_fields[part]
                     annotation = field_info.annotation
-                    
+
                     origin = get_origin(annotation)
                     if origin is Union:
                         next_model = None
@@ -262,17 +285,23 @@ class TestInitLockstep(TestCase):
                                 next_model = arg
                                 break
                         current_model = next_model
-                    elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    elif isinstance(annotation, type) and issubclass(
+                        annotation, BaseModel
+                    ):
                         current_model = annotation
                     else:
                         current_model = None
                 else:
                     break
-        
+
         for field in InitOptions.model_fields:
             if field in INIT_ONLY_OPTIONS:
                 continue
-            self.assertIn(field, INIT_OPTIONS_TO_CONFIG_PATH, f"InitOptions field '{field}' is not mapped in INIT_OPTIONS_TO_CONFIG_PATH.")
+            self.assertIn(
+                field,
+                INIT_OPTIONS_TO_CONFIG_PATH,
+                f"InitOptions field '{field}' is not mapped in INIT_OPTIONS_TO_CONFIG_PATH.",
+            )
 
 
 class TestScaffoldGitignore(TestCase):
@@ -303,3 +332,60 @@ class TestScaffoldGitignore(TestCase):
             content = existing.read_text(encoding="utf-8")
             self.assertIn(".env/", content)
             self.assertNotIn(".wiki/", content)
+
+
+class TestScaffoldTemplate(TestCase):
+    @staticmethod
+    def _make_fake_zip() -> bytes:
+        import io
+        import zipfile
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            z.writestr(
+                "wiki-templates-main/generic/wiki.yml", "wiki:\n  inputs:\n    - wiki\n"
+            )
+            z.writestr("wiki-templates-main/generic/README.md", "# My Generic Wiki")
+        return buf.getvalue()
+
+    @patch("urllib.request.urlopen")
+    def test_scaffold_with_template(self, mock_urlopen) -> None:
+        import io
+
+        fake_response = io.BytesIO(self._make_fake_zip())
+        mock_urlopen.return_value.__enter__.return_value = fake_response
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            result = _scaffold_wiki(
+                root,
+                InitOptions(
+                    graph_context_wiki="https://example.org/wiki/",
+                    template="generic",
+                ),
+            )
+            self.assertTrue(result.ok)
+            self.assertIn("generic", result.message)
+            self.assertTrue((root / "wiki.yml").exists())
+            self.assertTrue((root / "README.md").exists())
+            self.assertEqual((root / "README.md").read_text(), "# My Generic Wiki")
+
+    @patch("urllib.request.urlopen")
+    def test_scaffold_with_invalid_template(self, mock_urlopen) -> None:
+        import io
+
+        fake_response = io.BytesIO(self._make_fake_zip())
+        mock_urlopen.return_value.__enter__.return_value = fake_response
+
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            result = _scaffold_wiki(
+                root,
+                InitOptions(
+                    graph_context_wiki="https://example.org/wiki/",
+                    template="invalid_template_name",
+                ),
+            )
+            self.assertFalse(result.ok)
+            self.assertIn("Unknown template", result.error_message)
+            self.assertIn("generic", result.error_message)
