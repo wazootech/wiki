@@ -36,8 +36,9 @@ memory/
   wiki/                         # typed knowledge graph (living documents)
   raw/<source>/                 # immutable captures, append-only (data)
     <capture-files>             # unique per-item filenames
-  raw/<source>/.cursor          # monotonic opaque cursor
+  raw/<source>/.cursor          # monotonic opaque cursor (or .sync_token)
   raw/<source>/SUMMARY.json     # run bookkeeping
+  raw/<source>/thread_ids.json  # per-source sidecar metadata (optional)
   connectors/<name>/            # connector code (centralized, not per-repo)
   queries/                      # saved SPARQL queries
   wiki.yml                      # graph context, validation config
@@ -46,7 +47,7 @@ memory/
     check.yml                   # wiki check + wiki fmt --check
 ```
 
-`wiki/` pages are living documents. Everything under `raw/` is immutable and append-only.
+`wiki/` pages are living documents. Everything under `raw/` is immutable and append-only; the only mutable files are the per-source metadata entries listed below.
 
 ## Continuity contract
 
@@ -65,7 +66,8 @@ A memory repo must be stable, unchanged, and replayable over time. It is the dur
 Every connector owns one dataset subtree, `raw/<source>/`, with:
 
 - **Immutable captures:** append-only files written once per item, named from the source identifier plus a readable slug (e.g. `raw/gmail/<message-id>-<slug>.md`).
-- **cursor:** an opaque, monotonic position marker the connector reads at fetch start and writes only after the run succeeds.
+- **cursor:** an opaque, monotonic position marker the connector reads at fetch start and writes only after the run succeeds. Canonical cursor filenames are `.cursor` (default) and `.sync_token` (incremental sync connectors such as Calendar and Gmail).
+- **Mutable metadata whitelist:** `SUMMARY.json`, `.cursor`, `.sync_token`, `thread_ids.json`, and `.gitkeep` are the only mutable files under `raw/`; the memory-check invariant rejects any other modified, appended, or deleted path.
 - **SUMMARY.json** — the standardized bookkeeping contract:
 
 ```json
