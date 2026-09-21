@@ -12,7 +12,7 @@ from rdflib import RDF, BNode, Dataset, Graph, Literal, URIRef
 from rdflib.namespace import XSD
 
 from .config import Config, Context
-from .parser import document_data_from_path
+from .parser import document_data_from_path, read_text_tolerant
 from .paths import iter_document_files, route_for_document_file
 from .schemas.sources import GraphDescriptor, Lockfile, SourceConfig
 from .sources import _source_cache_dir, _source_resolved_path
@@ -348,7 +348,7 @@ def _process_document_file(graph: Graph, file_path: Path, context: Config) -> No
     if data:
         body = None
         if file_path.suffix.lower() == ".md" and context.graph.content_predicate:
-            content = file_path.read_text(encoding="utf-8")
+            content = read_text_tolerant(file_path)
             try:
                 body = extract(content).body.strip()
             except LinkedMarkdownError:
@@ -366,7 +366,7 @@ def _process_document_file(graph: Graph, file_path: Path, context: Config) -> No
     if file_path.suffix.lower() != ".md":
         return
 
-    content = file_path.read_text(encoding="utf-8")
+    content = read_text_tolerant(file_path)
 
     turtle_blocks = re.findall(r"```turtle\s*([\s\S]*?)```", content)
     for block in turtle_blocks:

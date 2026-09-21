@@ -25,7 +25,7 @@ from .links import (
     resolve_page_route,
     split_target,
 )
-from .parser import document_data_from_path
+from .parser import document_data_from_path, read_text_tolerant
 from .paths import iter_document_files, route_for_document_file
 from .schemas import BrokenLink
 
@@ -60,7 +60,7 @@ class LinkIndex:
             route = route_for_document_file(config, file_path)
             existing_routes.add(route)
             if file_path.suffix.lower() == ".md":
-                content = file_path.read_text(encoding="utf-8")
+                content = read_text_tolerant(file_path)
                 heading_ids_by_route[route] = _heading_ids(content)
                 _index_page_links(config, file_path, route, content, backlinks)
             else:
@@ -87,7 +87,7 @@ class LinkIndex:
                 data = document_data_from_path(file_path)
 
                 if file_path.suffix.lower() == ".md":
-                    content = file_path.read_text(encoding="utf-8")
+                    content = read_text_tolerant(file_path)
                     split = split_frontmatter_text(content)
                     body = split.body
                     body_offset = len(split.prefix)

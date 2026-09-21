@@ -15,7 +15,7 @@ from jsonschema.exceptions import ValidationError
 
 from .config import Config
 from .graph import _effective_types, resolve_type
-from .parser import document_data_from_path
+from .parser import document_data_from_path, read_text_tolerant
 from .paths import iter_document_files, route_for_document_file
 
 logger = logging.getLogger(__name__)
@@ -202,7 +202,7 @@ class SchemaLoader:
         if not local_schema_is_valid(path, self.config_root):
             return None, "must resolve to a readable .json file under the wiki config root"
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(read_text_tolerant(path))
         except (OSError, json.JSONDecodeError) as exc:
             return None, f"could not be read as JSON ({exc})"
         if not isinstance(data, dict):

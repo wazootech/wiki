@@ -26,7 +26,7 @@ from .layout import (
     layout_file_is_valid,
     resolve_layout_path,
 )
-from .parser import document_data_from_path, split_document_body
+from .parser import document_data_from_path, read_text_tolerant, split_document_body
 from .paths import (
     build_page_manifest,
     detect_output_collisions,
@@ -247,7 +247,7 @@ def lint_thematic_breaks(config: Config, file_filter: set[str] | None = None) ->
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_tolerant(file_path)
         body = markdown_body(content)
         protected = body_code_spans(body)
         lines = body.splitlines()
@@ -305,7 +305,7 @@ def lint_heading_levels(config: Config, file_filter: set[str] | None = None) -> 
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        body = markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(read_text_tolerant(file_path))
         previous_level = 0
         for heading in parse_headings(body):
             line_no = heading.line_no
@@ -326,7 +326,7 @@ def lint_duplicate_headings(config: Config, file_filter: set[str] | None = None)
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        body = markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(read_text_tolerant(file_path))
         seen: dict[str, int] = {}
         for heading in parse_headings(body):
             line_no = heading.line_no
@@ -358,7 +358,7 @@ def lint_headings(config: Config, file_filter: set[str] | None = None) -> list[s
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_tolerant(file_path)
         body = markdown_body(content)
         for heading in parse_headings(body):
             level = "#" * heading.level
@@ -389,7 +389,7 @@ def lint_link_style(config: Config, file_filter: set[str] | None = None) -> list
         route = route_for_document_file(config, file_path)
         if file_filter is not None and route not in file_filter:
             continue
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_tolerant(file_path)
         split = split_frontmatter_text(content)
         body_offset = len(split.prefix)
         protected = body_code_spans(split.body)

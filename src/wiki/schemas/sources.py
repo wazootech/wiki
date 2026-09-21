@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..parser import read_text_tolerant
+
 LOCKFILE_VERSION = 2
 LOCKFILE_FILENAME = "wiki.lock"
 
@@ -73,7 +75,7 @@ class Lockfile(BaseModel):
         if not path.exists():
             return cls()
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(read_text_tolerant(path))
             return cls.model_validate(data)
         except Exception:
             return cls()

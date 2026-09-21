@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
+from ..parser import read_text_tolerant
 from .layout_tokens import render_layout, render_packaged_minimal
 
 LAYOUT_SUFFIX = ".html"
@@ -44,7 +45,7 @@ class LayoutRenderer:
     def render(self, template_path: Path | None, context: dict) -> str:
         if template_path is None:
             return render_packaged_minimal(context)
-        template_text = template_path.read_text(encoding="utf-8")
+        template_text = read_text_tolerant(template_path)
         return render_layout(template_text, context)
 
 

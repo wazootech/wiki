@@ -105,6 +105,39 @@ class TestFrontmatterSchemaValidation(unittest.TestCase):
             self.assertIn("In Invalid:", validation[0])
             self.assertIn("familyName", validation[0])
 
+    def test_local_schema_file_with_bom_is_readable(self) -> None:
+        """A BOM-prefixed local JSON schema must still validate documents (wiki#312)."""
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            wiki = root / "wiki"
+            wiki.mkdir()
+            schema_path = root / "schemas" / "person.json"
+            schema_path.parent.mkdir(parents=True)
+            schema_path.write_text(json.dumps(self._person_schema()), encoding="utf-8-sig")
+            (wiki / "Person_Shape.md").write_text(
+                "---\n"
+                "type: sh:NodeShape\n"
+                "sh:targetClass: schema:Person\n"
+                "wazoo:jsonSchema: schemas/person.json\n"
+                "---\n",
+                encoding="utf-8",
+            )
+            (wiki / "Valid.md").write_text(
+                "---\ntype: schema:Person\ngivenName: Ada\nfamilyName: Lovelace\n---\n",
+                encoding="utf-8",
+            )
+            (wiki / "Invalid.md").write_text(
+                "---\ntype: schema:Person\ngivenName: Ada\n---\n",
+                encoding="utf-8",
+            )
+            config = Config(wiki={"input": [wiki]}, config_root=root)
+
+            missing, validation = check_frontmatter_schema(config)
+            self.assertEqual(missing, [])
+            self.assertEqual(len(validation), 1)
+            self.assertIn("In Invalid:", validation[0])
+            self.assertIn("familyName", validation[0])
+
     def test_binding_document_is_not_validated_as_instance(self) -> None:
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
