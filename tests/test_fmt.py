@@ -13,6 +13,7 @@ from wiki.fmt_util import (
     describe_fmt_source,
     format_markdown,
 )
+from wiki.parser import parse_frontmatter
 from wiki.site import build_page_html, build_site
 
 
@@ -55,6 +56,59 @@ class TestWikiFmt(unittest.TestCase):
             # Check that the file was indeed formatted (extra trailing spaces stripped)
             formatted_content = file_path.read_text(encoding="utf-8")
             self.assertNotIn("Some text  \n", formatted_content)
+
+    def test_cli_fmt_tolerates_utf8_sig_page(self) -> None:
+        """A page saved with a UTF-8 BOM formats cleanly and keeps its frontmatter (wiki#312)."""
+        runner = CliRunner()
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            file_path = wiki_dir / "Bommed.md"
+            file_path.write_text(
+                "---\ntype: schema:Person\nname: Bommed\n---\n\n# Bommed\n\nSome text  \n",
+                encoding="utf-8-sig",
+            )
+
+            result = runner.invoke(main, ["--input", str(wiki_dir), "fmt", "-v"])
+            self.assertEqual(result.exit_code, 0, result.output)
+
+            content = file_path.read_text(encoding="utf-8-sig")
+            self.assertNotIn("\ufeff", content)
+            self.assertNotIn("## ", content)
+            self.assertNotIn("Some text  \n", content)
+            data = parse_frontmatter(content)
+            self.assertIsNotNone(data)
+            self.assertEqual(data["type"], "schema:Person")
+
+    def test_cli_fmt_refuses_unparsable_frontmatter(self) -> None:
+        """fmt leaves a page with broken frontmatter untouched instead of flattening it (wiki#312)."""
+        runner = CliRunner()
+        original = "---\ntype: [unterminated\nname: Broken\n---\n\n# Broken\n\nSome text  \n"
+        with TemporaryDirectory() as tmpdir:
+            wiki_dir = Path(tmpdir)
+            file_path = wiki_dir / "Broken.md"
+            file_path.write_text(original, encoding="utf-8")
+
+            result = runner.invoke(main, ["--input", str(wiki_dir), "fmt"])
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn("Refusing to format Broken.md", result.output)
+            self.assertEqual(file_path.read_text(encoding="utf-8"), original)
+
+            checked = runner.invoke(main, ["--input", str(wiki_dir), "fmt", "--check"])
+            self.assertEqual(checked.exit_code, 1)
+            self.assertIn("Refusing to format Broken.md", checked.output)
+            self.assertEqual(file_path.read_text(encoding="utf-8"), original)
+
+    def test_format_markdown_strips_leading_bom(self) -> None:
+        """format_markdown is the corruption site: BOM + --- must not become a heading (wiki#312)."""
+        original = "\ufeff---\ntype: schema:Person\nname: Bommed\n---\n\n# Bommed\n"
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file_path = root / "Bommed.md"
+            file_path.write_text(original, encoding="utf-8")
+            formatted = format_markdown(original, file_path, Config(config_root=root))
+            self.assertNotIn("\ufeff", formatted)
+            self.assertNotIn("## ", formatted)
+            self.assertTrue(formatted.startswith("---\ntype: schema:Person"))
 
     def test_cli_fmt_check(self) -> None:
         """Test that wiki fmt --check flags unformatted files and passes on formatted ones."""

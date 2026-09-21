@@ -12,6 +12,7 @@ from markdown_it import MarkdownIt
 from wiki.mdit_py_plugins.wikilink import wikilink_plugin
 
 from .format import run_query
+from .parser import read_text_tolerant
 from .paths import iter_markdown_files, page_routes, select_markdown_paths
 
 # Matches SPARQL wrapper comments, fenced query, rendered table, and end comment.
@@ -41,7 +42,7 @@ def strip_sparql_wrappers_for_html(text: str) -> str:
 def has_sparql_blocks(md_file: Path) -> bool:
     """Return True if the markdown file contains at least one SPARQL block."""
     try:
-        content = md_file.read_text(encoding="utf-8")
+        content = read_text_tolerant(md_file)
     except OSError:
         return False
     return SPARQL_BLOCK_REGEX.search(content) is not None
@@ -122,7 +123,7 @@ def render_markdown_files(
         raise ValueError("render_markdown_files requires graph or query_graph")
 
     for md_file in markdown_files:
-        content = md_file.read_text(encoding="utf-8")
+        content = read_text_tolerant(md_file)
         modified = False
         file_errors = 0
 

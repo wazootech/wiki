@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from wiki.parser import (
     document_data_from_path,
     ensure_context,
+    frontmatter_error,
     parse_frontmatter,
     split_document_body,
     split_frontmatter_body,
@@ -100,6 +101,29 @@ Body text here"""
         self.assertIsNone(data)
         self.assertEqual(body, no_fm)
 
+    def test_split_document_body_tolerates_bom_prefixed_page(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            page = Path(tmpdir) / "Page.md"
+            page.write_text(
+                "---\nid: wiki:test\nlabel: Test\n---\nBody text here",
+                encoding="utf-8-sig",
+            )
+            data, body = split_document_body(page)
+            self.assertIsNotNone(data)
+            self.assertEqual(data["label"], "Test")
+            self.assertEqual(body, "Body text here")
+
+    def test_frontmatter_error(self) -> None:
+        """frontmatter_error flags only blocks mdformat could mangle."""
+        self.assertIsNone(frontmatter_error("Just body text\n"))
+        self.assertIsNone(frontmatter_error("---\nid: wiki:test\n---\nBody"))
+        self.assertIsNotNone(frontmatter_error("---\n[broken\n---\nBody"))
+        # Frontmatter that parses to a non-mapping is unreadable too.
+        self.assertIsNotNone(frontmatter_error("---\n- one\n- two\n---\nBody"))
+        # An opener with no closer is a thematic break, not a block: mdformat
+        # keeps it as one, so there is nothing to refuse.
+        self.assertIsNone(frontmatter_error("---\nid: wiki:test\n"))
+
     def test_split_frontmatter_body_with_dashes_in_body(self) -> None:
         """Test split_frontmatter_body handles --- in body text."""
         content = """---
@@ -136,6 +160,17 @@ Body with --- dashes --- in text"""
             self.assertIn("@context", yaml_data)
             self.assertIn("@context", json_data)
             self.assertIn("@context", toml_data)
+
+    def test_document_data_accepts_bom_prefixed_data_files(self) -> None:
+        """A BOM-prefixed data file must still parse (wiki#312)."""
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            json_file = root / "person.json"
+            yml_file = root / "person.yml"
+            json_file.write_text('{"type": "Person", "givenName": "Alice"}', encoding="utf-8-sig")
+            yml_file.write_text("type: Person\ngivenName: Gregory\n", encoding="utf-8-sig")
+            self.assertEqual(document_data_from_path(json_file)["givenName"], "Alice")
+            self.assertEqual(document_data_from_path(yml_file)["givenName"], "Gregory")
 
     def test_document_data_rejects_non_mapping_data_files(self) -> None:
         with TemporaryDirectory() as tmpdir:

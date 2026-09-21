@@ -238,8 +238,10 @@ def load_packaged_official_layout(layout: str) -> str:
     filename = _OFFICIAL_LAYOUT_FILES.get(layout)
     if filename is None:
         raise ValueError(f"Unknown official layout: {layout!r}")
+    # utf-8-sig: a BOM in a packaged layout must not be copied into the
+    # scaffolded project's layouts/ (wiki#312's read-path rule).
     return files("wiki").joinpath(filename).read_text(
-        encoding="utf-8"
+        encoding="utf-8-sig"
     )
 
 

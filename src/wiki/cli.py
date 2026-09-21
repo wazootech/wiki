@@ -740,6 +740,10 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
     for line in report.verbose_lines:
         click.echo(line)
 
+    if report.error_message:
+        click.echo(report.error_message, err=True)
+        sys.exit(1)
+
     if check:
         if report.stale_files:
             click.echo("Error: The following files are not correctly formatted:", err=True)
@@ -749,10 +753,6 @@ def fmt(wiki: Wiki, files: tuple[Path, ...], check: bool, verbose: bool) -> None
         if verbose:
             click.echo("All files are correctly formatted.")
         return
-
-    if not report.ok:
-        click.echo(report.error_message, err=True)
-        sys.exit(1)
 
     if report.formatted_count > 0:
         click.echo(f"Format complete. Reformatted {report.formatted_count} files.")

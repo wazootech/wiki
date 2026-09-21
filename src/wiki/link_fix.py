@@ -11,6 +11,7 @@ from .config import Config
 from .document import WIKILINK_FULL_REGEX, split_frontmatter_text
 from .headings import GitHubHeadingSlugger
 from .links import fragment_id, resolve_page_route, split_target
+from .parser import read_text_tolerant
 from .paths import iter_document_files, route_for_document_file
 from .schemas import BrokenLink, BrokenLinkFix
 
@@ -62,7 +63,7 @@ def apply_broken_link_fixes(
 
     changed: list[Path] = []
     for file_path, file_fixes in by_path.items():
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_tolerant(file_path)
         ordered = sorted(file_fixes, key=lambda item: item.issue.match_start or 0, reverse=True)
         for fix in ordered:
             start = fix.issue.match_start
@@ -112,7 +113,7 @@ def _heading_ids_by_route(config: Config) -> dict[str, set[str]]:
         if file_path.suffix.lower() != ".md":
             continue
         route = route_for_document_file(config, file_path)
-        body = split_frontmatter_text(file_path.read_text(encoding="utf-8")).body
+        body = split_frontmatter_text(read_text_tolerant(file_path)).body
         ids: set[str] = set()
         for match in re.finditer(r"^(#{1,6})\s+(.+)$", body, flags=re.MULTILINE):
             ids.add(slugger.slug(match.group(2).strip()))

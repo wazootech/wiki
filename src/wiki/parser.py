@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,49 @@ logger = logging.getLogger(__name__)
 
 DOCUMENT_EXTENSIONS = {".md", ".yaml", ".yml", ".json", ".toml"}
 DATA_DOCUMENT_EXTENSIONS = {".yaml", ".yml", ".json", ".toml"}
+
+BOM = "\ufeff"
+
+# Closing delimiters linked_markdown accepts for a frontmatter block.
+_FRONTMATTER_CLOSER_RE = re.compile(r"^(?:---|\+\+\+|= (?:yaml|json|toml) =)[ \t]*$")
+
+
+def read_text_tolerant(path: Path) -> str:
+    """Read a document as UTF-8, tolerating (and stripping) a leading BOM.
+
+    Windows editors — Notepad, PowerShell redirection, VS Code's "UTF-8 with
+    BOM" — save text with a UTF-8 BOM. Read as plain UTF-8 it survives as a
+    body character, which breaks structured parsers downstream (JSON) and
+    makes mdformat mistake frontmatter for prose (wiki#312).
+    """
+    return path.read_text(encoding="utf-8-sig")
+
+
+def frontmatter_error(content: str) -> str | None:
+    """Return why a document's frontmatter cannot be parsed, else ``None``.
+
+    A document without a frontmatter block is not an error: this reports only
+    blocks that were opened but could not be read. Callers use it as a guard
+    before rewriting a file, because mdformat has no idea a broken block is
+    frontmatter and would flatten it into prose (wiki#312).
+    """
+    text = content.lstrip(BOM)
+    try:
+        extract(text)
+    except LinkedMarkdownError as exc:
+        if exc.code == LMD_NO_FRONTMATTER:
+            return None
+        # An opener with no closer is not a frontmatter block to the renderer:
+        # mdformat keeps a lone `---` as a thematic break, so there is nothing
+        # to lose. Refuse only blocks mdformat could misread as frontmatter.
+        if not any(_FRONTMATTER_CLOSER_RE.match(line) for line in text.splitlines()[1:]):
+            return None
+        if exc.cause is not None:
+            return f"{exc.code}: {exc.cause}"
+        return str(exc)
+    except Exception as exc:  # pragma: no cover - defensive, unknown parse failures
+        return str(exc)
+    return None
 
 
 def parse_frontmatter(content: str) -> dict[str, Any] | None:
@@ -46,7 +90,7 @@ def document_data_from_path(path: Path, content_predicate: str | None = None) ->
         if suffix == ".md":
             return frontmatter_from_path(path, content_predicate=content_predicate)
 
-        content = path.read_text(encoding="utf-8")
+        content = read_text_tolerant(path)
         if suffix == ".json":
             data = json.loads(content)
         elif suffix == ".toml":
@@ -66,7 +110,7 @@ def document_data_from_path(path: Path, content_predicate: str | None = None) ->
 
 def frontmatter_from_path(path: Path, content_predicate: str | None = None) -> dict[str, Any] | None:
     try:
-        content = path.read_text(encoding="utf-8")
+        content = read_text_tolerant(path)
         result = extract(content)
         data = ensure_context(result.attrs)
 
@@ -97,7 +141,7 @@ def split_document_body(path: Path) -> tuple[dict[str, Any] | None, str]:
     suffix = path.suffix.lower()
     if suffix == ".md":
         try:
-            return split_frontmatter_body(path.read_text(encoding="utf-8"))
+            return split_frontmatter_body(read_text_tolerant(path))
         except Exception as exc:
             logger.debug("split_document_body(%s): %s", path, exc)
             return None, ""

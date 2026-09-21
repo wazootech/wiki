@@ -22,6 +22,7 @@ from typing import Any
 from ruamel.yaml import YAML
 
 from .config import CONFIG_FILENAMES, Config
+from .parser import read_text_tolerant
 from .schemas.sources import LOCKFILE_FILENAME, LockedSource, Lockfile, SourceConfig
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ def _config_path(config: Config) -> Path:
 
 def _load_data_file(path: Path) -> dict[str, Any]:
     """Load a YAML, JSON, or TOML file and return the parsed dict."""
-    raw = path.read_text(encoding="utf-8")
+    raw = read_text_tolerant(path)
     suffix = path.suffix.lower()
     if suffix == ".json":
         data = json.loads(raw)
@@ -293,7 +294,7 @@ def _add_to_wiki_yml(config: Config, source: SourceConfig) -> None:
     if not config_path.exists():
         raise RuntimeError("No wiki config file found")
 
-    raw = config_path.read_text(encoding="utf-8")
+    raw = read_text_tolerant(config_path)
     data = _yaml.load(raw) or {}
 
     sources = data.get("sources")
@@ -328,7 +329,7 @@ def _remove_from_wiki_yml(config: Config, name: str) -> None:
     if not config_path.exists():
         return
 
-    raw = config_path.read_text(encoding="utf-8")
+    raw = read_text_tolerant(config_path)
     data = _yaml.load(raw) or {}
 
     sources = data.get("sources")

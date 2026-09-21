@@ -13,7 +13,7 @@ from .document import (
     split_frontmatter_text,
 )
 from .links import format_internal_link
-from .parser import document_data_from_path
+from .parser import document_data_from_path, read_text_tolerant
 from .paths import iter_markdown_files, route_for_document_file
 from .schemas import LinkOpportunity
 from .site import extract_title, humanize_route
@@ -37,7 +37,7 @@ def find_link_opportunities(
         if file_filter is not None and route not in file_filter:
             continue
         data = document_data_from_path(file_path) or {}
-        content = file_path.read_text(encoding="utf-8")
+        content = read_text_tolerant(file_path)
         body = markdown_body(content)
         title = data.get("name") if isinstance(data.get("name"), str) else None
         if not title:
@@ -64,7 +64,7 @@ def find_link_opportunities(
         source_route = route_for_document_file(config, file_path)
         if file_filter is not None and source_route not in file_filter:
             continue
-        body = markdown_body(file_path.read_text(encoding="utf-8"))
+        body = markdown_body(read_text_tolerant(file_path))
         protected = _protected_spans(body)
         claimed: list[tuple[int, int]] = []
 
@@ -188,7 +188,7 @@ def apply_link_opportunities(
         if file_path is None:
             continue
 
-        split = split_frontmatter_text(file_path.read_text(encoding="utf-8"))
+        split = split_frontmatter_text(read_text_tolerant(file_path))
         prefix, body = split.prefix, split.body
         lines = body.splitlines(keepends=True)
         for opportunity in sorted(route_opportunities, key=lambda item: (item.line, item.column), reverse=True):

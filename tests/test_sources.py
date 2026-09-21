@@ -84,6 +84,28 @@ class TestLockfile(unittest.TestCase):
             lf = Lockfile.load(lock_path)
             self.assertEqual(lf.sources, {})
 
+    def test_load_tolerates_utf8_bom(self) -> None:
+        """A BOM-prefixed lockfile must parse, not silently load as empty (wiki#312)."""
+        with TemporaryDirectory() as tmpdir:
+            lock_path = Path(tmpdir) / "wiki.lock"
+            lock_path.write_text(
+                json.dumps(
+                    {
+                        "version": LOCKFILE_VERSION,
+                        "sources": {
+                            "test": {
+                                "url": "https://example.com/repo.git",
+                                "resolved_ref": "abc123def456",
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8-sig",
+            )
+            loaded = Lockfile.load(lock_path)
+            self.assertIn("test", loaded.sources)
+            self.assertEqual(loaded.sources["test"].resolved_ref, "abc123def456")
+
     def test_timestamp_format(self) -> None:
         ts = Lockfile.timestamp()
         self.assertIn("T", ts)

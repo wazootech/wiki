@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .config import Config
 from .fmt_util import format_markdown
+from .parser import frontmatter_error, read_text_tolerant
 from .paths import (
     iter_markdown_files,
     routes_from_markdown_files,
@@ -47,7 +48,16 @@ class DocumentBatch:
         report = FmtReport()
         for file_path in self.markdown_paths():
             try:
-                original = file_path.read_text(encoding="utf-8")
+                original = read_text_tolerant(file_path)
+                blocked = frontmatter_error(original)
+                if blocked is not None:
+                    report.ok = False
+                    report.error_message = (
+                        f"Refusing to format {file_path.name}: its frontmatter could not be "
+                        f"parsed ({blocked}). The file is unchanged; fix the frontmatter "
+                        "block and run again."
+                    )
+                    return report
                 formatted = format_markdown(original, file_path, self.config)
                 if original != formatted:
                     report.stale_files.append(file_path)

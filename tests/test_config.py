@@ -67,6 +67,22 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.sparql_service.path, "/api/sparql")
         self.assertEqual(config.link.style, "standard")
 
+    def test_Config_load_tolerates_utf8_bom(self) -> None:
+        """Config files saved with a UTF-8 BOM must load like any other (wiki#312)."""
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.yml").write_text(MINIMAL_WIKI_YAML, encoding="utf-8-sig")
+            self.assertEqual(Config.load(base_path).wiki.input, [base_path.absolute() / "wiki"])
+
+        # JSON is strict about the BOM, so a BOM-prefixed wiki.json used to fail
+        # to parse at all rather than load with the config it contains.
+        with TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir)
+            (base_path / "wiki.json").write_text(
+                json.dumps({"wiki": {"input": ["wiki"]}}), encoding="utf-8-sig"
+            )
+            self.assertEqual(Config.load(base_path).wiki.input, [base_path.absolute() / "wiki"])
+
     def test_Config_load_no_files(self) -> None:
         """Test Config.load falls back to defaults when no files exist."""
         with TemporaryDirectory() as tmpdir:

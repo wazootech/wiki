@@ -23,6 +23,7 @@ from pydantic import (
 )
 
 from ..context import Context
+from ..parser import read_text_tolerant
 from .rules import CheckConfig, LintConfig
 from .sources import SourceConfig
 
@@ -537,7 +538,7 @@ class Config(BaseModel):
         for config_path in potential_paths:
             if config_path.exists():
                 try:
-                    content = config_path.read_text(encoding="utf-8")
+                    content = read_text_tolerant(config_path)
                     if config_path.suffix == ".json":
                         data = json.loads(content)
                     elif config_path.suffix == ".toml":

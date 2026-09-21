@@ -65,7 +65,9 @@ def build_token_map(context: dict[str, Any]) -> dict[str, str]:
 
 @lru_cache(maxsize=8)
 def load_packaged_layout_text(name: str) -> str:
-    return files("wiki").joinpath(name).read_text(encoding="utf-8")
+    # utf-8-sig: a BOM in a packaged layout would otherwise be emitted into
+    # every rendered page (wiki#312's read-path rule, applied to our own data).
+    return files("wiki").joinpath(name).read_text(encoding="utf-8-sig")
 
 
 def substitute(template: str, tokens: dict[str, str]) -> str:

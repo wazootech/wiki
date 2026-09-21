@@ -115,7 +115,13 @@ def _mdformat_options(
 
 
 def format_markdown(original: str, file_path: Path, config: Config) -> str:
-    """Format markdown, honoring wiki fmt config and preserving SPARQL render blocks."""
+    """Format markdown, honoring wiki fmt config and preserving SPARQL render blocks.
+
+    A leading UTF-8 BOM is dropped first: mdformat's front_matters extension
+    does not recognize a BOM-prefixed ``---`` opener, so it parses the whole
+    block as a setext heading and destroys the page's frontmatter (wiki#312).
+    """
+    original = original.removeprefix("\ufeff")
     shielded, blocks = _shield_sparql_blocks(original)
     opts, extensions = _mdformat_options(file_path, config)
     try:
