@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 
 from rdflib import BNode, Graph, Literal, URIRef
-from rdflib.namespace import RDF, XSD
 
 probe = Path(sys.argv[1])
 fixture = json.loads((probe / "graph.json").read_text(encoding="utf-8"))[0]["triples"]
