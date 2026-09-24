@@ -12,3 +12,49 @@
  * ordering of the remaining work.
  */
 export { VERSION } from "./version.ts";
+export { BuildError, UpgradeError, WikiError } from "./errors.ts";
+export {
+  Context,
+  DEFAULT_BASE_IRI,
+  DEFAULT_NAMESPACES,
+  DEFAULT_VOCAB,
+  type NamespaceBinder,
+} from "./context.ts";
+export {
+  bodyCodeSpans,
+  type FrontmatterSplit,
+  markdownBody,
+  protectedInlineCodeSpans,
+  spanOverlaps,
+  splitFrontmatterText,
+  splitMaxSplit,
+  stripInlineCode,
+} from "./document.ts";
+export {
+  BOM,
+  DATA_DOCUMENT_EXTENSIONS,
+  type DataRecord,
+  DOCUMENT_EXTENSIONS,
+  documentDataFromPath,
+  ensureContext,
+  frontmatterError,
+  frontmatterFromPath,
+  isRecord,
+  linkedMarkdownMessage,
+  parseFrontmatter,
+  pyStrip,
+  readTextTolerant,
+  splitDocumentBody,
+  splitFrontmatterBody,
+  splitLines,
+} from "./parser.ts";
+export { pyRepr, pyReprString, pyTypeName } from "./pyrepr.ts";
+export {
+  describeValidationError,
+  extraForbidden,
+  missing,
+  modelType,
+  SchemaValidationError,
+  type ValidationIssue,
+  valueError,
+} from "./schemas/validation.ts";
