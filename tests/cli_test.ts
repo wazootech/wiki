@@ -63,6 +63,10 @@ Deno.test(
   },
 );
 
+// Only the exit code is asserted here. Click's group is `no_args_is_help`, so
+// the real stderr for an empty argv is the full group help, which arrives with
+// the command surface in phase 9; the divergence is tracked as the
+// `usage-no-command` case in `parity/cases.ts`.
 Deno.test(
   "no subcommand is a usage error, not a silent success",
   { permissions: { run: true } },

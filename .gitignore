@@ -36,6 +36,9 @@ ENV/
 env/
 .uv/
 
+# Differential-harness scratch copies of the test corpora (issue #273).
+.parity-tmp/
+
 # Reasoning-engine spike build output (106 MB; exceeds GitHub's 100 MB file limit).
 # Rebuild with spike-reasoning/compile-runtime.ts — see spike-reasoning/DECISION.md.
 spike-reasoning/spike-bin.exe

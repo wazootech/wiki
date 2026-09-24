@@ -50,9 +50,11 @@ export function main(argv: readonly string[] = Deno.args): number {
 
   const command = argv.find((arg) => !arg.startsWith("-"));
   if (command === undefined) {
-    // Click invoked with no subcommand prints the group help to stderr and
-    // exits 2. The help text is ported with the command surface; the exit code
-    // is the part of the contract that holds today.
+    // Click's group is declared `no_args_is_help`, so an empty argv prints the
+    // *full* help — not `USAGE_LINES` — to stderr and exits 2. Only the exit
+    // code is contractual today; the help body arrives with the command surface
+    // in phase 9, and the divergence is tracked as the `usage-no-command` case
+    // in `parity/cases.ts` rather than papered over here.
     console.error(USAGE_LINES.join("\n"));
     return EXIT_USAGE;
   }

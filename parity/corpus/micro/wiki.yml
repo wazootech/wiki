@@ -1,0 +1,56 @@
+# Micro corpus for the differential harness (issue #273, Phase 2).
+#
+# Deliberately small, and deliberately *dirty*: every integrity and convention
+# severity configured below has at least one finding to report, so the harness
+# compares non-empty output and non-zero exit codes rather than two silent
+# successes. The shape mirrors `wiki init` output, including the unset
+# `site.layout` (packaged minimal layout).
+
+# Wiki paths, assets, and filename policy (wiki check / wiki lint).
+wiki:
+  input:
+    - wiki
+  assets:
+    - assets
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md"
+
+# RDF document URIs, prefixes, and graph build settings.
+graph:
+  content_predicate: schema:articleBody
+  context:
+    "@vocab": https://schema.org/
+    schema: https://schema.org/
+    wazoo: https://schema.wazoo.dev/
+    foaf: http://xmlns.com/foaf/0.1/
+    sh: http://www.w3.org/ns/shacl#
+    owl: http://www.w3.org/2002/07/owl#
+    rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+    rdfs: http://www.w3.org/2000/01/rdf-schema#
+    xsd: http://www.w3.org/2001/XMLSchema#
+
+# Page layout and URL routing.
+site:
+  base_url: /wiki
+  url_style: dir
+
+# wiki link command output format and rename repair map.
+link:
+  style: standard
+
+# Integrity severities (wiki check): SHACL, JSON Schema, routes, layout files.
+check:
+  missing_layout_file: error
+  frontmatter_schema: error
+  missing_schema_ref: error
+
+# Convention severities (wiki lint): links, filenames, headings.
+lint:
+  broken_links: warning
+  filename_pattern: warning
+  link_style: warning
+
+# Markdown formatting options (wiki fmt); inline mapping or TOML path.
+fmt:
+  wrap: "no"
+  end_of_line: lf
+  extensions: [gfm, front_matters, wikilink, toc, footnote]

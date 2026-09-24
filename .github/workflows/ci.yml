@@ -165,3 +165,9 @@ jobs:
     # manifest rather than a launcher for the Python one.
     - name: Run Deno unit tests
       run: deno task test
+
+    # The differential harness (`deno task parity`) is deliberately not wired
+    # into CI yet: it resolves the pinned Python oracle from WIKI_ORACLE_ROOT,
+    # which this job does not have. Its decision logic is covered by the unit
+    # tests above; the harness itself runs locally against the pinned checkout
+    # until the parity gate, at which point the oracle stops existing anyway.

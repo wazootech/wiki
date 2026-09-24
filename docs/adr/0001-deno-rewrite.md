@@ -67,6 +67,18 @@ Three consequences fix the shape of the distribution work:
 - **The oracle is pinned at `1bfb422`** — the `fmt-bom-tolerance` tip (#312), one commit ahead of `main` at `ffdc1b0`. The rewrite branch is based on it. #312 merges to `main` on its own so that the rewrite eventually rebases onto a true `main` without carrying an unrelated fix inside a 10k-line diff.
 - Every milestone is validated against the pinned Python build before the next one starts, and lands as its own commit so the eventual PR is readable by following commit order.
 
+### Differential harness
+
+Parity is judged by `deno task parity`, which runs the pinned oracle and the Deno CLI over shared corpora with identical argv, working directory, and inputs, then compares exit code plus normalised stdout/stderr. Three decisions shape it:
+
+- **Normalisation is narrow and evidenced.** Only differences observed to be non-semantic are folded: line endings, ANSI escapes, a leading BOM, the scratch directory's absolute path, and trailing blank lines. A missing final newline is *not* folded, because that is a real difference. Rules that were observed but deliberately left off — Windows path separators in file lists, and `rich` table padding — are recorded in `parity/README.md` rather than guessed at, so they can be switched on when a case actually needs them.
+- **Every case declares how its divergence is accounted for.** `parity` cases must match the oracle; `known` cases must match a committed transcript on *both* sides; `pending` cases must **not** match — a command that starts agreeing without being promoted to `parity` fails the run. Silent progress is how a gate rots, and "this command now matches the oracle" is precisely the event worth reading in a diff.
+- **Each case runs in a fresh copy of its corpus, re-staged between the two runs.** Both CLIs see byte-identical inputs at an identical absolute path, so mutating commands (`fmt`, `render`, `build`) are safe to compare and case order cannot matter.
+
+Two corpora pull in opposite directions: `micro` is hand-written and deliberately dirty (broken link, wikilink under `link.style: standard`, stale SPARQL blocks, a shape violation, a filename-pattern violation) so that commands must compare non-empty findings; `docs` is this repository's own clean wiki, where the target for four commands is silence and exit 0.
+
+The harness earned its keep on its first run. The scaffold assumed Click printed a two-line usage for an empty argv; the oracle prints the full group help. That divergence is now tracked as the `usage-no-command` case rather than living as a wrong comment in `cli.ts`.
+
 ## Consequences
 
 ### Where the code lives during the port

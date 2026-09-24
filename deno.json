@@ -8,25 +8,32 @@
     "./cli": "./src/wiki/cli.ts"
   },
   "tasks": {
-    "check": "deno check src/wiki/mod.ts src/wiki/cli.ts",
+    "check": "deno check src/wiki/mod.ts src/wiki/cli.ts parity/run.ts",
     "test": "deno test --allow-read --allow-run tests/",
+    "parity": "deno run --allow-read --allow-write --allow-run --allow-env parity/run.ts",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
     "lint": "deno lint"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.0",
+    "@std/fs": "jsr:@std/fs@^1.0.0",
     "@std/path": "jsr:@std/path@^1.0.0"
   },
   "fmt": {
-    "include": ["src/**/*.ts", "tests/**/*.ts", "deno.json"],
-    "exclude": ["docs/", "npm/", "spike-reasoning/"]
+    "include": [
+      "src/**/*.ts",
+      "tests/**/*.ts",
+      "parity/**/*.ts",
+      "deno.json"
+    ],
+    "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"]
   },
   "lint": {
-    "include": ["src/**/*.ts", "tests/**/*.ts"],
-    "exclude": ["docs/", "npm/", "spike-reasoning/"]
+    "include": ["src/**/*.ts", "tests/**/*.ts", "parity/**/*.ts"],
+    "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"]
   },
-  "exclude": ["docs/", "npm/", "spike-reasoning/"],
+  "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
