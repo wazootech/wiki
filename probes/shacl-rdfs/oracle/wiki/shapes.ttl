@@ -1,0 +1,28 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix micro: <https://example.org/probe/> .
+
+# The axiom that decides the question: a Person is an Agent, so whether the
+# Agent shape applies to `ex:bob` depends entirely on whether the validator
+# performs RDFS inference.
+schema:Person rdfs:subClassOf micro:Agent .
+
+# Targets the *superclass*. Only fires for a Person under RDFS inference.
+micro:AgentShape a sh:NodeShape ;
+    sh:targetClass micro:Agent ;
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:message "Agent requires schema:name" ;
+    ] .
+
+# Targets the class directly. Fires with or without inference.
+micro:PersonShape a sh:NodeShape ;
+    sh:targetClass schema:Person ;
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:message "Person requires schema:name" ;
+    ] .

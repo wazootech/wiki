@@ -33,7 +33,7 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 |---|---|---|
 | `rdflib` | `@wazoo/sparql-engine` | Spike-verified at `jsr:@wazoo/sparql-engine@0.4.2` |
 | `owlrl` | `rdfjs-inference-engine` | `npm:rdfjs-inference-engine@0.2.2`; **#273 named `rdf-reasoner` — the spike replaced it** |
-| `pyshacl` | `rdf-validate-shacl` + RDFS closure pass | Emulates `inference="rdfs"` (`audit.py:120,137`); parity bar is spec-close |
+| `pyshacl` | `rdf-validate-shacl@0.6.5` + `@zazuko/env` | **#273's plan added an RDFS closure pass; the phase-3 probe dropped it** — the library already resolves `sh:targetClass` over `rdfs:subClassOf*` and matches the oracle exactly without one ([evidence](../../probes/shacl-rdfs/FINDINGS.md)). Parity bar is spec-close |
 | `jsonschema` | `ajv` | Draft 2020-12 |
 | `linked-markdown` | `@wazoo/linked-markdown` | Already exists |
 | `markdown-it-py` + `pygments` | `markdown-it` + `highlight.js` | |
