@@ -31,7 +31,7 @@
 
 import { VERSION } from "./version.ts";
 import type { Config } from "./config.ts";
-import type { Path } from "./fspath.ts";
+import { type Path, sortedRglob } from "./fspath.ts";
 import {
   parseRdf,
   RdfDataset,
@@ -90,13 +90,17 @@ function configFingerprint(config: Config): Record<string, unknown> {
  * The cache directory is skipped explicitly: it lives under the config root,
  * which is itself often an input directory, so a warm-started run would
  * otherwise fingerprint its own cache and invalidate itself on every write.
+ *
+ * Path order matters here — the manifest is a list, and the digest is over its
+ * rendered JSON — so the walk is the oracle's flat `sorted(rglob("*"))` (see
+ * `sortedRglob`), not a directory-level walk.
  */
 export function iterWikiFiles(config: Config): Path[] {
   const files: Path[] = [];
   const cacheRoot = cacheDir(config).resolve();
   for (const inputDir of config.wiki.input) {
     if (!inputDir.exists()) continue;
-    for (const filePath of inputDir.rglob()) {
+    for (const filePath of sortedRglob(inputDir)) {
       if (!filePath.isFile() || config.isExcluded(filePath)) continue;
       try {
         filePath.resolve().relativeTo(cacheRoot);

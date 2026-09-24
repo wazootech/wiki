@@ -41,6 +41,9 @@ import {
   triple,
 } from "../src/wiki/rdf.ts";
 
+/** 2023-11-14T22:13:20Z, a whole second so both sides record the same instant. */
+const PINNED_MTIME = 1_700_000_000;
+
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
 async function withTempDir(
   body: (root: Path) => void | Promise<void>,
@@ -348,5 +351,50 @@ Deno.test("a triple added twice is one triple in the cache file", async () => {
     setDiskGraph(config, false, graph);
     const lines = diskCachePath(config, false).readText().trimEnd().split("\n");
     assertEquals(lines.length, 1);
+  });
+});
+
+Deno.test("the manifest orders paths by component, not by string", async () => {
+  // The oracle settles this one: `sorted(Path.rglob("*"))` compares
+  // `_parts_normcase`, so `notes/inner.md` sorts *before* `notes.md` even though
+  // `.` precedes the separator in the joined string. It reaches the digest, and
+  // a digest that disagrees with the oracle is a cold cache on every run.
+  await withTempDir((root) => {
+    const wikiDir = root.joinpath("wiki");
+    Deno.mkdirSync(wikiDir.joinpath("notes").toString(), { recursive: true });
+    wikiDir.joinpath("notes.md").writeText("---\ntype: Thing\n---\n");
+    wikiDir.joinpath("notes", "inner.md").writeText("---\ntype: Thing\n---\n");
+    const config = Config.forRoot(root, { wiki: { input: [wikiDir] } });
+
+    assertEquals(
+      iterWikiFiles(config).map((path) => config.relativeToRoot(path)),
+      ["wiki/notes/inner.md", "wiki/notes.md"],
+    );
+    assertEquals(
+      wikiManifest(config).files.map((entry) => entry.path),
+      ["wiki/notes/inner.md", "wiki/notes.md"],
+    );
+
+    // Whole-second mtimes, because the oracle records `st_mtime_ns` in
+    // nanoseconds and this port derives nanoseconds from a `Date`'s
+    // milliseconds: a sub-second mtime would be a difference in the fixture
+    // rather than in the code.
+    for (
+      const file of [
+        wikiDir.joinpath("notes.md"),
+        wikiDir.joinpath("notes", "inner.md"),
+      ]
+    ) {
+      Deno.utimeSync(file.toString(), PINNED_MTIME, PINNED_MTIME);
+    }
+
+    // The oracle's own digest for exactly this fixture (`wiki_fingerprint` in a
+    // `PYTHONPATH=src` probe, Python 3.12.13), which is what makes this a
+    // byte-level check of the manifest order, the canonical JSON, and the
+    // SHA-256 together rather than of this port against itself.
+    assertEquals(
+      wikiFingerprint(config),
+      "0147e6a734a33a275096e178decbf95c504565cffa96000b2c6b509029a9f981",
+    );
   });
 });

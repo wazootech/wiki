@@ -227,23 +227,58 @@ export class ValueError extends Error {
 }
 
 /**
+ * The parts `pathlib` compares two paths by.
+ *
+ * `PurePath.__lt__` is `self._parts_normcase < other._parts_normcase` — the
+ * *component* list, lower-cased on a case-insensitive flavour — and not the
+ * joined string. That distinction is reachable, and the oracle settles it: with
+ * both `notes.md` and `notes/inner.md` present, `sorted(...)` puts
+ * `notes/inner.md` first (`"notes" < "notes.md"`), where a string comparison
+ * puts `notes.md` first because `.` sorts before the separator.
+ *
+ * Splitting on either separator also normalises what `str(PureWindowsPath)`
+ * normalises: a path written `a/b` is the same path as `a\\b`.
+ */
+function comparisonParts(path: Path): string[] {
+  const value = IS_WINDOWS ? path.value.toLowerCase() : path.value;
+  return value.split(/[\\/]+/);
+}
+
+/**
  * Sort paths the way `pathlib` does.
  *
- * `PurePath` compares case-folded strings on Windows and raw strings elsewhere,
- * and `iter_document_files` sorts a whole tree before anything filters it — so
- * this ordering reaches report output. Sorting with a bare `<` would reorder
- * Windows trees relative to the oracle.
+ * `iter_document_files` sorts a whole tree before anything filters it, `rglob`
+ * sorts each directory it walks, and the graph fingerprint sorts its manifest —
+ * so this ordering reaches report output *and* a SHA-256 digest.
  */
 export function sortPaths(paths: readonly Path[]): Path[] {
-  const key = (path: Path) =>
-    IS_WINDOWS ? path.value.toLowerCase() : path.value;
   return [...paths].sort((a, b) => {
-    const left = key(a);
-    const right = key(b);
-    if (left < right) return -1;
-    if (left > right) return 1;
-    return 0;
+    const left = comparisonParts(a);
+    const right = comparisonParts(b);
+    const shared = Math.min(left.length, right.length);
+    for (let index = 0; index < shared; index++) {
+      const leftPart = left[index]!;
+      const rightPart = right[index]!;
+      if (leftPart < rightPart) return -1;
+      if (leftPart > rightPart) return 1;
+    }
+    // A path that is a prefix of another sorts first: `a` before `a/b`.
+    return left.length - right.length;
   });
+}
+
+/**
+ * `sorted(root.rglob("*"))`, which is how every Python call site spells a walk.
+ *
+ * Two things are being pinned here. The collected list is sorted as a whole
+ * (`sorted(...)` inside a `for` header) rather than by directory walk
+ * (`Path.walk`'s own order), and it is sorted the way `pathlib` compares paths —
+ * by component, see {@link comparisonParts}. For the wiki's inputs the two
+ * agree, and this states the oracle's rule explicitly so a fixture with
+ * `notes.md` beside `notes/` cannot quietly depend on which one is used.
+ */
+export function sortedRglob(root: Path): Path[] {
+  return sortPaths(root.rglob());
 }
 
 /** `Path("a").joinpath("b")` without the ceremony of constructing a `Path`. */

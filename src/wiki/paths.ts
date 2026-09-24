@@ -19,7 +19,7 @@
 
 import { DOCUMENT_EXTENSIONS } from "./parser.ts";
 import type { Config } from "./config.ts";
-import { type Path, ValueError } from "./fspath.ts";
+import { type Path, sortedRglob, ValueError } from "./fspath.ts";
 import { quote } from "./urlquote.ts";
 import type { OutputEntry, PageRoute } from "./schemas/domain.ts";
 
@@ -31,7 +31,7 @@ export function iterDocumentFiles(config: Config): Path[] {
   const docFiles: Path[] = [];
   for (const inputDir of config.wiki.input) {
     if (!inputDir.isDir()) continue;
-    for (const filePath of inputDir.rglob()) {
+    for (const filePath of sortedRglob(inputDir)) {
       if (!filePath.isFile()) continue;
       if (!DOCUMENT_EXTENSIONS.has(filePath.suffix.toLowerCase())) continue;
       if (config.isExcluded(filePath)) continue;
