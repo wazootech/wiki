@@ -7,7 +7,7 @@ Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and bod
 Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): the engine is being **rewritten in Deno/TypeScript over RDF/JS** and cut over hard in a single pull request. [ADR 0001](docs/adr/0001-deno-rewrite.md) holds the decision, the dependency swaps, and the transition discipline.
 
 - **Python stays the oracle until the parity gate** — every milestone is validated against the pinned Python build; nothing is deleted while it is still the reference.
-- **The npm package becomes the engine** — no more private venv bootstrap and no Python on the user's machine.
+- **The published package becomes the engine** — `@wazoo/wiki` on JSR, reached from npm projects via `npx jsr add`, so the private venv bootstrap and Python itself leave the install path.
 - **On-disk and CLI contracts do not move** — `wiki.yaml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, the subcommand surface, and exit codes are preserved.
 
 ### Superseded: [#44](https://github.com/wazootech/wiki/issues/44) (Python core)

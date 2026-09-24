@@ -13,7 +13,7 @@
 Two of those conditions have now been met, and one supporting fact changed:
 
 1. **The two hardest subsystems already exist in the org as Deno packages.** `@wazoo/sparql-engine` ships SPARQL 1.1/1.2 query and update over RDF/JS quad stores with W3C evaluation-suite parity, plus Turtle/TriG/N-Triples/N-Quads parse and serialize. `@wazoo/linked-markdown` ports the same frontmatter parser the Python core depends on. #44 assumed these would have to be assembled from a fragmented ecosystem; they already exist.
-2. **The npm distribution requirement is now concrete.** The published npm package is not an implementation — it locates Python 3.12+, builds a private venv, pip-installs the matching PyPI distribution, and shells out (`npm/setup.js`, `npm/python.js`, `npm/uninstall.js`). Users who want a JavaScript-native tool get a Python installer. That is the npm-only distribution requirement #44 asked for, unmet.
+2. **The npm distribution requirement is now concrete — and no longer implies a hand-written npm package.** The published npm package is not an implementation — it locates Python 3.12+, builds a private venv, pip-installs the matching PyPI distribution, and shells out (`npm/setup.js`, `npm/python.js`, `npm/uninstall.js`). Users who want a JavaScript-native tool get a Python installer. That is the npm-only distribution requirement #44 asked for, unmet. It is met by publishing to JSR, not by re-authoring the wrapper in TypeScript: npm projects consume JSR packages through `npx jsr add` (or a native `jsr:` specifier on pnpm 10.9+, Yarn 4.9+, and vlt), which installs the package into `node_modules/@jsr` from `https://npm.jsr.io`. See [Distribution](#distribution) below.
 3. **The reasoning engine question is settled empirically.** A spike (`spike-reasoning/`) compared the candidate engine against `owlrl` on both the micro OWL2RL fixture suite and the 402-triple docs wiki. All 10 semantic checks pass; the two apparent failures are representation differences (structured `Inconsistency` reports rather than `owl:Nothing` typing), and every Python-only triple is boilerplate — `owl:sameAs` self-loops, datatype declarations, list-skolem rebnodes. On the docs wiki the candidate is *more* complete than `owlrl`, deriving correct `rdfs:subClassOf` closures that `owlrl` missed. `deno compile` produces a 29 MB self-contained binary that was clean-room verified with no filesystem access.
 
 ## Decision
@@ -51,6 +51,16 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 
 `nodeModulesDir: "auto"` is required once the npm-backed specs above land; it is deliberately absent from `deno.json` today, because the scaffold has no `npm:` dependency yet. The spike's config is the reference.
 
+### Distribution
+
+**JSR is the package; there is no hand-rolled npm package.** Earlier drafts of this plan carried "a real TypeScript npm package" as a Phase 12 deliverable, meaning a Node-shebanged wrapper re-exporting the engine. That artifact is redundant and is dropped. `deno publish` produces `@wazoo/wiki` on JSR, which npm consumers reach directly, so re-publishing the same modules under a second registry would be a second release pipeline to keep in sync for no user-visible gain.
+
+Three consequences fix the shape of the distribution work:
+
+- **The library surface is `@wazoo/wiki`.** An npm project adds it with `npx jsr add @wazoo/wiki`, which writes `.npmrc` with `@jsr:registry=https://npm.jsr.io` (that file is checked in). No `npm/` tree, no `tsup` build step, no `types.generated.ts` bridge.
+- **The CLI is reached as a JSR module export, not as a `bin` entry.** `deno x jsr:@wazoo/wiki/cli` runs it, and `deno install -g jsr:@wazoo/wiki/cli` makes it permanent. This works because `src/wiki/cli.ts` already guards top-level execution with `import.meta.main`, so the module is executable and importable from the same file. Neither `deno pack` nor JSR's npm-compat tarball synthesises a `package.json` `bin` field, so there is no `npx wazoo-wiki` path and none is planned.
+- **`deno compile` binaries stay supplementary.** They serve users with no Deno runtime at all, which the spike already proved out (29 MB, clean-room verified, no filesystem access). They are an extra artifact, not the primary install path.
+
 ### Oracle and transition discipline
 
 - **The Python CLI stays the oracle for every behaviour until the parity gate passes.** It is compared against, not deleted.
@@ -68,7 +78,7 @@ Deno modules live in `src/wiki/` **alongside** their Python counterparts (`audit
 
 ### Deleted at cutover
 
-`src/wiki/*.py`, `tests/*.py`, `wiki.spec`, `scripts/build_standalone.py` and the PyInstaller path, Sphinx API docs, the npm venv bootstrap (`npm/setup.js`, `npm/python.js`, `npm/uninstall.js`, `npm/src/runner.ts`), the PyPI release path, `uv.lock`, and `pyproject.toml`. Replaced by `deno.json` + `deno.lock`, the JSR package `@wazoo/wiki`, a real TypeScript npm package, typedoc, `deno compile` binaries, and a TypeScript release script.
+`src/wiki/*.py`, `tests/*.py`, `wiki.spec`, `scripts/build_standalone.py` and the PyInstaller path, Sphinx API docs, the npm venv bootstrap (`npm/setup.js`, `npm/python.js`, `npm/uninstall.js`, `npm/src/runner.ts`), the PyPI release path, `uv.lock`, and `pyproject.toml`. Replaced by `deno.json` + `deno.lock`, the JSR package `@wazoo/wiki` (npm consumers reach it via `npx jsr add`; the CLI via `deno x jsr:@wazoo/wiki/cli`), typedoc, `deno compile` binaries, and a TypeScript release script. No TypeScript npm package is authored — see [Distribution](#distribution).
 
 ### Risks and known differences
 

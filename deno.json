@@ -8,7 +8,7 @@
     "./cli": "./src/wiki/cli.ts"
   },
   "tasks": {
-    "check": "deno check src/wiki/mod.ts src/wiki/cli.ts src/wiki/npm.ts",
+    "check": "deno check src/wiki/mod.ts src/wiki/cli.ts",
     "test": "deno test --allow-read --allow-run tests/",
     "fmt": "deno fmt",
     "fmt:check": "deno fmt --check",
