@@ -59,7 +59,7 @@ Three consequences fix the shape of the distribution work:
 
 - **The library surface is `@wazoo/wiki`.** An npm project adds it with `npx jsr add @wazoo/wiki`, which writes `.npmrc` with `@jsr:registry=https://npm.jsr.io` (that file is checked in). No `npm/` tree, no `tsup` build step, no `types.generated.ts` bridge.
 - **The CLI is reached as a JSR module export, not as a `bin` entry.** `deno x jsr:@wazoo/wiki/cli` runs it, and `deno install -g jsr:@wazoo/wiki/cli` makes it permanent. This works because `src/wiki/cli.ts` already guards top-level execution with `import.meta.main`, so the module is executable and importable from the same file. Neither `deno pack` nor JSR's npm-compat tarball synthesises a `package.json` `bin` field, so there is no `npx wazoo-wiki` path and none is planned.
-- **`deno compile` binaries stay supplementary.** They serve users with no Deno runtime at all, which the spike already proved out (29 MB, clean-room verified, no filesystem access). They are an extra artifact, not the primary install path.
+- **`deno compile` binaries are a supported install path, not a convenience.** They are the answer for anyone without a Deno runtime, and the spike already proved them out: a 29 MB self-contained binary, clean-room verified with no filesystem access. Three install paths, one implementation — Deno users run `deno x jsr:@wazoo/wiki/cli`, npm users reach the library through JSR, and runtime-less users download a compiled binary.
 
 ### Oracle and transition discipline
 
