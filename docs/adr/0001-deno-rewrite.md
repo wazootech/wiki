@@ -50,7 +50,7 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 | `difflib.SequenceMatcher` | ported | `link-fix` parity only |
 | `@rdfjs/types` | `npm:@rdfjs/types@1.1.0` | Shared quad typing |
 
-`nodeModulesDir: "auto"` is required once the npm-backed specs above land; it is deliberately absent from `deno.json` today, because the scaffold has no `npm:` dependency yet. The spike's config is the reference.
+`nodeModulesDir: "auto"` became required in phase 5, when the first `npm:` dependencies landed (`@zazuko/env-node` for RDF IO, `n3` for Turtle output); it is set in `deno.json` as the spike's config anticipated. It is what makes `node_modules/` appear locally — gitignored, and not a build input.
 
 ### Distribution
 
@@ -98,7 +98,7 @@ Deno modules live in `src/wiki/` **alongside** their Python counterparts (`audit
 - **Formatter semantics differ from `mdformat`** (prose wrapping, table alignment, frontmatter). Mitigated by accepting a one-time docs reformat plus a shielding layer, with `test_fmt` ported to `deno fmt` goldens.
 - **SHACL report text differs from `pyshacl`.** Mitigated by the spec-close bar and committed transcripts.
 - **`.githooks/pre-commit` runs `prettier --check` on staged `.ts`/`.md`.** The hook is dormant today (`core.hooksPath` is unset), but anyone who enables it would find it rejects `deno fmt` styling. It needs scoping to `npm/` at cutover.
-- **`deno.lock` versus the legacy `package.json`.** Deno adopts the repo-root `package.json` as workspace dependencies, so `deno install` resolves the npm wrapper's devDependencies (eslint, esbuild, tsup, typedoc) into `deno.lock` and downloads them into `node_modules/`. The committed lockfile therefore pins only what the engine actually resolves (`@std`), and `deno install --frozen` is not a usable gate until `package.json` becomes the engine's own manifest at cutover.
+- **`deno.lock` versus the legacy `package.json`.** Deno adopts the repo-root `package.json` as workspace dependencies, so `nodeModulesDir: "auto"` resolves the npm wrapper's devDependencies (eslint, esbuild, tsup, typedoc, prettier) alongside the engine's own two npm packages. Measured at phase 5: the lockfile pins **318 npm packages**, of which the engine needs a handful. That is the price of the wrapper still living in this repository; `package.json` becomes the engine's own manifest at cutover, which removes the divergence in one step. Consequences meanwhile: `node_modules/` is gitignored and is not a build input, `deno install --frozen` is not a usable gate (the CI step is already removed), and no engine code may import a package that only the wrapper declares.
 - **Windows line endings.** Python's Click writes CRLF to a redirected stdout; `console.log` writes LF. This is exactly why the harness normalises rather than comparing bytes.
 - **Committed goldens are LF-normalised.** `.gitattributes` sets `* text=auto eol=lf`, so the `.nt` goldens under `spike-reasoning/goldens/` — written with CRLF by `rdflib` on Windows — are stored as LF. The harness must normalise line endings when *reading goldens*, not only when comparing CLI output, or a fresh clone will disagree with the machine that produced them.
 

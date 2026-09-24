@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
+  "nodeModulesDir": "auto",
   "name": "@wazoo/wiki",
   "version": "0.1.23",
   "license": "MIT",
@@ -16,12 +17,16 @@
     "lint": "deno lint"
   },
   "imports": {
+    "@rdfjs/types": "npm:@rdfjs/types@^2.0.1",
     "@std/assert": "jsr:@std/assert@^1.0.0",
     "@std/fs": "jsr:@std/fs@^1.0.0",
     "@std/path": "jsr:@std/path@^1.0.0",
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",
-    "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0"
+    "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0",
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.2",
+    "@zazuko/env-node": "npm:@zazuko/env-node@^3.0.0",
+    "n3": "npm:n3@^2.0.0"
   },
   "fmt": {
     "include": [
