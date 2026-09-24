@@ -131,3 +131,37 @@ jobs:
         WHEEL=$(ls "${GITHUB_WORKSPACE}/dist/wazootech_wiki-"*.whl | head -1)
         echo "Installing from wheel: $WHEEL"
         WIKI_PIP_SPEC="$WHEEL" node npm/bin/wiki.js --help
+
+  deno-checks:
+    name: Deno Engine Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v6
+
+    - name: Set up Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+        cache: true
+
+    # Migration scaffolding (issue #273). The Python job above remains the
+    # source of truth until the parity gate; these steps only guard the ported
+    # modules and the version surfaces as they land.
+    - name: Type-check the Deno engine
+      run: deno task check
+
+    - name: Lint the Deno engine
+      run: deno task lint
+
+    - name: Verify Deno formatting
+      run: deno task fmt:check
+
+    # No frozen-lockfile gate yet. Deno adopts the repo-root package.json as
+    # workspace dependencies, so `deno install --frozen` fails on the legacy
+    # npm wrapper's devDependencies (eslint, esbuild, tsup, typedoc) — packages
+    # the engine never resolves. Revisit once package.json is the engine's own
+    # manifest rather than a launcher for the Python one.
+    - name: Run Deno unit tests
+      run: deno task test

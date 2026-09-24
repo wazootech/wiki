@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
+  "name": "@wazoo/wiki",
+  "version": "0.1.23",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/wiki/mod.ts",
+    "./cli": "./src/wiki/cli.ts"
+  },
+  "tasks": {
+    "check": "deno check src/wiki/mod.ts src/wiki/cli.ts src/wiki/npm.ts",
+    "test": "deno test --allow-read --allow-run tests/",
+    "fmt": "deno fmt",
+    "fmt:check": "deno fmt --check",
+    "lint": "deno lint"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.0",
+    "@std/path": "jsr:@std/path@^1.0.0"
+  },
+  "fmt": {
+    "include": ["src/**/*.ts", "tests/**/*.ts", "deno.json"],
+    "exclude": ["docs/", "npm/", "spike-reasoning/"]
+  },
+  "lint": {
+    "include": ["src/**/*.ts", "tests/**/*.ts"],
+    "exclude": ["docs/", "npm/", "spike-reasoning/"]
+  },
+  "exclude": ["docs/", "npm/", "spike-reasoning/"],
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true
+  }
+}
