@@ -36,6 +36,10 @@ ENV/
 env/
 .uv/
 
+# Reasoning-engine spike build output (106 MB; exceeds GitHub's 100 MB file limit).
+# Rebuild with spike-reasoning/compile-runtime.ts — see spike-reasoning/DECISION.md.
+spike-reasoning/spike-bin.exe
+
 # Caches
 .pytest_cache/
 .mypy_cache/

@@ -1,0 +1,33 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <https://example.org/micro/> .
+
+# cax-sco chain
+ex:ethan rdf:type schema:Person .
+# scm-eqc2
+ex:ethan rdf:type ex:Creature .
+
+# prp-dom + prp-rng
+ex:ethan ex:worksFor ex:wazoo .
+# prp-trp chain
+ex:alice ex:reportsTo ex:bob .
+ex:bob ex:reportsTo ex:carol .
+# prp-spo1
+ex:ethan ex:directlyReportsTo ex:bob .
+# prp-eqp1
+ex:ethan ex:knows ex:sandra .
+# prp-key: two Users sharing ex:email
+ex:u1 rdf:type ex:User ; ex:email "e@x" .
+ex:u2 rdf:type ex:User ; ex:email "e@x" .
+# prp-fp: two fillers of a functional property
+ex:ethan ex:ssn "123" ; ex:ssn "124" .
+# prp-prp: worksFor o partOf -> memberOf
+ex:wazoo ex:partOf ex:parentco .
+# cax-dw + cls-com abuse: zeus is Person AND Organization AND NonPerson
+ex:zeus rdf:type schema:Person , ex:Organization , ex:NonPerson .
+# datatype sanity: no datatype entailment expected (42 vs 042 stay distinct)
+ex:ethan ex:age "42"^^xsd:integer .
+ex:ethan ex:age "042"^^xsd:integer .
