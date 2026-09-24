@@ -48,7 +48,15 @@ export {
   splitFrontmatterBody,
   splitLines,
 } from "./parser.ts";
-export { pyRepr, pyReprString, pyTypeName } from "./pyrepr.ts";
+export { pyRepr, pyReprString, pyStr, pyTypeName } from "./pyrepr.ts";
+export {
+  getLogger,
+  type Logger,
+  type LogLevel,
+  type LogRecord,
+  type LogSink,
+  setLogSink,
+} from "./logging.ts";
 export {
   describeValidationError,
   extraForbidden,
@@ -148,6 +156,26 @@ export {
   triple,
   UnsupportedFormatError,
 } from "./rdf.ts";
+export {
+  effectiveTypes,
+  type FrontmatterGraphOptions,
+  frontmatterToGraph,
+  graphDescriptors,
+  graphStats,
+  kebabCase,
+  loadDataset,
+  loadGraph,
+  type LoadOptions,
+  loadQueryGraph,
+  type QueryGraphOptions,
+  resolveObject,
+  resolvePredicate,
+  resolveType,
+  rootGraphUri,
+  sourceGraphUri,
+  usesNamedGraphs,
+} from "./graph.ts";
+export { applyInference } from "./infer.ts";
 export {
   cacheDir,
   canonicalJson,

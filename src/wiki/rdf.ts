@@ -485,6 +485,16 @@ export class RdfGraph {
     this.#bindings.set(prefix, iri);
   }
 
+  /**
+   * The {@link NamespaceBinder} entry point.
+   *
+   * `Context.bindNamespaces` calls `set`, so a graph has to answer to that name
+   * as well as to rdflib's `bind`; there is one implementation behind both.
+   */
+  set(prefix: string, iri: string): void {
+    this.bind(prefix, iri);
+  }
+
   /** Add a triple; adding the same triple twice is a no-op. */
   add(subject: Term, predicate: NamedNode, object: Term): void {
     const item = this.#graph === null
@@ -509,9 +519,19 @@ export class RdfGraph {
     for (const item of other) this.addQuad(item);
   }
 
-  /** `true` when the triple is present. */
+  /**
+   * `true` when the triple is present.
+   *
+   * A named-graph container keys its quads *with* the graph name, so the probe
+   * has to be keyed the same way — probing with a default-graph quad against a
+   * named graph is a comparison that can never match, which reads as "absent"
+   * for every triple in a `Dataset`.
+   */
   has(subject: Term, predicate: NamedNode, object: Term): boolean {
-    return this.#keys.has(quadKey(triple(subject, predicate, object)));
+    const item = this.#graph === null
+      ? triple(subject, predicate, object)
+      : quad(subject, predicate, object, this.#graph);
+    return this.#keys.has(quadKey(item));
   }
 
   /** Match triples, with `null` meaning "any". */
@@ -607,6 +627,11 @@ export class RdfDataset implements Iterable<Quad> {
   /** Bind a prefix on the dataset (and, by inheritance, its graphs). */
   bind(prefix: string, iri: string): void {
     this.#bindings.set(prefix, iri);
+  }
+
+  /** The {@link NamespaceBinder} entry point; see `RdfGraph.set`. */
+  set(prefix: string, iri: string): void {
+    this.bind(prefix, iri);
   }
 
   /** The named graph with this IRI, created on first use. */
