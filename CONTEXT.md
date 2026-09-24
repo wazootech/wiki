@@ -2,13 +2,21 @@
 
 Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and body into RDF, validate with SHACL and JSON Schema, infer with OWL-RL, query with SPARQL, and publish static HTML or serializations. Wiki CLI is the compiler and query engine — not the primary editor or note app. See [docs/wiki/wiki.md](docs/wiki/wiki.md) for scope, boundaries, and command reference.
 
-## Architecture decision: Python core
+## Architecture decision: Deno/TypeScript engine
 
-Issue [#44](https://github.com/wazootech/wiki/issues/44): keep the **Python CLI as the source of truth** for parsing, validation, inference, querying, and export. Do not plan a full TypeScript rewrite of the engine.
+Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): the engine is being **rewritten in Deno/TypeScript over RDF/JS** and cut over hard in a single pull request. [ADR 0001](docs/adr/0001-deno-rewrite.md) holds the decision, the dependency swaps, and the transition discipline.
 
-- **Why Python** — `rdflib`, `pyshacl`, and `owlrl` compose a single coherent RDF/SHACL/OWL pipeline aligned with this repo’s core job.
-- **TypeScript at the edges only** — the npm package is a thin delivery wrapper (private venv + matching PyPI engine), not a second implementation.
-- **Revisit a rewrite only if** — a concrete npm-only distribution requirement, a web-first product that dominates the roadmap, or maintenance pain in Python that outweighs the RDF ecosystem advantage.
+- **Python stays the oracle until the parity gate** — every milestone is validated against the pinned Python build; nothing is deleted while it is still the reference.
+- **The npm package becomes the engine** — no more private venv bootstrap and no Python on the user's machine.
+- **On-disk and CLI contracts do not move** — `wiki.yaml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, the subcommand surface, and exit codes are preserved.
+
+### Superseded: [#44](https://github.com/wazootech/wiki/issues/44) (Python core)
+
+Kept for the reasoning trail. #44 decided to keep the **Python CLI as the source of truth** for parsing, validation, inference, querying, and export, and to plan no full TypeScript rewrite of the engine.
+
+- **Why Python then** — `rdflib`, `pyshacl`, and `owlrl` composed a single coherent RDF/SHACL/OWL pipeline aligned with this repo’s core job.
+- **TypeScript at the edges only** — the npm package was a thin delivery wrapper (private venv + matching PyPI engine), not a second implementation.
+- **What changed** — the two hardest subsystems now ship as Deno packages in this org (`@wazoo/sparql-engine`, `@wazoo/linked-markdown`), the npm-only distribution requirement became concrete, and an engine spike settled the OWL-RL replacement empirically.
 
 ## Architecture decision: Library-first API
 
