@@ -58,3 +58,64 @@ export {
   type ValidationIssue,
   valueError,
 } from "./schemas/validation.ts";
+export {
+  Config,
+  CONFIG_FILENAMES,
+  DEFAULT_BASE_URL,
+  DEFAULT_CHECK_CONFIG,
+  DEFAULT_FILENAME_PATTERN,
+  DEFAULT_LINK_STYLE,
+  DEFAULT_LINT_CONFIG,
+  DEFAULT_URL_STYLE,
+  findConfigPath,
+  formatConfigValidationError,
+  normalizeApiPath,
+  normalizeUrlStyle,
+  VALID_URL_STYLES,
+} from "./config.ts";
+export type {
+  ConfigInput,
+  FmtConfig,
+  GraphBlock,
+  LinkBlock,
+  SiteBlock,
+  SparqlServiceBlock,
+  WikiBlock,
+} from "./schemas/wiki_config.ts";
+export { coerceSeverity, type Severity } from "./schemas/rules.ts";
+export type { CheckConfig, LintConfig } from "./schemas/rules.ts";
+export {
+  type GraphDescriptor,
+  loadLockfile,
+  type LockedSource,
+  type Lockfile,
+  LOCKFILE_FILENAME,
+  LOCKFILE_VERSION,
+  lockfileTimestamp,
+  saveLockfile,
+  type SourceConfig,
+} from "./schemas/sources.ts";
+export { METADATA_VIEWS, type MetadataView } from "./schemas/metadata.ts";
+export type {
+  BrokenLink,
+  BrokenLinkFix,
+  LinkOpportunity,
+  OutputEntry,
+  PageRoute,
+} from "./schemas/domain.ts";
+export {
+  buildPageManifest,
+  detectOutputCollisions,
+  iterDocumentFiles,
+  iterMarkdownFiles,
+  pageOutputPath,
+  pageRoutes,
+  pageUrl,
+  routeForDocumentFile,
+  routesFromMarkdownFiles,
+  selectDocumentPaths,
+  selectMarkdownPaths,
+  validateFilenamePattern,
+  validateRouteSafety,
+} from "./paths.ts";
+export { quote as quoteUrl } from "./urlquote.ts";

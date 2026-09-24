@@ -14,6 +14,9 @@
  */
 
 /** Render `value` the way Python's `repr` would. */
+
+import { IS_WINDOWS, Path } from "./fspath.ts";
+
 export function pyRepr(value: unknown): string {
   if (value === null || value === undefined) return "None";
   if (typeof value === "boolean") return value ? "True" : "False";
@@ -25,6 +28,13 @@ export function pyRepr(value: unknown): string {
   if (typeof value === "string") return pyReprString(value);
   if (Array.isArray(value)) {
     return `[${value.map((item) => pyRepr(item)).join(", ")}]`;
+  }
+  if (value instanceof Path) {
+    // `pathlib`'s repr names the concrete flavour and always uses forward
+    // slashes; a bare `{'value': ...}` would be unrecognisable in a message
+    // that quotes the config it failed on.
+    const flavour = IS_WINDOWS ? "WindowsPath" : "PosixPath";
+    return `${flavour}(${pyReprString(value.asPosix())})`;
   }
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
@@ -59,6 +69,17 @@ export function pyReprString(text: string): string {
     } else out += char;
   }
   return `${quote}${out}${quote}`;
+}
+
+/**
+ * Python's `str(value)`.
+ *
+ * `str` and `repr` agree everywhere except on strings themselves — the one
+ * difference that matters for `_looks_like_regex(str(bad))` and for messages
+ * that interpolate a value without `!r`.
+ */
+export function pyStr(value: unknown): string {
+  return typeof value === "string" ? value : pyRepr(value);
 }
 
 /** Python's `type(value).__name__`, for pydantic's `input_type=` field. */

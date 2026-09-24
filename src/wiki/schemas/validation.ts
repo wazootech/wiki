@@ -16,6 +16,7 @@
  * whether that ever reaches a user.
  */
 
+import { ValueError } from "../fspath.ts";
 import { pyRepr, pyTypeName } from "../pyrepr.ts";
 
 /** One validation failure, shaped like a pydantic error dictionary. */
@@ -29,8 +30,15 @@ export interface ValidationIssue {
 /** Pydantic version the fallback formatting is modelled on. */
 const PYDANTIC_VERSION = "2.13";
 
-/** Raised where Python raises `pydantic.ValidationError`. */
-export class SchemaValidationError extends Error {
+/**
+ * Raised where Python raises `pydantic.ValidationError`.
+ *
+ * It extends {@link ValueError} because pydantic's `ValidationError` does —
+ * callers throughout the Python engine catch `ValueError` around config
+ * construction, and a port that were only an `Error` would let those failures
+ * escape as crashes.
+ */
+export class SchemaValidationError extends ValueError {
   readonly modelName: string;
   readonly issues: readonly ValidationIssue[];
 
@@ -106,14 +114,21 @@ export function describeValidationError(
     count === 1 ? "" : "s"
   } for ${modelName}`;
   const lines = issues.map((issue) => {
-    const path = issue.loc.map((part) => String(part)).join(".");
+    const rows: string[] = [];
+    // A model-level failure has no location, and pydantic then prints no
+    // location line at all rather than an empty one.
+    if (issue.loc.length > 0) {
+      rows.push(issue.loc.map((part) => String(part)).join("."));
+    }
     const input = pyRepr(issue.input);
     const type = pyTypeName(issue.input);
-    return [
-      path,
+    rows.push(
       `  ${issue.msg} [type=${issue.type}, input_value=${input}, input_type=${type}]`,
+    );
+    rows.push(
       `    For further information visit https://errors.pydantic.dev/${PYDANTIC_VERSION}/v/${issue.type}`,
-    ].join("\n");
+    );
+    return rows.join("\n");
   });
   return [header, ...lines].join("\n");
 }
