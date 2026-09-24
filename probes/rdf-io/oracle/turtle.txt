@@ -1,0 +1,19 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/Alice> schema:active true ;
+    schema:age 42 ;
+    schema:dateModified "2026-09-24T00:00:00+00:00"^^xsd:dateTime ;
+    schema:description """line1
+line2 "quoted" \\ backslash	tab""" ;
+    schema:knows <https://example.org/Bob> ;
+    schema:name "café ☕"@fr .
+
+<https://example.org/Entity> rdfs:label "ümläut in <angle> and & ampersand" ;
+    rdfs:comment "" .
+
+<https://example.org/bob> schema:knows [ ] .
+
+[] schema:name "anonymous" .
+

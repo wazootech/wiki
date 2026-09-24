@@ -1,0 +1,71 @@
+[
+  {
+    "@id": "https://example.org/Alice",
+    "https://schema.org/active": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#boolean",
+        "@value": true
+      }
+    ],
+    "https://schema.org/age": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#integer",
+        "@value": 42
+      }
+    ],
+    "https://schema.org/dateModified": [
+      {
+        "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+        "@value": "2026-09-24T00:00:00+00:00"
+      }
+    ],
+    "https://schema.org/description": [
+      {
+        "@value": "line1\nline2 \"quoted\" \\ backslash\ttab"
+      }
+    ],
+    "https://schema.org/knows": [
+      {
+        "@id": "https://example.org/Bob"
+      }
+    ],
+    "https://schema.org/name": [
+      {
+        "@language": "fr",
+        "@value": "café ☕"
+      }
+    ]
+  },
+  {
+    "@id": "https://example.org/bob",
+    "https://schema.org/knows": [
+      {
+        "@id": "_:N80df498b4de4458197ea9b23232f12ca"
+      }
+    ]
+  },
+  {
+    "@id": "_:N80df498b4de4458197ea9b23232f12ca"
+  },
+  {
+    "@id": "_:N8b06d5f26a794504835b3a9f833539ff",
+    "https://schema.org/name": [
+      {
+        "@value": "anonymous"
+      }
+    ]
+  },
+  {
+    "@id": "https://example.org/Entity",
+    "http://www.w3.org/2000/01/rdf-schema#comment": [
+      {
+        "@value": ""
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#label": [
+      {
+        "@value": "ümläut in <angle> and & ampersand"
+      }
+    ]
+  }
+]

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+   xmlns:schema="https://schema.org/"
+>
+  <rdf:Description rdf:about="https://example.org/Alice">
+    <schema:knows rdf:resource="https://example.org/Bob"/>
+    <schema:name xml:lang="fr">café ☕</schema:name>
+    <schema:description>line1
+line2 "quoted" \ backslash	tab</schema:description>
+    <schema:active rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</schema:active>
+    <schema:age rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">42</schema:age>
+    <schema:dateModified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2026-09-24T00:00:00+00:00</schema:dateModified>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/Entity">
+    <rdfs:label>ümläut in &lt;angle&gt; and &amp; ampersand</rdfs:label>
+    <rdfs:comment></rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N8b06d5f26a794504835b3a9f833539ff">
+    <schema:name>anonymous</schema:name>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://example.org/bob">
+    <schema:knows rdf:nodeID="N80df498b4de4458197ea9b23232f12ca"/>
+  </rdf:Description>
+</rdf:RDF>
