@@ -27,13 +27,25 @@
       "parity/**/*.ts",
       "deno.json"
     ],
-    "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"]
+    "exclude": [
+      "docs/",
+      "npm/",
+      "spike-reasoning/",
+      "probes/",
+      ".parity-tmp/"
+    ]
   },
   "lint": {
     "include": ["src/**/*.ts", "tests/**/*.ts", "parity/**/*.ts"],
-    "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"]
+    "exclude": [
+      "docs/",
+      "npm/",
+      "spike-reasoning/",
+      "probes/",
+      ".parity-tmp/"
+    ]
   },
-  "exclude": ["docs/", "npm/", "spike-reasoning/", ".parity-tmp/"],
+  "exclude": ["docs/", "npm/", "spike-reasoning/", "probes/", ".parity-tmp/"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
