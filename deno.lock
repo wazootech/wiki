@@ -24,6 +24,7 @@
     "npm:eslint@^9.20.0": "9.39.5",
     "npm:globals@16": "16.5.0",
     "npm:json-schema-to-typescript@16": "16.0.0",
+    "npm:markdown-it@^14.1.0": "14.3.2",
     "npm:n3@2": "2.7.12",
     "npm:prettier@^3.9.5": "3.9.9",
     "npm:rdfjs-inference-engine@0.2.2": "0.2.2",
@@ -2081,6 +2082,7 @@
       "npm:@rdfjs/types@^2.0.1",
       "npm:@zazuko/env-node@3",
       "npm:ajv@^8.17.1",
+      "npm:markdown-it@^14.1.0",
       "npm:n3@2",
       "npm:rdfjs-inference-engine@0.2.2"
     ],

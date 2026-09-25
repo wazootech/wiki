@@ -28,6 +28,7 @@
     "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.2",
     "@zazuko/env-node": "npm:@zazuko/env-node@^3.0.0",
     "ajv": "npm:ajv@^8.17.1",
+    "markdown-it": "npm:markdown-it@^14.1.0",
     "n3": "npm:n3@^2.0.0",
     "rdfjs-inference-engine": "npm:rdfjs-inference-engine@0.2.2"
   },

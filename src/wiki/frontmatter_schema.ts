@@ -30,7 +30,7 @@
  */
 
 import type { Config } from "./config.ts";
-import { Path, ValueError } from "./fspath.ts";
+import { type Path, ValueError } from "./fspath.ts";
 import { effectiveTypes, resolveType } from "./graph.ts";
 import { JsonSchemaValidator, sortByInstancePath } from "./json_schema.ts";
 import {
@@ -40,7 +40,12 @@ import {
   pyStrip,
   readTextTolerant,
 } from "./parser.ts";
-import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
+import {
+  iterDocumentFiles,
+  pathWithinRoot,
+  resolveConfigRelativePath,
+  routeForDocumentFile,
+} from "./paths.ts";
 import { pyStr } from "./pyrepr.ts";
 
 /** The frontmatter key naming a JSON Schema document. */
@@ -101,20 +106,16 @@ export function isRemoteSchemaRef(ref: string): boolean {
 
 /** Resolve a local `wazoo:jsonSchema` path relative to the wiki config root. */
 export function resolveLocalSchemaPath(raw: string, configRoot: Path): Path {
-  const text = pyStrip(raw).replaceAll("\\", "/");
-  const path = Path.of(text);
-  return (path.isAbsolute() ? path : configRoot.joinpath(path)).resolve();
+  return resolveConfigRelativePath(raw, configRoot);
 }
 
-/** `true` when `path` lives under `configRoot`. */
+/**
+ * `true` when `path` lives under `configRoot`.
+ *
+ * The same predicate the layout resolver uses; `paths.ts` holds the one copy.
+ */
 export function schemaPathWithinRoot(path: Path, configRoot: Path): boolean {
-  try {
-    path.resolve().relativeTo(configRoot.resolve());
-  } catch (error) {
-    if (error instanceof ValueError) return false;
-    throw error;
-  }
-  return true;
+  return pathWithinRoot(path, configRoot);
 }
 
 /** `true` when `path` is a readable `.json` file under the config root. */

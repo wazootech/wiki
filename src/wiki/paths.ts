@@ -19,12 +19,53 @@
 
 import { DOCUMENT_EXTENSIONS } from "./parser.ts";
 import type { Config } from "./config.ts";
-import { type Path, sortedRglob, ValueError } from "./fspath.ts";
+import { Path, sortedRglob, ValueError } from "./fspath.ts";
 import { quote } from "./urlquote.ts";
 import type { OutputEntry, PageRoute } from "./schemas/domain.ts";
 
 /** Characters a route may never contain, because a URL cannot quote them. */
 export const UNSAFE_ROUTE_CHARS: ReadonlySet<string> = new Set(["?", "#", "%"]);
+
+/**
+ * Resolve a config-relative path value, the way three Python modules each do.
+ *
+ * `frontmatter_schema.resolve_local_schema_path`,
+ * `layout.resolve_layout_path`, and `site.layout_template`'s callers all mean
+ * the same thing by "a path in the config": strip it, accept backslashes as
+ * separators (Windows authors write them), resolve against the config root
+ * unless it is already absolute, and canonicalise.
+ *
+ * One copy rather than three, because the rule that matters is the *pairing*
+ * with {@link pathWithinRoot}: a value that resolves outside the root must be
+ * rejected, and three copies of the resolver are three chances to forget.
+ */
+export function resolveConfigRelativePath(raw: string, root: Path): Path {
+  const text = pyStrip(raw).replaceAll("\\", "/");
+  const path = Path.of(text);
+  return (path.isAbsolute() ? path : root.joinpath(path)).resolve();
+}
+
+/** `true` when `path` resolves inside `root`. */
+export function pathWithinRoot(path: Path, root: Path): boolean {
+  try {
+    path.resolve().relativeTo(root.resolve());
+  } catch (error) {
+    if (error instanceof ValueError) return false;
+    throw error;
+  }
+  return true;
+}
+
+/** `str.strip()` with Python's whitespace set, for the two helpers above. */
+function pyStrip(text: string): string {
+  return text.replace(
+    /^[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/,
+    "",
+  ).replace(
+    /[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/,
+    "",
+  );
+}
 
 /** Every document file under the configured inputs, sorted, minus exclusions. */
 export function iterDocumentFiles(config: Config): Path[] {

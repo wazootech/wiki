@@ -119,6 +119,8 @@ export {
   pageOutputPath,
   pageRoutes,
   pageUrl,
+  pathWithinRoot,
+  resolveConfigRelativePath,
   routeForDocumentFile,
   routesFromMarkdownFiles,
   selectDocumentPaths,
@@ -127,6 +129,47 @@ export {
   validateRouteSafety,
 } from "./paths.ts";
 export { quote as quoteUrl } from "./urlquote.ts";
+export {
+  GitHubHeadingSlugger,
+  type Heading,
+  headingIds,
+  headingSlug,
+  parseHeadings,
+} from "./headings.ts";
+export {
+  EXTERNAL_SCHEMES,
+  formatInternalLink,
+  fragmentId,
+  isExternalLink,
+  markdownLinkIsPage,
+  markdownLinkTarget,
+  PAGE_LINK_EXTENSIONS,
+  resolvePageHref,
+  resolvePageRoute,
+  splitTarget,
+} from "./links.ts";
+export {
+  LAYOUT_FRONTMATTER_KEY,
+  LAYOUT_SUFFIX,
+  layoutFileIsValid,
+  layoutStem,
+  parseLayoutFromFrontmatter,
+  resolveLayoutPath,
+} from "./layout.ts";
+export {
+  AuditReport,
+  type BuildOptions,
+  type BuildResult,
+  type ExportResult,
+  type FmtReport,
+  type Issue,
+  type IssueSeverity,
+  type LinkReport,
+  type Manifest,
+  type RenderReport,
+  type ScaffoldResult,
+  severityIssues,
+} from "./schemas/reports.ts";
 export {
   blankNode,
   canParse,
