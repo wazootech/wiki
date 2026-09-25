@@ -1,0 +1,110 @@
+route: yaml-json-typescript-css-markup
+resolved dprint config: {"lineWidth":80,"newLineKind":"lf","textWrap":"never","emphasisKind":"underscores","strongKind":"asterisks","unorderedListKind":"dashes","ignoreDirective":"deno-fmt-ignore","ignoreFileDirective":"deno-fmt-ignore-file","ignoreStartDirective":"deno-fmt-ignore-start","ignoreEndDirective":"deno-fmt-ignore-end"}
+dprint diagnostics: [{"propertyName":"ignore_comment_directive","message":"Unknown property in configuration"}]
+SAME  parity/corpus/micro/wiki/Alice.md
+SAME  parity/corpus/micro/wiki/Bob.md
+SAME  parity/corpus/micro/wiki/Index.md
+SAME  parity/corpus/micro/wiki/lowercase-name.md
+SAME  docs/wiki/Dataview_Integration.md
+SAME  docs/wiki/Vivary.md
+SAME  docs/wiki/wiki.md
+DIFF  docs/wiki/Wiki_Configuration.md  —  line 391: deno fmt "  <head>" != dprint "<head>"
+SAME  docs/wiki/wiki_mcp.md
+SAME  docs/wiki/Wiki_Page_Layouts.md
+SAME  docs/wiki/wiki_render.md
+SAME  docs/wiki/Wiki_Skills.md
+SAME  docs/wiki/WikiThon.md
+SAME  probes/fmt-shielding/input.md
+SAME  probes/fmt-shielding/input-tables.md
+SAME  docs/wiki/Agent_Memory_Filesystems.md
+SAME  docs/wiki/CSS.md
+SAME  docs/wiki/CSV.md
+SAME  docs/wiki/Content_Negotiation.md
+SAME  docs/wiki/Dataview_Integration.md
+SAME  docs/wiki/Declarative_Knowledge.md
+SAME  docs/wiki/Deploying_to_GitHub_Pages.md
+SAME  docs/wiki/Design_Philosophies.md
+SAME  docs/wiki/Farzapedia.md
+SAME  docs/wiki/Getting_Started.md
+SAME  docs/wiki/Graph_Cache.md
+SAME  docs/wiki/HTML.md
+SAME  docs/wiki/JSON.md
+SAME  docs/wiki/JSON_LD.md
+SAME  docs/wiki/Jeff_Kazzee.md
+SAME  docs/wiki/LLM_Wiki.md
+SAME  docs/wiki/Learning_Systems.md
+SAME  docs/wiki/Letta_MemFS.md
+SAME  docs/wiki/Linked_Markdown.md
+SAME  docs/wiki/Memory_Repo_Best_Practices.md
+SAME  docs/wiki/Microdata.md
+SAME  docs/wiki/N_Quads.md
+SAME  docs/wiki/N_Triples.md
+SAME  docs/wiki/Notation3.md
+SAME  docs/wiki/OKF.md
+SAME  docs/wiki/OWL.md
+SAME  docs/wiki/Obsidian.md
+SAME  docs/wiki/Obsidian_Integration.md
+SAME  docs/wiki/Personal_Knowledge.md
+SAME  docs/wiki/Procedural_Knowledge.md
+SAME  docs/wiki/Python_API_Reference.md
+SAME  docs/wiki/RDF.md
+DIFF  docs/wiki/RDF_XML.md  —  line 18: deno fmt "    xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"" != dprint "  xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
+SAME  docs/wiki/Recursive_Semantic_Datasets.md
+SAME  docs/wiki/Retrieval_Augmented_Generation.md
+SAME  docs/wiki/SHACL.md
+SAME  docs/wiki/SPARQL.md
+SAME  docs/wiki/Second_Brain.md
+SAME  docs/wiki/Semantic_Web.md
+SAME  docs/wiki/Software_Application_Shape.md
+SAME  docs/wiki/Style_Guide.md
+SAME  docs/wiki/Supermemory_SMFS.md
+SAME  docs/wiki/Tech_Article_Shape.md
+SAME  docs/wiki/TriG.md
+SAME  docs/wiki/Turtle.md
+SAME  docs/wiki/TypeScript_API_Reference.md
+SAME  docs/wiki/Vivary.md
+SAME  docs/wiki/WikiThon.md
+SAME  docs/wiki/Wiki_CLI.md
+DIFF  docs/wiki/Wiki_Configuration.md  —  line 391: deno fmt "  <head>" != dprint "<head>"
+SAME  docs/wiki/Wiki_Page_Layouts.md
+SAME  docs/wiki/Wiki_Programmatic_API.md
+SAME  docs/wiki/Wiki_Skills.md
+SAME  docs/wiki/Wiki_Subcommand_build.md
+SAME  docs/wiki/Wiki_Subcommand_check.md
+SAME  docs/wiki/Wiki_Subcommand_export.md
+SAME  docs/wiki/Wiki_Subcommand_fmt.md
+SAME  docs/wiki/Wiki_Subcommand_graph.md
+SAME  docs/wiki/Wiki_Subcommand_init.md
+SAME  docs/wiki/Wiki_Subcommand_install.md
+SAME  docs/wiki/Wiki_Subcommand_link.md
+SAME  docs/wiki/Wiki_Subcommand_lint.md
+SAME  docs/wiki/Wiki_Subcommand_mcp.md
+SAME  docs/wiki/Wiki_Subcommand_query.md
+SAME  docs/wiki/Wiki_Subcommand_remove.md
+SAME  docs/wiki/Wiki_Subcommand_render.md
+SAME  docs/wiki/Wiki_Subcommand_serve.md
+SAME  docs/wiki/Wiki_Subcommand_update.md
+SAME  docs/wiki/Wiki_Subcommand_upgrade.md
+SAME  docs/wiki/XML.md
+SAME  docs/wiki/wiki.md
+SAME  docs/wiki/wiki_build.md
+SAME  docs/wiki/wiki_check.md
+SAME  docs/wiki/wiki_export.md
+SAME  docs/wiki/wiki_fmt.md
+SAME  docs/wiki/wiki_graph.md
+SAME  docs/wiki/wiki_init.md
+SAME  docs/wiki/wiki_install.md
+SAME  docs/wiki/wiki_link.md
+SAME  docs/wiki/wiki_lint.md
+SAME  docs/wiki/wiki_mcp.md
+SAME  docs/wiki/wiki_query.md
+SAME  docs/wiki/wiki_remove.md
+SAME  docs/wiki/wiki_render.md
+SAME  docs/wiki/wiki_serve.md
+SAME  docs/wiki/wiki_update.md
+SAME  docs/wiki/wiki_upgrade.md
+
+micro: 4/4 byte-identical
+docs-nine: 8/9 byte-identical
+shielding: 2/2 byte-identical
+docs-all: 85/87 byte-identical
