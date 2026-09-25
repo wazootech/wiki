@@ -177,6 +177,12 @@ export {
 } from "./graph.ts";
 export { applyInference } from "./infer.ts";
 export {
+  JsonSchemaCompileError,
+  type JsonSchemaError,
+  JsonSchemaValidator,
+  sortByInstancePath,
+} from "./json_schema.ts";
+export {
   cacheDir,
   canonicalJson,
   clearAllProcessGraphs,

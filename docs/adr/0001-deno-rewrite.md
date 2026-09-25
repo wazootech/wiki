@@ -35,7 +35,7 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 | `rdflib` — RDF *IO* | `@zazuko/env-node` + `n3.js` (+ `@wazoo/sparql-engine/parser`) | **Split during phase 5**, because the store's IO coverage is one format deep: it parses Turtle only, and `@zazuko/env-node`'s Turtle serializer emits N-Triples. `@zazuko/env-node` supplies N-Triples/N-Quads/JSON-LD parse+write and all seven parse formats; `n3.js` supplies real Turtle/N3/TriG output; RDF/XML output is unassigned ([evidence](../../probes/rdf-io/FINDINGS.md)). Parity bar: known-difference for the pretty-printed formats |
 | `owlrl` | `rdfjs-inference-engine` | `npm:rdfjs-inference-engine@0.2.2`; **#273 named `rdf-reasoner` — the spike replaced it**. Ported in phase 5 as a *materializer* rather than an in-place expander: the closure of a graph is `asserted ∪ getStaticClosure() ∪ infer(asserted)`, and the OWL 2 RL ruleset is baked into `src/wiki/owl2rl_rules.ts` by `scripts/bake_owl2rl_rules.ts` so `deno compile` needs no filesystem at run time. Two parity-relevant differences, both from the spike: the engine reports inconsistencies as `inconsistencies:` resources instead of typing `owl:Nothing`, and it reifies SHACL shape property lists that `owlrl` ignored (the port filters the first and keeps the second) |
 | `pyshacl` | `rdf-validate-shacl@0.6.5` + `@zazuko/env` | **#273's plan added an RDFS closure pass; the phase-3 probe dropped it** — the library already resolves `sh:targetClass` over `rdfs:subClassOf*` and matches the oracle exactly without one ([evidence](../../probes/shacl-rdfs/FINDINGS.md)). Parity bar is spec-close |
-| `jsonschema` | `ajv` | Draft 2020-12 |
+| `jsonschema` | `ajv` | Draft 2020-12. **The swap is not message-compatible and `wiki check` prints these messages**, so the port keeps ajv as the engine and replaces the reporting layer: `src/wiki/json_schema.ts` renders jsonschema 4.26's wording from ajv's `keyword`/`params`/`schema`, and reconstructs jsonschema's error *order* (ajv emits `required` before `additionalProperties` regardless of key order). Compiled with `validateSchema: false`, `strict: false`, `validateFormats: false`. 63-case corpus, verdict agrees on all 63, messages byte-identical after the layer ([evidence](../../probes/json-schema/FINDINGS.md)) |
 | `linked-markdown` | `@wazoo/linked-markdown` | Already exists |
 | `markdown-it-py` + `pygments` | `markdown-it` + `highlight.js` | |
 | `mdformat` | **`deno fmt`** | Reverses #273's recommendation; one-time docs reformat accepted |
@@ -50,7 +50,7 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 | `difflib.SequenceMatcher` | ported | `link-fix` parity only |
 | `@rdfjs/types` | `npm:@rdfjs/types@1.1.0` | Shared quad typing |
 
-`nodeModulesDir: "auto"` became required in phase 5, when the first `npm:` dependencies landed (`@zazuko/env-node` for RDF IO, `n3` for Turtle output, `rdfjs-inference-engine` for OWL 2 RL); it is set in `deno.json` as the spike's config anticipated. It is what makes `node_modules/` appear locally — gitignored, and not a build input.
+`nodeModulesDir: "auto"` became required in phase 5, when the first `npm:` dependencies landed (`@zazuko/env-node` for RDF IO, `n3` for Turtle output, `rdfjs-inference-engine` for OWL 2 RL); it is set in `deno.json` as the spike's config anticipated. It is what makes `node_modules/` appear locally — gitignored, and not a build input. `ajv` (phase 6) joins them; like the others it is a plain npm package with no Deno build step.
 
 ### Distribution
 
