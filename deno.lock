@@ -15,16 +15,23 @@
     "jsr:@std/yaml@^1.0.5": "1.2.0",
     "jsr:@wazoo/linked-markdown@0.1": "0.1.0",
     "jsr:@wazoo/sparql-engine@0.4.2": "0.4.2",
+    "npm:@dprint/formatter@0.5.1": "0.5.1",
+    "npm:@dprint/json@0.21.3": "0.21.3",
+    "npm:@dprint/markdown@0.20.0": "0.20.0",
+    "npm:@dprint/typescript@0.96.1": "0.96.1",
     "npm:@eslint/js@^9.20.0": "9.39.5",
     "npm:@rdfjs/types@^2.0.1": "2.0.1",
     "npm:@types/node@24": "24.13.6",
     "npm:@zazuko/env-node@3": "3.1.0_@types+rdfjs__fetch-lite@3.0.11_@types+rdfjs__formats@4.0.1_@rdfjs+types@2.0.1_@types+clownface@2.0.10_@types+rdf-dataset-ext@1.0.8_@types+rdfjs__data-model@2.0.9_@types+rdfjs__dataset@2.0.7_@types+rdfjs__environment@1.0.0_@types+rdfjs__namespace@2.0.10_@types+rdfjs__term-map@2.0.10_@types+rdfjs__term-set@2.0.9_@types+rdfjs__traverser@0.1.5",
     "npm:@zazuko/env@3": "3.0.1_@rdfjs+types@2.0.1_@types+clownface@2.0.10_@types+rdf-dataset-ext@1.0.8_@types+rdfjs__data-model@2.0.9_@types+rdfjs__dataset@2.0.7_@types+rdfjs__environment@1.0.0_@types+rdfjs__formats@4.0.1_@types+rdfjs__namespace@2.0.10_@types+rdfjs__term-map@2.0.10_@types+rdfjs__term-set@2.0.9_@types+rdfjs__traverser@0.1.5",
     "npm:ajv@^8.17.1": "8.20.0",
+    "npm:dprint-plugin-yaml@0.5.0": "0.5.0",
     "npm:esbuild@0.28.1": "0.28.1",
     "npm:eslint@^9.20.0": "9.39.5",
     "npm:globals@16": "16.5.0",
     "npm:json-schema-to-typescript@16": "16.0.0",
+    "npm:lax-css@0.3.0": "0.3.0",
+    "npm:lax-markup@0.3.2": "0.3.2",
     "npm:markdown-it@^14.1.0": "14.3.2",
     "npm:n3@2": "2.7.12",
     "npm:prettier@^3.9.5": "3.9.9",
@@ -111,6 +118,18 @@
         "ky",
         "undici"
       ]
+    },
+    "@dprint/formatter@0.5.1": {
+      "integrity": "sha512-cdZUrm0iv/FnnY3CKE2dEcVhNEzrC551aE2h2mTFwQCRBrqyARLDnb7D+3PlXTUVp3s34ftlnGOVCmhLT9DeKA=="
+    },
+    "@dprint/json@0.21.3": {
+      "integrity": "sha512-fOmRKstf4kVZunnJcrGg1SNzoU6Y11mnLR1SbHQ7PwVvOUQTTUeCtxm3oLy/56nf69kaZmrdeegWXyxnTM5WDQ=="
+    },
+    "@dprint/markdown@0.20.0": {
+      "integrity": "sha512-qvynFdQZwul4Y+hoMP02QerEhM5VItb4cO8/qpQrSuQuYvDU+bIseiheVAetSpWlNPBU1JK8bQKloiCSp9lXnA=="
+    },
+    "@dprint/typescript@0.96.1": {
+      "integrity": "sha512-mz/nINSFQh1R5i2Qy90SWOCCK4SgNGRkNhCZba7LYmUkE4Zi8/45p8l8pqc9yN1fb4XY5Muhrzdh5Q3jFsYimw=="
     },
     "@esbuild/aix-ppc64@0.28.1": {
       "integrity": "sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==",
@@ -1200,6 +1219,9 @@
     "deep-is@0.1.4": {
       "integrity": "sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ=="
     },
+    "dprint-plugin-yaml@0.5.0": {
+      "integrity": "sha512-ZocMPCbIa2qO8r0jyN1wnRjXAtKwwPMmEFXHOKfTmrecZPopUzTDFg8uUPOSvjJdWYrlpmFfOAw4FFcyI7px0g=="
+    },
     "duplex-to@2.0.0": {
       "integrity": "sha512-f2nMnk11mwDptEFBTv2mcWHpF4ENAbuQ63yTiSy/99rG4Exsxsf0GJhJYq/AHF2cdMYswSx23LPuoijBflpquQ=="
     },
@@ -1545,6 +1567,12 @@
     },
     "ky@1.14.3": {
       "integrity": "sha512-9zy9lkjac+TR1c2tG+mkNSVlyOpInnWdSMiue4F+kq8TwJSgv6o8jhLRg8Ho6SnZ9wOYUq/yozts9qQCfk7bIw=="
+    },
+    "lax-css@0.3.0": {
+      "integrity": "sha512-xX/NxUKJlYfo3DtTS3/67x0uhGzd18ILxItGCgEawv5VeuY24N29/p5+iaMN1x9D7KPDMQ0PAmZKXTsgLTXmjQ=="
+    },
+    "lax-markup@0.3.2": {
+      "integrity": "sha512-54MbT4Sd/uQrbUOLjhUsVJ6y23a4smw3R1SVt0MGJCUKaU07p3BAv7ekd5ByG3C5mBjVpChL888k4L/ihDdP2A=="
     },
     "level-supports@6.2.0": {
       "integrity": "sha512-QNxVXP0IRnBmMsJIh+sb2kwNCYcKciQZJEt+L1hPCHrKNELllXhvrlClVHXBYZVT+a7aTSM6StgNXdAldoab3w=="
@@ -2117,10 +2145,17 @@
       "jsr:@std/yaml@1",
       "jsr:@wazoo/linked-markdown@0.1",
       "jsr:@wazoo/sparql-engine@0.4.2",
+      "npm:@dprint/formatter@0.5.1",
+      "npm:@dprint/json@0.21.3",
+      "npm:@dprint/markdown@0.20.0",
+      "npm:@dprint/typescript@0.96.1",
       "npm:@rdfjs/types@^2.0.1",
       "npm:@zazuko/env-node@3",
       "npm:@zazuko/env@3",
       "npm:ajv@^8.17.1",
+      "npm:dprint-plugin-yaml@0.5.0",
+      "npm:lax-css@0.3.0",
+      "npm:lax-markup@0.3.2",
       "npm:markdown-it@^14.1.0",
       "npm:n3@2",
       "npm:rdf-validate-shacl@0.6.5",

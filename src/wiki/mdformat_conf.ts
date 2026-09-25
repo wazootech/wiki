@@ -5,7 +5,7 @@
  * `wiki.yml` can carry an inline `fmt:` mapping, and a typo in it must be
  * reported the way mdformat reports it, because that message is what users have
  * been reading. Only the validation is ported; the formatting decisions
- * themselves belong to `deno fmt` (see the ADR).
+ * themselves belong to `formatter.ts` (see the ADR).
  *
  * **One known divergence.** `mdformat._conf._validate_keys` renders the
  * permitted keys with `set(DEFAULT_OPTS)`, whose iteration order is Python's

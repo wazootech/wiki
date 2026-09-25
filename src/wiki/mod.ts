@@ -304,6 +304,11 @@ export {
   renderDefaultMdformatToml,
   resolveFmtTomlOpts,
 } from "./fmt_util.ts";
+export {
+  DEFAULT_LINE_WIDTH,
+  formatMarkdownText,
+  FORMATTER_PLUGIN_VERSIONS,
+} from "./formatter.ts";
 export { resolve as resolveSources } from "./sources.ts";
 export {
   exitAuditReport,

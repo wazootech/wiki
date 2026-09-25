@@ -17,8 +17,7 @@
  * parameters default to `None`, and `documentPaths` returns `null` for "whole
  * wiki" because `_run_check` distinguishes absent from empty.
  *
- * `format` is the one method that writes to disk, and the only one that is
- * `async` — the markdown formatter is a subprocess. Its two guards are both
+ * `format` is the one method that writes to disk. Its two guards are both
  * wiki#312 fixes and both matter more than they look:
  *
  * - **A page whose frontmatter cannot be parsed is refused, not reformatted.**
@@ -90,9 +89,9 @@ export class DocumentBatch {
    * without it, each changed file is written and counted. Either way a stale
    * file is recorded, because `--check` and a real run report the same list.
    */
-  async format(
+  format(
     options: { readonly check?: boolean; readonly verbose?: boolean } = {},
-  ): Promise<FmtReport> {
+  ): FmtReport {
     const check = options.check ?? false;
     const verbose = options.verbose ?? false;
     const staleFiles: Path[] = [];
@@ -115,11 +114,7 @@ export class DocumentBatch {
             verbose_lines: verboseLines,
           };
         }
-        const formatted = await formatMarkdown(
-          original,
-          filePath,
-          this.#config,
-        );
+        const formatted = formatMarkdown(original, filePath, this.#config);
         if (original !== formatted) {
           staleFiles.push(filePath);
           if (!check) {

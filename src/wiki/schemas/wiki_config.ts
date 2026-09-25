@@ -311,9 +311,10 @@ function isFmtConfig(value: unknown): value is FmtConfig {
  * Validate and resolve a `fmt:` value.
  *
  * An inline mapping is checked against mdformat's option surface, because the
- * user is configuring *formatting behaviour* even though `deno fmt` performs
- * it; a string or path is treated as a pointer to a TOML file, and must be
- * relative to the config file so a cloned repo formats the same everywhere.
+ * user is configuring *formatting behaviour* even though the dprint plugin
+ * performs it; a string or path is treated as a pointer to a TOML file, and
+ * must be relative to the config file so a cloned repo formats the same
+ * everywhere.
  */
 export function parseFmtConfig(
   fmtData: unknown,

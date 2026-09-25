@@ -161,19 +161,19 @@ export const CASES: readonly ParityCase[] = [
   {
     // The divergence is a *difference of opinion*, not a bug, and the probe
     // enumerated it before the port existed: `mdformat` considers this wiki
-    // clean (exit 0, 87 files already formatted) while `deno fmt` would restyle
-    // nine pages — emphasis markers, hard-break syntax, fence style, list
-    // spacing, and mdformat's `______…______` thematic break. The port names
-    // the same nine the probe measured independently, which is the check worth
-    // having: the engine's own `--check` agrees with `deno fmt --check` run by
-    // hand. Those nine pages are the cutover's one-time reformat, so this case
-    // is `known` until phase 11 pays it.
+    // clean (exit 0, 87 files already formatted) while the dprint markdown
+    // plugin restyles nine pages — emphasis markers, hard-break syntax, fence
+    // style, list spacing, and mdformat's `______…______` thematic break. The
+    // port names the same nine the probe measured independently, which is the
+    // check worth having: the engine's own `--check` agrees with the reference
+    // formatter run by hand. Those nine pages are the cutover's one-time
+    // reformat, so this case is `known` until phase 11 pays it.
     id: "fmt-check-docs",
     corpus: "docs",
     argv: docs("fmt", "--check", "-v"),
     status: "known",
     note:
-      "formatter semantics: mdformat calls 87 pages clean, deno fmt restyles 9",
+      "formatter semantics: mdformat calls 87 pages clean, the dprint markdown plugin restyles 9",
   },
   {
     id: "render-check-docs",

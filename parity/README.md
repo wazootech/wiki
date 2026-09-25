@@ -60,19 +60,25 @@ message, and the exit code all still have to match. `check-docs` stays a gate
 because the clean corpus has no report text to render.
 
 The second is **`fmt-check-docs`**, and it is a difference of opinion rather than
-an unported feature. The formatter is `deno fmt` instead of `mdformat` (see the
-ADR), and the two disagree about this repository's own 87-page wiki: the oracle
-calls every page clean, the port restyles nine — emphasis markers, hard-break
-syntax, fence style, list spacing, and the thematic break. The probe measured
-the same nine before the port existed, so what the transcript gates is the
-agreement: whichever pages the engine names are the pages `deno fmt --check`
-named by hand. Those nine are the cutover's one-time reformat.
+an unported feature. The formatter is `dprint-plugin-markdown` instead of
+`mdformat` (see the ADR), and the two disagree about this repository's own
+87-page wiki: the oracle calls every page clean, the port restyles nine —
+emphasis markers, hard-break syntax, fence style, list spacing, and the thematic
+break. The probe measured the same nine before the port existed, so what the
+transcript gates is the agreement: whichever pages the engine names are the
+pages the probe named by hand. Those nine are the cutover's one-time reformat.
+
+The engine moved from a `deno fmt` subprocess to the dprint plugin in process
+without touching this case: the plugin is pinned to the version Deno 2.9.6
+bundles and the port reproduces `deno fmt`'s bytes on every page in the corpus
+(`probes/fmt-dprint/verify-production.ts`), so the recorded transcript is the
+same transcript either way.
 
 Two `fmt` cases are gates rather than divergences. `fmt-check-micro` compares the
 stale-file list and the exit code. `fmt-micro` is mutating, so its transcript
 gates the *messages* — which pages both formatters consider dirty — and not the
 bytes they write; the harness has no tree digest yet, so the formatting itself
-is covered by `tests/fmt_test.ts` against measured `deno fmt` output instead.
+is covered by `tests/fmt_test.ts` against measured output instead.
 
 ## Corpora
 

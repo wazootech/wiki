@@ -20,9 +20,8 @@
  *   the graph through `fetch`-capable loaders, so the sync/async split moves one
  *   level up from `audit.ts`. `lint()` stays synchronous, which is what keeps
  *   the common path — `wiki lint` over a corpus — free of await plumbing.
- *   {@link Wiki.format} is `async` for an unrelated reason: the formatter is a
- *   subprocess (`fmt_util.ts`), and a stdin pipe cannot be written
- *   synchronously.
+ *   {@link Wiki.format} is synchronous too, since the formatter stopped being a
+ *   subprocess; only `check()` and `preflight()` remain asynchronous.
  * - **Runtime overrides rebuild the config rather than mutating a copy of it.**
  *   Python's `model_copy(deep=True)` is pydantic machinery; {@link copyConfig}
  *   states what the copy actually has to guarantee (a new `site` and `wiki`
@@ -249,7 +248,7 @@ export class Wiki {
   format(
     files?: readonly Path[] | null,
     options: { readonly check?: boolean; readonly verbose?: boolean } = {},
-  ): Promise<FmtReport> {
+  ): FmtReport {
     return new DocumentBatch(this.config, files ?? null).format(options);
   }
 

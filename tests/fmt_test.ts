@@ -7,12 +7,11 @@
  *   file calls the `mdformat` library directly to pin the *plugin* behaviour the
  *   wiki depends on — wikilinks survive, tables pad to their widest cell. There
  *   is no mdformat in the port, so the same inputs go through
- *   `formatMarkdown`. Both expected strings were kept as-is: `deno fmt` with
- *   `--prose-wrap never` reproduces them byte for byte, which is the reassuring
- *   half of the engine swap.
+ *   `formatMarkdown`. Both expected strings were kept as-is, and the dprint
+ *   plugin reproduces them byte for byte.
  * - **The SPARQL-block cases assert survival, not layout.** Python could
  *   `assertIn("| class |", ...)` because mdformat left the block's table alone;
- *   `deno fmt` pads it (`| class     |`), so the assertion is on what the case
+ *   the plugin pads it (`| class     |`), so the assertion is on what the case
  *   exists to protect — the query, the fence language, the block markers, and
  *   the fact that the header text is not title-cased. The padding is cosmetic
  *   and the probe measured it.
@@ -21,9 +20,18 @@
  *   milestone that ports `render.py`/`publish.py`.
  *
  * One case is new: {@link "format_markdown rejects an extension the engine has no parser for"}.
- * The Python engine let `mdformat` refuse an unknown extension; `deno fmt` has
- * no extension surface at all, so the port has to refuse it by hand or a typo in
- * `fmt: extensions:` would silently format with defaults.
+ * The Python engine let `mdformat` refuse an unknown extension; neither the
+ * plugin nor `deno fmt` before it had an extension surface, so the port has to
+ * refuse it by hand or a typo in `fmt: extensions:` would silently format with
+ * defaults.
+ *
+ * The plugin's own guarantees — the version pin, the resolved configuration, and
+ * which fence tags get delegated to which host formatter — live in
+ * `formatter_test.ts`. This file stays the port of `test_fmt.py`'s behaviour.
+ *
+ * `await` on the now-synchronous `formatMarkdown` is deliberate: it reads the
+ * same either way and keeps the cases honest if the call ever becomes
+ * asynchronous again.
  *
  * The CLI cases stay in this file rather than moving to `cli_test.ts` so the
  * one-file-to-one-file correspondence with the oracle's suite survives: this
@@ -33,8 +41,8 @@
 import {
   assert,
   assertEquals,
-  assertRejects,
   assertStringIncludes,
+  assertThrows,
 } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 import { Config } from "../src/wiki/config.ts";
@@ -99,8 +107,8 @@ interface CliResult {
 }
 
 /**
- * Run the real CLI as a subprocess, in `cwd`, with the permissions a `fmt` run
- * needs: `run` for the formatter subprocess itself, `env` for the RDF stack.
+ * Run the real CLI as a subprocess, in `cwd`, with the permissions it needs:
+ * `run` for the CLI itself, `env` for the RDF stack.
  *
  * Output is compared with `\n`. The Python CLI writes CRLF on Windows through
  * text-mode stdout; the migration targets normalised output rather than byte
@@ -259,8 +267,8 @@ Deno.test("format_markdown strips a leading BOM", async () => {
   }
 });
 
-Deno.test("format_markdown rejects an extension the engine has no parser for", async () => {
-  // New in the port: `deno fmt` has no extension surface, so a mistyped
+Deno.test("format_markdown rejects an extension the engine has no parser for", () => {
+  // New in the port: the plugin has no extension surface, so a mistyped
   // extension would otherwise format with defaults and report success.
   const root = tempRoot();
   try {
@@ -269,7 +277,7 @@ Deno.test("format_markdown rejects an extension the engine has no parser for", a
       config_root: root,
       fmt: { extensions: ["nope"] },
     });
-    await assertRejects(
+    assertThrows(
       () => formatMarkdown("# Title\n", filePath, config),
       ValueError,
       "The required 'nope' mdformat extension is not installed.",
@@ -334,7 +342,7 @@ Deno.test("describeFmtSource names the file a fmt pointer points at", () => {
   }
 });
 
-Deno.test("an invalid TOML file at the fmt pointer is a ValueError", async () => {
+Deno.test("an invalid TOML file at the fmt pointer is a ValueError", () => {
   const root = tempRoot();
   try {
     write(root, "bad.toml", 'wrap = "no"\n[broken\n');
@@ -343,7 +351,7 @@ Deno.test("an invalid TOML file at the fmt pointer is a ValueError", async () =>
       config_root: root,
       fmt: root.joinpath("bad.toml"),
     });
-    await assertRejects(
+    assertThrows(
       () => formatMarkdown("# Title\n", filePath, config),
       ValueError,
       "Invalid TOML syntax",
@@ -353,12 +361,12 @@ Deno.test("an invalid TOML file at the fmt pointer is a ValueError", async () =>
   }
 });
 
-Deno.test("an invalid .mdformat.toml at the config root is a ValueError", async () => {
+Deno.test("an invalid .mdformat.toml at the config root is a ValueError", () => {
   const root = tempRoot();
   try {
     write(root, ".mdformat.toml", "[broken\n");
     const filePath = write(root, "page.md", "# Title\n");
-    await assertRejects(
+    assertThrows(
       () =>
         formatMarkdown(
           "# Title\n",
