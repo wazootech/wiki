@@ -105,8 +105,14 @@ function suffixOf(pagePart: string): string {
  *
  * `posixpath.normpath` semantics, spelled out: `.` and empty segments vanish,
  * `..` pops, and a leading `..` survives so the caller can reject it.
+ *
+ * Exported because the asset resolver needs the same normalisation on the same
+ * kind of string — a wiki-relative POSIX path — and Python reaches for
+ * `posixpath` from both modules. One difference, accepted: `posixpath` keeps a
+ * leading `//` (POSIX's implementation-defined form) where this collapses it,
+ * and no wiki path starts with two slashes.
  */
-function normalizeRoute(path: string): string {
+export function normalizePosixPath(path: string): string {
   const absolute = path.startsWith("/");
   const parts: string[] = [];
   for (const part of path.split("/")) {
@@ -146,7 +152,7 @@ export function resolvePageRoute(
   }
   const currentDir = posixDirname(currentRoute);
   const raw = pagePart === "" ? "." : pagePart;
-  let combined = normalizeRoute(
+  let combined = normalizePosixPath(
     currentDir === "" ? raw : `${currentDir}/${raw}`,
   );
   if (combined === ".") combined = currentRoute;
@@ -159,7 +165,7 @@ export function resolvePageRoute(
 }
 
 /** `posixpath.dirname`. */
-function posixDirname(path: string): string {
+export function posixDirname(path: string): string {
   const index = path.lastIndexOf("/");
   return index < 0 ? "" : path.slice(0, index);
 }

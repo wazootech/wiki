@@ -183,6 +183,21 @@ export class Path {
     }
   }
 
+  /**
+   * `true` when the entry is a symlink.
+   *
+   * `lstat`, not `stat`: the asset audit's whole job here is to notice the
+   * difference between a symlink and its target, because only one of the two is
+   * copied into the site.
+   */
+  isSymlink(): boolean {
+    try {
+      return Deno.lstatSync(this.value).isSymlink;
+    } catch {
+      return false;
+    }
+  }
+
   /** Read UTF-8 text, tolerating and stripping a leading BOM (wiki#312). */
   readText(): string {
     return stripBom(Deno.readTextFileSync(this.value));
