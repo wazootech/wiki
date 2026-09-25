@@ -1,0 +1,2230 @@
+{
+  "cases": [
+    {
+      "name": "required-single",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "familyName"
+          },
+          "message": "must have required property 'familyName'",
+          "schemaPath": "#/required",
+          "schema": [
+            "givenName",
+            "familyName"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'familyName'"
+      ]
+    },
+    {
+      "name": "required-all-missing",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "headline"
+          },
+          "message": "must have required property 'headline'",
+          "schemaPath": "#/required",
+          "schema": [
+            "headline",
+            "description"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "description"
+          },
+          "message": "must have required property 'description'",
+          "schemaPath": "#/required",
+          "schema": [
+            "headline",
+            "description"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'headline'",
+        "must have required property 'description'"
+      ]
+    },
+    {
+      "name": "required-list-order",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "zeta"
+          },
+          "message": "must have required property 'zeta'",
+          "schemaPath": "#/required",
+          "schema": [
+            "zeta",
+            "alpha",
+            "mu"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "alpha"
+          },
+          "message": "must have required property 'alpha'",
+          "schemaPath": "#/required",
+          "schema": [
+            "zeta",
+            "alpha",
+            "mu"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "mu"
+          },
+          "message": "must have required property 'mu'",
+          "schemaPath": "#/required",
+          "schema": [
+            "zeta",
+            "alpha",
+            "mu"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'zeta'",
+        "must have required property 'alpha'",
+        "must have required property 'mu'"
+      ]
+    },
+    {
+      "name": "required-and-type-same-object",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "count"
+          },
+          "message": "must have required property 'count'",
+          "schemaPath": "#/required",
+          "schema": [
+            "count"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "properties",
+            "required"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'count'"
+      ]
+    },
+    {
+      "name": "type-string-got-string",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "integer"
+          },
+          "message": "must be integer",
+          "schemaPath": "#/properties/x/type",
+          "schema": "integer",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must be integer"
+      ]
+    },
+    {
+      "name": "type-union",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": "must be string,null",
+          "schemaPath": "#/properties/x/type",
+          "schema": [
+            "string",
+            "null"
+          ],
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string,null"
+      ]
+    },
+    {
+      "name": "type-bool-is-not-integer",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "integer"
+          },
+          "message": "must be integer",
+          "schemaPath": "#/properties/x/type",
+          "schema": "integer",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must be integer"
+      ]
+    },
+    {
+      "name": "type-null",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/x/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string"
+      ]
+    },
+    {
+      "name": "type-float-integer",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "integer"
+          },
+          "message": "must be integer",
+          "schemaPath": "#/properties/x/type",
+          "schema": "integer",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must be integer"
+      ]
+    },
+    {
+      "name": "type-array-and-object",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "a"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/a/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "o"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "object"
+          },
+          "message": "must be object",
+          "schemaPath": "#/properties/o/type",
+          "schema": "object",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "a"
+        ],
+        [
+          "o"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string",
+        "must be object"
+      ]
+    },
+    {
+      "name": "min-length-string",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "minLength",
+          "params": {
+            "limit": 3
+          },
+          "message": "must NOT have fewer than 3 characters",
+          "schemaPath": "#/properties/x/minLength",
+          "schema": 3,
+          "parentSchemaKeys": [
+            "type",
+            "minLength"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have fewer than 3 characters"
+      ]
+    },
+    {
+      "name": "max-length-string",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "maxLength",
+          "params": {
+            "limit": 3
+          },
+          "message": "must NOT have more than 3 characters",
+          "schemaPath": "#/properties/x/maxLength",
+          "schema": 3,
+          "parentSchemaKeys": [
+            "type",
+            "maxLength"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have more than 3 characters"
+      ]
+    },
+    {
+      "name": "pattern-mismatch",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "slug"
+          ],
+          "keyword": "pattern",
+          "params": {
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+          },
+          "message": "must match pattern \"^[a-z]+(-[a-z]+)*$\"",
+          "schemaPath": "#/properties/slug/pattern",
+          "schema": "^[a-z]+(-[a-z]+)*$",
+          "parentSchemaKeys": [
+            "type",
+            "pattern"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "slug"
+        ]
+      ],
+      "sorted_messages": [
+        "must match pattern \"^[a-z]+(-[a-z]+)*$\""
+      ]
+    },
+    {
+      "name": "min-length-array",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "minItems",
+          "params": {
+            "limit": 1
+          },
+          "message": "must NOT have fewer than 1 items",
+          "schemaPath": "#/properties/tags/minItems",
+          "schema": 1,
+          "parentSchemaKeys": [
+            "type",
+            "minItems"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have fewer than 1 items"
+      ]
+    },
+    {
+      "name": "max-items-array",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "maxItems",
+          "params": {
+            "limit": 2
+          },
+          "message": "must NOT have more than 2 items",
+          "schemaPath": "#/properties/tags/maxItems",
+          "schema": 2,
+          "parentSchemaKeys": [
+            "type",
+            "maxItems",
+            "items"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have more than 2 items"
+      ]
+    },
+    {
+      "name": "unique-items",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "uniqueItems",
+          "params": {
+            "i": 1,
+            "j": 0
+          },
+          "message": "must NOT have duplicate items (items ## 0 and 1 are identical)",
+          "schemaPath": "#/properties/tags/uniqueItems",
+          "schema": true,
+          "parentSchemaKeys": [
+            "type",
+            "uniqueItems"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have duplicate items (items ## 0 and 1 are identical)"
+      ]
+    },
+    {
+      "name": "items-nested-path",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "authors",
+            1
+          ],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "name"
+          },
+          "message": "must have required property 'name'",
+          "schemaPath": "#/properties/authors/items/required",
+          "schema": [
+            "name"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        },
+        {
+          "path": [
+            "authors",
+            2,
+            "name"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/authors/items/properties/name/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "authors",
+          1
+        ],
+        [
+          "authors",
+          2,
+          "name"
+        ]
+      ],
+      "sorted_messages": [
+        "must have required property 'name'",
+        "must be string"
+      ]
+    },
+    {
+      "name": "enum-mismatch",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "status"
+          ],
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "draft",
+              "published"
+            ]
+          },
+          "message": "must be equal to one of the allowed values",
+          "schemaPath": "#/properties/status/enum",
+          "schema": [
+            "draft",
+            "published"
+          ],
+          "parentSchemaKeys": [
+            "enum"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "status"
+        ]
+      ],
+      "sorted_messages": [
+        "must be equal to one of the allowed values"
+      ]
+    },
+    {
+      "name": "const-mismatch",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "kind"
+          ],
+          "keyword": "const",
+          "params": {
+            "allowedValue": "page"
+          },
+          "message": "must be equal to constant",
+          "schemaPath": "#/properties/kind/const",
+          "schema": "page",
+          "parentSchemaKeys": [
+            "const"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "kind"
+        ]
+      ],
+      "sorted_messages": [
+        "must be equal to constant"
+      ]
+    },
+    {
+      "name": "minimum-number",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "order"
+          ],
+          "keyword": "minimum",
+          "params": {
+            "comparison": ">=",
+            "limit": 0
+          },
+          "message": "must be >= 0",
+          "schemaPath": "#/properties/order/minimum",
+          "schema": 0,
+          "parentSchemaKeys": [
+            "type",
+            "minimum"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "order"
+        ]
+      ],
+      "sorted_messages": [
+        "must be >= 0"
+      ]
+    },
+    {
+      "name": "exclusive-maximum",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "order"
+          ],
+          "keyword": "exclusiveMaximum",
+          "params": {
+            "comparison": "<",
+            "limit": 10
+          },
+          "message": "must be < 10",
+          "schemaPath": "#/properties/order/exclusiveMaximum",
+          "schema": 10,
+          "parentSchemaKeys": [
+            "type",
+            "exclusiveMaximum"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "order"
+        ]
+      ],
+      "sorted_messages": [
+        "must be < 10"
+      ]
+    },
+    {
+      "name": "multiple-of",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "multipleOf",
+          "params": {
+            "multipleOf": 5
+          },
+          "message": "must be multiple of 5",
+          "schemaPath": "#/properties/n/multipleOf",
+          "schema": 5,
+          "parentSchemaKeys": [
+            "type",
+            "multipleOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "must be multiple of 5"
+      ]
+    },
+    {
+      "name": "additional-properties",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "stray"
+          },
+          "message": "must NOT have additional properties",
+          "schemaPath": "#/additionalProperties",
+          "schema": false,
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties",
+            "additionalProperties"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "another"
+          },
+          "message": "must NOT have additional properties",
+          "schemaPath": "#/additionalProperties",
+          "schema": false,
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties",
+            "additionalProperties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must NOT have additional properties",
+        "must NOT have additional properties"
+      ]
+    },
+    {
+      "name": "additional-properties-pattern",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x-bad"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/patternProperties/%5Ex-/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x-bad"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string"
+      ]
+    },
+    {
+      "name": "nested-object-path",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "format-email-and-date-time",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "format-annotation-only",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "any-of-none-match",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/value/anyOf/0/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "number"
+          },
+          "message": "must be number",
+          "schemaPath": "#/properties/value/anyOf/1/type",
+          "schema": "number",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf",
+          "schemaPath": "#/properties/value/anyOf",
+          "schema": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "parentSchemaKeys": [
+            "anyOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ],
+        [
+          "value"
+        ],
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string",
+        "must be number",
+        "must match a schema in anyOf"
+      ]
+    },
+    {
+      "name": "one-of-none-match",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/value/oneOf/0/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "number"
+          },
+          "message": "must be number",
+          "schemaPath": "#/properties/value/oneOf/1/type",
+          "schema": "number",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "params": {
+            "passingSchemas": null
+          },
+          "message": "must match exactly one schema in oneOf",
+          "schemaPath": "#/properties/value/oneOf",
+          "schema": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "parentSchemaKeys": [
+            "oneOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ],
+        [
+          "value"
+        ],
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must be string",
+        "must be number",
+        "must match exactly one schema in oneOf"
+      ]
+    },
+    {
+      "name": "one-of-multiple-match",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "params": {
+            "passingSchemas": [
+              0,
+              1
+            ]
+          },
+          "message": "must match exactly one schema in oneOf",
+          "schemaPath": "#/properties/value/oneOf",
+          "schema": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            }
+          ],
+          "parentSchemaKeys": [
+            "oneOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must match exactly one schema in oneOf"
+      ]
+    },
+    {
+      "name": "all-of-failure",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "minLength",
+          "params": {
+            "limit": 5
+          },
+          "message": "must NOT have fewer than 5 characters",
+          "schemaPath": "#/properties/value/allOf/1/minLength",
+          "schema": 5,
+          "parentSchemaKeys": [
+            "minLength"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have fewer than 5 characters"
+      ]
+    },
+    {
+      "name": "not-failure",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "not",
+          "params": {},
+          "message": "must NOT be valid",
+          "schemaPath": "#/properties/value/not",
+          "schema": {
+            "type": "string"
+          },
+          "parentSchemaKeys": [
+            "not"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT be valid"
+      ]
+    },
+    {
+      "name": "local-defs-ref",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "author"
+          ],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "name"
+          },
+          "message": "must have required property 'name'",
+          "schemaPath": "#/$defs/person/required",
+          "schema": [
+            "name"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "author"
+        ]
+      ],
+      "sorted_messages": [
+        "must have required property 'name'"
+      ]
+    },
+    {
+      "name": "top-level-required-and-nested-error-order",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "type"
+          },
+          "message": "must have required property 'type'",
+          "schemaPath": "#/required",
+          "schema": [
+            "type",
+            "title"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        },
+        {
+          "path": [
+            "title"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/title/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "author"
+          ],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "name"
+          },
+          "message": "must have required property 'name'",
+          "schemaPath": "#/properties/author/required",
+          "schema": [
+            "name"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "properties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        [
+          "author"
+        ],
+        [
+          "title"
+        ]
+      ],
+      "sorted_messages": [
+        "must have required property 'type'",
+        "must have required property 'name'",
+        "must be string"
+      ]
+    },
+    {
+      "name": "type-key-after-properties-key",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "y"
+          },
+          "message": "must have required property 'y'",
+          "schemaPath": "#/required",
+          "schema": [
+            "y"
+          ],
+          "parentSchemaKeys": [
+            "properties",
+            "required",
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "const",
+          "params": {
+            "allowedValue": 1
+          },
+          "message": "must be equal to constant",
+          "schemaPath": "#/properties/x/const",
+          "schema": 1,
+          "parentSchemaKeys": [
+            "const"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "must have required property 'y'",
+        "must be equal to constant"
+      ]
+    },
+    {
+      "name": "instance-root-not-object",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "type",
+          "params": {
+            "type": "object"
+          },
+          "message": "must be object",
+          "schemaPath": "#/type",
+          "schema": "object",
+          "parentSchemaKeys": [
+            "type",
+            "required"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must be object"
+      ]
+    },
+    {
+      "name": "empty-schema",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "false-schema",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "false schema",
+          "params": {},
+          "message": "boolean schema is false",
+          "schemaPath": "#/properties/x/false schema",
+          "schema": false,
+          "parentSchemaKeys": []
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "boolean schema is false"
+      ]
+    },
+    {
+      "name": "true-schema",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "dependant-required",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "dependentRequired",
+          "params": {
+            "property": "credit_card",
+            "missingProperty": "billing_address",
+            "depsCount": 1,
+            "deps": "billing_address"
+          },
+          "message": "must have property billing_address when property credit_card is present",
+          "schemaPath": "#/dependentRequired",
+          "schema": {
+            "credit_card": [
+              "billing_address"
+            ]
+          },
+          "parentSchemaKeys": [
+            "type",
+            "dependentRequired"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must have property billing_address when property credit_card is present"
+      ]
+    },
+    {
+      "name": "contains-keyword",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags",
+            0
+          ],
+          "keyword": "const",
+          "params": {
+            "allowedValue": "wiki"
+          },
+          "message": "must be equal to constant",
+          "schemaPath": "#/properties/tags/contains/const",
+          "schema": "wiki",
+          "parentSchemaKeys": [
+            "const"
+          ]
+        },
+        {
+          "path": [
+            "tags",
+            1
+          ],
+          "keyword": "const",
+          "params": {
+            "allowedValue": "wiki"
+          },
+          "message": "must be equal to constant",
+          "schemaPath": "#/properties/tags/contains/const",
+          "schema": "wiki",
+          "parentSchemaKeys": [
+            "const"
+          ]
+        },
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "contains",
+          "params": {
+            "minContains": 1
+          },
+          "message": "must contain at least 1 valid item(s)",
+          "schemaPath": "#/properties/tags/contains",
+          "schema": {
+            "const": "wiki"
+          },
+          "parentSchemaKeys": [
+            "type",
+            "contains"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ],
+        [
+          "tags",
+          0
+        ],
+        [
+          "tags",
+          1
+        ]
+      ],
+      "sorted_messages": [
+        "must contain at least 1 valid item(s)",
+        "must be equal to constant",
+        "must be equal to constant"
+      ]
+    },
+    {
+      "name": "property-names-pattern",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "pattern",
+          "params": {
+            "pattern": "^[a-z]+$"
+          },
+          "message": "must match pattern \"^[a-z]+$\"",
+          "schemaPath": "#/propertyNames/pattern",
+          "schema": "^[a-z]+$",
+          "parentSchemaKeys": [
+            "pattern"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "propertyNames",
+          "params": {
+            "propertyName": "Good"
+          },
+          "message": "property name must be valid",
+          "schemaPath": "#/propertyNames",
+          "schema": {
+            "pattern": "^[a-z]+$"
+          },
+          "parentSchemaKeys": [
+            "type",
+            "propertyNames"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "pattern",
+          "params": {
+            "pattern": "^[a-z]+$"
+          },
+          "message": "must match pattern \"^[a-z]+$\"",
+          "schemaPath": "#/propertyNames/pattern",
+          "schema": "^[a-z]+$",
+          "parentSchemaKeys": [
+            "pattern"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "propertyNames",
+          "params": {
+            "propertyName": "BAD"
+          },
+          "message": "property name must be valid",
+          "schemaPath": "#/propertyNames",
+          "schema": {
+            "pattern": "^[a-z]+$"
+          },
+          "parentSchemaKeys": [
+            "type",
+            "propertyNames"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        [],
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must match pattern \"^[a-z]+$\"",
+        "property name must be valid",
+        "must match pattern \"^[a-z]+$\"",
+        "property name must be valid"
+      ]
+    },
+    {
+      "name": "unevaluated-properties",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "unevaluatedProperties",
+          "params": {
+            "unevaluatedProperty": "b"
+          },
+          "message": "must NOT have unevaluated properties",
+          "schemaPath": "#/unevaluatedProperties",
+          "schema": false,
+          "parentSchemaKeys": [
+            "type",
+            "properties",
+            "unevaluatedProperties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must NOT have unevaluated properties"
+      ]
+    },
+    {
+      "name": "decimal-boundary-multiple",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "multipleOf",
+          "params": {
+            "multipleOf": 0.1
+          },
+          "message": "must be multiple of 0.1",
+          "schemaPath": "#/properties/n/multipleOf",
+          "schema": 0.1,
+          "parentSchemaKeys": [
+            "multipleOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "must be multiple of 0.1"
+      ]
+    },
+    {
+      "name": "invalid-schema-keyword-type",
+      "compiled": false,
+      "compile_error": "Error: schema is invalid: data/properties/x/type must be equal to one of the allowed values, data/properties/x/type must be array, data/properties/x/type must match a schema in anyOf"
+    },
+    {
+      "name": "invalid-schema-minimum-string",
+      "compiled": false,
+      "compile_error": "Error: schema is invalid: data/properties/x/minimum must be number"
+    },
+    {
+      "name": "unresolvable-ref",
+      "compiled": false,
+      "compile_error": "Error: can't resolve reference https://example.org/absent.json from id #"
+    },
+    {
+      "name": "order-additional-then-required",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "a"
+          },
+          "message": "must have required property 'a'",
+          "schemaPath": "#/required",
+          "schema": [
+            "a"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "additionalProperties",
+            "required"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "b"
+          },
+          "message": "must NOT have additional properties",
+          "schemaPath": "#/additionalProperties",
+          "schema": false,
+          "parentSchemaKeys": [
+            "type",
+            "additionalProperties",
+            "required"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'a'",
+        "must NOT have additional properties"
+      ]
+    },
+    {
+      "name": "order-required-then-additional",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "a"
+          },
+          "message": "must have required property 'a'",
+          "schemaPath": "#/required",
+          "schema": [
+            "a"
+          ],
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "additionalProperties"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "b"
+          },
+          "message": "must NOT have additional properties",
+          "schemaPath": "#/additionalProperties",
+          "schema": false,
+          "parentSchemaKeys": [
+            "type",
+            "required",
+            "additionalProperties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'a'",
+        "must NOT have additional properties"
+      ]
+    },
+    {
+      "name": "min-properties",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "minProperties",
+          "params": {
+            "limit": 2
+          },
+          "message": "must NOT have fewer than 2 properties",
+          "schemaPath": "#/minProperties",
+          "schema": 2,
+          "parentSchemaKeys": [
+            "type",
+            "minProperties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must NOT have fewer than 2 properties"
+      ]
+    },
+    {
+      "name": "max-properties",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "maxProperties",
+          "params": {
+            "limit": 1
+          },
+          "message": "must NOT have more than 1 properties",
+          "schemaPath": "#/maxProperties",
+          "schema": 1,
+          "parentSchemaKeys": [
+            "type",
+            "maxProperties"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must NOT have more than 1 properties"
+      ]
+    },
+    {
+      "name": "if-then-branch",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "type"
+          },
+          "message": "must have required property 'type'",
+          "schemaPath": "#/then/required",
+          "schema": [
+            "type"
+          ],
+          "parentSchemaKeys": [
+            "required"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "if",
+          "params": {
+            "failingKeyword": "then"
+          },
+          "message": "must match \"then\" schema",
+          "schemaPath": "#/if",
+          "schema": {
+            "required": [
+              "kind"
+            ]
+          },
+          "parentSchemaKeys": [
+            "type",
+            "if",
+            "then",
+            "else"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'type'",
+        "must match \"then\" schema"
+      ]
+    },
+    {
+      "name": "if-else-branch",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "name"
+          },
+          "message": "must have required property 'name'",
+          "schemaPath": "#/else/required",
+          "schema": [
+            "name"
+          ],
+          "parentSchemaKeys": [
+            "required"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "if",
+          "params": {
+            "failingKeyword": "else"
+          },
+          "message": "must match \"else\" schema",
+          "schemaPath": "#/if",
+          "schema": {
+            "required": [
+              "kind"
+            ]
+          },
+          "parentSchemaKeys": [
+            "type",
+            "if",
+            "then",
+            "else"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'name'",
+        "must match \"else\" schema"
+      ]
+    },
+    {
+      "name": "dependent-schemas",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "params": {
+            "missingProperty": "b"
+          },
+          "message": "must have required property 'b'",
+          "schemaPath": "#/dependentSchemas/a/required",
+          "schema": [
+            "b"
+          ],
+          "parentSchemaKeys": [
+            "required"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "must have required property 'b'"
+      ]
+    },
+    {
+      "name": "exclusive-minimum",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "exclusiveMinimum",
+          "params": {
+            "comparison": ">",
+            "limit": 0
+          },
+          "message": "must be > 0",
+          "schemaPath": "#/properties/n/exclusiveMinimum",
+          "schema": 0,
+          "parentSchemaKeys": [
+            "type",
+            "exclusiveMinimum"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "must be > 0"
+      ]
+    },
+    {
+      "name": "maximum",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "maximum",
+          "params": {
+            "comparison": "<=",
+            "limit": 5
+          },
+          "message": "must be <= 5",
+          "schemaPath": "#/properties/n/maximum",
+          "schema": 5,
+          "parentSchemaKeys": [
+            "maximum"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "must be <= 5"
+      ]
+    },
+    {
+      "name": "min-contains",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags",
+            1
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/tags/contains/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "contains",
+          "params": {
+            "minContains": 2
+          },
+          "message": "must contain at least 2 valid item(s)",
+          "schemaPath": "#/properties/tags/contains",
+          "schema": {
+            "type": "string"
+          },
+          "parentSchemaKeys": [
+            "type",
+            "contains",
+            "minContains"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ],
+        [
+          "tags",
+          1
+        ]
+      ],
+      "sorted_messages": [
+        "must contain at least 2 valid item(s)",
+        "must be string"
+      ]
+    },
+    {
+      "name": "type-number-bool",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "number"
+          },
+          "message": "must be number",
+          "schemaPath": "#/properties/n/type",
+          "schema": "number",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "must be number"
+      ]
+    },
+    {
+      "name": "integer-integral-float",
+      "compiled": true,
+      "raw": [],
+      "is_valid": true,
+      "sorted_paths": [],
+      "sorted_messages": []
+    },
+    {
+      "name": "one-of-three-matches",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "params": {
+            "passingSchemas": [
+              0,
+              1
+            ]
+          },
+          "message": "must match exactly one schema in oneOf",
+          "schemaPath": "#/properties/value/oneOf",
+          "schema": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "number",
+              "maximum": 100
+            }
+          ],
+          "parentSchemaKeys": [
+            "oneOf"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "must match exactly one schema in oneOf"
+      ]
+    },
+    {
+      "name": "min-items-two",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "minItems",
+          "params": {
+            "limit": 2
+          },
+          "message": "must NOT have fewer than 2 items",
+          "schemaPath": "#/properties/tags/minItems",
+          "schema": 2,
+          "parentSchemaKeys": [
+            "type",
+            "minItems"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "must NOT have fewer than 2 items"
+      ]
+    },
+    {
+      "name": "max-contains",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "contains",
+          "params": {
+            "minContains": 1,
+            "maxContains": 1
+          },
+          "message": "must contain at least 1 and no more than 1 valid item(s)",
+          "schemaPath": "#/properties/tags/contains",
+          "schema": {
+            "type": "string"
+          },
+          "parentSchemaKeys": [
+            "type",
+            "contains",
+            "maxContains"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "must contain at least 1 and no more than 1 valid item(s)"
+      ]
+    },
+    {
+      "name": "tuple-items-prefix-items",
+      "compiled": true,
+      "raw": [
+        {
+          "path": [
+            "pair",
+            0
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "string"
+          },
+          "message": "must be string",
+          "schemaPath": "#/properties/pair/prefixItems/0/type",
+          "schema": "string",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        },
+        {
+          "path": [
+            "pair",
+            1
+          ],
+          "keyword": "type",
+          "params": {
+            "type": "integer"
+          },
+          "message": "must be integer",
+          "schemaPath": "#/properties/pair/prefixItems/1/type",
+          "schema": "integer",
+          "parentSchemaKeys": [
+            "type"
+          ]
+        }
+      ],
+      "is_valid": false,
+      "sorted_paths": [
+        [
+          "pair",
+          0
+        ],
+        [
+          "pair",
+          1
+        ]
+      ],
+      "sorted_messages": [
+        "must be string",
+        "must be integer"
+      ]
+    }
+  ]
+}

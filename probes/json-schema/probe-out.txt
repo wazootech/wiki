@@ -1,0 +1,297 @@
+
+== required-single
+   messages:
+      jsonschema: ["'familyName' is a required property"]
+      ajv:        ["must have required property 'familyName'"]
+
+== required-all-missing
+   messages:
+      jsonschema: ["'headline' is a required property","'description' is a required property"]
+      ajv:        ["must have required property 'headline'","must have required property 'description'"]
+
+== required-list-order
+   messages:
+      jsonschema: ["'zeta' is a required property","'alpha' is a required property","'mu' is a required property"]
+      ajv:        ["must have required property 'zeta'","must have required property 'alpha'","must have required property 'mu'"]
+
+== required-and-type-same-object
+   messages:
+      jsonschema: ["'count' is a required property"]
+      ajv:        ["must have required property 'count'"]
+
+== type-string-got-string
+   messages:
+      jsonschema: ["'seven' is not of type 'integer'"]
+      ajv:        ["must be integer"]
+
+== type-union
+   messages:
+      jsonschema: ["7 is not of type 'string', 'null'"]
+      ajv:        ["must be string,null"]
+
+== type-bool-is-not-integer
+   messages:
+      jsonschema: ["True is not of type 'integer'"]
+      ajv:        ["must be integer"]
+
+== type-null
+   messages:
+      jsonschema: ["None is not of type 'string'"]
+      ajv:        ["must be string"]
+
+== type-float-integer
+   messages:
+      jsonschema: ["1.5 is not of type 'integer'"]
+      ajv:        ["must be integer"]
+
+== type-array-and-object
+   messages:
+      jsonschema: ["[1, 2] is not of type 'string'","'no' is not of type 'object'"]
+      ajv:        ["must be string","must be object"]
+
+== min-length-string
+   messages:
+      jsonschema: ["'ab' is too short"]
+      ajv:        ["must NOT have fewer than 3 characters"]
+
+== max-length-string
+   messages:
+      jsonschema: ["'abcd' is too long"]
+      ajv:        ["must NOT have more than 3 characters"]
+
+== pattern-mismatch
+   messages:
+      jsonschema: ["'Not A Slug' does not match '^[a-z]+(-[a-z]+)*$'"]
+      ajv:        ["must match pattern \"^[a-z]+(-[a-z]+)*$\""]
+
+== min-length-array
+   messages:
+      jsonschema: ["[] should be non-empty"]
+      ajv:        ["must NOT have fewer than 1 items"]
+
+== max-items-array
+   messages:
+      jsonschema: ["['a', 'b', 'c'] is too long"]
+      ajv:        ["must NOT have more than 2 items"]
+
+== unique-items
+   messages:
+      jsonschema: ["['a', 'a'] has non-unique elements"]
+      ajv:        ["must NOT have duplicate items (items ## 0 and 1 are identical)"]
+
+== items-nested-path
+   messages:
+      jsonschema: ["'name' is a required property","5 is not of type 'string'"]
+      ajv:        ["must have required property 'name'","must be string"]
+
+== enum-mismatch
+   messages:
+      jsonschema: ["'archived' is not one of ['draft', 'published']"]
+      ajv:        ["must be equal to one of the allowed values"]
+
+== const-mismatch
+   messages:
+      jsonschema: ["'page' was expected"]
+      ajv:        ["must be equal to constant"]
+
+== minimum-number
+   messages:
+      jsonschema: ["-1 is less than the minimum of 0"]
+      ajv:        ["must be >= 0"]
+
+== exclusive-maximum
+   messages:
+      jsonschema: ["10 is greater than or equal to the maximum of 10"]
+      ajv:        ["must be < 10"]
+
+== multiple-of
+   messages:
+      jsonschema: ["7 is not a multiple of 5"]
+      ajv:        ["must be multiple of 5"]
+
+== additional-properties
+   paths: jsonschema=[[]] ajv=[[],[]]
+   messages:
+      jsonschema: ["Additional properties are not allowed ('another', 'stray' were unexpected)"]
+      ajv:        ["must NOT have additional properties","must NOT have additional properties"]
+
+== additional-properties-pattern
+   messages:
+      jsonschema: ["1 is not of type 'string'"]
+      ajv:        ["must be string"]
+
+== any-of-none-match
+   paths: jsonschema=[["value"]] ajv=[["value"],["value"],["value"]]
+   messages:
+      jsonschema: ["True is not valid under any of the given schemas"]
+      ajv:        ["must be string","must be number","must match a schema in anyOf"]
+
+== one-of-none-match
+   paths: jsonschema=[["value"]] ajv=[["value"],["value"],["value"]]
+   messages:
+      jsonschema: ["[] is not valid under any of the given schemas"]
+      ajv:        ["must be string","must be number","must match exactly one schema in oneOf"]
+
+== one-of-multiple-match
+   messages:
+      jsonschema: ["5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number'}"]
+      ajv:        ["must match exactly one schema in oneOf"]
+
+== all-of-failure
+   messages:
+      jsonschema: ["'abc' is too short"]
+      ajv:        ["must NOT have fewer than 5 characters"]
+
+== not-failure
+   messages:
+      jsonschema: ["'a string' should not be valid under {'type': 'string'}"]
+      ajv:        ["must NOT be valid"]
+
+== local-defs-ref
+   messages:
+      jsonschema: ["'name' is a required property"]
+      ajv:        ["must have required property 'name'"]
+
+== top-level-required-and-nested-error-order
+   messages:
+      jsonschema: ["'type' is a required property","'name' is a required property","3 is not of type 'string'"]
+      ajv:        ["must have required property 'type'","must have required property 'name'","must be string"]
+
+== type-key-after-properties-key
+   messages:
+      jsonschema: ["'y' is a required property","1 was expected"]
+      ajv:        ["must have required property 'y'","must be equal to constant"]
+
+== instance-root-not-object
+   messages:
+      jsonschema: ["'a string' is not of type 'object'"]
+      ajv:        ["must be object"]
+
+== false-schema
+   paths: jsonschema=[[]] ajv=[["x"]]
+   messages:
+      jsonschema: ["False schema does not allow 1"]
+      ajv:        ["boolean schema is false"]
+
+== dependant-required
+   messages:
+      jsonschema: ["'billing_address' is a dependency of 'credit_card'"]
+      ajv:        ["must have property billing_address when property credit_card is present"]
+
+== contains-keyword
+   paths: jsonschema=[["tags"]] ajv=[["tags"],["tags",0],["tags",1]]
+   messages:
+      jsonschema: ["['a', 'b'] does not contain items matching the given schema"]
+      ajv:        ["must contain at least 1 valid item(s)","must be equal to constant","must be equal to constant"]
+
+== property-names-pattern
+   paths: jsonschema=[[],[]] ajv=[[],[],[],[]]
+   messages:
+      jsonschema: ["'Good' does not match '^[a-z]+$'","'BAD' does not match '^[a-z]+$'"]
+      ajv:        ["must match pattern \"^[a-z]+$\"","property name must be valid","must match pattern \"^[a-z]+$\"","property name must be valid"]
+
+== unevaluated-properties
+   messages:
+      jsonschema: ["Unevaluated properties are not allowed ('b' was unexpected)"]
+      ajv:        ["must NOT have unevaluated properties"]
+
+== decimal-boundary-multiple
+   messages:
+      jsonschema: ["0.3 is not a multiple of 0.1"]
+      ajv:        ["must be multiple of 0.1"]
+
+== invalid-schema-keyword-type
+   raised: jsonschema=UnknownType: Unknown type 'not a type' for validator with schema:
+    {'type': 'not a type'}
+
+While checking instance:
+    1 ajv=-
+   ajv compile: Error: schema is invalid: data/properties/x/type must be equal to one of the allowed values, data/properties/x/type must be array, data/properties/x/type must match a schema in anyOf
+
+== invalid-schema-minimum-string
+   raised: jsonschema=TypeError: '<' not supported between instances of 'int' and 'str' ajv=-
+   ajv compile: Error: schema is invalid: data/properties/x/minimum must be number
+
+== unresolvable-ref
+   raised: jsonschema=_WrappedReferencingError: Unresolvable: https://example.org/absent.json ajv=-
+   ajv compile: Error: can't resolve reference https://example.org/absent.json from id #
+
+== order-additional-then-required
+   messages:
+      jsonschema: ["Additional properties are not allowed ('b' was unexpected)","'a' is a required property"]
+      ajv:        ["must have required property 'a'","must NOT have additional properties"]
+
+== order-required-then-additional
+   messages:
+      jsonschema: ["'a' is a required property","Additional properties are not allowed ('b' was unexpected)"]
+      ajv:        ["must have required property 'a'","must NOT have additional properties"]
+
+== min-properties
+   messages:
+      jsonschema: ["{'a': 1} does not have enough properties"]
+      ajv:        ["must NOT have fewer than 2 properties"]
+
+== max-properties
+   messages:
+      jsonschema: ["{'a': 1, 'b': 2} has too many properties"]
+      ajv:        ["must NOT have more than 1 properties"]
+
+== if-then-branch
+   paths: jsonschema=[[]] ajv=[[],[]]
+   messages:
+      jsonschema: ["'type' is a required property"]
+      ajv:        ["must have required property 'type'","must match \"then\" schema"]
+
+== if-else-branch
+   paths: jsonschema=[[]] ajv=[[],[]]
+   messages:
+      jsonschema: ["'name' is a required property"]
+      ajv:        ["must have required property 'name'","must match \"else\" schema"]
+
+== dependent-schemas
+   messages:
+      jsonschema: ["'b' is a required property"]
+      ajv:        ["must have required property 'b'"]
+
+== exclusive-minimum
+   messages:
+      jsonschema: ["0 is less than or equal to the minimum of 0"]
+      ajv:        ["must be > 0"]
+
+== maximum
+   messages:
+      jsonschema: ["9 is greater than the maximum of 5"]
+      ajv:        ["must be <= 5"]
+
+== min-contains
+   paths: jsonschema=[["tags"]] ajv=[["tags"],["tags",1]]
+   messages:
+      jsonschema: ["Too few items match the given schema (expected at least 2 but only 1 matched)"]
+      ajv:        ["must contain at least 2 valid item(s)","must be string"]
+
+== type-number-bool
+   messages:
+      jsonschema: ["True is not of type 'number'"]
+      ajv:        ["must be number"]
+
+== one-of-three-matches
+   messages:
+      jsonschema: ["5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number', 'maximum': 100}, {'type': 'number'}"]
+      ajv:        ["must match exactly one schema in oneOf"]
+
+== min-items-two
+   messages:
+      jsonschema: ["['a'] is too short"]
+      ajv:        ["must NOT have fewer than 2 items"]
+
+== max-contains
+   messages:
+      jsonschema: ["Too many items match the given schema (expected at most 1)"]
+      ajv:        ["must contain at least 1 and no more than 1 valid item(s)"]
+
+== tuple-items-prefix-items
+   messages:
+      jsonschema: ["7 is not of type 'string'","'x' is not of type 'integer'"]
+      ajv:        ["must be string","must be integer"]
+
+63 cases · verdict agrees 63 · paths agree 54 · messages agree 9 · structural/other 15
