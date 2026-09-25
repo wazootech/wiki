@@ -29,7 +29,7 @@
  */
 
 import type { Config } from "./config.ts";
-import { Path, sortedRglob } from "./fspath.ts";
+import { type Path, sortedRglob } from "./fspath.ts";
 import {
   isExternalLink,
   normalizePosixPath,
