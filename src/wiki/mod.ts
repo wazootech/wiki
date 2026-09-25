@@ -291,3 +291,16 @@ export {
   wikiManifest,
   type WikiManifestEntry,
 } from "./graph_cache.ts";
+export { DocumentBatch } from "./batch.ts";
+export { resolve as resolveSources } from "./sources.ts";
+export {
+  exitAuditReport,
+  exitCheckResults,
+  printCheckMessages,
+} from "./cli_output.ts";
+export {
+  type GraphOptions,
+  resolveRuntimeConfig,
+  type RuntimeOverrides,
+  Wiki,
+} from "./wiki.ts";

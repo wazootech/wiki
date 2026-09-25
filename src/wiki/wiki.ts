@@ -1,0 +1,248 @@
+/**
+ * The `Wiki` session: config, graph lifecycle, and the operations built on them.
+ *
+ * Port of `wiki.py`, up to and including the audit commands. What is here is the
+ * spine — {@link Wiki.load}, the graph accessors, {@link Wiki.check},
+ * {@link Wiki.lint}, and {@link Wiki.preflight} — because that is what `check`
+ * and `lint` need to be callable end to end.
+ *
+ * Deliberately absent, each because its dependency is unported rather than
+ * because it was skipped: `build` (`publish.py`), `format` (`fmt_util`), `render`
+ * (`render.py`), `export` (`format.py`), `link` (`link_fix`/`link_suggest`),
+ * `query` (`format`/`jqfilter`), `serve` (`serve.py`), and `init`
+ * (`init_scaffold.py`). The Python module's `__init__` is two assignments; the
+ * shape of a `Wiki` is `config` plus `config_path`, and callers that only audit
+ * never touch the rest.
+ *
+ * Two port decisions are worth stating because they are visible from outside:
+ *
+ * - **`preflight()` is `async`, and `check()` with it.** `check_shacl_all` reads
+ *   the graph through `fetch`-capable loaders, so the sync/async split moves one
+ *   level up from `audit.ts`. `lint()` stays synchronous, which is what keeps
+ *   the common path — `wiki lint` over a corpus — free of await plumbing.
+ * - **Runtime overrides rebuild the config rather than mutating a copy of it.**
+ *   Python's `model_copy(deep=True)` is pydantic machinery; {@link copyConfig}
+ *   states what the copy actually has to guarantee (a new `site` and `wiki`
+ *   block, everything else shared) instead of deep-cloning class instances that
+ *   carry a `Path` and a `Logger` with them.
+ *
+ * `Wiki.load` resolves locked sources before it returns, so a wiki with a
+ * `wiki.lock` loads the same corpus the oracle would. A source whose cache is
+ * missing warns and is skipped; see `sources.ts`.
+ */
+
+import { mergeResults, runCheck, runLint } from "./audit.ts";
+import { DocumentBatch } from "./batch.ts";
+import { Config, findConfigPath } from "./config.ts";
+import { Path } from "./fspath.ts";
+import { graphDescriptors, loadDataset, loadGraph } from "./graph.ts";
+import type { RdfDataset, RdfGraph } from "./rdf.ts";
+import { resolve as resolveSources } from "./sources.ts";
+import type { GraphDescriptor } from "./schemas/sources.ts";
+import type { AuditReport } from "./schemas/reports.ts";
+
+export { usesNamedGraphs } from "./graph.ts";
+
+/** Options shared by the graph accessors. */
+export interface GraphOptions {
+  readonly infer?: boolean;
+  readonly reload?: boolean;
+  readonly diskCache?: boolean;
+}
+
+/** The two `site:` values a session can override at run time. */
+export interface RuntimeOverrides {
+  readonly baseUrl?: string | null;
+  readonly urlStyle?: string | null;
+}
+
+/**
+ * A copy of `config` with one or more top-level blocks replaced.
+ *
+ * The copy is made with `Object.create` so that the class's methods survive —
+ * `Config.isExcluded` is called on every document scan — and shares every block
+ * it is not asked to replace. Sharing is safe for the blocks that are already
+ * immutable in practice (`graph`, `link`, `check`, `lint`) and is *not* safe for
+ * `wiki.input`, which is why `Wiki.load` builds that list before copying rather
+ * than appending to a shared one.
+ */
+function copyConfig(
+  config: Config,
+  blocks: { readonly wiki?: Config["wiki"]; readonly site?: Config["site"] },
+): Config {
+  const copy = Object.create(Config.prototype) as Config;
+  Object.assign(
+    copy,
+    config,
+    blocks.wiki === undefined ? {} : { wiki: blocks.wiki },
+    blocks.site === undefined ? {} : { site: blocks.site },
+  );
+  return copy;
+}
+
+/**
+ * Apply the runtime `site:` overrides `_resolve_runtime_config` applies.
+ *
+ * `base_url` is right-stripped of `/` because every URL builder appends its own
+ * separator; `url_style` is taken as given, since it is validated where the
+ * config is loaded.
+ */
+export function resolveRuntimeConfig(
+  config: Config,
+  overrides: RuntimeOverrides = {},
+): Config {
+  const site = { ...config.site };
+  let changed = false;
+  if (overrides.baseUrl !== undefined && overrides.baseUrl !== null) {
+    site.base_url = overrides.baseUrl.replace(/\/+$/, "");
+    changed = true;
+  }
+  if (overrides.urlStyle !== undefined && overrides.urlStyle !== null) {
+    site.url_style = overrides.urlStyle;
+    changed = true;
+  }
+  return changed ? copyConfig(config, { site }) : config;
+}
+
+/** Loaded wiki configuration and graph session for library operations. */
+export class Wiki {
+  readonly config: Config;
+  readonly config_path: Path | null;
+
+  constructor(config: Config, configPath: Path | null = null) {
+    this.config = config;
+    this.config_path = configPath;
+  }
+
+  /**
+   * Load a wiki from a config file or a directory holding one.
+   *
+   * `wikiInputs` overrides `wiki.input`, and relative entries resolve against
+   * the config root the way a config file's own entries do. Locked sources are
+   * then appended, since a source contributes documents to the same corpus.
+   */
+  static load(
+    configPath: string | Path,
+    options: { readonly wikiInputs?: readonly string[] | null } = {},
+  ): Wiki {
+    const path = configPath instanceof Path ? configPath : new Path(configPath);
+    const resolvedConfigPath = findConfigPath(path);
+    const config = Config.load(path);
+
+    const inputs: Path[] = [...config.wiki.input];
+    const wikiInputs = options.wikiInputs ?? null;
+    if (wikiInputs !== null && wikiInputs.length > 0) {
+      inputs.length = 0;
+      for (const entry of wikiInputs) {
+        const candidate = new Path(entry);
+        inputs.push(
+          candidate.isAbsolute()
+            ? candidate
+            : config.config_root.joinpath(candidate),
+        );
+      }
+    }
+
+    let current = inputs.length === config.wiki.input.length &&
+        inputs.every((path, index) => path === config.wiki.input[index])
+      ? config
+      : copyConfig(config, { wiki: { ...config.wiki, input: inputs } });
+
+    // A resolved path that is already an input is not added twice: a config can
+    // name the same directory as a source and as `wiki.input` after a hand edit.
+    // Comparison is on the path string, which is what Python's `set` of paths
+    // does for two paths spelled the same way.
+    const existing = new Set(current.wiki.input.map((path) => path.toString()));
+    const fromSources: Path[] = [];
+    for (const resolved of resolveSources(current)) {
+      const key = resolved.toString();
+      if (existing.has(key)) continue;
+      existing.add(key);
+      fromSources.push(resolved);
+    }
+    if (fromSources.length > 0) {
+      current = copyConfig(current, {
+        wiki: {
+          ...current.wiki,
+          input: [...current.wiki.input, ...fromSources],
+        },
+      });
+    }
+
+    return new Wiki(current, resolvedConfigPath);
+  }
+
+  /** A copy of this session with runtime `site:` overrides applied. */
+  withRuntime(overrides: RuntimeOverrides = {}): Wiki {
+    return new Wiki(
+      resolveRuntimeConfig(this.config, overrides),
+      this.config_path,
+    );
+  }
+
+  /** The wiki's RDF graph, inferred by default. */
+  graph(options: GraphOptions = {}): Promise<RdfGraph> {
+    return loadGraph(this.config, {
+      infer: options.infer ?? true,
+      reload: options.reload ?? false,
+      diskCache: options.diskCache ?? false,
+    });
+  }
+
+  /** A read-only dataset with stable named graphs. */
+  dataset(options: GraphOptions = {}): Promise<RdfDataset> {
+    return loadDataset(this.config, {
+      infer: options.infer ?? true,
+      reload: options.reload ?? false,
+      diskCache: options.diskCache ?? false,
+    });
+  }
+
+  /** Named graph descriptors for the root corpus and installed sources. */
+  graphs(): GraphDescriptor[] {
+    return graphDescriptors(this.config);
+  }
+
+  /**
+   * Run the integrity checks: SHACL, JSON Schema, routes, collisions, layout.
+   *
+   * With `files`, the pass is scoped to those documents and skips the whole-wiki
+   * SHACL validation; without it, the wiki is validated as one graph. `strict`
+   * promotes warnings to errors, which is what makes the exit code 1 rather than
+   * 0 for a wiki whose only findings are advisory.
+   */
+  async check(
+    files?: readonly Path[] | null,
+    options: { readonly strict?: boolean } = {},
+  ): Promise<AuditReport> {
+    const batch = new DocumentBatch(this.config, files ?? null);
+    const fileFilter = batch.routeFilter();
+    const filePaths = batch.documentPaths();
+    let report = filePaths !== null
+      ? await runCheck(this.config, { fileFilter, filePaths })
+      : await runCheck(this.config, { fileFilter });
+    if (options.strict ?? false) report = report.applyStrict();
+    return report;
+  }
+
+  /** Run the convention audits: links, filenames, headings, link style. */
+  lint(
+    files?: readonly Path[] | null,
+    options: { readonly strict?: boolean } = {},
+  ): AuditReport {
+    const batch = new DocumentBatch(this.config, files ?? null);
+    let report = runLint(this.config, batch.routeFilter());
+    if (options.strict ?? false) report = report.applyStrict();
+    return report;
+  }
+
+  /**
+   * Lint then check, merged — the order `build`'s preflight uses.
+   *
+   * `lint` first is not arbitrary: convention findings are cheaper to fix and
+   * often *cause* the integrity findings a user would otherwise chase.
+   */
+  async preflight(): Promise<AuditReport> {
+    return mergeResults(this.lint(), await this.check());
+  }
+}

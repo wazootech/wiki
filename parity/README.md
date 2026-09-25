@@ -49,6 +49,16 @@ reading in a diff.
 Re-record a `known` divergence with `--update`, and review the transcript diff
 before committing it.
 
+The first recorded divergence is **`check-micro`**, and it is irreducible rather
+than pending: both sides find the same one violation of the same constraint on
+the same focus node and exit 1, but `pyshacl`'s `results_text` renders terms the
+way `rdflib` does — `sh:Violation` prefix-compacted, the source shape expanded
+into a blank-node description carrying pyshacl's own `owl:sameAs <self>` marker
+— while the port renders N-Triples. What the transcript gates is everything
+*around* that: the header, the result count, the constraint component, the
+message, and the exit code all still have to match. `check-docs` stays a gate
+because the clean corpus has no report text to render.
+
 ## Corpora
 
 | Corpus | What it is | Why |

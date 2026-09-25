@@ -61,18 +61,40 @@ export const CASES: readonly ParityCase[] = [
     note: "full group help is ported in phase 9 (cliffy)",
   },
   {
+    // Ported, and deliberately *not* a gate: the only finding on this corpus is
+    // a SHACL violation, and `results_text` is `pyshacl`'s rendering of the
+    // report — `sh:Violation` prefix-compacted, the source shape as an expanded
+    // blank-node description carrying pyshacl's `owl:sameAs <self>` marker. The
+    // port reproduces the skeleton and renders terms as N-Triples (see
+    // `shacl.ts`), so the divergence is confined to term syntax and recorded as
+    // a transcript rather than chased. What the transcript does gate is that
+    // both sides still *find* the violation, report one result, and exit 1.
     id: "check-micro",
     corpus: "micro",
     argv: micro("check", "--strict", "-v"),
-    status: "pending",
-    note: "check is ported in phase 6 (validation/audit)",
+    status: "known",
+    note: "SHACL report text: skeleton identical, terms rendered as N-Triples",
   },
   {
     id: "lint-micro",
     corpus: "micro",
     argv: micro("lint", "--strict", "-v"),
-    status: "pending",
-    note: "lint is ported in phase 6 (validation/audit)",
+    status: "parity",
+  },
+  {
+    // The same two commands over the *clean* corpus, where the target is the
+    // opposite: no findings and exit 0. Promoted in phase 6, and the match is
+    // not vacuous — both engines walk all 87 pages of this wiki.
+    id: "check-docs",
+    corpus: "docs",
+    argv: docs("check", "--strict", "-v"),
+    status: "parity",
+  },
+  {
+    id: "lint-docs",
+    corpus: "docs",
+    argv: docs("lint", "--strict", "-v"),
+    status: "parity",
   },
   {
     id: "fmt-check-micro",
@@ -132,21 +154,7 @@ export const CASES: readonly ParityCase[] = [
     note: "link is ported in phase 8",
   },
 
-  // --- The repository's own wiki: the oracle must stay silent ----------------
-  {
-    id: "check-docs",
-    corpus: "docs",
-    argv: docs("check", "--strict", "-v"),
-    status: "pending",
-    note: "docs wiki is clean; the target is exit 0 with no findings",
-  },
-  {
-    id: "lint-docs",
-    corpus: "docs",
-    argv: docs("lint", "--strict", "-v"),
-    status: "pending",
-    note: "docs wiki is clean; the target is exit 0 with no findings",
-  },
+  // --- The repository's own wiki: formatting and rendering still owed --------
   {
     id: "fmt-check-docs",
     corpus: "docs",
