@@ -19,6 +19,7 @@
     "npm:@rdfjs/types@^2.0.1": "2.0.1",
     "npm:@types/node@24": "24.13.6",
     "npm:@zazuko/env-node@3": "3.1.0_@types+rdfjs__fetch-lite@3.0.11_@types+rdfjs__formats@4.0.1_@rdfjs+types@2.0.1_@types+clownface@2.0.10_@types+rdf-dataset-ext@1.0.8_@types+rdfjs__data-model@2.0.9_@types+rdfjs__dataset@2.0.7_@types+rdfjs__environment@1.0.0_@types+rdfjs__namespace@2.0.10_@types+rdfjs__term-map@2.0.10_@types+rdfjs__term-set@2.0.9_@types+rdfjs__traverser@0.1.5",
+    "npm:@zazuko/env@3": "3.0.1_@rdfjs+types@2.0.1_@types+clownface@2.0.10_@types+rdf-dataset-ext@1.0.8_@types+rdfjs__data-model@2.0.9_@types+rdfjs__dataset@2.0.7_@types+rdfjs__environment@1.0.0_@types+rdfjs__formats@4.0.1_@types+rdfjs__namespace@2.0.10_@types+rdfjs__term-map@2.0.10_@types+rdfjs__term-set@2.0.9_@types+rdfjs__traverser@0.1.5",
     "npm:ajv@^8.17.1": "8.20.0",
     "npm:esbuild@0.28.1": "0.28.1",
     "npm:eslint@^9.20.0": "9.39.5",
@@ -27,6 +28,7 @@
     "npm:markdown-it@^14.1.0": "14.3.2",
     "npm:n3@2": "2.7.12",
     "npm:prettier@^3.9.5": "3.9.9",
+    "npm:rdf-validate-shacl@0.6.5": "0.6.5",
     "npm:rdfjs-inference-engine@0.2.2": "0.2.2",
     "npm:tsup@^8.3.0": "8.5.1_typescript@5.9.3",
     "npm:typedoc@0.28": "0.28.20_typescript@5.9.3",
@@ -943,6 +945,12 @@
         "eslint-visitor-keys@5.0.1"
       ]
     },
+    "@vocabulary/sh@1.1.6_@rdfjs+types@2.0.1": {
+      "integrity": "sha512-8IfAQoKh57THz8LA2+n1jaY/VC2XaqMNSsJgzBKSSrj20y5PSMAawb6dMsxoLxqDIPBDs1TFRl/9CijUnwbBUA==",
+      "dependencies": [
+        "@rdfjs/types"
+      ]
+    },
     "@zazuko/env-core@1.1.2_@types+rdfjs__environment@1.0.0": {
       "integrity": "sha512-mnLG40utuT7jPBPLs6fJ0puhfagnXSj+S8t9+zUGs3YlrOq/7b2zr64Hi3p3etwDdApaQ0VgQuNIY9doaruS1Q==",
       "dependencies": [
@@ -1776,12 +1784,42 @@
       ],
       "deprecated": true
     },
+    "rdf-literal@2.0.0": {
+      "integrity": "sha512-jlQ+h7EvnXmncmk8OzOYR8T3gNfd4g0LQXbflHkEkancic8dh0Tdt5RiRq8vUFndjIeNHt1RWeA5TAj6rgrtng==",
+      "dependencies": [
+        "rdf-data-factory"
+      ]
+    },
     "rdf-parser-ts@0.2.6": {
       "integrity": "sha512-PGG/oEzp6RCImrmT6nX9pQPOusGqmlweV/RndC+XQrRZUZKvEV6JgXEt44n1n+fQVQ5MUb/ZSYKBHoN8ZHjxCw==",
       "dependencies": [
         "@rdfjs/types"
       ],
       "bin": true
+    },
+    "rdf-validate-datatype@0.2.2": {
+      "integrity": "sha512-mH9qL8i0WBbZ6HJCA26BB6V+WV2MraKvitez3SV0QegBWVQ4wYO49CgfFBzoAYg6tlnhFXl9MkrOAQ07X2N1FA==",
+      "dependencies": [
+        "@rdfjs/term-map",
+        "@tpluscode/rdf-ns-builders"
+      ]
+    },
+    "rdf-validate-shacl@0.6.5": {
+      "integrity": "sha512-rwIibopSixDE8ecA9x0c7oTVxdMWxGiJh7h3uJ+WS2h4lq2nx3DZVO7rJvwa5kZpDq9QEFPoyZINAUyfaaoN4Q==",
+      "dependencies": [
+        "@rdfjs/data-model",
+        "@rdfjs/dataset",
+        "@rdfjs/environment",
+        "@rdfjs/namespace",
+        "@rdfjs/term-set",
+        "@rdfjs/types",
+        "@vocabulary/sh",
+        "clownface",
+        "debug",
+        "rdf-dataset-ext",
+        "rdf-literal",
+        "rdf-validate-datatype"
+      ]
     },
     "rdfjs-inference-engine@0.2.2": {
       "integrity": "sha512-m4kZxjUXmGOrJe6+85tnsQHUsEvzlR3r3TB95taQLAbukn+aTxicsQkXdgKcEMY8Fd1cslCj7zI7hb/zUe/Zgw==",
@@ -2081,9 +2119,11 @@
       "jsr:@wazoo/sparql-engine@0.4.2",
       "npm:@rdfjs/types@^2.0.1",
       "npm:@zazuko/env-node@3",
+      "npm:@zazuko/env@3",
       "npm:ajv@^8.17.1",
       "npm:markdown-it@^14.1.0",
       "npm:n3@2",
+      "npm:rdf-validate-shacl@0.6.5",
       "npm:rdfjs-inference-engine@0.2.2"
     ],
     "packageJson": {
