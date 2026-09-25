@@ -42,7 +42,7 @@ export interface Heading {
  * `#early-life-1` fragment means.
  */
 export class GitHubHeadingSlugger {
-  readonly seen = new Map<string, number>();
+  readonly seen: Map<string, number> = new Map();
 
   slug(title: string): string {
     const normalized = pyStripMd(title.normalize("NFKD")).toLowerCase();
