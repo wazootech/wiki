@@ -177,6 +177,25 @@ export {
 } from "./graph.ts";
 export { applyInference } from "./infer.ts";
 export {
+  buildTypeSchemaRegistry,
+  checkFrontmatterSchema,
+  coerceSchemaRefs,
+  isRemoteSchemaRef,
+  isSchemaBindingDocument,
+  JSON_SCHEMA_KEY,
+  localSchemaIsValid,
+  MAX_SCHEMA_BYTES,
+  normalizeTypeUri,
+  REMOTE_FETCH_TIMEOUT,
+  resolveLocalSchemaPath,
+  type SchemaIssues,
+  SchemaLoader,
+  type SchemaLoaderOptions,
+  schemaPathWithinRoot,
+  TARGET_CLASS_KEY,
+  validationPayload,
+} from "./frontmatter_schema.ts";
+export {
   JsonSchemaCompileError,
   type JsonSchemaError,
   JsonSchemaValidator,
