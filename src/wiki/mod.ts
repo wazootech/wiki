@@ -245,6 +245,41 @@ export {
   sortByInstancePath,
 } from "./json_schema.ts";
 export {
+  checkShaclAll,
+  checkShaclFile,
+  formatReport,
+  loadShapes,
+  type ShaclOutcome,
+  validateShacl,
+} from "./shacl.ts";
+export {
+  applyIssues,
+  checkLayoutFrontmatter,
+  collectBrokenLinks,
+  formatBrokenLink,
+  headingPlainText,
+  lintBrokenLinks,
+  lintDuplicateHeadings,
+  lintFilenames,
+  lintHeadingLevels,
+  lintHeadings,
+  lintLinkStyle,
+  lintThematicBreaks,
+  mergeResults,
+  runCheck,
+  type RunCheckOptions,
+  runLint,
+  titleCaseWordsAfterFirst,
+} from "./audit.ts";
+export {
+  pyCasefold,
+  pyIsDigit,
+  pyIsLower,
+  pyIsUpper,
+  pySplitWhitespace,
+  pyStripChars,
+} from "./pystr.ts";
+export {
   cacheDir,
   canonicalJson,
   clearAllProcessGraphs,
