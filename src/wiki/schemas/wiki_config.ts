@@ -323,7 +323,9 @@ export function parseFmtConfig(
   if (fmtData === null || fmtData === undefined) return null;
   if (isFmtConfig(fmtData)) return fmtData;
 
-  if (isMapping(fmtData)) {
+  // A `Path` is an object, so `isMapping` matches it; Python's `isinstance(dict)`
+  // does not, and the pointer branch below is where a path belongs.
+  if (isMapping(fmtData) && !(fmtData instanceof Path)) {
     const options: Record<string, unknown> = { ...fmtData };
     // mdformat spells "never wrap" as `wrap = "no"`; `false` is the YAML way of
     // writing the same intent, so it is translated rather than rejected.

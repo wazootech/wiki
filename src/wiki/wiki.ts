@@ -1,15 +1,15 @@
 /**
  * The `Wiki` session: config, graph lifecycle, and the operations built on them.
  *
- * Port of `wiki.py`, up to and including the audit commands. What is here is the
- * spine — {@link Wiki.load}, the graph accessors, {@link Wiki.check},
- * {@link Wiki.lint}, and {@link Wiki.preflight} — because that is what `check`
- * and `lint` need to be callable end to end.
+ * Port of `wiki.py`, up to and including `fmt`. What is here is the spine —
+ * {@link Wiki.load}, the graph accessors, {@link Wiki.check}, {@link Wiki.lint},
+ * {@link Wiki.format}, and {@link Wiki.preflight} — because that is what
+ * `check`, `lint`, and `fmt` need to be callable end to end.
  *
  * Deliberately absent, each because its dependency is unported rather than
- * because it was skipped: `build` (`publish.py`), `format` (`fmt_util`), `render`
- * (`render.py`), `export` (`format.py`), `link` (`link_fix`/`link_suggest`),
- * `query` (`format`/`jqfilter`), `serve` (`serve.py`), and `init`
+ * because it was skipped: `build` (`publish.py`), `render` (`render.py`),
+ * `export` (`format.py`), `link` (`link_fix`/`link_suggest`), `query`
+ * (`format`/`jqfilter`), `serve` (`serve.py`), and `init`
  * (`init_scaffold.py`). The Python module's `__init__` is two assignments; the
  * shape of a `Wiki` is `config` plus `config_path`, and callers that only audit
  * never touch the rest.
@@ -20,6 +20,9 @@
  *   the graph through `fetch`-capable loaders, so the sync/async split moves one
  *   level up from `audit.ts`. `lint()` stays synchronous, which is what keeps
  *   the common path — `wiki lint` over a corpus — free of await plumbing.
+ *   {@link Wiki.format} is `async` for an unrelated reason: the formatter is a
+ *   subprocess (`fmt_util.ts`), and a stdin pipe cannot be written
+ *   synchronously.
  * - **Runtime overrides rebuild the config rather than mutating a copy of it.**
  *   Python's `model_copy(deep=True)` is pydantic machinery; {@link copyConfig}
  *   states what the copy actually has to guarantee (a new `site` and `wiki`
@@ -39,7 +42,7 @@ import { graphDescriptors, loadDataset, loadGraph } from "./graph.ts";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import { resolve as resolveSources } from "./sources.ts";
 import type { GraphDescriptor } from "./schemas/sources.ts";
-import type { AuditReport } from "./schemas/reports.ts";
+import type { AuditReport, FmtReport } from "./schemas/reports.ts";
 
 export { usesNamedGraphs } from "./graph.ts";
 
@@ -234,6 +237,20 @@ export class Wiki {
     let report = runLint(this.config, batch.routeFilter());
     if (options.strict ?? false) report = report.applyStrict();
     return report;
+  }
+
+  /**
+   * Format the wiki's markdown pages.
+   *
+   * `check` reports without writing; `verbose` names every file it touched or
+   * found clean. The batch records both, so a `--check` run and a real one
+   * produce the same file list.
+   */
+  format(
+    files?: readonly Path[] | null,
+    options: { readonly check?: boolean; readonly verbose?: boolean } = {},
+  ): Promise<FmtReport> {
+    return new DocumentBatch(this.config, files ?? null).format(options);
   }
 
   /**

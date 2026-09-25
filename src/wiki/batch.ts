@@ -1,9 +1,10 @@
 /**
- * Document selection for commands that take an optional `FILE...` argument.
+ * Document selection and batch formatting for commands that take an optional
+ * `FILE...` argument.
  *
- * Port of `batch.py`, minus `format`. The class exists so that `check`, `lint`,
- * `link`, `render`, `export`, and `fmt` all answer "which files did the user
- * mean?" the same way, and the two answers they need are different:
+ * Port of `batch.py`. The class exists so that `check`, `lint`, `link`,
+ * `render`, `export`, and `fmt` all answer "which files did the user mean?" the
+ * same way, and the two answers they need are different:
  *
  * - {@link DocumentBatch.routeFilter} is a set of *routes*, which is what the
  *   audit's rules filter on; and
@@ -16,14 +17,25 @@
  * parameters default to `None`, and `documentPaths` returns `null` for "whole
  * wiki" because `_run_check` distinguishes absent from empty.
  *
- * `format` is not here yet: it is the only method that needs the markdown
- * formatter, which lands in phase 7 with `fmt_util` and the `deno fmt` probe.
- * Everything it would call (`markdownPaths` and the `FmtReport` shape) already
- * exists.
+ * `format` is the one method that writes to disk, and the only one that is
+ * `async` — the markdown formatter is a subprocess. Its two guards are both
+ * wiki#312 fixes and both matter more than they look:
+ *
+ * - **A page whose frontmatter cannot be parsed is refused, not reformatted.**
+ *   Reformatting a page the engine cannot read is how a broken frontmatter
+ *   block becomes a page with no frontmatter: the formatter sees prose where
+ *   the metadata was. The batch stops at the first such page, leaves it
+ *   untouched, and says which file to fix.
+ * - **The original text is what decides staleness.** `--check` compares the
+ *   formatter's output to the bytes on disk, so a page is "already formatted"
+ *   only if a run would write nothing.
  */
 
 import type { Config } from "./config.ts";
-import type { Path } from "./fspath.ts";
+import { type Path, ValueError } from "./fspath.ts";
+import { formatMarkdown } from "./fmt_util.ts";
+import { frontmatterError, readTextTolerant } from "./parser.ts";
+import type { FmtReport } from "./schemas/reports.ts";
 import {
   iterMarkdownFiles,
   routesFromMarkdownFiles,
@@ -70,4 +82,81 @@ export class DocumentBatch {
     }
     return iterMarkdownFiles(this.#config);
   }
+
+  /**
+   * Format the batch's markdown files and build an {@link FmtReport}.
+   *
+   * With `check`, nothing is written and `ok` means "nothing *would* change";
+   * without it, each changed file is written and counted. Either way a stale
+   * file is recorded, because `--check` and a real run report the same list.
+   */
+  async format(
+    options: { readonly check?: boolean; readonly verbose?: boolean } = {},
+  ): Promise<FmtReport> {
+    const check = options.check ?? false;
+    const verbose = options.verbose ?? false;
+    const staleFiles: Path[] = [];
+    const verboseLines: string[] = [];
+    let formattedCount = 0;
+
+    for (const filePath of this.markdownPaths()) {
+      try {
+        const original = readTextTolerant(filePath);
+        const blocked = frontmatterError(original);
+        if (blocked !== null) {
+          return {
+            ok: false,
+            stale_files: staleFiles,
+            formatted_count: formattedCount,
+            error_message:
+              `Refusing to format ${filePath.name}: its frontmatter could not be ` +
+              `parsed (${blocked}). The file is unchanged; fix the frontmatter ` +
+              "block and run again.",
+            verbose_lines: verboseLines,
+          };
+        }
+        const formatted = await formatMarkdown(
+          original,
+          filePath,
+          this.#config,
+        );
+        if (original !== formatted) {
+          staleFiles.push(filePath);
+          if (!check) {
+            filePath.writeText(formatted);
+            formattedCount += 1;
+            if (verbose) verboseLines.push(`Formatted ${filePath.name}`);
+          }
+        } else if (verbose) {
+          verboseLines.push(`Already formatted ${filePath.name}`);
+        }
+      } catch (error) {
+        return {
+          ok: false,
+          stale_files: staleFiles,
+          formatted_count: formattedCount,
+          error_message: `Error formatting ${filePath.name}: ${
+            errorText(error)
+          }`,
+          verbose_lines: verboseLines,
+        };
+      }
+    }
+
+    return {
+      ok: check ? staleFiles.length === 0 : true,
+      stale_files: staleFiles,
+      formatted_count: formattedCount,
+      error_message: null,
+      verbose_lines: verboseLines,
+    };
+  }
+}
+
+/** Python's `str(exception)` for the formatter's failure message. */
+function errorText(error: unknown): string {
+  if (error instanceof ValueError || error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
 }

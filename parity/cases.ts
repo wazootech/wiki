@@ -100,15 +100,19 @@ export const CASES: readonly ParityCase[] = [
     id: "fmt-check-micro",
     corpus: "micro",
     argv: micro("fmt", "--check", "-v"),
-    status: "pending",
-    note: "fmt is ported in phase 7 (with the formatter probe)",
+    status: "parity",
   },
   {
+    // Mutating, so the harness re-stages the corpus between the two runs. Note
+    // what this case does *not* prove: it compares the messages and the exit
+    // code, not the bytes written, because the harness has no tree digest yet.
+    // Agreement on "4 files reformatted" is agreement that both formatters
+    // consider the same four pages dirty — the ranking of the dirty pages, not
+    // the formatting itself.
     id: "fmt-micro",
     corpus: "micro",
     argv: micro("fmt", "-v"),
-    status: "pending",
-    note: "mutating fmt; the harness re-stages the corpus between runs",
+    status: "parity",
   },
   {
     id: "render-check-micro",
@@ -153,14 +157,23 @@ export const CASES: readonly ParityCase[] = [
     status: "pending",
     note: "link is ported in phase 8",
   },
-
   // --- The repository's own wiki: formatting and rendering still owed --------
   {
+    // The divergence is a *difference of opinion*, not a bug, and the probe
+    // enumerated it before the port existed: `mdformat` considers this wiki
+    // clean (exit 0, 87 files already formatted) while `deno fmt` would restyle
+    // nine pages — emphasis markers, hard-break syntax, fence style, list
+    // spacing, and mdformat's `______…______` thematic break. The port names
+    // the same nine the probe measured independently, which is the check worth
+    // having: the engine's own `--check` agrees with `deno fmt --check` run by
+    // hand. Those nine pages are the cutover's one-time reformat, so this case
+    // is `known` until phase 11 pays it.
     id: "fmt-check-docs",
     corpus: "docs",
     argv: docs("fmt", "--check", "-v"),
-    status: "pending",
-    note: "docs wiki is mdformat-clean; deno fmt scoping must preserve that",
+    status: "known",
+    note:
+      "formatter semantics: mdformat calls 87 pages clean, deno fmt restyles 9",
   },
   {
     id: "render-check-docs",
