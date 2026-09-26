@@ -24,6 +24,12 @@
 import { copy, ensureDir, exists } from "@std/fs";
 import { dirname, fromFileUrl, join } from "@std/path";
 import { normalizeOutput } from "./normalize.ts";
+import {
+  diffTreeSnapshots,
+  snapshotTree,
+  type TreeChange,
+  type TreeDiff,
+} from "./tree.ts";
 import type { OracleCommand } from "./oracle.ts";
 
 /** Repository root of the Deno rewrite worktree. */
@@ -87,6 +93,7 @@ export interface ParityCase {
   readonly status: CaseStatus;
   /** Fed to stdin when the command reads its query from a pipe. */
   readonly stdin?: string;
+  readonly mutates?: boolean;
   /** Why the divergence exists. Expected on `known` cases. */
   readonly note?: string;
 }
@@ -96,6 +103,7 @@ export interface CliResult {
   readonly exitCode: number;
   readonly stdout: string;
   readonly stderr: string;
+  readonly tree?: TreeDiff;
 }
 
 /** A committed `known` divergence. */
@@ -136,7 +144,8 @@ function childEnv(): Record<string, string> {
 export function resultsMatch(left: CliResult, right: CliResult): boolean {
   return left.exitCode === right.exitCode &&
     left.stdout === right.stdout &&
-    left.stderr === right.stderr;
+    left.stderr === right.stderr &&
+    left.tree?.digest === right.tree?.digest;
 }
 
 /** First line where two streams differ, or `undefined` when they agree. */
@@ -190,7 +199,45 @@ export function describeDifference(
       );
     }
   }
+  if (left.tree?.digest !== right.tree?.digest) {
+    parts.push(
+      describeTreeDifference(leftLabel, left.tree, rightLabel, right.tree),
+    );
+  }
   return parts.length > 0 ? parts.join("; ") : "results differ";
+}
+
+function describeTreeDifference(
+  leftLabel: string,
+  left: TreeDiff | undefined,
+  rightLabel: string,
+  right: TreeDiff | undefined,
+): string {
+  const leftChanges = new Map(
+    left?.changes.map((change) => [change.path, change]),
+  );
+  const rightChanges = new Map(
+    right?.changes.map((change) => [change.path, change]),
+  );
+  const paths = [...new Set([...leftChanges.keys(), ...rightChanges.keys()])]
+    .sort();
+  for (const path of paths) {
+    const leftChange = leftChanges.get(path);
+    const rightChange = rightChanges.get(path);
+    if (JSON.stringify(leftChange) !== JSON.stringify(rightChange)) {
+      return `tree ${path}: ${leftLabel}=${describeTreeChange(leftChange)} ` +
+        `${rightLabel}=${describeTreeChange(rightChange)}`;
+    }
+  }
+  return `tree digest ${leftLabel}=${left?.digest.slice(0, 12) ?? "none"} ` +
+    `${rightLabel}=${right?.digest.slice(0, 12) ?? "none"}`;
+}
+
+function describeTreeChange(change: TreeChange | undefined): string {
+  if (change === undefined) return "unchanged";
+  const before = change.beforeHash?.slice(0, 12) ?? "-";
+  const after = change.afterHash?.slice(0, 12) ?? "-";
+  return `${change.kind} (${before} -> ${after})`;
 }
 
 /** Decide whether a case passes, from already-normalised results. */
@@ -373,6 +420,9 @@ export async function runCase(
 ): Promise<CaseRun> {
   const scratchRoot = options.scratchRoot ?? SCRATCH_ROOT;
   const cwd = await provisionCaseDir(testCase, scratchRoot);
+  const oracleBefore = testCase.mutates === true
+    ? await snapshotTree(cwd)
+    : undefined;
 
   const oracleRaw = await spawnCli({
     bin: options.oracle.bin,
@@ -380,10 +430,16 @@ export async function runCase(
     cwd,
     ...(testCase.stdin === undefined ? {} : { stdin: testCase.stdin }),
   });
+  const oracleTree = oracleBefore === undefined
+    ? undefined
+    : await diffTreeSnapshots(oracleBefore, await snapshotTree(cwd));
 
   // Re-stage so the Deno run sees the same tree the oracle saw, not the tree
   // the oracle left behind.
   await provisionCaseDir(testCase, scratchRoot);
+  const denoBefore = testCase.mutates === true
+    ? await snapshotTree(cwd)
+    : undefined;
 
   const denoRaw = await spawnCli({
     bin: Deno.execPath(),
@@ -391,16 +447,21 @@ export async function runCase(
     cwd,
     ...(testCase.stdin === undefined ? {} : { stdin: testCase.stdin }),
   });
+  const denoTree = denoBefore === undefined
+    ? undefined
+    : await diffTreeSnapshots(denoBefore, await snapshotTree(cwd));
 
   const oracle: CliResult = {
     exitCode: oracleRaw.exitCode,
     stdout: normalizeOutput(oracleRaw.stdout, { scratchRoot: cwd }),
     stderr: normalizeOutput(oracleRaw.stderr, { scratchRoot: cwd }),
+    ...(oracleTree === undefined ? {} : { tree: oracleTree }),
   };
   const deno: CliResult = {
     exitCode: denoRaw.exitCode,
     stdout: normalizeOutput(denoRaw.stdout, { scratchRoot: cwd }),
     stderr: normalizeOutput(denoRaw.stderr, { scratchRoot: cwd }),
+    ...(denoTree === undefined ? {} : { tree: denoTree }),
   };
 
   const transcript = testCase.status === "known"

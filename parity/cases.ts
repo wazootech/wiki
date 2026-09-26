@@ -104,16 +104,11 @@ export const CASES: readonly ParityCase[] = [
     status: "parity",
   },
   {
-    // Mutating, so the harness re-stages the corpus between the two runs. Note
-    // what this case does *not* prove: it compares the messages and the exit
-    // code, not the bytes written, because the harness has no tree digest yet.
-    // Agreement on "4 files reformatted" is agreement that both formatters
-    // consider the same four pages dirty — the ranking of the dirty pages, not
-    // the formatting itself.
     id: "fmt-micro",
     corpus: "micro",
     argv: micro("fmt", "-v"),
     status: "parity",
+    mutates: true,
   },
   {
     id: "render-check-micro",
@@ -127,7 +122,7 @@ export const CASES: readonly ParityCase[] = [
     corpus: "micro",
     argv: micro("render", "-v"),
     status: "parity",
-    note: "The harness re-stages the corpus between the mutating runs.",
+    mutates: true,
   },
   {
     id: "export-micro",
@@ -136,6 +131,16 @@ export const CASES: readonly ParityCase[] = [
     status: "known",
     note:
       "Same data; Python escapes non-ASCII JSON while TypeScript emits UTF-8.",
+  },
+  {
+    id: "query-micro-rdfxml",
+    corpus: "micro",
+    argv: micro(
+      "query",
+      "--no-inference",
+      "SELECT ?name WHERE { <https://example.org/rdf-ingestion> <https://schema.org/name> ?name }",
+    ),
+    status: "parity",
   },
   {
     id: "query-micro-stdin",
@@ -166,7 +171,10 @@ export const CASES: readonly ParityCase[] = [
     id: "build-micro",
     corpus: "micro",
     argv: micro("build", "--no-check", "-v"),
-    status: "parity",
+    status: "known",
+    note:
+      "Two generated pages differ only in fenced SPARQL highlighting: Python emits Pygments spans; Deno emits the escaped query without syntax-highlight markup.",
+    mutates: true,
   },
   {
     id: "link-micro",

@@ -309,6 +309,8 @@ async function main(): Promise<number> {
       detail: evaluation.detail,
       oracleExitCode: run.oracle.exitCode,
       denoExitCode: run.deno.exitCode,
+      oracleTreeDigest: run.oracle.tree?.digest ?? null,
+      denoTreeDigest: run.deno.tree?.digest ?? null,
     });
 
     if (!evaluation.ok) failures.push(testCase.id);

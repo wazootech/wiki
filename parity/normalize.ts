@@ -103,3 +103,22 @@ export function normalizeOutput(
 export function normalizeFixture(text: string): string {
   return normalizeTrailingBlankLines(normalizeLineEndings(stripBom(text)));
 }
+
+export function normalizeTreePath(path: string): string {
+  const parts: string[] = [];
+  for (const part of path.replaceAll("\\", "/").split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === ".." && parts.length > 0 && parts[parts.length - 1] !== "..") {
+      parts.pop();
+    } else {
+      parts.push(part);
+    }
+  }
+  return parts.join("/");
+}
+
+export function normalizeTreeText(text: string, root?: string): string {
+  let normalized = normalizeLineEndings(stripBom(text));
+  if (root !== undefined) normalized = normalizeScratchRoot(normalized, root);
+  return normalized;
+}

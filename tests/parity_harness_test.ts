@@ -22,6 +22,7 @@ import {
 import { CASE_IDS, selectCases } from "../parity/cases.ts";
 import type { ParityCase } from "../parity/harness.ts";
 import { normalizeOutput } from "../parity/normalize.ts";
+import { diffTreeSnapshots, snapshotTree } from "../parity/tree.ts";
 
 function result(
   exitCode: number,
@@ -210,4 +211,94 @@ Deno.test("selectCases filters by corpus and id", () => {
 
 Deno.test("selectCases refuses a selection that matches nothing", () => {
   assertThrows(() => selectCases({ corpora: ["nope"], ids: [] }));
+});
+
+Deno.test("tree snapshots digest created, changed, and deleted files", async () => {
+  const root = await Deno.makeTempDir({ prefix: "wiki-parity-tree-" });
+  try {
+    await Deno.writeTextFile(join(root, "changed.md"), "before\r\n");
+    await Deno.writeTextFile(join(root, "deleted.md"), "removed\n");
+    const before = await snapshotTree(root);
+
+    await Deno.writeTextFile(join(root, "changed.md"), "after\n");
+    await Deno.remove(join(root, "deleted.md"));
+    await Deno.writeTextFile(join(root, "created.md"), "added\n");
+    const after = await snapshotTree(root);
+    const diff = await diffTreeSnapshots(before, after);
+
+    assertEquals(
+      diff.changes.map(({ path, kind }) => [path, kind]),
+      [
+        ["changed.md", "changed"],
+        ["created.md", "created"],
+        ["deleted.md", "deleted"],
+      ],
+    );
+    assertEquals(diff.digest.length, 64);
+    assertEquals(
+      diff.digest,
+      (await diffTreeSnapshots(before, new Map([...after].reverse()))).digest,
+    );
+    const extraRetainedFile = await diffTreeSnapshots(
+      new Map([...before, ["untouched.md", "same"]]),
+      new Map([...after, ["untouched.md", "same"]]),
+    );
+    assertEquals(extraRetainedFile.changes, diff.changes);
+    assertEquals(extraRetainedFile.digest === diff.digest, false);
+    const normalizedPaths = await diffTreeSnapshots(
+      new Map([[".\\nested\\page.md", "same"]]),
+      new Map([["nested/page.md", "same"]]),
+    );
+    assertEquals(normalizedPaths.changes, []);
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
+
+Deno.test("mutating micro parity cases compare rendered and built trees", () => {
+  const cases = selectCases({
+    corpora: ["micro"],
+    ids: ["fmt-micro", "render-micro", "build-micro"],
+  });
+  assertEquals(cases.length, 3);
+  assertEquals(cases.every((testCase) => testCase.mutates === true), true);
+});
+
+Deno.test("tree digest participates in parity result equality", () => {
+  const left = {
+    ...result(0, "same"),
+    tree: { digest: "left", changes: [] },
+  };
+  const right = {
+    ...result(0, "same"),
+    tree: { digest: "right", changes: [] },
+  };
+  assertEquals(resultsMatch(left, right), false);
+  const evaluation = evaluateCase(testCase("parity"), left, right, undefined);
+  assertEquals(evaluation.ok, false);
+  assertEquals(evaluation.detail.includes("tree"), true);
+});
+
+Deno.test("tree snapshots exclude cache files and normalize text newlines", async () => {
+  const root = await Deno.makeTempDir({ prefix: "wiki-parity-tree-" });
+  const cacheDirectory = join(root, ".wiki", "cache");
+  try {
+    await Deno.mkdir(cacheDirectory, { recursive: true });
+    await Deno.writeTextFile(join(root, "page.md"), "\uFEFFsame\r\n");
+    await Deno.writeTextFile(join(cacheDirectory, "graph.nt"), "first");
+    const before = await snapshotTree(root);
+
+    await Deno.writeTextFile(join(root, "page.md"), "same\n");
+    await Deno.writeTextFile(
+      join(cacheDirectory, "graph.nt"),
+      "nondeterministic",
+    );
+    const after = await snapshotTree(root);
+    const diff = await diffTreeSnapshots(before, after);
+
+    assertEquals([...before.keys()], ["page.md"]);
+    assertEquals(diff.changes, []);
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
 });
