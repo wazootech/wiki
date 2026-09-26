@@ -117,6 +117,36 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "file command help lists each command's actual options",
+  { permissions: { run: true } },
+  async () => {
+    const cases = [
+      ["check", "--strict", "--verbose"],
+      ["lint", "--strict", "--verbose"],
+      ["fmt", "--check", "--verbose"],
+    ] as const;
+
+    for (const [command, option, verbose] of cases) {
+      const result = await runCli([command, "--help"]);
+      assertEquals(result.code, EXIT_OK);
+      assertEquals(result.stderr, "");
+      assert(result.stdout.startsWith(`Usage: wiki ${command} [OPTIONS]`));
+      assert(result.stdout.includes(option));
+      assert(result.stdout.includes(verbose));
+      assert(result.stdout.includes("--help"));
+    }
+
+    const alias = await runCli(["i", "--help"]);
+    assertEquals(alias.code, EXIT_OK);
+    assertEquals(
+      alias.stdout,
+      "Usage: wiki i [OPTIONS] [URL]\n\nAlias for install.\n\nOptions:\n  --help  Show this message and exit.\n",
+    );
+    assertEquals(alias.stderr, "");
+  },
+);
+
 // ---------------------------------------------------------------------------
 // The audit commands, driven through the process contract
 // ---------------------------------------------------------------------------

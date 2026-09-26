@@ -136,6 +136,40 @@ const FILE_COMMAND_FLAGS: Readonly<Record<string, readonly string[]>> = {
   fmt: ["-v", "--verbose", "--check"],
 };
 
+const FILE_COMMAND_HELP: Readonly<Record<string, string>> = {
+  check: [
+    "Usage: wiki check [OPTIONS] [FILES]...",
+    "",
+    "  Integrity checks: SHACL, JSON Schema, routes, collisions, layout (FILE...:",
+    "  SHACL + JSON Schema).",
+    "",
+    "Options:",
+    "  -v, --verbose  Show integrity audit warnings.",
+    "  --strict       Elevate all warnings to errors and exit with code 1.",
+    "  --help         Show this message and exit.",
+  ].join("\n"),
+  lint: [
+    "Usage: wiki lint [OPTIONS] [FILES]...",
+    "",
+    "  Convention audits: links, filenames, headings, and link style.",
+    "",
+    "Options:",
+    "  -v, --verbose  Show convention audit warnings.",
+    "  --strict       Elevate all warnings to errors and exit with code 1.",
+    "  --help         Show this message and exit.",
+  ].join("\n"),
+  fmt: [
+    "Usage: wiki fmt [OPTIONS] [FILES]...",
+    "",
+    "  Format markdown wiki pages with the Deno formatter.",
+    "",
+    "Options:",
+    "  --check        Check formatting without writing files back. Exits with code 1 if any files would change.",
+    "  -v, --verbose  Print fmt config source and formatted file names.",
+    "  --help         Show this message and exit.",
+  ].join("\n"),
+};
+
 /** Write the short usage to stderr, optionally followed by an error line. */
 function usageError(detail: string): number {
   console.error([...USAGE_LINES, "", detail].join("\n"));
@@ -231,10 +265,7 @@ function parseFileCommandArgs(
       continue;
     }
     if (token === "--help" || token === "-h") {
-      // Click prints the command's help to stdout and exits 0. The body is the
-      // short usage until the full surface lands, which is the same pending
-      // divergence the group's help carries.
-      console.log(USAGE_LINES.join("\n"));
+      console.log(FILE_COMMAND_HELP[command] ?? USAGE_LINES.join("\n"));
       return EXIT_OK;
     }
     if (token.startsWith("-") && token !== "-") {
@@ -1221,10 +1252,15 @@ function parseInitCommandArgs(
 
 function parseInstallCommandArgs(
   args: readonly string[],
+  command: "install" | "i" = "install",
 ): string | null | number {
   if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
     console.log(
-      "Usage: wiki install [OPTIONS] [URL]\n\nFetch and lock external data sources. With no URL, install declared sources. With a URL, add and fetch one git source.\n\nOptions:\n  --help  Show this message and exit.",
+      `Usage: wiki ${command} [OPTIONS] [URL]\n\n${
+        command === "i"
+          ? "Alias for install."
+          : "Fetch and lock external data sources. With no URL, install declared sources. With a URL, add and fetch one git source."
+      }\n\nOptions:\n  --help  Show this message and exit.`,
     );
     return EXIT_OK;
   }
@@ -1554,7 +1590,10 @@ export async function main(
   }
 
   if (command === "install" || command === "i") {
-    const parsedInstall = parseInstallCommandArgs(argv.slice(index + 1));
+    const parsedInstall = parseInstallCommandArgs(
+      argv.slice(index + 1),
+      command,
+    );
     if (typeof parsedInstall === "number") return parsedInstall;
     const wiki = await loadWiki(configPath, wikiInputs);
     if (typeof wiki === "number") return wiki;

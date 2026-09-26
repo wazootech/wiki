@@ -71,7 +71,7 @@ The Python oracle is pinned at `1bfb422` and kept only in a detached local workt
 
 ### Oracle and transition discipline
 
-- The Python CLI was the oracle until the parity gate. The verified pinned differential suite has 21 cases: 15 pass, 6 documented known differences, 0 pending, and 0 failures. Mutating commands compare normalized output-tree digests.
+- The Python CLI was the oracle until the parity gate. The verified pinned differential suite has 21 cases: 14 pass, 7 documented known differences, 0 pending, and 0 failures. Mutating commands compare normalized output-tree digests.
 - The oracle is pinned at `1bfb422` — the `fmt-bom-tolerance` tip (#312), one commit ahead of `main` at `ffdc1b0`. The rewrite branch is based on it. #312 merges to `main` on its own so that the rewrite eventually rebases onto a true `main` without carrying an unrelated fix inside a 10k-line diff.
 - The pinned Python checkout stays outside the PR branch as a local oracle; no Python runtime is shipped after cutover.
 - Each cutover milestone is validated against the pinned Python build before the next one starts, and lands as its own commit so the eventual PR is readable by following commit order.

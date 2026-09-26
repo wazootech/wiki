@@ -8,7 +8,7 @@ Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](http
 
 - **Deno/TypeScript is the sole runtime after cutover.** The Python engine, packaging, tests, CI/release steps, and Python docs builder are removed or replaced; the pinned Python checkout is only a local differential oracle during the cutover.
 - **Keep the npm contract.** `wazootech-wiki` retains its `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. Its runtime is Deno-backed and must not require system Python or a separately installed Deno. `@wazoo/wiki` remains the native JSR package; per-platform `deno compile` binaries remain available for direct downloads.
-- **Cutover gate status:** 21 pinned differential cases; 15 pass, 6 documented known differences, 0 pending, 0 failures. The suite compares normalized filesystem trees for mutating commands and includes an end-to-end RDF/XML ingestion fixture.
+- **Cutover gate status:** 21 pinned differential cases; 14 pass, 7 documented known differences, 0 pending, 0 failures. The suite compares normalized filesystem trees for mutating commands and includes an end-to-end RDF/XML ingestion fixture.
 - **Data and CLI contracts remain stable** — `wiki.yml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, supported subcommands, and exit codes are preserved. RDF/XML input remains supported; RDF/XML output is explicitly deferred and returns a clear unsupported-format error.
 
 ### Superseded: [#44](https://github.com/wazootech/wiki/issues/44) (Python core)
