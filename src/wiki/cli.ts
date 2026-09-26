@@ -3,8 +3,8 @@
  * CLI entrypoint — Deno port of `src/wiki/cli.py`.
  *
  * Ported so far: the group's `--config`/`--input` options, `--version`, the two
- * audit commands (`check`, `lint`), `fmt`, `query`, and `render`. The remaining commands —
- * `link`, `graph`, `mcp`, `build`, `export`, `serve`, `init`,
+ * audit commands (`check`, `lint`), `fmt`, `query`, `render`, and `export`. The remaining commands —
+ * `link`, `graph`, `mcp`, `build`, `serve`, `init`,
  * `install`/`i`, `update`, `remove`, `upgrade` — land as their modules do, and
  * until one does, invoking it is a usage error naming that fact rather than a
  * silent success.
@@ -84,6 +84,7 @@ const PORTED_COMMANDS: readonly string[] = [
   "fmt",
   "query",
   "render",
+  "export",
 ];
 
 /** The flags each `FILE...` command accepts, so an unknown one is a usage error. */
@@ -366,6 +367,152 @@ async function parseQueryCommandArgs(
   }
 }
 
+interface ParsedExportCommand {
+  readonly files: readonly Path[];
+  readonly output: Path | null;
+  readonly format: import("./export.ts").ExportFormat;
+  readonly mode: "expanded" | "compacted";
+}
+
+async function parseExportCommandArgs(
+  args: readonly string[],
+): Promise<ParsedExportCommand | number> {
+  const files: Path[] = [];
+  let output: Path | null = null;
+  let format = "dict";
+  let mode: "expanded" | "compacted" = "expanded";
+  let optionsEnded = false;
+
+  for (let index = 0; index < args.length; index++) {
+    const token = args[index]!;
+    if (optionsEnded) {
+      const path = new Path(token);
+      if (!path.exists()) {
+        return usageError(
+          `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
+        );
+      }
+      files.push(path);
+    } else if (token === "--") {
+      optionsEnded = true;
+    } else if (token === "--help" || token === "-h") {
+      console.log(
+        "Usage: wiki export [OPTIONS] [FILES]...\n\n" +
+          "Export document frontmatter as RDF or JSON-LD.\n\n" +
+          "Options:\n" +
+          "  -o, --output PATH   File to write serialized RDF output\n" +
+          "  -f, --format FORMAT dict, json-ld, turtle, xml (deferred), n3, nt, trig, nquads\n" +
+          "      --mode MODE     expanded or compacted JSON-LD",
+      );
+      return EXIT_OK;
+    } else if (token === "-f" || token === "--format") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      format = value;
+      index += 1;
+    } else if (token.startsWith("--format=")) {
+      format = token.slice("--format=".length);
+    } else if (token === "--mode") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError("Error: Option '--mode' requires an argument.");
+      }
+      const normalized = value.toLowerCase();
+      if (normalized !== "expanded" && normalized !== "compacted") {
+        return usageError(
+          `Error: Invalid value for '--mode': '${value}' is not one of 'expanded', 'compacted'.`,
+        );
+      }
+      mode = normalized;
+      index += 1;
+    } else if (token.startsWith("--mode=")) {
+      const value = token.slice("--mode=".length).toLowerCase();
+      if (value !== "expanded" && value !== "compacted") {
+        return usageError(
+          `Error: Invalid value for '--mode': '${value}' is not one of 'expanded', 'compacted'.`,
+        );
+      }
+      mode = value;
+    } else if (token === "-o" || token === "--output") {
+      const value = args[index + 1];
+      if (value === undefined || (value.startsWith("-") && value !== "-")) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      output = new Path(value);
+      index += 1;
+    } else if (token.startsWith("--output=")) {
+      output = new Path(token.slice("--output=".length));
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      const path = new Path(token);
+      if (!path.exists()) {
+        return usageError(
+          `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
+        );
+      }
+      files.push(path);
+    }
+  }
+
+  try {
+    const { normalizeExportFormat } = await import("./export.ts");
+    return { files, output, format: normalizeExportFormat(format), mode };
+  } catch (error) {
+    return usageError(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+async function runExportCommand(
+  wiki: Wiki,
+  parsed: ParsedExportCommand,
+): Promise<number> {
+  let result: Awaited<ReturnType<Wiki["export"]>>;
+  try {
+    result = await wiki.export(
+      parsed.files.length > 0 ? parsed.files : null,
+      { format: parsed.format, mode: parsed.mode },
+    );
+  } catch (error) {
+    if (error instanceof ValueError) {
+      console.error(`Error: ${error.message}`);
+      return EXIT_FAILURE;
+    }
+    throw error;
+  }
+
+  if (!result.ok) {
+    console.error(`Error: ${result.error_message ?? "Export failed."}`);
+    return EXIT_FAILURE;
+  }
+
+  if (parsed.output !== null) {
+    try {
+      await Deno.writeTextFile(parsed.output.toString(), result.output);
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return EXIT_FAILURE;
+    }
+    const rawFormats = new Set(["turtle", "xml", "n3", "nt", "trig", "nquads"]);
+    if (rawFormats.has(parsed.format) && parsed.files.length <= 1) {
+      console.log(`Written ${parsed.format} output to ${parsed.output}`);
+    } else {
+      const description = parsed.files.length > 1 ? "payload array" : "payload";
+      console.log(`Written ${description} to ${parsed.output}`);
+    }
+    return EXIT_OK;
+  }
+
+  console.log(result.output);
+  return EXIT_OK;
+}
+
 interface ParsedRenderCommand {
   readonly files: readonly Path[];
   readonly noInference: boolean;
@@ -642,6 +789,14 @@ export async function main(
     const wiki = await loadWiki(configPath, wikiInputs);
     if (typeof wiki === "number") return wiki;
     return await runRenderCommand(wiki, parsedRender);
+  }
+
+  if (command === "export") {
+    const parsedExport = await parseExportCommandArgs(argv.slice(index + 1));
+    if (typeof parsedExport === "number") return parsedExport;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runExportCommand(wiki, parsedExport);
   }
 
   const parsed = parseFileCommandArgs(command, argv.slice(index + 1));

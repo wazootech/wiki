@@ -132,8 +132,9 @@ export const CASES: readonly ParityCase[] = [
     id: "export-micro",
     corpus: "micro",
     argv: micro("export"),
-    status: "pending",
-    note: "export is ported in phase 7",
+    status: "known",
+    note:
+      "Same data; Python escapes non-ASCII JSON while TypeScript emits UTF-8.",
   },
   {
     id: "query-micro-stdin",

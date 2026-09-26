@@ -36,6 +36,7 @@ import {
   loadQueryGraph,
 } from "./graph.ts";
 import { renderMarkdownFiles } from "./render.ts";
+import { exportFrontmatter, type ExportOptions } from "./export.ts";
 import { type QueryFormat, runQuery } from "./format.ts";
 import { resolvePath } from "./jqfilter.ts";
 import { pyStr } from "./pyrepr.ts";
@@ -45,6 +46,7 @@ import { pageRoutes, selectMarkdownPaths } from "./paths.ts";
 import type { GraphDescriptor } from "./schemas/sources.ts";
 import type {
   AuditReport,
+  ExportResult,
   FmtReport,
   RenderReport,
 } from "./schemas/reports.ts";
@@ -324,6 +326,13 @@ export class Wiki {
       await this.dataset({ infer, reload: true, diskCache: true });
     }
     return report;
+  }
+
+  async export(
+    files?: readonly Path[] | null,
+    options: ExportOptions = {},
+  ): Promise<ExportResult> {
+    return await exportFrontmatter(this.config, files ?? null, options);
   }
 
   /**

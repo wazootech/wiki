@@ -321,6 +321,14 @@ export {
   type QueryFormat,
 } from "./format.ts";
 export {
+  EXPORT_FORMATS,
+  type ExportFormat,
+  type ExportMode,
+  type ExportOptions,
+  normalizeExportFormat,
+  normalizeExportMode,
+} from "./export.ts";
+export {
   type GraphOptions,
   type QueryOptions,
   type RenderOptions,

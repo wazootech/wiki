@@ -37,6 +37,7 @@
     "lax-css": "npm:lax-css@0.3.0",
     "lax-markup": "npm:lax-markup@0.3.2",
     "markdown-it": "npm:markdown-it@^14.1.0",
+    "jsonld": "npm:jsonld@9.0.0",
     "n3": "npm:n3@^2.0.0",
     "rdf-validate-shacl": "npm:rdf-validate-shacl@0.6.5",
     "rdfjs-inference-engine": "npm:rdfjs-inference-engine@0.2.2"
