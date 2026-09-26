@@ -7,6 +7,13 @@ function pageUrl(slug) {
   return WIKI_BASE_URL + '/' + (slug ? slug + '.html' : 'index.html');
 }
 
+function isIndexPage() {
+  // The index page ships CURRENT_SLUG as the "__index__" sentinel; accept both the
+  // bare and the JSON-quoted encoding so the category filter always runs.
+  var slug = String(CURRENT_SLUG).replace(/^"|"$/g, '');
+  return slug === '' || slug === '__index__';
+}
+
 function switchTab(viewName) {
   document.querySelectorAll('.vector-tabs li').forEach(function(li) {
     li.classList.remove('selected');
@@ -275,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
     list.style.display = 'none';
     toggleBtn.textContent = '[show]';
   }
-  if (CURRENT_SLUG === '' || CURRENT_SLUG === '"__index__"') {
+  if (isIndexPage()) {
     applyCategoryFilterFromUrl();
   }
   initCodeCopyButtons();
