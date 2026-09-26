@@ -1,19 +1,12 @@
 ---
 type: TechArticle
 headline: Getting Started
-description: Install the wiki CLI and scaffold a new wiki.
+description: Install the Deno-based wiki CLI and scaffold a new wiki.
 ---
 
 # Getting Started
 
 ## Install
-
-### From PyPI
-
-```bash
-pip install wazootech-wiki
-wiki --help
-```
 
 ### From npm
 
@@ -22,23 +15,34 @@ npm install -g wazootech-wiki
 wiki --help
 ```
 
-This installs **`wiki`** on PATH. The npm package creates a private Python virtual environment and installs the matching PyPI **`wazootech-wiki`** release. Python 3.12 or newer is required on the machine.
+This installs the `wiki` command and provisions its Deno runtime from the npm package. Node.js 18 or newer is required; system Python and a separately installed Deno are not.
 
-The npm package also exposes a type-safe TypeScript SDK for Node projects. See [Wiki Programmatic API](Wiki_Programmatic_API.md#typescript-sdk) for SDK installation and usage.
-
-Zero-install (no global install):
+Use `npx` without a global install:
 
 ```bash
+npx wazootech-wiki --help
 npx wazootech-wiki init
 npx wazootech-wiki check
 ```
 
-`npx wazootech-wiki` and `uvx --from wazootech-wiki wiki` accept the same subcommands and flags as `wiki`.
+### From Deno
 
-### Editable install from this repository
+The `@wazoo/wiki` JSR package is configured but has not been published yet. The first tagged release will publish it after the package is created and linked to this GitHub repository in JSR settings.
+
+Until then, use the repository source:
 
 ```bash
-uv pip install -e .
+deno run -A src/wiki/cli.ts --help
+deno task check
+```
+
+After the first JSR release, install the CLI globally with `deno install --global --allow-all --name wiki jsr:@wazoo/wiki/cli`, or import `jsr:@wazoo/wiki` from a Deno project. For npm projects, `npx jsr add @wazoo/wiki` will be available once that first release is published.
+
+### From source
+
+```bash
+deno run -A src/wiki/cli.ts --help
+deno task check
 ```
 
 ## Scaffold a new wiki
@@ -59,7 +63,7 @@ wiki init --git
 
 ### Branding
 
-Styling and branding (such as site name, theme color, logo, and favicon) are not managed by the CLI out-of-the-box, which outputs plain, unstyled HTML. To add custom styling, write a custom layout template file and place custom assets under the `wiki.assets` directory, then configure `site.layout` in your `wiki.yml`. See [Wiki Configuration — Custom CSS](Wiki_Configuration.md#custom-css) and [wiki init](wiki_init.md).
+Styling and branding (such as site name, theme color, logo, and favicon) are configured through a custom layout template and assets under `wiki.assets`; set `site.layout` in `wiki.yml`. See [Wiki Configuration — Custom CSS](Wiki_Configuration.md#custom-css) and [wiki init](wiki_init.md).
 
 Alternatively, start from a GitHub template: [wiki-templates/generic](https://github.com/wazootech/wiki-templates/tree/main/generic) (generic wiki project) or the [LLM Wiki](LLM_Wiki.md) starter [wiki-templates/llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/llm-wiki). See [Wiki CLI templates](wiki.md#ecosystem-templates).
 
@@ -92,14 +96,13 @@ Use `wiki check -v` / `wiki lint -v` to see warnings. In CI, run both with `--st
 
 ## Work in this repository’s docs wiki
 
-The published site under `docs/wiki/` is built with:
+Run commands from the repository root:
 
 ```bash
-wiki -c docs/wiki.yml check --strict -v
-wiki -c docs/wiki.yml lint --strict -v
-python -m wiki -c docs/wiki.yml serve --watch
-wiki -c docs/wiki.yml render --cache
-wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
+deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
+deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict -v
+deno run -A src/wiki/cli.ts -c docs/wiki.yml render --cache
+deno run -A docs/build.ts --output-dir _site
 ```
 
 See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Actions workflow.

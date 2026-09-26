@@ -318,8 +318,9 @@ function updateUnavailableMessage(
     ].join("\n");
   }
   return [
-    "This wiki CLI is not installed as a global Deno command, so there is no installed executable to replace.",
-    "To install or update a global command, run:",
+    "This wiki CLI is not installed as a global Deno command, so wiki upgrade cannot replace it.",
+    "For an npm install, run npm update -g wazootech-wiki (global) or npm update wazootech-wiki (project-local).",
+    "To install or update a global Deno command, run:",
     `  deno install --global --force --allow-all --name wiki jsr:@wazoo/wiki@${latest}/cli`,
   ].join("\n");
 }

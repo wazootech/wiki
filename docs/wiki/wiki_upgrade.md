@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki upgrade
-description: Check PyPI for updates and upgrade wazootech-wiki.
+description: Check for Wiki CLI updates and upgrade supported installations.
 ---
 
 # `wiki upgrade`
 
-Compare the installed **wazootech-wiki** version to PyPI and optionally upgrade with pip.
+Compare the installed CLI version with the latest JSR release. A global Deno installation can be upgraded in place; npm installations are updated with npm, and standalone binaries are replaced from GitHub Releases.
 
 ## Usage
 
@@ -14,7 +14,7 @@ Compare the installed **wazootech-wiki** version to PyPI and optionally upgrade 
 wiki upgrade -c          # check only; exit 1 if outdated
 wiki upgrade             # prompt to upgrade when outdated
 wiki upgrade -y          # upgrade without prompt
-wiki upgrade -y -v       # show pip output
+wiki upgrade -y -v       # show Deno install output
 ```
 
 ## Options
@@ -23,26 +23,17 @@ wiki upgrade -y -v       # show pip output
 | ----------------- | ---------------------------------- |
 | `-c`, `--check`   | Report status only; do not install |
 | `-y`, `--yes`     | Skip confirmation                  |
-| `-v`, `--verbose` | Show pip install logs              |
+| `-v`, `--verbose` | Show Deno install output           |
 
-## Windows PATH troubleshooting
+## Updating npm and standalone installations
 
-If `python -m wiki upgrade` works but `wiki upgrade` says `No such command 'upgrade'`, PATH is probably resolving `wiki` to an older `wiki.exe` from a different Python install.
+`wiki upgrade` cannot replace a command installed by npm. Update it with:
 
-Check which launcher is active:
-
-```powershell
-Get-Command wiki
-where.exe wiki
-python -m wiki --help
+```bash
+npm update -g wazootech-wiki
 ```
 
-If the PATH launcher is stale, upgrade through the intended interpreter and remove or refresh the older shim:
-
-```powershell
-python -m wiki upgrade -y
-python -m pip install --upgrade wazootech-wiki
-```
+For a local npm project, run `npm update wazootech-wiki`. For a standalone executable, download the current binary from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify it against `SHA256SUMS`, and replace the installed file. The command can update a global Deno installation directly.
 
 ## Related
 

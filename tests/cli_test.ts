@@ -104,6 +104,11 @@ Deno.test(
         "  upgrade  Check for updates and upgrade the wiki CLI.",
       ),
     );
+    assert(
+      help.stdout.includes(
+        "  fmt      Format markdown wiki pages with the Deno formatter.",
+      ),
+    );
 
     const empty = await runCli([]);
     assertEquals(empty.code, EXIT_USAGE);

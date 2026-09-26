@@ -19,11 +19,8 @@ Wiki CLI builds each article into HTML using a **page layout** file. Two levels 
 Set the path in `wiki.yml` (or `wiki.yaml`) relative to the directory that contains the config file:
 
 ```yaml
-
 site:
-
   layout: index.html
-
 ```
 
 By default, if `site.layout` is omitted, Wiki CLI uses the built-in minimal fallback `index.html` layout. Set `site.layout` to your custom layout path to configure a customized page shell.
@@ -33,7 +30,6 @@ By default, if `site.layout` is omitted, Wiki CLI uses the built-in minimal fall
 Override the site default for one page:
 
 ```yaml
-
 type: schema:Person
 
 wazoo:layout: layouts/article.html
@@ -41,7 +37,6 @@ wazoo:layout: layouts/article.html
 givenName: Ethan
 
 familyName: Davidson
-
 ```
 
 When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must exist and end in `.html`. `wiki check` reports missing `wazoo:layout` paths as errors.

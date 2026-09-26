@@ -1,18 +1,13 @@
 ---
 type: TechArticle
-headline: Python API Reference
-description: Auto-generated reference documentation for the wazootech-wiki Python library.
+headline: Python API Reference (Retired)
+description: Notice that the former Python API and PyPI package were retired by the Deno cutover.
 ---
 
-# Python API Reference
+# Python API Reference (Retired)
 
-This page is an index into the auto-generated Python API reference, built via [Sphinx](https://www.sphinx-doc.org/) from Google-style docstrings on all public symbols.
+Wiki no longer ships a Python engine, Python library API, or PyPI package. The engine is implemented in Deno/TypeScript; this page remains as a migration notice for links to the former Python reference.
 
-- [Full API Reference](https://wazootech.github.io/wiki/assets/api/python/)
-
-The [Wiki Programmatic API](Wiki_Programmatic_API.md) page provides usage examples and design rationale.
-
-## Related
-
-- [Wiki Programmatic API](Wiki_Programmatic_API.md) — usage guide
-- [wiki](wiki.md) — command reference
+- [Deno API Reference](Deno_API_Reference.md)
+- [TypeScript API Reference](TypeScript_API_Reference.md)
+- [Wiki Programmatic API](Wiki_Programmatic_API.md)

@@ -309,6 +309,16 @@ async function main(): Promise<number> {
       detail: evaluation.detail,
       oracleExitCode: run.oracle.exitCode,
       denoExitCode: run.deno.exitCode,
+      oracleTreeDigest: run.oracle.tree?.digest ?? null,
+      oracleChangedPaths: run.oracle.tree?.changes.map((change) => ({
+        path: change.path,
+        kind: change.kind,
+      })) ?? null,
+      denoTreeDigest: run.deno.tree?.digest ?? null,
+      denoChangedPaths: run.deno.tree?.changes.map((change) => ({
+        path: change.path,
+        kind: change.kind,
+      })) ?? null,
     });
 
     if (!evaluation.ok) failures.push(testCase.id);

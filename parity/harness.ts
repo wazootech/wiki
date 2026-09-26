@@ -3,7 +3,7 @@
  *
  * The spine of the migration: run the pinned Python oracle and the Deno CLI
  * over the same corpus, in the same scratch directory, with the same argv, then
- * compare exit code plus *normalised* stdout/stderr (`./normalize.ts`).
+ * compare exit code, normalised stdout/stderr, and mutating-command tree digests.
  *
  * Each case declares how its divergence is accounted for:
  *
@@ -22,8 +22,12 @@
  */
 
 import { copy, ensureDir, exists } from "@std/fs";
-import { dirname, fromFileUrl, join } from "@std/path";
-import { normalizeOutput } from "./normalize.ts";
+import { dirname, fromFileUrl, join, relative } from "@std/path";
+import {
+  normalizeOutput,
+  normalizeTreePath,
+  normalizeTreeText,
+} from "./normalize.ts";
 import type { OracleCommand } from "./oracle.ts";
 
 /** Repository root of the Deno rewrite worktree. */
@@ -87,15 +91,30 @@ export interface ParityCase {
   readonly status: CaseStatus;
   /** Fed to stdin when the command reads its query from a pipe. */
   readonly stdin?: string;
+  /** Compare the corpus/output tree after the command as well as its streams. */
+  readonly mutates?: boolean;
   /** Why the divergence exists. Expected on `known` cases. */
   readonly note?: string;
 }
 
 /** One CLI's captured process contract. */
+export interface TreeChange {
+  readonly path: string;
+  readonly kind: "created" | "changed" | "deleted";
+  readonly beforeHash?: string;
+  readonly afterHash?: string;
+}
+
+export interface TreeDiff {
+  readonly digest: string;
+  readonly changes: readonly TreeChange[];
+}
+
 export interface CliResult {
   readonly exitCode: number;
   readonly stdout: string;
   readonly stderr: string;
+  readonly tree?: TreeDiff;
 }
 
 /** A committed `known` divergence. */
@@ -136,7 +155,8 @@ function childEnv(): Record<string, string> {
 export function resultsMatch(left: CliResult, right: CliResult): boolean {
   return left.exitCode === right.exitCode &&
     left.stdout === right.stdout &&
-    left.stderr === right.stderr;
+    left.stderr === right.stderr &&
+    left.tree?.digest === right.tree?.digest;
 }
 
 /** First line where two streams differ, or `undefined` when they agree. */
@@ -190,7 +210,45 @@ export function describeDifference(
       );
     }
   }
+  if (left.tree?.digest !== right.tree?.digest) {
+    parts.push(
+      describeTreeDifference(leftLabel, left.tree, rightLabel, right.tree),
+    );
+  }
   return parts.length > 0 ? parts.join("; ") : "results differ";
+}
+
+function describeTreeChange(change: TreeChange | undefined): string {
+  if (change === undefined) return "unchanged";
+  const before = change.beforeHash?.slice(0, 12) ?? "-";
+  const after = change.afterHash?.slice(0, 12) ?? "-";
+  return `${change.kind} (${before} -> ${after})`;
+}
+
+function describeTreeDifference(
+  leftLabel: string,
+  left: TreeDiff | undefined,
+  rightLabel: string,
+  right: TreeDiff | undefined,
+): string {
+  const leftChanges = new Map(
+    left?.changes.map((change) => [change.path, change]),
+  );
+  const rightChanges = new Map(
+    right?.changes.map((change) => [change.path, change]),
+  );
+  const paths = [...new Set([...leftChanges.keys(), ...rightChanges.keys()])]
+    .sort();
+  for (const path of paths) {
+    const leftChange = leftChanges.get(path);
+    const rightChange = rightChanges.get(path);
+    if (JSON.stringify(leftChange) !== JSON.stringify(rightChange)) {
+      return `tree ${path}: ${leftLabel}=${describeTreeChange(leftChange)} ` +
+        `${rightLabel}=${describeTreeChange(rightChange)}`;
+    }
+  }
+  return `tree digest ${leftLabel}=${left?.digest.slice(0, 12) ?? "none"} ` +
+    `${rightLabel}=${right?.digest.slice(0, 12) ?? "none"}`;
 }
 
 /** Decide whether a case passes, from already-normalised results. */
@@ -263,6 +321,103 @@ async function removeDir(path: string): Promise<void> {
   } catch (error) {
     if (!(error instanceof Deno.errors.NotFound)) throw error;
   }
+}
+
+const TREE_CACHE_DIRS = new Set([
+  ".cache",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  "__pycache__",
+]);
+
+function isNondeterministicCachePath(path: string): boolean {
+  const normalized = normalizeTreePath(path);
+  return normalized === ".wiki/cache" ||
+    normalized.startsWith(".wiki/cache/") ||
+    normalized.split("/").some((part) => TREE_CACHE_DIRS.has(part));
+}
+
+async function sha256(bytes: Uint8Array): Promise<string> {
+  const input = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(input).set(bytes);
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", input));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function digestTreeFile(path: string, root: string): Promise<string> {
+  let bytes: Uint8Array;
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(
+      await Deno.readFile(path),
+    );
+    bytes = ENCODER.encode(normalizeTreeText(text, root));
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    bytes = await Deno.readFile(path);
+  }
+  return await sha256(bytes);
+}
+
+/** Snapshot regular files by stable relative path, omitting known cache trees. */
+export async function snapshotTree(root: string): Promise<Map<string, string>> {
+  const snapshot = new Map<string, string>();
+  async function visit(directory: string): Promise<void> {
+    for await (const entry of Deno.readDir(directory)) {
+      const absolutePath = join(directory, entry.name);
+      const path = normalizeTreePath(relative(root, absolutePath));
+      if (isNondeterministicCachePath(path)) continue;
+      if (entry.isDirectory) {
+        await visit(absolutePath);
+      } else if (entry.isFile) {
+        snapshot.set(path, await digestTreeFile(absolutePath, root));
+      } else if (entry.isSymlink) {
+        const target = await Deno.readLink(absolutePath);
+        snapshot.set(
+          path,
+          await sha256(ENCODER.encode(normalizeTreeText(target, root))),
+        );
+      }
+    }
+  }
+  await visit(root);
+  return snapshot;
+}
+
+/** Digest the normalized result tree and describe its created/changed/deleted files. */
+export async function diffTreeSnapshots(
+  before: ReadonlyMap<string, string>,
+  after: ReadonlyMap<string, string>,
+): Promise<TreeDiff> {
+  const paths = [...new Set([...before.keys(), ...after.keys()])].sort();
+  const changes: TreeChange[] = [];
+  for (const path of paths) {
+    const beforeHash = before.get(path);
+    const afterHash = after.get(path);
+    if (beforeHash === undefined && afterHash !== undefined) {
+      changes.push({ path, kind: "created", afterHash });
+    } else if (beforeHash !== undefined && afterHash === undefined) {
+      changes.push({ path, kind: "deleted", beforeHash });
+    } else if (
+      beforeHash !== undefined && afterHash !== undefined &&
+      beforeHash !== afterHash
+    ) {
+      changes.push({ path, kind: "changed", beforeHash, afterHash });
+    }
+  }
+  const files = [...after].sort(([left], [right]) =>
+    left < right ? -1 : left > right ? 1 : 0
+  );
+  const digestInput = JSON.stringify({
+    files,
+    changes: changes.map((change) => [
+      change.path,
+      change.kind,
+      change.beforeHash ?? null,
+      change.afterHash ?? null,
+    ]),
+  });
+  return { digest: await sha256(ENCODER.encode(digestInput)), changes };
 }
 
 /** Stage a pristine copy of a case's corpus and return its absolute path. */
@@ -373,6 +528,9 @@ export async function runCase(
 ): Promise<CaseRun> {
   const scratchRoot = options.scratchRoot ?? SCRATCH_ROOT;
   const cwd = await provisionCaseDir(testCase, scratchRoot);
+  const oracleBefore = testCase.mutates === true
+    ? await snapshotTree(cwd)
+    : undefined;
 
   const oracleRaw = await spawnCli({
     bin: options.oracle.bin,
@@ -380,10 +538,16 @@ export async function runCase(
     cwd,
     ...(testCase.stdin === undefined ? {} : { stdin: testCase.stdin }),
   });
+  const oracleTree = oracleBefore === undefined
+    ? undefined
+    : await diffTreeSnapshots(oracleBefore, await snapshotTree(cwd));
 
   // Re-stage so the Deno run sees the same tree the oracle saw, not the tree
   // the oracle left behind.
   await provisionCaseDir(testCase, scratchRoot);
+  const denoBefore = testCase.mutates === true
+    ? await snapshotTree(cwd)
+    : undefined;
 
   const denoRaw = await spawnCli({
     bin: Deno.execPath(),
@@ -391,16 +555,21 @@ export async function runCase(
     cwd,
     ...(testCase.stdin === undefined ? {} : { stdin: testCase.stdin }),
   });
+  const denoTree = denoBefore === undefined
+    ? undefined
+    : await diffTreeSnapshots(denoBefore, await snapshotTree(cwd));
 
   const oracle: CliResult = {
     exitCode: oracleRaw.exitCode,
     stdout: normalizeOutput(oracleRaw.stdout, { scratchRoot: cwd }),
     stderr: normalizeOutput(oracleRaw.stderr, { scratchRoot: cwd }),
+    ...(oracleTree === undefined ? {} : { tree: oracleTree }),
   };
   const deno: CliResult = {
     exitCode: denoRaw.exitCode,
     stdout: normalizeOutput(denoRaw.stdout, { scratchRoot: cwd }),
     stderr: normalizeOutput(denoRaw.stderr, { scratchRoot: cwd }),
+    ...(denoTree === undefined ? {} : { tree: denoTree }),
   };
 
   const transcript = testCase.status === "known"

@@ -1,13 +1,15 @@
 {
   "name": "wazootech-wiki",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
   "repository": {
     "type": "git",
     "url": "https://github.com/wazootech/wiki.git"
   },
   "homepage": "https://github.com/wazootech/wiki",
-  "bugs": "https://github.com/wazootech/wiki/issues",
+  "bugs": {
+    "url": "https://github.com/wazootech/wiki/issues"
+  },
   "license": "MIT",
   "main": "./npm/dist/index.js",
   "module": "./npm/dist/index.mjs",
@@ -23,31 +25,31 @@
     "wiki": "npm/bin/wiki.js"
   },
   "scripts": {
-    "build": "tsup npm/src/index.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims --silent",
+    "build": "tsup npm/src/index.ts npm/src/runtime.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims --silent",
     "prepack": "npm run build",
-    "postinstall": "node npm/setup.js",
-    "preuninstall": "node npm/uninstall.js",
-    "setup": "node npm/setup.js",
-    "gendocs:python": "uv run sphinx-build -b html -W -c docs docs/api/python docs/assets/api/python",
     "gendocs:ts": "typedoc",
-    "gen:cli-types": "uv run python scripts/export_cli_schemas.py && node scripts/generate_cli_types.mjs && prettier npm/src/types.generated.ts --write",
     "format": "prettier \"npm/**/*.ts\" --write",
     "format:check": "prettier \"npm/**/*.ts\" --check",
     "lint": "eslint npm/",
-    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
+    "test:npm": "npm run build && node npm/test-runtime.js && node npm/test-wiki-api.js"
   },
   "files": [
     "npm/bin/",
     "npm/dist/",
-    "npm/python.js",
-    "npm/setup.js",
-    "npm/uninstall.js",
+    "deno.json",
+    "deno.lock",
+    "src/wiki/**/*.ts",
+    "src/wiki/**/*.html",
+    "src/wiki/templates/**/*.yml",
     "package.json",
     "README.md",
     "LICENSE"
   ],
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "deno": "2.9.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",

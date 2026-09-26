@@ -13,6 +13,8 @@ import {
   normalizeOutput,
   normalizeScratchRoot,
   normalizeTrailingBlankLines,
+  normalizeTreePath,
+  normalizeTreeText,
   stripAnsi,
   stripBom,
 } from "../parity/normalize.ts";
@@ -83,4 +85,26 @@ Deno.test("normalizeFixture makes a CRLF golden read as LF", () => {
   // `.gitattributes` stores fixtures as LF while the machine that produced them
   // may have written CRLF, so reads are normalised rather than compared raw.
   assertEquals(normalizeFixture("\uFEFFa\r\nb\r\n"), "a\nb\n");
+});
+
+Deno.test("tree paths normalize separators and redundant relative components", () => {
+  assertEquals(
+    normalizeTreePath(".\\wiki\\people\\Alice.md"),
+    "wiki/people/Alice.md",
+  );
+  assertEquals(
+    normalizeTreePath("wiki//people/./Alice.md"),
+    "wiki/people/Alice.md",
+  );
+  assertEquals(
+    normalizeTreePath("wiki/people/../Alice.md"),
+    "wiki/Alice.md",
+  );
+});
+
+Deno.test("tree text normalizes line endings, BOMs, and scratch-root paths", () => {
+  assertEquals(
+    normalizeTreeText("\uFEFFunder /tmp/case/wiki\r\n", "/tmp/case"),
+    "under <CORPUS>/wiki\n",
+  );
 });

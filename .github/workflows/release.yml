@@ -1,26 +1,10 @@
 name: Release
 
-# Keep this file as release.yml — npm and PyPI trusted publishing are bound to
-# .github/workflows/release.yml exactly; renaming breaks OIDC with E404.
-
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      skip_pypi:
-        description: Skip PyPI publish
-        type: boolean
-        default: false
-      skip_npm:
-        description: Skip npm publish
-        type: boolean
-        default: false
-      skip_binaries:
-        description: Skip standalone binaries and GitHub Release upload
-        type: boolean
-        default: false
 
 permissions:
   contents: write
@@ -36,67 +20,136 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Verify pyproject, package.json, and __init__.py versions
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Verify package and engine versions
         id: versions
+        shell: bash
         run: |
-          PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
-          NPM_VER=$(node -e "console.log(require('./package.json').version)")
-          INIT_VER=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/wiki/__init__.py').read()).group(1))")
-          echo "version=$PY_VER" >> "$GITHUB_OUTPUT"
-          test "$PY_VER" = "$NPM_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER package.json=$NPM_VER"; exit 1; }
-          test "$PY_VER" = "$INIT_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER __init__.py=$INIT_VER"; exit 1; }
+          set -euo pipefail
+          NPM_VERSION="$(node -p 'require("./package.json").version')"
+          DENO_VERSION="$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')"
+          ENGINE_VERSION="$(sed -n 's/^export const VERSION = "\([^"]*\)";/\1/p' src/wiki/version.ts)"
+          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" || {
+            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION"
+            exit 1
+          }
+          echo "version=$NPM_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Verify tag matches version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           TAG="${GITHUB_REF_NAME#v}"
-          PY_VER="${{ steps.versions.outputs.version }}"
-          test "$TAG" = "$PY_VER" || { echo "::error::tag $TAG != pyproject $PY_VER"; exit 1; }
+          VERSION="${{ steps.versions.outputs.version }}"
+          test "$TAG" = "$VERSION" || { echo "::error::tag $TAG != package version $VERSION"; exit 1; }
 
-  publish-pypi:
-    name: Publish PyPI
+      - name: Validate JSR package contents
+        run: deno publish --dry-run
+
+  build-standalone:
+    name: Build standalone (${{ matrix.slug }})
     needs: verify
     if: >-
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-      || (github.event_name == 'workflow_dispatch' && !inputs.skip_pypi)
+      || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - slug: linux-x64
+            target: x86_64-unknown-linux-gnu
+          - slug: windows-x64
+            target: x86_64-pc-windows-msvc
+            extension: .exe
+          - slug: macos-arm64
+            target: aarch64-apple-darwin
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
         with:
-          python-version: "3.12"
+          deno-version: v2.x
+          cache: true
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+      - name: Compile standalone executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/standalone
+          output="dist/standalone/wazootech-wiki-${{ matrix.slug }}${{ matrix.extension }}"
+          deno compile --node-modules-dir=none --frozen --allow-all --exclude-unused-npm --target "${{ matrix.target }}" --output "$output" src/wiki/cli.ts
+          if [ "${{ matrix.slug }}" = "linux-x64" ]; then
+            "$output" --help
+            "$output" -c docs/wiki.yml check --strict
+          fi
+
+      - name: Upload standalone artifact
+        uses: actions/upload-artifact@v4
         with:
-          enable-cache: true
+          name: standalone-${{ matrix.slug }}
+          path: dist/standalone/wazootech-wiki-*
+          if-no-files-found: error
 
-      - name: Install dependencies
-        run: uv sync
+  publish-jsr:
+    name: Publish JSR
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Install build tooling
-        run: python -m pip install -U build twine
-
-      - name: Build
-        run: python -m build
-
-      - name: Twine check
-        run: python -m twine check dist/*
-
-      - name: Publish to PyPI (trusted publishing)
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
         with:
-          skip-existing: true
+          deno-version: v2.x
+          cache: true
+
+      - name: Publish to JSR (GitHub OIDC)
+        run: deno publish
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [verify, build-standalone, publish-jsr]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download standalone artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: standalone-*
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd release-assets
+          sha256sum wazootech-wiki-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release-assets/wazootech-wiki-*
+            release-assets/SHA256SUMS
 
   publish-npm:
     name: Publish npm
-    needs: [verify, publish-pypi]
-    if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-      || (github.event_name == 'workflow_dispatch' && !inputs.skip_npm)
+    needs: [verify, publish-github-release]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -136,93 +189,3 @@ jobs:
           done
           echo "::error::wazootech-wiki@${VERSION} not found on registry after retries."
           exit 1
-
-  build-standalone:
-    name: Build standalone (${{ matrix.slug }})
-    needs: verify
-    if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-      || (github.event_name == 'workflow_dispatch' && !inputs.skip_binaries)
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            slug: linux-x64
-            smoke_check: true
-          - runner: windows-latest
-            slug: windows-x64
-            smoke_check: false
-          - runner: macos-14
-            slug: macos-arm64
-            smoke_check: false
-          # macOS (Intel) standalone disabled: GitHub's macos-13 runner pool has
-          # been unable to schedule jobs (queued for hours). Re-enable when
-          # runner capacity recovers.
-          # - runner: macos-13
-          #   slug: macos-x64
-          #   smoke_check: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Install PyInstaller
-        run: uv pip install pyinstaller
-
-      - name: Build standalone archive
-        run: |
-          if [ "${{ matrix.smoke_check }}" = "true" ]; then
-            uv run python scripts/build_standalone.py --smoke-check
-          else
-            uv run python scripts/build_standalone.py
-          fi
-        shell: bash
-
-      - name: Upload standalone artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: standalone-${{ matrix.slug }}
-          path: dist/standalone/*
-          if-no-files-found: error
-
-  publish-github-release:
-    name: Publish GitHub Release
-    needs: [verify, build-standalone]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download standalone artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release-assets
-          pattern: standalone-*
-          merge-multiple: true
-
-      - name: Generate SHA256SUMS
-        run: |
-          cd release-assets
-          sha256sum wazootech-wiki-* > SHA256SUMS
-          cat SHA256SUMS
-
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          files: |
-            release-assets/wazootech-wiki-*
-            release-assets/SHA256SUMS

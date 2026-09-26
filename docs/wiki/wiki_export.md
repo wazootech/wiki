@@ -21,18 +21,20 @@ wiki export wiki/Page.md --mode compacted -f json-ld
 
 ## Options
 
-| Flag             | Default       | Description                                                      |
-| ---------------- | ------------- | ---------------------------------------------------------------- |
-| `FILE...`        | all wiki docs | One or more wiki documents, or omit for entire wiki              |
-| `-f`, `--format` | `dict`        | `dict`, `json-ld`, `turtle`, `xml`, `n3`, `nt`, `trig`, `nquads` |
-| `--mode`         | `expanded`    | `expanded` or `compacted` serialization mode                     |
-| `-o`, `--output` | stdout        | Output file                                                      |
+| Flag             | Default       | Description                                               |
+| ---------------- | ------------- | --------------------------------------------------------- |
+| `FILE...`        | all wiki docs | One or more wiki documents, or omit for entire wiki       |
+| `-f`, `--format` | `dict`        | `dict`, `json-ld`, `turtle`, `n3`, `nt`, `trig`, `nquads` |
+| `--mode`         | `expanded`    | `expanded` or `compacted` serialization mode              |
+| `-o`, `--output` | stdout        | Output file                                               |
+
+RDF/XML **input** is supported for `.rdf` and `.xml` files under `wiki.input`. RDF/XML **output** is deferred from the Deno cutover: `-f xml` is rejected with a clear unsupported-format error and never falls back to another format.
 
 ## Output shape
 
 For `dict` and `json-ld`, each entry is `{"name": "<filename>", "rdf": ...}`.
 
-Raw RDF formats (`turtle`, etc.) on a **single** FILE write plain serialization without a JSON wrapper. Multiple FILE args or whole-wiki export with raw formats is not supported — use `dict` or `json-ld`, or export one file at a time.
+Raw RDF formats (`turtle`, `n3`, `nt`, `trig`, `nquads`) on a **single** FILE write plain serialization without a JSON wrapper. Multiple FILE args or whole-wiki export with raw formats is not supported — use `dict` or `json-ld`, or export one file at a time.
 
 `--mode compacted` is most visible for JSON-LD, where it emits `@context` and compacted terms when the wiki context provides them.
 
@@ -46,5 +48,4 @@ Raw RDF formats (`turtle`, etc.) on a **single** FILE write plain serialization 
 - [N Triples](N_Triples.md)
 - [TriG](TriG.md)
 - [N Quads](N_Quads.md)
-- [XML](XML.md)
 - [Style Guide](Style_Guide.md)

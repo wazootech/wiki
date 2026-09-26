@@ -1,0 +1,17 @@
+{
+  "caseId": "usage-help",
+  "argv": [
+    "--help"
+  ],
+  "note": "The Deno help names the Deno formatter instead of legacy mdformat.",
+  "oracle": {
+    "exitCode": 0,
+    "stdout": "Usage: wiki [OPTIONS] COMMAND [ARGS]...\n\n  Query, validate, and manage your semantic LLM wiki.\n\nOptions:\n  --version          Show the version and exit.\n  --input TEXT       Override wiki.input from config file (.md, .yaml, .json,\n                     .toml; repeatable).\n  -c, --config TEXT  Path to wiki config file or directory containing\n                     wiki.yml/wiki.yaml/wiki.json/wiki.toml (default: current\n                     directory).\n  --help             Show this message and exit.\n\nCommands:\n  build    Build static HTML site from wiki documents.\n  check    Integrity checks: SHACL, JSON Schema, routes, collisions,...\n  export   Export document frontmatter as RDF or JSON-LD.\n  fmt      Format markdown wiki pages using mdformat.\n  graph    Inspect read-only RDF named graph provenance.\n  init     Scaffold a new wiki project in the current directory.\n  install  Fetch and lock external data sources.\n  link     Suggest or repair internal links for wiki pages.\n  lint     Convention audits: links, filenames, headings, and link style.\n  mcp      Start a read-only MCP server for the wiki graph.\n  query    Run SPARQL SELECT or CONSTRUCT (query argument or stdin).\n  remove   Remove a source from the config file, its cache, and wiki.lock.\n  render   Render inline SPARQL blocks in markdown files.\n  serve    Start a local HTTP server for browsing the wiki.\n  update   Check locked sources for newer commits and update wiki.lock.\n  upgrade  Check for updates and upgrade the wiki CLI.\n",
+    "stderr": ""
+  },
+  "deno": {
+    "exitCode": 0,
+    "stdout": "Usage: wiki [OPTIONS] COMMAND [ARGS]...\n\n  Query, validate, and manage your semantic LLM wiki.\n\nOptions:\n  --version          Show the version and exit.\n  --input TEXT       Override wiki.input from config file (.md, .yaml, .json,\n                     .toml; repeatable).\n  -c, --config TEXT  Path to wiki config file or directory containing\n                     wiki.yml/wiki.yaml/wiki.json/wiki.toml (default: current\n                     directory).\n  --help             Show this message and exit.\n\nCommands:\n  build    Build static HTML site from wiki documents.\n  check    Integrity checks: SHACL, JSON Schema, routes, collisions,...\n  export   Export document frontmatter as RDF or JSON-LD.\n  fmt      Format markdown wiki pages with the Deno formatter.\n  graph    Inspect read-only RDF named graph provenance.\n  init     Scaffold a new wiki project in the current directory.\n  install  Fetch and lock external data sources.\n  link     Suggest or repair internal links for wiki pages.\n  lint     Convention audits: links, filenames, headings, and link style.\n  mcp      Start a read-only MCP server for the wiki graph.\n  query    Run SPARQL SELECT or CONSTRUCT (query argument or stdin).\n  remove   Remove a source from the config file, its cache, and wiki.lock.\n  render   Render inline SPARQL blocks in markdown files.\n  serve    Start a local HTTP server for browsing the wiki.\n  update   Check locked sources for newer commits and update wiki.lock.\n  upgrade  Check for updates and upgrade the wiki CLI.\n",
+    "stderr": ""
+  }
+}

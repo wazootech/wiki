@@ -41,8 +41,8 @@ In a [Semantic Web](Semantic_Web.md) compliant system, URIs identifying real-wor
 
 The [wiki](wiki.md) applies content negotiation in two places:
 
-- **Page metadata view** on [wiki build](wiki_build.md) and [wiki serve](wiki_serve.md#metadata-view) — format chips for JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads
-- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or RDF graph serializations ([wiki serve](wiki_serve.md#sparql-endpoint))
+- **SPARQL endpoint** on `wiki serve` when enabled — `Accept` selects SPARQL Results JSON, CSV, TSV, or a supported RDF graph serialization ([wiki serve](wiki_serve.md#sparql-endpoint)). RDF/XML output is not supported by the Deno/TypeScript engine; requesting `application/rdf+xml` returns `406 Not Acceptable`.
+- **Static docs metadata panel** in this repository — compacted JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads. RDF/XML output is deferred and is not listed as a panel format.
 
 ## Related
 

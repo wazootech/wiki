@@ -2,9 +2,9 @@
 
 The spine of the Deno rewrite ([#273](https://github.com/wazootech/wiki/issues/273)).
 It runs the pinned Python oracle and the Deno CLI over the same corpus, in the
-same scratch directory, with the same `argv`, and compares exit code plus
-*normalised* stdout/stderr. Every milestone is validated against it before the
-next one starts.
+same scratch directory, with the same `argv`, and compares exit code plus *normalised* stdout/stderr.
+Mutating cases also compare a stable digest of the output-tree changes. Every
+milestone is validated against it before the next one starts.
 
 Migrated here from nothing — the Python project has no equivalent, because it
 never had a second implementation to disagree with.
@@ -59,14 +59,15 @@ into a blank-node description carrying pyshacl's own `owl:sameAs <self>` marker
 message, and the exit code all still have to match. `check-docs` stays a gate
 because the clean corpus has no report text to render.
 
-The second is **`fmt-check-docs`**, and it is a difference of opinion rather than
-an unported feature. The formatter is `dprint-plugin-markdown` instead of
-`mdformat` (see the ADR), and the two disagree about this repository's own
-87-page wiki: the oracle calls every page clean, the port restyles nine —
-emphasis markers, hard-break syntax, fence style, list spacing, and the thematic
-break. The probe measured the same nine before the port existed, so what the
-transcript gates is the agreement: whichever pages the engine names are the
-pages the probe named by hand. Those nine are the cutover's one-time reformat.
+The second known case is **`export-micro`**. Both sides export the same data, but
+Python escapes non-ASCII characters in JSON while TypeScript emits UTF-8. The
+transcript records the representation difference on both sides.
+
+The third is **`fmt-check-docs`**, and it records the formatter transition.
+The docs corpus is now formatted with Deno's dprint-based formatter. The pinned
+Python `mdformat` oracle flags `Dataview_Integration.md`; the Deno formatter
+reports all 89 pages clean. The committed transcript keeps both results fixed
+so neither formatter can drift unnoticed.
 
 The engine moved from a `deno fmt` subprocess to the dprint plugin in process
 without touching this case: the plugin is pinned to the version Deno 2.9.6
@@ -74,23 +75,35 @@ bundles and the port reproduces `deno fmt`'s bytes on every page in the corpus
 (`probes/fmt-dprint/verify-production.ts`), so the recorded transcript is the
 same transcript either way.
 
+The fourth known case is **`build-micro`**. Both engines build the same four pages
+at the same routes and report identical output, but fenced SPARQL blocks differ:
+Python wraps code with Pygments highlight spans; Deno emits the same escaped code
+without syntax-highlight markup. The tree digest and transcript preserve that
+visible difference explicitly.
+
+The fifth and sixth known cases are **`usage-help`** and
+**`usage-no-command`**. The root catalog is otherwise aligned, but the Deno CLI
+correctly describes its own formatter rather than naming the retired Python
+`mdformat` implementation. The empty invocation prints that same catalog to
+stderr, so its transcript records the same single-line difference.
+
 Two `fmt` cases are gates rather than divergences. `fmt-check-micro` compares the
-stale-file list and the exit code. `fmt-micro` is mutating, so its transcript
-gates the *messages* — which pages both formatters consider dirty — and not the
-bytes they write; the harness has no tree digest yet, so the formatting itself
-is covered by `tests/fmt_test.ts` against measured output instead.
+stale-file list and exit code. `fmt-micro` also compares the changed-file tree
+digest, not just formatter messages.
 
 ## Corpora
 
 | Corpus | What it is | Why |
 |---|---|---|
 | `micro` | Hand-written, deliberately dirty: a broken link, a wikilink under `link.style: standard`, stale SPARQL blocks, a shape violation, a filename-pattern violation. | Commands must compare *non-empty* output and non-zero exit codes, or a port that silently does nothing would pass. |
-| `docs` | This repository's own 87-page wiki, clean. | The opposite pressure: a port that invents findings where the oracle is silent fails here. |
+| `docs` | This repository's own 89-page wiki, clean. | The opposite pressure: a port that invents findings where the oracle is silent fails here. |
 
 Each case is staged into a fresh copy under `.parity-tmp/`, and the copy is
 re-made between the two runs — so both CLIs see byte-identical inputs, an
-identical absolute path, and no state left behind by the other. That is what
-makes mutating commands (`fmt`, `render`, `build`) safe to compare.
+identical absolute path, and no state left behind by the other. For mutating
+commands (`fmt`, `render`, `build`), the harness snapshots created, changed, and
+deleted files, normalizes text paths/line endings, and compares the resulting
+tree digest.
 
 ## Normalisation
 
@@ -117,16 +130,14 @@ Observed but deliberately **not** enabled, pending a case that needs them:
   port with a different table renderer diverges on trailing spaces that carry no
   meaning. Fold it in when the `query` case starts being compared.
 
-## Not covered yet
+## Differential cases not covered
 
-- **Produced files.** Mutating cases compare stdout/stderr/exit code but not the
-  tree they write. `fmt`, `render`, and `build` also need a normalised tree
-  digest; that lands with the site work so it can be designed against real
-  output rather than guessed.
-- **`serve` and `mcp`.** Both are long-lived servers, so they need a request
-  harness rather than an argv harness.
-- **`sources`, `install`, `update`, `remove`, `upgrade`.** Network and
-  filesystem-heavy; they land with the source commands.
+- **`serve` and `mcp`.** Both are long-lived servers; the unit tests cover their
+  request and transport behavior, but this argv-based harness does not compare
+  them with the Python oracle.
+- **Network-oriented source and upgrade commands.** Focused tests exercise
+  `install`, `update`, `remove`, and `upgrade` with injected dependencies; the
+  differential harness avoids live network operations.
 
 ## Adding a case
 

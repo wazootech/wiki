@@ -39,7 +39,9 @@ export const CASES: readonly ParityCase[] = [
     id: "version",
     corpus: "micro",
     argv: ["--version"],
-    status: "parity",
+    status: "known",
+    note:
+      "The Deno cutover advances the package version to 0.1.24; the pinned Python oracle remains at 0.1.23.",
   },
   {
     id: "usage-unknown-command",
@@ -51,15 +53,18 @@ export const CASES: readonly ParityCase[] = [
     id: "usage-help",
     corpus: "micro",
     argv: ["--help"],
-    status: "parity",
+    status: "known",
+    note: "The Deno help names the Deno formatter instead of legacy mdformat.",
   },
 
-  // --- Awaiting port ---------------------------------------------------------
+  // --- Core behavior and deliberate known differences -----------------------
   {
     id: "usage-no-command",
     corpus: "micro",
     argv: [],
-    status: "parity",
+    status: "known",
+    note:
+      "The empty invocation's root help names the Deno formatter instead of legacy mdformat.",
   },
   {
     // Ported, and deliberately *not* a gate: the only finding on this corpus is
@@ -85,7 +90,7 @@ export const CASES: readonly ParityCase[] = [
   {
     // The same two commands over the *clean* corpus, where the target is the
     // opposite: no findings and exit 0. Promoted in phase 6, and the match is
-    // not vacuous — both engines walk all 87 pages of this wiki.
+    // not vacuous — both engines walk all 89 pages of this wiki.
     id: "check-docs",
     corpus: "docs",
     argv: docs("check", "--strict", "-v"),
@@ -104,16 +109,11 @@ export const CASES: readonly ParityCase[] = [
     status: "parity",
   },
   {
-    // Mutating, so the harness re-stages the corpus between the two runs. Note
-    // what this case does *not* prove: it compares the messages and the exit
-    // code, not the bytes written, because the harness has no tree digest yet.
-    // Agreement on "4 files reformatted" is agreement that both formatters
-    // consider the same four pages dirty — the ranking of the dirty pages, not
-    // the formatting itself.
     id: "fmt-micro",
     corpus: "micro",
     argv: micro("fmt", "-v"),
     status: "parity",
+    mutates: true,
   },
   {
     id: "render-check-micro",
@@ -127,7 +127,7 @@ export const CASES: readonly ParityCase[] = [
     corpus: "micro",
     argv: micro("render", "-v"),
     status: "parity",
-    note: "The harness re-stages the corpus between the mutating runs.",
+    mutates: true,
   },
   {
     id: "export-micro",
@@ -136,6 +136,16 @@ export const CASES: readonly ParityCase[] = [
     status: "known",
     note:
       "Same data; Python escapes non-ASCII JSON while TypeScript emits UTF-8.",
+  },
+  {
+    id: "query-micro-rdfxml",
+    corpus: "micro",
+    argv: micro(
+      "query",
+      "--no-inference",
+      "SELECT ?name WHERE { <https://example.org/rdf-ingestion> <https://schema.org/name> ?name }",
+    ),
+    status: "parity",
   },
   {
     id: "query-micro-stdin",
@@ -166,7 +176,10 @@ export const CASES: readonly ParityCase[] = [
     id: "build-micro",
     corpus: "micro",
     argv: micro("build", "--no-check", "-v"),
-    status: "parity",
+    status: "known",
+    note:
+      "Fenced-code HTML differs: Python wraps SPARQL in Pygments spans; Deno emits the same escaped code without syntax-highlight markup.",
+    mutates: true,
   },
   {
     id: "link-micro",
@@ -178,21 +191,16 @@ export const CASES: readonly ParityCase[] = [
   },
   // --- The repository's own wiki: one formatter divergence remains -----------
   {
-    // The divergence is a *difference of opinion*, not a bug, and the probe
-    // enumerated it before the port existed: `mdformat` considers this wiki
-    // clean (exit 0, 87 files already formatted) while the dprint markdown
-    // plugin restyles nine pages — emphasis markers, hard-break syntax, fence
-    // style, list spacing, and mdformat's `______…______` thematic break. The
-    // port names the same nine the probe measured independently, which is the
-    // check worth having: the engine's own `--check` agrees with the reference
-    // formatter run by hand. Those nine pages are the cutover's one-time
-    // reformat, so this case is `known` until phase 11 pays it.
+    // The docs corpus is formatted with the Deno markdown formatter after the
+    // cutover. The pinned Python oracle's mdformat check still flags one page,
+    // while the Deno formatter reports the full corpus clean; this records the
+    // intended formatter transition rather than asking Python to own formatting.
     id: "fmt-check-docs",
     corpus: "docs",
     argv: docs("fmt", "--check", "-v"),
     status: "known",
     note:
-      "formatter semantics: mdformat calls 87 pages clean, the dprint markdown plugin restyles 9",
+      "The Deno-formatted docs corpus is clean to Deno fmt; the pinned mdformat oracle flags Dataview_Integration.md.",
   },
   {
     id: "render-check-docs",

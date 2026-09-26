@@ -88,7 +88,7 @@ Example shape:
 
 ```json
 {
-  "version": "0.1.23",
+  "version": "0.1.24",
   "config": "docs/wiki.yml",
   "inputs": ["docs/wiki"],
   "namespaces": {
@@ -104,7 +104,11 @@ Example shape:
   },
   "vocabulary": {
     "classes": [
-      { "iri": "https://schema.org/Person", "curie": "schema:Person", "count": 12 }
+      {
+        "iri": "https://schema.org/Person",
+        "curie": "schema:Person",
+        "count": 12
+      }
     ],
     "predicates": [
       { "iri": "https://schema.org/name", "curie": "schema:name", "count": 42 }

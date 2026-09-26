@@ -15,7 +15,6 @@ wiki serve
 wiki serve --host 0.0.0.0 --port 3000
 wiki serve --watch
 wiki serve --site-base-url /my-wiki --site-url-style dir
-python -m wiki serve --watch
 ```
 
 ## Options
@@ -34,7 +33,7 @@ Default URL with config `site.base_url: /wiki`: `http://127.0.0.1:8080/wiki/`.
 
 When `sparql_service.enabled` is on, `wiki serve` also exposes a read-only SPARQL endpoint at `sparql_service.path` (default `/api/sparql`). See [Wiki Configuration](Wiki_Configuration.md#serve-api) for config keys, opt-in defaults, and path collision rules.
 
-A bare `GET` on that path (no query string) returns a [SPARQL 1.1 Service Description](https://www.w3.org/TR/sparql11-service-description/) document (OWL-RL as the default entailment profile, supported result formats, default dataset triple count when available). Content negotiation applies: `text/turtle`, `application/rdf+xml`, or `application/n-triples`.
+A bare `GET` on that path (no query string) returns a [SPARQL 1.1 Service Description](https://www.w3.org/TR/sparql11-service-description/) document (OWL-RL as the default entailment profile, supported result formats, default dataset triple count when available). The service description is available as Turtle or N-Triples. RDF/XML output is deferred; `Accept: application/rdf+xml` returns `406 Not Acceptable` rather than another serialization.
 
 Example config:
 
@@ -93,7 +92,7 @@ The same `site.layout` from [Wiki Configuration](Wiki_Configuration.md#page-layo
 
 ## Metadata view
 
-The live page metadata panel supports RDF formats without JavaScript: compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. A compact **Format** chip row selects the view. Set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). See [Content Negotiation](Content_Negotiation.md) for the HTTP `Accept` model.
+The generic `wiki serve` page renderer does not currently provide the docs site's custom metadata-panel UI. The repository's static Wikipedia-themed docs build adds a metadata panel for JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads. RDF/XML output is deferred and is not offered in that panel. See [wiki build](wiki_build.md).
 
 ## Related
 

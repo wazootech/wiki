@@ -4,11 +4,12 @@ Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and bod
 
 ## Architecture decision: Deno/TypeScript engine
 
-Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): the engine is being **rewritten in Deno/TypeScript over RDF/JS** and cut over hard in a single pull request. [ADR 0001](docs/adr/0001-deno-rewrite.md) holds the decision, the dependency swaps, and the transition discipline.
+Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): Wiki is being cut over to a Deno/TypeScript engine over RDF/JS in PR [#317](https://github.com/wazootech/wiki/pull/317). [ADR 0001](docs/adr/0001-deno-rewrite.md) records the architecture, dependency choices, deferred RDF/XML output, and transition gates.
 
-- **Python stays the oracle until the parity gate** — every milestone is validated against the pinned Python build; nothing is deleted while it is still the reference.
-- **The published package becomes the engine** — `@wazoo/wiki` on JSR, reached from npm projects via `npx jsr add`, so the private venv bootstrap and Python itself leave the install path.
-- **On-disk and CLI contracts do not move** — `wiki.yaml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, the subcommand surface, and exit codes are preserved.
+- **Deno/TypeScript is the sole runtime after cutover.** The Python engine, packaging, tests, CI/release steps, and Python docs builder are removed or replaced; the pinned Python checkout is only a local differential oracle during the cutover.
+- **Keep the npm contract.** `wazootech-wiki` retains its `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. Its runtime is Deno-backed and must not require system Python or a separately installed Deno. `@wazoo/wiki` remains the native JSR package; per-platform `deno compile` binaries remain available for direct downloads.
+- **Cutover gate status:** 21 pinned differential cases; 15 pass, 6 documented known differences, 0 pending, 0 failures. The suite compares normalized filesystem trees for mutating commands and includes an end-to-end RDF/XML ingestion fixture.
+- **Data and CLI contracts remain stable** — `wiki.yml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, supported subcommands, and exit codes are preserved. RDF/XML input remains supported; RDF/XML output is explicitly deferred and returns a clear unsupported-format error.
 
 ### Superseded: [#44](https://github.com/wazootech/wiki/issues/44) (Python core)
 
@@ -20,7 +21,7 @@ Kept for the reasoning trail. #44 decided to keep the **Python CLI as the source
 
 ## Architecture decision: Library-first API
 
-Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Python library** (`Wiki`, typed `AuditReport` / operation results) with the Click CLI as a thin I/O wrapper. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md). Semver applies to symbols in `wiki.__all__`; audit dict helpers are removed in favor of Pydantic report models.
+Superseded by the Deno/TypeScript cutover. The former Python library-first API (`Wiki`, Pydantic `AuditReport`, and symbols in `wiki.__all__`) no longer defines the public runtime contract. The current Deno API is exported from `src/wiki/mod.ts` as `@wazoo/wiki`; the npm package keeps its existing TypeScript SDK surface. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
 
 ## Language
 
@@ -34,7 +35,7 @@ Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Py
 
 **Context**: The namespace mapping and prefix bindings (similar to JSON-LD `@context`) embedded inside a Config. _Avoid_: Namespace list.
 
-**Config**: The root configuration object loaded from `wiki.yml` (or legacy `wiki.yaml`) — same nested blocks as the file (`wiki`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.wiki.input`, routing and layout path via `config.site.*` (`layout`, `base_url`, `url_style`); presentation and branding live in the page layout and `wiki.assets`, RDF via `config.graph.*` and the `config.context` property. Import as `from wiki.config import Config`. _Avoid_: parameters, settings, flat `input_dirs` fields.
+**Config**: The root configuration object loaded from `wiki.yml` (or legacy `wiki.yaml`) — same nested blocks as the file (`wiki`, `graph`, `site`, …) plus loader-injected `config_root`. Access paths via `config.wiki.input`, routing and layout path via `config.site.*` (`layout`, `base_url`, `url_style`); presentation and branding live in the page layout and `wiki.assets`, RDF via `config.graph.*` and the `config.context` property. Use the `Wiki.load({ config })` API or CLI `-c` option; `Config` is an internal module type, not a top-level public export. _Avoid_: parameters, settings, flat `input_dirs` fields.
 
 **WikiConfig**: Reserved name for a future top-level `wiki:` yaml section (`{section}Config` pattern). Not loaded today. _Avoid_: Using this name for the root loader (use **Config**).
 
@@ -60,15 +61,15 @@ Issue [#112](https://github.com/wazootech/wiki/issues/112): expose a **stable Py
 
 **Linting**: Conventions and broken links via `wiki lint` (`lint.broken_links`, filename pattern, headings, link style).
 
-**Linting**: Convention audits on the **Wiki** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (mdformat). _Avoid_: Checking (use `wiki check` for integrity).
+**Linting**: Convention audits on the **Wiki** via `wiki lint` — configurable `filename_pattern`, `headings` (sentence-case H2+, numbering), `thematic_breaks`, and `link_style`. ATX heading syntax is enforced by **`wiki fmt`** (the Deno in-process Markdown formatter). _Avoid_: Checking (use `wiki check` for integrity).
 
-**Formatting**: Markdown formatting via `wiki fmt` (mdformat). Separate from check and lint.
+**Formatting**: Markdown formatting via `wiki fmt`, implemented by the Deno/TypeScript engine's in-process dprint Markdown plugin. Separate from check and lint.
 
 **Link hygiene**: Suggest missing wikilinks or repair unambiguous broken internal links via `wiki link` (`--apply`, `--fix-broken`). Broken-link detection lives in **Linting** (`lint.broken_links`); mutation is explicit and never part of `wiki build` preflight. _Avoid_: Treating enrichment as lint or folding repair into `wiki check`.
 
 **Exporting**: The process of compiling and exporting the Frontmatter of all Documents into a single canonical JSON-LD representation. _Avoid_: Saving, dumping.
 
-**CLI**: The command-line interface built with Click for managing the wiki.
+**CLI**: The Deno/TypeScript command-line interface for managing the wiki.
 
 ## Relationships
 

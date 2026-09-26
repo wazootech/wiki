@@ -1,17 +1,18 @@
 /**
- * Python oracle resolution for the differential harness (issue #273, Phase 2).
+ * Python oracle resolution for the Deno cutover differential harness.
  *
- * The Python CLI stays the source of truth for every behaviour until the parity
- * gate passes, so the harness refuses to run against an oracle it cannot
- * identify. Two environment variables configure it, and neither has a default:
- * the pinned Python checkout is a sibling worktree on one machine and a
- * separate clone in CI, and guessing would silently compare the wrong engine.
+ * The pinned Python CLI is the comparison reference for committed parity and
+ * known-difference cases; it is not the implementation or a mandate to recreate
+ * every Python capability. The harness refuses to run against an oracle it
+ * cannot identify. Two environment variables configure it, and neither has a
+ * default: the pinned Python checkout is a sibling worktree on one machine and
+ * a separate clone in CI, and guessing would silently compare the wrong engine.
  *
  * - `WIKI_ORACLE_ROOT` — the pinned Python checkout. The harness reads its
  *   `git` revision to confirm the pin, then runs `.venv/Scripts/wiki.exe`
  *   (Windows) or `.venv/bin/wiki` (POSIX).
  * - `WIKI_ORACLE` — overrides the executable only, for a checkout whose venv
- *   lives somewhere else or is reached through `uv run`.
+ *   lives somewhere else.
  */
 
 import { join } from "@std/path";
@@ -38,7 +39,7 @@ export class OracleNotConfiguredError extends Error {
         "`.venv/Scripts/wiki.exe` on Windows or `.venv/bin/wiki` elsewhere.",
         "",
         "Set WIKI_ORACLE instead to point at the executable directly, for example",
-        "`uv run wiki` from the oracle checkout.",
+        "the wiki executable inside the pinned oracle checkout.",
       ].join("\n"),
     );
     this.name = "OracleNotConfiguredError";

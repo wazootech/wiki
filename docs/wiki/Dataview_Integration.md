@@ -17,13 +17,13 @@ While both tools allow you to query your wiki metadata, they optimize for differ
 
 ### Comparison
 
-| Feature               | Obsidian Dataview                        | Wiki CLI                                        |
-| --------------------- | ---------------------------------------- | ----------------------------------------------- |
-| **Execution Context** | Inside the Obsidian application (GUI)    | Terminal, scripts, and CI/CD pipelines          |
-| **Query Language**    | DQL (custom SQL-like) or JavaScript      | SPARQL (W3C standard)                           |
-| **Validation**        | Presentation only (no constraints check) | `wiki check` (SHACL and JSON Schema validation) |
-| **Logical Inference** | None (direct field matching)             | OWL-RL reasoning (implicit class hierarchies)   |
-| **Output Formats**    | Dynamic markdown views in Obsidian       | Static HTML, Turtle, JSON-LD, RDF/XML           |
+| Feature               | Obsidian Dataview                        | Wiki CLI                                                                     |
+| --------------------- | ---------------------------------------- | ---------------------------------------------------------------------------- |
+| **Execution Context** | Inside the Obsidian application (GUI)    | Terminal, scripts, and CI/CD pipelines                                       |
+| **Query Language**    | DQL (custom SQL-like) or JavaScript      | SPARQL (W3C standard)                                                        |
+| **Validation**        | Presentation only (no constraints check) | `wiki check` (SHACL and JSON Schema validation)                              |
+| **Logical Inference** | None (direct field matching)             | OWL-RL reasoning (implicit class hierarchies)                                |
+| **Output Formats**    | Dynamic markdown views in Obsidian       | Static HTML, Turtle, JSON-LD (plus N3, N-Triples, TriG, and N-Quads exports) |
 
 ## Query examples
 
@@ -40,10 +40,10 @@ To list all software applications in the wiki:
 TABLE description, softwareVersion as Version
 WHERE type = "schema:SoftwareApplication" OR type = "SoftwareApplication"
 SORT file.name ASC
+```
 ````
 
 ````
-
 #### Wiki CLI (SPARQL)
 ```sparql
 PREFIX schema: <https://schema.org/>
@@ -57,7 +57,7 @@ SELECT ?name ?description ?version WHERE {
 ORDER BY ?name
 ````
 
-______________________________________________________________________
+---
 
 ### Advanced Querying with DataviewJS
 
@@ -81,7 +81,6 @@ dv.table(
 ````
 
 ```
-
 ## Related
 
 - [Obsidian Integration](Obsidian_Integration.md) — executing CLI commands from Obsidian

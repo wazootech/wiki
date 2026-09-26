@@ -29,11 +29,11 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                                         |
-| ---------- | ------------ | ---------- | --------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, JSON Schema frontmatter, layout file existence           |
-| Convention | `wiki lint`  | `lint:`    | Links, filename pattern severity, headings, link style in prose |
-| Formatting | `wiki fmt`   | `fmt:`     | Mechanical markdown (mdformat; inline mapping or TOML path)     |
+| Lane       | Command      | YAML block | Purpose                                                                                |
+| ---------- | ------------ | ---------- | -------------------------------------------------------------------------------------- |
+| Integrity  | `wiki check` | `check:`   | SHACL, JSON Schema frontmatter, layout file existence                                  |
+| Convention | `wiki lint`  | `lint:`    | Links, filename pattern severity, headings, link style in prose                        |
+| Formatting | `wiki fmt`   | `fmt:`     | Mechanical Markdown via the Deno formatter; mdformat-compatible options and TOML paths |
 
 **Rule placement:** Mechanical markdown belongs under **`fmt:`**. Wiki policy and link conventions belong under **`lint:`**. SHACL, JSON Schema, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
@@ -56,7 +56,7 @@ Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitra
 | `lint:`           | Convention severities                                 | `wiki lint`                       | optional | yes               |
 | `sources:`        | External data sources (git repos)                     | `wiki install`, `wiki remove`     | optional | commented example |
 | `sparql_service:` | Opt-in SPARQL HTTP on `wiki serve`                    | `wiki serve`                      | optional | commented example |
-| `fmt:`            | Mechanical markdown via mdformat                      | `wiki fmt`                        | optional | inline mapping    |
+| `fmt:`            | Mechanical Markdown via the Deno formatter            | `wiki fmt`                        | optional | inline mapping    |
 
 **Order in the file:** source and semantics first (`wiki`, `graph`), then publish and authoring (`site`, `link`), then severity tables (`check`, `lint`), optional serve (`sparql_service`), then `fmt` last.
 
@@ -79,11 +79,11 @@ These apply regardless of yaml severities:
 ## Wiki (`wiki:`)
 
 ```yaml
-wiki:  # optional block
-  input: [wiki]                    # default [wiki]; init writes
-  assets: [assets]                  # default [assets] if assets/ exists, else []; init writes
-  exclude: []                         # default []; init omits
-  filename_pattern: "[A-Za-z0-9_()-]+\\.md"  # no default; recommended; init writes
+wiki: # optional block
+  input: [wiki] # default [wiki]; init writes
+  assets: [assets] # default [assets] if assets/ exists, else []; init writes
+  exclude: [] # default []; init omits
+  filename_pattern: "[A-Za-z0-9_()-]+\\.md" # no default; recommended; init writes
 ```
 
 | Key                | Required               | Default                                     | Init   | Audited by                                 |
@@ -102,15 +102,15 @@ See [Filename conventions](#filename-conventions) for regex patterns.
 RDF and document URI settings for graph build, `wiki query`, microdata, and SHACL.
 
 ```yaml
-graph:  # optional block
+graph: # optional block
   # base_iri: unset → graph.context.wiki → https://wiki.example.org/
-  content_predicate: schema:articleBody   # unset by default; init writes when flagged
-  include_file_extension: false           # default false; init omits (commented)
-  implicit_types: []                      # default []; init omits (commented)
-  implicit_types_policy: fallback         # default fallback; init omits (commented)
-  context:                                # merges with built-in prefixes; init writes
+  content_predicate: schema:articleBody # unset by default; init writes when flagged
+  include_file_extension: false # default false; init omits (commented)
+  implicit_types: [] # default []; init omits (commented)
+  implicit_types_policy: fallback # default fallback; init omits (commented)
+  context: # merges with built-in prefixes; init writes
     schema: https://schema.org/
-    wiki: https://example.org/wiki/       # recommended
+    wiki: https://example.org/wiki/ # recommended
     wazoo: https://schema.wazoo.dev/
     foaf: http://xmlns.com/foaf/0.1/
     dc: http://purl.org/dc/elements/1.1/
@@ -135,10 +135,10 @@ When `implicit_types_policy` is `append`, frontmatter types are unioned with `im
 Default page layout and routing for `wiki build` / `wiki serve`. Branding and chrome → [Page layout](#page-layout).
 
 ```yaml
-site:  # optional block
-  layout: index.html   # unset → built-in minimal fallback layout
-  base_url: /wiki                   # default /wiki; init writes
-  url_style: dir                    # default dir; init writes
+site: # optional block
+  layout: index.html # unset → built-in minimal fallback layout
+  base_url: /wiki # default /wiki; init writes
+  url_style: dir # default dir; init writes
 ```
 
 | Key         | Required               | Default                               | Init   | Audited by                                                                          |
@@ -156,9 +156,9 @@ CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `sit
 Settings for the `wiki link` command family (separate from `lint.link_style` severity).
 
 ```yaml
-link:  # optional block
-  style: standard       # default standard; init writes
-  renames: {}           # default {}; init omits (commented example)
+link: # optional block
+  style: standard # default standard; init writes
+  renames: {} # default {}; init omits (commented example)
 ```
 
 | Key       | Required | Default                               | Init              | Audited by               |
@@ -173,10 +173,10 @@ link:  # optional block
 Under `check`, each rule is `error`, `warning`, or `off`:
 
 ```yaml
-check:  # optional block
-  missing_layout_file: error    # default error; init writes
-  frontmatter_schema: error     # default error; init writes
-  missing_schema_ref: error   # default error; init writes
+check: # optional block
+  missing_layout_file: error # default error; init writes
+  frontmatter_schema: error # default error; init writes
+  missing_schema_ref: error # default error; init writes
 ```
 
 | Key                   | Required | Default | Init   | Audited by                           |
@@ -198,14 +198,14 @@ Shape binding documents are not validated as instances — only their schema ref
 Under `lint`, each rule is `error`, `warning`, or `off`:
 
 ```yaml
-lint:  # optional block
-  broken_links: warning       # default warning; init writes
-  filename_pattern: warning   # default warning; init writes
-  headings: off               # default off; init omits
-  heading_levels: off         # default off; init omits
-  duplicate_headings: off     # default off; init omits
-  thematic_breaks: off        # default off; init omits
-  link_style: warning         # default warning; init writes
+lint: # optional block
+  broken_links: warning # default warning; init writes
+  filename_pattern: warning # default warning; init writes
+  headings: off # default off; init omits
+  heading_levels: off # default off; init omits
+  duplicate_headings: off # default off; init omits
+  thematic_breaks: off # default off; init omits
+  link_style: warning # default warning; init writes
 ```
 
 | Key                  | Required | Default   | Init   | Audited by                                                   |
@@ -218,7 +218,7 @@ lint:  # optional block
 | `thematic_breaks`    | optional | `off`     | omits  | horizontal rules in body prose                               |
 | `link_style`         | optional | `warning` | writes | Obsidian `[[wikilinks]]` when `link.style` is `standard`     |
 
-ATX heading syntax is also enforced by **`wiki fmt`** (mdformat); Setext underlines are converted on format.
+ATX heading syntax is also enforced by **`wiki fmt`**, the Deno Markdown formatter; Setext underlines are converted on format.
 
 When `link.style` is `standard`, set `lint.link_style: off` to allow wikilinks in prose, or set `link.style: wikilink` for an Obsidian-style wiki.
 
@@ -231,12 +231,12 @@ Declare external git repositories that contribute wiki pages or RDF data to the 
 Sources are read-only inputs during graph construction. Wiki composes root content and installed sources into one default query view, while preserving each installed source as a stable RDF named graph for provenance and SPARQL `GRAPH` clauses.
 
 ```yaml
-sources:  # optional block
+sources: # optional block
   - name: solar-system
     type: git
     url: https://github.com/EthanThatOneKid/solar-system-wiki.git
-    ref: v0.1.0       # optional — branch, tag, or commit
-    path: wiki        # optional — subdirectory within the repo
+    ref: v0.1.0 # optional — branch, tag, or commit
+    path: wiki # optional — subdirectory within the repo
 ```
 
 | Key    | Required | Default   | Init              | Command(s)     |
@@ -289,9 +289,9 @@ For the product framing behind recursive source composition, see [Recursive Sema
 Opt-in read-only SPARQL HTTP endpoint on `wiki serve`:
 
 ```yaml
-sparql_service:  # optional block
-  enabled: false        # default false; init omits (commented)
-  path: /api/sparql     # default /api/sparql; init omits (commented)
+sparql_service: # optional block
+  enabled: false # default false; init omits (commented)
+  path: /api/sparql # default /api/sparql; init omits (commented)
 ```
 
 | Key       | Required | Default       | Init              | Audited by                   |
@@ -317,10 +317,10 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 ## Formatting (`fmt`)
 
-Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed — not both:
+Top-level **`fmt`** configures `wiki fmt`, the in-process Deno Markdown formatter. The option names remain mdformat-compatible. Two shapes are allowed — not both:
 
 ```yaml
-fmt:  # optional block — inline mapping (init writes)
+fmt: # optional block — inline mapping (init writes)
   wrap: "no"
   end_of_line: lf
   extensions: [gfm, front_matters, wikilink, toc, footnote]
@@ -367,7 +367,7 @@ Without a configured layout file (or when the path is missing), every page is re
 
 Layout files use `%wiki.*%` slot substitution (not Jinja). On each page render, the CLI builds a slot map from the current page context and replaces every known slot in your layout file. Unknown `%wiki.*%` spellings are left unchanged.
 
-Programmatic consumers and contract tests use `wiki.site.layout_tokens.build_layout_token_map` as the single boundary for slot production. See [Wiki Programmatic API](Wiki_Programmatic_API.md#layout-slot-contract).
+Layout settings and the supported slots are documented in [Wiki Page Layouts](Wiki_Page_Layouts.md).
 
 Canonical slot list (3 slots):
 
@@ -388,14 +388,14 @@ Example excerpt (`index.html`):
 ```html
 <!DOCTYPE html>
 <html lang=en>
-<head>
+  <head>
 <meta charset=UTF-8>
 <meta name=viewport content=width=device-width,initial-scale=1.0>
 %wiki.head%
-</head>
-<body>
+  </head>
+  <body>
 %wiki.body%
-</body>
+  </body>
 </html>
 ```
 
@@ -423,7 +423,7 @@ Built assets are served at `%wiki.base_url%/assets/…` during `wiki serve` and 
 
 See also [Wiki Page Layouts](Wiki_Page_Layouts.md) for `site.layout`, `wazoo:layout`, and packaged layout files.
 
-The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all format views are embedded in the page HTML so the picker works offline.
+The metadata pane uses the same RDF serialization path as `wiki export` (compacted JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads). A compact **Format** chip row switches views without JavaScript. In `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). In `wiki build`, all supported format views are embedded in the page HTML so the picker works offline. RDF/XML output is deferred and is not offered.
 
 ### Built-in CSS classes and IDs
 
@@ -494,7 +494,7 @@ When `link.style` is `standard`, `lint.link_style` (default `warning`) flags Obs
 
 ## Formatting (`fmt`)
 
-Top-level **`fmt`** configures `wiki fmt` (mdformat). Two shapes are allowed — not both:
+Top-level **`fmt`** configures `wiki fmt`, the in-process Deno Markdown formatter. The option names remain mdformat-compatible. Two shapes are allowed — not both:
 
 | Shape          | Example               | When to use                                 |
 | -------------- | --------------------- | ------------------------------------------- |

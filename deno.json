@@ -2,11 +2,21 @@
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "nodeModulesDir": "auto",
   "name": "@wazoo/wiki",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "license": "MIT",
   "exports": {
     ".": "./src/wiki/mod.ts",
     "./cli": "./src/wiki/cli.ts"
+  },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "deno.json",
+      "src/**/*.ts",
+      "src/wiki/index.html",
+      "src/wiki/templates/**/*.yml"
+    ]
   },
   "tasks": {
     "check": "deno check src tests parity/run.ts",

@@ -13,7 +13,7 @@ description: >-
 
 # Wiki CLI Skill
 
-Procedural knowledge for coding agents working with [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command, PyPI **`wazootech-wiki`**).
+Procedural knowledge for coding agents working with [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command and the `wazootech-wiki` npm package). The TypeScript engine is available natively through `@wazoo/wiki` on JSR.
 
 Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `skills/` to `wiki.input`.
 
@@ -22,7 +22,7 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 1. **Deterministic work belongs in scripts and the CLI** — run `skills/wiki/scripts/verify.sh` and `skills/wiki/scripts/audit.sh` instead of reimplementing validator pipelines in prose.
 1. **One workflow per turn** — read the matching reference below, finish that job, stop. Do not chain install → create → deploy unless the user asked for the full flow.
 1. **Advisor-executor model for vault changes** — survey and plan changes as a read-only advisor; dispatch executor subagents to apply edits in isolated worktrees, and review their diffs. Never directly edit user files without approval.
-1. **Deploy uses wholesale templates** — embed [workflow-template-uv.yml](references/workflow-template-uv.yml) or [workflow-template-pip.yml](references/workflow-template-pip.yml) in full; substitute placeholders only.
+1. **Deploy uses a wholesale Deno template** — embed [workflow-template-deno.yml](references/workflow-template-deno.yml) in full; substitute placeholders only.
 1. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
 
 ## Route first
@@ -48,11 +48,11 @@ Before any wiki command:
 1. Run `bash skills/wiki/scripts/verify.sh` (or `.agents/skills/wiki/scripts/verify.sh` when vendored).
 1. Exit `0` → use PATH `wiki`.
 1. Exit `2` (stale) → upgrade **`wazootech-wiki`** per [install.md](references/install.md).
-1. Exit `1` (missing) → install or stop with one-line PyPI hint; read [install.md](references/install.md) for paths.
+1. Exit `1` (missing) → stop and give the npm or standalone install options from [install.md](references/install.md). Do not install software without the user's approval.
 
-In the **Wiki CLI repository checkout**, if PATH `wiki` fails but `pyproject.toml` exists, use `uv run wiki` or `python -m wiki` when both `--help` and `fmt` capability pass.
+In the **Wiki CLI repository checkout**, if PATH `wiki` is unavailable, use `deno run -A src/wiki/cli.ts` only when Deno and the source checkout are present; verify `--help` and `fmt --help` first.
 
-Zero-install equivalent: `npx wazootech-wiki <args>` or `uvx --from wazootech-wiki wiki <args>` in place of `wiki <args>`.
+For a project that already has the package available, `npx wazootech-wiki <args>` is equivalent to `wiki <args>`. Deno-native projects can run `deno run -A jsr:@wazoo/wiki/cli <args>`.
 
 ## Deterministic scripts
 

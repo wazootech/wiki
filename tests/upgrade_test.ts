@@ -235,6 +235,12 @@ Deno.test("non-global and standalone installs are not overwritten", async () => 
         ? "standalone wiki binary"
         : "not installed as a global Deno command",
     );
+    if (target.kind === "non-global") {
+      assertStringIncludes(
+        state.stderr.join("\n"),
+        "npm update -g wazootech-wiki",
+      );
+    }
   }
 });
 

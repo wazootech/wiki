@@ -1,16 +1,16 @@
 ---
 type: TechArticle
 headline: RDF XML
-description: XML-based W3C serialization for RDF graphs.
+description: XML-based W3C syntax for RDF input; Wiki output support is deferred.
 ---
 
 # RDF XML
 
-**RDF/XML** is a W3C-standard XML serialization of [RDF](RDF.md). It is designed primarily for **machine-to-machine interchange**, not for hand authoring. The underlying data model is still RDF triples; RDF/XML is just one concrete syntax for writing them down.
+**RDF/XML** is a W3C-standard XML syntax for representing [RDF](RDF.md). It is designed primarily for **machine-to-machine interchange**, not hand authoring. The underlying data model is still RDF triples; RDF/XML is one concrete syntax for writing them down.
 
 Compared with [Turtle](Turtle.md) or [JSON LD](JSON_LD.md), RDF/XML is usually more verbose and less pleasant for humans to edit directly, but it remains important for compatibility with older semantic-web tools and XML-oriented systems.
 
-## Hello world
+## Example
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -29,9 +29,11 @@ This expresses the RDF statement:
 - predicate: `https://schema.org/givenName`
 - object: `Alice`
 
-## In [wiki](wiki.md)
+## In Wiki
 
-Use `wiki export -f xml` when you want RDF serialized in RDF/XML form.
+RDF/XML **input** remains supported: `.rdf` and `.xml` files under `wiki.input` are parsed into the wiki graph. RDF/XML **output** is deferred from the Deno/TypeScript cutover. `wiki export -f xml` returns a clear unsupported-format error, and the SPARQL service returns `406 Not Acceptable` when RDF/XML is requested; neither path substitutes another serialization. A dedicated follow-up can add an RDF/XML writer and test graph equivalence.
+
+Use [Turtle](Turtle.md), N-Triples, N-Quads, N3, TriG, or JSON-LD for output today. See [wiki export](wiki_export.md) and [wiki serve](wiki_serve.md).
 
 ## Related
 

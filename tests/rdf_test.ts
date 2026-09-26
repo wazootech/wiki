@@ -1,9 +1,9 @@
 /**
  * Tests for `src/wiki/rdf.ts`, the RDF substrate.
  *
- * The interesting assertions are the two that compare against **rdflib's own
- * bytes**, committed as goldens under `tests/fixtures/rdf/` (regenerate with
- * that directory's `generate-golden.py`). Those two encoders write the on-disk
+ * The interesting assertions compare the two encoders against committed
+ * fixtures under `tests/fixtures/rdf/`, regenerated with
+ * `tests/fixtures/rdf/generate-golden.ts`. Those encoders write the on-disk
  * graph cache, which is reused across processes, so their output is a contract
  * rather than an implementation detail.
  *

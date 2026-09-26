@@ -1,11 +1,11 @@
-<https://example.org/Entity> <http://www.w3.org/2000/01/rdf-schema#label> "ümläut in <angle> and & ampersand" .
 <https://example.org/Alice> <https://schema.org/active> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
 <https://example.org/Alice> <https://schema.org/age> "42"^^<http://www.w3.org/2001/XMLSchema#integer> .
-<https://example.org/Alice> <https://schema.org/name> "café ☕"@fr .
-<https://example.org/Alice> <https://schema.org/description> "single line \"quoted\" \\ backslash	tab" .
 <https://example.org/Alice> <https://schema.org/dateModified> "2026-09-24T00:00:00+00:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-<https://example.org/Entity> <http://www.w3.org/2000/01/rdf-schema#comment> "" .
+<https://example.org/Alice> <https://schema.org/description> "single line \"quoted\" \\ backslash	tab" .
+<https://example.org/Alice> <https://schema.org/name> "café ☕"@fr .
 <https://example.org/Alice> <https://schema.org/name> "plain literal" .
 <https://example.org/Alice> <https://schema.org/text> """line1
 line2 "quoted" \\ backslash	tab""" .
+<https://example.org/Entity> <http://www.w3.org/2000/01/rdf-schema#comment> "" .
+<https://example.org/Entity> <http://www.w3.org/2000/01/rdf-schema#label> "ümläut in <angle> and & ampersand" .
 <https://example.org/bob> <https://schema.org/knows> <https://example.org/Bob> .

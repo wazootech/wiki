@@ -2,172 +2,119 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  test:
-    name: Run Tests and Audits
+  deno-checks:
+    name: Deno Engine Checks
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v6
+      - name: Checkout Repository
+        uses: actions/checkout@v6
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
 
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v8.2.0
-      with:
-        enable-cache: true
+      - name: Type-check the Deno engine
+        run: deno task check
 
-    - name: Install Dependencies
-      run: uv sync --group dev
+      - name: Lint the Deno engine
+        run: deno task lint
 
-    - name: Run Python static analysis
-      run: uv run ruff check .
+      - name: Verify Deno formatting
+        run: deno task fmt:check
 
-    - name: Run Unit Tests
-      env:
-        PYTHONPATH: src
-      run: uv run python -m unittest discover -s tests
+      - name: Run Deno unit tests
+        run: deno task test
 
-    - name: Run Docs Wiki Integrity Audits
-      run: uv run wiki -c docs/wiki.yml check --strict -v
+      - name: Validate JSR package contents
+        run: deno publish --dry-run
 
-    - name: Run Docs Wiki Convention Audits
-      run: uv run wiki -c docs/wiki.yml lint --strict -v
+      - name: Compile and smoke-test standalone CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/wiki"
+          deno compile --node-modules-dir=none --frozen --allow-all --exclude-unused-npm --target x86_64-unknown-linux-gnu --output "$output" src/wiki/cli.ts
+          "$output" --help
+          "$output" -c docs/wiki.yml check --strict
 
-    - name: Verify Docs Wiki Formatting
-      run: uv run wiki -c docs/wiki.yml fmt --check -v
+      - name: Run Docs Wiki Integrity Audits
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
 
-    - name: Verify Docs Wiki SPARQL Blocks are Up to Date
-      run: uv run wiki -c docs/wiki.yml render --check
+      - name: Run Docs Wiki Convention Audits
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict -v
 
-    - name: Install docs dependencies
-      run: uv pip install -r docs/requirements-docs.txt
+      - name: Verify Docs Wiki Formatting
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml fmt --check -v
 
-    - name: Verify Python API docs build
-      run: npm run gendocs:python
-
-    - name: Verify TypeScript API docs build
-      run: npm install && npm run gendocs:ts
+      - name: Verify Docs Wiki SPARQL Blocks are Up to Date
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml render --check
 
   npm-checks:
     name: NPM Package Checks
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v6
+      - name: Checkout Repository
+        uses: actions/checkout@v6
 
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version: "24"
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
 
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v8.2.0
-      with:
-        enable-cache: true
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
 
-    - name: Install Python dependencies
-      run: uv sync
+      - name: Verify TypeScript Prettier formatting
+        run: npm run format:check
 
-    - name: Install npm dependencies
-      run: npm ci --ignore-scripts
+      - name: Verify TypeScript ESLint
+        run: npm run lint
 
-    - name: Verify TypeScript Prettier formatting
-      run: npm run format:check
+      - name: Check npm and Deno version consistency
+        run: |
+          node -e 'const pkg = require("./package.json"); const deno = require("./deno.json"); if (pkg.version !== deno.version) { console.error(`Version mismatch: package.json=${pkg.version} deno.json=${deno.version}`); process.exit(1); }'
 
-    - name: Verify TypeScript ESLint
-      run: npm run lint
+      - name: Build and test npm package
+        run: npm run test:npm
 
-    - name: Check npm/PyPI version consistency
-      run: |
-        PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
-        NPM_VER=$(node -e "console.log(require('./package.json').version)")
-        INIT_VER=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/wiki/__init__.py').read()).group(1))")
-        test "$PY_VER" = "$NPM_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER package.json=$NPM_VER"; exit 1; }
-        test "$PY_VER" = "$INIT_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER __init__.py=$INIT_VER"; exit 1; }
+      - name: Verify TypeScript API docs build
+        run: npm run gendocs:ts
 
-    - name: Syntax check JS files
-      run: |
-        node -e "require('./npm/python')"
-        node -e "require('./npm/setup')"
-        node npm/test-setup-argv.js
+      - name: Build static site
+        run: deno run -A docs/build.ts --output-dir _site
 
-    - name: Build TypeScript
-      run: npm run build
-
-    - name: Verify CLI drift — Python/TypeScript alignment
-      run: node npm/test-cli-drift.js
-
-    - name: Run npm API tests
-      run: npm run test:npm
-
-    - name: Verify npm can pack
-      run: npm pack --dry-run
-
-    - name: Build Python package for integration test
-      run: uv build
-
-    - name: Integration test (pack and run wiki --help)
-      run: |
-        TARBALL=$(npm pack --silent)
-        TMPDIR=$(mktemp -d)
-        cd "$TMPDIR"
-        tar xzf "${GITHUB_WORKSPACE}/${TARBALL}"
-        cd package
-        WHEEL=$(ls "${GITHUB_WORKSPACE}/dist/wazootech_wiki-"*.whl | head -1)
-        echo "Installing from wheel: $WHEEL"
-        WIKI_PIP_SPEC="$WHEEL" node npm/bin/wiki.js --help
-
-  deno-checks:
-    name: Deno Engine Checks
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v6
-
-    - name: Set up Deno
-      uses: denoland/setup-deno@v2
-      with:
-        deno-version: v2.x
-        cache: true
-
-    # Migration scaffolding (issue #273). The Python job above remains the
-    # source of truth until the parity gate; these steps only guard the ported
-    # modules and the version surfaces as they land.
-    - name: Type-check the Deno engine
-      run: deno task check
-
-    - name: Lint the Deno engine
-      run: deno task lint
-
-    - name: Verify Deno formatting
-      run: deno task fmt:check
-
-    # No frozen-lockfile gate yet. Deno adopts the repo-root package.json as
-    # workspace dependencies, so `deno install --frozen` fails on the legacy
-    # npm wrapper's devDependencies (eslint, esbuild, tsup, typedoc) — packages
-    # the engine never resolves. Revisit once package.json is the engine's own
-    # manifest rather than a launcher for the Python one.
-    - name: Run Deno unit tests
-      run: deno task test
-
-    # The differential harness (`deno task parity`) is deliberately not wired
-    # into CI yet: it resolves the pinned Python oracle from WIKI_ORACLE_ROOT,
-    # which this job does not have. Its decision logic is covered by the unit
-    # tests above; the harness itself runs locally against the pinned checkout
-    # until the parity gate, at which point the oracle stops existing anyway.
+      - name: Verify npm tarball CLI runs without Python or system Deno
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_root="$RUNNER_TEMP/wiki-cli-tarball"
+          blocked_path="$test_root/no-python"
+          install_root="$test_root/install"
+          mkdir -p "$blocked_path" "$install_root"
+          for executable in python python2 python3 python3.10 python3.11 python3.12 python3.13 deno deno.exe; do
+            printf '%s\n' '#!/usr/bin/env bash' 'echo "An external language runtime was invoked in this package test." >&2' 'exit 127' > "$blocked_path/$executable"
+            chmod +x "$blocked_path/$executable"
+          done
+          tarball="$(npm pack --silent --pack-destination "$test_root")"
+          case "$tarball" in
+            /*) ;;
+            *) tarball="$test_root/$tarball" ;;
+          esac
+          PATH="$blocked_path:$PATH" npm install --prefix "$install_root" --no-audit --no-fund "$tarball"
+          PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" --help

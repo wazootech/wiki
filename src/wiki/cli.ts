@@ -72,7 +72,7 @@ const ROOT_HELP_LINES = [
   "  build    Build static HTML site from wiki documents.",
   "  check    Integrity checks: SHACL, JSON Schema, routes, collisions,...",
   "  export   Export document frontmatter as RDF or JSON-LD.",
-  "  fmt      Format markdown wiki pages using mdformat.",
+  "  fmt      Format markdown wiki pages with the Deno formatter.",
   "  graph    Inspect read-only RDF named graph provenance.",
   "  init     Scaffold a new wiki project in the current directory.",
   "  install  Fetch and lock external data sources.",

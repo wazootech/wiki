@@ -1,8 +1,6 @@
 /**
- * GENERATED FILE — do not hand-edit.
- * Sources: scripts/export_cli_schemas.py (src/wiki/schemas/cli.py COMMAND_MODELS,
- * model_json_schema(by_alias=True)) compiled by json-schema-to-typescript.
- * Regenerate via: npm run gen:cli-types
+ * Compatibility declarations retained for the published npm API.
+ * Keep these option types aligned with the package-local Wiki CLI.
  */
 
 // Choice unions — named mirrors of the schema enums (public API aliases).
@@ -10,7 +8,7 @@
 /** Override ``site.url_style`` (``"file"`` or ``"dir"``). */
 export type UrlStyle = "dir" | "file";
 
-/** RDF serialization format. */
+/** RDF serialization format. `xml` remains a compatibility choice but currently fails with a clear unsupported-format error; RDF/XML output is deferred. */
 export type ExportFormat =
   "dict" | "json-ld" | "turtle" | "xml" | "n3" | "nt" | "trig" | "nquads";
 
@@ -96,7 +94,7 @@ export interface ExportOptions {
    */
   output?: string;
   /**
-   * RDF serialization format.
+   * RDF serialization format. RDF/XML (`xml`) is deferred and returns a clear unsupported-format error.
    */
   format?:
     "dict" | "json-ld" | "turtle" | "xml" | "n3" | "nt" | "trig" | "nquads";
@@ -393,7 +391,7 @@ export interface UpgradeOptions {
    */
   yes?: boolean;
   /**
-   * Show pip install output.
+   * Show installer command and output.
    */
   verbose?: boolean;
 }
