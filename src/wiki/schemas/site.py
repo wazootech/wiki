@@ -1,4 +1,4 @@
-﻿"""Site build models for virtual pages and table of contents."""
+"""Site build models for virtual pages and table of contents."""
 
 from __future__ import annotations
 
