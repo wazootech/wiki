@@ -1,4 +1,4 @@
-﻿"""Central Config and Context managing CLI settings, paths, check rules, and namespace bindings."""
+"""Central Config and Context managing CLI settings, paths, check rules, and namespace bindings."""
 
 from __future__ import annotations
 

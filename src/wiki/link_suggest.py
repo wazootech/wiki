@@ -1,4 +1,4 @@
-﻿"""Detect plain-text page mentions that could be wikilinks."""
+"""Detect plain-text page mentions that could be wikilinks."""
 
 from __future__ import annotations
 

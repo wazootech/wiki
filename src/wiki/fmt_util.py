@@ -1,4 +1,4 @@
-﻿"""Markdown formatting helpers for wiki fmt (mdformat config + SPARQL shields)."""
+"""Markdown formatting helpers for wiki fmt (mdformat config + SPARQL shields)."""
 
 from __future__ import annotations
 
