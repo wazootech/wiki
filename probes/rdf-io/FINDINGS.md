@@ -31,7 +31,12 @@ else comes from two libraries, and **one format has no writer at all**.
   including a reverse-direction check: rdflib re-parsing what the port wrote.
   → [`oracle/`](oracle)
 
-Run: `deno run --allow-read --allow-write --allow-run --allow-env --config deno.json probe.ts`
+Run `probe.ts` first, then `oracle/generate.py` from the rdflib checkout;
+`n3-probe.ts` reads the generated oracle Turtle. Captures under `deno/` and
+`oracle/` are generated locally and intentionally not committed; the findings
+below quote the relevant outputs.
+
+`deno run --allow-read --allow-write --allow-run --allow-env --config deno.json probe.ts`
 
 ## Result 1: `@zazuko/env` registers nothing, and failure is silent
 
@@ -89,8 +94,8 @@ output back (`n3.Parser` → 10 quads):
     schema:age 42;
 ```
 
-Compare [`oracle/turtle.txt`](oracle/turtle.txt) — rdflib groups the same
-predicates, abbreviates `"true"^^xsd:boolean` to `true` as well, but writes
+The rdflib Turtle output groups the same predicates, abbreviates
+`"true"^^xsd:boolean` to `true` as well, but writes
 ` ;` where n3.js writes `;`, uses `[ ]` for a blank object, escapes a newline as
 `\n` where rdflib switches to a triple-quoted literal, and orders predicates
 alphabetically where n3.js keeps insertion order. Same shape, different bytes.
@@ -117,7 +122,7 @@ literal, and no escaping of `<`, `>` or `&` inside literals. Two differences:
 `format.py::_serialize_nquads_graph` builds N-Quads lines as
 `f"{s.n3()} {p.n3()} {o.n3()} ."`, so the *cache and export format* is rdflib's
 term rendering, not N-Quads-toolkit rendering. The fixture caught the one place
-that differs, in [`oracle/nquads.txt`](oracle/nquads.txt):
+that differs in rdflib's N-Quads output:
 
 ```
 <https://example.org/Alice> <https://schema.org/description> """line1
@@ -126,7 +131,7 @@ line2 \"quoted\" \\ backslash	tab""" .
 
 A literal containing a newline is written **triple-quoted with the newline left
 raw**, while backslashes and quotes are still escaped. Reproducing N-Triples with
-`\n` escapes instead (`deno/nquads-handwritten.txt`) is one line off — which
+`\n` escapes instead is one line off — which
 would have been a diff on every cached graph containing a multi-line literal,
 since page bodies are stored as literals. The port's `n3()` must therefore
 reproduce rdflib's rule: use `"""…"""` when the value contains a newline, and keep

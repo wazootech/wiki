@@ -1,5 +1,5 @@
 /**
- * Runs the comparison over the corpora and writes `probe-out.txt`.
+ * Runs the comparison over the corpora and writes per-route captures.
  *
  * `deno run -A probe.ts` — must be run from `probes/fmt-dprint`, because the
  * corpus paths are resolved relative to the worktree root one level up.
@@ -9,8 +9,8 @@ import {
   buildBareRoute,
   buildContextRoute,
   denoFmtRoute,
-  firstDifference,
   type DprintRoute,
+  firstDifference,
   type HostSet,
 } from "./harness.ts";
 import { buildFaithfulRoute } from "./route.ts";
@@ -164,7 +164,9 @@ const postPass = Deno.args.includes("--post-pass");
 const tag = Deno.args.includes("--bare")
   ? "bare"
   : Deno.args.includes("--context")
-  ? Object.entries(hosts).filter(([, on]) => on).map(([name]) => name).join("-") ||
+  ? Object.entries(hosts).filter(([, on]) => on).map(([name]) => name).join(
+    "-",
+  ) ||
     "none"
   : `faithful${postPass ? "+html" : ""}`;
 const route: DprintRoute = Deno.args.includes("--bare")

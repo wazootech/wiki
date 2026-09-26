@@ -20,9 +20,10 @@ deno run --allow-read --allow-write probe.ts
 deno run --allow-read modes.ts      # construction-mode evidence
 ```
 
-`corpus.json` is the shared input; both sides read it verbatim.
-`oracle/golden.json` and `deno-ajv.json` are the recorded outputs,
-`probe-out.txt` the human-readable diff.
+`corpus.json` is shared input; both sides read it verbatim. Tests retain
+`oracle/golden.json` as the regression fixture. The probe generates
+`deno-ajv.json`; `probe-out.txt` is a captured stdout diff. Neither capture is
+committed; the findings below preserve the comparison summary.
 
 ## Headline
 

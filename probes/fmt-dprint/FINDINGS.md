@@ -28,8 +28,9 @@ deno run -A goldens.ts                      # tests/fmt_test.ts's goldens, repla
 deno run -A host-config.ts                  # resolved config per host plugin
 ```
 
-`probe.ts` writes `probe-out-<route>.txt` and `results-<route>.json`; the
-recorded runs are committed next to it. The corpora are read from the worktree
+`probe.ts` writes `probe-out-<route>.txt` and `results-<route>.json`; these
+captures are generated locally and intentionally not committed. The findings
+below summarize the measured runs. The corpora are read from the worktree
 root: the four micro pages (`parity/corpus/micro/wiki/`), the nine pages
 `fmt-check-docs` names as divergent, all 87 `docs/wiki/` pages, and the two
 `probes/fmt-shielding/` inputs.

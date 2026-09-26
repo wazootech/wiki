@@ -70,3 +70,12 @@ skills/*-workspace/
 # skills CLI install artifacts (canonical skills live under skills/)
 .agents/
 skills-lock.json
+
+# Generated investigation captures (recreated by the probes; not test fixtures).
+/probes/fmt-dprint/probe-out-*.txt
+/probes/fmt-dprint/results-*.json
+/probes/json-schema/deno-ajv.json
+/probes/json-schema/probe-out.txt
+/probes/rdf-io/deno/*.txt
+/probes/rdf-io/oracle/*.txt
+/probes/rdf-io/oracle/report.json
