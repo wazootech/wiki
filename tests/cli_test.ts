@@ -216,6 +216,72 @@ Deno.test(
 );
 
 Deno.test(
+  "graph and graph list help match the Python CLI",
+  { permissions: { run: true } },
+  async () => {
+    const group = await runCli(["graph", "--help"]);
+    assertEquals(group.code, EXIT_OK);
+    assertEquals(group.stderr, "");
+    assertEquals(
+      group.stdout,
+      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n\n" +
+        "  Inspect read-only RDF named graph provenance.\n\n" +
+        "Options:\n" +
+        "  --help  Show this message and exit.\n\n" +
+        "Commands:\n" +
+        "  list  List named graphs available to SPARQL GRAPH queries.\n",
+    );
+
+    const list = await runCli(["graph", "list", "--help"]);
+    assertEquals(list.code, EXIT_OK);
+    assertEquals(list.stderr, "");
+    assertEquals(
+      list.stdout,
+      "Usage: wiki graph list [OPTIONS]\n\n" +
+        "  List named graphs available to SPARQL GRAPH queries.\n\n" +
+        "Options:\n" +
+        "  --help  Show this message and exit.\n",
+    );
+  },
+);
+
+Deno.test(
+  "graph group usage errors identify the correct command context",
+  { permissions: { run: true } },
+  async () => {
+    const missing = await runCli(["graph"]);
+    assertEquals(missing.code, EXIT_USAGE);
+    assertEquals(missing.stdout, "");
+    assertEquals(
+      missing.stderr,
+      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
+        "Try 'wiki graph --help' for help.\n\n" +
+        "Error: Missing command.\n",
+    );
+
+    const unknown = await runCli(["graph", "bogus"]);
+    assertEquals(unknown.code, EXIT_USAGE);
+    assertEquals(unknown.stdout, "");
+    assertEquals(
+      unknown.stderr,
+      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
+        "Try 'wiki graph --help' for help.\n\n" +
+        "Error: No such command 'bogus'.\n",
+    );
+
+    const extra = await runCli(["graph", "list", "extra"]);
+    assertEquals(extra.code, EXIT_USAGE);
+    assertEquals(extra.stdout, "");
+    assertEquals(
+      extra.stderr,
+      "Usage: wiki graph list [OPTIONS]\n" +
+        "Try 'wiki graph list --help' for help.\n\n" +
+        "Error: Got unexpected extra argument (extra)\n",
+    );
+  },
+);
+
+Deno.test(
   "graph list prints the root graph table",
   { permissions: { run: true, read: true, write: true } },
   async () => {

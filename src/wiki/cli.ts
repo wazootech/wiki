@@ -142,6 +142,30 @@ function usageError(detail: string): number {
   return EXIT_USAGE;
 }
 
+function graphUsageError(detail: string): number {
+  console.error(
+    [
+      `Usage: ${PROG_NAME} graph [OPTIONS] COMMAND [ARGS]...`,
+      `Try '${PROG_NAME} graph --help' for help.`,
+      "",
+      `Error: ${detail}`,
+    ].join("\n"),
+  );
+  return EXIT_USAGE;
+}
+
+function graphListUsageError(detail: string): number {
+  console.error(
+    [
+      `Usage: ${PROG_NAME} graph list [OPTIONS]`,
+      `Try '${PROG_NAME} graph list --help' for help.`,
+      "",
+      `Error: ${detail}`,
+    ].join("\n"),
+  );
+  return EXIT_USAGE;
+}
+
 /** Run an audit command over the wiki the group options resolved to. */
 async function runAuditCommand(
   wiki: Wiki,
@@ -1592,8 +1616,40 @@ export async function main(
   }
 
   if (command === "graph") {
-    if (argv[index + 1] !== "list" || argv.length > index + 2) {
-      return usageError("Usage: wiki graph list");
+    const graphCommand = argv[index + 1];
+    if (graphCommand === "--help" || graphCommand === "-h") {
+      console.log(
+        "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n\n" +
+          "  Inspect read-only RDF named graph provenance.\n\n" +
+          "Options:\n" +
+          "  --help  Show this message and exit.\n\n" +
+          "Commands:\n" +
+          "  list  List named graphs available to SPARQL GRAPH queries.",
+      );
+      return EXIT_OK;
+    }
+    if (
+      graphCommand === "list" &&
+      (argv[index + 2] === "--help" || argv[index + 2] === "-h")
+    ) {
+      console.log(
+        "Usage: wiki graph list [OPTIONS]\n\n" +
+          "  List named graphs available to SPARQL GRAPH queries.\n\n" +
+          "Options:\n" +
+          "  --help  Show this message and exit.",
+      );
+      return EXIT_OK;
+    }
+    if (graphCommand === undefined) {
+      return graphUsageError("Missing command.");
+    }
+    if (graphCommand !== "list") {
+      return graphUsageError(`No such command '${graphCommand}'.`);
+    }
+    if (argv.length > index + 2) {
+      return graphListUsageError(
+        `Got unexpected extra argument (${argv[index + 2]})`,
+      );
     }
     const wiki = await loadWiki(configPath, wikiInputs);
     if (typeof wiki === "number") return wiki;
