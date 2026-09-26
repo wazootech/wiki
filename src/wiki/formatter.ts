@@ -36,11 +36,13 @@
  * check` from paying to instantiate ~8 MB of WebAssembly it will never call.
  */
 
+import { basename } from "@std/path";
+import { ValueError } from "./errors.ts";
 import { createFromBuffer, type Formatter } from "@dprint/formatter";
 import * as markdownPlugin from "@dprint/markdown";
 import * as jsonPlugin from "@dprint/json";
 import * as typescriptPlugin from "@dprint/typescript";
-import { type Path, ValueError } from "./fspath.ts";
+
 import { pyReprString } from "./pyrepr.ts";
 
 /**
@@ -360,7 +362,7 @@ function resolveWrap(
  */
 export function formatMarkdownText(
   text: string,
-  filePath: Path,
+  filePath: string,
   wrap: unknown,
 ): string {
   const host = loaded();
@@ -374,12 +376,12 @@ export function formatMarkdownText(
   let formatted: string;
   try {
     formatted = host.markdown.formatText({
-      filePath: filePath.name,
+      filePath: basename(filePath),
       fileText: text,
     });
   } catch (error) {
     throw new ValueError(
-      `dprint-plugin-markdown failed on ${filePath.name}: ${
+      `dprint-plugin-markdown failed on ${basename(filePath)}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

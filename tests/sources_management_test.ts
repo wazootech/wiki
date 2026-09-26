@@ -1,3 +1,5 @@
+import { dirname, join } from "@std/path";
+import { pathExists, readText } from "../src/wiki/fspath.ts";
 import {
   assert,
   assertEquals,
@@ -5,23 +7,23 @@ import {
   assertThrows,
 } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { loadLockfile } from "../src/wiki/schemas/sources.ts";
 import { install, remove, update } from "../src/wiki/sources.ts";
 
-function withTempDir(body: (root: Path) => void): void {
-  const root = new Path(Deno.makeTempDirSync({ prefix: "wiki-sources-" }));
+function withTempDir(body: (root: string) => void): void {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-sources-" });
   try {
     body(root);
   } finally {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   }
 }
 
-function git(args: string[], cwd: Path): string {
+function git(args: string[], cwd: string): string {
   const result = new Deno.Command("git", {
     args,
-    cwd: cwd.toString(),
+    cwd: cwd,
     stdout: "piped",
     stderr: "piped",
   }).outputSync();
@@ -34,17 +36,17 @@ function git(args: string[], cwd: Path): string {
 }
 
 function initRepo(
-  root: Path,
+  root: string,
   name: string,
   files: Record<string, string>,
-): Path {
-  const repo = root.joinpath(name);
-  Deno.mkdirSync(repo.toString(), { recursive: true });
+): string {
+  const repo = join(root, name);
+  Deno.mkdirSync(repo, { recursive: true });
   git(["init", "--initial-branch=main"], repo);
   for (const [relative, content] of Object.entries(files)) {
-    const file = repo.joinpath(relative);
-    Deno.mkdirSync(file.parent.toString(), { recursive: true });
-    file.writeText(content);
+    const file = join(repo, relative);
+    Deno.mkdirSync(dirname(file), { recursive: true });
+    Deno.writeTextFileSync(file, content);
   }
   git(["add", "."], repo);
   git([
@@ -59,9 +61,9 @@ function initRepo(
   return repo;
 }
 
-function commitFile(repo: Path, relative: string, content: string): string {
-  const file = repo.joinpath(relative);
-  file.writeText(content);
+function commitFile(repo: string, relative: string, content: string): string {
+  const file = join(repo, relative);
+  Deno.writeTextFileSync(file, content);
   git(["add", relative], repo);
   git([
     "-c",
@@ -76,13 +78,14 @@ function commitFile(repo: Path, relative: string, content: string): string {
 }
 
 function rootConfig(
-  root: Path,
+  root: string,
   sources: readonly { name: string; url: string }[] = [],
 ): Config {
   const entries = sources.map(({ name, url }) =>
     `  - name: ${name}\n    type: git\n    url: ${url}`
   );
-  root.joinpath("wiki.yml").writeText(
+  Deno.writeTextFileSync(
+    join(root, "wiki.yml"),
     `wiki:\n  input: wiki\n${
       entries.length ? `sources:\n${entries.join("\n")}\n` : ""
     }`,
@@ -94,10 +97,11 @@ Deno.test("source install and removal preserve comments in wiki.yml", () => {
   withTempDir((root) => {
     const existing = initRepo(root, "existing", { "page.md": "# Existing\n" });
     const added = initRepo(root, "added", { "page.md": "# Added\n" });
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
-    const configPath = wikiRoot.joinpath("wiki.yml");
-    configPath.writeText(
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
+    const configPath = join(wikiRoot, "wiki.yml");
+    Deno.writeTextFileSync(
+      configPath,
       `# root comment\n` +
         `wiki:\n` +
         `  input: [wiki] # inline wiki comment\n` +
@@ -114,10 +118,10 @@ Deno.test("source install and removal preserve comments in wiki.yml", () => {
     );
     const config = Config.load(wikiRoot);
 
-    install(config, added.toString());
+    install(config, added);
     remove(config, "added");
 
-    const result = configPath.readText();
+    const result = readText(configPath);
     for (
       const comment of [
         "# root comment",
@@ -141,37 +145,38 @@ Deno.test("source install and removal preserve comments in wiki.yml", () => {
 Deno.test("install from URL adds config entry and locks a local Git source", () => {
   withTempDir((root) => {
     const repo = initRepo(root, "source", { "page.md": "# Source\n" });
-    const rootDir = root.joinpath("wiki-root");
-    Deno.mkdirSync(rootDir.toString());
+    const rootDir = join(root, "wiki-root");
+    Deno.mkdirSync(rootDir);
     const config = rootConfig(rootDir);
     const expectedRef = git(["rev-parse", "HEAD"], repo);
 
-    const lockfile = install(config, repo.toString());
+    const lockfile = install(config, repo);
     assertEquals([...lockfile.sources.keys()], ["source"]);
     assertEquals(lockfile.sources.get("source")?.resolved_ref, expectedRef);
     assertEquals(lockfile.sources.get("source")?.required_by, []);
     assertEquals(config.sources.map((source) => source.name), ["source"]);
     assert(
-      rootDir.joinpath(".wiki", "sources", "source", "repo", "page.md")
-        .exists(),
+      pathExists(
+        join(rootDir, ".wiki", "sources", "source", "repo", "page.md"),
+      ),
     );
-    assertEquals(loadLockfile(rootDir.joinpath("wiki.lock")).sources.size, 1);
-    assertStringIncludes(rootDir.joinpath("wiki.yml").readText(), "url: ");
+    assertEquals(loadLockfile(join(rootDir, "wiki.lock")).sources.size, 1);
+    assertStringIncludes(readText(join(rootDir, "wiki.yml")), "url: ");
   });
 });
 
 Deno.test("update dry-run reports the new ref without changing the lock", () => {
   withTempDir((root) => {
     const repo = initRepo(root, "source", { "page.md": "# v1\n" });
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "source",
-      url: repo.toString(),
+      url: repo,
     }]);
     const installed = install(config);
     const oldRef = installed.sources.get("source")!.resolved_ref;
-    const lockBefore = wikiRoot.joinpath("wiki.lock").readText();
+    const lockBefore = readText(join(wikiRoot, "wiki.lock"));
     const newRef = commitFile(repo, "page.md", "# v2\n");
 
     const dryRun = update(config, undefined, { dry_run: true });
@@ -179,12 +184,12 @@ Deno.test("update dry-run reports the new ref without changing the lock", () => 
     assertEquals(dryRun.changed.map((entry) => entry.name), ["source"]);
     assertEquals(dryRun.updates[0]?.previous_ref, oldRef.slice(0, 12));
     assertEquals(dryRun.updates[0]?.current_ref, newRef.slice(0, 12));
-    assertEquals(wikiRoot.joinpath("wiki.lock").readText(), lockBefore);
+    assertEquals(readText(join(wikiRoot, "wiki.lock")), lockBefore);
 
     const applied = update(config);
     assertEquals(applied.changed.map((entry) => entry.name), ["source"]);
     assertEquals(
-      loadLockfile(wikiRoot.joinpath("wiki.lock")).sources.get("source")
+      loadLockfile(join(wikiRoot, "wiki.lock")).sources.get("source")
         ?.resolved_ref,
       newRef,
     );
@@ -196,14 +201,14 @@ Deno.test("install resolves transitive sources and records parent links", () => 
     const dep = initRepo(root, "dependency", { "dep.md": "# Dependency\n" });
     const parent = initRepo(root, "parent", {
       "wiki.yml":
-        `wiki:\n  input: wiki\nsources:\n  - name: dependency\n    type: git\n    url: ${dep.toString()}\n`,
+        `wiki:\n  input: wiki\nsources:\n  - name: dependency\n    type: git\n    url: ${dep}\n`,
       "parent.md": "# Parent\n",
     });
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "parent",
-      url: parent.toString(),
+      url: parent,
     }]);
 
     const lockfile = install(config);
@@ -211,8 +216,9 @@ Deno.test("install resolves transitive sources and records parent links", () => 
     assertEquals(lockfile.sources.get("parent")?.required_by, []);
     assertEquals(lockfile.sources.get("dependency")?.required_by, ["parent"]);
     assert(
-      wikiRoot.joinpath(".wiki", "sources", "dependency", "repo", "dep.md")
-        .exists(),
+      pathExists(
+        join(wikiRoot, ".wiki", "sources", "dependency", "repo", "dep.md"),
+      ),
     );
   });
 });
@@ -222,31 +228,31 @@ Deno.test("remove cascades orphan caches while preserving shared dependencies", 
     const shared = initRepo(root, "shared", { "shared.md": "# Shared\n" });
     const sourceA = initRepo(root, "source-a", {
       "wiki.yml":
-        `sources:\n  - name: shared\n    type: git\n    url: ${shared.toString()}\n`,
+        `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
     });
     const sourceB = initRepo(root, "source-b", {
       "wiki.yml":
-        `sources:\n  - name: shared\n    type: git\n    url: ${shared.toString()}\n`,
+        `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
     });
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [
-      { name: "source-a", url: sourceA.toString() },
-      { name: "source-b", url: sourceB.toString() },
+      { name: "source-a", url: sourceA },
+      { name: "source-b", url: sourceB },
     ]);
     install(config);
 
     remove(config, "source-a");
-    let lockfile = loadLockfile(wikiRoot.joinpath("wiki.lock"));
+    let lockfile = loadLockfile(join(wikiRoot, "wiki.lock"));
     assert(!lockfile.sources.has("source-a"));
     assertEquals(lockfile.sources.get("shared")?.required_by, ["source-b"]);
-    assert(!wikiRoot.joinpath(".wiki", "sources", "source-a").exists());
-    assert(wikiRoot.joinpath(".wiki", "sources", "shared").exists());
+    assert(!pathExists(join(wikiRoot, ".wiki", "sources", "source-a")));
+    assert(pathExists(join(wikiRoot, ".wiki", "sources", "shared")));
 
     remove(config, "source-b");
-    lockfile = loadLockfile(wikiRoot.joinpath("wiki.lock"));
+    lockfile = loadLockfile(join(wikiRoot, "wiki.lock"));
     assertEquals(lockfile.sources.size, 0);
-    assert(!wikiRoot.joinpath(".wiki", "sources", "shared").exists());
+    assert(!pathExists(join(wikiRoot, ".wiki", "sources", "shared")));
     assertEquals(rootConfig(wikiRoot).sources.length, 0);
   });
 });
@@ -255,52 +261,51 @@ Deno.test("remove recursively deletes orphaned dependency chains", () => {
   withTempDir((root) => {
     const leaf = initRepo(root, "leaf", { "leaf.md": "# Leaf\n" });
     const middle = initRepo(root, "middle", {
-      "wiki.yml":
-        `sources:\n  - name: leaf\n    type: git\n    url: ${leaf.toString()}\n`,
+      "wiki.yml": `sources:\n  - name: leaf\n    type: git\n    url: ${leaf}\n`,
     });
     const top = initRepo(root, "top", {
       "wiki.yml":
-        `sources:\n  - name: middle\n    type: git\n    url: ${middle.toString()}\n`,
+        `sources:\n  - name: middle\n    type: git\n    url: ${middle}\n`,
     });
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
-    const config = rootConfig(wikiRoot, [{ name: "top", url: top.toString() }]);
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
+    const config = rootConfig(wikiRoot, [{ name: "top", url: top }]);
     install(config);
 
     remove(config, "top");
 
-    const lockfile = loadLockfile(wikiRoot.joinpath("wiki.lock"));
+    const lockfile = loadLockfile(join(wikiRoot, "wiki.lock"));
     assertEquals(lockfile.sources.size, 0);
     for (const name of ["top", "middle", "leaf"]) {
-      assert(!wikiRoot.joinpath(".wiki", "sources", name).exists());
+      assert(!pathExists(join(wikiRoot, ".wiki", "sources", name)));
     }
   });
 });
 
 Deno.test("remove rejects path-traversing names without touching external data", () => {
   withTempDir((root) => {
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
-    const outside = root.joinpath("outside");
-    Deno.mkdirSync(outside.toString());
-    outside.joinpath("keep.txt").writeText("keep\n");
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
+    const outside = join(root, "outside");
+    Deno.mkdirSync(outside);
+    Deno.writeTextFileSync(join(outside, "keep.txt"), "keep\n");
     const config = rootConfig(wikiRoot);
     assertThrows(
       () => remove(config, "../outside"),
       Error,
       "Unsafe source name",
     );
-    assertEquals(outside.joinpath("keep.txt").readText(), "keep\n");
+    assertEquals(readText(join(outside, "keep.txt")), "keep\n");
   });
 });
 
 Deno.test("failed clone retains Git stderr in the install error", () => {
   withTempDir((root) => {
-    const wikiRoot = root.joinpath("wiki-root");
-    Deno.mkdirSync(wikiRoot.toString());
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "missing",
-      url: root.joinpath("does-not-exist").toString(),
+      url: join(root, "does-not-exist"),
     }]);
     const error = assertThrows(
       () => install(config),

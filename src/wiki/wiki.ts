@@ -16,20 +16,22 @@
  * - **Runtime overrides rebuild the config rather than mutating a copy of it.**
  *   Python's `model_copy(deep=True)` is pydantic machinery; {@link copyConfig}
  *   states what the copy actually has to guarantee (a new `site` and `wiki`
- *   block, everything else shared) instead of deep-cloning class instances that
- *   carry a `Path` and a `Logger` with them.
+ *   block, everything else shared) rather than deep-cloning the configuration
+ *   graph, including its Logger.`
  *
  * `Wiki.load` resolves locked sources before it returns, so a wiki with a
  * `wiki.lock` loads the same corpus the oracle would. A source whose cache is
  * missing warns and is skipped; see `sources.ts`.
  */
 
+import { basename, extname, isAbsolute, join } from "@std/path";
+import { isFile, pathExists, walkTree } from "./fspath.ts";
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
 import { buildStaticSite } from "./site/publish.ts";
 import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
-import { Path } from "./fspath.ts";
+
 import {
   graphDescriptors,
   loadDataset,
@@ -184,16 +186,16 @@ export function resolveRuntimeConfig(
 }
 
 export interface WikiInitOptions extends Omit<ResolveInitOptions, "cwd"> {
-  readonly cwd?: string | Path;
+  readonly cwd?: string;
   readonly template?: string | null;
 }
 
 /** Loaded wiki configuration and graph session for library operations. */
 export class Wiki {
   readonly config: Config;
-  readonly config_path: Path | null;
+  readonly config_path: string | null;
 
-  constructor(config: Config, configPath: Path | null = null) {
+  constructor(config: Config, configPath: string | null = null) {
     this.config = config;
     this.config_path = configPath;
   }
@@ -220,23 +222,23 @@ export class Wiki {
    * then appended, since a source contributes documents to the same corpus.
    */
   static load(
-    configPath: string | Path,
+    configPath: string,
     options: { readonly wikiInputs?: readonly string[] | null } = {},
   ): Wiki {
-    const path = configPath instanceof Path ? configPath : new Path(configPath);
+    const path = configPath;
     const resolvedConfigPath = findConfigPath(path);
     const config = Config.load(path);
 
-    const inputs: Path[] = [...config.wiki.input];
+    const inputs: string[] = [...config.wiki.input];
     const wikiInputs = options.wikiInputs ?? null;
     if (wikiInputs !== null && wikiInputs.length > 0) {
       inputs.length = 0;
       for (const entry of wikiInputs) {
-        const candidate = new Path(entry);
+        const candidate = entry;
         inputs.push(
-          candidate.isAbsolute()
+          isAbsolute(candidate)
             ? candidate
-            : config.config_root.joinpath(candidate),
+            : join(config.config_root, candidate),
         );
       }
     }
@@ -250,10 +252,10 @@ export class Wiki {
     // name the same directory as a source and as `wiki.input` after a hand edit.
     // Comparison is on the path string, which is what Python's `set` of paths
     // does for two paths spelled the same way.
-    const existing = new Set(current.wiki.input.map((path) => path.toString()));
-    const fromSources: Path[] = [];
+    const existing = new Set(current.wiki.input.map((path) => path));
+    const fromSources: string[] = [];
     for (const resolved of resolveSources(current)) {
-      const key = resolved.toString();
+      const key = resolved;
       if (existing.has(key)) continue;
       existing.add(key);
       fromSources.push(resolved);
@@ -329,7 +331,7 @@ export class Wiki {
    * 0 for a wiki whose only findings are advisory.
    */
   async check(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: { readonly strict?: boolean } = {},
   ): Promise<AuditReport> {
     const batch = new DocumentBatch(this.config, files ?? null);
@@ -344,7 +346,7 @@ export class Wiki {
 
   /** Run the convention audits: links, filenames, headings, link style. */
   lint(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: { readonly strict?: boolean } = {},
   ): AuditReport {
     const batch = new DocumentBatch(this.config, files ?? null);
@@ -361,7 +363,7 @@ export class Wiki {
    * produce the same file list.
    */
   format(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: { readonly check?: boolean; readonly verbose?: boolean } = {},
   ): FmtReport {
     return new DocumentBatch(this.config, files ?? null).format(options);
@@ -388,7 +390,7 @@ export class Wiki {
   }
 
   async render(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: RenderOptions = {},
   ): Promise<RenderReport> {
     const explicitFiles = files && files.length > 0 ? files : [];
@@ -420,14 +422,14 @@ export class Wiki {
   }
 
   async export(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: ExportOptions = {},
   ): Promise<ExportResult> {
     return await exportFrontmatter(this.config, files ?? null, options);
   }
 
   async build(
-    outputDir: Path | string = "_site",
+    outputDir: string = "_site",
     options: BuildMethodOptions = {},
   ): Promise<BuildResult> {
     const wiki = this.withRuntime({
@@ -435,7 +437,7 @@ export class Wiki {
       ...(options.urlStyle === undefined ? {} : { urlStyle: options.urlStyle }),
     });
     return await buildStaticSite(wiki, {
-      output_dir: outputDir instanceof Path ? outputDir : new Path(outputDir),
+      output_dir: outputDir,
       ...(options.baseUrl === undefined ? {} : { base_url: options.baseUrl }),
       ...(options.urlStyle === undefined
         ? {}
@@ -456,7 +458,7 @@ export class Wiki {
       | "dir"
       | "file";
     const tempDir = await Deno.makeTempDir({ prefix: "wiki-serve-" });
-    const outputDir = new Path(tempDir);
+    const outputDir = tempDir;
     let server: ReturnType<typeof startStaticSiteServer> | null = null;
     let stopWatching: (() => void) | null = null;
     try {
@@ -472,10 +474,10 @@ export class Wiki {
       }
       const baseParts = baseUrl.split("/").filter(Boolean);
       const siteDir = baseParts.length > 0
-        ? outputDir.joinpath(...baseParts)
+        ? join(outputDir, ...baseParts)
         : outputDir;
       server = startStaticSiteServer({
-        siteDir: siteDir.toString(),
+        siteDir: siteDir,
         host: options.host ?? "127.0.0.1",
         port: options.port ?? 8080,
         baseUrl,
@@ -576,29 +578,27 @@ export class Wiki {
       ".woff",
       ".ttf",
     ]);
-    const files = new Map<string, Path>();
+    const files = new Map<string, string>();
     for (
       const root of [...this.config.wiki.input, ...this.config.wiki.assets]
     ) {
-      if (!root.exists()) continue;
-      const paths = root.isFile() ? [root] : root.rglob();
+      if (!pathExists(root)) continue;
+      const paths = isFile(root) ? [root] : walkTree(root);
       for (const path of paths) {
-        if (!path.isFile() || this.config.isExcluded(path)) continue;
-        if (!watchedExtensions.has(path.suffix.toLowerCase())) continue;
-        files.set(path.toString(), path);
+        if (!isFile(path) || this.config.isExcluded(path)) continue;
+        if (!watchedExtensions.has(extname(path).toLowerCase())) continue;
+        files.set(path, path);
       }
     }
-    return [...files.values()].sort((a, b) =>
-      a.toString().localeCompare(b.toString())
-    )
+    return [...files.values()].sort((a, b) => a.localeCompare(b))
       .map((path) => {
-        const stat = Deno.statSync(path.toString());
+        const stat = Deno.statSync(path);
         return `${path}:${stat.mtime?.getTime() ?? 0}:${stat.size}`;
       }).join("\n");
   }
 
   link(
-    files?: readonly Path[] | null,
+    files?: readonly string[] | null,
     options: LinkOptions = {},
   ): LinkReport {
     const fileFilter = files && files.length > 0
@@ -608,7 +608,7 @@ export class Wiki {
       ok: true,
       opportunities: 0,
       fixes: 0,
-      changed_paths: [] as Path[],
+      changed_paths: [] as string[],
       remaining_broken: 0,
       lines: [] as string[],
     };
@@ -618,7 +618,7 @@ export class Wiki {
       report.fixes = fixes.length;
       for (const fix of fixes) {
         report.lines.push(
-          `${fix.issue.source_path.name}: ${fix.issue.link_kind} [` +
+          `${basename(fix.issue.source_path)}: ${fix.issue.link_kind} [` +
             `${fix.issue.raw_target}] -> ${fix.description}`,
         );
       }

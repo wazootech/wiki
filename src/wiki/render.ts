@@ -1,7 +1,9 @@
+import { relativeWithin } from "./fspath.ts";
+import { basename } from "@std/path";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import { readTextTolerant } from "./parser.ts";
 import { iterMarkdownFiles, selectMarkdownPaths } from "./paths.ts";
-import type { Path } from "./fspath.ts";
+
 import { runQuery } from "./format.ts";
 import type { Config } from "./config.ts";
 import type { RenderReport } from "./schemas/reports.ts";
@@ -24,7 +26,7 @@ export function stripSparqlWrappersForHtml(markdown: string): string {
   });
 }
 
-function hasSparqlBlocks(path: Path): boolean {
+function hasSparqlBlocks(path: string): boolean {
   try {
     return blockRegex().test(readTextTolerant(path));
   } catch {
@@ -79,11 +81,11 @@ function replaceSparqlTable(
   }${renderedMarkdown}${suffix}${group(match, "end")}`;
 }
 
-function relativePath(path: Path): string {
+function relativePath(path: string): string {
   try {
-    return path.relativeTo(Deno.cwd()).asPosix();
+    return (relativeWithin(path, Deno.cwd())).replaceAll("\\", "/");
   } catch {
-    return path.toString();
+    return path;
   }
 }
 
@@ -92,7 +94,7 @@ export interface RenderMarkdownOptions {
   readonly baseIri: string;
   readonly knownSlugs: ReadonlySet<string>;
   readonly dryRun?: boolean;
-  readonly explicitFiles?: readonly Path[];
+  readonly explicitFiles?: readonly string[];
 }
 
 export async function renderMarkdownFiles(
@@ -135,7 +137,7 @@ export async function renderMarkdownFiles(
         }
       } catch (error) {
         renderErrors.push(
-          `Error rendering query in ${file.name}: ${
+          `Error rendering query in ${basename(file)}: ${
             error instanceof Error ? error.message : String(error)
           }`,
         );
@@ -150,7 +152,7 @@ export async function renderMarkdownFiles(
     if (!modified || newContent === content) continue;
     staleFiles.push(relativePath(file));
     if (!options.dryRun) {
-      await Deno.writeTextFile(file.toString(), newContent);
+      await Deno.writeTextFile(file, newContent);
       updatedCount += 1;
     }
   }

@@ -7,18 +7,16 @@
  * parsed from user input.
  */
 
-import type { Path } from "../fspath.ts";
-
 /** A wiki page: its source file and the route it is published at. */
 export interface PageRoute {
-  readonly source: Path;
+  readonly source: string;
   readonly route: string;
 }
 
 /** One entry in the output manifest a build produces. */
 export interface OutputEntry {
-  readonly source: Path | null;
-  readonly output_path: Path;
+  readonly source: string | null;
+  readonly output_path: string;
   readonly public_url: string;
   readonly kind: string;
 }
@@ -26,7 +24,7 @@ export interface OutputEntry {
 /** A link that does not resolve to a page, asset, or heading. */
 export interface BrokenLink {
   readonly source_route: string;
-  readonly source_path: Path;
+  readonly source_path: string;
   readonly link_kind: string;
   readonly raw_target: string;
   readonly issue_kind: string;

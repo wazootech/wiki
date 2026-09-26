@@ -17,7 +17,6 @@
  *   Python behaviour and costs nothing to keep.
  */
 
-import type { Path } from "../fspath.ts";
 import type { OutputEntry } from "./domain.ts";
 
 /** The two severities an issue can carry. */
@@ -27,7 +26,7 @@ export type IssueSeverity = "error" | "warning";
 export interface Issue {
   readonly code: string;
   readonly message: string;
-  readonly path?: Path | null;
+  readonly path?: string | null;
   readonly severity?: IssueSeverity;
 }
 
@@ -96,7 +95,7 @@ export interface LinkReport {
   readonly ok: boolean;
   readonly opportunities: number;
   readonly fixes: number;
-  readonly changed_paths: readonly Path[];
+  readonly changed_paths: readonly string[];
   readonly remaining_broken: number;
   readonly lines: readonly string[];
 }
@@ -112,7 +111,7 @@ export interface RenderReport {
 
 /** Options for `build`. */
 export interface BuildOptions {
-  readonly output_dir: Path;
+  readonly output_dir: string;
   readonly base_url?: string | null;
   readonly url_style?: string | null;
   readonly render_first?: boolean;
@@ -127,7 +126,7 @@ export interface BuildResult {
   readonly ok: boolean;
   readonly page_count: number;
   readonly asset_count: number;
-  readonly written_paths: readonly Path[];
+  readonly written_paths: readonly string[];
   readonly preflight?: AuditReport | null;
   readonly error_message?: string | null;
 }
@@ -142,7 +141,7 @@ export interface ExportResult {
 /** What `fmt` did. */
 export interface FmtReport {
   readonly ok: boolean;
-  readonly stale_files: readonly Path[];
+  readonly stale_files: readonly string[];
   readonly formatted_count: number;
   readonly error_message?: string | null;
   readonly verbose_lines: readonly string[];
@@ -151,8 +150,8 @@ export interface FmtReport {
 /** What `init` wrote. */
 export interface ScaffoldResult {
   readonly ok: boolean;
-  readonly config_path?: Path | null;
-  readonly written_paths: readonly Path[];
+  readonly config_path?: string | null;
+  readonly written_paths: readonly string[];
   readonly message: string;
   readonly error_message?: string | null;
 }

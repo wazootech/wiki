@@ -23,7 +23,8 @@
  * "inside the config root" rule cannot land in one call site and miss another.
  */
 
-import type { Path } from "./fspath.ts";
+import { basename, extname } from "@std/path";
+import { isFile } from "./fspath.ts";
 import { pathWithinRoot, resolveConfigRelativePath } from "./paths.ts";
 
 /** The frontmatter key naming a per-page layout file. */
@@ -33,22 +34,22 @@ export const LAYOUT_FRONTMATTER_KEY = "wazoo:layout";
 export const LAYOUT_SUFFIX = ".html";
 
 /** Derive a CSS-safe layout slug from a layout file path. */
-export function layoutStem(path: Path): string {
-  const name = path.name;
+export function layoutStem(path: string): string {
+  const name = basename(path);
   if (name.toLowerCase().endsWith(LAYOUT_SUFFIX)) {
     return name.slice(0, -LAYOUT_SUFFIX.length);
   }
-  return path.stem;
+  return basename(path, extname(path));
 }
 
 /** `true` when `path` is a readable `.html` page layout under `configRoot`. */
-export function layoutFileIsValid(path: Path, configRoot: Path): boolean {
+export function layoutFileIsValid(path: string, configRoot: string): boolean {
   if (!pathWithinRoot(path, configRoot)) return false;
-  return path.isFile() && path.name.toLowerCase().endsWith(LAYOUT_SUFFIX);
+  return isFile(path) && basename(path).toLowerCase().endsWith(LAYOUT_SUFFIX);
 }
 
 /** Resolve a `wazoo:layout` path relative to the wiki config root. */
-export function resolveLayoutPath(raw: string, configRoot: Path): Path {
+export function resolveLayoutPath(raw: string, configRoot: string): string {
   return resolveConfigRelativePath(raw, configRoot);
 }
 
@@ -61,8 +62,8 @@ export function resolveLayoutPath(raw: string, configRoot: Path): Path {
  */
 export function parseLayoutFromFrontmatter(
   frontmatter: Record<string, unknown>,
-  configRoot: Path,
-): [Path | null, string] {
+  configRoot: string,
+): [string | null, string] {
   const raw = frontmatter[LAYOUT_FRONTMATTER_KEY];
   if (typeof raw !== "string" || raw.trim() === "") return [null, "default"];
   const path = resolveLayoutPath(raw, configRoot);

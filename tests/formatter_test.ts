@@ -22,6 +22,8 @@
  * a corpus page cannot isolate.
  */
 
+import { dirname, join } from "@std/path";
+import { ValueError } from "../src/wiki/errors.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { createFromBuffer } from "@dprint/formatter";
 import * as jsonPlugin from "@dprint/json";
@@ -34,14 +36,13 @@ import {
   formatMarkdownText,
   FORMATTER_PLUGIN_VERSIONS,
 } from "../src/wiki/formatter.ts";
-import { Path, ValueError } from "../src/wiki/fspath.ts";
 
 const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
 const DECODER = new TextDecoder();
 
 /** The formatter's entry point, with a placeholder path for its messages. */
 function format(text: string): string {
-  return formatMarkdownText(text, Path.of("Page.md"), "no");
+  return formatMarkdownText(text, "Page.md", "no");
 }
 
 /** A document whose only content is one fenced block. */
@@ -104,7 +105,7 @@ Deno.test("wrap: no leaves the paragraph on one line", () => {
 
 Deno.test("wrap: an integer wraps the paragraph to that column", () => {
   assertEquals(
-    formatMarkdownText(PARAGRAPH, Path.of("Page.md"), 40),
+    formatMarkdownText(PARAGRAPH, "Page.md", 40),
     "# H\n\nThis paragraph is long enough that a\n" +
       "forty column wrap has something to do\n" +
       "with it, clearly.\n",
@@ -114,14 +115,14 @@ Deno.test("wrap: an integer wraps the paragraph to that column", () => {
 Deno.test("wrap: keep preserves the line breaks the page already had", () => {
   const wrapped = "Long\nLines\nkept as they are even though they are short.\n";
   assertEquals(
-    formatMarkdownText(wrapped, Path.of("Page.md"), "keep"),
+    formatMarkdownText(wrapped, "Page.md", "keep"),
     wrapped,
   );
 });
 
 Deno.test("wrap: an unusable value is a ValueError", () => {
   assertThrows(
-    () => formatMarkdownText("# H\n", Path.of("Page.md"), "preserve"),
+    () => formatMarkdownText("# H\n", "Page.md", "preserve"),
     ValueError,
     "Invalid 'wrap' value: 'preserve'",
   );
@@ -284,16 +285,16 @@ Deno.test(
     // invocation, and could not work at all under `deno compile`. Both facts are
     // gone only while nothing spawns anything, so the CLI is run here with every
     // permission *except* `run`.
-    const root = Path.of(Deno.makeTempDirSync({ prefix: "wiki-fmt-perm-" }));
+    const root = Deno.makeTempDirSync({ prefix: "wiki-fmt-perm-" });
     try {
       Deno.writeTextFileSync(
-        root.joinpath("wiki.yml").toString(),
+        join(root, "wiki.yml"),
         "wiki:\n  input: [wiki]\n",
       );
-      const page = root.joinpath("wiki", "Page.md");
-      Deno.mkdirSync(page.parent.toString(), { recursive: true });
+      const page = join(root, "wiki", "Page.md");
+      Deno.mkdirSync(dirname(page), { recursive: true });
       Deno.writeTextFileSync(
-        page.toString(),
+        page,
         "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text  \nwith a hard break.\n",
       );
 
@@ -306,7 +307,7 @@ Deno.test(
           "--allow-env",
           CLI_ENTRY,
           "-c",
-          root.joinpath("wiki.yml").toString(),
+          join(root, "wiki.yml"),
           "fmt",
         ],
         stdout: "piped",
@@ -319,7 +320,7 @@ Deno.test(
           "the CLI failed without `--allow-run`: the formatter is a subprocess again",
       );
       assertEquals(
-        Deno.readTextFileSync(page.toString()),
+        Deno.readTextFileSync(page),
         "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text\\\nwith a hard break.\n",
       );
       assert(
@@ -328,7 +329,7 @@ Deno.test(
       );
     } finally {
       try {
-        Deno.removeSync(root.toString(), { recursive: true });
+        Deno.removeSync(root, { recursive: true });
       } catch {
         // Windows keeps a handle open long enough to lose this race.
       }

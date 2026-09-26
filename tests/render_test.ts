@@ -1,19 +1,20 @@
+import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { Wiki } from "../src/wiki/wiki.ts";
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-render-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-render-" });
 }
 
-function write(root: Path, relative: string, content: string): Path {
-  const path = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(path.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(path.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const path = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(path), { recursive: true });
+  Deno.writeTextFileSync(path, content);
   return path;
 }
 
-function writeWiki(root: Path, report: string): Path {
+function writeWiki(root: string, report: string): string {
   write(
     root,
     "wiki.yaml",
@@ -27,8 +28,8 @@ function writeWiki(root: Path, report: string): Path {
   return write(root, "wiki/Report.md", report);
 }
 
-function cleanup(root: Path): void {
-  Deno.removeSync(root.toString(), { recursive: true });
+function cleanup(root: string): void {
+  Deno.removeSync(root, { recursive: true });
 }
 
 const VISIBLE_BLOCK = [
@@ -50,12 +51,12 @@ Deno.test("render --check finds stale blocks without writing, then render is ide
     assertEquals(stale.ok, false);
     assertEquals(stale.updated_count, 0);
     assertEquals(stale.stale_files.length, 1);
-    assertEquals(Deno.readTextFileSync(page.toString()), original);
+    assertEquals(Deno.readTextFileSync(page), original);
 
     const rendered = await wiki.render(null, { noInference: true });
     assertEquals(rendered.ok, true);
     assertEquals(rendered.updated_count, 1);
-    const updated = Deno.readTextFileSync(page.toString());
+    const updated = Deno.readTextFileSync(page);
     assertStringIncludes(updated, "| name |");
     assertStringIncludes(updated, "| Alice |");
 
@@ -112,7 +113,7 @@ Deno.test("render preserves hidden query comment structure and query fence bytes
     const page = writeWiki(root, report);
     const wiki = Wiki.load(root);
     const result = await wiki.render(null, { noInference: true });
-    const updated = Deno.readTextFileSync(page.toString());
+    const updated = Deno.readTextFileSync(page);
 
     assertEquals(result.ok, true);
     assert(updated.includes("<!-- sparql:start\n```sparql\n"));
@@ -135,7 +136,7 @@ Deno.test("render retains a bad query and reports it without writing", async () 
     assertEquals(result.ok, false);
     assertEquals(result.error_count, 1);
     assertEquals(result.updated_count, 0);
-    assertEquals(Deno.readTextFileSync(page.toString()), original);
+    assertEquals(Deno.readTextFileSync(page), original);
     assertStringIncludes(result.render_errors[0]!, "Report.md");
   } finally {
     cleanup(root);

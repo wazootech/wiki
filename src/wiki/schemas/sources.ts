@@ -6,7 +6,7 @@
  * newline, UTF-8 without a BOM, and field order as declared.
  */
 
-import type { Path } from "../fspath.ts";
+import { pathExists } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import { type ModelSpec, validateModel } from "./model.ts";
 import type { ValidationIssue } from "./validation.ts";
@@ -37,7 +37,7 @@ export interface GraphDescriptor {
   readonly ref: string | null;
   readonly resolved_ref: string | null;
   readonly path: string | null;
-  readonly local_path: Path | null;
+  readonly local_path: string | null;
   readonly required_by: readonly string[];
 }
 
@@ -147,8 +147,8 @@ export function emptyLockfile(): Lockfile {
  * it, and a hard failure here would strand a user whose lockfile was truncated
  * by an interrupted checkout.
  */
-export function loadLockfile(path: Path): Lockfile {
-  if (!path.exists()) return emptyLockfile();
+export function loadLockfile(path: string): Lockfile {
+  if (!pathExists(path)) return emptyLockfile();
   try {
     const data: unknown = JSON.parse(readTextTolerant(path));
     const issues: ValidationIssue[] = [];
@@ -164,11 +164,11 @@ export function loadLockfile(path: Path): Lockfile {
 }
 
 /** Write a lockfile the way `Lockfile.save` does: 2-space indent, no BOM. */
-export function saveLockfile(lockfile: Lockfile, path: Path): void {
+export function saveLockfile(lockfile: Lockfile, path: string): void {
   const sources: Record<string, unknown> = {};
   for (const [name, entry] of lockfile.sources) sources[name] = entry;
   const payload = { version: lockfile.version, sources };
-  path.writeText(`${JSON.stringify(payload, null, 2)}`);
+  Deno.writeTextFileSync(path, `${JSON.stringify(payload, null, 2)}`);
 }
 
 /**

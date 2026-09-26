@@ -17,9 +17,17 @@
  *   filesystem.
  */
 
+import {
+  isDirectory,
+  isFile,
+  relativeWithin,
+  sortedTreePaths,
+} from "./fspath.ts";
+import { basename, extname, isAbsolute, join, resolve } from "@std/path";
+import { ValueError } from "./errors.ts";
 import { DOCUMENT_EXTENSIONS } from "./parser.ts";
 import type { Config } from "./config.ts";
-import { Path, sortedRglob, ValueError } from "./fspath.ts";
+
 import { quote } from "./urlquote.ts";
 import type { OutputEntry, PageRoute } from "./schemas/domain.ts";
 
@@ -39,16 +47,16 @@ export const UNSAFE_ROUTE_CHARS: ReadonlySet<string> = new Set(["?", "#", "%"]);
  * with {@link pathWithinRoot}: a value that resolves outside the root must be
  * rejected, and three copies of the resolver are three chances to forget.
  */
-export function resolveConfigRelativePath(raw: string, root: Path): Path {
+export function resolveConfigRelativePath(raw: string, root: string): string {
   const text = pyStrip(raw).replaceAll("\\", "/");
-  const path = Path.of(text);
-  return (path.isAbsolute() ? path : root.joinpath(path)).resolve();
+  const path = text;
+  return resolve(isAbsolute(path) ? path : join(root, path));
 }
 
 /** `true` when `path` resolves inside `root`. */
-export function pathWithinRoot(path: Path, root: Path): boolean {
+export function pathWithinRoot(path: string, root: string): boolean {
   try {
-    path.resolve().relativeTo(root.resolve());
+    relativeWithin(resolve(path), resolve(root));
   } catch (error) {
     if (error instanceof ValueError) return false;
     throw error;
@@ -68,13 +76,13 @@ function pyStrip(text: string): string {
 }
 
 /** Every document file under the configured inputs, sorted, minus exclusions. */
-export function iterDocumentFiles(config: Config): Path[] {
-  const docFiles: Path[] = [];
+export function iterDocumentFiles(config: Config): string[] {
+  const docFiles: string[] = [];
   for (const inputDir of config.wiki.input) {
-    if (!inputDir.isDir()) continue;
-    for (const filePath of sortedRglob(inputDir)) {
-      if (!filePath.isFile()) continue;
-      if (!DOCUMENT_EXTENSIONS.has(filePath.suffix.toLowerCase())) continue;
+    if (!isDirectory(inputDir)) continue;
+    for (const filePath of sortedTreePaths(inputDir)) {
+      if (!isFile(filePath)) continue;
+      if (!DOCUMENT_EXTENSIONS.has(extname(filePath).toLowerCase())) continue;
       if (config.isExcluded(filePath)) continue;
       docFiles.push(filePath);
     }
@@ -83,17 +91,17 @@ export function iterDocumentFiles(config: Config): Path[] {
 }
 
 /** Markdown documents only. */
-export function iterMarkdownFiles(config: Config): Path[] {
+export function iterMarkdownFiles(config: Config): string[] {
   return iterDocumentFiles(config).filter((filePath) =>
-    filePath.suffix.toLowerCase() === ".md"
+    extname(filePath).toLowerCase() === ".md"
   );
 }
 
 /** Map every document's resolved path back to the path it was discovered at. */
-function wikiDocumentIndex(config: Config): Map<string, Path> {
-  const index = new Map<string, Path>();
+function wikiDocumentIndex(config: Config): Map<string, string> {
+  const index = new Map<string, string>();
   for (const filePath of iterDocumentFiles(config)) {
-    index.set(filePath.resolve().toString(), filePath);
+    index.set(resolve(filePath), filePath);
   }
   return index;
 }
@@ -101,23 +109,27 @@ function wikiDocumentIndex(config: Config): Map<string, Path> {
 /** Resolve explicit CLI paths to wiki documents, preserving the given order. */
 function resolveWikiPaths(
   config: Config,
-  paths: readonly Path[],
+  paths: readonly string[],
   options: { allowedSuffixes: ReadonlySet<string>; label: string },
-): Path[] {
+): string[] {
   if (paths.length === 0) return [];
   const index = wikiDocumentIndex(config);
-  const selected: Path[] = [];
+  const selected: string[] = [];
   for (const path of paths) {
-    const wikiPath = index.get(path.resolve().toString());
+    const wikiPath = index.get(resolve(path));
     if (wikiPath === undefined) {
       throw new ValueError(
-        `${path.name} is not a wiki document under inputs (or is excluded).`,
+        `${
+          basename(path)
+        } is not a wiki document under inputs (or is excluded).`,
       );
     }
-    if (!options.allowedSuffixes.has(wikiPath.suffix.toLowerCase())) {
+    if (!options.allowedSuffixes.has(extname(wikiPath).toLowerCase())) {
       const suffixes = [...options.allowedSuffixes].sort().join(", ");
       throw new ValueError(
-        `${options.label} only supports ${suffixes} files, got ${wikiPath.name}.`,
+        `${options.label} only supports ${suffixes} files, got ${
+          basename(wikiPath)
+        }.`,
       );
     }
     selected.push(wikiPath);
@@ -128,8 +140,8 @@ function resolveWikiPaths(
 /** Resolve explicit CLI paths to wiki documents (`.md`, `.yaml`, `.json`). */
 export function selectDocumentPaths(
   config: Config,
-  paths: readonly Path[],
-): Path[] {
+  paths: readonly string[],
+): string[] {
   return resolveWikiPaths(config, paths, {
     allowedSuffixes: DOCUMENT_EXTENSIONS,
     label: "export",
@@ -139,8 +151,8 @@ export function selectDocumentPaths(
 /** Resolve explicit CLI paths to wiki markdown files. */
 export function selectMarkdownPaths(
   config: Config,
-  paths: readonly Path[],
-): Path[] {
+  paths: readonly string[],
+): string[] {
   return resolveWikiPaths(config, paths, {
     allowedSuffixes: new Set([".md"]),
     label: "command",
@@ -150,7 +162,7 @@ export function selectMarkdownPaths(
 /** The routes of the given explicit markdown paths. */
 export function routesFromMarkdownFiles(
   config: Config,
-  paths: readonly Path[],
+  paths: readonly string[],
 ): Set<string> {
   return new Set(
     selectMarkdownPaths(config, paths).map((path) =>
@@ -165,8 +177,12 @@ export function routesFromMarkdownFiles(
  * Both `index` elision and route safety live here, so every consumer inherits
  * the same answer for `games/index.md`.
  */
-export function routeForDocumentFile(config: Config, filePath: Path): string {
-  const rel = relativeToInputDir(config, filePath).withSuffix("").asPosix();
+export function routeForDocumentFile(config: Config, filePath: string): string {
+  const relativePath = relativeToInputDir(config, filePath);
+  const extension = extname(relativePath);
+  const rel =
+    (extension === "" ? relativePath : relativePath.slice(0, -extension.length))
+      .replaceAll("\\", "/");
   let parts = rel.split("/").filter((part) => part !== "");
   if (parts.length > 0 && parts[parts.length - 1] === "index") {
     parts = parts.slice(0, -1);
@@ -210,24 +226,24 @@ export function pageUrl(
 
 /** Where a route's HTML is written inside the owned output directory. */
 export function pageOutputPath(
-  ownedOutputDir: Path,
+  ownedOutputDir: string,
   route: string,
   urlStyle: string,
-): Path {
+): string {
   if (urlStyle === "file") {
-    if (route === "") return ownedOutputDir.joinpath("index.html");
+    if (route === "") return join(ownedOutputDir, "index.html");
     const parts = route.split("/");
     const last = parts.pop()!;
-    return ownedOutputDir.joinpath(...parts, `${last}.html`);
+    return join(ownedOutputDir, ...parts, `${last}.html`);
   }
-  if (route === "") return ownedOutputDir.joinpath("index.html");
-  return ownedOutputDir.joinpath(...route.split("/"), "index.html");
+  if (route === "") return join(ownedOutputDir, "index.html");
+  return join(ownedOutputDir, ...route.split("/"), "index.html");
 }
 
 /** The manifest entries for every page in the wiki. */
 export function buildPageManifest(
   config: Config,
-  ownedOutputDir: Path,
+  ownedOutputDir: string,
   baseUrl: string,
   urlStyle: string,
 ): OutputEntry[] {
@@ -254,7 +270,7 @@ export function detectOutputCollisions(
   const seenPaths = new Map<string, OutputEntry>();
   const seenUrls = new Map<string, OutputEntry>();
   for (const entry of entries) {
-    const pathKey = entry.output_path.toString().toLowerCase();
+    const pathKey = entry.output_path.toLowerCase();
     const urlKey = entry.public_url.toLowerCase();
     const previousPath = seenPaths.get(pathKey);
     if (previousPath !== undefined) {
@@ -282,19 +298,19 @@ export function detectOutputCollisions(
  */
 export function validateFilenamePattern(
   config: Config,
-  mdFile: Path,
+  mdFile: string,
 ): string | null {
   const pattern = config.wiki.filename_pattern;
   if (!pattern) return null;
-  if (mdFile.suffix.toLowerCase() !== ".md") return null;
+  if (extname(mdFile).toLowerCase() !== ".md") return null;
   let regex: RegExp;
   try {
     regex = compilePythonRegex(pattern);
   } catch (error) {
     return `Invalid filename_pattern: ${(error as Error).message}`;
   }
-  if (regex.exec(mdFile.name) === null) {
-    return `Filename '${mdFile.name}' does not match filename_pattern.`;
+  if (regex.exec(basename(mdFile)) === null) {
+    return `Filename '${basename(mdFile)}' does not match filename_pattern.`;
   }
   return null;
 }
@@ -330,10 +346,10 @@ export function validateRouteSafety(config: Config): string[] {
 }
 
 /** The input directory a document lives under, or the path itself. */
-function relativeToInputDir(config: Config, mdFile: Path): Path {
+function relativeToInputDir(config: Config, mdFile: string): string {
   for (const root of config.wiki.input) {
     try {
-      return mdFile.relativeTo(root);
+      return relativeWithin(mdFile, root);
     } catch {
       continue;
     }
@@ -342,7 +358,7 @@ function relativeToInputDir(config: Config, mdFile: Path): Path {
 }
 
 /** Reject route segments that cannot appear in a URL. */
-function validateRouteParts(parts: readonly string[], source: Path): void {
+function validateRouteParts(parts: readonly string[], source: string): void {
   for (const part of parts) {
     if (part === "" || part === "." || part === "..") {
       throw new ValueError(

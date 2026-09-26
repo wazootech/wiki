@@ -8,13 +8,15 @@
  * `graph.ts` lands there is nothing left to discover.
  */
 
+import { basename, extname, join } from "@std/path";
+import { pathExists, readText } from "../src/wiki/fspath.ts";
 import {
   assertEquals,
   assertNotEquals,
   assertStringIncludes,
 } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   cacheDir,
   canonicalJson,
@@ -46,11 +48,11 @@ const PINNED_MTIME = 1_700_000_000;
 
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
 async function withTempDir(
-  body: (root: Path) => void | Promise<void>,
+  body: (root: string) => void | Promise<void>,
 ): Promise<void> {
   const dir = Deno.makeTempDirSync({ prefix: "wiki-cache-" });
   try {
-    await body(new Path(dir));
+    await body(dir);
   } finally {
     clearAllProcessGraphs();
     Deno.removeSync(dir, { recursive: true });
@@ -59,13 +61,13 @@ async function withTempDir(
 
 /** A wiki with one page, plus the config that points at it. */
 function wiki(
-  root: Path,
+  root: string,
   content = "---\ntype: Person\ngivenName: Ada\n---\n",
 ) {
-  const wikiDir = root.joinpath("wiki");
-  Deno.mkdirSync(wikiDir.toString(), { recursive: true });
-  const page = wikiDir.joinpath("page.md");
-  page.writeText(content);
+  const wikiDir = join(root, "wiki");
+  Deno.mkdirSync(wikiDir, { recursive: true });
+  const page = join(wikiDir, "page.md");
+  Deno.writeTextFileSync(page, content);
   return {
     wikiDir,
     page,
@@ -83,7 +85,7 @@ Deno.test("the fingerprint follows content and configuration, not the clock", as
       "a repeat call must be stable",
     );
 
-    page.writeText("---\ntype: Person\ngivenName: Grace\n---\n");
+    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     const edited = wikiFingerprint(config);
     assertNotEquals(edited, first);
 
@@ -114,22 +116,25 @@ Deno.test("the cache directory is excluded from the files it fingerprints", asyn
   await withTempDir((root) => {
     const { config } = wiki(root);
     const cache = cacheDir(config);
-    Deno.mkdirSync(cache.toString(), { recursive: true });
-    cache.joinpath("graph-asserted-deadbeef.nt").writeText("<a> <b> <c> .\n");
+    Deno.mkdirSync(cache, { recursive: true });
+    Deno.writeTextFileSync(
+      join(cache, "graph-asserted-deadbeef.nt"),
+      "<a> <b> <c> .\n",
+    );
     // A staged file inside the wiki tree that is not a cache artifact.
-    config.wiki.input[0]!.joinpath("other.md").writeText("x");
+    Deno.writeTextFileSync(join(config.wiki.input[0]!, "other.md"), "x");
 
-    const files = iterWikiFiles(config).map((path) => path.name).sort();
+    const files = iterWikiFiles(config).map((path) => basename(path)).sort();
     assertEquals(files, ["other.md", "page.md"]);
   });
 });
 
 Deno.test("excluded files do not contribute to the fingerprint", async () => {
   await withTempDir((root) => {
-    const wikiDir = root.joinpath("wiki");
-    Deno.mkdirSync(wikiDir.joinpath("drafts").toString(), { recursive: true });
-    wikiDir.joinpath("Published.md").writeText("x");
-    wikiDir.joinpath("drafts", "Draft.md").writeText("x");
+    const wikiDir = join(root, "wiki");
+    Deno.mkdirSync(join(wikiDir, "drafts"), { recursive: true });
+    Deno.writeTextFileSync(join(wikiDir, "Published.md"), "x");
+    Deno.writeTextFileSync(join(wikiDir, "drafts", "Draft.md"), "x");
     const config = Config.forRoot(root, {
       wiki: { input: [wikiDir], exclude: ["wiki/drafts/**"] },
     });
@@ -196,7 +201,7 @@ Deno.test("the in-process cache separates infer modes and drops stale entries", 
 
     // Editing the wiki changes the fingerprint, so the old entry is no longer
     // reachable — and setting a new one drops it rather than leaking it.
-    page.writeText("---\ntype: Person\ngivenName: Grace\n---\n");
+    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     assertEquals(getProcessGraph(config, true), null);
     const rebuilt = new RdfGraph();
     setProcessGraph(config, true, rebuilt);
@@ -222,9 +227,9 @@ Deno.test("a graph survives a disk round trip across a cleared process cache", a
     setDiskGraph(config, false, graph);
 
     const cachePath = diskCachePath(config, false);
-    assertEquals(cachePath.exists(), true);
-    assertStringIncludes(cachePath.toString(), "graph-asserted-");
-    assertEquals(cachePath.suffix, ".nt");
+    assertEquals(pathExists(cachePath), true);
+    assertStringIncludes(cachePath, "graph-asserted-");
+    assertEquals(extname(cachePath), ".nt");
 
     clearAllProcessGraphs();
     const loaded = await getDiskGraph(config, false);
@@ -242,11 +247,11 @@ Deno.test("the infer and asserted caches do not share a file", async () => {
     const graph = new RdfGraph();
     setDiskGraph(config, false, graph);
     assertNotEquals(
-      diskCachePath(config, false).toString(),
-      diskCachePath(config, true).toString(),
+      diskCachePath(config, false),
+      diskCachePath(config, true),
     );
     assertStringIncludes(
-      diskCachePath(config, true).toString(),
+      diskCachePath(config, true),
       "graph-infer-",
     );
     assertEquals(await getDiskGraph(config, true), null);
@@ -265,17 +270,17 @@ Deno.test("writing a new fingerprint removes the old cache file", async () => {
     setDiskGraph(config, false, graph);
     const stale = diskCachePath(config, false);
 
-    page.writeText("---\ntype: Person\ngivenName: Grace\n---\n");
+    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     setDiskGraph(config, false, graph);
     const current = diskCachePath(config, false);
 
-    assertNotEquals(current.toString(), stale.toString());
-    assertEquals(current.exists(), true);
-    assertEquals(stale.exists(), false);
+    assertNotEquals(current, stale);
+    assertEquals(pathExists(current), true);
+    assertEquals(pathExists(stale), false);
     // The other mode's files are left alone.
     setDiskGraph(config, true, graph);
-    assertEquals(diskCachePath(config, true).exists(), true);
-    assertEquals(current.exists(), true);
+    assertEquals(pathExists(diskCachePath(config, true)), true);
+    assertEquals(pathExists(current), true);
   });
 });
 
@@ -290,10 +295,14 @@ Deno.test("a corrupt cache file is discarded rather than propagated", async () =
     );
     setDiskGraph(config, false, graph);
     const cachePath = diskCachePath(config, false);
-    cachePath.writeText("this is not n-triples\n");
+    Deno.writeTextFileSync(cachePath, "this is not n-triples\n");
 
     assertEquals(await getDiskGraph(config, false), null);
-    assertEquals(cachePath.exists(), false, "the unreadable cache is removed");
+    assertEquals(
+      pathExists(cachePath),
+      false,
+      "the unreadable cache is removed",
+    );
   });
 });
 
@@ -316,9 +325,9 @@ Deno.test("a named-graph dataset round-trips through its own cache file", async 
 
     setDiskDataset(config, false, dataset);
     const cachePath = datasetCachePath(config, false);
-    assertEquals(cachePath.exists(), true);
-    assertStringIncludes(cachePath.toString(), "dataset-asserted-");
-    assertEquals(cachePath.suffix, ".nq");
+    assertEquals(pathExists(cachePath), true);
+    assertStringIncludes(cachePath, "dataset-asserted-");
+    assertEquals(extname(cachePath), ".nq");
 
     const loaded = await getDiskDataset(config, false);
     assertEquals(loaded?.size, 2);
@@ -349,21 +358,27 @@ Deno.test("a triple added twice is one triple in the cache file", async () => {
     graph.addQuad(item);
     graph.addQuad(item);
     setDiskGraph(config, false, graph);
-    const lines = diskCachePath(config, false).readText().trimEnd().split("\n");
+    const lines = readText(diskCachePath(config, false)).trimEnd().split("\n");
     assertEquals(lines.length, 1);
   });
 });
 
 Deno.test("the manifest orders paths by component, not by string", async () => {
-  // The oracle settles this one: `sorted(Path.rglob("*"))` compares
+  // The oracle settles this one: the sorted recursive path walk compares
   // `_parts_normcase`, so `notes/inner.md` sorts *before* `notes.md` even though
   // `.` precedes the separator in the joined string. It reaches the digest, and
   // a digest that disagrees with the oracle is a cold cache on every run.
   await withTempDir((root) => {
-    const wikiDir = root.joinpath("wiki");
-    Deno.mkdirSync(wikiDir.joinpath("notes").toString(), { recursive: true });
-    wikiDir.joinpath("notes.md").writeText("---\ntype: Thing\n---\n");
-    wikiDir.joinpath("notes", "inner.md").writeText("---\ntype: Thing\n---\n");
+    const wikiDir = join(root, "wiki");
+    Deno.mkdirSync(join(wikiDir, "notes"), { recursive: true });
+    Deno.writeTextFileSync(
+      join(wikiDir, "notes.md"),
+      "---\ntype: Thing\n---\n",
+    );
+    Deno.writeTextFileSync(
+      join(wikiDir, "notes", "inner.md"),
+      "---\ntype: Thing\n---\n",
+    );
     const config = Config.forRoot(root, { wiki: { input: [wikiDir] } });
 
     assertEquals(
@@ -381,11 +396,11 @@ Deno.test("the manifest orders paths by component, not by string", async () => {
     // rather than in the code.
     for (
       const file of [
-        wikiDir.joinpath("notes.md"),
-        wikiDir.joinpath("notes", "inner.md"),
+        join(wikiDir, "notes.md"),
+        join(wikiDir, "notes", "inner.md"),
       ]
     ) {
-      Deno.utimeSync(file.toString(), PINNED_MTIME, PINNED_MTIME);
+      Deno.utimeSync(file, PINNED_MTIME, PINNED_MTIME);
     }
 
     // The oracle's own digest for exactly this fixture (`wiki_fingerprint` in a

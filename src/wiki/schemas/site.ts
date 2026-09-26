@@ -1,5 +1,4 @@
 import type { Config } from "./wiki_config.ts";
-import type { Path } from "../fspath.ts";
 
 export interface TocItem {
   readonly title: string;
@@ -13,8 +12,8 @@ export interface VirtualPage {
   readonly markdown: string;
   readonly html: string;
   readonly frontmatter: Record<string, unknown>;
-  readonly source_path: Path | null;
-  readonly layout_path: Path | null;
+  readonly source_path: string | null;
+  readonly layout_path: string | null;
   readonly layout_stem: string;
   readonly wiki_ids: readonly string[];
   readonly outline: readonly TocItem[];

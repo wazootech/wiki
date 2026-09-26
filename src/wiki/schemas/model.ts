@@ -22,7 +22,7 @@
  * nested issue at its own location. Both reach the same fallback text.
  */
 
-import { ValueError } from "../fspath.ts";
+import { ValueError } from "../errors.ts";
 import {
   extraForbidden,
   missing as missingIssue,

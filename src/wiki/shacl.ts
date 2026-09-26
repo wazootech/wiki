@@ -40,7 +40,7 @@ import type { DatasetCore, Quad, Term } from "@rdfjs/types";
 import { SH } from "./context.ts";
 import type { Config } from "./config.ts";
 import { frontmatterToGraph, loadGraph } from "./graph.ts";
-import type { Path } from "./fspath.ts";
+
 import { documentDataFromPath } from "./parser.ts";
 import { routeForDocumentFile } from "./paths.ts";
 import {
@@ -243,7 +243,7 @@ function termText(term: Term | undefined): string {
  * "conforms", and the reason `audit` reports `missing_metadata` for it.
  */
 export async function checkShaclFile(
-  filePath: Path,
+  filePath: string,
   config: Config,
 ): Promise<ShaclOutcome | null> {
   const data = documentDataFromPath(filePath);

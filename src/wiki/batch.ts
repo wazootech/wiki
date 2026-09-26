@@ -30,8 +30,10 @@
  *   only if a run would write nothing.
  */
 
+import { basename } from "@std/path";
+import { ValueError } from "./errors.ts";
 import type { Config } from "./config.ts";
-import { type Path, ValueError } from "./fspath.ts";
+
 import { formatMarkdown } from "./fmt_util.ts";
 import { frontmatterError, readTextTolerant } from "./parser.ts";
 import type { FmtReport } from "./schemas/reports.ts";
@@ -45,9 +47,9 @@ import {
 /** A set of files the user named on the command line, or none of them. */
 export class DocumentBatch {
   readonly #config: Config;
-  readonly #rawFiles: readonly Path[] | null;
+  readonly #rawFiles: readonly string[] | null;
 
-  constructor(config: Config, files?: readonly Path[] | null) {
+  constructor(config: Config, files?: readonly string[] | null) {
     this.#config = config;
     this.#rawFiles = files && files.length > 0 ? [...files] : null;
   }
@@ -69,13 +71,13 @@ export class DocumentBatch {
   }
 
   /** The document paths to walk per-file, or `null` for the whole wiki. */
-  documentPaths(): Path[] | null {
+  documentPaths(): string[] | null {
     if (this.#rawFiles === null) return null;
     return selectDocumentPaths(this.#config, this.#rawFiles);
   }
 
   /** The markdown paths to process, filtered or not. Never `null`. */
-  markdownPaths(): Path[] {
+  markdownPaths(): string[] {
     if (this.#rawFiles !== null) {
       return selectMarkdownPaths(this.#config, this.#rawFiles);
     }
@@ -94,7 +96,7 @@ export class DocumentBatch {
   ): FmtReport {
     const check = options.check ?? false;
     const verbose = options.verbose ?? false;
-    const staleFiles: Path[] = [];
+    const staleFiles: string[] = [];
     const verboseLines: string[] = [];
     let formattedCount = 0;
 
@@ -108,7 +110,9 @@ export class DocumentBatch {
             stale_files: staleFiles,
             formatted_count: formattedCount,
             error_message:
-              `Refusing to format ${filePath.name}: its frontmatter could not be ` +
+              `Refusing to format ${
+                basename(filePath)
+              }: its frontmatter could not be ` +
               `parsed (${blocked}). The file is unchanged; fix the frontmatter ` +
               "block and run again.",
             verbose_lines: verboseLines,
@@ -118,19 +122,19 @@ export class DocumentBatch {
         if (original !== formatted) {
           staleFiles.push(filePath);
           if (!check) {
-            filePath.writeText(formatted);
+            Deno.writeTextFileSync(filePath, formatted);
             formattedCount += 1;
-            if (verbose) verboseLines.push(`Formatted ${filePath.name}`);
+            if (verbose) verboseLines.push(`Formatted ${basename(filePath)}`);
           }
         } else if (verbose) {
-          verboseLines.push(`Already formatted ${filePath.name}`);
+          verboseLines.push(`Already formatted ${basename(filePath)}`);
         }
       } catch (error) {
         return {
           ok: false,
           stale_files: staleFiles,
           formatted_count: formattedCount,
-          error_message: `Error formatting ${filePath.name}: ${
+          error_message: `Error formatting ${basename(filePath)}: ${
             errorText(error)
           }`,
           verbose_lines: verboseLines,

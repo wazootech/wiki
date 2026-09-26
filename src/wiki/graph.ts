@@ -35,6 +35,14 @@
  *   flagged where they happen rather than papered over.
  */
 
+import {
+  IS_WINDOWS,
+  isDirectory,
+  isFile,
+  pathExists,
+  sortedTreePaths,
+} from "./fspath.ts";
+import { basename, extname, join, resolve } from "@std/path";
 import { extract, LinkedMarkdownError } from "@wazoo/linked-markdown";
 import type { NamedNode, Quad, Term } from "./rdf.ts";
 import {
@@ -54,7 +62,7 @@ import {
 } from "./rdf.ts";
 import { Config } from "./config.ts";
 import type { Context } from "./context.ts";
-import { IS_WINDOWS, type Path, sortedRglob } from "./fspath.ts";
+
 import { getLogger } from "./logging.ts";
 import {
   type DataRecord,
@@ -116,8 +124,8 @@ export function sourceGraphUri(config: Config, sourceName: string): string {
  * small read-only helper local so describing graphs does not depend on the
  * source-management operations.
  */
-function sourceCacheDir(config: Config, sourceName: string): Path {
-  return config.config_root.joinpath(".wiki", "sources", sourceName);
+function sourceCacheDir(config: Config, sourceName: string): string {
+  return join(config.config_root, ".wiki", "sources", sourceName);
 }
 
 /**
@@ -126,25 +134,25 @@ function sourceCacheDir(config: Config, sourceName: string): Path {
  * Ported from `sources.py::_source_resolved_path`, including the `RuntimeError`
  * that `graph_descriptors` swallows to skip a source whose cache is incomplete.
  */
-function sourceResolvedPath(source: SourceConfig, repoDir: Path): Path {
-  const base = source.path ? repoDir.joinpath(source.path) : repoDir;
-  if (!base.exists()) {
+function sourceResolvedPath(source: SourceConfig, repoDir: string): string {
+  const base = source.path ? join(repoDir, source.path) : repoDir;
+  if (!pathExists(base)) {
     throw new Error(
       `Source ${pyRepr(source.name)}: path ${
         pyRepr(source.path)
       } does not exist`,
     );
   }
-  return base.resolve();
+  return resolve(base);
 }
 
 /** Describe root and installed source graphs without mutating source state. */
 export function graphDescriptors(config: Config): GraphDescriptor[] {
-  const lockfile = loadLockfile(config.config_root.joinpath("wiki.lock"));
-  const cacheRoot = config.config_root.joinpath(".wiki", "sources");
+  const lockfile = loadLockfile(join(config.config_root, "wiki.lock"));
+  const cacheRoot = join(config.config_root, ".wiki", "sources");
   if (
-    lockfile.sources.size === 0 && cacheRoot.isDir() &&
-    [...Deno.readDirSync(cacheRoot.toString())].length > 0
+    lockfile.sources.size === 0 && isDirectory(cacheRoot) &&
+    [...Deno.readDirSync(cacheRoot)].length > 0
   ) {
     logger.warning(
       `Source cache exists under ${cacheRoot} but wiki.lock has no sources; ` +
@@ -160,8 +168,8 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
     if (requiredBy.length === 0 && directSourceNames.has(name)) {
       requiredBy = ["root"];
     }
-    const repoDir = sourceCacheDir(config, name).joinpath("repo");
-    if (!repoDir.exists()) continue;
+    const repoDir = join(sourceCacheDir(config, name), "repo");
+    if (!pathExists(repoDir)) continue;
     const source: SourceConfig = {
       name,
       type: "git",
@@ -169,13 +177,13 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
       ref: locked.ref,
       path: locked.path,
     };
-    let localPath: Path;
+    let localPath: string;
     try {
       localPath = sourceResolvedPath(source, repoDir);
     } catch {
       continue;
     }
-    sourcePaths.set(localPath.resolve().toString(), {
+    sourcePaths.set(resolve(localPath), {
       name,
       uri: sourceGraphUri(config, name),
       kind: "source",
@@ -190,10 +198,10 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
     });
   }
 
-  const rootInputs: Path[] = [];
+  const rootInputs: string[] = [];
   const sourceDescriptors: GraphDescriptor[] = [];
   for (const inputDir of config.wiki.input) {
-    const descriptor = sourcePaths.get(inputDir.resolve().toString());
+    const descriptor = sourcePaths.get(resolve(inputDir));
     if (descriptor === undefined) {
       rootInputs.push(inputDir);
     } else if (!sourceDescriptors.some((item) => item.uri === descriptor.uri)) {
@@ -592,22 +600,22 @@ function addQuads(target: RdfGraph, quads: Iterable<Quad>): void {
 }
 
 /** A stable key for a path, matching `pathlib`'s case-insensitive Windows hash. */
-function pathKey(path: Path): string {
-  const value = path.toString();
+function pathKey(path: string): string {
+  const value = path;
   return IS_WINDOWS ? value.toLowerCase() : value;
 }
 
 /** Parse a supported wiki document into the graph. */
 function processDocumentFile(
   graph: RdfGraph,
-  filePath: Path,
+  filePath: string,
   config: Config,
 ): void {
   const data = documentDataFromPath(filePath);
   if (data !== null) {
     let body: string | null = null;
     if (
-      filePath.suffix.toLowerCase() === ".md" &&
+      extname(filePath).toLowerCase() === ".md" &&
       pyTruthy(config.graph.content_predicate)
     ) {
       const content = readTextTolerant(filePath);
@@ -623,12 +631,12 @@ function processDocumentFile(
         fileId: routeForDocumentFile(config, filePath),
         body,
         includeFileExtension: config.graph.include_file_extension,
-        fileExt: filePath.suffix.toLowerCase(),
+        fileExt: extname(filePath).toLowerCase(),
       }),
     );
   }
 
-  if (filePath.suffix.toLowerCase() !== ".md") return;
+  if (extname(filePath).toLowerCase() !== ".md") return;
 
   const content = readTextTolerant(filePath);
 
@@ -639,7 +647,9 @@ function processDocumentFile(
       addQuads(graph, parseTurtle(match[1]!.trim()));
     } catch (error) {
       logger.warning(
-        `Failed to parse turtle block in ${filePath.name}: ${String(error)}`,
+        `Failed to parse turtle block in ${basename(filePath)}: ${
+          String(error)
+        }`,
       );
     }
   }
@@ -660,17 +670,17 @@ const EXT_FORMAT_MAP: ReadonlyMap<string, string> = new Map([
 async function processInputDir(
   graph: RdfGraph,
   config: Config,
-  inputDir: Path,
+  inputDir: string,
   documentFiles: ReadonlySet<string>,
 ): Promise<void> {
-  if (!inputDir.exists()) return;
-  for (const filePath of sortedRglob(inputDir)) {
-    if (!filePath.isFile() || config.isExcluded(filePath)) continue;
+  if (!pathExists(inputDir)) return;
+  for (const filePath of sortedTreePaths(inputDir)) {
+    if (!isFile(filePath) || config.isExcluded(filePath)) continue;
     try {
       if (documentFiles.has(pathKey(filePath))) {
         processDocumentFile(graph, filePath, config);
       } else {
-        const format = EXT_FORMAT_MAP.get(filePath.suffix.toLowerCase());
+        const format = EXT_FORMAT_MAP.get(extname(filePath).toLowerCase());
         if (format !== undefined) {
           addQuads(
             graph,
@@ -681,7 +691,9 @@ async function processInputDir(
     } catch (error) {
       // A warning, not a failure: a wiki with one unparseable import is still a
       // wiki, and the oracle's contract is to load the rest of it.
-      logger.warning(`Failed to process ${filePath.name}: ${String(error)}`);
+      logger.warning(
+        `Failed to process ${basename(filePath)}: ${String(error)}`,
+      );
     }
   }
 }
@@ -765,14 +777,14 @@ export async function loadDataset(
       continue;
     }
     sourceByPath.set(
-      descriptor.local_path.resolve().toString(),
+      resolve(descriptor.local_path),
       descriptor,
     );
   }
   const rootDescriptor = descriptors[0]!;
 
   for (const inputDir of config.wiki.input) {
-    const descriptor = sourceByPath.get(inputDir.resolve().toString()) ??
+    const descriptor = sourceByPath.get(resolve(inputDir)) ??
       rootDescriptor;
     const graph = dataset.graph(descriptor.uri);
     config.bindNamespaces(graph);

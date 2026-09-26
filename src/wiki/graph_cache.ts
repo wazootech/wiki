@@ -29,9 +29,17 @@
  *   {@link canonicalJson}.
  */
 
+import {
+  isFile,
+  pathExists,
+  readText,
+  relativeWithin,
+  sortedTreePaths,
+} from "./fspath.ts";
+import { join, resolve } from "@std/path";
 import { VERSION } from "./version.ts";
 import type { Config } from "./config.ts";
-import { type Path, sortedRglob } from "./fspath.ts";
+
 import {
   parseRdf,
   RdfDataset,
@@ -61,8 +69,8 @@ const processGraphs = new Map<string, RdfGraph>();
 const processDatasets = new Map<string, RdfDataset>();
 
 /** Directory for optional on-disk graph cache artifacts. */
-export function cacheDir(config: Config): Path {
-  return config.config_root.joinpath(".wiki", "cache");
+export function cacheDir(config: Config): string {
+  return join(config.config_root, ".wiki", "cache");
 }
 
 /** The parts of the configuration that change how a graph is built. */
@@ -92,18 +100,18 @@ function configFingerprint(config: Config): Record<string, unknown> {
  * otherwise fingerprint its own cache and invalidate itself on every write.
  *
  * Path order matters here — the manifest is a list, and the digest is over its
- * rendered JSON — so the walk is the oracle's flat `sorted(rglob("*"))` (see
- * `sortedRglob`), not a directory-level walk.
+ * rendered JSON — so the walk is the oracle's flat `sortedTreePaths` (see
+ * `sortedTreePaths`), not a directory-level walk.
  */
-export function iterWikiFiles(config: Config): Path[] {
-  const files: Path[] = [];
-  const cacheRoot = cacheDir(config).resolve();
+export function iterWikiFiles(config: Config): string[] {
+  const files: string[] = [];
+  const cacheRoot = resolve(cacheDir(config));
   for (const inputDir of config.wiki.input) {
-    if (!inputDir.exists()) continue;
-    for (const filePath of sortedRglob(inputDir)) {
-      if (!filePath.isFile() || config.isExcluded(filePath)) continue;
+    if (!pathExists(inputDir)) continue;
+    for (const filePath of sortedTreePaths(inputDir)) {
+      if (!isFile(filePath) || config.isExcluded(filePath)) continue;
       try {
-        filePath.resolve().relativeTo(cacheRoot);
+        relativeWithin(resolve(filePath), cacheRoot);
         continue;
       } catch {
         // Not under the cache directory: this is the interesting case.
@@ -118,7 +126,7 @@ export function iterWikiFiles(config: Config): Path[] {
 export function wikiManifest(config: Config): WikiManifest {
   const files: WikiManifestEntry[] = [];
   for (const filePath of iterWikiFiles(config)) {
-    const stat = Deno.statSync(filePath.toString());
+    const stat = Deno.statSync(filePath);
     files.push({
       path: config.relativeToRoot(filePath),
       size: stat.size,
@@ -220,15 +228,17 @@ function diskCachePrefix(
 }
 
 /** Path to the persisted graph for the current wiki fingerprint. */
-export function diskCachePath(config: Config, infer: boolean): Path {
-  return cacheDir(config).joinpath(
+export function diskCachePath(config: Config, infer: boolean): string {
+  return join(
+    cacheDir(config),
     `${diskCachePrefix(infer)}-${wikiFingerprint(config)}.nt`,
   );
 }
 
 /** Path to the persisted named-graph dataset for the current wiki fingerprint. */
-export function datasetCachePath(config: Config, infer: boolean): Path {
-  return cacheDir(config).joinpath(
+export function datasetCachePath(config: Config, infer: boolean): string {
+  return join(
+    cacheDir(config),
     `${diskCachePrefix(infer, "dataset")}-${wikiFingerprint(config)}.nq`,
   );
 }
@@ -260,9 +270,9 @@ export async function getDiskGraph(
   infer: boolean,
 ): Promise<RdfGraph | null> {
   const cachePath = diskCachePath(config, infer);
-  if (!cachePath.exists()) return null;
+  if (!pathExists(cachePath)) return null;
   try {
-    const quads = await parseRdf(cachePath.readText(), "nt");
+    const quads = await parseRdf(readText(cachePath), "nt");
     const graph = new RdfGraph();
     graph.addAll(quads);
     return graph;
@@ -270,7 +280,7 @@ export async function getDiskGraph(
     // A corrupt or partial cache must never block a command: drop it and let
     // the caller rebuild.
     try {
-      Deno.removeSync(cachePath.toString());
+      Deno.removeSync(cachePath);
     } catch {
       // Already gone, or not ours to remove.
     }
@@ -284,15 +294,15 @@ export async function getDiskDataset(
   infer: boolean,
 ): Promise<RdfDataset | null> {
   const cachePath = datasetCachePath(config, infer);
-  if (!cachePath.exists()) return null;
+  if (!pathExists(cachePath)) return null;
   try {
-    const quads = await parseRdf(cachePath.readText(), "nquads");
+    const quads = await parseRdf(readText(cachePath), "nquads");
     const dataset = new RdfDataset({ defaultUnion: true });
     for (const item of quads) dataset.addQuad(item);
     return dataset;
   } catch {
     try {
-      Deno.removeSync(cachePath.toString());
+      Deno.removeSync(cachePath);
     } catch {
       // Already gone, or not ours to remove.
     }
@@ -341,10 +351,10 @@ export function setDiskGraph(
   graph: RdfGraph,
 ): void {
   const root = cacheDir(config);
-  Deno.mkdirSync(root.toString(), { recursive: true });
+  Deno.mkdirSync(root, { recursive: true });
   const cachePath = diskCachePath(config, infer);
   removeStaleCacheFiles(root, `${diskCachePrefix(infer)}-`, ".nt", cachePath);
-  cachePath.writeText(serializeNt(graph.toArray()));
+  Deno.writeTextFileSync(cachePath, serializeNt(graph.toArray()));
 }
 
 /** Persist a named-graph dataset for reuse across one-shot CLI invocations. */
@@ -354,7 +364,7 @@ export function setDiskDataset(
   dataset: RdfDataset,
 ): void {
   const root = cacheDir(config);
-  Deno.mkdirSync(root.toString(), { recursive: true });
+  Deno.mkdirSync(root, { recursive: true });
   const cachePath = datasetCachePath(config, infer);
   removeStaleCacheFiles(
     root,
@@ -362,28 +372,28 @@ export function setDiskDataset(
     ".nq",
     cachePath,
   );
-  cachePath.writeText(serializeNquadsDataset([...dataset]));
+  Deno.writeTextFileSync(cachePath, serializeNquadsDataset([...dataset]));
 }
 
 /** Delete cache files for the same kind and mode but a different fingerprint. */
 function removeStaleCacheFiles(
-  root: Path,
+  root: string,
   prefix: string,
   suffix: string,
-  keep: Path,
+  keep: string,
 ): void {
   let names: string[];
   try {
-    names = [...Deno.readDirSync(root.toString())].map((entry) => entry.name);
+    names = [...Deno.readDirSync(root)].map((entry) => entry.name);
   } catch {
     return;
   }
   for (const name of names) {
     if (!name.startsWith(prefix) || !name.endsWith(suffix)) continue;
-    const candidate = root.joinpath(name);
-    if (candidate.toString() === keep.toString()) continue;
+    const candidate = join(root, name);
+    if (candidate === keep) continue;
     try {
-      Deno.removeSync(candidate.toString());
+      Deno.removeSync(candidate);
     } catch {
       // A stale file we cannot remove is not worth failing a build over.
     }
@@ -403,7 +413,7 @@ export function clearProcessDataset(config: Config, infer: boolean): void {
 /** Drop the persisted graph entry for the current wiki fingerprint. */
 export function clearDiskGraph(config: Config, infer: boolean): void {
   try {
-    Deno.removeSync(diskCachePath(config, infer).toString());
+    Deno.removeSync(diskCachePath(config, infer));
   } catch {
     // Nothing cached under this fingerprint.
   }
@@ -412,7 +422,7 @@ export function clearDiskGraph(config: Config, infer: boolean): void {
 /** Drop the persisted dataset entry for the current wiki fingerprint. */
 export function clearDiskDataset(config: Config, infer: boolean): void {
   try {
-    Deno.removeSync(datasetCachePath(config, infer).toString());
+    Deno.removeSync(datasetCachePath(config, infer));
   } catch {
     // Nothing cached under this fingerprint.
   }

@@ -1,3 +1,4 @@
+import { join } from "@std/path";
 import {
   assert,
   assertEquals,
@@ -14,30 +15,30 @@ import {
   querySparql,
   runMcpServer,
 } from "../src/wiki/mcp.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { Wiki } from "../src/wiki/wiki.ts";
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-mcp-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-mcp-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows can briefly retain a handle after a graph read.
   }
 }
 
-function makeWiki(root: Path): Wiki {
-  const wikiDir = root.joinpath("wiki");
-  Deno.mkdirSync(wikiDir.toString(), { recursive: true });
+function makeWiki(root: string): Wiki {
+  const wikiDir = join(root, "wiki");
+  Deno.mkdirSync(wikiDir, { recursive: true });
   Deno.writeTextFileSync(
-    root.joinpath("wiki.yaml").toString(),
+    join(root, "wiki.yaml"),
     "wiki:\n  input: [wiki]\n",
   );
   Deno.writeTextFileSync(
-    wikiDir.joinpath("Ethan.md").toString(),
+    join(wikiDir, "Ethan.md"),
     "---\ntype: schema:Person\ngivenName: Ethan\nfamilyName: Davidson\n---\n",
   );
   return Wiki.load(root);

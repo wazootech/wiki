@@ -19,9 +19,10 @@
  * schema document `ajv` refuses to compile. See `json_schema.ts`.
  */
 
+import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse, assertThrows } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   buildTypeSchemaRegistry,
   checkFrontmatterSchema,
@@ -33,28 +34,28 @@ import {
 } from "../src/wiki/frontmatter_schema.ts";
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-frontmatter-schema-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-frontmatter-schema-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 /** Write a file below `root`, creating parent directories. */
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
 function writeSchema(
-  root: Path,
+  root: string,
   relative: string,
   schema: unknown,
 ): void {
@@ -62,17 +63,17 @@ function writeSchema(
 }
 
 /** A config whose input directory is `<root>/wiki`, as the Python tests build. */
-function configFor(root: Path, check: Record<string, unknown> = {}): Config {
+function configFor(root: string, check: Record<string, unknown> = {}): Config {
   return new Config({
-    wiki: { input: [root.joinpath("wiki")] },
+    wiki: { input: [join(root, "wiki")] },
     config_root: root,
     ...(Object.keys(check).length > 0 ? { check } : {}),
   });
 }
 
-function makeWiki(root: Path): Path {
-  const wiki = root.joinpath("wiki");
-  Deno.mkdirSync(wiki.toString(), { recursive: true });
+function makeWiki(root: string): string {
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki, { recursive: true });
   return wiki;
 }
 
@@ -196,7 +197,7 @@ Deno.test("a BOM-prefixed local schema is still readable (wiki#312)", async () =
     const wiki = makeWiki(root);
     const schemaPath = write(root, "schemas/person.json", "");
     Deno.writeTextFileSync(
-      schemaPath.toString(),
+      schemaPath,
       "\uFEFF" + JSON.stringify(personSchema()),
     );
     write(
@@ -348,7 +349,7 @@ Deno.test("a page schema list is a union of requirements", async () => {
     assertEquals(validation.length, 1);
     assert(validation[0]!.includes("bar"));
 
-    Deno.removeSync(wiki.joinpath("Page.md").toString());
+    Deno.removeSync(join(wiki, "Page.md"));
     write(
       wiki,
       "PageBoth.md",
@@ -368,7 +369,7 @@ Deno.test("a schema outside the config root is refused", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
-    write(root.parent, "outside.json", "{}");
+    write(dirname(root), "outside.json", "{}");
     write(
       wiki,
       "Page.md",
@@ -463,7 +464,7 @@ Deno.test("the issue list is byte-identical to the oracle's", async () => {
       properties: { nickname: { type: "string" } },
     });
     writeSchema(root, "schemas/rules.yaml", { type: "object" });
-    write(root.parent, "outside.json", "{}");
+    write(dirname(root), "outside.json", "{}");
     write(
       wiki,
       "Person_Shape.md",

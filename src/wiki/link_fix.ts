@@ -1,7 +1,8 @@
+import { extname } from "@std/path";
 import { LinkIndex } from "./wiki_links.ts";
 import type { Config } from "./config.ts";
 import { splitFrontmatterText, WIKILINK_FULL_REGEX } from "./document.ts";
-import type { Path } from "./fspath.ts";
+
 import { fragmentId, resolvePageRoute, splitTarget } from "./links.ts";
 import { readTextTolerant } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
@@ -31,7 +32,7 @@ function headingIdsByRoute(config: Config): Map<string, Set<string>> {
   for (const filePath of iterDocumentFiles(config)) {
     const route = routeForDocumentFile(config, filePath);
     const ids = new Set<string>();
-    if (filePath.suffix.toLowerCase() === ".md") {
+    if (extname(filePath).toLowerCase() === ".md") {
       const body = splitFrontmatterText(readTextTolerant(filePath)).body;
       const slugger = new GitHubHeadingSlugger();
       for (const match of body.matchAll(/^(#{1,6})\s+(.+)$/gm)) {
@@ -183,16 +184,16 @@ function replaceTargetInMatch(
 export function applyBrokenLinkFixes(
   fixes: readonly BrokenLinkFix[],
   dryRun = false,
-): Path[] {
-  const byPath = new Map<string, { path: Path; fixes: BrokenLinkFix[] }>();
+): string[] {
+  const byPath = new Map<string, { path: string; fixes: BrokenLinkFix[] }>();
   for (const fix of fixes) {
-    const key = fix.issue.source_path.toString();
+    const key = fix.issue.source_path;
     const entry = byPath.get(key) ?? { path: fix.issue.source_path, fixes: [] };
     entry.fixes.push(fix);
     byPath.set(key, entry);
   }
 
-  const changed: Path[] = [];
+  const changed: string[] = [];
   for (const { path, fixes: pathFixes } of byPath.values()) {
     let content = readTextTolerant(path);
     pathFixes.sort((left, right) =>
@@ -209,7 +210,7 @@ export function applyBrokenLinkFixes(
       );
       content = content.slice(0, start) + replacement + content.slice(end);
     }
-    if (!dryRun) path.writeText(content);
+    if (!dryRun) Deno.writeTextFileSync(path, content);
     changed.push(path);
   }
   return changed;
@@ -217,7 +218,7 @@ export function applyBrokenLinkFixes(
 
 function issueKey(issue: BrokenLink): string {
   return [
-    issue.source_path.toString(),
+    issue.source_path,
     issue.match_start,
     issue.match_end,
     issue.raw_target,

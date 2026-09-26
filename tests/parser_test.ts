@@ -6,8 +6,9 @@
  * The BOM cases are wiki#312 — the behaviour the oracle branch is named after.
  */
 
+import { join } from "@std/path";
 import { assertEquals, assertNotEquals } from "@std/assert";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   documentDataFromPath,
   ensureContext,
@@ -18,10 +19,10 @@ import {
 } from "../src/wiki/parser.ts";
 
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
-function withTempDir(body: (root: Path) => void): void {
+function withTempDir(body: (root: string) => void): void {
   const dir = Deno.makeTempDirSync({ prefix: "wiki-parser-" });
   try {
-    body(new Path(dir));
+    body(dir);
   } finally {
     Deno.removeSync(dir, { recursive: true });
   }
@@ -110,14 +111,14 @@ Deno.test("frontmatterError returns null for a document with no BOM trouble", ()
 
 Deno.test("documentDataFromPath loads each data format", () => {
   withTempDir((root) => {
-    const yml = root.joinpath("person.yml");
-    const yaml = root.joinpath("person.yaml");
-    const json = root.joinpath("person.json");
-    const toml = root.joinpath("person.toml");
-    yml.writeText("type: Person\ngivenName: Gregory\n");
-    yaml.writeText("type: Person\ngivenName: Gregory\n");
-    json.writeText('{"type": "Person", "givenName": "Alice"}');
-    toml.writeText('type = "Person"\ngivenName = "Bob"\n');
+    const yml = join(root, "person.yml");
+    const yaml = join(root, "person.yaml");
+    const json = join(root, "person.json");
+    const toml = join(root, "person.toml");
+    Deno.writeTextFileSync(yml, "type: Person\ngivenName: Gregory\n");
+    Deno.writeTextFileSync(yaml, "type: Person\ngivenName: Gregory\n");
+    Deno.writeTextFileSync(json, '{"type": "Person", "givenName": "Alice"}');
+    Deno.writeTextFileSync(toml, 'type = "Person"\ngivenName = "Bob"\n');
 
     const ymlData = documentDataFromPath(yml);
     const yamlData = documentDataFromPath(yaml);
@@ -136,10 +137,16 @@ Deno.test("documentDataFromPath loads each data format", () => {
 
 Deno.test("documentDataFromPath tolerates BOM-prefixed data files (wiki#312)", () => {
   withTempDir((root) => {
-    const json = root.joinpath("person.json");
-    const yml = root.joinpath("person.yml");
-    json.writeText("\uFEFF" + '{"type": "Person", "givenName": "Alice"}');
-    yml.writeText("\uFEFF" + "type: Person\ngivenName: Gregory\n");
+    const json = join(root, "person.json");
+    const yml = join(root, "person.yml");
+    Deno.writeTextFileSync(
+      json,
+      "\uFEFF" + '{"type": "Person", "givenName": "Alice"}',
+    );
+    Deno.writeTextFileSync(
+      yml,
+      "\uFEFF" + "type: Person\ngivenName: Gregory\n",
+    );
     assertEquals(documentDataFromPath(json)?.["givenName"], "Alice");
     assertEquals(documentDataFromPath(yml)?.["givenName"], "Gregory");
   });
@@ -154,8 +161,8 @@ Deno.test("documentDataFromPath rejects files that are not mappings", () => {
       ["items.toml", "x = broken\n"],
     ];
     for (const [name, content] of files) {
-      const file = root.joinpath(name);
-      file.writeText(content);
+      const file = join(root, name);
+      Deno.writeTextFileSync(file, content);
       assertEquals(documentDataFromPath(file), null, `${name} should be null`);
     }
   });
@@ -163,12 +170,12 @@ Deno.test("documentDataFromPath rejects files that are not mappings", () => {
 
 Deno.test("splitDocumentBody gives data files an empty body", () => {
   withTempDir((root) => {
-    const yml = root.joinpath("person.yml");
-    const yaml = root.joinpath("person.yaml");
-    const toml = root.joinpath("person.toml");
-    yml.writeText("type: Person\ngivenName: Gregory\n");
-    yaml.writeText("type: Person\ngivenName: Gregory\n");
-    toml.writeText('type = "Person"\ngivenName = "Bob"\n');
+    const yml = join(root, "person.yml");
+    const yaml = join(root, "person.yaml");
+    const toml = join(root, "person.toml");
+    Deno.writeTextFileSync(yml, "type: Person\ngivenName: Gregory\n");
+    Deno.writeTextFileSync(yaml, "type: Person\ngivenName: Gregory\n");
+    Deno.writeTextFileSync(toml, 'type = "Person"\ngivenName = "Bob"\n');
 
     const [ymlData, ymlBody] = splitDocumentBody(yml);
     const [yamlData, yamlBody] = splitDocumentBody(yaml);
@@ -185,8 +192,9 @@ Deno.test("splitDocumentBody gives data files an empty body", () => {
 
 Deno.test("splitDocumentBody tolerates a BOM-prefixed page", () => {
   withTempDir((root) => {
-    const page = root.joinpath("Page.md");
-    page.writeText(
+    const page = join(root, "Page.md");
+    Deno.writeTextFileSync(
+      page,
       "\uFEFF---\nid: wiki:test\nlabel: Test\n---\nBody text here",
     );
     const [data, body] = splitDocumentBody(page);

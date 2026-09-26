@@ -1,3 +1,4 @@
+import { IS_WINDOWS } from "./fspath.ts";
 /**
  * Python's `repr` for JavaScript values.
  *
@@ -14,9 +15,6 @@
  */
 
 /** Render `value` the way Python's `repr` would. */
-
-import { IS_WINDOWS, Path } from "./fspath.ts";
-
 export function pyRepr(value: unknown): string {
   if (value === null || value === undefined) return "None";
   if (typeof value === "boolean") return value ? "True" : "False";
@@ -29,21 +27,24 @@ export function pyRepr(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map((item) => pyRepr(item)).join(", ")}]`;
   }
-  if (value instanceof Path) {
-    // `pathlib`'s repr names the concrete flavour and always uses forward
-    // slashes; a bare `{'value': ...}` would be unrecognisable in a message
-    // that quotes the config it failed on.
-    const flavour = IS_WINDOWS ? "WindowsPath" : "PosixPath";
-    return `${flavour}(${pyReprString(value.asPosix())})`;
-  }
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
     return `{${
-      entries.map(([key, item]) => `${pyReprString(key)}: ${pyRepr(item)}`)
-        .join(", ")
+      entries.map(([key, item]) =>
+        `${pyReprString(key)}: ${
+          key === "config_root" && typeof item === "string"
+            ? pyReprPath(item)
+            : pyRepr(item)
+        }`
+      ).join(", ")
     }}`;
   }
   return String(value);
+}
+
+function pyReprPath(path: string): string {
+  const flavour = IS_WINDOWS ? "WindowsPath" : "PosixPath";
+  return `${flavour}(${pyReprString(path.replaceAll("\\", "/"))})`;
 }
 
 /**

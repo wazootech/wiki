@@ -16,7 +16,7 @@
  * whether that ever reaches a user.
  */
 
-import { ValueError } from "../fspath.ts";
+import { ValueError } from "../errors.ts";
 import { pyRepr, pyTypeName } from "../pyrepr.ts";
 
 /** One validation failure, shaped like a pydantic error dictionary. */

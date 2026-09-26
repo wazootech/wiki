@@ -1,5 +1,6 @@
-import { basename, dirname, join, normalize } from "@std/path";
 import { UpgradeError } from "./errors.ts";
+import { basename, dirname, join, normalize } from "@std/path";
+
 import { VERSION } from "./version.ts";
 
 export const JSR_METADATA_URL = "https://jsr.io/@wazoo/wiki/meta.json";

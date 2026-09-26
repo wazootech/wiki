@@ -1,3 +1,4 @@
+import { basename } from "@std/path";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Wiki } from "../src/wiki/wiki.ts";
 
@@ -41,7 +42,9 @@ Deno.test("Wiki.link --apply inserts a page link and check accepts the result", 
   try {
     const report = wiki.link(null, { apply: true, verbose: true });
     assertEquals(report.opportunities, 1);
-    assertEquals(report.changed_paths.map((path) => path.name), ["Notes.md"]);
+    assertEquals(report.changed_paths.map((path) => basename(path)), [
+      "Notes.md",
+    ]);
     assertStringIncludes(
       Deno.readTextFileSync(source),
       "[Ethan Davidson](Ethan_Davidson.md)",
@@ -67,7 +70,9 @@ Deno.test("Wiki.link repairs unambiguous targets in place and honors dry-run", (
       verbose: true,
     });
     assertEquals(preview.fixes, 2);
-    assertEquals(preview.changed_paths.map((path) => path.name), ["Notes.md"]);
+    assertEquals(preview.changed_paths.map((path) => basename(path)), [
+      "Notes.md",
+    ]);
     assertEquals(Deno.readTextFileSync(source), original);
 
     const applied = wiki.link(null, { fixBroken: true, verbose: true });

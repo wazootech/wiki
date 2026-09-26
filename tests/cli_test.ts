@@ -1,3 +1,4 @@
+import { join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 import {
@@ -6,7 +7,7 @@ import {
   EXIT_USAGE,
   PROG_NAME,
 } from "../src/wiki/cli.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { VERSION } from "../src/wiki/version.ts";
 
 const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
@@ -116,24 +117,24 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 /** A wiki whose only findings are a broken wikilink and a missing layout. */
-function writeAuditCorpus(): Path {
-  const root = Path.of(Deno.makeTempDirSync({ prefix: "wiki-cli-" }));
-  const wiki = root.joinpath("wiki");
-  Deno.mkdirSync(wiki.toString(), { recursive: true });
+function writeAuditCorpus(): string {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-" });
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki, { recursive: true });
   Deno.writeTextFileSync(
-    root.joinpath("wiki.yml").toString(),
+    join(root, "wiki.yml"),
     "wiki:\n  input: [wiki]\n",
   );
   Deno.writeTextFileSync(
-    wiki.joinpath("Page.md").toString(),
+    join(wiki, "Page.md"),
     "---\ntype: schema:WebPage\nwazoo:layout: layouts/missing.html\n---\n\nSee [[Missing]].\n",
   );
   return root;
 }
 
-function removeCorpus(root: Path): void {
+function removeCorpus(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -147,7 +148,7 @@ Deno.test(
     try {
       const result = await runCliIn(
         ["-c", "wiki.yml", "lint", "-v"],
-        root.toString(),
+        root,
         ["--allow-all"],
       );
       assertEquals(result.code, EXIT_OK);
@@ -174,7 +175,7 @@ Deno.test(
     try {
       const result = await runCliIn(
         ["-c", "wiki.yml", "lint", "--strict", "-v"],
-        root.toString(),
+        root,
         ["--allow-all"],
       );
       assertEquals(result.code, EXIT_FAILURE);
@@ -196,7 +197,7 @@ Deno.test(
     try {
       const result = await runCliIn(
         ["-c", "wiki.yml", "check", "--strict", "-v"],
-        root.toString(),
+        root,
         ["--allow-all"],
       );
       assertEquals(result.code, EXIT_FAILURE);
@@ -222,7 +223,7 @@ Deno.test(
     try {
       const result = await runCliIn(
         ["-c", "wiki.yml", "graph", "list"],
-        root.toString(),
+        root,
         ["--allow-all"],
       );
       assertEquals(result.code, EXIT_OK);
@@ -240,15 +241,15 @@ Deno.test(
   "build writes a static page and reports generated files",
   { permissions: { run: true, read: true, write: true } },
   async () => {
-    const root = Path.of(Deno.makeTempDirSync({ prefix: "wiki-cli-build-" }));
-    const wikiDir = root.joinpath("wiki");
-    Deno.mkdirSync(wikiDir.toString(), { recursive: true });
+    const root = Deno.makeTempDirSync({ prefix: "wiki-cli-build-" });
+    const wikiDir = join(root, "wiki");
+    Deno.mkdirSync(wikiDir, { recursive: true });
     Deno.writeTextFileSync(
-      root.joinpath("wiki.yml").toString(),
+      join(root, "wiki.yml"),
       "wiki:\n  input: [wiki]\n",
     );
     Deno.writeTextFileSync(
-      wikiDir.joinpath("Ethan.md").toString(),
+      join(wikiDir, "Ethan.md"),
       "# Ethan\n\nA valid page.\n",
     );
     try {
@@ -262,13 +263,13 @@ Deno.test(
           "--no-check",
           "-v",
         ],
-        root.toString(),
+        root,
         ["--allow-all"],
       );
       assertEquals(result.code, EXIT_OK, result.stderr);
       assert(result.stdout.includes("Built 1 pages and 0 assets to published"));
       const page = Deno.readTextFileSync(
-        root.joinpath("published", "wiki", "Ethan", "index.html").toString(),
+        join(root, "published", "wiki", "Ethan", "index.html"),
       );
       assert(page.includes("A valid page."));
     } finally {

@@ -52,10 +52,13 @@
  *   changes output rather than presentation.
  */
 
+import { isFile, relativeWithin } from "./fspath.ts";
+import { basename, dirname, join } from "@std/path";
+import { ValueError } from "./errors.ts";
 import { parse as parseToml } from "@std/toml";
 import type { Config } from "./config.ts";
 import { formatMarkdownText } from "./formatter.ts";
-import { type Path, ValueError } from "./fspath.ts";
+
 import {
   DEFAULT_OPTS,
   InvalidConfError,
@@ -116,7 +119,7 @@ export function renderDefaultMdformatToml(): string {
  * with the detail coming from the JavaScript parser, so a malformed file reports
  * the same way with a differently-worded parse error attached.
  */
-export function loadTomlOpts(path: Path): Record<string, unknown> {
+export function loadTomlOpts(path: string): Record<string, unknown> {
   let parsed: Record<string, unknown>;
   try {
     parsed = parseToml(readTextTolerant(path)) as Record<string, unknown>;
@@ -126,8 +129,8 @@ export function loadTomlOpts(path: Path): Record<string, unknown> {
     );
   }
   try {
-    validateKeys(parsed, path.toString());
-    validateValues(parsed, path.toString());
+    validateKeys(parsed, path);
+    validateValues(parsed, path);
   } catch (error) {
     if (error instanceof InvalidConfError) throw new ValueError(error.message);
     throw error;
@@ -145,7 +148,7 @@ export function loadTomlOpts(path: Path): Record<string, unknown> {
  * config root beats the walk; and the walk beats the shipped defaults.
  */
 export function resolveFmtTomlOpts(
-  filePath: Path,
+  filePath: string,
   config: Config,
 ): [Record<string, unknown>, string] {
   if (config.fmt !== null && config.fmt.options !== null) {
@@ -161,22 +164,22 @@ export function resolveFmtTomlOpts(
   const root = config.config_root;
   if (config.fmt !== null && config.fmt.toml !== null) {
     const pointed = config.fmt.toml;
-    if (pointed.isFile()) {
+    if (isFile(pointed)) {
       return [
         loadTomlOpts(pointed),
-        `fmt from ${pointed.relativeTo(root).asPosix()}`,
+        `fmt from ${(relativeWithin(pointed, root)).replaceAll("\\", "/")}`,
       ];
     }
   }
 
-  const defaultPath = root.joinpath(".mdformat.toml");
-  if (defaultPath.isFile()) {
+  const defaultPath = join(root, ".mdformat.toml");
+  if (isFile(defaultPath)) {
     return [loadTomlOpts(defaultPath), ".mdformat.toml at config root"];
   }
 
-  const [tomlOpts, confPath] = readTomlOpts(filePath.parent);
+  const [tomlOpts, confPath] = readTomlOpts(dirname(filePath));
   if (confPath !== null) {
-    return [{ ...tomlOpts }, confPath.toString()];
+    return [{ ...tomlOpts }, confPath];
   }
 
   return [{ ...DEFAULT_FMT_OPTS }, "Wiki CLI fmt defaults"];
@@ -192,12 +195,12 @@ export function resolveFmtTomlOpts(
  * pointer is.
  */
 export function readTomlOpts(
-  confDir: Path,
-): [Record<string, unknown>, Path | null] {
+  confDir: string,
+): [Record<string, unknown>, string | null] {
   let dir = confDir;
   for (;;) {
-    const confPath = dir.joinpath(".mdformat.toml");
-    if (confPath.isFile()) {
+    const confPath = join(dir, ".mdformat.toml");
+    if (isFile(confPath)) {
       let parsed: Record<string, unknown>;
       try {
         parsed = parseToml(readTextTolerant(confPath)) as Record<
@@ -207,25 +210,25 @@ export function readTomlOpts(
       } catch (error) {
         throw new ValueError(`Invalid TOML syntax: ${errorText(error)}`);
       }
-      validateKeys(parsed, confPath.toString());
-      validateValues(parsed, confPath.toString());
+      validateKeys(parsed, confPath);
+      validateValues(parsed, confPath);
       return [parsed, confPath];
     }
-    const parent = dir.parent;
-    if (parent.toString() === dir.toString()) return [{}, null];
+    const parent = dirname(dir);
+    if (parent === dir) return [{}, null];
     dir = parent;
   }
 }
 
 /** Which config source {@link resolveFmtTomlOpts} would use, in prose. */
-export function describeFmtSource(filePath: Path, config: Config): string {
+export function describeFmtSource(filePath: string, config: Config): string {
   const [, source] = resolveFmtTomlOpts(filePath, config);
   return source;
 }
 
 /** The merged mdformat options and the extensions they enable. */
 export function mdformatOptions(
-  filePath: Path,
+  filePath: string,
   config: Config,
 ): [Record<string, unknown>, readonly string[]] {
   const [tomlOpts] = resolveFmtTomlOpts(filePath, config);
@@ -286,7 +289,7 @@ function applyEndOfLine(
  */
 export function formatMarkdown(
   original: string,
-  filePath: Path,
+  filePath: string,
   config: Config,
 ): string {
   const withoutBom = original.startsWith(BOM)
@@ -297,7 +300,7 @@ export function formatMarkdown(
   const formatted = formatMarkdownText(withoutBom, filePath, opts["wrap"]);
   const result = applyEndOfLine(formatted, withoutBom, opts["end_of_line"]);
   if (result !== withoutBom) {
-    logger.debug(`formatted ${filePath.name}`);
+    logger.debug(`formatted ${basename(filePath)}`);
   }
   return result;
 }

@@ -6,6 +6,7 @@
  * `@vocab` — and the prefix-deletion rule, which is the only way a config can
  * remove a default binding.
  */
+import { BuildError, UpgradeError, WikiError } from "../src/wiki/errors.ts";
 import { assertEquals } from "@std/assert";
 import {
   Context,
@@ -15,7 +16,6 @@ import {
   SCHEMA,
   WAZOO,
 } from "../src/wiki/context.ts";
-import { BuildError, UpgradeError, WikiError } from "../src/wiki/errors.ts";
 
 Deno.test("an unconfigured context keeps the default prefixes and vocab", () => {
   const context = new Context();

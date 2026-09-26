@@ -16,37 +16,39 @@
  *   error about escaping — routing, not sanity-checking, decides.
  */
 
+import { dirname, join } from "@std/path";
+import { pathExists } from "../src/wiki/fspath.ts";
 import { assert, assertEquals } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { LinkIndex } from "../src/wiki/wiki_links.ts";
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-links-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-links-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 /** Write a file below `root`, creating parent directories. */
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
-function configFor(root: Path): Config {
+function configFor(root: string): Config {
   return new Config({
     wiki: {
-      input: [root.joinpath("wiki")],
-      ...(root.joinpath("assets").exists()
-        ? { assets: [root.joinpath("assets")] }
+      input: [join(root, "wiki")],
+      ...(pathExists(join(root, "assets"))
+        ? { assets: [join(root, "assets")] }
         : {}),
     },
     config_root: root,

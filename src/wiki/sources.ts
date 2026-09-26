@@ -1,10 +1,12 @@
 /** External Git source lifecycle and lockfile resolution. */
 
+import { basename, extname, join, resolve as resolvePath } from "@std/path";
+import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
 import { isSeq, parseDocument } from "yaml";
 import { type Config, CONFIG_FILENAMES } from "./config.ts";
-import type { Path } from "./fspath.ts";
+
 import { getLogger } from "./logging.ts";
 import { readTextTolerant } from "./parser.ts";
 import { pyRepr } from "./pyrepr.ts";
@@ -34,8 +36,8 @@ const OWNER_REPO_SHORTHAND =
   /^([a-zA-Z0-9._-]+)\/([a-zA-Z0-9._-]+?)(?:\.git)?$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 
-function lockfilePath(config: Config): Path {
-  return config.config_root.joinpath(LOCKFILE_FILENAME);
+function lockfilePath(config: Config): string {
+  return join(config.config_root, LOCKFILE_FILENAME);
 }
 
 function setLockedSource(
@@ -50,8 +52,8 @@ function deleteLockedSource(lockfile: MutableLockfile, name: string): void {
   lockfile.sources.delete(name);
 }
 
-function sourceRoot(config: Config): Path {
-  return config.config_root.joinpath(".wiki", "sources");
+function sourceRoot(config: Config): string {
+  return join(config.config_root, ".wiki", "sources");
 }
 
 function assertSafeSourceName(name: string): void {
@@ -60,37 +62,37 @@ function assertSafeSourceName(name: string): void {
   }
 }
 
-function sourceCacheDir(config: Config, sourceName: string): Path {
+function sourceCacheDir(config: Config, sourceName: string): string {
   assertSafeSourceName(sourceName);
-  return sourceRoot(config).joinpath(sourceName);
+  return join(sourceRoot(config), sourceName);
 }
 
-function configPath(config: Config): Path {
+function configPath(config: Config): string {
   for (const name of CONFIG_FILENAMES) {
-    const candidate = config.config_root.joinpath(name);
-    if (candidate.exists()) return candidate;
+    const candidate = join(config.config_root, name);
+    if (pathExists(candidate)) return candidate;
   }
-  return config.config_root.joinpath("wiki.yml");
+  return join(config.config_root, "wiki.yml");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function loadDataFile(path: Path): Record<string, unknown> {
+function loadDataFile(path: string): Record<string, unknown> {
   const raw = readTextTolerant(path);
   let data: unknown;
-  if (path.suffix.toLowerCase() === ".json") data = JSON.parse(raw);
-  else if (path.suffix.toLowerCase() === ".toml") data = parseToml(raw);
+  if (extname(path).toLowerCase() === ".json") data = JSON.parse(raw);
+  else if (extname(path).toLowerCase() === ".toml") data = parseToml(raw);
   else data = parseYaml(raw);
   if (!isRecord(data)) {
-    throw new Error(`${path.name}: top-level content must be a mapping`);
+    throw new Error(`${basename(path)}: top-level content must be a mapping`);
   }
   return data;
 }
 
-function requireYamlConfig(path: Path): void {
-  if (path.suffix.toLowerCase() === ".toml") {
+function requireYamlConfig(path: string): void {
+  if (extname(path).toLowerCase() === ".toml") {
     throw new Error(
       "Source management requires a YAML config file. " +
         "Edit wiki.toml manually or use wiki.yml for source management.",
@@ -98,12 +100,12 @@ function requireYamlConfig(path: Path): void {
   }
 }
 
-function writeYamlConfig(path: Path, data: Record<string, unknown>): void {
+function writeYamlConfig(path: string, data: Record<string, unknown>): void {
   const source = readTextTolerant(path);
   const document = parseDocument(source, { uniqueKeys: true });
   if (document.errors.length > 0) {
     throw new Error(
-      `${path.name}: ${
+      `${basename(path)}: ${
         document.errors.map((error) => error.message).join("; ")
       }`,
     );
@@ -145,7 +147,8 @@ function writeYamlConfig(path: Path, data: Record<string, unknown>): void {
     flowCollectionPadding: false,
     lineWidth: 0,
   });
-  path.writeText(
+  Deno.writeTextFileSync(
+    path,
     newline === "\n" ? serialized : serialized.replaceAll("\n", newline),
   );
 }
@@ -153,7 +156,7 @@ function writeYamlConfig(path: Path, data: Record<string, unknown>): void {
 function addToConfig(config: Config, source: SourceConfig): void {
   const path = configPath(config);
   requireYamlConfig(path);
-  if (!path.exists()) throw new Error("No wiki config file found");
+  if (!pathExists(path)) throw new Error("No wiki config file found");
 
   const data = loadDataFile(path);
   const rawSources = data["sources"];
@@ -184,7 +187,7 @@ function addToConfig(config: Config, source: SourceConfig): void {
 function removeFromConfig(config: Config, name: string): void {
   const path = configPath(config);
   requireYamlConfig(path);
-  if (!path.exists()) return;
+  if (!pathExists(path)) return;
 
   const data = loadDataFile(path);
   const sources = data["sources"];
@@ -224,10 +227,10 @@ interface GitResult {
   readonly stderr: string;
 }
 
-function runGit(args: readonly string[], cwd?: Path): GitResult {
+function runGit(args: readonly string[], cwd?: string): GitResult {
   const command = new Deno.Command("git", {
     args: [...args],
-    ...(cwd === undefined ? {} : { cwd: cwd.toString() }),
+    ...(cwd === undefined ? {} : { cwd: cwd }),
     stdout: "piped",
     stderr: "piped",
   });
@@ -248,7 +251,7 @@ function gitDetails(result: GitResult): string {
 
 function checkedGit(
   args: readonly string[],
-  cwd: Path,
+  cwd: string,
   message: string,
 ): GitResult {
   const result = runGit(args, cwd);
@@ -259,34 +262,34 @@ function checkedGit(
   return result;
 }
 
-function removeTree(path: Path): void {
-  if (!path.exists()) return;
+function removeTree(path: string): void {
+  if (!pathExists(path)) return;
   try {
-    Deno.removeSync(path.toString(), { recursive: true });
+    Deno.removeSync(path, { recursive: true });
   } catch (firstError) {
-    const makeWritable = (entry: Path): void => {
-      if (entry.isSymlink()) return;
-      if (entry.isDir()) {
-        for (const child of Deno.readDirSync(entry.toString())) {
-          makeWritable(entry.joinpath(child.name));
+    const makeWritable = (entry: string): void => {
+      if (isSymlink(entry)) return;
+      if (isDirectory(entry)) {
+        for (const child of Deno.readDirSync(entry)) {
+          makeWritable(join(entry, child.name));
         }
       }
       try {
-        const mode = Deno.statSync(entry.toString()).mode;
-        if (mode !== null) Deno.chmodSync(entry.toString(), mode | 0o200);
+        const mode = Deno.statSync(entry).mode;
+        if (mode !== null) Deno.chmodSync(entry, mode | 0o200);
       } catch {
         throw firstError;
       }
     };
     makeWritable(path);
-    Deno.removeSync(path.toString(), { recursive: true });
+    Deno.removeSync(path, { recursive: true });
   }
 }
 
-function cloneOrFetch(source: SourceConfig, cacheDir: Path): Path {
+function cloneOrFetch(source: SourceConfig, cacheDir: string): string {
   assertSafeSourceName(source.name);
-  const repoDir = cacheDir.joinpath("repo");
-  if (repoDir.exists()) {
+  const repoDir = join(cacheDir, "repo");
+  if (pathExists(repoDir)) {
     const remote = runGit(["remote", "get-url", "origin"], repoDir);
     if (remote.code === 0 && remote.stdout.trim() !== source.url) {
       checkedGit(
@@ -335,9 +338,9 @@ function cloneOrFetch(source: SourceConfig, cacheDir: Path): Path {
     return repoDir;
   }
 
-  Deno.mkdirSync(cacheDir.toString(), { recursive: true });
+  Deno.mkdirSync(cacheDir, { recursive: true });
   const depth = source.ref && FULL_SHA.test(source.ref) ? [] : ["--depth", "1"];
-  const clone = runGit(["clone", ...depth, source.url, repoDir.toString()]);
+  const clone = runGit(["clone", ...depth, source.url, repoDir]);
   if (clone.code !== 0) {
     removeTree(cacheDir);
     const details = gitDetails(clone);
@@ -350,7 +353,7 @@ function cloneOrFetch(source: SourceConfig, cacheDir: Path): Path {
   return repoDir;
 }
 
-function prepareRef(source: SourceConfig, repoDir: Path): void {
+function prepareRef(source: SourceConfig, repoDir: string): void {
   if (source.ref !== null && source.ref !== undefined) {
     checkedGit(
       ["checkout", source.ref, "--"],
@@ -397,7 +400,7 @@ function prepareRef(source: SourceConfig, repoDir: Path): void {
   }
 }
 
-function resolveGitRef(ref: string, repoDir: Path): string {
+function resolveGitRef(ref: string, repoDir: string): string {
   const result = runGit(["rev-parse", ref], repoDir);
   if (result.code !== 0) {
     const details = gitDetails(result);
@@ -412,23 +415,23 @@ function resolveGitRef(ref: string, repoDir: Path): string {
 
 function resolvedSourcePath(
   source: Pick<SourceConfig, "name" | "path">,
-  repoDir: Path,
-): Path {
-  const base = source.path ? repoDir.joinpath(source.path) : repoDir;
-  if (!base.exists()) {
+  repoDir: string,
+): string {
+  const base = source.path ? join(repoDir, source.path) : repoDir;
+  if (!pathExists(base)) {
     throw new Error(
       `Source ${pyRepr(source.name)}: path ${
         pyRepr(source.path ?? null)
       } does not exist`,
     );
   }
-  return base.resolve();
+  return resolvePath(base);
 }
 
-function discoverSources(repoDir: Path): SourceConfig[] {
+function discoverSources(repoDir: string): SourceConfig[] {
   for (const name of CONFIG_FILENAMES) {
-    const path = repoDir.joinpath(name);
-    if (!path.exists()) continue;
+    const path = join(repoDir, name);
+    if (!pathExists(path)) continue;
     try {
       const data = loadDataFile(path);
       const rawSources = data["sources"];
@@ -676,8 +679,8 @@ export function update(
     );
     const visited = new Set(lockfile.sources.keys());
     for (const source of config.sources) {
-      const repoDir = sourceCacheDir(config, source.name).joinpath("repo");
-      if (!repoDir.exists()) continue;
+      const repoDir = join(sourceCacheDir(config, source.name), "repo");
+      if (!pathExists(repoDir)) continue;
       const transitive = discoverSources(repoDir);
       if (transitive.length > 0) {
         installTree(config, transitive, lockfile, source.name, visited, []);
@@ -719,7 +722,7 @@ function removeOrphans(
     .map(([name]) => name);
   for (const orphan of orphaned) {
     const cacheDir = sourceCacheDir(config, orphan);
-    if (cacheDir.exists()) {
+    if (pathExists(cacheDir)) {
       removeTree(cacheDir);
       logger.debug(
         `Removed cache for orphaned transitive source ${pyRepr(orphan)}`,
@@ -742,7 +745,7 @@ export function remove(config: Config, name: string): void {
   }
 
   const cacheDir = sourceCacheDir(config, name);
-  if (cacheDir.exists()) {
+  if (pathExists(cacheDir)) {
     removeTree(cacheDir);
     logger.debug(`Removed cache for source ${pyRepr(name)}`);
   }
@@ -757,20 +760,20 @@ export function remove(config: Config, name: string): void {
 }
 
 /** Resolve locked sources to their existing local paths without fetching. */
-export function resolve(config: Config): Path[] {
+export function resolve(config: Config): string[] {
   const lockfile = loadLockfile(lockfilePath(config));
   if (lockfile.sources.size === 0) return [];
 
-  const resolved: Path[] = [];
+  const resolved: string[] = [];
   for (const [name, locked] of lockfile.sources) {
-    let repoDir: Path;
+    let repoDir: string;
     try {
-      repoDir = sourceCacheDir(config, name).joinpath("repo");
+      repoDir = join(sourceCacheDir(config, name), "repo");
     } catch (error) {
       logger.warning(String(error));
       continue;
     }
-    if (!repoDir.exists()) {
+    if (!pathExists(repoDir)) {
       logger.warning(
         `Source '${name}' is not cached. Run 'wiki install' first.`,
       );

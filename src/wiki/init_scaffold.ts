@@ -1,4 +1,6 @@
-import { Path, ValueError } from "./fspath.ts";
+import { dirname, join, resolve } from "@std/path";
+import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
+import { ValueError } from "./errors.ts";
 import type { ScaffoldResult } from "./schemas/reports.ts";
 import { DEFAULT_WIKI_BASE, normalizeBaseIri } from "./schemas/wiki_config.ts";
 
@@ -25,7 +27,7 @@ export interface ResolveInitOptions {
   readonly site_layout?: string | null;
   readonly graph_content_predicate?: string | null;
   readonly link_style?: string | null;
-  readonly cwd: string | Path;
+  readonly cwd: string;
   readonly init_git?: boolean;
   readonly prompt_context_wiki?: (defaultValue: string) => string;
   readonly wiki_inputs?: readonly string[] | null;
@@ -156,12 +158,12 @@ function runGit(
   };
 }
 
-export function detectOriginRepo(cwd: string | Path): string | null {
-  const root = Path.of(cwd);
-  if (!root.joinpath(".git").exists()) return null;
+export function detectOriginRepo(cwd: string): string | null {
+  const root = cwd;
+  if (!pathExists(join(root, ".git"))) return null;
   let output: ReturnType<typeof runGit>;
   try {
-    output = runGit(["remote", "get-url", "origin"], root.toString());
+    output = runGit(["remote", "get-url", "origin"], root);
   } catch {
     return null;
   }
@@ -225,11 +227,11 @@ function normalizeInitOptionStyles(options: InitOptions): InitOptions {
 }
 
 export function resolveInitOptions(options: ResolveInitOptions): InitOptions {
-  const cwd = Path.of(options.cwd);
+  const cwd = options.cwd;
   let repo = options.repo ?? null;
   if (
     repo === null &&
-    (options.init_git === true || cwd.joinpath(".git").exists())
+    (options.init_git === true || pathExists(join(cwd, ".git")))
   ) {
     repo = detectOriginRepo(cwd);
   }
@@ -494,50 +496,50 @@ export function renderWikiYaml(options: InitOptions): string {
   return `${lines.join("\n")}\n`;
 }
 
-function conflict(root: Path): string | null {
-  if (CONFIG_FILENAMES.some((name) => root.joinpath(name).exists())) {
+function conflict(root: string): string | null {
+  if (CONFIG_FILENAMES.some((name) => pathExists(join(root, name)))) {
     return "wiki.yml/wiki.yaml/wiki.json/wiki.toml already exists. Use a new directory or remove the config file.";
   }
-  if (root.joinpath("README.md").exists()) {
+  if (pathExists(join(root, "README.md"))) {
     return "README.md already exists. Use a new directory or remove README.md.";
   }
-  const wikiDir = root.joinpath("wiki");
-  if (!wikiDir.exists()) return null;
-  if (!wikiDir.isDir()) {
+  const wikiDir = join(root, "wiki");
+  if (!pathExists(wikiDir)) return null;
+  if (!isDirectory(wikiDir)) {
     return "wiki/ exists and is not a directory. Use a new directory or remove wiki/.";
   }
-  if (Deno.readDirSync(wikiDir.toString()).next().done === false) {
+  if (Deno.readDirSync(wikiDir).next().done === false) {
     return "wiki/ is not empty. Use a new directory or clear wiki/ before init.";
   }
   return null;
 }
 
-function ensureDirectory(path: Path, created: Path[]): void {
-  const missing: Path[] = [];
+function ensureDirectory(path: string, created: string[]): void {
+  const missing: string[] = [];
   let current = path;
-  while (!current.exists()) {
+  while (!pathExists(current)) {
     missing.push(current);
-    const parent = current.parent;
-    if (parent.toString() === current.toString()) {
+    const parent = dirname(current);
+    if (parent === current) {
       throw new Error(`Cannot find an existing parent for ${path}`);
     }
     current = parent;
   }
-  if (!current.isDir()) {
+  if (!isDirectory(current)) {
     throw new Error(`${current} exists and is not a directory`);
   }
   for (const directory of missing.reverse()) {
     try {
-      Deno.mkdirSync(directory.toString());
+      Deno.mkdirSync(directory);
       created.push(directory);
     } catch (error) {
-      if (!directory.isDir()) throw error;
+      if (!isDirectory(directory)) throw error;
     }
   }
 }
 
-function writeNewFile(path: Path, text: string, created: Path[]): void {
-  const file = Deno.openSync(path.toString(), { write: true, createNew: true });
+function writeNewFile(path: string, text: string, created: string[]): void {
+  const file = Deno.openSync(path, { write: true, createNew: true });
   created.push(path);
   try {
     const bytes = encoder.encode(text);
@@ -552,9 +554,9 @@ function writeNewFile(path: Path, text: string, created: Path[]): void {
   }
 }
 
-function removeIfPresent(path: Path, recursive = false): string | null {
+function removeIfPresent(path: string, recursive = false): string | null {
   try {
-    Deno.removeSync(path.toString(), { recursive });
+    Deno.removeSync(path, { recursive });
     return null;
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) return null;
@@ -562,7 +564,7 @@ function removeIfPresent(path: Path, recursive = false): string | null {
   }
 }
 
-function rollback(paths: readonly Path[]): string[] {
+function rollback(paths: readonly string[]): string[] {
   const errors: string[] = [];
   for (const path of [...paths].reverse()) {
     const error = removeIfPresent(path);
@@ -577,17 +579,17 @@ function defaultGitRunner(cwd: string): { code: number; stderr: string } {
 }
 
 export function scaffoldWiki(
-  targetDirectory: string | Path,
+  targetDirectory: string,
   initOptions: InitOptions,
   settings: ScaffoldSettings = {},
 ): ScaffoldResult {
-  const root = Path.of(targetDirectory).resolve();
-  const created: Path[] = [];
-  let gitDirectory: Path | null = null;
+  const root = resolve(targetDirectory);
+  const created: string[] = [];
+  let gitDirectory: string | null = null;
   let gitExisted = false;
   const failure = (errorMessage: string): ScaffoldResult => {
     const rollbackErrors: string[] = [];
-    if (gitDirectory !== null && !gitExisted && gitDirectory.exists()) {
+    if (gitDirectory !== null && !gitExisted && pathExists(gitDirectory)) {
       const gitRollbackError = removeIfPresent(gitDirectory, true);
       if (gitRollbackError !== null) rollbackErrors.push(gitRollbackError);
     }
@@ -604,7 +606,7 @@ export function scaffoldWiki(
   };
 
   try {
-    if (root.exists() && !root.isDir()) {
+    if (pathExists(root) && !isDirectory(root)) {
       return {
         ok: false,
         written_paths: [],
@@ -612,7 +614,7 @@ export function scaffoldWiki(
         error_message: `${root} exists and is not a directory.`,
       };
     }
-    const initialConflict = root.exists() ? conflict(root) : null;
+    const initialConflict = pathExists(root) ? conflict(root) : null;
     if (initialConflict !== null) {
       return {
         ok: false,
@@ -626,34 +628,34 @@ export function scaffoldWiki(
     const afterCreateConflict = conflict(root);
     if (afterCreateConflict !== null) return failure(afterCreateConflict);
 
-    const writtenPaths: Path[] = [];
-    const gitignorePath = root.joinpath(".gitignore");
-    if (!gitignorePath.exists()) {
+    const writtenPaths: string[] = [];
+    const gitignorePath = join(root, ".gitignore");
+    if (!pathExists(gitignorePath)) {
       writeNewFile(gitignorePath, GITIGNORE_TEMPLATE, created);
       writtenPaths.push(gitignorePath);
     }
 
-    const readmePath = root.joinpath("README.md");
+    const readmePath = join(root, "README.md");
     writeNewFile(readmePath, README_TEMPLATE, created);
     writtenPaths.push(readmePath);
 
-    const wikiDirectory = root.joinpath("wiki");
-    if (!wikiDirectory.exists()) {
-      Deno.mkdirSync(wikiDirectory.toString());
+    const wikiDirectory = join(root, "wiki");
+    if (!pathExists(wikiDirectory)) {
+      Deno.mkdirSync(wikiDirectory);
       created.push(wikiDirectory);
     }
     writtenPaths.push(wikiDirectory);
 
-    const configPath = root.joinpath("wiki.yml");
+    const configPath = join(root, "wiki.yml");
     writeNewFile(configPath, renderWikiYaml(initOptions), created);
     writtenPaths.push(configPath);
 
     if (settings.init_git === true) {
-      gitDirectory = root.joinpath(".git");
-      gitExisted = gitDirectory.exists();
+      gitDirectory = join(root, ".git");
+      gitExisted = pathExists(gitDirectory);
       let result: { code: number; stderr: string };
       try {
-        result = (settings.git_runner ?? defaultGitRunner)(root.toString());
+        result = (settings.git_runner ?? defaultGitRunner)(root);
       } catch (error) {
         if (error instanceof Deno.errors.NotFound) {
           return failure(
@@ -696,11 +698,11 @@ export interface TemplateCloneResult {
 }
 
 export interface TemplateDependencies {
-  readonly cloneRepository?: (destination: Path) => TemplateCloneResult;
+  readonly cloneRepository?: (destination: string) => TemplateCloneResult;
 }
 
 interface TemplateEntry {
-  readonly source: Path;
+  readonly source: string;
   readonly path: readonly string[];
   readonly directory: boolean;
 }
@@ -708,7 +710,7 @@ interface TemplateEntry {
 const WIKI_TEMPLATES_REPO = "https://github.com/wazootech/wiki-templates.git";
 const TEMPLATE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
-function cloneTemplateRepository(destination: Path): TemplateCloneResult {
+function cloneTemplateRepository(destination: string): TemplateCloneResult {
   try {
     const result = new Deno.Command("git", {
       args: [
@@ -718,7 +720,7 @@ function cloneTemplateRepository(destination: Path): TemplateCloneResult {
         "--branch",
         "main",
         WIKI_TEMPLATES_REPO,
-        destination.toString(),
+        destination,
       ],
       stdout: "null",
       stderr: "piped",
@@ -733,16 +735,16 @@ function cloneTemplateRepository(destination: Path): TemplateCloneResult {
 }
 
 function templateEntries(
-  directory: Path,
+  directory: string,
   parent: readonly string[] = [],
   topLevel = true,
   result: TemplateEntry[] = [],
 ): TemplateEntry[] {
-  for (const entry of Deno.readDirSync(directory.toString())) {
+  for (const entry of Deno.readDirSync(directory)) {
     if (topLevel && entry.name.startsWith(".") && entry.name !== ".gitignore") {
       continue;
     }
-    const source = directory.joinpath(entry.name);
+    const source = join(directory, entry.name);
     if (entry.isSymlink) {
       throw new Error(
         `Template entry '${
@@ -762,12 +764,12 @@ function templateEntries(
 }
 
 function copyTemplateFile(
-  source: Path,
-  destination: Path,
-  created: Path[],
+  source: string,
+  destination: string,
+  created: string[],
 ): void {
-  const bytes = Deno.readFileSync(source.toString());
-  const file = Deno.openSync(destination.toString(), {
+  const bytes = Deno.readFileSync(source);
+  const file = Deno.openSync(destination, {
     write: true,
     createNew: true,
   });
@@ -784,27 +786,27 @@ function copyTemplateFile(
   } finally {
     file.close();
   }
-  const mode = Deno.statSync(source.toString()).mode;
-  if (mode !== null) Deno.chmodSync(destination.toString(), mode & 0o777);
+  const mode = Deno.statSync(source).mode;
+  if (mode !== null) Deno.chmodSync(destination, mode & 0o777);
 }
 
-function removeTemplateDirectory(path: Path): void {
+function removeTemplateDirectory(path: string): void {
   try {
-    Deno.removeSync(path.toString(), { recursive: true });
+    Deno.removeSync(path, { recursive: true });
   } catch (firstError) {
-    const makeWritable = (entry: Path): void => {
-      if (entry.isSymlink()) return;
-      if (entry.isDir()) {
-        for (const child of Deno.readDirSync(entry.toString())) {
-          makeWritable(entry.joinpath(child.name));
+    const makeWritable = (entry: string): void => {
+      if (isSymlink(entry)) return;
+      if (isDirectory(entry)) {
+        for (const child of Deno.readDirSync(entry)) {
+          makeWritable(join(entry, child.name));
         }
       }
-      const mode = Deno.statSync(entry.toString()).mode;
-      if (mode !== null) Deno.chmodSync(entry.toString(), mode | 0o200);
+      const mode = Deno.statSync(entry).mode;
+      if (mode !== null) Deno.chmodSync(entry, mode | 0o200);
     };
     try {
       makeWritable(path);
-      Deno.removeSync(path.toString(), { recursive: true });
+      Deno.removeSync(path, { recursive: true });
     } catch {
       throw firstError;
     }
@@ -813,7 +815,7 @@ function removeTemplateDirectory(path: Path): void {
 
 function templateFailure(
   errorMessage: string,
-  created: readonly Path[] = [],
+  created: readonly string[] = [],
 ): ScaffoldResult {
   const rollbackErrors = rollback(created);
   if (rollbackErrors.length > 0) {
@@ -828,7 +830,7 @@ function templateFailure(
 }
 
 export function fetchTemplate(
-  targetDirectory: string | Path,
+  targetDirectory: string,
   templateName: string,
   dependencies: TemplateDependencies = {},
 ): ScaffoldResult {
@@ -836,16 +838,16 @@ export function fetchTemplate(
     return templateFailure(`Invalid template name '${templateName}'.`);
   }
 
-  const root = Path.of(targetDirectory).resolve();
-  if (root.exists() && !root.isDir()) {
+  const root = resolve(targetDirectory);
+  if (pathExists(root) && !isDirectory(root)) {
     return templateFailure(`${root} exists and is not a directory.`);
   }
   const existingConflict = conflict(root);
   if (existingConflict !== null) return templateFailure(existingConflict);
 
-  const tempRoot = Path.of(Deno.makeTempDirSync({ prefix: "wiki-template-" }));
-  const cloneDir = tempRoot.joinpath("wiki-templates");
-  const created: Path[] = [];
+  const tempRoot = Deno.makeTempDirSync({ prefix: "wiki-template-" });
+  const cloneDir = join(tempRoot, "wiki-templates");
+  const created: string[] = [];
   try {
     const clone = (dependencies.cloneRepository ?? cloneTemplateRepository)(
       cloneDir,
@@ -858,9 +860,9 @@ export function fetchTemplate(
           : `Failed to clone ${WIKI_TEMPLATES_REPO}.`,
       );
     }
-    const templateDir = cloneDir.joinpath(templateName);
-    if (!templateDir.isDir() || templateDir.isSymlink()) {
-      const available = [...Deno.readDirSync(cloneDir.toString())]
+    const templateDir = join(cloneDir, templateName);
+    if (!isDirectory(templateDir) || isSymlink(templateDir)) {
+      const available = [...Deno.readDirSync(cloneDir)]
         .filter((entry) => entry.isDirectory && !entry.name.startsWith("."))
         .map((entry) => entry.name)
         .sort();
@@ -876,8 +878,8 @@ export function fetchTemplate(
       return templateFailure(`Template '${templateName}' is empty.`);
     }
     for (const entry of entries) {
-      const destination = root.joinpath(...entry.path);
-      if (destination.exists()) {
+      const destination = join(root, ...entry.path);
+      if (pathExists(destination)) {
         return templateFailure(
           `Template path '${destination}' already exists. Use a new directory or remove the conflicting path.`,
         );
@@ -885,11 +887,11 @@ export function fetchTemplate(
     }
 
     ensureDirectory(root, created);
-    const written: Path[] = [];
+    const written: string[] = [];
     for (const entry of entries) {
-      const destination = root.joinpath(...entry.path);
+      const destination = join(root, ...entry.path);
       if (entry.directory) {
-        Deno.mkdirSync(destination.toString());
+        Deno.mkdirSync(destination);
         created.push(destination);
       } else {
         copyTemplateFile(entry.source, destination, created);

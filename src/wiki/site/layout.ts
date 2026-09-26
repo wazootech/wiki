@@ -1,4 +1,4 @@
-import type { Path } from "../fspath.ts";
+import { isFile } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import type { VirtualPage } from "./types.ts";
 
@@ -10,8 +10,8 @@ function escapeHtml(value: string): string {
     );
 }
 
-function templateText(path: Path | null): string {
-  if (path !== null && path.isFile()) return readTextTolerant(path);
+function templateText(path: string | null): string {
+  if (path !== null && isFile(path)) return readTextTolerant(path);
   return Deno.readTextFileSync(new URL("../index.html", import.meta.url));
 }
 
@@ -19,7 +19,7 @@ export function renderLayout(
   title: string,
   baseUrl: string,
   content: string,
-  templatePath: Path | null,
+  templatePath: string | null,
 ): string {
   const tokens = new Map([
     ["%wiki.base_url%", escapeHtml(baseUrl)],
@@ -40,7 +40,7 @@ export function renderLayout(
 export function renderPageLayout(
   page: VirtualPage,
   baseUrl: string,
-  defaultLayout: Path | null,
+  defaultLayout: string | null,
 ): string {
   return renderLayout(
     page.title,

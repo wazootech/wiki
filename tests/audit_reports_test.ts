@@ -9,28 +9,29 @@
  * kept as the file's centrepiece and the other two are asserted alongside it.
  */
 
+import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import { runLint } from "../src/wiki/audit.ts";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { AuditReport, type Issue } from "../src/wiki/schemas/reports.ts";
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-audit-reports-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-audit-reports-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 

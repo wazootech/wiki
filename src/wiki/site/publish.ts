@@ -1,6 +1,8 @@
-import type { Wiki } from "../wiki.ts";
 import { BuildError } from "../errors.ts";
-import type { Path } from "../fspath.ts";
+import { dirname, join, resolve } from "@std/path";
+import { isFile, pathExists, relativeWithin } from "../fspath.ts";
+import type { Wiki } from "../wiki.ts";
+
 import { buildAssetManifest, iterAssetFiles } from "../assets.ts";
 import {
   buildPageManifest,
@@ -15,51 +17,55 @@ import {
 import { buildIndexHtml, buildPageHtml } from "./html.ts";
 import { buildSite } from "./build.ts";
 
-function pathIsSameOrAncestor(ancestor: Path, descendant: Path): boolean {
-  const root = ancestor.resolve();
-  const candidate = descendant.resolve();
-  if (root.toString() === candidate.toString()) return true;
+function pathIsSameOrAncestor(ancestor: string, descendant: string): boolean {
+  const root = resolve(ancestor);
+  const candidate = resolve(descendant);
+  if (root === candidate) return true;
   try {
-    candidate.relativeTo(root);
+    relativeWithin(candidate, root);
     return true;
   } catch {
     return false;
   }
 }
 
-function validateOutputDir(pageOutputDir: Path, wiki: Wiki): void {
-  const protectedPaths: [string, Path][] = [
+function validateOutputDir(pageOutputDir: string, wiki: Wiki): void {
+  const protectedPaths: [string, string][] = [
     ["config root", wiki.config.config_root],
     ...wiki.config.wiki.input.map((path) =>
-      ["wiki input", path] as [string, Path]
+      ["wiki input", path] as [string, string]
     ),
     ...wiki.config.wiki.assets.map((path) =>
-      ["wiki asset", path] as [string, Path]
+      ["wiki asset", path] as [string, string]
     ),
   ];
   const layout = wiki.config.site.layout;
-  if (layout !== null && layout.isFile()) {
-    protectedPaths.push(["page layout", layout.parent]);
+  if (layout !== null && isFile(layout)) {
+    protectedPaths.push(["page layout", dirname(layout)]);
   }
   for (const [label, path] of protectedPaths) {
     if (!pathIsSameOrAncestor(pageOutputDir, path)) continue;
     throw new BuildError(
-      `refusing to clean build output path ${pageOutputDir.resolve()} because it overlaps ${label} at ${path.resolve()}. Choose a separate output directory such as _site.`,
+      `refusing to clean build output path ${
+        resolve(pageOutputDir)
+      } because it overlaps ${label} at ${
+        resolve(path)
+      }. Choose a separate output directory such as _site.`,
     );
   }
 }
 
-function outputSubdirectory(outputDir: Path, baseUrl: string): Path {
+function outputSubdirectory(outputDir: string, baseUrl: string): string {
   const relative = baseUrl.replace(/^\/+|\/+$/g, "");
   const parts = relative.split("/").filter((part) => part !== "");
   if (parts.some((part) => part === "." || part === "..")) {
     throw new BuildError(`invalid site.base_url path: ${baseUrl}`);
   }
-  return parts.length === 0 ? outputDir : outputDir.joinpath(...parts);
+  return parts.length === 0 ? outputDir : join(outputDir, ...parts);
 }
 
-function relativeOutputPath(path: Path, outputDir: Path): Path {
-  return path.resolve().relativeTo(outputDir.resolve());
+function relativeOutputPath(path: string, outputDir: string): string {
+  return relativeWithin(resolve(path), resolve(outputDir));
 }
 
 export async function buildStaticSite(
@@ -75,8 +81,8 @@ export async function buildStaticSite(
     await wiki.render(null, renderOptions);
   }
 
-  if (!config.wiki.input.some((path) => path.exists())) {
-    const directories = config.wiki.input.map(String).join(", ");
+  if (!config.wiki.input.some((path) => pathExists(path))) {
+    const directories = config.wiki.input.join(", ");
     return {
       ok: false,
       page_count: 0,
@@ -102,8 +108,8 @@ export async function buildStaticSite(
   const baseUrl = options.base_url ?? config.site.base_url;
   const urlStyle = options.url_style ?? config.site.url_style;
   const site = buildSite(config, baseUrl, urlStyle);
-  const outputDir = options.output_dir.resolve();
-  const pageOutputDir = outputSubdirectory(outputDir, baseUrl).resolve();
+  const outputDir = resolve(options.output_dir);
+  const pageOutputDir = resolve(outputSubdirectory(outputDir, baseUrl));
   const manifest = [
     ...buildPageManifest(config, pageOutputDir, baseUrl, urlStyle),
     ...buildAssetManifest(config, pageOutputDir, baseUrl),
@@ -127,19 +133,20 @@ export async function buildStaticSite(
   }
 
   validateOutputDir(pageOutputDir, wiki);
-  if (pageOutputDir.exists()) {
-    Deno.removeSync(pageOutputDir.toString(), { recursive: true });
+  if (pathExists(pageOutputDir)) {
+    Deno.removeSync(pageOutputDir, { recursive: true });
   }
-  Deno.mkdirSync(pageOutputDir.toString(), { recursive: true });
+  Deno.mkdirSync(pageOutputDir, { recursive: true });
 
-  const defaultLayout = config.site.layout?.isFile()
-    ? config.site.layout
-    : null;
-  const writtenPaths: Path[] = [];
+  const defaultLayout =
+    config.site.layout !== null && isFile(config.site.layout)
+      ? config.site.layout
+      : null;
+  const writtenPaths: string[] = [];
   if (!site.pages.some((page) => page.file_slug === "")) {
-    const indexPath = pageOutputDir.joinpath("index.html");
+    const indexPath = join(pageOutputDir, "index.html");
     Deno.writeTextFileSync(
-      indexPath.toString(),
+      indexPath,
       buildIndexHtml(site, baseUrl, urlStyle, defaultLayout),
     );
     writtenPaths.push(relativeOutputPath(indexPath, outputDir));
@@ -147,9 +154,9 @@ export async function buildStaticSite(
 
   for (const page of site.pages) {
     const outputPath = pageOutputPath(pageOutputDir, page.file_slug, urlStyle);
-    Deno.mkdirSync(outputPath.parent.toString(), { recursive: true });
+    Deno.mkdirSync(dirname(outputPath), { recursive: true });
     Deno.writeTextFileSync(
-      outputPath.toString(),
+      outputPath,
       buildPageHtml(page, baseUrl, defaultLayout),
     );
     writtenPaths.push(relativeOutputPath(outputPath, outputDir));
@@ -157,9 +164,9 @@ export async function buildStaticSite(
 
   const assetEntries = buildAssetManifest(config, pageOutputDir, baseUrl);
   for (const entry of assetEntries) {
-    Deno.mkdirSync(entry.output_path.parent.toString(), { recursive: true });
+    Deno.mkdirSync(dirname(entry.output_path), { recursive: true });
     if (entry.source !== null) {
-      Deno.copyFileSync(entry.source.toString(), entry.output_path.toString());
+      Deno.copyFileSync(entry.source, entry.output_path);
     }
     writtenPaths.push(relativeOutputPath(entry.output_path, outputDir));
   }

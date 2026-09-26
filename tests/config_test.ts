@@ -8,6 +8,8 @@
  * filesystem cases only reach indirectly.
  */
 
+import { join, resolve } from "@std/path";
+import { ValueError } from "../src/wiki/errors.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   Config,
@@ -23,37 +25,36 @@ import {
   type ValidationIssue,
   valueError,
 } from "../src/wiki/schemas/validation.ts";
-import { Path, ValueError } from "../src/wiki/fspath.ts";
 
 const MINIMAL_WIKI_YAML = "wiki:\n  input: [wiki]\n";
 
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
-function withTempDir(body: (root: Path) => void): void {
+function withTempDir(body: (root: string) => void): void {
   const dir = Deno.makeTempDirSync({ prefix: "wiki-config-" });
   try {
-    body(new Path(dir));
+    body(dir);
   } finally {
     Deno.removeSync(dir, { recursive: true });
   }
 }
 
 /** Write `content` to `root/name` and hand back the file path. */
-function writeFile(root: Path, name: string, content: string): Path {
-  const file = root.joinpath(name);
-  file.writeText(content);
+function writeFile(root: string, name: string, content: string): string {
+  const file = join(root, name);
+  Deno.writeTextFileSync(file, content);
   return file;
 }
 
 /** Render a path list for comparison, so assertions read like the Python ones. */
-function strings(paths: readonly Path[]): string[] {
-  return paths.map((path) => path.toString());
+function strings(paths: readonly string[]): string[] {
+  return paths.map((path) => path);
 }
 
 Deno.test("Config has the documented defaults", () => {
   const config = new Config();
   assertEquals(
     strings(config.wiki.input),
-    [config.config_root.absolute().joinpath("wiki").toString()],
+    [join(resolve(config.config_root), "wiki")],
   );
   assertEquals(config.wiki.assets.length, 0);
   assertEquals(config.graph.include_file_extension, false);
@@ -74,7 +75,7 @@ Deno.test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () =>
     writeFile(base, "wiki.yml", `\uFEFF${MINIMAL_WIKI_YAML}`);
     assertEquals(
       strings(Config.load(base).wiki.input),
-      [base.absolute().joinpath("wiki").toString()],
+      [join(resolve(base), "wiki")],
     );
   });
   withTempDir((base) => {
@@ -86,7 +87,7 @@ Deno.test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () =>
     );
     assertEquals(
       strings(Config.load(base).wiki.input),
-      [base.absolute().joinpath("wiki").toString()],
+      [join(resolve(base), "wiki")],
     );
   });
 });
@@ -96,7 +97,7 @@ Deno.test("Config.load falls back to defaults when no config file exists", () =>
     const config = Config.load(base);
     assertEquals(
       strings(config.wiki.input),
-      [config.config_root.absolute().joinpath("wiki").toString()],
+      [join(resolve(config.config_root), "wiki")],
     );
   });
 });
@@ -134,11 +135,11 @@ Deno.test("Config.load parses a full wiki.yaml", () => {
 
     const config = Config.load(base);
     assertEquals(strings(config.wiki.input), [
-      base.absolute().joinpath("custom_wiki").toString(),
+      join(resolve(base), "custom_wiki"),
     ]);
     assertEquals(strings(config.wiki.assets), [
-      base.absolute().joinpath("assets").toString(),
-      base.absolute().joinpath("media/photos").toString(),
+      join(resolve(base), "assets"),
+      join(resolve(base), "media/photos"),
     ]);
     assertEquals([...config.wiki.exclude], [
       "wiki/drafts/**",
@@ -160,13 +161,13 @@ Deno.test("Config.load parses a full wiki.yaml", () => {
 
 Deno.test("Config.load resolves a custom page layout against the config file", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(base.joinpath("layouts").toString());
-    writeFile(base.joinpath("layouts"), "custom.html", "<html></html>");
+    Deno.mkdirSync(join(base, "layouts"));
+    writeFile(join(base, "layouts"), "custom.html", "<html></html>");
     writeFile(base, "wiki.yaml", "site:\n  layout: layouts/custom.html\n");
     const config = Config.load(base);
     assertEquals(
-      config.page_layout?.toString(),
-      base.joinpath("layouts").joinpath("custom.html").resolve().toString(),
+      config.page_layout,
+      resolve(join(join(base, "layouts"), "custom.html")),
     );
   });
 });
@@ -208,7 +209,7 @@ Deno.test("removed flat top-level keys are reported together", () => {
 
 Deno.test("camelCase top-level keys are unknown keys, not silent no-ops", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(base.joinpath("assets").toString());
+    Deno.mkdirSync(join(base, "assets"));
     writeFile(
       base,
       "wiki.yaml",
@@ -260,31 +261,31 @@ Deno.test("unknown keys inside a block name the block", () => {
 
 Deno.test("the assets default only kicks in when the directory exists", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(base.joinpath("assets").toString());
+    Deno.mkdirSync(join(base, "assets"));
     writeFile(base, "wiki.yaml", MINIMAL_WIKI_YAML);
     const config = Config.load(base);
     assertEquals(strings(config.wiki.assets), [
-      base.absolute().joinpath("assets").toString(),
+      join(resolve(base), "assets"),
     ]);
   });
 });
 
 Deno.test("exclude patterns match config-root-relative paths", () => {
   withTempDir((base) => {
-    const root = base.absolute();
+    const root = resolve(base);
     const config = Config.forRoot(root, {
       wiki: { exclude: ["wiki/drafts/**", "**/.env*"] },
     });
     assertEquals(
-      config.isExcluded(root.joinpath("wiki", "drafts", "note.md")),
+      config.isExcluded(join(root, "wiki", "drafts", "note.md")),
       true,
     );
     assertEquals(
-      config.isExcluded(root.joinpath("assets", ".env.local")),
+      config.isExcluded(join(root, "assets", ".env.local")),
       true,
     );
     assertEquals(
-      config.isExcluded(root.joinpath("wiki", "published.md")),
+      config.isExcluded(join(root, "wiki", "published.md")),
       false,
     );
   });
@@ -375,7 +376,7 @@ Deno.test("wiki.json loads, and @context is accepted as an alias", () => {
     );
     const config = Config.load(base);
     assertEquals(strings(config.wiki.input), [
-      base.absolute().joinpath("json_wiki").toString(),
+      join(resolve(base), "json_wiki"),
     ]);
     assertEquals(config.namespaces.has("json_pref"), true);
   });
@@ -535,8 +536,8 @@ Deno.test("fmt accepts a relative path pointer and refuses an absolute one", () 
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt: custom.toml\n");
     const config = Config.load(base);
     assertEquals(
-      config.fmt?.toml?.toString(),
-      base.absolute().joinpath("custom.toml").toString(),
+      config.fmt?.toml,
+      join(resolve(base), "custom.toml"),
     );
     assertEquals(config.fmt?.options, null);
   });
@@ -563,7 +564,9 @@ Deno.test("fmt accepts a relative path pointer and refuses an absolute one", () 
         "  Value error, Invalid config file wiki.yaml: fmt path must be relative " +
         "to the config file [type=value_error, input_value={" +
         `'wiki': {'input': 'wiki'}, 'fmt': '${absolute}', ` +
-        `'config_root': ${pathFlavour}('${base.absolute().asPosix()}')}, input_type=dict]\n` +
+        `'config_root': ${pathFlavour}('${
+          (resolve(base)).replaceAll("\\", "/")
+        }')}, input_type=dict]\n` +
         "    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
     );
   });

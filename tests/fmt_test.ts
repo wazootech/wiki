@@ -38,6 +38,8 @@
  * file answers "does `wiki fmt` do what `test_fmt.py` says it does?".
  */
 
+import { dirname, join } from "@std/path";
+import { ValueError } from "../src/wiki/errors.ts";
 import {
   assert,
   assertEquals,
@@ -51,20 +53,20 @@ import {
   formatMarkdown,
   resolveFmtTomlOpts,
 } from "../src/wiki/fmt_util.ts";
-import { Path, ValueError } from "../src/wiki/fspath.ts";
+
 import { BOM, parseFrontmatter, readTextTolerant } from "../src/wiki/parser.ts";
 
 const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
 const DECODER = new TextDecoder();
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-fmt-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-fmt-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -72,15 +74,15 @@ function cleanup(root: Path): void {
 
 /** Write a file below `root`, creating parent directories. */
 function write(
-  root: Path,
+  root: string,
   relative: string,
   content: string,
   options: { readonly bom?: boolean } = {},
-): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
+): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
   Deno.writeTextFileSync(
-    target.toString(),
+    target,
     options.bom ? BOM + content : content,
   );
   return target;
@@ -94,7 +96,7 @@ function write(
  * the working directory is — the CLI tests otherwise depend on where the test
  * runner happened to start, and here the wiki root *is* the corpus.
  */
-function wikiRoot(): Path {
+function wikiRoot(): string {
   const root = tempRoot();
   write(root, "wiki.yml", "wiki:\n  input: [.]\n");
   return root;
@@ -316,7 +318,7 @@ Deno.test("a fmt pointer to a missing file falls back to .mdformat.toml", () => 
     const filePath = write(root, "page.md", "# Title\n");
     const config = new Config({
       config_root: root,
-      fmt: root.joinpath("missing.toml"),
+      fmt: "missing.toml",
     });
     assertEquals(
       describeFmtSource(filePath, config),
@@ -334,7 +336,7 @@ Deno.test("describeFmtSource names the file a fmt pointer points at", () => {
     const filePath = write(root, "page.md", "# Title\n");
     const config = new Config({
       config_root: root,
-      fmt: root.joinpath("custom.toml"),
+      fmt: "custom.toml",
     });
     assertEquals(describeFmtSource(filePath, config), "fmt from custom.toml");
   } finally {
@@ -349,7 +351,7 @@ Deno.test("an invalid TOML file at the fmt pointer is a ValueError", () => {
     const filePath = write(root, "page.md", "# Title\n");
     const config = new Config({
       config_root: root,
-      fmt: root.joinpath("bad.toml"),
+      fmt: "bad.toml",
     });
     assertThrows(
       () => formatMarkdown("# Title\n", filePath, config),
@@ -384,7 +386,7 @@ Deno.test("an invalid .mdformat.toml at the config root is a ValueError", () => 
 Deno.test("the fmt source walks up from the page to find .mdformat.toml", () => {
   const root = tempRoot();
   try {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     write(root, "wiki/.mdformat.toml", TOML_DEFAULTS);
     const filePath = write(root, "wiki/sub/page.md", "# Title\n");
     const config = new Config({
@@ -468,7 +470,7 @@ Deno.test("inline, pointer, and omitted fmt produce the same bytes", async () =>
     const pointerOut = await formatMarkdown(
       original,
       filePath,
-      Config.load(root.joinpath("pointer")),
+      Config.load(join(root, "pointer")),
     );
 
     write(root, "omit/.mdformat.toml", TOML_DEFAULTS);
@@ -476,7 +478,7 @@ Deno.test("inline, pointer, and omitted fmt produce the same bytes", async () =>
     const omitOut = await formatMarkdown(
       original,
       filePath,
-      Config.load(root.joinpath("omit")),
+      Config.load(join(root, "omit")),
     );
 
     assertEquals(inlineOut, pointerOut);
@@ -556,13 +558,13 @@ Deno.test(
       );
       const result = await runCli(
         ["-c", "wiki.yml", "fmt", "-v"],
-        root.toString(),
+        root,
       );
       assertEquals(result.code, 0, result.stderr);
       assertStringIncludes(result.stdout, "Formatted unformatted.md");
       assertStringIncludes(result.stdout, "Using ");
       assert(
-        !Deno.readTextFileSync(filePath.toString()).includes("Some text  \n"),
+        !Deno.readTextFileSync(filePath).includes("Some text  \n"),
       );
     } finally {
       cleanup(root);
@@ -584,13 +586,13 @@ Deno.test(
       );
       const result = await runCli(
         ["-c", "wiki.yml", "fmt", "-v"],
-        root.toString(),
+        root,
       );
       assertEquals(result.code, 0, result.stderr);
 
-      // Read the raw bytes: `Path.readText` strips the BOM, so reading through
-      // it would make this assertion true even if the file kept one.
-      const content = Deno.readTextFileSync(filePath.toString());
+      // Read raw text: the BOM-tolerant parser strips a leading BOM, so
+      // using it here would mask a retained BOM.
+      const content = Deno.readTextFileSync(filePath);
       assert(!content.startsWith(BOM), JSON.stringify(content));
       assert(!content.includes("## "), content);
       assert(!content.includes("Some text  \n"), content);
@@ -615,11 +617,11 @@ Deno.test(
       for (const args of [["fmt"], ["fmt", "--check"]]) {
         const result = await runCli(
           ["-c", "wiki.yml", ...args],
-          root.toString(),
+          root,
         );
         assertEquals(result.code, 1, result.stderr);
         assertStringIncludes(result.stderr, "Refusing to format Broken.md");
-        assertEquals(Deno.readTextFileSync(filePath.toString()), original);
+        assertEquals(Deno.readTextFileSync(filePath), original);
       }
     } finally {
       cleanup(root);
@@ -639,7 +641,7 @@ Deno.test(
 
       const stale = await runCli(
         ["-c", "wiki.yml", "fmt", "--check", "-v"],
-        root.toString(),
+        root,
       );
       assertEquals(stale.code, 1);
       assertStringIncludes(
@@ -648,17 +650,17 @@ Deno.test(
       );
       assertStringIncludes(stale.stderr, "unformatted.md");
       // --check reports; it must not write.
-      assertEquals(Deno.readTextFileSync(filePath.toString()), original);
+      assertEquals(Deno.readTextFileSync(filePath), original);
 
       const written = await runCli(
         ["-c", "wiki.yml", "fmt"],
-        root.toString(),
+        root,
       );
       assertEquals(written.code, 0, written.stderr);
 
       const clean = await runCli(
         ["-c", "wiki.yml", "fmt", "--check", "-v"],
-        root.toString(),
+        root,
       );
       assertEquals(clean.code, 0, clean.stderr);
       assertStringIncludes(clean.stdout, "All files are correctly formatted.");

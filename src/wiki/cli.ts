@@ -24,8 +24,11 @@
  * through text-mode stdout, while `console.error` writes `\n`. The migration
  * targets normalised output, not byte parity — see the ADR.
  */
+import { pathExists } from "./fspath.ts";
+import { basename } from "@std/path";
+import { ValueError } from "./errors.ts";
 import { exitAuditReport } from "./cli_output.ts";
-import { Path, ValueError } from "./fspath.ts";
+
 import { VERSION } from "./version.ts";
 // Type-only, so the audit stack is not evaluated on import: `wiki.ts` reaches
 // `@zazuko/env`, which reads `process.env` while it loads and therefore needs
@@ -143,7 +146,7 @@ function usageError(detail: string): number {
 async function runAuditCommand(
   wiki: Wiki,
   command: "check" | "lint",
-  files: readonly Path[],
+  files: readonly string[],
   options: { readonly verbose: boolean; readonly strict: boolean },
 ): Promise<number> {
   const report = command === "check"
@@ -179,13 +182,13 @@ function parseFileCommandArgs(
   command: string,
   args: readonly string[],
 ): {
-  readonly files: Path[];
+  readonly files: string[];
   readonly verbose: boolean;
   readonly strict: boolean;
   readonly check: boolean;
 } | number {
   const flags = FILE_COMMAND_FLAGS[command] ?? [];
-  const files: Path[] = [];
+  const files: string[] = [];
   let verbose = false;
   let strict = false;
   let check = false;
@@ -213,8 +216,8 @@ function parseFileCommandArgs(
     if (token.startsWith("-") && token !== "-") {
       return usageError(`Error: No such option: ${token}`);
     }
-    const path = new Path(token);
-    if (!path.exists()) {
+    const path = token;
+    if (!pathExists(path)) {
       return usageError(
         `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
       );
@@ -238,7 +241,7 @@ function parseFileCommandArgs(
 async function runFmtCommand(
   wiki: Wiki,
   parsed: {
-    readonly files: readonly Path[];
+    readonly files: readonly string[];
     readonly verbose: boolean;
     readonly check: boolean;
   },
@@ -273,7 +276,7 @@ async function runFmtCommand(
           "Error: The following files are not correctly formatted:",
         );
         for (const stale of report.stale_files) {
-          console.error(`  - ${stale.name}`);
+          console.error(`  - ${basename(stale)}`);
         }
         return EXIT_FAILURE;
       }
@@ -407,7 +410,7 @@ async function parseQueryCommandArgs(
 }
 
 interface ParsedLinkCommand {
-  readonly files: readonly Path[];
+  readonly files: readonly string[];
   readonly apply: boolean;
   readonly fixBroken: boolean;
   readonly dryRun: boolean;
@@ -418,7 +421,7 @@ interface ParsedLinkCommand {
 function parseLinkCommandArgs(
   args: readonly string[],
 ): ParsedLinkCommand | number {
-  const files: Path[] = [];
+  const files: string[] = [];
   let apply = false;
   let fixBroken = false;
   let dryRun = false;
@@ -429,8 +432,8 @@ function parseLinkCommandArgs(
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index]!;
     if (optionsEnded) {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -466,8 +469,8 @@ Options:
     } else if (token.startsWith("-") && token !== "-") {
       return usageError(`Error: No such option: ${token}`);
     } else {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -520,8 +523,8 @@ async function runLinkCommand(
 }
 
 interface ParsedExportCommand {
-  readonly files: readonly Path[];
-  readonly output: Path | null;
+  readonly files: readonly string[];
+  readonly output: string | null;
   readonly format: import("./export.ts").ExportFormat;
   readonly mode: "expanded" | "compacted";
 }
@@ -529,8 +532,8 @@ interface ParsedExportCommand {
 async function parseExportCommandArgs(
   args: readonly string[],
 ): Promise<ParsedExportCommand | number> {
-  const files: Path[] = [];
-  let output: Path | null = null;
+  const files: string[] = [];
+  let output: string | null = null;
   let format = "dict";
   let mode: "expanded" | "compacted" = "expanded";
   let optionsEnded = false;
@@ -538,8 +541,8 @@ async function parseExportCommandArgs(
   for (let index = 0; index < args.length; index++) {
     const token = args[index]!;
     if (optionsEnded) {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -592,15 +595,15 @@ async function parseExportCommandArgs(
       if (value === undefined || (value.startsWith("-") && value !== "-")) {
         return usageError(`Error: Option '${token}' requires an argument.`);
       }
-      output = new Path(value);
+      output = value;
       index += 1;
     } else if (token.startsWith("--output=")) {
-      output = new Path(token.slice("--output=".length));
+      output = token.slice("--output=".length);
     } else if (token.startsWith("-") && token !== "-") {
       return usageError(`Error: No such option: ${token}`);
     } else {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -644,7 +647,7 @@ async function runExportCommand(
 
   if (parsed.output !== null) {
     try {
-      await Deno.writeTextFile(parsed.output.toString(), result.output);
+      await Deno.writeTextFile(parsed.output, result.output);
     } catch (error) {
       console.error(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
@@ -666,7 +669,7 @@ async function runExportCommand(
 }
 
 interface ParsedRenderCommand {
-  readonly files: readonly Path[];
+  readonly files: readonly string[];
   readonly noInference: boolean;
   readonly reload: boolean;
   readonly cache: boolean;
@@ -677,7 +680,7 @@ interface ParsedRenderCommand {
 function parseRenderCommandArgs(
   args: readonly string[],
 ): ParsedRenderCommand | number {
-  const files: Path[] = [];
+  const files: string[] = [];
   let noInference = false;
   let reload = false;
   let cache = false;
@@ -687,8 +690,8 @@ function parseRenderCommandArgs(
 
   for (const token of args) {
     if (optionsEnded) {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -721,8 +724,8 @@ function parseRenderCommandArgs(
     } else if (token.startsWith("-") && token !== "-") {
       return usageError(`Error: No such option: ${token}`);
     } else {
-      const path = new Path(token);
-      if (!path.exists()) {
+      const path = token;
+      if (!pathExists(path)) {
         return usageError(
           `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
         );
@@ -1377,7 +1380,7 @@ async function runBuildCommand(
 ): Promise<number> {
   let result: Awaited<ReturnType<Wiki["build"]>>;
   try {
-    result = await wiki.build(new Path(parsed.outputDir), {
+    result = await wiki.build(parsed.outputDir, {
       baseUrl: parsed.baseUrl,
       urlStyle: parsed.urlStyle,
       render: parsed.render,

@@ -28,8 +28,17 @@
  * that claims to do something.
  */
 
+import {
+  isDirectory,
+  isFile,
+  isSymlink,
+  pathExists,
+  relativeWithin,
+  sortedTreePaths,
+} from "./fspath.ts";
+import { join, resolve } from "@std/path";
 import type { Config } from "./config.ts";
-import { type Path, sortedRglob } from "./fspath.ts";
+
 import {
   isExternalLink,
   normalizePosixPath,
@@ -40,14 +49,14 @@ import {
 import type { OutputEntry } from "./schemas/domain.ts";
 import { quote } from "./urlquote.ts";
 
-/** Every asset file a build would copy, in `pathlib` order. */
-export function iterAssetFiles(config: Config): Path[] {
-  const assets: Path[] = [];
+/** Every asset file a build would copy, in measured path-component order. */
+export function iterAssetFiles(config: Config): string[] {
+  const assets: string[] = [];
   for (const assetDir of config.wiki.assets) {
-    if (!assetDir.exists() || assetDir.isSymlink()) continue;
-    for (const path of sortedRglob(assetDir)) {
+    if (!pathExists(assetDir) || isSymlink(assetDir)) continue;
+    for (const path of sortedTreePaths(assetDir)) {
       if (config.isExcluded(path)) continue;
-      if (path.isDir() || path.isSymlink()) continue;
+      if (isDirectory(path) || isSymlink(path)) continue;
       assets.push(path);
     }
   }
@@ -64,20 +73,20 @@ export function auditAssets(config: Config): string[] {
   const warnings: string[] = [];
   for (const assetDir of config.wiki.assets) {
     if (config.isExcluded(assetDir)) continue;
-    const usable = assetDir.exists() && assetDir.isDir() &&
-      !assetDir.isSymlink();
-    if (!assetDir.exists()) {
+    const usable = pathExists(assetDir) && isDirectory(assetDir) &&
+      !isSymlink(assetDir);
+    if (!pathExists(assetDir)) {
       warnings.push(`Asset directory does not exist: ${assetDir}`);
-    } else if (assetDir.isSymlink()) {
+    } else if (isSymlink(assetDir)) {
       warnings.push(
         `Asset directory is a symlink and will not be copied: ${assetDir}`,
       );
-    } else if (!assetDir.isDir()) {
+    } else if (!isDirectory(assetDir)) {
       warnings.push(`Asset directory is not a directory: ${assetDir}`);
     }
     if (!usable) continue;
-    for (const path of sortedRglob(assetDir)) {
-      if (path.isSymlink() && !config.isExcluded(path)) {
+    for (const path of sortedTreePaths(assetDir)) {
+      if (isSymlink(path) && !config.isExcluded(path)) {
         warnings.push(`Asset symlink will not be copied: ${path}`);
       }
     }
@@ -94,7 +103,7 @@ export function auditAssets(config: Config): string[] {
  */
 export function buildAssetManifest(
   config: Config,
-  ownedOutputDir: Path,
+  ownedOutputDir: string,
   baseUrl: string,
 ): OutputEntry[] {
   const entries: OutputEntry[] = [];
@@ -102,7 +111,7 @@ export function buildAssetManifest(
   for (const asset of iterAssetFiles(config)) {
     const rel = config.relativeToRoot(asset);
     const relParts = rel.split("/").filter((part) => part !== "");
-    const outputPath = ownedOutputDir.joinpath(...relParts);
+    const outputPath = join(ownedOutputDir, ...relParts);
     const encoded = quote(rel, "/()_-.$~");
     const publicUrl = base === "" ? `/${encoded}` : `${base}/${encoded}`;
     entries.push({
@@ -125,9 +134,9 @@ export function buildAssetManifest(
  */
 export function resolveAssetPath(
   config: Config,
-  currentFile: Path,
+  currentFile: string,
   target: string,
-): Path | null {
+): string | null {
   if (isExternalLink(target)) return null;
   const [pagePartRaw] = splitTarget(target);
   const pagePart = pyUnquote(pagePartRaw.split("?")[0] as string)
@@ -137,10 +146,11 @@ export function resolveAssetPath(
 
   let currentRel: string;
   try {
-    currentRel = currentFile.resolve().relativeTo(config.config_root.resolve())
-      .asPosix();
+    currentRel =
+      (relativeWithin(resolve(currentFile), resolve(config.config_root)))
+        .replaceAll("\\", "/");
   } catch {
-    currentRel = currentFile.asPosix();
+    currentRel = currentFile.replaceAll("\\", "/");
   }
   const combined = normalizePosixPath(
     posixDirname(currentRel) === ""
@@ -149,11 +159,10 @@ export function resolveAssetPath(
   );
   if (combined.startsWith("../") || combined === "..") return null;
 
-  const candidate = config.config_root.joinpath(...combined.split("/"))
-    .resolve();
+  const candidate = resolve(join(config.config_root, ...combined.split("/")));
   for (const assetDir of config.wiki.assets) {
     try {
-      candidate.relativeTo(assetDir.resolve());
+      relativeWithin(candidate, resolve(assetDir));
       return candidate;
     } catch {
       continue;
@@ -171,7 +180,7 @@ export function resolveAssetPath(
  */
 export function assetReferenceIssue(
   config: Config,
-  currentFile: Path,
+  currentFile: string,
   target: string,
 ): string | null {
   const assetPath = resolveAssetPath(config, currentFile, target);
@@ -179,10 +188,10 @@ export function assetReferenceIssue(
   if (config.isExcluded(assetPath)) {
     return `points to excluded asset: ${target}`;
   }
-  if (assetPath.isSymlink()) {
+  if (isSymlink(assetPath)) {
     return `points to symlink asset, which will not be copied: ${target}`;
   }
-  if (!assetPath.exists() || !assetPath.isFile()) {
+  if (!pathExists(assetPath) || !isFile(assetPath)) {
     return `points to missing asset: ${target}`;
   }
   return null;

@@ -22,6 +22,8 @@
  *   predicate cannot start differing on a BOM-only difference.
  */
 
+import { readText } from "./fspath.ts";
+import { extname } from "@std/path";
 import {
   extract,
   LinkedMarkdownError,
@@ -29,7 +31,6 @@ import {
 } from "@wazoo/linked-markdown";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
-import type { Path } from "./fspath.ts";
 
 /** Document extensions the engine treats as wiki inputs. */
 export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
@@ -65,8 +66,8 @@ export type DataRecord = Record<string, unknown>;
  * character, which breaks structured parsers downstream (JSON) and makes
  * `fmt` mistake frontmatter for prose (wiki#312).
  */
-export function readTextTolerant(path: Path): string {
-  return path.readText();
+export function readTextTolerant(path: string): string {
+  return readText(path);
 }
 
 /**
@@ -132,10 +133,10 @@ export function ensureContext(data: DataRecord): DataRecord {
 
 /** Load a document's structured data, or `null` when it has none. */
 export function documentDataFromPath(
-  path: Path,
+  path: string,
   contentPredicate?: string | undefined,
 ): DataRecord | null {
-  const suffix = path.suffix.toLowerCase();
+  const suffix = extname(path).toLowerCase();
   try {
     if (suffix === ".md") {
       return frontmatterFromPath(path, contentPredicate);
@@ -161,7 +162,7 @@ export function documentDataFromPath(
 
 /** Load a markdown file's frontmatter, folding the body into a predicate. */
 export function frontmatterFromPath(
-  path: Path,
+  path: string,
   contentPredicate?: string | undefined,
 ): DataRecord | null {
   try {
@@ -201,9 +202,9 @@ export function splitFrontmatterBody(
 
 /** Split a document file into its data and body; data files have no body. */
 export function splitDocumentBody(
-  path: Path,
+  path: string,
 ): [DataRecord | null, string] {
-  const suffix = path.suffix.toLowerCase();
+  const suffix = extname(path).toLowerCase();
   if (suffix === ".md") {
     try {
       return splitFrontmatterBody(readTextTolerant(path));

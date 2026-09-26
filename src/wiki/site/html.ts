@@ -1,4 +1,3 @@
-import type { Path } from "../fspath.ts";
 import { pageUrl } from "../paths.ts";
 import type { VirtualPage, WikiSite } from "./types.ts";
 import { renderLayout, renderPageLayout } from "./layout.ts";
@@ -37,7 +36,7 @@ export function buildIndexHtml(
   site: WikiSite,
   baseUrl: string,
   urlStyle: string,
-  defaultLayout: Path | null,
+  defaultLayout: string | null,
 ): string {
   const links = site.pages.map((page) => {
     const categories = escapeHtml(pageCategories(page).join(","));
@@ -57,7 +56,7 @@ export function buildIndexHtml(
 export function buildPageHtml(
   page: VirtualPage,
   baseUrl: string,
-  defaultLayout: Path | null,
+  defaultLayout: string | null,
 ): string {
   return renderPageLayout(page, baseUrl, defaultLayout);
 }

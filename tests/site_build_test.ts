@@ -1,3 +1,6 @@
+import { BuildError } from "../src/wiki/errors.ts";
+import { dirname, join } from "@std/path";
+import { pathExists } from "../src/wiki/fspath.ts";
 import {
   assert,
   assertEquals,
@@ -5,26 +8,25 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { BuildError } from "../src/wiki/errors.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { AuditReport } from "../src/wiki/schemas/reports.ts";
 import { buildSite } from "../src/wiki/site/build.ts";
 import { buildStaticSite } from "../src/wiki/site/publish.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
 
-function tempRoot(): Path {
-  return new Path(Deno.makeTempDirSync({ prefix: "wiki-site-build-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-site-build-" });
 }
 
-function write(root: Path, relative: string, content: string): Path {
-  const path = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(path.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(path.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const path = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(path), { recursive: true });
+  Deno.writeTextFileSync(path, content);
   return path;
 }
 
-function cleanup(root: Path): void {
-  Deno.removeSync(root.toString(), { recursive: true });
+function cleanup(root: string): void {
+  Deno.removeSync(root, { recursive: true });
 }
 
 Deno.test("buildSite globally sorts pages and filters excluded documents", () => {
@@ -35,7 +37,7 @@ Deno.test("buildSite globally sorts pages and filters excluded documents", () =>
     write(root, "wiki-a/drafts/Hidden.md", "# Hidden\n");
     const config = Config.forRoot(root, {
       wiki: {
-        input: [root.joinpath("wiki-z"), root.joinpath("wiki-a")],
+        input: [join(root, "wiki-z"), join(root, "wiki-a")],
         exclude: ["wiki-a/drafts/**"],
       },
     });
@@ -52,7 +54,7 @@ Deno.test("buildSite globally sorts pages and filters excluded documents", () =>
 Deno.test("buildSite maps Markdown links and data documents to canonical routes", () => {
   const root = tempRoot();
   try {
-    const wikiDir = root.joinpath("wiki");
+    const wikiDir = join(root, "wiki");
     write(
       root,
       "wiki/People/Ethan_Davidson.md",
@@ -124,8 +126,8 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
     write(root, "assets/site.css", css);
     write(root, "assets/private/secret.css", "body { display: none; }\n");
     write(root, "_site/manual/stale.txt", "stale output\n");
-    const wiki = new Wiki(Config.load(root.joinpath("wiki.yaml")));
-    const output = root.joinpath("_site");
+    const wiki = new Wiki(Config.load(join(root, "wiki.yaml")));
+    const output = join(root, "_site");
 
     const result = await buildStaticSite(wiki, {
       output_dir: output,
@@ -138,7 +140,7 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
     assertEquals(result.page_count, 3);
     assertEquals(result.asset_count, 1);
     const ethanHtml = Deno.readTextFileSync(
-      output.joinpath("manual/People/Ethan.html").toString(),
+      join(output, "manual/People/Ethan.html"),
     );
     assertStringIncludes(ethanHtml, 'data-layout="article"');
     assertStringIncludes(
@@ -147,18 +149,18 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
     );
     assertEquals(
       Deno.readTextFileSync(
-        output.joinpath("manual/assets/site.css").toString(),
+        join(output, "manual/assets/site.css"),
       ),
       css,
     );
     assertEquals(
-      output.joinpath("manual/assets/private/secret.css").exists(),
+      pathExists(join(output, "manual/assets/private/secret.css")),
       false,
     );
-    assertEquals(output.joinpath("manual/stale.txt").exists(), false);
+    assertEquals(pathExists(join(output, "manual/stale.txt")), false);
     assertEquals(
       Deno.readTextFileSync(
-        output.joinpath("manual/index.html").toString(),
+        join(output, "manual/index.html"),
       ).includes("All Pages"),
       false,
     );
@@ -175,11 +177,11 @@ Deno.test("output collisions are reported before the previous site is cleaned", 
     write(root, "assets/foo/index.html", "asset\n");
     const config = Config.forRoot(root, {
       wiki: {
-        input: [root.joinpath("wiki")],
-        assets: [root.joinpath("assets")],
+        input: [join(root, "wiki")],
+        assets: [join(root, "assets")],
       },
     });
-    const output = root.joinpath("_site");
+    const output = join(root, "_site");
     write(root, "_site/wiki/keep.txt", "previous site\n");
 
     const result = await buildStaticSite(new Wiki(config), {
@@ -194,7 +196,7 @@ Deno.test("output collisions are reported before the previous site is cleaned", 
       ),
     );
     assertEquals(
-      Deno.readTextFileSync(output.joinpath("wiki/keep.txt").toString()),
+      Deno.readTextFileSync(join(output, "wiki/keep.txt")),
       "previous site\n",
     );
   } finally {
@@ -207,7 +209,7 @@ Deno.test("build refuses to clean an output path that is the source tree", async
   try {
     const source = write(root, "wiki/Keep.md", "# Keep\n");
     const wiki = new Wiki(
-      Config.forRoot(root, { wiki: { input: [root.joinpath("wiki")] } }),
+      Config.forRoot(root, { wiki: { input: [join(root, "wiki")] } }),
     );
 
     await assertRejects(
@@ -220,7 +222,7 @@ Deno.test("build refuses to clean an output path that is the source tree", async
       "refusing to clean build output path",
     );
 
-    assertEquals(Deno.readTextFileSync(source.toString()), "# Keep\n");
+    assertEquals(Deno.readTextFileSync(source), "# Keep\n");
   } finally {
     cleanup(root);
   }
@@ -231,9 +233,9 @@ Deno.test("build render flags are forwarded, while failed preflight preserves ou
   try {
     write(root, "wiki/Page.md", "# Page\n");
     const wiki = new Wiki(
-      Config.forRoot(root, { wiki: { input: [root.joinpath("wiki")] } }),
+      Config.forRoot(root, { wiki: { input: [join(root, "wiki")] } }),
     );
-    const output = root.joinpath("_site");
+    const output = join(root, "_site");
     write(root, "_site/wiki/keep.txt", "previous site\n");
     const received: unknown[] = [];
     wiki.render = (_files, options) => {
@@ -269,7 +271,7 @@ Deno.test("build render flags are forwarded, while failed preflight preserves ou
     assertEquals(result.ok, false);
     assertEquals(result.preflight?.errors[0]?.message, "failed checks");
     assertEquals(
-      Deno.readTextFileSync(output.joinpath("wiki/keep.txt").toString()),
+      Deno.readTextFileSync(join(output, "wiki/keep.txt")),
       "previous site\n",
     );
   } finally {

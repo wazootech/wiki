@@ -1,8 +1,9 @@
+import { sortPathsByComponent } from "../fspath.ts";
 import { LinkIndex } from "../wiki_links.ts";
 import type { Config } from "../config.ts";
 import { isExternalLink } from "../links.ts";
 import { parseLayoutFromFrontmatter } from "../layout.ts";
-import { sortPaths } from "../fspath.ts";
+
 import { splitDocumentBody } from "../parser.ts";
 import { pyStr } from "../pyrepr.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "../paths.ts";
@@ -74,7 +75,7 @@ export function buildSite(
 ): WikiSite {
   const linkIndex = LinkIndex.fromConfig(config);
   const pages: VirtualPage[] = [];
-  for (const sourcePath of sortPaths(iterDocumentFiles(config))) {
+  for (const sourcePath of sortPathsByComponent(iterDocumentFiles(config))) {
     const [rawData, body] = splitDocumentBody(sourcePath);
     const frontmatter = objectRecord(rawData);
     const route = routeForDocumentFile(config, sourcePath);

@@ -30,11 +30,21 @@
  *   same fallback text; only the intermediate rendering differs.
  */
 
+import {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  resolve,
+} from "@std/path";
+import { isDirectory, isFile, pathExists, relativeWithin } from "../fspath.ts";
+import { ValueError } from "../errors.ts";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
 import { Context } from "../context.ts";
 import { fnmatchCase } from "../fnmatch.ts";
-import { Path, ValueError } from "../fspath.ts";
+
 import {
   InvalidConfError,
   validateKeys,
@@ -136,16 +146,10 @@ function coerceImplicitTypes(value: unknown): string[] {
 }
 
 /** Coerce a path-or-list value, as `_coerce_path_list` does. */
-function coercePathList(value: unknown): Path[] {
-  if (value === null || value === undefined) return [new Path("wiki")];
-  if (typeof value === "string" || value instanceof Path) {
-    return [Path.of(value)];
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) =>
-      Path.of(item instanceof Path ? item : String(item))
-    );
-  }
+function coercePathList(value: unknown): string[] {
+  if (value === null || value === undefined) return ["wiki"];
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.map(String);
   throw new ValueError(
     `expected string, path, or list, got ${pyTypeName(value)}`,
   );
@@ -298,7 +302,7 @@ export function formatConfigValidationError(
 /** Resolved `fmt:` configuration: inline options, or a path to a TOML file. */
 export interface FmtConfig {
   readonly options: Record<string, unknown> | null;
-  readonly toml: Path | null;
+  readonly toml: string | null;
 }
 
 /** `true` when the value is already a resolved {@link FmtConfig}. */
@@ -319,14 +323,12 @@ function isFmtConfig(value: unknown): value is FmtConfig {
 export function parseFmtConfig(
   fmtData: unknown,
   configName: string,
-  baseDir: Path,
+  baseDir: string,
 ): FmtConfig | null {
   if (fmtData === null || fmtData === undefined) return null;
   if (isFmtConfig(fmtData)) return fmtData;
 
-  // A `Path` is an object, so `isMapping` matches it; Python's `isinstance(dict)`
-  // does not, and the pointer branch below is where a path belongs.
-  if (isMapping(fmtData) && !(fmtData instanceof Path)) {
+  if (isMapping(fmtData)) {
     const options: Record<string, unknown> = { ...fmtData };
     // mdformat spells "never wrap" as `wrap = "no"`; `false` is the YAML way of
     // writing the same intent, so it is translated rather than rejected.
@@ -353,27 +355,13 @@ export function parseFmtConfig(
         `Invalid config file ${configName}: fmt path must not be empty`,
       );
     }
-    const pathObj = new Path(text);
-    if (pathObj.isAbsolute()) {
+    const pathObj = text;
+    if (isAbsolute(pathObj)) {
       throw new ValueError(
         `Invalid config file ${configName}: fmt path must be relative to the config file`,
       );
     }
-    return { options: null, toml: baseDir.joinpath(pathObj) };
-  }
-
-  if (fmtData instanceof Path) {
-    if (fmtData.isAbsolute()) {
-      try {
-        fmtData.relativeTo(baseDir);
-      } catch {
-        throw new ValueError(
-          `Invalid config file ${configName}: fmt path must be relative to the config file`,
-        );
-      }
-      return { options: null, toml: fmtData };
-    }
-    return { options: null, toml: baseDir.joinpath(fmtData) };
+    return { options: null, toml: join(baseDir, pathObj) };
   }
 
   throw new ValueError(
@@ -382,25 +370,20 @@ export function parseFmtConfig(
 }
 
 /** Resolve a possibly-relative path against the config file's directory. */
-function resolvePath(value: string | Path, baseDir: Path): Path {
-  const pathObj = Path.of(value);
-  return pathObj.isAbsolute() ? pathObj : baseDir.joinpath(pathObj);
+function resolvePath(value: string, baseDir: string): string {
+  const pathObj = value;
+  return isAbsolute(pathObj) ? pathObj : join(baseDir, pathObj);
 }
 
 /** Resolve `site.layout`, returning an absolute path or `null`. */
 function parsePageLayoutPath(
   layoutRaw: unknown,
-  baseDir: Path,
-): Path | null {
+  baseDir: string,
+): string | null {
   if (layoutRaw === null || layoutRaw === undefined) return null;
-  if (layoutRaw instanceof Path) {
-    return layoutRaw.isAbsolute()
-      ? layoutRaw.resolve()
-      : baseDir.joinpath(layoutRaw).resolve();
-  }
   if (pyStr(layoutRaw).trim() === "") return null;
-  const pathObj = new Path(pyStr(layoutRaw).trim());
-  return (pathObj.isAbsolute() ? pathObj : baseDir.joinpath(pathObj)).resolve();
+  const pathObj = pyStr(layoutRaw).trim();
+  return resolve(isAbsolute(pathObj) ? pathObj : join(baseDir, pathObj));
 }
 
 /** Normalize `site.url_style`. */
@@ -429,19 +412,19 @@ export function normalizeApiPath(value: unknown): string {
 }
 
 /** Return a wiki config file path when `path` is a file or searchable directory. */
-export function findConfigPath(path: Path): Path | null {
-  if (path.isFile()) return path;
+export function findConfigPath(path: string): string | null {
+  if (isFile(path)) return path;
   for (const name of CONFIG_FILENAMES) {
-    const candidate = path.joinpath(name);
-    if (candidate.exists()) return candidate;
+    const candidate = join(path, name);
+    if (pathExists(candidate)) return candidate;
   }
   return null;
 }
 
 /** The `wiki:` block after resolution. */
 export interface WikiBlock {
-  readonly input: readonly Path[];
-  readonly assets: readonly Path[];
+  readonly input: readonly string[];
+  readonly assets: readonly string[];
   readonly exclude: readonly string[];
   readonly filename_pattern: string | null;
 }
@@ -458,7 +441,7 @@ export interface GraphBlock {
 
 /** The `site:` block after resolution. */
 export interface SiteBlock {
-  readonly layout: Path | null;
+  readonly layout: string | null;
   readonly base_url: string;
   readonly url_style: string;
 }
@@ -556,7 +539,7 @@ const wikiBlockSpec: ModelSpec = {
   label: "WikiConfig",
   forbidExtra: true,
   fields: [
-    ["input", { factory: () => [new Path("wiki")], before: coercePathList }],
+    ["input", { factory: () => ["wiki"], before: coercePathList }],
     ["assets", {
       defaultValue: null,
       before: (value) =>
@@ -628,7 +611,7 @@ const fmtField: FieldSpec = {
   before: (value) => {
     if (value === null || value === undefined) return null;
     if (
-      isMapping(value) || typeof value === "string" || value instanceof Path
+      isMapping(value) || typeof value === "string"
     ) return value;
     throw new ValueError("fmt must be a mapping or path string");
   },
@@ -652,8 +635,8 @@ const configSpec: ModelSpec = {
     ["fmt", fmtField],
     ["sparql_service", { model: () => sparqlServiceSpec }],
     ["config_root", {
-      factory: () => new Path(Deno.cwd()),
-      before: (value) => value instanceof Path ? value : new Path(pyStr(value)),
+      factory: () => Deno.cwd(),
+      before: (value) => pyStr(value),
     }],
   ],
 };
@@ -694,7 +677,7 @@ export interface ConfigInput {
   readonly sources?: unknown;
   readonly fmt?: unknown;
   readonly sparql_service?: unknown;
-  readonly config_root?: string | Path;
+  readonly config_root?: string;
 }
 
 /**
@@ -714,7 +697,7 @@ export class Config {
   readonly sources: readonly SourceConfig[];
   readonly fmt: FmtConfig | null;
   readonly sparql_service: SparqlServiceBlock;
-  readonly config_root: Path;
+  readonly config_root: string;
 
   constructor(data: ConfigInput = {}, options: { configName?: string } = {}) {
     const resolved = resolveConfig(data, options.configName ?? "");
@@ -731,8 +714,8 @@ export class Config {
   }
 
   /** Build a resolved config for a root directory, as `Config.for_root` does. */
-  static forRoot(root: string | Path, overrides: ConfigInput = {}): Config {
-    return new Config({ ...overrides, config_root: Path.of(root) });
+  static forRoot(root: string, overrides: ConfigInput = {}): Config {
+    return new Config({ ...overrides, config_root: root });
   }
 
   /**
@@ -740,30 +723,32 @@ export class Config {
    * directory, falling back to defaults when no file exists.
    */
   static load(
-    path: Path = new Path("."),
+    path: string = ".",
     options: { configName?: string } = {},
   ): Config {
-    const potentialPaths = path.isFile()
+    const potentialPaths = isFile(path)
       ? [path]
-      : CONFIG_FILENAMES.map((name) => path.joinpath(name));
+      : CONFIG_FILENAMES.map((name) => join(path, name));
 
     for (const configPath of potentialPaths) {
-      if (!configPath.exists()) continue;
+      if (!pathExists(configPath)) continue;
       try {
         const content = readTextTolerant(configPath);
         let data: unknown;
-        if (configPath.suffix === ".json") data = JSON.parse(content);
-        else if (configPath.suffix === ".toml") data = parseToml(content);
+        if (extname(configPath) === ".json") data = JSON.parse(content);
+        else if (extname(configPath) === ".toml") data = parseToml(content);
         else data = parseYaml(content);
 
         if (!isMapping(data)) {
           throw new ValueError(
-            `Invalid config file ${configPath.name}: top-level content must be a mapping`,
+            `Invalid config file ${
+              basename(configPath)
+            }: top-level content must be a mapping`,
           );
         }
 
-        const name = options.configName || configPath.name;
-        const baseDir = configPath.parent.absolute();
+        const name = options.configName || basename(configPath);
+        const baseDir = resolve(dirname(configPath));
         try {
           // The name is carried into resolution, not just into the routing:
           // the Python model receives it as pydantic validation context, and a
@@ -783,7 +768,9 @@ export class Config {
         // failure) is wrapped with the file it came from.
         if (error instanceof ValueError) throw error;
         throw new ValueError(
-          `Failed to load config file ${configPath.name}: ${String(error)}`,
+          `Failed to load config file ${basename(configPath)}: ${
+            String(error)
+          }`,
         );
       }
     }
@@ -801,10 +788,10 @@ export class Config {
   }
 
   /** The resolved custom page layout, or `null` when the built-in one is used. */
-  get page_layout(): Path | null {
+  get page_layout(): string | null {
     const layout = this.site.layout;
     if (layout === null) return null;
-    return parsePageLayoutPath(layout, this.config_root.absolute());
+    return parsePageLayoutPath(layout, resolve(this.config_root));
   }
 
   /** The JSON-LD context derived from `graph.context` and the base IRI. */
@@ -836,18 +823,18 @@ export class Config {
   }
 
   /** A path as a config-root-relative POSIX string, for `exclude` matching. */
-  relativeToRoot(path: Path): string {
-    let rel: Path;
+  relativeToRoot(path: string): string {
+    let rel: string;
     try {
-      rel = path.resolve().relativeTo(this.config_root.resolve());
+      rel = relativeWithin(resolve(path), resolve(this.config_root));
     } catch {
       rel = path;
     }
-    return rel.asPosix().replace(/^\/+/, "").replace(/\/+$/, "");
+    return rel.replaceAll("\\", "/").replace(/^\/+/, "").replace(/\/+$/, "");
   }
 
   /** `true` when `path` matches any `wiki.exclude` pattern. */
-  isExcluded(path: Path): boolean {
+  isExcluded(path: string): boolean {
     const rel = this.relativeToRoot(path);
     return this.wiki.exclude.some((pattern) => fnmatchCase(rel, pattern));
   }
@@ -864,7 +851,7 @@ interface ResolvedConfig {
   readonly sources: readonly SourceConfig[];
   readonly fmt: FmtConfig | null;
   readonly sparql_service: SparqlServiceBlock;
-  readonly config_root: Path;
+  readonly config_root: string;
 }
 
 /**
@@ -901,13 +888,13 @@ function resolveRuntime(
   values: Record<string, unknown>,
   configName: string,
 ): ResolvedConfig {
-  const configRoot = values["config_root"] as Path;
-  const baseDir = configRoot.absolute();
+  const configRoot = values["config_root"] as string;
+  const baseDir = resolve(configRoot);
 
   const wiki = values["wiki"] as unknown as WikiBlock;
   const inputs = wiki.input.map((path) => resolvePath(path, baseDir));
   const assetsRaw = wiki.assets === null || wiki.assets === undefined
-    ? (baseDir.joinpath("assets").isDir() ? [new Path("assets")] : [])
+    ? (isDirectory(join(baseDir, "assets")) ? ["assets"] : [])
     : [...wiki.assets];
   const assets = assetsRaw.map((path) => resolvePath(path, baseDir));
   const exclude = wiki.exclude.map((pattern) =>

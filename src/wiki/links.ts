@@ -21,7 +21,7 @@
  *   climbing out of it.
  */
 
-import { ValueError } from "./fspath.ts";
+import { ValueError } from "./errors.ts";
 import { headingSlug } from "./headings.ts";
 import { pageUrl } from "./paths.ts";
 

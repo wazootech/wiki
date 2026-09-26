@@ -29,8 +29,11 @@
  * injected fetch, the way the Python tests patch `urlopen`.
  */
 
+import { isFile } from "./fspath.ts";
+import { basename, resolve } from "@std/path";
+import { ValueError } from "./errors.ts";
 import type { Config } from "./config.ts";
-import { type Path, ValueError } from "./fspath.ts";
+
 import { effectiveTypes, resolveType } from "./graph.ts";
 import { JsonSchemaValidator, sortByInstancePath } from "./json_schema.ts";
 import {
@@ -105,7 +108,10 @@ export function isRemoteSchemaRef(ref: string): boolean {
 }
 
 /** Resolve a local `wazoo:jsonSchema` path relative to the wiki config root. */
-export function resolveLocalSchemaPath(raw: string, configRoot: Path): Path {
+export function resolveLocalSchemaPath(
+  raw: string,
+  configRoot: string,
+): string {
   return resolveConfigRelativePath(raw, configRoot);
 }
 
@@ -114,14 +120,17 @@ export function resolveLocalSchemaPath(raw: string, configRoot: Path): Path {
  *
  * The same predicate the layout resolver uses; `paths.ts` holds the one copy.
  */
-export function schemaPathWithinRoot(path: Path, configRoot: Path): boolean {
+export function schemaPathWithinRoot(
+  path: string,
+  configRoot: string,
+): boolean {
   return pathWithinRoot(path, configRoot);
 }
 
 /** `true` when `path` is a readable `.json` file under the config root. */
-export function localSchemaIsValid(path: Path, configRoot: Path): boolean {
+export function localSchemaIsValid(path: string, configRoot: string): boolean {
   if (!schemaPathWithinRoot(path, configRoot)) return false;
-  return path.isFile() && path.name.toLowerCase().endsWith(".json");
+  return isFile(path) && basename(path).toLowerCase().endsWith(".json");
 }
 
 /**
@@ -240,15 +249,15 @@ interface LoadedValidator {
 
 /** Load and cache JSON Schema documents from local paths or remote URLs. */
 export class SchemaLoader {
-  readonly configRoot: Path;
+  readonly configRoot: string;
   readonly remoteSchemaRefs: "allow" | "deny" | "allowlist";
   readonly remoteSchemaHosts: ReadonlySet<string>;
   readonly #fetch: Fetch;
   readonly #schemaCache = new Map<string, LoadedSchema>();
   readonly #validatorCache = new Map<string, LoadedValidator>();
 
-  constructor(configRoot: Path, options: SchemaLoaderOptions = {}) {
-    this.configRoot = configRoot.resolve();
+  constructor(configRoot: string, options: SchemaLoaderOptions = {}) {
+    this.configRoot = resolve(configRoot);
     this.remoteSchemaRefs = options.remoteSchemaRefs ?? "allow";
     this.remoteSchemaHosts = new Set(options.remoteSchemaHosts ?? []);
     this.#fetch = options.fetch ?? fetch;
@@ -519,7 +528,7 @@ function formatValidationError(
 export async function checkFrontmatterSchema(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
-  options: { readonly filePaths?: readonly Path[] | null } = {},
+  options: { readonly filePaths?: readonly string[] | null } = {},
 ): Promise<SchemaIssues> {
   if (
     config.check.frontmatter_schema === "off" &&

@@ -1,3 +1,5 @@
+import { basename } from "@std/path";
+import { ValueError } from "./errors.ts";
 import type { JsonLdDocument } from "jsonld";
 import { documentDataFromPath } from "./parser.ts";
 import {
@@ -7,7 +9,7 @@ import {
 } from "./paths.ts";
 import type { Config } from "./config.ts";
 import { frontmatterToGraph } from "./graph.ts";
-import { type Path, ValueError } from "./fspath.ts";
+
 import {
   normalizeFormat,
   serializeRdf,
@@ -93,7 +95,7 @@ function compactedJsonLdContext(config: Config): Record<string, string> {
 
 async function serializeDocument(
   data: Record<string, unknown>,
-  filePath: Path,
+  filePath: string,
   config: Config,
   format: ExportFormat,
   mode: ExportMode,
@@ -120,7 +122,7 @@ async function serializeDocument(
 
 export async function exportFrontmatter(
   config: Config,
-  files: readonly Path[] | null = null,
+  files: readonly string[] | null = null,
   options: ExportOptions = {},
 ): Promise<ExportResult> {
   const format = normalizeExportFormat(options.format ?? "dict");
@@ -149,14 +151,16 @@ export async function exportFrontmatter(
         return {
           ok: false,
           output: "",
-          error_message: `No valid document metadata found in ${filePath.name}`,
+          error_message: `No valid document metadata found in ${
+            basename(filePath)
+          }`,
         };
       }
       continue;
     }
     try {
       converted.push({
-        name: filePath.name,
+        name: basename(filePath),
         rdf: await serializeDocument(data, filePath, config, format, mode),
       });
     } catch (error) {

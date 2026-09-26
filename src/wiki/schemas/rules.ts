@@ -7,7 +7,7 @@
  * Python original accepts all four as shorthands for `off` and `error`.
  */
 
-import { ValueError } from "../fspath.ts";
+import { ValueError } from "../errors.ts";
 import { pyRepr } from "../pyrepr.ts";
 import { type ModelSpec, validateModel } from "./model.ts";
 import type { ValidationIssue } from "./validation.ts";

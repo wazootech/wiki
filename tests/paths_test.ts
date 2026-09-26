@@ -8,9 +8,11 @@
  * detail.
  */
 
+import { dirname, join } from "@std/path";
+import { isDirectory } from "../src/wiki/fspath.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   buildPageManifest,
   compilePythonRegex,
@@ -25,28 +27,28 @@ import {
 import type { OutputEntry } from "../src/wiki/schemas/domain.ts";
 
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
-function withTempDir(body: (root: Path) => void): void {
+function withTempDir(body: (root: string) => void): void {
   const dir = Deno.makeTempDirSync({ prefix: "wiki-paths-" });
   try {
-    body(new Path(dir));
+    body(dir);
   } finally {
     Deno.removeSync(dir, { recursive: true });
   }
 }
 
 /** Write `name` under `root`, creating parent directories as needed. */
-function writePage(root: Path, name: string, content = "# Page\n"): Path {
-  const file = root.joinpath(name);
-  if (!file.parent.isDir()) {
-    Deno.mkdirSync(file.parent.toString(), { recursive: true });
+function writePage(root: string, name: string, content = "# Page\n"): string {
+  const file = join(root, name);
+  if (!isDirectory(dirname(file))) {
+    Deno.mkdirSync(dirname(file), { recursive: true });
   }
-  file.writeText(content);
+  Deno.writeTextFileSync(file, content);
   return file;
 }
 
 Deno.test("routes preserve case, folders, and a copy suffix", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     const page = writePage(
       wiki,
       "games/Pokemon_Diamond_(copy_1).md",
@@ -62,7 +64,7 @@ Deno.test("routes preserve case, folders, and a copy suffix", () => {
 
 Deno.test("index.md maps to its containing folder", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     const rootIndex = writePage(wiki, "index.md", "# Home");
     const folderIndex = writePage(wiki, "games/index.md", "# Games");
     const config = Config.forRoot(root, { wiki: { input: [wiki] } });
@@ -94,28 +96,28 @@ Deno.test("dir url style uses a trailing slash", () => {
 });
 
 Deno.test("output paths for dir and file styles", () => {
-  const owned = new Path("_site").joinpath("wiki");
+  const owned = join("_site", "wiki");
   assertEquals(
-    pageOutputPath(owned, "games/Pokemon", "dir").toString(),
-    owned.joinpath("games", "Pokemon", "index.html").toString(),
+    pageOutputPath(owned, "games/Pokemon", "dir"),
+    join(owned, "games", "Pokemon", "index.html"),
   );
   assertEquals(
-    pageOutputPath(owned, "games/Pokemon", "file").toString(),
-    owned.joinpath("games", "Pokemon.html").toString(),
+    pageOutputPath(owned, "games/Pokemon", "file"),
+    join(owned, "games", "Pokemon.html"),
   );
   assertEquals(
-    pageOutputPath(owned, "", "dir").toString(),
-    owned.joinpath("index.html").toString(),
+    pageOutputPath(owned, "", "dir"),
+    join(owned, "index.html"),
   );
   assertEquals(
-    pageOutputPath(owned, "", "file").toString(),
-    owned.joinpath("index.html").toString(),
+    pageOutputPath(owned, "", "file"),
+    join(owned, "index.html"),
   );
 });
 
 Deno.test("route safety rejects spaces and URL-special characters", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     writePage(wiki, "Bad Page.md", "# Bad");
     writePage(wiki, "Bad#Page.md", "# Bad");
     const config = Config.forRoot(root, { wiki: { input: [wiki] } });
@@ -167,7 +169,7 @@ Deno.test("filename_pattern is a Python regex, translated where it must be", () 
   assertEquals(
     validateFilenamePattern(
       new Config({ wiki: { filename_pattern: "[a" } }),
-      new Path("anything.md"),
+      "anything.md",
     )?.startsWith("Invalid filename_pattern: "),
     true,
   );
@@ -175,7 +177,7 @@ Deno.test("filename_pattern is a Python regex, translated where it must be", () 
 
 Deno.test("excluded markdown files do not create routes", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     writePage(wiki, "Published.md", "# Published");
     writePage(wiki, "drafts/Draft.md", "# Draft");
     const config = Config.forRoot(root, {
@@ -187,14 +189,14 @@ Deno.test("excluded markdown files do not create routes", () => {
 
 Deno.test("duplicate routes collide", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     writePage(wiki, "About.md", "# About");
     writePage(wiki, "About/index.md", "# About");
     const config = Config.forRoot(root, { wiki: { input: [wiki] } });
 
     const entries = buildPageManifest(
       config,
-      root.joinpath("_site", "wiki"),
+      join(root, "_site", "wiki"),
       "/wiki",
       "dir",
     );
@@ -206,14 +208,14 @@ Deno.test("duplicate routes collide", () => {
 
 Deno.test("markdown and yaml with the same slug collide", () => {
   withTempDir((root) => {
-    const wiki = root.joinpath("wiki");
+    const wiki = join(root, "wiki");
     writePage(wiki, "About.md", "# About");
     writePage(wiki, "About.yaml", "type: Thing\nname: About data\n");
     const config = Config.forRoot(root, { wiki: { input: [wiki] } });
 
     const entries = buildPageManifest(
       config,
-      root.joinpath("_site", "wiki"),
+      join(root, "_site", "wiki"),
       "/wiki",
       "dir",
     );
@@ -231,14 +233,14 @@ Deno.test("markdown and yaml with the same slug collide", () => {
 Deno.test("case-only output paths collide", () => {
   const entries: OutputEntry[] = [
     {
-      source: new Path("Page.md"),
-      output_path: new Path("_site/wiki/Page/index.html"),
+      source: "Page.md",
+      output_path: "_site/wiki/Page/index.html",
       public_url: "/wiki/Page/",
       kind: "page",
     },
     {
-      source: new Path("page.md"),
-      output_path: new Path("_site/wiki/page/index.html"),
+      source: "page.md",
+      output_path: "_site/wiki/page/index.html",
       public_url: "/wiki/page/",
       kind: "page",
     },
@@ -257,14 +259,14 @@ Deno.test("case-only output paths collide", () => {
 Deno.test("a collision message names both sides and the URL", () => {
   const entries: OutputEntry[] = [
     {
-      source: new Path("wiki/A.md"),
-      output_path: new Path("_site/wiki/A/index.html"),
+      source: "wiki/A.md",
+      output_path: "_site/wiki/A/index.html",
       public_url: "/wiki/A/",
       kind: "page",
     },
     {
-      source: new Path("wiki/a.md"),
-      output_path: new Path("_site/wiki/a/index.html"),
+      source: "wiki/a.md",
+      output_path: "_site/wiki/a/index.html",
       public_url: "/wiki/a/",
       kind: "page",
     },

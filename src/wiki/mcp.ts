@@ -1,9 +1,10 @@
+import { resolve } from "@std/path";
+import { relativeWithin } from "./fspath.ts";
 import { detectQueryForm, normalizeQueryFormat } from "./format.ts";
 import { graphStats } from "./graph.ts";
 import { serializeRdf } from "./rdf.ts";
 import { VERSION } from "./version.ts";
 import type { Wiki } from "./wiki.ts";
-import type { Path } from "./fspath.ts";
 
 export const QUERY_FORMATS = [
   "table",
@@ -249,14 +250,14 @@ const resources: readonly ResourceDefinition[] = [
   },
 ];
 
-function relativePath(path: Path, root: Path): string {
-  const resolved = path.resolve();
-  const resolvedRoot = root.resolve();
-  if (resolved.toString() === resolvedRoot.toString()) return ".";
+function relativePath(path: string, root: string): string {
+  const resolved = resolve(path);
+  const resolvedRoot = resolve(root);
+  if (resolved === resolvedRoot) return ".";
   try {
-    return resolved.relativeTo(resolvedRoot).asPosix();
+    return (relativeWithin(resolved, resolvedRoot)).replaceAll("\\", "/");
   } catch {
-    return resolved.asPosix();
+    return resolved.replaceAll("\\", "/");
   }
 }
 

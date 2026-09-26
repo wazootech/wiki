@@ -26,6 +26,7 @@
  * them.
  */
 
+import { basename, dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import {
   checkLayoutFrontmatter,
@@ -40,7 +41,7 @@ import {
   runLint,
 } from "../src/wiki/audit.ts";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { loadGraph } from "../src/wiki/graph.ts";
 import { RdfGraph } from "../src/wiki/rdf.ts";
 import {
@@ -49,27 +50,27 @@ import {
   loadShapes,
 } from "../src/wiki/shacl.ts";
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-audit-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-audit-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
 /** Run `body` against a fresh temp root and always clean it up. */
-function withRoot(run: (root: Path) => void | Promise<void>): Promise<void> {
+function withRoot(run: (root: string) => void | Promise<void>): Promise<void> {
   const root = tempRoot();
   return Promise.resolve(run(root)).finally(() => cleanup(root));
 }
@@ -245,7 +246,7 @@ Deno.test("headings lint: sentence case for H2+ only", () =>
     // see: the Python tests each have a fresh `TemporaryDirectory`, and sharing
     // one here would read the previous case's page too.
     cases.forEach(([name, headings, expectWarning], index) => {
-      const caseRoot = root.joinpath(`case-${index}`);
+      const caseRoot = join(root, `case-${index}`);
       write(
         caseRoot,
         name,
@@ -290,7 +291,7 @@ Deno.test("headings lint never reports Setext syntax, in any form", () =>
     // The fenced `---` case on its own: a YAML fence in a page about YAML. Its
     // own root, because the module-level `config` above closes over the shared
     // one and a second page would be linted alongside the first.
-    const yamlRoot = root.joinpath("yaml-fence");
+    const yamlRoot = join(root, "yaml-fence");
     write(
       yamlRoot,
       "Example.md",
@@ -314,7 +315,7 @@ Deno.test("heading levels increase by one at a time", () =>
       ["## Real\n\n```md\n# Fake\n### Also fake\n```\n", 0],
     ];
     cases.forEach(([body, expected], index) => {
-      const caseRoot = root.joinpath(`case-${index}`);
+      const caseRoot = join(root, `case-${index}`);
       write(caseRoot, "Page.md", `${PAGE_FRONTMATTER}${body}`);
       const warnings = lintHeadingLevels(
         new Config({ wiki: { input: [caseRoot] } }),
@@ -335,7 +336,7 @@ Deno.test("duplicate heading text is reported from H2 down, case-insensitively",
       ["## Foo\n\n```\n## Foo\n```\n", 0],
     ];
     cases.forEach(([body, expected], index) => {
-      const caseRoot = root.joinpath(`case-${index}`);
+      const caseRoot = join(root, `case-${index}`);
       write(caseRoot, "Page.md", `${PAGE_FRONTMATTER}${body}`);
       const warnings = lintDuplicateHeadings(
         new Config({ wiki: { input: [caseRoot] } }),
@@ -350,8 +351,8 @@ Deno.test("duplicate heading text is reported from H2 down, case-insensitively",
 
 Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
   withRoot((root) => {
-    const wiki = root.joinpath("wiki");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    Deno.mkdirSync(wiki, { recursive: true });
     write(root, "wiki/Target.md", "# Target\n");
     write(root, "wiki/Guide.md", "# Guide\n\nSee [[Target]] for details.\n");
     const config = new Config({
@@ -474,8 +475,8 @@ Deno.test("run_lint severity applies to the style rules too", () =>
     ];
 
     for (const [rule, body, fragment, lintConfig] of cases) {
-      const wiki = root.joinpath("wiki");
-      Deno.mkdirSync(wiki.toString(), { recursive: true });
+      const wiki = join(root, "wiki");
+      Deno.mkdirSync(wiki, { recursive: true });
       write(root, "wiki/x.md", `${PAGE_FRONTMATTER}${body}`);
       const report = runLint(
         new Config({
@@ -510,7 +511,7 @@ Deno.test("load_shapes survives a missing input directory", () =>
   withRoot(async (root) => {
     assertEquals(loadShapes(new RdfGraph()).size, 0);
     const config = new Config({
-      wiki: { input: [root.joinpath("non-existent")] },
+      wiki: { input: [join(root, "non-existent")] },
     });
     const graph = await loadGraph(config, { infer: false });
     assertEquals(loadShapes(graph).size, 0);
@@ -518,8 +519,8 @@ Deno.test("load_shapes survives a missing input directory", () =>
 
 Deno.test("a .ttl shape file constrains the pages beside it", () =>
   withRoot(async (root) => {
-    const wiki = root.joinpath("wiki");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    Deno.mkdirSync(wiki, { recursive: true });
     write(
       root,
       "wiki/person-shape.ttl",
@@ -550,16 +551,16 @@ schema:PersonShape
     // No metadata is `null`, which `audit` turns into `missing_metadata` —
     // distinct from "conforms".
     assertEquals(
-      await checkShaclFile(wiki.joinpath("no-fm.md"), config),
+      await checkShaclFile(join(wiki, "no-fm.md"), config),
       null,
     );
     const valid = await checkShaclFile(
-      wiki.joinpath("valid-person.md"),
+      join(wiki, "valid-person.md"),
       config,
     );
     assert(valid !== null && valid.conforms);
     const invalid = await checkShaclFile(
-      wiki.joinpath("invalid-person.md"),
+      join(wiki, "invalid-person.md"),
       config,
     );
     assert(invalid !== null && !invalid.conforms);
@@ -570,8 +571,8 @@ schema:PersonShape
 
 Deno.test("shapes can be declared in markdown frontmatter", () =>
   withRoot(async (root) => {
-    const wiki = root.joinpath("wiki");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    Deno.mkdirSync(wiki, { recursive: true });
     const config = new Config({ wiki: { input: [wiki] } });
     write(
       root,
@@ -595,12 +596,12 @@ Deno.test("shapes can be declared in markdown frontmatter", () =>
     );
 
     const invalid = await checkShaclFile(
-      wiki.joinpath("invalid-project.md"),
+      join(wiki, "invalid-project.md"),
       config,
     );
     assert(invalid !== null && !invalid.conforms);
     const valid = await checkShaclFile(
-      wiki.joinpath("valid-project.md"),
+      join(wiki, "valid-project.md"),
       config,
     );
     assert(valid !== null && valid.conforms);
@@ -608,8 +609,8 @@ Deno.test("shapes can be declared in markdown frontmatter", () =>
 
 Deno.test("wazoo:layout must resolve to a readable .html file", () =>
   withRoot((root) => {
-    const wiki = root.joinpath("wiki");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    Deno.mkdirSync(wiki, { recursive: true });
     write(
       root,
       "wiki/page.md",
@@ -643,7 +644,7 @@ Deno.test("wazoo:layout must resolve to a readable .html file", () =>
  * once here.
  */
 
-function writeSchema(root: Path, relative: string, schema: unknown): void {
+function writeSchema(root: string, relative: string, schema: unknown): void {
   write(root, relative, `${JSON.stringify(schema, null, 2)}\n`);
 }
 
@@ -657,9 +658,9 @@ const ARTICLE_SCHEMA = {
 };
 
 /** A wiki whose `Broken.md` fails a required-field schema, and a missing ref. */
-function writeSeverityFixture(root: Path): Path {
-  const wiki = root.joinpath("wiki");
-  Deno.mkdirSync(wiki.toString(), { recursive: true });
+function writeSeverityFixture(root: string): string {
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki, { recursive: true });
   writeSchema(root, "schemas/article.json", ARTICLE_SCHEMA);
   write(
     root,
@@ -702,8 +703,8 @@ function issueMessages(report: {
 
 Deno.test("run_check reports frontmatter schema errors", () =>
   withRoot(async (root) => {
-    const wiki = root.joinpath("wiki");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    Deno.mkdirSync(wiki, { recursive: true });
     writeSchema(root, "schemas/article.json", ARTICLE_SCHEMA);
     write(
       root,
@@ -839,5 +840,5 @@ Deno.test("run_check in scoped mode reports per-file findings", () =>
     assertFalse(results.ok);
     assertEquals(results.errors.length, 1);
     assertEquals(results.errors[0]!.code, "missing_metadata");
-    assertEquals(results.errors[0]!.path?.name, "Plain.md");
+    assertEquals(basename(results.errors[0]!.path!), "Plain.md");
   }));

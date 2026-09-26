@@ -20,29 +20,31 @@
  *   error and asserts the merge order.
  */
 
+import { basename, dirname, join } from "@std/path";
+import { isDirectory } from "../src/wiki/fspath.ts";
 import { assert, assertEquals, assertFalse } from "@std/assert";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { type LogRecord, setLogSink } from "../src/wiki/logging.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-session-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-session-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 /** Write a file below `root`, creating parent directories. */
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
@@ -58,7 +60,7 @@ function captureLogs<T>(fn: () => T): { records: LogRecord[]; value: T } {
 }
 
 /** A wiki root with a config file, ready for `Wiki.load`. */
-function writeWiki(root: Path, pages: Record<string, string>): void {
+function writeWiki(root: string, pages: Record<string, string>): void {
   for (const [name, content] of Object.entries(pages)) {
     write(root, `wiki/${name}`, content);
   }
@@ -74,8 +76,8 @@ Deno.test("Wiki.load resolves the config and checks the whole wiki", () => {
     // The input directory is resolved against the config root, so the corpus is
     // found from a config file whose own path is relative.
     assertEquals(wiki.config.wiki.input.length, 1);
-    assert(wiki.config.wiki.input[0]!.isDir());
-    assertEquals(wiki.config_path?.name, "wiki.yaml");
+    assert(isDirectory(wiki.config.wiki.input[0]!));
+    assertEquals(basename(wiki.config_path!), "wiki.yaml");
   } finally {
     cleanup(root);
   }
@@ -89,17 +91,19 @@ Deno.test("Wiki.load honours wiki_inputs over the config file", () => {
 
     const wiki = Wiki.load(root, { wikiInputs: ["extra"] });
     assertEquals(
-      wiki.config.wiki.input.map((path) => path.name),
+      wiki.config.wiki.input.map((path) => basename(path)),
       ["extra"],
     );
 
     // An absolute entry is taken as given rather than joined onto the root.
     const absolute = Wiki.load(root, {
-      wikiInputs: [root.joinpath("extra").toString()],
+      wikiInputs: [join(root, "extra")],
     });
     // The filesystem normalises one spelling to the other, so the assertion is
     // on the segment rather than the separator.
-    assert(absolute.config.wiki.input[0]!.asPosix().endsWith("/extra"));
+    assert(
+      (absolute.config.wiki.input[0]!).replaceAll("\\", "/").endsWith("/extra"),
+    );
   } finally {
     cleanup(root);
   }
@@ -113,7 +117,7 @@ Deno.test("a scoped check reports per-document findings, a whole-wiki check does
       "Typed.md": "---\ntype: schema:WebPage\n---\n\nBody.\n",
     });
     const wiki = Wiki.load(root);
-    const plain = wiki.config.wiki.input[0]!.joinpath("Plain.md");
+    const plain = join(wiki.config.wiki.input[0]!, "Plain.md");
 
     // Scoped: `missing_metadata` is a per-document finding, and the issue carries
     // the document it came from — which is the `file_paths` distinction the
@@ -122,7 +126,7 @@ Deno.test("a scoped check reports per-document findings, a whole-wiki check does
     assertFalse(scoped.ok);
     assertEquals(scoped.errors.length, 1);
     assertEquals(scoped.errors[0]!.code, "missing_metadata");
-    assertEquals(scoped.errors[0]!.path?.name, "Plain.md");
+    assertEquals(basename(scoped.errors[0]!.path!), "Plain.md");
 
     // Whole-wiki: the same page is not a finding, because the pass validates the
     // assembled graph rather than each file.
@@ -221,12 +225,12 @@ Deno.test("locked sources extend wiki.input, and a missing cache warns", () => {
   const root = tempRoot();
   try {
     writeWiki(root, { "Page.md": "# Page\n" });
-    const wikiDir = root.joinpath("wiki");
+    const wikiDir = join(root, "wiki");
     // A locked source with a populated cache, and one whose checkout is gone.
-    const cached = root.joinpath(".wiki", "sources", "cached", "repo");
-    Deno.mkdirSync(cached.toString(), { recursive: true });
+    const cached = join(root, ".wiki", "sources", "cached", "repo");
+    Deno.mkdirSync(cached, { recursive: true });
     Deno.writeTextFileSync(
-      cached.joinpath("Sourced.md").toString(),
+      join(cached, "Sourced.md"),
       "---\ntype: schema:WebPage\n---\n",
     );
     write(
@@ -257,8 +261,8 @@ Deno.test("locked sources extend wiki.input, and a missing cache warns", () => {
 
     const { records, value: wiki } = captureLogs(() => Wiki.load(root));
     assertEquals(
-      wiki.config.wiki.input.map((path) => path.name),
-      [wikiDir.name, "repo"],
+      wiki.config.wiki.input.map((path) => basename(path)),
+      [basename(wikiDir), "repo"],
     );
     // The uncached source is skipped with a warning rather than dropped in
     // silence — a wiki that quietly loaded fewer pages would be worse than one

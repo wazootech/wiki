@@ -27,6 +27,7 @@
  * `_page_target_message`, which is a separate call for exactly that reason.
  */
 
+import { basename, extname } from "@std/path";
 import type { Config } from "./config.ts";
 import { assetReferenceIssue, auditAssets } from "./assets.ts";
 import {
@@ -118,7 +119,7 @@ export class LinkIndex {
     for (const filePath of iterDocumentFiles(config)) {
       const route = routeForDocumentFile(config, filePath);
       existingRoutes.add(route);
-      if (filePath.suffix.toLowerCase() === ".md") {
+      if (extname(filePath).toLowerCase() === ".md") {
         const content = readTextTolerant(filePath);
         headingIdsByRoute.set(route, headingIds(content));
         indexPageLinks(route, content, backlinks);
@@ -155,7 +156,7 @@ export class LinkIndex {
       try {
         const data = documentDataFromPath(filePath);
 
-        if (filePath.suffix.toLowerCase() === ".md") {
+        if (extname(filePath).toLowerCase() === ".md") {
           const content = readTextTolerant(filePath);
           const split = splitFrontmatterText(content);
           const body = split.body;
@@ -244,8 +245,9 @@ export class LinkIndex {
                     link_kind: "Asset link",
                     raw_target: target,
                     issue_kind: "missing_asset",
-                    message:
-                      `In ${filePath.name}: Broken asset link [${target}] ${assetIssue}.`,
+                    message: `In ${
+                      basename(filePath)
+                    }: Broken asset link [${target}] ${assetIssue}.`,
                     match_start: bodyOffset + start,
                     match_end: bodyOffset + end,
                     full_match: match[0],
@@ -287,8 +289,9 @@ export class LinkIndex {
                 link_kind: "Frontmatter asset",
                 raw_target: target,
                 issue_kind: "missing_asset",
-                message:
-                  `In ${filePath.name}: Broken frontmatter asset [${target}] ${assetIssue}.`,
+                message: `In ${
+                  basename(filePath)
+                }: Broken frontmatter asset [${target}] ${assetIssue}.`,
               }),
             );
           }
@@ -301,7 +304,7 @@ export class LinkIndex {
             link_kind: "Read error",
             raw_target: "",
             issue_kind: "read_error",
-            message: `Failed to read ${filePath.name} for link audit: ${
+            message: `Failed to read ${basename(filePath)} for link audit: ${
               errorMessage(error)
             }`,
           }),

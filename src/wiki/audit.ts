@@ -35,6 +35,8 @@
  * `_is_setext_text_line` stays because `lint_thematic_breaks` does use it.
  */
 
+import { basename, join, resolve } from "@std/path";
+import { ValueError } from "./errors.ts";
 import { buildAssetManifest } from "./assets.ts";
 import type { Config } from "./config.ts";
 import {
@@ -44,7 +46,7 @@ import {
   splitFrontmatterText,
   WIKILINK_FULL_REGEX,
 } from "./document.ts";
-import { Path, ValueError } from "./fspath.ts";
+
 import { checkFrontmatterSchema } from "./frontmatter_schema.ts";
 import { parseHeadings } from "./headings.ts";
 import {
@@ -250,7 +252,9 @@ export function lintThematicBreaks(
       }
       if (!isSetext && THEMATIC_BREAK_RE.test(stripped) && !inCode) {
         warnings.push(
-          `In ${filePath.name}:${lineNo}: Thematic break '${stripped}' in body; ` +
+          `In ${
+            basename(filePath)
+          }:${lineNo}: Thematic break '${stripped}' in body; ` +
             "use headings instead of horizontal rules.",
         );
       }
@@ -296,7 +300,9 @@ export function lintDuplicateHeadings(
       const first = seen.get(key);
       if (first !== undefined) {
         warnings.push(
-          `In ${filePath.name}:${heading.line_no}: Duplicate heading h${heading.level} ` +
+          `In ${
+            basename(filePath)
+          }:${heading.line_no}: Duplicate heading h${heading.level} ` +
             `${pyReprString(heading.text)} (first at line ${first}).`,
         );
       } else {
@@ -322,7 +328,9 @@ export function lintHeadingLevels(
       const level = heading.level;
       if (previousLevel > 0 && level > previousLevel + 1) {
         warnings.push(
-          `In ${filePath.name}:${heading.line_no}: Heading h${level} skips level ` +
+          `In ${
+            basename(filePath)
+          }:${heading.line_no}: Heading h${level} skips level ` +
             `h${previousLevel + 1}; increase depth by one at a time.`,
         );
       }
@@ -353,7 +361,7 @@ export function lintHeadings(
       const text = pyStrip(heading.text);
       if (NUMBERED_HEADING_RE.test(text)) {
         warnings.push(
-          `In ${filePath.name}: Numbered heading ${level} ${
+          `In ${basename(filePath)}: Numbered heading ${level} ${
             pyReprString(text)
           }; ` +
             "use unnumbered headings.",
@@ -362,7 +370,7 @@ export function lintHeadings(
       }
       if (heading.level > 1 && titleCaseWordsAfterFirst(text).length >= 2) {
         warnings.push(
-          `In ${filePath.name}: H2+ heading ${level} ${
+          `In ${basename(filePath)}: H2+ heading ${level} ${
             pyReprString(text)
           } looks like ` +
             "title case; use sentence case (capitalize only the first word and proper nouns).",
@@ -398,7 +406,9 @@ export function lintLinkStyle(
       if (spanOverlaps(start, end, protectedSpans)) continue;
       const lineNo = lineNumberForOffset(content, bodyOffset + start);
       warnings.push(
-        `In ${filePath.name}:${lineNo}: Wikilink ${pyReprString(match[0])}; ` +
+        `In ${basename(filePath)}:${lineNo}: Wikilink ${
+          pyReprString(match[0])
+        }; ` +
           "use standard links ([display](Page.md)) per link.style.",
       );
     }
@@ -462,7 +472,7 @@ export function checkLayoutFrontmatter(
   fileFilter: ReadonlySet<string> | null = null,
 ): string[] {
   const missing: string[] = [];
-  const configRoot = config.config_root.resolve();
+  const configRoot = resolve(config.config_root);
 
   for (const filePath of iterMarkdownFiles(config)) {
     let route: string;
@@ -504,7 +514,7 @@ export function checkLayoutFrontmatter(
  */
 export interface RunCheckOptions {
   readonly fileFilter?: ReadonlySet<string> | null;
-  readonly filePaths?: readonly Path[] | null;
+  readonly filePaths?: readonly string[] | null;
 }
 
 /**
@@ -531,15 +541,16 @@ export async function runCheck(
       if (result === null) {
         report = addErrors(report, [{
           code: "missing_metadata",
-          message: `No valid document metadata found in ${filePath.name}`,
+          message: `No valid document metadata found in ${basename(filePath)}`,
           path: filePath,
           severity: "error",
         }]);
       } else if (!result.conforms) {
         report = addErrors(report, [{
           code: "shacl_violation",
-          message:
-            `SHACL Validation Violation in ${filePath.name}:\n${result.resultsText}`,
+          message: `SHACL Validation Violation in ${
+            basename(filePath)
+          }:\n${result.resultsText}`,
           path: filePath,
           severity: "error",
         }]);
@@ -591,8 +602,8 @@ export async function runCheck(
   } else {
     const baseUrl = config.site.base_url;
     const ownedOutputDir = baseUrl === ""
-      ? new Path("_site")
-      : new Path("_site").joinpath(baseUrl.replace(/^\/+|\/+$/g, ""));
+      ? "_site"
+      : join("_site", baseUrl.replace(/^\/+|\/+$/g, ""));
     const collisionIssues = detectOutputCollisions([
       ...buildPageManifest(
         config,

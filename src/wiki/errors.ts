@@ -31,3 +31,11 @@ export class UpgradeError extends WikiError {
     this.name = "UpgradeError";
   }
 }
+
+/** Raised for invalid values accepted at library boundaries. */
+export class ValueError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValueError";
+  }
+}

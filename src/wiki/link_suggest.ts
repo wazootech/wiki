@@ -1,3 +1,4 @@
+import { basename } from "@std/path";
 import type { Config } from "./config.ts";
 import {
   MARKDOWN_LINK_FULL_REGEX,
@@ -6,7 +7,7 @@ import {
   WIKILINK_FULL_REGEX,
 } from "./document.ts";
 import { formatInternalLink } from "./links.ts";
-import type { Path } from "./fspath.ts";
+
 import { documentDataFromPath, readTextTolerant } from "./parser.ts";
 import { iterMarkdownFiles, routeForDocumentFile } from "./paths.ts";
 import { parseHeadings } from "./headings.ts";
@@ -226,7 +227,7 @@ export function findLinkOpportunities(
       const [line, column] = pythonLineColumn(body, start);
       opportunities.push({
         source_route: sourceRoute,
-        source_file: filePath.name,
+        source_file: basename(filePath),
         line,
         column,
         matched_text: match[0],
@@ -257,7 +258,7 @@ export function applyLinkOpportunities(
   config: Config,
   opportunities: readonly LinkOpportunity[],
   dryRun = false,
-): Path[] {
+): string[] {
   if (opportunities.length === 0) return [];
   const routePaths = new Map(
     iterMarkdownFiles(config).map((filePath) => [
@@ -272,7 +273,7 @@ export function applyLinkOpportunities(
     byRoute.set(opportunity.source_route, items);
   }
 
-  const changed: Path[] = [];
+  const changed: string[] = [];
   for (const [route, routeOpportunities] of byRoute) {
     const filePath = routePaths.get(route);
     if (filePath === undefined) continue;
@@ -306,7 +307,9 @@ export function applyLinkOpportunities(
         lineContent.slice(columnIndex + opportunity.matched_text.length) +
         line.slice(lineContent.length);
     }
-    if (!dryRun) filePath.writeText(split.prefix + lines.join(""));
+    if (!dryRun) {
+      Deno.writeTextFileSync(filePath, split.prefix + lines.join(""));
+    }
     changed.push(filePath);
   }
   return changed;

@@ -16,9 +16,10 @@
  * parity harness carries the oracle's transcript as a `known` case.
  */
 
+import { dirname, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import { loadGraph } from "../src/wiki/graph.ts";
 import {
   checkShaclAll,
@@ -65,29 +66,29 @@ ex:bob a schema:Person .
 ex:dave a micro:Agent .
 `;
 
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-shacl-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-shacl-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
 /** The probe's config: a `micro:` corpus with SHACL and RDFS prefixes bound. */
-function configFor(root: Path): Config {
+function configFor(root: string): Config {
   return new Config({
-    wiki: { input: [root.joinpath("wiki")] },
+    wiki: { input: [join(root, "wiki")] },
     config_root: root,
     graph: {
       context: {
@@ -103,7 +104,7 @@ function configFor(root: Path): Config {
   });
 }
 
-function writeCorpus(root: Path): void {
+function writeCorpus(root: string): void {
   write(root, "wiki/shapes.ttl", SHAPES);
   write(root, "wiki/data.ttl", DATA);
 }

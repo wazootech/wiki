@@ -18,10 +18,11 @@
  * JavaScript has one date-time type.
  */
 
+import { dirname, join, resolve } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
 import type { Context } from "../src/wiki/context.ts";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   effectiveTypes,
   frontmatterToGraph,
@@ -63,23 +64,23 @@ function ns(context: Context, prefix: string): string {
 }
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
-function tempRoot(): Path {
-  return Path.of(Deno.makeTempDirSync({ prefix: "wiki-graph-" }));
+function tempRoot(): string {
+  return Deno.makeTempDirSync({ prefix: "wiki-graph-" });
 }
 
-function cleanup(root: Path): void {
+function cleanup(root: string): void {
   try {
-    Deno.removeSync(root.toString(), { recursive: true });
+    Deno.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 /** Write a file below `root`, creating parent directories. */
-function write(root: Path, relative: string, content: string): Path {
-  const target = root.joinpath(...relative.split("/"));
-  Deno.mkdirSync(target.parent.toString(), { recursive: true });
-  Deno.writeTextFileSync(target.toString(), content);
+function write(root: string, relative: string, content: string): string {
+  const target = join(root, ...relative.split("/"));
+  Deno.mkdirSync(dirname(target), { recursive: true });
+  Deno.writeTextFileSync(target, content);
   return target;
 }
 
@@ -574,10 +575,10 @@ Deno.test("loadGraph reads every input dir and survives broken RDF", async () =>
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
-    const wiki = root.joinpath("wiki");
-    const imports = root.joinpath("imports");
-    Deno.mkdirSync(wiki.toString(), { recursive: true });
-    Deno.mkdirSync(imports.toString(), { recursive: true });
+    const wiki = join(root, "wiki");
+    const imports = join(root, "imports");
+    Deno.mkdirSync(wiki, { recursive: true });
+    Deno.mkdirSync(imports, { recursive: true });
 
     write(root, "imports/error.ttl", "UNPARSABLE NONSENSE");
     write(
@@ -882,22 +883,19 @@ sh:property:
 // ---------------------------------------------------------------------------
 
 /** A source checkout the way `sources install` leaves one. */
-function sourceFixture(root: Path): { wiki: Path; source: Path } {
-  const wiki = root.joinpath("wiki");
-  Deno.mkdirSync(wiki.toString(), { recursive: true });
-  const source = root.joinpath(
-    ".wiki",
-    "sources",
-    "brain",
-    "repo",
-    "wiki",
-  );
-  Deno.mkdirSync(source.toString(), { recursive: true });
+function sourceFixture(root: string): { wiki: string; source: string } {
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki, { recursive: true });
+  const source = join(root, ".wiki", "sources", "brain", "repo", "wiki");
+  Deno.mkdirSync(source, { recursive: true });
   return { wiki, source };
 }
 
 /** The locked entry every dataset test uses, with `required_by` overridable. */
-function lockBrain(root: Path, requiredBy: readonly string[] = ["root"]): void {
+function lockBrain(
+  root: string,
+  requiredBy: readonly string[] = ["root"],
+): void {
   saveLockfile({
     version: 2,
     sources: new Map([["brain", {
@@ -908,7 +906,7 @@ function lockBrain(root: Path, requiredBy: readonly string[] = ["root"]): void {
       fetched_at: "2026-01-01T00:00:00+00:00",
       required_by: requiredBy,
     }]]),
-  }, root.joinpath("wiki.lock"));
+  }, join(root, "wiki.lock"));
 }
 
 Deno.test("loadDataset keeps root and source graphs separate", async () => {
@@ -1008,7 +1006,7 @@ name: Source Doc
       ),
     );
     const cacheFiles = [...Deno.readDirSync(
-      root.joinpath(".wiki", "cache").toString(),
+      join(root, ".wiki", "cache"),
     )].map((entry) => entry.name);
     assert(
       cacheFiles.some((name) =>
@@ -1035,7 +1033,7 @@ Deno.test("graphDescriptors reports locked source metadata", () => {
         fetched_at: "2026-01-01T00:00:00+00:00",
         required_by: ["root"],
       }]]),
-    }, root.joinpath("wiki.lock"));
+    }, join(root, "wiki.lock"));
 
     const config = Config.forRoot(root, { wiki: { input: [wiki, source] } });
     const descriptors = graphDescriptors(config);
@@ -1049,8 +1047,8 @@ Deno.test("graphDescriptors reports locked source metadata", () => {
     assertEquals(brain.resolved_ref, "abcdef1234567890");
     assertEquals(brain.required_by, ["root"]);
     assertEquals(
-      brain.local_path?.resolve().toString(),
-      source.resolve().toString(),
+      resolve(brain.local_path!),
+      resolve(source),
     );
   } finally {
     cleanup(root);

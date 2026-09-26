@@ -1,5 +1,6 @@
+import { join } from "@std/path";
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { Path } from "../src/wiki/fspath.ts";
+
 import {
   normalizeExportFormat,
   normalizeExportMode,
@@ -7,28 +8,28 @@ import {
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function setup() {
-  const root = Path.of(Deno.makeTempDirSync({ prefix: "wiki-export-" }));
-  const wiki = root.joinpath("wiki");
-  Deno.mkdirSync(wiki.toString());
+  const root = Deno.makeTempDirSync({ prefix: "wiki-export-" });
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki);
   Deno.writeTextFileSync(
-    root.joinpath("wiki.yaml").toString(),
+    join(root, "wiki.yaml"),
     'wiki:\n  input: [wiki]\ngraph:\n  context:\n    "@vocab": https://schema.org/\n    schema: https://schema.org/\n    wiki: https://wiki.example.org/\n',
   );
-  const ada = wiki.joinpath("Ada.md");
+  const ada = join(wiki, "Ada.md");
   Deno.writeTextFileSync(
-    ada.toString(),
+    ada,
     "---\nid: wiki:Ada\ntype: schema:Person\nname: Ada\n---\n# Ada\n",
   );
-  const bob = wiki.joinpath("Bob.md");
+  const bob = join(wiki, "Bob.md");
   Deno.writeTextFileSync(
-    bob.toString(),
+    bob,
     "---\nid: wiki:Bob\ntype: schema:Person\nname: Bob\n---\n# Bob\n",
   );
   return { root, ada, bob, wiki: Wiki.load(root) };
 }
 
-function cleanup(root: Path): void {
-  Deno.removeSync(root.toString(), { recursive: true });
+function cleanup(root: string): void {
+  Deno.removeSync(root, { recursive: true });
 }
 
 Deno.test("export normalizes format aliases and defaults unknown API modes to expanded", () => {
@@ -110,8 +111,8 @@ Deno.test("export rejects deferred RDF/XML output and raw multi-file exports", a
 Deno.test("export reports a selected document without metadata", async () => {
   const { root, wiki } = setup();
   try {
-    const path = root.joinpath("wiki", "Plain.md");
-    Deno.writeTextFileSync(path.toString(), "# Plain\n");
+    const path = join(root, "wiki", "Plain.md");
+    Deno.writeTextFileSync(path, "# Plain\n");
     const result = await wiki.export([path]);
     assertEquals(result.ok, false);
     assertStringIncludes(
