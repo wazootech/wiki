@@ -1,6 +1,6 @@
 # Agent Guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by `wiki fmt` (mechanical markdown), `wiki check` (integrity), and `wiki lint` (conventions) in the Wiki CLI (`wazootech-wiki` on PyPI). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the Deno/TypeScript Wiki CLI: `fmt` (mechanical Markdown), `check` (integrity), and `lint` (conventions). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
 
 This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **`-c docs/wiki.yml`** on wiki commands here so local runs match CI.
 
@@ -8,9 +8,9 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 
 - **Wiki** — overall product name in prose (docs, skills, CHANGELOG).
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
-- **Wiki Library** (or **Wiki Python API**) — specifically for the Python API/Library.
+- **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — Package name on PyPI and NPM.
+- **`wazootech-wiki`** — the npm package name. It preserves the `wiki` executable and CommonJS, ESM, and TypeScript SDK entry points; its bundled Deno runtime means consumers need neither system Python nor a separately installed Deno.
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules
@@ -46,7 +46,7 @@ Use Markdown links for all internal and external URLs.
 
 ### Formatting (`wiki fmt`)
 
-- **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align markdown tables or list spacing — mdformat owns mechanical layout; CI fails on drift.
+- **Rule:** After editing any wiki page under `docs/wiki/` (including reference docs such as [Wiki Configuration](docs/wiki/Wiki_Configuration.md)), run `wiki fmt` on the changed files before commit. Do not hand-align Markdown tables or list spacing — the Deno formatter owns mechanical layout; CI fails on drift.
 - **Enforcer:** `wiki fmt --check` in CI (same order as [wiki lint](docs/wiki/wiki_lint.md): fmt → lint → check).
 
 ## Developer notes
@@ -69,40 +69,31 @@ Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, a
 
 ### TypeScript bindings
 
-The npm TypeScript API is a thin binding over the Python CLI, not a second implementation. When changing `src/wiki/cli.py` subcommands, flags, choices, or positional arguments, update `npm/src/wiki.ts`, `npm/src/types.ts`, and `npm/test-wiki-api.js` in the same PR. Run `npm run test:npm` before landing those changes.
+The npm package preserves the `wazootech-wiki` name, the `wiki` executable, and the CommonJS/ESM/TypeScript SDK. Its SDK and CLI run the same Deno/TypeScript engine; do not introduce a Python subprocess or require users to install Deno separately. When changing `src/wiki/cli.ts` subcommands, flags, choices, or positional arguments, update the SDK mappings in `npm/src/wiki.ts` and its types/tests in the same change. Run `npm run test:npm` before landing those changes.
 
-The option-bag types in `npm/src/types.ts` are generated from the Pydantic `COMMAND_MODELS` models (`src/wiki/schemas/cli.py`): after changing a model's fields, aliases, or docstrings, run `npm run gen:cli-types` and commit the regenerated `npm/src/types.generated.ts`. The drift test (`npm/test-cli-drift.js`) fails CI when the committed generated file falls out of sync with the models, and it also verifies every `--flag` string the wrapper methods in `npm/src/wiki.ts` emit against the real Click option strings — rename a Click flag and the wrapper must be updated in the same PR or CI fails. The drift test also verifies every config-key reference in the scaffold template (`src/wiki/templates/wiki.yml`) and the docs against the `Config` schema (`src/wiki/schemas/wiki_config.py`) — rename a config-schema field and the template or docs must be updated in the same PR or CI fails.
+The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. Verify the packed tarball's `wiki --help` path in CI with system Python blocked; keep the runtime invocation in `npm/src/runtime.ts` and `npm/bin/wiki.js` aligned.
 
 ### Running validations
 
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
 ```bash
-# 0. Python static analysis (requires dev deps)
-uv sync --group dev
-uv run ruff check .
+deno task check
+deno task lint
+deno task fmt:check
+deno task test
 
-# 1. Format (apply, then verify)
-wiki -c docs/wiki.yml fmt
-wiki -c docs/wiki.yml fmt --check
-
-# 2. Conventions: broken links, filename pattern, headings, link style
-wiki -c docs/wiki.yml lint --strict
-
-# 3. Integrity: SHACL, JSON Schema frontmatter, route safety, layout frontmatter
-wiki -c docs/wiki.yml check --strict
-
-# 4. Stale inline SPARQL result blocks
-wiki -c docs/wiki.yml render --check
-
-# Verbose output
-wiki -c docs/wiki.yml check -v
-wiki -c docs/wiki.yml lint -v
+deno run -A src/wiki/cli.ts -c docs/wiki.yml fmt --check
+deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict
+deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict
+deno run -A src/wiki/cli.ts -c docs/wiki.yml render --check
+deno run -A docs/build.ts --output-dir _site
+npm run test:npm
 ```
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
-For library-level validation and build in Python (without subprocess), see [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md). Unit tests target `Wiki` class methods under `tests/`.
+The Deno `Wiki` API is the in-process library surface; the npm SDK is the stable Node.js API and CLI binding. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are in `npm/`.
 
 ### Deploy configuration
 
@@ -113,32 +104,9 @@ For library-level validation and build in Python (without subprocess), see [Wiki
 
 ### Release workflow
 
-To ship a new version across PyPI and npm:
+A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
-Use the release helper for the normal path:
-
-```bash
-uv run python scripts/release.py patch --message "Fix graph URI resolution" --issue 215 --full --push --watch
-```
-
-The helper bumps all enforced version surfaces (`pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/wiki.md`), updates `CHANGELOG.md`, regenerates inline SPARQL result blocks, formats docs, runs validation, commits, tags, pushes, and optionally watches GitHub Actions.
-
-Manual fallback:
-
-1. **Bump version** in all enforced places: `pyproject.toml`, `package.json`, `package-lock.json`, `uv.lock`, `src/wiki/__init__.py`, and `docs/wiki/wiki.md` (they must match — CI verifies this).
-1. **Update `CHANGELOG.md`** with the new version's entries.
-1. **Regenerate docs outputs** with `wiki -c docs/wiki.yml render`, then run `wiki -c docs/wiki.yml fmt` on touched docs.
-1. **Commit and push** the version bump. Tag it with `v<VERSION>` (e.g., `v0.1.18`).
-1. **Dispatch the release** — either push the `v*` tag, or run the workflow manually from `Actions > Release > Run workflow`. The workflow has skip-toggles for PyPI, npm, and standalone binaries.
-1. **Verify** — the workflow publishes to PyPI (trusted publishing), npm (provenance), and attaches standalone binaries to a GitHub Release with auto-generated release notes.
-
-The release workflow is at `.github/workflows/release.yml`. It is the **only** path for publishing to registries — do not `npm publish` or `uv publish` by hand.
-
-Workflow inputs (all optional):
-
-- `skip_pypi` — skip PyPI publish
-- `skip_npm` — skip npm publish
-- `skip_binaries` — skip standalone binaries and GitHub Release
+Before the first release, create `@wazoo/wiki` on JSR and link it to `wazootech/wiki` in JSR package settings; the release workflow uses GitHub OIDC and cannot publish until that link exists. `.github/workflows/release.yml` verifies versions, dry-runs the JSR package contents, builds Deno standalone binaries, then publishes JSR, GitHub Release assets, and `wazootech-wiki` to npm with provenance. The workflow no longer publishes a Python package to PyPI. Do not publish packages by hand.
 
 ### Config schema changes
 

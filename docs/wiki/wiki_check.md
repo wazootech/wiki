@@ -69,7 +69,7 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 | Command               | Purpose                                              |
 | --------------------- | ---------------------------------------------------- |
 | `wiki lint --strict`  | Broken links, filename pattern, headings, link style |
-| `wiki fmt --check`    | mdformat consistency                                 |
+| `wiki fmt --check`    | Deno Markdown formatter consistency                  |
 | `wiki render --check` | Stale inline SPARQL result blocks                    |
 | `wiki link --check`   | Remaining missing-wikilink opportunities             |
 

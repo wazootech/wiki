@@ -1,6 +1,6 @@
 # Initialize wiki
 
-Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) project: `wiki init` (Phase A) plus a tweak step (Phase B). Requires **`wiki` on PATH** (PyPI package `wazootech-wiki`).
+Scaffold a new [Wiki CLI](https://github.com/wazootech/wiki) project: `wiki init` (Phase A) plus a tweak step (Phase B). Requires `wiki` on PATH, installed from npm as `wazootech-wiki`; its npm package includes the Deno runtime.
 
 This workflow **only** scaffolds or customizes a wiki project. When done, summarize and **stop**. If the CLI is missing, state the blocker and stop — read [install.md](install.md) only when the user wants install help.
 
@@ -8,7 +8,7 @@ This workflow **only** scaffolds or customizes a wiki project. When done, summar
 
 Run `bash skills/wiki/scripts/verify.sh` first.
 
-Prefer `wiki` on PATH when exit code is `0`. In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale, try `uv run wiki` or `python -m wiki`. If neither works, stop and recommend upgrading **`wazootech-wiki`** (one-liner only).
+Prefer `wiki` on PATH when exit code is `0`. In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale, try `deno run -A src/wiki/cli.ts` from the checkout root. Do not use `uv run wiki` or `python -m wiki`. If neither the PATH command nor Deno source command works, stop and recommend upgrading or reinstalling `wazootech-wiki` from npm (one-liner only).
 
 ## Prerequisite gate
 
@@ -23,7 +23,7 @@ If either fails:
 
 1. Say that **creating a wiki requires `wiki` on PATH** (install Wiki CLI — package **`wazootech-wiki`**).
 1. If `--help` passes but `fmt` fails, note stale or shadowed `wiki` — upgrade/reinstall before init.
-1. **Do not** run `wiki init`, write scaffold files, or paste a step-by-step pip guide.
+1. **Do not** run `wiki init`, write scaffold files, or paste a step-by-step Python installation guide.
 1. **Stop.**
 
 ## Workflow (CLI present)
@@ -163,3 +163,5 @@ Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config 
 | `check:` | `wiki check` | SHACL, JSON Schema, routes, layouts |
 
 Regex belongs in `wiki.filename_pattern`, not under `check:`.
+
+Fresh `wiki init` writes `fmt:` settings in `wiki.yml`; the Deno formatter uses these options and may read compatible `.mdformat.toml` settings during migration.

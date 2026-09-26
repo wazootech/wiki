@@ -2,7 +2,7 @@ name: Deploy Wiki to Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,48 +23,38 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
-      
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-      
-      - name: Install Dependencies
-        run: uv sync
 
-      - name: Install docs dependencies
-        run: uv pip install -r docs/requirements-docs.txt
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
         with:
-          node-version: "20"
+          deno-version: v2.x
+          cache: true
 
-      - name: Generate Python API docs
-        run: npm run gendocs:python
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
 
       - name: Generate TypeScript API docs
-        run: npm install && npm run gendocs:ts
+        run: npm run gendocs:ts
 
       - name: Run Docs Wiki Integrity Audits
-        run: uv run wiki -c docs/wiki.yml check --strict -v
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
 
       - name: Run Docs Wiki Convention Audits
-        run: uv run wiki -c docs/wiki.yml lint --strict -v
+        run: deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict -v
 
       - name: Build Static Site
-        run: uv run python docs/build.py --output-dir _site
+        run: deno run -A docs/build.ts --output-dir _site
 
-      - name: Copy API docs into site output
+      - name: Copy TypeScript API docs into site output
         run: |
           mkdir -p _site/assets/api
-          cp -r docs/assets/api/python _site/assets/api/
-          cp -r docs/assets/api/ts _site/assets/api/
+          cp -R docs/assets/api/ts _site/assets/api/ts
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

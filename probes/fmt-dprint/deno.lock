@@ -1,0 +1,51 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@dprint/formatter@0.5.1": "0.5.1",
+    "npm:@dprint/json@0.21.3": "0.21.3",
+    "npm:@dprint/markdown@0.20.0": "0.20.0",
+    "npm:@dprint/typescript@0.96.1": "0.96.1",
+    "npm:dprint-plugin-yaml@0.5.0": "0.5.0",
+    "npm:lax-css@0.3.0": "0.3.0",
+    "npm:lax-markup@0.3.2": "0.3.2",
+    "npm:lax-sql@0.3.0": "0.3.0"
+  },
+  "npm": {
+    "@dprint/formatter@0.5.1": {
+      "integrity": "sha512-cdZUrm0iv/FnnY3CKE2dEcVhNEzrC551aE2h2mTFwQCRBrqyARLDnb7D+3PlXTUVp3s34ftlnGOVCmhLT9DeKA=="
+    },
+    "@dprint/json@0.21.3": {
+      "integrity": "sha512-fOmRKstf4kVZunnJcrGg1SNzoU6Y11mnLR1SbHQ7PwVvOUQTTUeCtxm3oLy/56nf69kaZmrdeegWXyxnTM5WDQ=="
+    },
+    "@dprint/markdown@0.20.0": {
+      "integrity": "sha512-qvynFdQZwul4Y+hoMP02QerEhM5VItb4cO8/qpQrSuQuYvDU+bIseiheVAetSpWlNPBU1JK8bQKloiCSp9lXnA=="
+    },
+    "@dprint/typescript@0.96.1": {
+      "integrity": "sha512-mz/nINSFQh1R5i2Qy90SWOCCK4SgNGRkNhCZba7LYmUkE4Zi8/45p8l8pqc9yN1fb4XY5Muhrzdh5Q3jFsYimw=="
+    },
+    "dprint-plugin-yaml@0.5.0": {
+      "integrity": "sha512-ZocMPCbIa2qO8r0jyN1wnRjXAtKwwPMmEFXHOKfTmrecZPopUzTDFg8uUPOSvjJdWYrlpmFfOAw4FFcyI7px0g=="
+    },
+    "lax-css@0.3.0": {
+      "integrity": "sha512-xX/NxUKJlYfo3DtTS3/67x0uhGzd18ILxItGCgEawv5VeuY24N29/p5+iaMN1x9D7KPDMQ0PAmZKXTsgLTXmjQ=="
+    },
+    "lax-markup@0.3.2": {
+      "integrity": "sha512-54MbT4Sd/uQrbUOLjhUsVJ6y23a4smw3R1SVt0MGJCUKaU07p3BAv7ekd5ByG3C5mBjVpChL888k4L/ihDdP2A=="
+    },
+    "lax-sql@0.3.0": {
+      "integrity": "sha512-Wgd+fMYE1w0N4JuG5j51m4/IJFbZVWwQTKHaYkXF0UEmCIiEycJ1eWKZuJTE3md0EnY4PF0a9aDPHbRHjut+MQ=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@dprint/formatter@0.5.1",
+      "npm:@dprint/json@0.21.3",
+      "npm:@dprint/markdown@0.20.0",
+      "npm:@dprint/typescript@0.96.1",
+      "npm:dprint-plugin-yaml@0.5.0",
+      "npm:lax-css@0.3.0",
+      "npm:lax-markup@0.3.2",
+      "npm:lax-sql@0.3.0"
+    ]
+  }
+}

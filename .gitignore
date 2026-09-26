@@ -36,6 +36,13 @@ ENV/
 env/
 .uv/
 
+# Differential-harness scratch copies of the test corpora (issue #273).
+.parity-tmp/
+
+# Reasoning-engine spike build output (106 MB; exceeds GitHub's 100 MB file limit).
+# Rebuild with spike-reasoning/compile-runtime.ts — see spike-reasoning/DECISION.md.
+spike-reasoning/spike-bin.exe
+
 # Caches
 .pytest_cache/
 .mypy_cache/
@@ -63,3 +70,12 @@ skills/*-workspace/
 # skills CLI install artifacts (canonical skills live under skills/)
 .agents/
 skills-lock.json
+
+# Generated investigation captures (recreated by the probes; not test fixtures).
+/probes/fmt-dprint/probe-out-*.txt
+/probes/fmt-dprint/results-*.json
+/probes/json-schema/deno-ajv.json
+/probes/json-schema/probe-out.txt
+/probes/rdf-io/deno/*.txt
+/probes/rdf-io/oracle/*.txt
+/probes/rdf-io/oracle/report.json

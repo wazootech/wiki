@@ -1,26 +1,26 @@
 ---
 type: schema:SoftwareApplication
 name: wiki
-softwareVersion: 0.1.23
+softwareVersion: 0.1.24
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 codeRepository: https://github.com/wazootech/wiki
 ---
 
 # `wiki`
 
-This page is the **documentation home** for **Wiki CLI** (`wiki` on PyPI and npm as [**`wazootech-wiki`**](https://pypi.org/project/wazootech-wiki/)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
+This page is the **documentation home** for **Wiki CLI** (`wiki`, distributed on npm as [**`wazootech-wiki`**](https://www.npmjs.com/package/wazootech-wiki)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
 
 ```bash
-pip install wazootech-wiki
+npm install -g wazootech-wiki
 wiki --help
 ```
 
-Install options: PyPI (`pip install wazootech-wiki`), npm ([`wazootech-wiki` on npm](https://www.npmjs.com/package/wazootech-wiki) → `wiki` on PATH), or zero-install (`npx wazootech-wiki` / `uvx --from wazootech-wiki wiki` — same subcommands as `wiki`). See [Getting Started](Getting_Started.md#install).
+Install globally from npm, run one-off commands with `npx wazootech-wiki`, or download a self-contained executable from [GitHub Releases](https://github.com/wazootech/wiki/releases). See [Getting Started](Getting_Started.md#install).
 
 ## Quickstart
 
 ```bash
-pip install wazootech-wiki
+npm install -g wazootech-wiki
 mkdir my-wiki && cd my-wiki
 wiki init
 wiki check
@@ -115,7 +115,7 @@ GitHub **template repositories** in the [wazootech](https://github.com/wazootech
 | [mintlify](https://github.com/wazootech/wiki-templates/tree/main/mintlify)   | Mintlify or Holocron docs site from a compatible vault                                        |
 | [holocron](https://github.com/wazootech/wiki-templates/tree/main/holocron)   | Holocron docs site from a Wiki CLI-compatible vault                                           |
 | [astro](https://github.com/wazootech/wiki-templates/tree/main/astro)         | Astro SSG consumer of `wiki export` JSON-LD                                                   |
-| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia) | Wikipedia-themed layout using the Wiki Python API                                             |
+| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia) | Wikipedia-themed layout for Wiki CLI-generated sites                                          |
 | [camunda](https://github.com/wazootech/wiki-templates/tree/main/camunda)     | Camunda BPMN/DMN governance knowledge base with SHACL shapes                                  |
 
 ### Artifact contract
@@ -135,7 +135,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/ya
 - **Check** — SHACL and JSON Schema integrity, route safety, layout frontmatter ([wiki check](wiki_check.md))
 - **Lint** — broken links, filename pattern, and heading conventions ([wiki lint](wiki_lint.md))
 - **Link** — repair broken internal links and optionally insert suggested links as wiki-gardening ([wiki link](wiki_link.md))
-- **Fmt** — mdformat for markdown ([wiki fmt](wiki_fmt.md))
+- **Fmt** — Deno Markdown formatter for markdown ([wiki fmt](wiki_fmt.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([wiki query](wiki_query.md), [Graph Cache](Graph_Cache.md))
 - **Graph list** — inspect root and source named graphs for SPARQL `GRAPH` provenance ([wiki graph](wiki_graph.md))
 - **MCP** — read-only query-first MCP server for local agents ([wiki mcp](wiki_mcp.md))
@@ -146,20 +146,20 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/ya
 - **Update** — check locked sources for newer commits ([wiki update](wiki_update.md))
 - **Remove** — delete a source from wiki.yml, cache, and lockfile ([wiki remove](wiki_remove.md))
 - **Init** — scaffold `wiki.yml` ([wiki init](wiki_init.md))
-- **Upgrade** — PyPI updates ([wiki upgrade](wiki_upgrade.md))
+- **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md))
 
 ## Supported file formats
 
 ### Input pipelines
 
-Wiki CLI processes files through two distinct pipelines. Files in `wiki.input` are classified as either **documents** (frontmatter parsed, IRI derived from file path, link-checked) or **raw RDF sources** (loaded directly via rdflib, no document processing):
+Wiki CLI processes files through two distinct pipelines. Files in `wiki.input` are classified as either **documents** (frontmatter parsed, IRI derived from file path, link-checked) or **raw RDF sources** (parsed directly into the RDF graph, without document processing):
 
-| Category            | Extensions                                               | Pipeline             | Key behavior                                                                                  |
-| ------------------- | -------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------- |
-| Wiki documents      | `.md`, `.yaml`, `.yml`, `.json`, `.toml`                 | Frontmatter → graph  | Parsed for frontmatter/data; document IRI derived from file path; link-checked and exportable |
-| Data-only documents | `.yaml`, `.yml`, `.json`, `.toml`                        | Frontmatter → graph  | Subset of wiki documents without a markdown body — entire file is the data dict               |
-| Raw RDF sources     | `.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld` | rdflib parse → graph | Loaded as raw triples; no route, no link checking, no frontmatter pipeline                    |
-| Inline Turtle       | Inside `.md` as ```` ```turtle ```` blocks               | rdflib parse → graph | Fenced turtle blocks inside markdown files are parsed and merged into the graph               |
+| Category            | Extensions                                               | Pipeline               | Key behavior                                                                                  |
+| ------------------- | -------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| Wiki documents      | `.md`, `.yaml`, `.yml`, `.json`, `.toml`                 | Frontmatter → graph    | Parsed for frontmatter/data; document IRI derived from file path; link-checked and exportable |
+| Data-only documents | `.yaml`, `.yml`, `.json`, `.toml`                        | Frontmatter → graph    | Subset of wiki documents without a markdown body — entire file is the data dict               |
+| Raw RDF sources     | `.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld` | RDF/JS parsers → graph | Loaded as raw triples; no route, no link checking, no frontmatter pipeline                    |
+| Inline Turtle       | Turtle-tagged code fence inside `.md`                    | RDF/JS parser → graph  | Parsed and merged into the graph alongside document frontmatter                               |
 
 ### Document pipeline
 
@@ -169,17 +169,17 @@ All document formats have their `@context` auto-populated with `wiki:` and `foaf
 
 ### Raw RDF pipeline
 
-Files with raw RDF extensions are parsed directly by rdflib using the format mapped from their extension. They bypass all document processing — no route registration, no link validation, no frontmatter coercion. They contribute triples to the same graph but are invisible to `wiki export` (which operates on documents) and `wiki link`.
+Files with raw RDF extensions are parsed by the Deno RDF/JS stack using the format mapped from their extension. They bypass document processing — no route registration, link validation, or frontmatter coercion. They contribute triples to the same graph but are invisible to `wiki export` (which operates on documents) and `wiki link`.
 
-**Important nuance:** `.jsonld` is raw RDF (rdflib `json-ld` format) — it is NOT a wiki document. It does not get a document IRI, does not go through `ensure_context()`, and is not subject to link checking. A `.json` file with the same content *is* a wiki document and follows the frontmatter pipeline. These are disjoint processing paths.
+**Important nuance:** `.jsonld` is raw RDF, not a wiki document. It does not get a document IRI or document-level context injection, and it is not subject to link checking. A `.json` file with the same content is a wiki document and follows the frontmatter pipeline. These are disjoint processing paths.
 
 ### Output formats
 
-| Context                                   | Formats                                                                    |
-| ----------------------------------------- | -------------------------------------------------------------------------- |
-| `wiki export`                             | `dict` (default), `json-ld`, `turtle`, `xml`, `n3`, `nt`, `trig`, `nquads` |
-| `wiki query`                              | `table` (default), `json`, `csv`, `tsv`, `turtle`, `n3`, `markdown`        |
-| `wiki serve` / `wiki build` metadata view | `json-ld`, `turtle`, `n3`, `xml`, `nt`, `trig`, `nquads`                   |
+| Context                              | Formats                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `wiki export`                        | `dict` (default), `json-ld`, `turtle`, `xml` (deferred), `n3`, `nt`, `trig`, `nquads` |
+| `wiki query`                         | `table` (default), `json`, `csv`, `tsv`, `turtle`, `n3`, `markdown`                   |
+| Repository docs-theme metadata panel | `json-ld`, `turtle`, `n3`, `nt`, `trig`, `nquads`                                     |
 
 ### Key nuances
 
@@ -187,7 +187,7 @@ Files with raw RDF extensions are parsed directly by rdflib using the format map
 - **N3 is output-only** — Notation3 (`.n3`) is available for `wiki export` and `wiki query` CONSTRUCT results but is not recognized as an input graph source extension.
 - **`@context` auto-injection** — Document files that lack an `@context` key get default `wiki:` and `foaf:` prefixes injected. If `@context` is present as a dict, those defaults are merged in.
 - **Only `.md` carries body text** — Data-only formats cannot carry a body literal in the graph; the entire file content is the data dict.
-- **Inline ```` ```turtle ``` ```` blocks** — Any fenced code block with `turtle` language inside a `.md` file is parsed as Turtle RDF and merged into the wiki graph. This is separate from SPARQL result blocks.
+- **Turtle-tagged code fences** — Markdown code fences tagged `turtle` are parsed as RDF and merged into the wiki graph. This is separate from SPARQL result blocks.
 - **`.toml` is a document format** — TOML files under `wiki.input` are treated as data-only wiki documents, subject to `@context` injection and route generation.
 
 ### Related
@@ -251,24 +251,24 @@ ORDER BY ?command
 ```
 -->
 
-| command | description |
-| --- | --- |
-| [wiki_build](wiki_build.md) | Generate a static HTML site from the wiki. |
-| [wiki_check](wiki_check.md) | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
-| [wiki_export](wiki_export.md) | Export document frontmatter as RDF or JSON-LD. |
-| [wiki_fmt](wiki_fmt.md) | Format markdown wiki pages using mdformat with wikilink preservation. |
-| [wiki_graph](wiki_graph.md) | List read-only RDF named graphs for root and installed source provenance. |
-| [wiki_init](wiki_init.md) | Scaffold wiki.yml and an empty wiki/ folder for markdown pages. |
-| [wiki_install](wiki_install.md) | Fetch and lock external data sources declared in wiki.yml. |
-| [wiki_link](wiki_link.md) | Suggest missing wikilinks and repair unambiguous broken internal links. |
-| [wiki_lint](wiki_lint.md) | Convention audits for broken links, filename patterns, heading style, and internal link style. |
-| [wiki_mcp](wiki_mcp.md) | Run a read-only MCP server for querying the wiki graph. |
-| [wiki_query](wiki_query.md) | Run SPARQL SELECT or CONSTRUCT against the wiki graph. |
-| [wiki_remove](wiki_remove.md) | Remove a data source from wiki.yml, its cache, and wiki.lock. |
-| [wiki_render](wiki_render.md) | Update inline SPARQL result tables in markdown files. |
-| [wiki_serve](wiki_serve.md) | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint. |
-| [wiki_update](wiki_update.md) | Check locked sources for newer commits and update wiki.lock. |
-| [wiki_upgrade](wiki_upgrade.md) | Check PyPI for updates and upgrade wazootech-wiki. |
+| command                         | description                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [wiki_build](wiki_build.md)     | Generate a static HTML site from the wiki.                                                          |
+| [wiki_check](wiki_check.md)     | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
+| [wiki_export](wiki_export.md)   | Export document frontmatter as RDF or JSON-LD.                                                      |
+| [wiki_fmt](wiki_fmt.md)         | Format Markdown wiki pages with the Deno formatter and wikilink preservation.                       |
+| [wiki_graph](wiki_graph.md)     | List read-only RDF named graphs for root and installed source provenance.                           |
+| [wiki_init](wiki_init.md)       | Scaffold wiki.yml and an empty wiki/ folder for markdown pages.                                     |
+| [wiki_install](wiki_install.md) | Fetch and lock external data sources declared in wiki.yml.                                          |
+| [wiki_link](wiki_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links.                             |
+| [wiki_lint](wiki_lint.md)       | Convention audits for broken links, filename patterns, heading style, and internal link style.      |
+| [wiki_mcp](wiki_mcp.md)         | Run a read-only MCP server for querying the wiki graph.                                             |
+| [wiki_query](wiki_query.md)     | Run SPARQL SELECT or CONSTRUCT against the wiki graph.                                              |
+| [wiki_remove](wiki_remove.md)   | Remove a data source from wiki.yml, its cache, and wiki.lock.                                       |
+| [wiki_render](wiki_render.md)   | Update inline SPARQL result tables in markdown files.                                               |
+| [wiki_serve](wiki_serve.md)     | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                     |
+| [wiki_update](wiki_update.md)   | Check locked sources for newer commits and update wiki.lock.                                        |
+| [wiki_upgrade](wiki_upgrade.md) | Check for Wiki CLI updates and upgrade supported installations.                                     |
 
 <!-- sparql:end -->
 
@@ -302,7 +302,7 @@ Enforcing schemas on text databases can become problematic as structures evolve.
 
 ## Design
 
-The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For programmatic use from Python or TypeScript, see [Wiki Programmatic API](Wiki_Programmatic_API.md).
+The CLI follows a flat, scriptable surface and [Design Philosophies](Design_Philosophies.md) (silent success, composable stdout). For programmatic use from Node.js/TypeScript or directly from Deno, see [Wiki Programmatic API](Wiki_Programmatic_API.md).
 
 ## Pattern context
 

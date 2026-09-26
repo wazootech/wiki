@@ -45,7 +45,7 @@ Assets from `wiki.assets` copy under the same prefix. See [Wiki Configuration](W
 
 ## Metadata view
 
-Each built page embeds compacted JSON-LD plus Turtle, N3, RDF/XML, N-Triples, TriG, and N-Quads. JSON-LD is selected by default; the chip row stays usable without JavaScript.
+Each built page embeds compacted JSON-LD plus Turtle, N3, N-Triples, TriG, and N-Quads. JSON-LD is selected by default; the chip row stays usable without JavaScript. RDF/XML output is deferred from the Deno/TypeScript cutover and is not offered in the metadata panel.
 
 ## Wiki page layout
 

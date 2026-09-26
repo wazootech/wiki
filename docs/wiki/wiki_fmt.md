@@ -1,12 +1,12 @@
 ---
 type: TechArticle
 headline: wiki fmt
-description: Format markdown wiki pages using mdformat with wikilink preservation.
+description: Format Markdown wiki pages with the Deno formatter and wikilink preservation.
 ---
 
 # `wiki fmt`
 
-Format markdown wiki pages in-place using **mdformat**. Mechanical markdown style (ATX headings, list spacing, GFM tables, frontmatter layout) is configured under the top-level **`fmt`** key in `wiki.yaml` (or `wiki.json`).
+Format Markdown wiki pages in-place with Wiki's in-process Deno formatter, backed by `dprint-plugin-markdown`. Mechanical markdown style (ATX headings, list spacing, GFM tables, frontmatter layout) is configured under the top-level **`fmt`** key in `wiki.yaml` (or `wiki.json`).
 
 ## Configuration
 
@@ -21,7 +21,7 @@ fmt:
   extensions: [gfm, front_matters, wikilink, toc, footnote]
 ```
 
-Keys and values follow [mdformat configuration](https://mdformat.readthedocs.io/en/stable/users/configuration_file.html). Unknown keys fail at config load; invalid values fail at load or when `wiki fmt` reads TOML.
+The option names and values follow the [mdformat-compatible configuration shape](https://mdformat.readthedocs.io/en/stable/users/configuration_file.html); that page documents the settings, not the formatter runtime. Unknown keys fail at config load; invalid values fail at load or when `wiki fmt` reads TOML.
 
 An empty mapping (`fmt: {}`) is valid and resolves to the same **Wiki CLI fmt defaults** as omitting `fmt` when no TOML file applies (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`).
 
@@ -42,7 +42,7 @@ Create the file beside `wiki.yaml` with the same keys as inline `fmt` (for examp
 1. **Inline** — `fmt:` mapping in `wiki.yaml` (`fmt: {}` counts as inline and uses Wiki CLI defaults)
 1. **Pointer** — TOML at the relative path in `fmt:`
 1. **Wiki TOML** — `config_root/.mdformat.toml` when `fmt` is omitted or the pointer file is missing
-1. **Parent walk** — nearest `.mdformat.toml` above the markdown file (mdformat behavior)
+1. **Parent walk** — nearest `.mdformat.toml` above the markdown file (legacy compatible search behavior)
 1. **Defaults** — Wiki CLI fmt defaults (`wrap: "no"`, `end_of_line: lf`, `gfm` / `front_matters` / `wikilink` / `toc` / `footnote`)
 
 `wiki fmt -v` prints which step matched (for example `Using inline fmt in wiki config.`).

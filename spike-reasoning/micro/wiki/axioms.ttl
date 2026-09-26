@@ -1,0 +1,42 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/micro/> .
+
+# cax-sco: subclass chain Person < Human < Agent
+schema:Person rdfs:subClassOf ex:Human .
+ex:Human rdfs:subClassOf schema:Agent .
+
+# scm-eqc2: equivalent class
+ex:Creature owl:equivalentClass schema:Agent .
+
+# prp-dom / prp-rng
+ex:worksFor rdfs:domain schema:Person ; rdfs:range ex:Organization .
+
+# prp-inv1 / prp-inv2: inverse
+ex:employs owl:inverseOf ex:worksFor .
+
+# prp-trp: transitive property
+ex:reportsTo a owl:TransitiveProperty .
+
+# prp-spo1: sub-property
+ex:directlyReportsTo rdfs:subPropertyOf ex:reportsTo .
+
+# prp-eqp1/2: equivalent properties
+ex:hasColleague owl:equivalentProperty ex:knows .
+
+# key (prp-key): email is a key of User -> two Users sharing email are owl:sameAs
+ex:User owl:hasKey ( ex:email ) .
+
+# prp-fp: functional property -> two fillers entail owl:sameAs
+ex:ssn a owl:FunctionalProperty .
+
+# prp-prp: property chain worksFor o partOf -> memberOf
+ex:memberOf owl:propertyChainAxiom ( ex:worksFor ex:partOf ) .
+
+# cax-dw: disjoint classes
+ex:Organization owl:disjointWith schema:Person .
+
+# cls-com: complement class
+ex:NonPerson owl:complementOf schema:Person .

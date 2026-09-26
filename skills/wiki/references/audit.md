@@ -21,7 +21,7 @@ Clean conventions and visual presentation of the wiki source files:
 - **Filename conventions**: Filenames not matching the Wikipedia-style pattern (e.g. `Opal_Security.md` preserving capitalization and underscores), or `index.md` used for non-folder index routes.
 - **Heading styles**: Use of Setext underlines (e.g., `===` or `---` under titles) instead of standard ATX `#` headings. Use of sentence-case headings for H2+ (only capitalize first word and proper nouns). Numbered headings (e.g., `## 1. Introduction`).
 - **Thematic breaks**: Forbidden horizontal rules (`---`) in standard body text.
-- **Format drift**: Trailing blank lines, inconsistent table indentation, or list spacing that has drifted from the format enforced by `wiki fmt` (Enforced by mdformat via `wiki fmt`).
+- **Format drift**: Trailing blank lines, inconsistent table indentation, or list spacing that has drifted from the Deno Markdown formatter enforced by `wiki fmt`.
 - **Prose structure**: Standard pages missing a `## References` section at the end if citations are present.
 
 ## Configuration hygiene
@@ -41,7 +41,7 @@ Build and hosting verification for GitHub Pages:
 - **Artifact path mismatches**: The GitHub Action's `upload-pages-artifact` `path` is set to `_site` instead of `_site/subpath` when a non-empty `site.base_url` is used.
 - **Legacy branch deploys**: Repos configured to build/push to a `gh-pages` branch instead of utilizing modern GitHub Actions direct uploads.
 - **Build ignore rules**: Missing `_site/` or build directory in `.gitignore`, causing built HTML to be accidentally committed to the source branch.
-- **CI runner mismatches**: Using `uv sync` in workflow without a `pyproject.toml` or `uv.lock` in the repository (should use the `pip install` template instead).
+- **CI runner mismatches**: A workflow invokes the source CLI without setting up Deno, or still uses the retired Python/PyPI path instead of the npm package or Deno-native CLI.
 
 ## Semantic metadata and SPARQL
 

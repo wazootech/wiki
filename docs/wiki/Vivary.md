@@ -83,7 +83,7 @@ Key commands:
 
 ## Adding or changing types — tighten-only overlays
 
-Once a base schema exists, refinement happens through **overlays** — nested `tropo.toml` files that may only *add requirements or narrow enums* for a subtree, never relax inherited ones. That is the **tighten-only law**: a schema's evolution toward being optimal for a project is a directional, one-way tightening process, enforced at config-load time (`E120` on any loosen attempt) and guided by what `tropo check` and `tropo fix` surface as friction — `W210` flags frontmatter that merely repeats a derived value, and `tropo fix` strips it (the only mechanical edit tropo makes).
+Once a base schema exists, refinement happens through **overlays** — nested `tropo.toml` files that may only _add requirements or narrow enums_ for a subtree, never relax inherited ones. That is the **tighten-only law**: a schema's evolution toward being optimal for a project is a directional, one-way tightening process, enforced at config-load time (`E120` on any loosen attempt) and guided by what `tropo check` and `tropo fix` surface as friction — `W210` flags frontmatter that merely repeats a derived value, and `tropo fix` strips it (the only mechanical edit tropo makes).
 
 Add or change a type by editing `tropo.toml`:
 
@@ -127,21 +127,21 @@ required = { owner = "string", review_status = "enum:draft|reviewed|approved" }
 
 ## Vivary vs [wiki](wiki.md)
 
-| Dimension          | Vivary (tropo)                                                     | [wiki](wiki.md)                          |
-| ------------------ | ------------------------------------------------------------------ | ---------------------------------------- |
-| Primary goal       | Standardized **agent workspace**                                   | Semantic wiki **toolchain**              |
-| Workspace contract | Thin `.vivary/` — `context.md` + `workspace.toml` (v0.3)           | `wiki.yaml` config                       |
-| Schema model       | Folder-as-type + `[types.*]` in `workspace.toml`                   | SHACL, JSON Schema, `wiki.yaml`          |
-| Metadata style     | Derive `id`, `title`; minimal frontmatter                          | YAML-LD frontmatter + shapes             |
-| Graph              | Typed nodes/edges from `ref` fields                                | Full RDF compile + [SPARQL](SPARQL.md)   |
-| Records            | `.vivary/records/` — one typed Markdown per `create-vivary record` | Documents with frontmatter + shapes      |
-| Validation         | `tropo check` + Doctor (strict gate)                               | `wiki check`, `wiki lint`                |
-| Governance         | Task Capsules, Execution Receipts, local run receipts              | Link graph, SHACL                        |
-| Privacy            | `.vivary/private/`, `.vivary/runtime/` gitignored + graph-excluded | Config excludes only                     |
-| Agent loop         | `AGENTS.md` → `.vivary/context.md`, receipts, human gates          | [Wiki Skills](Wiki_Skills.md) (optional) |
-| Publishing         | Not the focus (workspace OS)                                       | `wiki build`, static HTML, RDF export    |
-| MCP                | Optional read-only `vivary-mcp` (4 tools)                          | Optional read-only `wiki mcp` (SPARQL)   |
-| Dependencies       | Zero on core engines; storage/MCP opt-in                           | PyPI `wazootech-wiki`                    |
+| Dimension          | Vivary (tropo)                                                     | [wiki](wiki.md)                             |
+| ------------------ | ------------------------------------------------------------------ | ------------------------------------------- |
+| Primary goal       | Standardized **agent workspace**                                   | Semantic wiki **toolchain**                 |
+| Workspace contract | Thin `.vivary/` — `context.md` + `workspace.toml` (v0.3)           | `wiki.yaml` config                          |
+| Schema model       | Folder-as-type + `[types.*]` in `workspace.toml`                   | SHACL, JSON Schema, `wiki.yaml`             |
+| Metadata style     | Derive `id`, `title`; minimal frontmatter                          | YAML-LD frontmatter + shapes                |
+| Graph              | Typed nodes/edges from `ref` fields                                | Full RDF compile + [SPARQL](SPARQL.md)      |
+| Records            | `.vivary/records/` — one typed Markdown per `create-vivary record` | Documents with frontmatter + shapes         |
+| Validation         | `tropo check` + Doctor (strict gate)                               | `wiki check`, `wiki lint`                   |
+| Governance         | Task Capsules, Execution Receipts, local run receipts              | Link graph, SHACL                           |
+| Privacy            | `.vivary/private/`, `.vivary/runtime/` gitignored + graph-excluded | Config excludes only                        |
+| Agent loop         | `AGENTS.md` → `.vivary/context.md`, receipts, human gates          | [Wiki Skills](Wiki_Skills.md) (optional)    |
+| Publishing         | Not the focus (workspace OS)                                       | `wiki build`, static HTML, RDF export       |
+| MCP                | Optional read-only `vivary-mcp` (4 tools)                          | Optional read-only `wiki mcp` (SPARQL)      |
+| Dependencies       | Zero on core engines; storage/MCP opt-in                           | `@wazoo/wiki` (JSR), `wazootech-wiki` (npm) |
 
 **Wiki CLI** targets wikis that become queryable, publishable [semantic web](Semantic_Web.md) artifacts; Vivary targets the **agent-native workspace** pattern in the [LLM Wiki](LLM_Wiki.md) era — thin governed contract + typed graph + verification receipts + human gates — without RDF compilation.
 

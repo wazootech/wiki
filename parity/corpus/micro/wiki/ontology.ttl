@@ -1,0 +1,25 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix micro: <https://wiki.example.org/micro/> .
+
+# --- Axioms -----------------------------------------------------------------
+# A subclass chain, so inference has something to derive and SPARQL has
+# something to see only after OWL-RL runs.
+schema:Person rdfs:subClassOf micro:Agent .
+
+micro:knows a owl:ObjectProperty ;
+    rdfs:domain schema:Person ;
+    rdfs:range schema:Person .
+
+# --- Shapes -----------------------------------------------------------------
+# `schema:Person` must carry a `schema:name`. Alice satisfies it; Bob does not.
+micro:PersonShape a sh:NodeShape ;
+    sh:targetClass schema:Person ;
+    sh:property [
+        sh:path schema:name ;
+        sh:minCount 1 ;
+        sh:message "schema:Person requires schema:name" ;
+    ] .

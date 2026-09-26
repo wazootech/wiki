@@ -1,0 +1,24 @@
+Errors:
+  - SHACL Validation Violation:
+Validation Report
+Conforms: False
+Results (3):
+Constraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: [ owl:sameAs <self> ; sh:message Literal("Agent requires schema:name") ; sh:minCount Literal("1", datatype=xsd:integer) ; sh:path schema:name ]
+	Focus Node: micro:bob
+	Result Path: schema:name
+	Message: Agent requires schema:name
+Constraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: [ owl:sameAs <self> ; sh:message Literal("Agent requires schema:name") ; sh:minCount Literal("1", datatype=xsd:integer) ; sh:path schema:name ]
+	Focus Node: micro:dave
+	Result Path: schema:name
+	Message: Agent requires schema:name
+Constraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: [ owl:sameAs <self> ; sh:message Literal("Person requires schema:name") ; sh:minCount Literal("1", datatype=xsd:integer) ; sh:path schema:name ]
+	Focus Node: micro:bob
+	Result Path: schema:name
+	Message: Person requires schema:name
+

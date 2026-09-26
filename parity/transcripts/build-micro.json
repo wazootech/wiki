@@ -1,0 +1,81 @@
+{
+  "caseId": "build-micro",
+  "argv": [
+    "-c",
+    "wiki.yml",
+    "build",
+    "--no-check",
+    "-v"
+  ],
+  "note": "Fenced-code HTML differs: Python wraps SPARQL in Pygments spans; Deno emits the same escaped code without syntax-highlight markup.",
+  "oracle": {
+    "exitCode": 0,
+    "stdout": "  wiki/index.html\n  wiki/Alice/index.html\n  wiki/Bob/index.html\n  wiki/Index/index.html\n  wiki/lowercase-name/index.html\n\nBuilt 4 pages and 0 assets to _site\n",
+    "stderr": "",
+    "tree": {
+      "digest": "2f315444e6527a60b6c075bd173acfff5569c163218d8654e458250b5123fd7a",
+      "changes": [
+        {
+          "path": "_site/wiki/Alice/index.html",
+          "kind": "created",
+          "afterHash": "252017174427e70a82babd1ebd0b1e3f141780369c78b08f6063f719d71b39e2"
+        },
+        {
+          "path": "_site/wiki/Bob/index.html",
+          "kind": "created",
+          "afterHash": "1af2b57d0be00aa0ff1641d320993f9e0e6d1cbb8c1a2cf0479fd64d781d58ff"
+        },
+        {
+          "path": "_site/wiki/Index/index.html",
+          "kind": "created",
+          "afterHash": "bf589515e865fe660e954bbcdd8a672f6d960df60f3c5645238a9dbc09e29a41"
+        },
+        {
+          "path": "_site/wiki/index.html",
+          "kind": "created",
+          "afterHash": "2c4b8ec13c402324ce58c2fa85c3e412cb2a308cc8cd905e9c481427b3e57c33"
+        },
+        {
+          "path": "_site/wiki/lowercase-name/index.html",
+          "kind": "created",
+          "afterHash": "2185ddffd84c07ed580f55612d824c6b135e467054105a4ca2bbb3238f6bda41"
+        }
+      ]
+    }
+  },
+  "deno": {
+    "exitCode": 0,
+    "stdout": "  wiki/index.html\n  wiki/Alice/index.html\n  wiki/Bob/index.html\n  wiki/Index/index.html\n  wiki/lowercase-name/index.html\n\nBuilt 4 pages and 0 assets to _site\n",
+    "stderr": "",
+    "tree": {
+      "digest": "08a3c434484290cd0a6e51a2f35370e094810c474b3564a21a00143713f53af8",
+      "changes": [
+        {
+          "path": "_site/wiki/Alice/index.html",
+          "kind": "created",
+          "afterHash": "064d9c16d0283d39379cf49b28891c2c9e8c42bd91c44181fe1933b876426f37"
+        },
+        {
+          "path": "_site/wiki/Bob/index.html",
+          "kind": "created",
+          "afterHash": "1af2b57d0be00aa0ff1641d320993f9e0e6d1cbb8c1a2cf0479fd64d781d58ff"
+        },
+        {
+          "path": "_site/wiki/Index/index.html",
+          "kind": "created",
+          "afterHash": "8990dcc1369977dd164cca532d97ebcc6b08c2602a80158d43bb1389b2e87a02"
+        },
+        {
+          "path": "_site/wiki/index.html",
+          "kind": "created",
+          "afterHash": "2c4b8ec13c402324ce58c2fa85c3e412cb2a308cc8cd905e9c481427b3e57c33"
+        },
+        {
+          "path": "_site/wiki/lowercase-name/index.html",
+          "kind": "created",
+          "afterHash": "2185ddffd84c07ed580f55612d824c6b135e467054105a4ca2bbb3238f6bda41"
+        }
+      ]
+    }
+  }
+}

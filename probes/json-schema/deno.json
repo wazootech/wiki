@@ -1,0 +1,6 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "ajv": "npm:ajv@^8.17.1"
+  }
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:schema="https://schema.org/">
+  <rdf:Description rdf:about="https://example.org/rdf-ingestion">
+    <rdf:type rdf:resource="https://schema.org/Thing" />
+    <schema:name>RDF/XML integration fixture</schema:name>
+  </rdf:Description>
+</rdf:RDF>

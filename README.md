@@ -1,6 +1,5 @@
 # Wiki CLI
 
-[![PyPI version](https://badge.fury.io/py/wazootech-wiki.svg)](https://pypi.org/project/wazootech-wiki/)
 [![npm version](https://img.shields.io/npm/v/wazootech-wiki)](https://www.npmjs.com/package/wazootech-wiki)
 [![CI Status](https://github.com/wazootech/wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/wazootech/wiki/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -8,7 +7,7 @@
 
 **Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in Obsidian, VS Code, or any editor — the CLI validates your documents, runs queries against them, and builds static sites. Drop a `wiki.yaml` in your folder and you're set.
 
-Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [pip](https://pypi.org/project/wazootech-wiki/) or [npm](https://www.npmjs.com/package/wazootech-wiki).
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [npm](https://www.npmjs.com/package/wazootech-wiki) or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases).
 
 Starter templates: [wiki-templates](https://github.com/wazootech/wiki-templates) (monorepo with all starter templates). See [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
@@ -84,34 +83,12 @@ All templates live in the [wiki-templates](https://github.com/wazootech/wiki-tem
 | [quartz](https://github.com/wazootech/wiki-templates/tree/main/quartz)                 | **Quartz publish** — digital garden with Wiki CLI CI checks                                                                                                       |
 | [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/cocoindex)           | **CocoIndex sidecar** — incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes ([#201](https://github.com/wazootech/wiki/issues/201)) |
 | [yasgui](https://github.com/wazootech/wiki-templates/tree/main/yasgui)                 | **YASGUI SPARQL** — query UI explorer                                                                                                                             |
-| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia)           | **Wikipedia theme** — Jinja2 Wikipedia-themed layout using the Wiki Python API                                                                                   |
+| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia)           | **Wikipedia theme** — Wikipedia-inspired static layout using the Wiki Deno/TypeScript engine                                                                 |
 | [camunda](https://github.com/wazootech/wiki-templates/tree/main/camunda)               | **Camunda governance** — BPMN/DMN knowledge base starter with SHACL shapes and JSON Schemas                                                                      |
 
 Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ## Installation
-
-### From PyPI
-
-```bash
-pip install wazootech-wiki
-```
-
-Then verify the CLI is installed:
-
-```bash
-wiki --help
-```
-
-On Windows, if `wiki --help` is missing newer subcommands that do work with `python -m wiki`, check which launcher PATH is using:
-
-```powershell
-Get-Command wiki
-where.exe wiki
-python -m wiki --help
-```
-
-Multiple `wiki.exe` shims can coexist across Python installs. If PATH is preferring a stale launcher, run `python -m wiki upgrade -y` with the intended Python environment and remove or refresh the older `wiki.exe`.
 
 ### From npm
 
@@ -119,85 +96,29 @@ Multiple `wiki.exe` shims can coexist across Python installs. If PATH is preferr
 npm install -g wazootech-wiki
 ```
 
-This installs the **`wiki`** command globally (the npm package name is `wazootech-wiki`). The npm package automatically creates a private Python virtual environment and installs the matching PyPI version of `wazootech-wiki` as the engine. Python 3.12 or newer is required on the machine.
+This installs the `wiki` command. The npm package includes the platform-matched Deno runtime and packaged engine source; system Python and a separate Deno installation are not required. Node.js 18 or newer is required.
 
-`npx wazootech-wiki` (via a Node shim) and `uvx --from wazootech-wiki wiki` (the PyPI package directly) accept the **same subcommands and flags** as `wiki`.
-
-Zero-install (no global install required):
+`npx wazootech-wiki` accepts the same commands and flags as the global `wiki` command.
 
 ```bash
 npx wazootech-wiki --help
 npx wazootech-wiki init
 npx wazootech-wiki -c docs/wiki.yml check
-uvx --from wazootech-wiki wiki --help
 ```
 
-After `npm install -g wazootech-wiki`, use `wiki` instead of the `npx` prefix (for example `wiki check`). For library usage from Node or TypeScript, see [Programmatic APIs](#programmatic-apis).
+### Standalone executable
 
-### Standalone binary (no Python required)
+Self-contained Deno-compiled executables for Linux x64/arm64, Windows x64/arm64, and macOS x64/arm64 are published on [GitHub Releases](https://github.com/wazootech/wiki/releases) with `SHA256SUMS`. They do not require Node.js, Python, or Deno.
 
-Pre-built executables ship on [GitHub Releases](https://github.com/wazootech/wiki/releases) for Linux (x64), macOS (arm64), and Windows (x64). Each release includes a `SHA256SUMS` file.
+### From source
 
-```bash
-# Linux / macOS — verify checksum, then extract
-sha256sum -c SHA256SUMS
-tar -xzf wazootech-wiki-VERSION-linux-x64.tar.gz
-./wiki --help
-```
-
-```powershell
-# Windows — verify checksum, then extract
-Get-FileHash wazootech-wiki-VERSION-windows-x64.zip -Algorithm SHA256
-Expand-Archive wazootech-wiki-VERSION-windows-x64.zip -DestinationPath .
-.\wiki.exe --help
-```
-
-Add the directory containing `wiki` (or `wiki.exe`) to your `PATH`, or invoke it by full path. Standalone builds do not use `pip`; run `wiki upgrade` to see download instructions when a newer release is available.
-
-On macOS, Gatekeeper may block unsigned binaries until you allow them in System Settings or run `xattr -d com.apple.quarantine ./wiki` after verifying the checksum.
-
-### From within this repo (editable)
-
-```bash
-# Using uv (fastest)
-uv pip install -e .
-
-# Using standard pip
-pip install -e .
-```
-
-### Global install (use from any directory)
-
-```bash
-# From the repo root
-uv pip install -e /path/to/wiki
-```
-
-Once installed globally, the `wiki` command is available in any directory that has a `wiki.yaml` configuration file. You can also point to a config explicitly with `-c <path>`.
+Install Deno, then run `deno task check`, `deno task lint`, `deno task fmt:check`, and `deno task test`.
 
 ## Programmatic APIs
 
-### Python library
-
-Python callers can use the in-process `Wiki` class for typed reports without spawning the CLI:
-
-```python
-from wiki import Wiki
-
-wiki = Wiki.load("docs/wiki.yml")
-
-report = wiki.check(strict=True)
-if not report.ok:
-    raise SystemExit(report.messages()[0])
-
-result = wiki.query("SELECT ?s WHERE { ?s ?p ?o }", format="json")
-```
-
-See [Wiki Python Library](docs/wiki/Wiki_Programmatic_API.md) for the full Python API.
-
 ### TypeScript SDK
 
-The npm package also ships a type-safe TypeScript SDK. It is a thin binding over the same Python CLI engine installed by the npm package, not a second Wiki implementation.
+The npm package preserves its TypeScript SDK. It invokes the same Deno-backed engine as the `wiki` command.
 
 ```bash
 npm install wazootech-wiki
@@ -226,30 +147,14 @@ Methods mirror the CLI surface (`check`, `lint`, `fmt`, `render`, `build`, `expo
 
 ## Local development
 
-Use this repo's docs wiki as the main contributor sandbox.
+Use Deno tasks for type checking, linting, formatting, and tests. Run the docs CLI from source with `deno run -A src/wiki/cli.ts -c docs/wiki.yml <command>`; the repository-specific Wikipedia-themed Pages site is built with `deno run -A docs/build.ts --output-dir _site`.
 
-```bash
-# Install the project in editable mode
-uv pip install -e .
-
-# Python static analysis (dev dependency group)
-uv sync --group dev
-uv run ruff check .
-
-# Run the docs wiki integrity checks from the repo root
-wiki -c docs/wiki.yml check
-wiki -c docs/wiki.yml lint
-
-# Start the docs wiki local preview with auto-reload
-python -m wiki -c docs/wiki.yml serve --watch
-```
-
-`serve --watch` rebuilds when files under `wiki.input` and `wiki.assets` change. It does **not** hot-reload Python changes in `src/wiki/` — restart the server after editing CLI code (even when using `python -m wiki`).
+`serve --watch` rebuilds when files under `wiki.input` and `wiki.assets` change. Restart the server after editing CLI code.
 
 Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
-- Use `python -m wiki -c docs/wiki.yml serve --watch` for the main live-preview workflow (restart after CLI changes).
+- Use `deno run -A src/wiki/cli.ts -c docs/wiki.yml serve --watch` for the main live-preview workflow (restart after CLI changes).
 - Run `wiki -c docs/wiki.yml check --strict -v` and `wiki -c docs/wiki.yml lint --strict -v` before landing documentation changes.
 - Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
 
@@ -546,16 +451,11 @@ In the built site:
 
 #### Metadata pane (RDF views)
 
-Built and served HTML pages include a **Metadata** tab with a compact no-JavaScript format picker (CSS radio chips). The pane uses the same serialization path as `wiki export`:
-
-- JSON-LD (compacted, with `@context`)
-- Turtle, N3, RDF/XML, N-Triples, TriG, N-Quads
-
-`wiki build` embeds all format views in each page. On `wiki serve`, set the initial chip with `?metadata_format=FORMAT` (for example `turtle` or `json-ld`). Aliases such as `ttl`, `rdf`, and `jsonld` are accepted.
+The repository's themed static docs build provides a **Metadata** tab with compacted JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads. RDF/XML input is supported, but RDF/XML output is deferred and is not included in the pane. The generic `wiki serve` renderer does not currently provide this repository-specific metadata panel.
 
 #### GitHub Pages deployment
 
-Create `.github/workflows/deploy.yml` in your wiki repository:
+After the first tagged release publishes `@wazoo/wiki`, create `.github/workflows/deploy.yml` in your wiki repository. For the native Deno CLI, install Deno and run the JSR module. Until then, use `deno run -A src/wiki/cli.ts` from a Wiki repository checkout.
 
 ```yaml
 name: Deploy Wiki to Pages
@@ -581,46 +481,27 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
         with:
-          python-version: "3.12"
-      
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-      
-      - name: Install Dependencies
-        run: uv sync
-      
-      - name: Run Docs Wiki Integrity Audits
-        run: uv run wiki -c docs/wiki.yml check --strict -v
-
-      - name: Run Docs Wiki Convention Audits
-        run: uv run wiki -c docs/wiki.yml lint --strict -v
-
-      - name: Build Static Site
-        run: uv run wiki -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+          deno-version: v2.x
+      - name: Check the wiki
+        run: deno run -A jsr:@wazoo/wiki/cli -c docs/wiki.yml check --strict -v
+      - name: Lint the wiki
+        run: deno run -A jsr:@wazoo/wiki/cli -c docs/wiki.yml lint --strict -v
+      - name: Build the site
+        run: deno run -A jsr:@wazoo/wiki/cli -c docs/wiki.yml build --output-dir _site --site-base-url /wiki
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: "_site/wiki"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
 ```
 
 Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
 
 ### `serve`
 
-Start a local development HTTP server that renders wiki markdown files as HTML (wikilinks, backlinks, ToC, infobox, and metadata pane included). Uses the same rendering engine as `build` but serves pages on-the-fly without writing files to disk.
+Start a local development HTTP server that renders wiki Markdown as HTML. Use `wiki serve` from an installed package or `deno run -A src/wiki/cli.ts serve --watch` from a source checkout. The repository-specific metadata panel is part of its static Wikipedia-themed docs build, not the generic serve renderer.
 
 ```bash
 # Default: http://127.0.0.1:8080/wiki/ (when site.base_url is /wiki)
@@ -631,12 +512,9 @@ wiki serve --host 0.0.0.0 --port 3000
 
 # Watch wiki files; rebuild graph, SPARQL blocks, and reload the browser on change
 wiki serve --watch
-
-# Editable install: run the in-repo package without reinstalling after pip/uv -e .
-python -m wiki serve --watch
 ```
 
-`--watch` polls `wiki.input` and `wiki.assets` only. Restart the server after changing Python code in the installed package. Set the metadata pane with `?metadata_format=FORMAT` (for example `turtle`, `ttl`, or `json-ld`).
+`--watch` polls `wiki.input` and `wiki.assets` only. Restart the server after changing CLI code.
 
 When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
 
@@ -657,7 +535,7 @@ Compile and export parsed **Frontmatter** blocks of documents in a supported RDF
 
 When run without a file argument, exports all documents in the wiki directory.
 
-**Note:** When using the default `dict` format or `json-ld`, each file's output is wrapped in a JSON object with `name` (the filename) and `rdf` (the content). For raw RDF formats (`turtle`, `xml`, `n3`, `nt`, `trig`, `nquads`), single-file export outputs raw serialized RDF directly (no JSON wrapper). Multi-file bulk export with raw formats still uses the JSON wrapper for structure.
+**Note:** `dict` and `json-ld` outputs are wrapped with `name` and `rdf`. Supported serialized output formats are `turtle`, `n3`, `nt`, `trig`, and `nquads`. RDF/XML input remains supported for `.rdf` and `.xml` files; RDF/XML output is deferred, and `-f xml` fails clearly rather than substituting another format.
 
 ```bash
 # Export parsed frontmatter of the entire wiki as dict (default)
@@ -672,12 +550,14 @@ wiki export wiki/rdf.md -f json-ld
 # Export as compacted JSON-LD
 wiki export wiki/rdf.md -f json-ld --mode compacted
 
-# Export in other RDF formats (turtle, xml, n3, nt, trig, nquads)
+# Export in another supported RDF format (turtle, n3, nt, trig, nquads)
 wiki export wiki/rdf.md -f turtle
 
 # Write to a file
 wiki export -f json-ld -o wiki-export.json
 ```
+
+The `--format` choices are `dict`, `json-ld`, `turtle`, `n3`, `nt`, `trig`, and `nquads`. RDF/XML parsing remains supported for input `.rdf` and `.xml` files. RDF/XML output is deferred from the Deno cutover; `-f xml` returns a clear unsupported-format error.
 
 ### Global options
 
