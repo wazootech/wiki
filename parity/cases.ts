@@ -140,8 +140,19 @@ export const CASES: readonly ParityCase[] = [
     corpus: "micro",
     argv: micro("query"),
     stdin: MICRO_STDIN_QUERY,
-    status: "pending",
-    note: "query is ported in phase 7; the query arrives on stdin",
+    status: "parity",
+    note: "The query arrives on stdin; SELECT output matches the oracle.",
+  },
+  {
+    id: "query-micro-named-graph",
+    corpus: "micro",
+    argv: micro(
+      "query",
+      "--no-inference",
+      "SELECT ?name WHERE { GRAPH ?g { ?p a <https://schema.org/Person> ; <https://schema.org/name> ?name . } } ORDER BY ?name",
+    ),
+    status: "parity",
+    note: "GRAPH queries run over the source-named dataset.",
   },
   {
     id: "build-micro",

@@ -18,15 +18,16 @@
  * | N-Quads | — | this module, ported from `format.py`'s hand-rolled writer |
  * | Turtle, N3, TriG | — | `n3.js` |
  * | JSON-LD | — | `@zazuko/env-node` |
- * | RDF/XML | — | **unassigned**; throws rather than pretending |
+ * | RDF/XML | — | **deferred from the initial cutover**; throws clearly |
  *
  * Two hazards shape the code below, both measured rather than assumed:
  *
  * - **A missing serializer is not an error.** `@zazuko/env`'s `serialize`
  *   returns canonical N-Quads when it cannot find one, so a typo or a missing
  *   registration looks like success. Every path here goes through
- *   {@link serializeRdf}, which answers a format it does not know with a
- *   thrown {@link UnsupportedFormatError}.
+ *   {@link serializeRdf}, which answers an unsupported format with a
+ *   thrown {@link UnsupportedFormatError}. RDF/XML serialization is an
+ *   intentional first-release omission, not a silent serializer fallback.
  * - **The two N-Triples dialects are different.** rdflib's NT serializer
  *   escapes a newline as `\n`; `Literal.n3()`, which `format.py`'s hand-rolled
  *   N-Quads writer uses, switches to a triple-quoted literal and leaves the
@@ -150,7 +151,9 @@ export function normalizeFormat(format: string): RdfFormat {
     case "n-quads":
       return "nquads";
     case "xml":
+    case "rdf":
     case "rdf/xml":
+    case "application/rdf+xml":
       return "xml";
     case "json-ld":
     case "jsonld":
@@ -184,7 +187,13 @@ export function mediaTypeFor(format: RdfFormat): string {
 /** Raised for a format the engine does not implement. */
 export class UnsupportedFormatError extends Error {
   constructor(format: string, direction: "parse" | "serialize" = "serialize") {
-    super(`Unsupported ${direction} format: ${format}`);
+    const rdfXml = ["xml", "rdf", "rdf/xml", "application/rdf+xml"].includes(
+      format.toLowerCase(),
+    );
+    const message = direction === "serialize" && rdfXml
+      ? "RDF/XML serialization is deferred; use Turtle, N-Triples, N-Quads, N3, TriG, or JSON-LD."
+      : `Unsupported ${direction} format: ${format}`;
+    super(message);
     this.name = "UnsupportedFormatError";
   }
 }
@@ -202,9 +211,10 @@ export function canParse(format: string): boolean {
 /**
  * Every format the engine can write.
  *
- * `xml` is absent on purpose: no library in the chosen stack has an RDF/XML
- * writer, and the phase-5 probe deliberately left it unassigned rather than
- * papering over it with N-Quads.
+ * `xml` is absent on purpose: RDF/XML serialization is deferred from the
+ * initial TypeScript cutover because no library in the chosen stack has a
+ * writer. The parser remains available; serialization fails explicitly rather
+ * than silently substituting N-Quads.
  */
 export function canSerialize(format: string): boolean {
   try {
@@ -403,7 +413,7 @@ function prefixObject(
  * Serialize triples in any format the engine can write.
  *
  * Always consulted instead of a library's own `serialize`, because a miss there
- * is silent (see the module doc). An unassigned format raises.
+ * is silent (see the module doc). A deferred or unsupported format raises.
  */
 export async function serializeRdf(
   quads: readonly Quad[],

@@ -3,8 +3,8 @@
  * CLI entrypoint — Deno port of `src/wiki/cli.py`.
  *
  * Ported so far: the group's `--config`/`--input` options, `--version`, the two
- * audit commands (`check`, `lint`), and `fmt`. The remaining 13 commands —
- * `link`, `graph`, `query`, `mcp`, `render`, `build`, `export`, `serve`, `init`,
+ * audit commands (`check`, `lint`), `fmt`, and `query`. The remaining commands —
+ * `link`, `graph`, `mcp`, `render`, `build`, `export`, `serve`, `init`,
  * `install`/`i`, `update`, `remove`, `upgrade` — land as their modules do, and
  * until one does, invoking it is a usage error naming that fact rather than a
  * silent success.
@@ -78,7 +78,7 @@ const KNOWN_COMMANDS: readonly string[] = [
 ];
 
 /** The commands this entrypoint implements today. */
-const PORTED_COMMANDS: readonly string[] = ["check", "lint", "fmt"];
+const PORTED_COMMANDS: readonly string[] = ["check", "lint", "fmt", "query"];
 
 /** The flags each `FILE...` command accepts, so an unknown one is a usage error. */
 const FILE_COMMAND_FLAGS: Readonly<Record<string, readonly string[]>> = {
@@ -250,6 +250,189 @@ async function runFmtCommand(
   }
 }
 
+interface ParsedQueryCommand {
+  readonly queryArgs: readonly string[];
+  readonly format: import("./format.ts").QueryFormat;
+  readonly output: string | null;
+  readonly noInference: boolean;
+  readonly reload: boolean;
+  readonly cache: boolean;
+  readonly jq: string | null;
+  readonly pretty: boolean;
+  readonly verbose: boolean;
+}
+
+async function parseQueryCommandArgs(
+  args: readonly string[],
+): Promise<ParsedQueryCommand | number> {
+  const queryArgs: string[] = [];
+  let format = "table";
+  let output: string | null = null;
+  let noInference = false;
+  let reload = false;
+  let cache = false;
+  let jq: string | null = null;
+  let pretty = false;
+  let verbose = false;
+  let optionsEnded = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    if (optionsEnded) {
+      queryArgs.push(token);
+    } else if (token === "--") {
+      optionsEnded = true;
+    } else if (token === "--help" || token === "-h") {
+      console.log(
+        "Usage: wiki query [OPTIONS] [QUERY_ARGS]...\n\n" +
+          "Run SPARQL SELECT or CONSTRUCT (query argument or stdin).\n\n" +
+          "Options:\n" +
+          "  -f, --format FORMAT  table, json, csv, tsv, turtle, n3, markdown\n" +
+          "  -o, --output PATH    Write output to a file\n" +
+          "  --no-inference       Skip OWL-RL inference\n" +
+          "  --reload             Rebuild the graph before querying\n" +
+          "  --cache              Persist the graph under .wiki/cache\n" +
+          "  --jq PATH            Extract values from JSON output\n" +
+          "  --pretty             Render a table for stdout",
+      );
+      return EXIT_OK;
+    } else if (token === "--no-inference") {
+      noInference = true;
+    } else if (token === "--reload") {
+      reload = true;
+    } else if (token === "--cache") {
+      cache = true;
+    } else if (token === "--pretty") {
+      pretty = true;
+    } else if (token === "-v" || token === "--verbose") {
+      verbose = true;
+    } else if (token === "-f" || token === "--format") {
+      const value = args[index + 1];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      format = value;
+      index += 1;
+    } else if (token.startsWith("--format=")) {
+      format = token.slice("--format=".length);
+    } else if (token === "-o" || token === "--output") {
+      const value = args[index + 1];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      output = value;
+      index += 1;
+    } else if (token.startsWith("--output=")) {
+      output = token.slice("--output=".length);
+    } else if (token === "--jq") {
+      const value = args[index + 1];
+      if (value === undefined) {
+        return usageError("Error: Option '--jq' requires an argument.");
+      }
+      jq = value;
+      index += 1;
+    } else if (token.startsWith("--jq=")) {
+      jq = token.slice("--jq=".length);
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      queryArgs.push(token);
+    }
+  }
+
+  try {
+    const { normalizeQueryFormat } = await import("./format.ts");
+    return {
+      queryArgs,
+      format: normalizeQueryFormat(format),
+      output,
+      noInference,
+      reload,
+      cache,
+      jq,
+      pretty,
+      verbose,
+    };
+  } catch (error) {
+    return usageError(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+async function runQueryCommand(
+  wiki: Wiki,
+  parsed: ParsedQueryCommand,
+): Promise<number> {
+  let sparqlQuery: string;
+  if (parsed.queryArgs.length > 0) {
+    sparqlQuery = parsed.queryArgs.join(" ");
+  } else if (Deno.stdin.isTerminal()) {
+    console.error("Error: No query provided.");
+    return EXIT_FAILURE;
+  } else {
+    sparqlQuery = await new Response(Deno.stdin.readable).text();
+  }
+
+  if (parsed.pretty && parsed.output !== null) {
+    console.error(
+      "Error: --pretty writes to stdout only; do not use -o/--output.",
+    );
+    return EXIT_FAILURE;
+  }
+  if (parsed.pretty && parsed.jq !== null) {
+    console.error("Error: --pretty is incompatible with --jq.");
+    return EXIT_FAILURE;
+  }
+  if (parsed.pretty && parsed.format !== "table") {
+    console.error(
+      "Error: --pretty only supports table format (default -f table).",
+    );
+    return EXIT_FAILURE;
+  }
+
+  try {
+    if (parsed.verbose) {
+      const { graphStats, usesNamedGraphs } = await import("./graph.ts");
+      const graphOptions = {
+        infer: !parsed.noInference,
+        reload: parsed.reload,
+        diskCache: parsed.cache,
+      };
+      const graph = usesNamedGraphs(sparqlQuery)
+        ? await wiki.dataset(graphOptions)
+        : await wiki.graph(graphOptions);
+      const stats = graphStats(graph);
+      console.log(
+        `Graph stats: ${stats.triples} triples, ${stats.subjects} subjects\n`,
+      );
+    }
+
+    const result = await wiki.query(sparqlQuery, {
+      format: parsed.format,
+      noInference: parsed.noInference,
+      reload: parsed.reload,
+      cache: parsed.cache,
+      jq: parsed.jq,
+      pretty: parsed.pretty,
+    });
+    if (parsed.output !== null) {
+      await Deno.writeTextFile(parsed.output, result);
+      console.log(`Written results to ${parsed.output}`);
+    } else {
+      console.log(result);
+    }
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Query Execution Error: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
 /**
  * Run the CLI and return the process exit code.
  *
@@ -325,6 +508,14 @@ export async function main(
 
   if (!PORTED_COMMANDS.includes(command)) {
     return usageError(`Error: The '${command}' command is not ported yet.`);
+  }
+
+  if (command === "query") {
+    const parsedQuery = await parseQueryCommandArgs(argv.slice(index + 1));
+    if (typeof parsedQuery === "number") return parsedQuery;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runQueryCommand(wiki, parsedQuery);
   }
 
   const parsed = parseFileCommandArgs(command, argv.slice(index + 1));

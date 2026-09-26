@@ -1,18 +1,10 @@
 /**
  * The `Wiki` session: config, graph lifecycle, and the operations built on them.
  *
- * Port of `wiki.py`, up to and including `fmt`. What is here is the spine —
- * {@link Wiki.load}, the graph accessors, {@link Wiki.check}, {@link Wiki.lint},
- * {@link Wiki.format}, and {@link Wiki.preflight} — because that is what
- * `check`, `lint`, and `fmt` need to be callable end to end.
+ * Port of `wiki.py`, through `query`. The session owns config and graph
+ * lifecycle; command methods are added as their dependencies land.
  *
- * Deliberately absent, each because its dependency is unported rather than
- * because it was skipped: `build` (`publish.py`), `render` (`render.py`),
- * `export` (`format.py`), `link` (`link_fix`/`link_suggest`), `query`
- * (`format`/`jqfilter`), `serve` (`serve.py`), and `init`
- * (`init_scaffold.py`). The Python module's `__init__` is two assignments; the
- * shape of a `Wiki` is `config` plus `config_path`, and callers that only audit
- * never touch the rest.
+ * Still absent: `build`, `render`, `export`, `link`, `serve`, and `init`.
  *
  * Two port decisions are worth stating because they are visible from outside:
  *
@@ -37,7 +29,15 @@ import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
 import { Config, findConfigPath } from "./config.ts";
 import { Path } from "./fspath.ts";
-import { graphDescriptors, loadDataset, loadGraph } from "./graph.ts";
+import {
+  graphDescriptors,
+  loadDataset,
+  loadGraph,
+  loadQueryGraph,
+} from "./graph.ts";
+import { type QueryFormat, runQuery } from "./format.ts";
+import { resolvePath } from "./jqfilter.ts";
+import { pyStr } from "./pyrepr.ts";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import { resolve as resolveSources } from "./sources.ts";
 import type { GraphDescriptor } from "./schemas/sources.ts";
@@ -50,6 +50,15 @@ export interface GraphOptions {
   readonly infer?: boolean;
   readonly reload?: boolean;
   readonly diskCache?: boolean;
+}
+
+export interface QueryOptions {
+  readonly format?: QueryFormat;
+  readonly noInference?: boolean;
+  readonly reload?: boolean;
+  readonly cache?: boolean;
+  readonly jq?: string | null;
+  readonly pretty?: boolean;
 }
 
 /** The two `site:` values a session can override at run time. */
@@ -250,6 +259,26 @@ export class Wiki {
     options: { readonly check?: boolean; readonly verbose?: boolean } = {},
   ): FmtReport {
     return new DocumentBatch(this.config, files ?? null).format(options);
+  }
+
+  async query(
+    sparqlQuery: string,
+    options: QueryOptions = {},
+  ): Promise<string> {
+    const graph = await loadQueryGraph(this.config, sparqlQuery, {
+      infer: !(options.noInference ?? false),
+      reload: options.reload ?? false,
+      diskCache: options.cache ?? false,
+    });
+    const result = await runQuery(graph, sparqlQuery, {
+      format: options.jq !== undefined && options.jq !== null
+        ? "json"
+        : options.format ?? "table",
+      baseIri: this.config.base_iri,
+      pretty: options.pretty ?? false,
+    });
+    if (options.jq === undefined || options.jq === null) return result;
+    return resolvePath(JSON.parse(result), options.jq).map(pyStr).join("\n");
   }
 
   /**

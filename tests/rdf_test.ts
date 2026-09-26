@@ -114,13 +114,21 @@ Deno.test("the two N-Triples dialects differ exactly where rdflib's do", () => {
   assert(nquads.includes("backslash\ttab"));
 });
 
-Deno.test("Turtle and XML are reported by capability rather than discovered", async () => {
+Deno.test("RDF/XML parsing remains supported while serialization is deferred", async () => {
   assertEquals(canSerialize("turtle"), true);
   assertEquals(canSerialize("ttl"), true);
   assertEquals(canSerialize("nquads"), true);
   assertEquals(canSerialize("xml"), false);
+  assertEquals(canSerialize("rdf"), false);
+  assertEquals(canSerialize("application/rdf+xml"), false);
   assertEquals(canSerialize("nosuchformat"), false);
-  await assertRejects(() => serializeRdf(quads, "xml"), UnsupportedFormatError);
+  for (const format of ["xml", "rdf", "rdf/xml", "application/rdf+xml"]) {
+    const error = await assertRejects(
+      () => serializeRdf(quads, format),
+      UnsupportedFormatError,
+    );
+    assertStringIncludes(error.message, "RDF/XML serialization is deferred");
+  }
   await assertRejects(
     () => serializeRdf(quads, "nosuchformat"),
     UnsupportedFormatError,

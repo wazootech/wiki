@@ -1,9 +1,9 @@
 /**
  * `@wazoo/wiki` public API surface (JSR entrypoint).
  *
- * The Python engine remains the source of truth for every behaviour until the
- * parity gate passes, so this file only re-exports what has actually been
- * ported. Modules are ported one milestone at a time into this directory
+ * The Python engine remains the comparison oracle for supported behavior until
+ * the migration gate passes. Deliberately deferred capabilities are documented
+ * in the ADR; this file only re-exports what has actually been ported. Modules are ported one milestone at a time into this directory
  * alongside their Python counterparts (`audit.py` → `audit.ts`,
  * `graph_cache.py` → `graph_cache.ts`), and the published surface grows with
  * them rather than being scaffolded up front.
@@ -316,7 +316,13 @@ export {
   printCheckMessages,
 } from "./cli_output.ts";
 export {
+  normalizeQueryFormat,
+  QUERY_FORMATS,
+  type QueryFormat,
+} from "./format.ts";
+export {
   type GraphOptions,
+  type QueryOptions,
   resolveRuntimeConfig,
   type RuntimeOverrides,
   Wiki,
