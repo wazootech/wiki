@@ -1,7 +1,6 @@
 name: Release
 
-# Keep this file as release.yml — npm and PyPI trusted publishing are bound to
-# .github/workflows/release.yml exactly; renaming breaks OIDC with E404.
+# Keep this filename release.yml: npm trusted publishing is bound to it.
 
 on:
   push:
@@ -9,10 +8,6 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
-      skip_pypi:
-        description: Skip PyPI publish
-        type: boolean
-        default: false
       skip_npm:
         description: Skip npm publish
         type: boolean
@@ -36,64 +31,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Verify pyproject, package.json, and __init__.py versions
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Verify Deno, npm, and CLI versions
         id: versions
-        run: |
-          PY_VER=$(python -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
-          NPM_VER=$(node -e "console.log(require('./package.json').version)")
-          INIT_VER=$(python -c "import re; print(re.search(r'__version__ = \"([^\"]+)\"', open('src/wiki/__init__.py').read()).group(1))")
-          echo "version=$PY_VER" >> "$GITHUB_OUTPUT"
-          test "$PY_VER" = "$NPM_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER package.json=$NPM_VER"; exit 1; }
-          test "$PY_VER" = "$INIT_VER" || { echo "::error::Version mismatch: pyproject=$PY_VER __init__.py=$INIT_VER"; exit 1; }
+        run: deno run --allow-read --allow-write scripts/set_version.ts --check --github-output "$GITHUB_OUTPUT"
 
       - name: Verify tag matches version
         if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VERSION: ${{ steps.versions.outputs.version }}
         run: |
           TAG="${GITHUB_REF_NAME#v}"
-          PY_VER="${{ steps.versions.outputs.version }}"
-          test "$TAG" = "$PY_VER" || { echo "::error::tag $TAG != pyproject $PY_VER"; exit 1; }
-
-  publish-pypi:
-    name: Publish PyPI
-    needs: verify
-    if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-      || (github.event_name == 'workflow_dispatch' && !inputs.skip_pypi)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Install build tooling
-        run: python -m pip install -U build twine
-
-      - name: Build
-        run: python -m build
-
-      - name: Twine check
-        run: python -m twine check dist/*
-
-      - name: Publish to PyPI (trusted publishing)
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
+          test "$TAG" = "$VERSION" || { echo "::error::tag $TAG != version $VERSION"; exit 1; }
 
   publish-npm:
     name: Publish npm
-    needs: [verify, publish-pypi]
+    needs: verify
     if: >-
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
       || (github.event_name == 'workflow_dispatch' && !inputs.skip_npm)
@@ -108,11 +66,13 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install package dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
 
-      - name: Verify npm can pack
-        run: npm pack --dry-run
+      - name: Build and verify npm package
+        run: |
+          npm run build
+          npm pack --dry-run --ignore-scripts
 
       - name: Publish to npm (trusted publishing / OIDC)
         run: |
@@ -150,53 +110,36 @@ jobs:
         include:
           - runner: ubuntu-latest
             slug: linux-x64
-            smoke_check: true
+            target: x86_64-unknown-linux-gnu
           - runner: windows-latest
             slug: windows-x64
-            smoke_check: false
+            target: x86_64-pc-windows-msvc
           - runner: macos-14
             slug: macos-arm64
-            smoke_check: false
-          # macOS (Intel) standalone disabled: GitHub's macos-13 runner pool has
-          # been unable to schedule jobs (queued for hours). Re-enable when
-          # runner capacity recovers.
+            target: aarch64-apple-darwin
+          # Intel macOS remains disabled while its runner pool is unavailable.
           # - runner: macos-13
           #   slug: macos-x64
-          #   smoke_check: false
+          #   target: x86_64-apple-darwin
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
         with:
-          python-version: "3.12"
+          deno-version: v2.x
+          cache: true
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Install PyInstaller
-        run: uv pip install pyinstaller
-
-      - name: Build standalone archive
-        run: |
-          if [ "${{ matrix.smoke_check }}" = "true" ]; then
-            uv run python scripts/build_standalone.py --smoke-check
-          else
-            uv run python scripts/build_standalone.py
-          fi
+      - name: Compile, package, and smoke-test standalone executable
+        run: deno run -A scripts/build_standalone.ts --target "${{ matrix.target }}" --smoke-check
         shell: bash
 
       - name: Upload standalone artifact
         uses: actions/upload-artifact@v4
         with:
           name: standalone-${{ matrix.slug }}
-          path: dist/standalone/*
+          path: dist/standalone/*-${{ matrix.slug }}.*
           if-no-files-found: error
 
   publish-github-release:
