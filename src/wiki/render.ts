@@ -13,6 +13,17 @@ function blockRegex(): RegExp {
   return new RegExp(SPARQL_BLOCK_REGEX.source, SPARQL_BLOCK_REGEX.flags);
 }
 
+export function stripSparqlWrappersForHtml(markdown: string): string {
+  return markdown.replace(blockRegex(), (match) => {
+    const groups = blockRegex().exec(match)?.groups;
+    if (groups === undefined) return match;
+    const table = (groups.table ?? "").trim();
+    return groups.comment_end !== undefined
+      ? `${table}\n`
+      : `${groups.fence ?? ""}\n\n${table}\n`;
+  });
+}
+
 function hasSparqlBlocks(path: Path): boolean {
   try {
     return blockRegex().test(readTextTolerant(path));

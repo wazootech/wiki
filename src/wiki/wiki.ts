@@ -1,10 +1,9 @@
 /**
  * The `Wiki` session: config, graph lifecycle, and the operations built on them.
  *
- * Port of `wiki.py`, through `query`. The session owns config and graph
- * lifecycle; command methods are added as their dependencies land.
- *
- * Still absent: `build`, `export`, `link`, `serve`, and `init`.
+ * Deno/TypeScript implementation of the Python `Wiki` session API. The session
+ * owns configuration and graph lifecycle; implementation-specific deferrals are
+ * recorded in `docs/adr/0001-deno-rewrite.md`.
  *
  * Two port decisions are worth stating because they are visible from outside:
  *
@@ -27,6 +26,8 @@
 
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
+import { buildStaticSite } from "./site/publish.ts";
+import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
 import { Path } from "./fspath.ts";
 import {
@@ -37,19 +38,50 @@ import {
 } from "./graph.ts";
 import { renderMarkdownFiles } from "./render.ts";
 import { exportFrontmatter, type ExportOptions } from "./export.ts";
+import {
+  applyBrokenLinkFixes,
+  findBrokenLinkFixes,
+  remainingBrokenLinks,
+} from "./link_fix.ts";
+import {
+  applyLinkOpportunities,
+  findLinkOpportunities,
+} from "./link_suggest.ts";
+import { formatInternalLink } from "./links.ts";
 import { type QueryFormat, runQuery } from "./format.ts";
 import { resolvePath } from "./jqfilter.ts";
 import { pyStr } from "./pyrepr.ts";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
-import { resolve as resolveSources } from "./sources.ts";
-import { pageRoutes, selectMarkdownPaths } from "./paths.ts";
+import {
+  install as installSources,
+  remove as removeSource,
+  resolve as resolveSources,
+  update as updateSources,
+  type UpdateResult,
+} from "./sources.ts";
+import {
+  fetchTemplate,
+  type ResolveInitOptions,
+  resolveInitOptions,
+  scaffoldWiki,
+} from "./init_scaffold.ts";
+import { createSparqlServiceHandler } from "./sparql_service.ts";
+import {
+  pageRoutes,
+  routesFromMarkdownFiles,
+  selectMarkdownPaths,
+} from "./paths.ts";
 import type { GraphDescriptor } from "./schemas/sources.ts";
 import type {
   AuditReport,
+  BuildResult,
   ExportResult,
   FmtReport,
+  LinkReport,
   RenderReport,
+  ScaffoldResult,
 } from "./schemas/reports.ts";
+import type { Lockfile } from "./schemas/sources.ts";
 
 export { usesNamedGraphs } from "./graph.ts";
 
@@ -75,11 +107,32 @@ export interface RenderOptions {
   readonly cache?: boolean;
   readonly noInference?: boolean;
 }
+export interface LinkOptions {
+  readonly apply?: boolean;
+  readonly fixBroken?: boolean;
+  readonly dryRun?: boolean;
+  readonly check?: boolean;
+  readonly verbose?: boolean;
+}
 
 /** The two `site:` values a session can override at run time. */
 export interface RuntimeOverrides {
   readonly baseUrl?: string | null;
   readonly urlStyle?: string | null;
+}
+
+export interface BuildMethodOptions extends RuntimeOverrides {
+  readonly render?: boolean;
+  readonly reload?: boolean;
+  readonly cache?: boolean;
+  readonly noCheck?: boolean;
+  readonly verbose?: boolean;
+}
+
+export interface ServeOptions extends RuntimeOverrides {
+  readonly host?: string;
+  readonly port?: number;
+  readonly watch?: boolean;
 }
 
 /**
@@ -130,6 +183,11 @@ export function resolveRuntimeConfig(
   return changed ? copyConfig(config, { site }) : config;
 }
 
+export interface WikiInitOptions extends Omit<ResolveInitOptions, "cwd"> {
+  readonly cwd?: string | Path;
+  readonly template?: string | null;
+}
+
 /** Loaded wiki configuration and graph session for library operations. */
 export class Wiki {
   readonly config: Config;
@@ -138,6 +196,20 @@ export class Wiki {
   constructor(config: Config, configPath: Path | null = null) {
     this.config = config;
     this.config_path = configPath;
+  }
+
+  static init(options: WikiInitOptions = {}): ScaffoldResult {
+    const cwd = options.cwd ?? Deno.cwd();
+    if (options.template !== undefined && options.template !== null) {
+      return fetchTemplate(cwd, options.template);
+    }
+    const { cwd: _cwd, template: _template, ...initOptions } = options;
+    const resolved = resolveInitOptions({ ...initOptions, cwd });
+    return scaffoldWiki(
+      cwd,
+      resolved,
+      options.init_git === undefined ? {} : { init_git: options.init_git },
+    );
   }
 
   /**
@@ -227,6 +299,25 @@ export class Wiki {
   /** Named graph descriptors for the root corpus and installed sources. */
   graphs(): GraphDescriptor[] {
     return graphDescriptors(this.config);
+  }
+
+  install(url?: string | null): Lockfile {
+    return installSources(this.config, url);
+  }
+
+  update(
+    name?: string | null,
+    options: { readonly dryRun?: boolean } = {},
+  ): UpdateResult {
+    return updateSources(
+      this.config,
+      name,
+      options.dryRun === undefined ? {} : { dry_run: options.dryRun },
+    );
+  }
+
+  remove(name: string): void {
+    removeSource(this.config, name);
   }
 
   /**
@@ -333,6 +424,259 @@ export class Wiki {
     options: ExportOptions = {},
   ): Promise<ExportResult> {
     return await exportFrontmatter(this.config, files ?? null, options);
+  }
+
+  async build(
+    outputDir: Path | string = "_site",
+    options: BuildMethodOptions = {},
+  ): Promise<BuildResult> {
+    const wiki = this.withRuntime({
+      ...(options.baseUrl === undefined ? {} : { baseUrl: options.baseUrl }),
+      ...(options.urlStyle === undefined ? {} : { urlStyle: options.urlStyle }),
+    });
+    return await buildStaticSite(wiki, {
+      output_dir: outputDir instanceof Path ? outputDir : new Path(outputDir),
+      ...(options.baseUrl === undefined ? {} : { base_url: options.baseUrl }),
+      ...(options.urlStyle === undefined
+        ? {}
+        : { url_style: options.urlStyle }),
+      ...(options.render === undefined ? {} : { render_first: options.render }),
+      ...(options.reload === undefined ? {} : { reload_graph: options.reload }),
+      ...(options.cache === undefined ? {} : { disk_cache: options.cache }),
+      ...(options.noCheck === undefined
+        ? {}
+        : { skip_preflight: options.noCheck }),
+      ...(options.verbose === undefined ? {} : { verbose: options.verbose }),
+    });
+  }
+
+  async serve(options: ServeOptions = {}): Promise<void> {
+    const baseUrl = options.baseUrl ?? this.config.site.base_url;
+    const urlStyle = (options.urlStyle ?? this.config.site.url_style) as
+      | "dir"
+      | "file";
+    const tempDir = await Deno.makeTempDir({ prefix: "wiki-serve-" });
+    const outputDir = new Path(tempDir);
+    let server: ReturnType<typeof startStaticSiteServer> | null = null;
+    let stopWatching: (() => void) | null = null;
+    try {
+      const result = await this.build(outputDir, {
+        baseUrl,
+        urlStyle,
+        noCheck: true,
+      });
+      if (!result.ok) {
+        throw new Error(
+          result.error_message ?? "The wiki site could not be built.",
+        );
+      }
+      const baseParts = baseUrl.split("/").filter(Boolean);
+      const siteDir = baseParts.length > 0
+        ? outputDir.joinpath(...baseParts)
+        : outputDir;
+      server = startStaticSiteServer({
+        siteDir: siteDir.toString(),
+        host: options.host ?? "127.0.0.1",
+        port: options.port ?? 8080,
+        baseUrl,
+        urlStyle,
+        watch: options.watch ?? false,
+        requestHandler: createSparqlServiceHandler(this, {
+          path: this.config.sparql_service.path,
+          baseUrl,
+        }),
+      });
+      const stop = new AbortController();
+      if (options.watch) {
+        let snapshot = this.watchSnapshot();
+        const watchLoop = async () => {
+          while (!stop.signal.aborted) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            if (stop.signal.aborted) break;
+            const next = this.watchSnapshot();
+            if (next === snapshot) continue;
+            snapshot = next;
+            try {
+              await this.render(null, { reload: true });
+              const rebuilt = await this.build(outputDir, {
+                baseUrl,
+                urlStyle,
+                noCheck: true,
+              });
+              if (!rebuilt.ok) {
+                console.error(
+                  `Error: ${rebuilt.error_message ?? "Wiki rebuild failed."}`,
+                );
+              }
+            } catch (error) {
+              console.error(
+                `Error: ${
+                  error instanceof Error ? error.message : String(error)
+                }`,
+              );
+            }
+            snapshot = this.watchSnapshot();
+          }
+        };
+        void watchLoop();
+        stopWatching = () => stop.abort();
+      }
+      console.log(`Wiki server ready at ${server.url}`);
+      console.log(
+        `Serving ${result.page_count} pages from ${
+          this.config.wiki.input.join(", ")
+        }`,
+      );
+      if (result.page_count === 0) {
+        console.log(
+          "Warning: no pages found. Ensure your wiki directory has .md, .yaml, .yml, or .json files.",
+        );
+      }
+      console.log("Press Ctrl+C to stop.");
+      const onInterrupt = () => {
+        void server?.close();
+      };
+      Deno.addSignalListener("SIGINT", onInterrupt);
+      try {
+        await server.server.finished;
+      } finally {
+        Deno.removeSignalListener("SIGINT", onInterrupt);
+      }
+    } finally {
+      stopWatching?.();
+      await server?.close();
+      await Deno.remove(tempDir, { recursive: true });
+    }
+  }
+
+  private watchSnapshot(): string {
+    const watchedExtensions = new Set([
+      ".md",
+      ".yaml",
+      ".yml",
+      ".json",
+      ".ttl",
+      ".trig",
+      ".nt",
+      ".nq",
+      ".rdf",
+      ".xml",
+      ".jsonld",
+      ".html",
+      ".htm",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".svg",
+      ".webp",
+      ".css",
+      ".js",
+      ".woff2",
+      ".woff",
+      ".ttf",
+    ]);
+    const files = new Map<string, Path>();
+    for (
+      const root of [...this.config.wiki.input, ...this.config.wiki.assets]
+    ) {
+      if (!root.exists()) continue;
+      const paths = root.isFile() ? [root] : root.rglob();
+      for (const path of paths) {
+        if (!path.isFile() || this.config.isExcluded(path)) continue;
+        if (!watchedExtensions.has(path.suffix.toLowerCase())) continue;
+        files.set(path.toString(), path);
+      }
+    }
+    return [...files.values()].sort((a, b) =>
+      a.toString().localeCompare(b.toString())
+    )
+      .map((path) => {
+        const stat = Deno.statSync(path.toString());
+        return `${path}:${stat.mtime?.getTime() ?? 0}:${stat.size}`;
+      }).join("\n");
+  }
+
+  link(
+    files?: readonly Path[] | null,
+    options: LinkOptions = {},
+  ): LinkReport {
+    const fileFilter = files && files.length > 0
+      ? routesFromMarkdownFiles(this.config, files)
+      : null;
+    const report = {
+      ok: true,
+      opportunities: 0,
+      fixes: 0,
+      changed_paths: [] as Path[],
+      remaining_broken: 0,
+      lines: [] as string[],
+    };
+
+    if (options.fixBroken) {
+      const fixes = findBrokenLinkFixes(this.config, fileFilter);
+      report.fixes = fixes.length;
+      for (const fix of fixes) {
+        report.lines.push(
+          `${fix.issue.source_path.name}: ${fix.issue.link_kind} [` +
+            `${fix.issue.raw_target}] -> ${fix.description}`,
+        );
+      }
+      if (fixes.length > 0) {
+        report.changed_paths.push(
+          ...applyBrokenLinkFixes(fixes, options.dryRun ?? false),
+        );
+      }
+      if (options.check) {
+        const remaining = remainingBrokenLinks(
+          this.config,
+          fileFilter,
+          options.dryRun ? fixes : null,
+        );
+        report.remaining_broken = remaining.length;
+        report.ok = remaining.length === 0;
+      }
+      if (!options.apply) return report;
+    }
+
+    const opportunities = findLinkOpportunities(this.config, fileFilter);
+    report.opportunities = opportunities.length;
+    if (options.apply) {
+      if (opportunities.length > 0) {
+        report.changed_paths.push(
+          ...applyLinkOpportunities(
+            this.config,
+            opportunities,
+            options.dryRun ?? false,
+          ),
+        );
+      }
+      if (options.check) {
+        report.ok = findLinkOpportunities(this.config, fileFilter).length === 0;
+      }
+      return report;
+    }
+
+    if (opportunities.length === 0) {
+      report.ok = true;
+      return report;
+    }
+    for (const item of opportunities) {
+      const suggestion = formatInternalLink(
+        item.target_route,
+        item.matched_text,
+        this.config.link.style,
+      );
+      const target = options.verbose
+        ? `${item.target_route} (${item.target_title})`
+        : suggestion;
+      report.lines.push(
+        `${item.source_file}:${item.line}:${item.column}: ` +
+          `"${item.matched_text}" -> ${target}`,
+      );
+    }
+    report.ok = !options.check;
+    return report;
   }
 
   /**

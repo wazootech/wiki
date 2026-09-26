@@ -38,10 +38,11 @@
     "npm:prettier@^3.9.5": "3.9.9",
     "npm:rdf-validate-shacl@0.6.5": "0.6.5",
     "npm:rdfjs-inference-engine@0.2.2": "0.2.2",
-    "npm:tsup@^8.3.0": "8.5.1_typescript@5.9.3",
+    "npm:tsup@^8.3.0": "8.5.1_typescript@5.9.3_yaml@2.9.1",
     "npm:typedoc@0.28": "0.28.20_typescript@5.9.3",
     "npm:typescript-eslint@^8.24.0": "8.70.1_eslint@9.39.5_typescript@5.9.3",
-    "npm:typescript@^5.8.0": "5.9.3"
+    "npm:typescript@^5.8.0": "5.9.3",
+    "npm:yaml@2.9.1": "2.9.1"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -1765,10 +1766,14 @@
         "pathe"
       ]
     },
-    "postcss-load-config@6.0.1": {
+    "postcss-load-config@6.0.1_yaml@2.9.1": {
       "integrity": "sha512-oPtTM4oerL+UXmx+93ytZVN82RrlY/wPUV8IeDxFrzIjXOLF1pN+EmKPLbubvKHT2HC20xXsCAH2Z+CKV6Oz/g==",
       "dependencies": [
-        "lilconfig"
+        "lilconfig",
+        "yaml"
+      ],
+      "optionalPeers": [
+        "yaml"
       ]
     },
     "prelude-ls@1.2.1": {
@@ -2029,7 +2034,7 @@
     "ts-interface-checker@0.1.13": {
       "integrity": "sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA=="
     },
-    "tsup@8.5.1_typescript@5.9.3": {
+    "tsup@8.5.1_typescript@5.9.3_yaml@2.9.1": {
       "integrity": "sha512-xtgkqwdhpKWr3tKPmCkvYmS9xnQK3m3XgxZHwSUjvfTjp7YfXe5tT3GgWi0F2N+ZSMsOeWeZFh7ZZFg5iPhing==",
       "dependencies": [
         "bundle-require",
@@ -2161,7 +2166,8 @@
       "npm:markdown-it@^14.1.0",
       "npm:n3@2",
       "npm:rdf-validate-shacl@0.6.5",
-      "npm:rdfjs-inference-engine@0.2.2"
+      "npm:rdfjs-inference-engine@0.2.2",
+      "npm:yaml@2.9.1"
     ],
     "packageJson": {
       "dependencies": [

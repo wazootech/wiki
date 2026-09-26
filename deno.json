@@ -10,7 +10,7 @@
   },
   "tasks": {
     "check": "deno check src tests parity/run.ts",
-    "test": "deno test --allow-read --allow-write --allow-run --allow-env tests/",
+    "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net=127.0.0.1,localhost tests/",
     "parity": "deno run --allow-read --allow-write --allow-run --allow-env parity/run.ts",
     "bake:rules": "deno run --allow-read --allow-write scripts/bake_owl2rl_rules.ts",
     "fmt": "deno fmt",
@@ -40,7 +40,8 @@
     "jsonld": "npm:jsonld@9.0.0",
     "n3": "npm:n3@^2.0.0",
     "rdf-validate-shacl": "npm:rdf-validate-shacl@0.6.5",
-    "rdfjs-inference-engine": "npm:rdfjs-inference-engine@0.2.2"
+    "rdfjs-inference-engine": "npm:rdfjs-inference-engine@0.2.2",
+    "yaml": "npm:yaml@2.9.1"
   },
   "fmt": {
     "include": [
@@ -73,7 +74,13 @@
       ".parity-tmp/"
     ]
   },
-  "exclude": ["docs/", "npm/", "spike-reasoning/", "probes/", ".parity-tmp/"],
+  "exclude": [
+    "docs/",
+    "npm/",
+    "spike-reasoning/",
+    "probes/",
+    ".parity-tmp/"
+  ],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,

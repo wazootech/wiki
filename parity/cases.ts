@@ -47,18 +47,19 @@ export const CASES: readonly ParityCase[] = [
     argv: ["bogus"],
     status: "parity",
   },
+  {
+    id: "usage-help",
+    corpus: "micro",
+    argv: ["--help"],
+    status: "parity",
+  },
 
   // --- Awaiting port ---------------------------------------------------------
   {
-    // The first divergence the harness found, on its first run. Click's group is
-    // declared `no_args_is_help`, so an empty argv prints the *full* help to
-    // stderr with exit code 2 — not the short usage the scaffold assumed. Only
-    // the exit code is verified today; the help body arrives with the CLI port.
     id: "usage-no-command",
     corpus: "micro",
     argv: [],
-    status: "pending",
-    note: "full group help is ported in phase 9 (cliffy)",
+    status: "parity",
   },
   {
     // Ported, and deliberately *not* a gate: the only finding on this corpus is
@@ -156,18 +157,24 @@ export const CASES: readonly ParityCase[] = [
     note: "GRAPH queries run over the source-named dataset.",
   },
   {
+    id: "graph-list-docs",
+    corpus: "docs",
+    argv: ["-c", "docs/wiki.yml", "graph", "list"],
+    status: "parity",
+  },
+  {
     id: "build-micro",
     corpus: "micro",
     argv: micro("build", "--no-check", "-v"),
-    status: "pending",
-    note: "build is ported in phase 8 (site/publish/serve)",
+    status: "parity",
   },
   {
     id: "link-micro",
     corpus: "micro",
     argv: micro("link"),
-    status: "pending",
-    note: "link is ported in phase 8",
+    status: "parity",
+    note:
+      "The micro corpus has no link suggestions; link mutation and repair are covered by focused tests.",
   },
   // --- The repository's own wiki: one formatter divergence remains -----------
   {

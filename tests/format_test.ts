@@ -22,6 +22,7 @@ Deno.test("query format aliases normalize and unsupported formats reject", () =>
   assertEquals(normalizeQueryFormat("JSON"), "json");
   assertEquals(normalizeQueryFormat("text/csv"), "csv");
   assertEquals(normalizeQueryFormat("ttl"), "turtle");
+  assertEquals(normalizeQueryFormat("nt"), "nt");
   assertEquals(normalizeQueryFormat("md"), "markdown");
   try {
     normalizeQueryFormat("rdf+xml");
@@ -29,7 +30,7 @@ Deno.test("query format aliases normalize and unsupported formats reject", () =>
   } catch (error) {
     assertStringIncludes(
       error instanceof Error ? error.message : String(error),
-      "Choose from table, json, csv, tsv, turtle, n3, markdown",
+      "Choose from table, json, csv, tsv, turtle, n3, nt, markdown",
     );
   }
 });
@@ -119,6 +120,20 @@ Deno.test("CONSTRUCT results serialize as RDF and preserve triples", async () =>
   );
   const quads = await parseRdf(turtle, "turtle");
   assertEquals(quads.length, 2);
+  const ntriples = await runQuery(
+    graph,
+    "CONSTRUCT { ?s <https://schema.org/name> ?name } WHERE { ?s <https://schema.org/name> ?name }",
+    { format: "nt" },
+  );
+  assertStringIncludes(
+    ntriples,
+    '<https://wiki.example.org/alice> <https://schema.org/name> "Alice" .',
+  );
+  await assertRejects(
+    () => runQuery(graph, "SELECT ?s WHERE { ?s ?p ?o }", { format: "nt" }),
+    Error,
+    "The 'nt' format only supports CONSTRUCT and DESCRIBE queries.",
+  );
 });
 
 Deno.test("query datasets expose their union and named graphs", async () => {

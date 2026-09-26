@@ -113,6 +113,8 @@ export interface RenderReport {
 /** Options for `build`. */
 export interface BuildOptions {
   readonly output_dir: Path;
+  readonly base_url?: string | null;
+  readonly url_style?: string | null;
   readonly render_first?: boolean;
   readonly reload_graph?: boolean;
   readonly disk_cache?: boolean;

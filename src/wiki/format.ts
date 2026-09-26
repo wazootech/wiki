@@ -20,6 +20,7 @@ export const QUERY_FORMATS = [
   "tsv",
   "turtle",
   "n3",
+  "nt",
   "markdown",
 ] as const;
 
@@ -193,6 +194,11 @@ function stripSparqlPrelude(query: string): string {
     .trimStart();
 }
 
+export function isSparqlUpdate(query: string): boolean {
+  return /^(?:INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b/i
+    .test(stripSparqlPrelude(query));
+}
+
 export function detectQueryForm(query: string): string {
   const text = stripSparqlPrelude(query);
   const match = /\b(SELECT|ASK|CONSTRUCT|DESCRIBE)\b/i.exec(text);
@@ -211,11 +217,7 @@ export async function runQuery(
   } = {},
 ): Promise<string> {
   const format = normalizeQueryFormat(options.format ?? "table");
-  if (
-    /^(?:INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b/i.test(
-      stripSparqlPrelude(query),
-    )
-  ) {
+  if (isSparqlUpdate(query)) {
     throw new Error("SPARQL updates are not supported by wiki query.");
   }
   const queryForm = detectQueryForm(query);
@@ -231,13 +233,22 @@ export async function runQuery(
     ...(options.baseIri === undefined ? {} : { baseIri: options.baseIri }),
   });
   if (response.kind === "construct") {
-    const rdfFormat = format === "n3" ? "n3" : "turtle";
+    const rdfFormat = format === "n3"
+      ? "n3"
+      : format === "nt"
+      ? "nt"
+      : "turtle";
     return await serializeRdf(response.data.quads, rdfFormat, {
       prefixes: graph.bindings,
     });
   }
   if (response.kind === "void") {
     throw new Error("SPARQL updates are not supported by wiki query.");
+  }
+  if (format === "nt") {
+    throw new Error(
+      "The 'nt' format only supports CONSTRUCT and DESCRIBE queries.",
+    );
   }
   if (format === "json") return formatJson(response);
   if (response.kind === "ask") return response.data.boolean ? "true" : "false";

@@ -309,7 +309,27 @@ export {
   formatMarkdownText,
   FORMATTER_PLUGIN_VERSIONS,
 } from "./formatter.ts";
-export { resolve as resolveSources } from "./sources.ts";
+export {
+  install as installSources,
+  remove as removeSource,
+  resolve as resolveSources,
+  type SourceUpdate,
+  update as updateSources,
+  type UpdateResult,
+} from "./sources.ts";
+export {
+  fetchTemplate,
+  INIT_OPTIONS_TO_CONFIG_PATH,
+  type InitOptions,
+  mapInitOptionsToConfig,
+  normalizeBaseUrl,
+  parseGithubRepo,
+  renderWikiYaml,
+  type ResolveInitOptions,
+  resolveInitOptions,
+  type ScaffoldSettings,
+  scaffoldWiki,
+} from "./init_scaffold.ts";
 export {
   exitAuditReport,
   exitCheckResults,
@@ -329,10 +349,18 @@ export {
   normalizeExportMode,
 } from "./export.ts";
 export {
+  type BuildMethodOptions,
   type GraphOptions,
+  type LinkOptions,
   type QueryOptions,
   type RenderOptions,
   resolveRuntimeConfig,
   type RuntimeOverrides,
+  type ServeOptions,
   Wiki,
+  type WikiInitOptions,
 } from "./wiki.ts";
+export {
+  createSparqlServiceHandler,
+  validateSparqlServicePath,
+} from "./sparql_service.ts";

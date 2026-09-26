@@ -112,9 +112,9 @@ export function sourceGraphUri(config: Config, sourceName: string): string {
 /**
  * Where an installed source's cache lives.
  *
- * Ported from `sources.py::_source_cache_dir`. It belongs in `sources.ts`;
- * `graph_descriptors` needs it now and the rest of that module is phase 9, so it
- * lives here until then rather than being duplicated.
+ * Mirrors the path convention in `sources.ts`. The graph loader keeps this
+ * small read-only helper local so describing graphs does not depend on the
+ * source-management operations.
  */
 function sourceCacheDir(config: Config, sourceName: string): Path {
   return config.config_root.joinpath(".wiki", "sources", sourceName);

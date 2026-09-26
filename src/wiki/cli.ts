@@ -2,12 +2,9 @@
 /**
  * CLI entrypoint — Deno port of `src/wiki/cli.py`.
  *
- * Ported so far: the group's `--config`/`--input` options, `--version`, the two
- * audit commands (`check`, `lint`), `fmt`, `query`, `render`, and `export`. The remaining commands —
- * `link`, `graph`, `mcp`, `build`, `serve`, `init`,
- * `install`/`i`, `update`, `remove`, `upgrade` — land as their modules do, and
- * until one does, invoking it is a usage error naming that fact rather than a
- * silent success.
+ * Ported commands cover wiki validation, formatting, graph/query/export,
+ * links, static build/preview, read-only MCP, initialization, Git sources, and
+ * self-upgrade. RDF/XML serialization remains an explicit deferral.
  *
  * Three contracts are preserved deliberately, because the differential harness
  * asserts them:
@@ -20,10 +17,8 @@
  * - **Audit output goes to stderr** through `cli_output.ts`, and the exit code
  *   is the report's, not the printer's.
  *
- * The group's help body is still the short usage: Click's group is declared
- * `no_args_is_help`, so a bare `wiki` prints the full command help to stderr,
- * and that body arrives with the command surface. The divergence is tracked as
- * the `usage-no-command` case in `parity/cases.ts` rather than papered over.
+ * The root help body is shared by `--help` and an empty invocation, with the
+ * latter returning Click's usage-error exit code on stderr.
  *
  * Line endings differ from the Python CLI on Windows: Click writes `\r\n`
  * through text-mode stdout, while `console.error` writes `\n`. The migration
@@ -37,7 +32,7 @@ import { VERSION } from "./version.ts";
 // `--allow-env` before any command runs. `--version` and an unknown command must
 // work under zero permissions (the CLI test asserts exactly that), so the module
 // is imported dynamically inside the command that needs it.
-import type { Wiki } from "./wiki.ts";
+import type { Wiki, WikiInitOptions } from "./wiki.ts";
 
 /** Program name in usage and version output (mirrors Click's `prog_name`). */
 export const PROG_NAME = "wiki";
@@ -54,6 +49,39 @@ export const EXIT_FAILURE = 1;
 const USAGE_LINES = [
   `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...`,
   `Try '${PROG_NAME} --help' for help.`,
+];
+
+const ROOT_HELP_LINES = [
+  `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...`,
+  "",
+  "  Query, validate, and manage your semantic LLM wiki.",
+  "",
+  "Options:",
+  "  --version          Show the version and exit.",
+  "  --input TEXT       Override wiki.input from config file (.md, .yaml, .json,",
+  "                     .toml; repeatable).",
+  "  -c, --config TEXT  Path to wiki config file or directory containing",
+  "                     wiki.yml/wiki.yaml/wiki.json/wiki.toml (default: current",
+  "                     directory).",
+  "  --help             Show this message and exit.",
+  "",
+  "Commands:",
+  "  build    Build static HTML site from wiki documents.",
+  "  check    Integrity checks: SHACL, JSON Schema, routes, collisions,...",
+  "  export   Export document frontmatter as RDF or JSON-LD.",
+  "  fmt      Format markdown wiki pages using mdformat.",
+  "  graph    Inspect read-only RDF named graph provenance.",
+  "  init     Scaffold a new wiki project in the current directory.",
+  "  install  Fetch and lock external data sources.",
+  "  link     Suggest or repair internal links for wiki pages.",
+  "  lint     Convention audits: links, filenames, headings, and link style.",
+  "  mcp      Start a read-only MCP server for the wiki graph.",
+  "  query    Run SPARQL SELECT or CONSTRUCT (query argument or stdin).",
+  "  remove   Remove a source from the config file, its cache, and wiki.lock.",
+  "  render   Render inline SPARQL blocks in markdown files.",
+  "  serve    Start a local HTTP server for browsing the wiki.",
+  "  update   Check locked sources for newer commits and update wiki.lock.",
+  "  upgrade  Check for updates and upgrade the wiki CLI.",
 ];
 
 /** Every command the Python CLI declares, ported or not. */
@@ -85,6 +113,17 @@ const PORTED_COMMANDS: readonly string[] = [
   "query",
   "render",
   "export",
+  "graph",
+  "link",
+  "build",
+  "serve",
+  "mcp",
+  "init",
+  "install",
+  "i",
+  "update",
+  "remove",
+  "upgrade",
 ];
 
 /** The flags each `FILE...` command accepts, so an unknown one is a usage error. */
@@ -365,6 +404,119 @@ async function parseQueryCommandArgs(
       `Error: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+interface ParsedLinkCommand {
+  readonly files: readonly Path[];
+  readonly apply: boolean;
+  readonly fixBroken: boolean;
+  readonly dryRun: boolean;
+  readonly check: boolean;
+  readonly verbose: boolean;
+}
+
+function parseLinkCommandArgs(
+  args: readonly string[],
+): ParsedLinkCommand | number {
+  const files: Path[] = [];
+  let apply = false;
+  let fixBroken = false;
+  let dryRun = false;
+  let check = false;
+  let verbose = false;
+  let optionsEnded = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    if (optionsEnded) {
+      const path = new Path(token);
+      if (!path.exists()) {
+        return usageError(
+          `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
+        );
+      }
+      files.push(path);
+    } else if (token === "--") {
+      optionsEnded = true;
+    } else if (token === "--help" || token === "-h") {
+      console.log(`Usage: wiki link [OPTIONS] [FILES]...
+
+  Suggest or repair internal links for wiki pages.
+
+Options:
+  --apply        Insert suggested internal links (format from link.style in
+                 config file).
+  --fix-broken   Repair unambiguous broken internal links.
+  -n, --dry-run  Preview apply/fix changes without writing files.
+  -c, --check    Exit 1 if link opportunities or broken links remain.
+  -v, --verbose  Show target titles in suggestions; list changed files when
+                 applying.
+  --help         Show this message and exit.`);
+      return EXIT_OK;
+    } else if (token === "--apply") {
+      apply = true;
+    } else if (token === "--fix-broken") {
+      fixBroken = true;
+    } else if (token === "-n" || token === "--dry-run") {
+      dryRun = true;
+    } else if (token === "-c" || token === "--check") {
+      check = true;
+    } else if (token === "-v" || token === "--verbose") {
+      verbose = true;
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      const path = new Path(token);
+      if (!path.exists()) {
+        return usageError(
+          `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
+        );
+      }
+      files.push(path);
+    }
+  }
+
+  return { files, apply, fixBroken, dryRun, check, verbose };
+}
+
+async function runLinkCommand(
+  wiki: Wiki,
+  parsed: ParsedLinkCommand,
+): Promise<number> {
+  let report: Awaited<ReturnType<Wiki["link"]>>;
+  try {
+    report = await wiki.link(parsed.files.length > 0 ? parsed.files : null, {
+      apply: parsed.apply,
+      fixBroken: parsed.fixBroken,
+      dryRun: parsed.dryRun,
+      check: parsed.check,
+      verbose: parsed.verbose,
+    });
+  } catch (error) {
+    if (error instanceof ValueError) {
+      console.error(`Error: ${error.message}`);
+      return EXIT_FAILURE;
+    }
+    throw error;
+  }
+
+  for (const line of report.lines) console.log(line);
+  if (parsed.fixBroken && report.fixes > 0 && parsed.verbose) {
+    const prefix = parsed.dryRun ? "would fix" : "fixed";
+    for (const path of report.changed_paths) console.log(`${prefix} ${path}`);
+  } else if (
+    parsed.apply && report.changed_paths.length > 0 &&
+    (parsed.verbose || parsed.dryRun)
+  ) {
+    const prefix = parsed.dryRun ? "would update" : "updated";
+    for (const path of report.changed_paths) console.log(`${prefix} ${path}`);
+  }
+
+  if (parsed.check && !report.ok) return EXIT_FAILURE;
+  if (parsed.fixBroken && !parsed.apply) return EXIT_OK;
+  if (parsed.apply) return EXIT_OK;
+  if (report.opportunities === 0) return EXIT_OK;
+  return parsed.check ? EXIT_FAILURE : EXIT_OK;
 }
 
 interface ParsedExportCommand {
@@ -698,6 +850,603 @@ async function runQueryCommand(
   }
 }
 
+interface ParsedBuildCommand {
+  readonly outputDir: string;
+  readonly baseUrl: string | null;
+  readonly urlStyle: "file" | "dir" | null;
+  readonly render: boolean;
+  readonly reload: boolean;
+  readonly cache: boolean;
+  readonly noCheck: boolean;
+  readonly verbose: boolean;
+}
+
+function parseBuildCommandArgs(
+  args: readonly string[],
+): ParsedBuildCommand | number {
+  let outputDir = "_site";
+  let baseUrl: string | null = null;
+  let urlStyle: "file" | "dir" | null = null;
+  let render = false;
+  let reload = false;
+  let cache = false;
+  let noCheck = false;
+  let verbose = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    const readValue = (): string | number => {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      index += 1;
+      return value;
+    };
+    if (token === "--help" || token === "-h") {
+      console.log(
+        `Usage: wiki build [OPTIONS]\n\nBuild static HTML site from wiki documents.\n\nOptions:\n  --output-dir PATH       Directory to write site files. (default: _site)\n  --site-base-url TEXT    Override site.base_url. Empty string for root-level URLs.\n  --site-url-style STYLE  Override site.url_style: file or dir.\n  --render                Render inline SPARQL blocks before building.\n  --reload                Rebuild graph before --render.\n  --cache                 Persist graph under .wiki/cache when using --render.\n  --no-check              Skip lint and check preflight before building.\n  -v, --verbose           Print generated file paths.`,
+      );
+      return EXIT_OK;
+    }
+    if (token === "--render") render = true;
+    else if (token === "--reload") reload = true;
+    else if (token === "--cache") cache = true;
+    else if (token === "--no-check") noCheck = true;
+    else if (token === "-v" || token === "--verbose") verbose = true;
+    else if (token === "--output-dir") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      outputDir = value;
+    } else if (token.startsWith("--output-dir=")) {
+      outputDir = token.slice("--output-dir=".length);
+    } else if (token === "--site-base-url") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      baseUrl = value;
+    } else if (token.startsWith("--site-base-url=")) {
+      baseUrl = token.slice("--site-base-url=".length);
+    } else if (token === "--site-url-style") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      if (value !== "file" && value !== "dir") {
+        return usageError(
+          `Error: Invalid value for '--site-url-style': '${value}'.`,
+        );
+      }
+      urlStyle = value;
+    } else if (token.startsWith("--site-url-style=")) {
+      const value = token.slice("--site-url-style=".length);
+      if (value !== "file" && value !== "dir") {
+        return usageError(
+          `Error: Invalid value for '--site-url-style': '${value}'.`,
+        );
+      }
+      urlStyle = value;
+    } else {
+      return usageError(
+        token.startsWith("-")
+          ? `Error: No such option: ${token}`
+          : `Error: Got unexpected extra argument (${token})`,
+      );
+    }
+  }
+  return {
+    outputDir,
+    baseUrl,
+    urlStyle,
+    render,
+    reload,
+    cache,
+    noCheck,
+    verbose,
+  };
+}
+
+interface ParsedServeCommand {
+  readonly host: string;
+  readonly port: number;
+  readonly baseUrl: string | null;
+  readonly urlStyle: "file" | "dir" | null;
+  readonly watch: boolean;
+}
+
+function parseServeCommandArgs(
+  args: readonly string[],
+): ParsedServeCommand | number {
+  let host = "127.0.0.1";
+  let port = 8080;
+  let baseUrl: string | null = null;
+  let urlStyle: "file" | "dir" | null = null;
+  let watch = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    const readValue = (): string | number => {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      index += 1;
+      return value;
+    };
+    if (token === "--help" || token === "-h") {
+      console.log(
+        `Usage: wiki serve [OPTIONS]\n\nStart a local HTTP server for browsing the wiki.\n\nOptions:\n  --host TEXT             Host to bind the server to. (default: 127.0.0.1)\n  --port INTEGER          Port to serve on. (default: 8080)\n  --site-base-url TEXT    Override site.base_url. Empty string for root-level URLs.\n  --site-url-style STYLE  Override site.url_style: file or dir.\n  --watch                 Watch wiki inputs and reload the browser on changes.`,
+      );
+      return EXIT_OK;
+    }
+    if (token === "--watch") watch = true;
+    else if (token === "--host") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      host = value;
+    } else if (token.startsWith("--host=")) {
+      host = token.slice("--host=".length);
+    } else if (token === "--port") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      if (!/^[+-]?\d+$/.test(value)) {
+        return usageError(
+          `Error: Invalid value for '--port': '${value}' is not a valid integer.`,
+        );
+      }
+      port = Number(value);
+    } else if (token.startsWith("--port=")) {
+      const value = token.slice("--port=".length);
+      if (!/^[+-]?\d+$/.test(value)) {
+        return usageError(
+          `Error: Invalid value for '--port': '${value}' is not a valid integer.`,
+        );
+      }
+      port = Number(value);
+    } else if (token === "--site-base-url") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      baseUrl = value;
+    } else if (token.startsWith("--site-base-url=")) {
+      baseUrl = token.slice("--site-base-url=".length);
+    } else if (token === "--site-url-style") {
+      const value = readValue();
+      if (typeof value === "number") return value;
+      if (value !== "file" && value !== "dir") {
+        return usageError(
+          `Error: Invalid value for '--site-url-style': '${value}'.`,
+        );
+      }
+      urlStyle = value;
+    } else if (token.startsWith("--site-url-style=")) {
+      const value = token.slice("--site-url-style=".length);
+      if (value !== "file" && value !== "dir") {
+        return usageError(
+          `Error: Invalid value for '--site-url-style': '${value}'.`,
+        );
+      }
+      urlStyle = value;
+    } else {
+      return usageError(
+        token.startsWith("-")
+          ? `Error: No such option: ${token}`
+          : `Error: Got unexpected extra argument (${token})`,
+      );
+    }
+  }
+  return { host, port, baseUrl, urlStyle, watch };
+}
+
+interface ParsedMcpCommand {
+  readonly mode: "stdio";
+  readonly cache: boolean;
+}
+
+function parseMcpCommandArgs(
+  args: readonly string[],
+): ParsedMcpCommand | number {
+  let mode = "stdio";
+  let cache = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    if (token === "--help" || token === "-h") {
+      console.log(
+        `Usage: wiki mcp [OPTIONS]\n\nStart a read-only MCP server for the wiki graph.\n\nOptions:\n  --mode MODE  MCP transport mode. (default: stdio)\n  --cache      Persist graph under .wiki/cache for faster reuse across launches.`,
+      );
+      return EXIT_OK;
+    }
+    if (token === "--cache") {
+      cache = true;
+    } else if (token === "--mode") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      mode = value.toLowerCase();
+      index += 1;
+    } else if (token.startsWith("--mode=")) {
+      mode = token.slice("--mode=".length).toLowerCase();
+    } else {
+      return usageError(
+        token.startsWith("-")
+          ? `Error: No such option: ${token}`
+          : `Error: Got unexpected extra argument (${token})`,
+      );
+    }
+  }
+  if (mode !== "stdio") {
+    return usageError(`Error: Invalid value for '--mode': '${mode}'.`);
+  }
+  return { mode: "stdio", cache };
+}
+
+interface ParsedUpgradeCommand {
+  readonly checkOnly: boolean;
+  readonly yes: boolean;
+  readonly verbose: boolean;
+}
+
+function parseUpgradeCommandArgs(
+  args: readonly string[],
+): ParsedUpgradeCommand | number {
+  let checkOnly = false;
+  let yes = false;
+  let verbose = false;
+  for (const token of args) {
+    if (token === "--help" || token === "-h") {
+      console.log(
+        "Usage: wiki upgrade [OPTIONS]\n\nCheck for updates and upgrade the wiki CLI.\n\nOptions:\n  -c, --check    Check for updates without upgrading. Exits 1 when outdated.\n  -y, --yes      Skip confirmation and upgrade the global Deno install.\n  -v, --verbose  Show installer command and output.\n  --help         Show this message and exit.",
+      );
+      return EXIT_OK;
+    }
+    if (token === "-c" || token === "--check") checkOnly = true;
+    else if (token === "-y" || token === "--yes") yes = true;
+    else if (token === "-v" || token === "--verbose") verbose = true;
+    else return usageError(`Error: No such option: ${token}`);
+  }
+  return { checkOnly, yes, verbose };
+}
+
+interface ParsedUpdateCommand {
+  readonly name: string | null;
+  readonly dryRun: boolean;
+}
+
+function parseInitCommandArgs(
+  args: readonly string[],
+): WikiInitOptions | number {
+  const values: Record<string, unknown> = {
+    wiki_inputs: [],
+    graph_implicit_types: [],
+  };
+  const valueOptions: Readonly<Record<string, string>> = {
+    "--repo": "repo",
+    "--graph-context-wiki": "graph_context_wiki",
+    "--site-base-url": "site_base_url",
+    "--site-url-style": "site_url_style",
+    "--site-layout": "site_layout",
+    "--graph-content-predicate": "graph_content_predicate",
+    "--link-style": "link_style",
+    "--graph-base-iri": "graph_base_iri",
+    "--graph-implicit-types-policy": "graph_implicit_types_policy",
+    "--template": "template",
+  };
+  const choices: Readonly<Record<string, readonly string[]>> = {
+    "--site-url-style": ["file", "dir"],
+    "--link-style": ["standard", "wikilink"],
+    "--graph-implicit-types-policy": ["fallback", "append"],
+  };
+  for (let index = 0; index < args.length; index += 1) {
+    const token = args[index]!;
+    if (token === "--help" || token === "-h") {
+      console.log(
+        `Usage: wiki init [OPTIONS]\n\nScaffold a new wiki project in the current directory.\n\nOptions:\n  --git                               Run git init after scaffolding.\n  --repo TEXT                         Infer GitHub Pages defaults from owner/repo.\n  --graph-context-wiki TEXT           Override graph.context.wiki.\n  --site-base-url TEXT                Override site.base_url.\n  --site-url-style [file|dir]          Override site.url_style.\n  --site-layout TEXT                  Override site.layout.\n  --graph-content-predicate TEXT      Override graph.content_predicate.\n  --link-style [standard|wikilink]     Override link.style.\n  --input TEXT                        Override wiki.input (repeatable).\n  --graph-base-iri TEXT               Override graph.base_iri.\n  --graph-implicit-types TEXT         Default type for untyped documents (repeatable).\n  --graph-implicit-types-policy TEXT  Strategy for applying implicit types.\n  --graph-include-file-extension      Include .md in graph document URIs.\n  --no-graph-include-file-extension   Omit .md from graph document URIs.\n  --template TEXT                     Use a starter template from wiki-templates.\n  --help                              Show this message and exit.`,
+      );
+      return EXIT_OK;
+    }
+    if (token === "--git") {
+      values["init_git"] = true;
+      continue;
+    }
+    if (token === "--graph-include-file-extension") {
+      values["graph_include_file_extension"] = true;
+      continue;
+    }
+    if (token === "--no-graph-include-file-extension") {
+      values["graph_include_file_extension"] = false;
+      continue;
+    }
+
+    const equalsAt = token.indexOf("=");
+    const option = equalsAt < 0 ? token : token.slice(0, equalsAt);
+    const field = option === "--input"
+      ? "wiki_inputs"
+      : option === "--graph-implicit-types"
+      ? "graph_implicit_types"
+      : valueOptions[option];
+    if (field === undefined) {
+      return usageError(`Error: No such option: ${token}`);
+    }
+    let value = equalsAt < 0 ? undefined : token.slice(equalsAt + 1);
+    if (value === undefined) {
+      value = args[index + 1];
+      if (value === undefined || value.startsWith("-")) {
+        return usageError(`Error: Option '${option}' requires an argument.`);
+      }
+      index += 1;
+    }
+    const allowed = choices[option];
+    if (allowed !== undefined && !allowed.includes(value)) {
+      return usageError(
+        `Error: Invalid value for '${option}': '${value}'. Choose from ${
+          allowed.map((item) => `'${item}'`).join(", ")
+        }.`,
+      );
+    }
+    if (field === "wiki_inputs" || field === "graph_implicit_types") {
+      (values[field] as string[]).push(value);
+    } else {
+      values[field] = value;
+    }
+  }
+  for (const field of ["wiki_inputs", "graph_implicit_types"]) {
+    if ((values[field] as string[]).length === 0) delete values[field];
+  }
+  return values as WikiInitOptions;
+}
+
+function parseInstallCommandArgs(
+  args: readonly string[],
+): string | null | number {
+  if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
+    console.log(
+      "Usage: wiki install [OPTIONS] [URL]\n\nFetch and lock external data sources. With no URL, install declared sources. With a URL, add and fetch one git source.\n\nOptions:\n  --help  Show this message and exit.",
+    );
+    return EXIT_OK;
+  }
+  if (args.length > 1) {
+    return usageError(`Error: Got unexpected extra argument (${args[1]}).`);
+  }
+  if (args.length === 1 && args[0]!.startsWith("-")) {
+    return usageError(`Error: No such option: ${args[0]}`);
+  }
+  return args[0] ?? null;
+}
+
+function parseUpdateCommandArgs(
+  args: readonly string[],
+): ParsedUpdateCommand | number {
+  let name: string | null = null;
+  let dryRun = false;
+  for (const token of args) {
+    if (token === "--help" || token === "-h") {
+      console.log(
+        "Usage: wiki update [OPTIONS] [NAME]\n\nCheck locked sources for newer commits and update wiki.lock.\n\nOptions:\n  -n, --dry-run  Report changes without modifying wiki.lock.\n  --help         Show this message and exit.",
+      );
+      return EXIT_OK;
+    }
+    if (token === "-n" || token === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+    if (token.startsWith("-")) {
+      return usageError(`Error: No such option: ${token}`);
+    }
+    if (name !== null) {
+      return usageError(`Error: Got unexpected extra argument (${token}).`);
+    }
+    name = token;
+  }
+  return { name, dryRun };
+}
+
+function parseRemoveCommandArgs(args: readonly string[]): string | number {
+  if (args.length === 1 && (args[0] === "--help" || args[0] === "-h")) {
+    console.log(
+      "Usage: wiki remove [OPTIONS] NAME\n\nRemove a source from the config file, its cache, and wiki.lock.\n\nOptions:\n  --help  Show this message and exit.",
+    );
+    return EXIT_OK;
+  }
+  if (args.length === 0) return usageError("Error: Missing argument 'NAME'.");
+  if (args.length > 1) {
+    return usageError(`Error: Got unexpected extra argument (${args[1]}).`);
+  }
+  if (args[0]!.startsWith("-")) {
+    return usageError(`Error: No such option: ${args[0]}`);
+  }
+  return args[0]!;
+}
+
+function runInstallCommand(wiki: Wiki, url: string | null): number {
+  try {
+    const lockfile = wiki.install(url);
+    const count = lockfile.sources.size;
+    if (count === 0) {
+      console.log("No sources to install.");
+      return EXIT_OK;
+    }
+    console.log(`Locked ${count} source${count === 1 ? "" : "s"}.`);
+    for (const [name, locked] of lockfile.sources) {
+      console.log(
+        `  ${name}: ${locked.resolved_ref.slice(0, 12)} (${locked.fetched_at})`,
+      );
+    }
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
+function runUpdateCommand(wiki: Wiki, parsed: ParsedUpdateCommand): number {
+  try {
+    const result = wiki.update(parsed.name, { dryRun: parsed.dryRun });
+    if (result.updates.length === 0) {
+      console.log("No sources to update.");
+      return EXIT_OK;
+    }
+    if (result.changed.length === 0) {
+      console.log("All sources are up to date.");
+      return EXIT_OK;
+    }
+    for (const update of result.changed) {
+      const action = parsed.dryRun ? "would update" : "updated";
+      console.log(
+        `${action} ${update.name}: ${update.previous_ref} -> ${update.current_ref}`,
+      );
+    }
+    if (!parsed.dryRun) {
+      const count = result.changed.length;
+      console.log(
+        `Updated ${count} source${count === 1 ? "" : "s"} in wiki.lock.`,
+      );
+    }
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
+function runRemoveCommand(wiki: Wiki, name: string): number {
+  try {
+    wiki.remove(name);
+    console.log(`Removed source '${name}'.`);
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
+async function runUpgradeCommand(
+  options: ParsedUpgradeCommand,
+): Promise<number> {
+  const { runUpgrade } = await import("./upgrade.ts");
+  return await runUpgrade(options);
+}
+
+async function runInitCommand(options: WikiInitOptions): Promise<number> {
+  try {
+    const { Wiki: WikiSession } = await import("./wiki.ts");
+    const result = WikiSession.init({
+      ...options,
+      cwd: Deno.cwd(),
+      prompt_context_wiki: (defaultValue) => {
+        let interactive = false;
+        try {
+          interactive = Deno.stdin.isTerminal();
+        } catch {
+          interactive = false;
+        }
+        if (!interactive) {
+          console.error(
+            "Non-interactive stdin detected — using the default wiki namespace " +
+              `IRI ${defaultValue}. Pass --repo or --graph-context-wiki to control it.`,
+          );
+          return defaultValue;
+        }
+        return prompt(
+          "Custom wiki namespace IRI (graph.context.wiki)",
+          defaultValue,
+        )?.trim() || defaultValue;
+      },
+    });
+    if (!result.ok) {
+      console.error(
+        `Error: ${result.error_message ?? "Initialization failed."}`,
+      );
+      return EXIT_FAILURE;
+    }
+    console.log(result.message);
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
+async function runBuildCommand(
+  wiki: Wiki,
+  parsed: ParsedBuildCommand,
+): Promise<number> {
+  let result: Awaited<ReturnType<Wiki["build"]>>;
+  try {
+    result = await wiki.build(new Path(parsed.outputDir), {
+      baseUrl: parsed.baseUrl,
+      urlStyle: parsed.urlStyle,
+      render: parsed.render,
+      reload: parsed.reload,
+      cache: parsed.cache,
+      noCheck: parsed.noCheck,
+      verbose: parsed.verbose,
+    });
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+  if (parsed.render && parsed.verbose && result.ok) {
+    console.log("Rendered SPARQL dynamic blocks before build.");
+  }
+  if (!result.ok) {
+    if (result.error_message) {
+      console.error(`Error: ${result.error_message}`);
+      return EXIT_FAILURE;
+    }
+    if (result.preflight) {
+      return exitAuditReport(result.preflight, {
+        verbose: parsed.verbose,
+        strict: false,
+      });
+    }
+    return EXIT_FAILURE;
+  }
+  if (parsed.verbose) {
+    for (const path of result.written_paths) console.log(`  ${path}`);
+    console.log(
+      `\nBuilt ${result.page_count} pages and ${result.asset_count} assets to ${parsed.outputDir}`,
+    );
+  }
+  return EXIT_OK;
+}
+
+async function runServeCommand(
+  wiki: Wiki,
+  parsed: ParsedServeCommand,
+): Promise<number> {
+  try {
+    await wiki.serve(parsed);
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
+
+async function runMcpCommand(
+  wiki: Wiki,
+  parsed: ParsedMcpCommand,
+): Promise<number> {
+  try {
+    const { runMcpServer } = await import("./mcp.ts");
+    await runMcpServer(wiki, { mode: parsed.mode, diskCache: parsed.cache });
+    return EXIT_OK;
+  } catch (error) {
+    console.error(
+      `Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return EXIT_FAILURE;
+  }
+}
 /**
  * Run the CLI and return the process exit code.
  *
@@ -722,7 +1471,7 @@ export async function main(
       return EXIT_OK;
     }
     if (token === "--help" || token === "-h") {
-      console.log(USAGE_LINES.join("\n"));
+      console.log(ROOT_HELP_LINES.join("\n"));
       return EXIT_OK;
     }
     if (token === "-c" || token === "--config") {
@@ -759,12 +1508,8 @@ export async function main(
 
   const command = argv[index];
   if (command === undefined) {
-    // Click's group is declared `no_args_is_help`, so an empty argv prints the
-    // *full* help — not `USAGE_LINES` — to stderr and exits 2. Only the exit
-    // code is contractual today; the help body arrives with the command surface
-    // in phase 9, and the divergence is tracked as the `usage-no-command` case
-    // in `parity/cases.ts` rather than papered over here.
-    return usageError("");
+    console.error(ROOT_HELP_LINES.join("\n"));
+    return EXIT_USAGE;
   }
 
   if (!KNOWN_COMMANDS.includes(command)) {
@@ -773,6 +1518,104 @@ export async function main(
 
   if (!PORTED_COMMANDS.includes(command)) {
     return usageError(`Error: The '${command}' command is not ported yet.`);
+  }
+
+  if (command === "init") {
+    const parsedInit = parseInitCommandArgs(argv.slice(index + 1));
+    if (typeof parsedInit === "number") return parsedInit;
+    return await runInitCommand(parsedInit);
+  }
+
+  if (command === "install" || command === "i") {
+    const parsedInstall = parseInstallCommandArgs(argv.slice(index + 1));
+    if (typeof parsedInstall === "number") return parsedInstall;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return runInstallCommand(wiki, parsedInstall);
+  }
+
+  if (command === "update") {
+    const parsedUpdate = parseUpdateCommandArgs(argv.slice(index + 1));
+    if (typeof parsedUpdate === "number") return parsedUpdate;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return runUpdateCommand(wiki, parsedUpdate);
+  }
+
+  if (command === "remove") {
+    const parsedRemove = parseRemoveCommandArgs(argv.slice(index + 1));
+    if (typeof parsedRemove === "number") return parsedRemove;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return runRemoveCommand(wiki, parsedRemove);
+  }
+
+  if (command === "upgrade") {
+    const parsedUpgrade = parseUpgradeCommandArgs(argv.slice(index + 1));
+    if (typeof parsedUpgrade === "number") return parsedUpgrade;
+    return await runUpgradeCommand(parsedUpgrade);
+  }
+
+  if (command === "build") {
+    const parsed = parseBuildCommandArgs(argv.slice(index + 1));
+    if (typeof parsed === "number") return parsed;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runBuildCommand(wiki, parsed);
+  }
+
+  if (command === "serve") {
+    const parsed = parseServeCommandArgs(argv.slice(index + 1));
+    if (typeof parsed === "number") return parsed;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runServeCommand(wiki, parsed);
+  }
+
+  if (command === "mcp") {
+    const parsed = parseMcpCommandArgs(argv.slice(index + 1));
+    if (typeof parsed === "number") return parsed;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runMcpCommand(wiki, parsed);
+  }
+
+  if (command === "link") {
+    const parsedLink = parseLinkCommandArgs(argv.slice(index + 1));
+    if (typeof parsedLink === "number") return parsedLink;
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    return await runLinkCommand(wiki, parsedLink);
+  }
+
+  if (command === "graph") {
+    if (argv[index + 1] !== "list" || argv.length > index + 2) {
+      return usageError("Usage: wiki graph list");
+    }
+    const wiki = await loadWiki(configPath, wikiInputs);
+    if (typeof wiki === "number") return wiki;
+    const descriptors = wiki.graphs();
+    const headers = ["name", "kind", "uri", "commit", "required_by"];
+    const rows = descriptors.map((descriptor) => [
+      descriptor.name,
+      descriptor.kind,
+      descriptor.uri,
+      descriptor.resolved_ref?.slice(0, 12) ?? "",
+      descriptor.required_by.join(","),
+    ]);
+    const widths = headers.map((header, index) =>
+      Math.max(header.length, ...rows.map((row) => row[index]!.length))
+    );
+    console.log(
+      headers.map((header, index) => header.padEnd(widths[index]!)).join("  "),
+    );
+    console.log(widths.map((width) => "-".repeat(width)).join("  "));
+    for (const row of rows) {
+      console.log(
+        row.map((value, index) => value.padEnd(widths[index]!)).join("  "),
+      );
+    }
+    return EXIT_OK;
   }
 
   if (command === "query") {

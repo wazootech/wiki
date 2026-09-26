@@ -87,16 +87,27 @@ Deno.test(
   },
 );
 
-// Only the exit code is asserted here. Click's group is `no_args_is_help`, so
-// the real stderr for an empty argv is the full group help, which arrives with
-// the command surface in phase 9; the divergence is tracked as the
-// `usage-no-command` case in `parity/cases.ts`.
 Deno.test(
-  "no subcommand is a usage error, not a silent success",
+  "--help prints the full command catalog, and empty argv prints it to stderr",
   { permissions: { run: true } },
   async () => {
-    const result = await runCli([]);
-    assertEquals(result.code, EXIT_USAGE);
+    const help = await runCli(["--help"]);
+    assertEquals(help.code, EXIT_OK);
+    assertEquals(help.stderr, "");
+    assert(
+      help.stdout.startsWith("Usage: wiki [OPTIONS] COMMAND [ARGS]...\n\n"),
+    );
+    assert(help.stdout.includes("Commands:\n  build"));
+    assert(
+      help.stdout.includes(
+        "  upgrade  Check for updates and upgrade the wiki CLI.",
+      ),
+    );
+
+    const empty = await runCli([]);
+    assertEquals(empty.code, EXIT_USAGE);
+    assertEquals(empty.stdout, "");
+    assertEquals(empty.stderr, help.stdout);
   },
 );
 
@@ -204,15 +215,85 @@ Deno.test(
 );
 
 Deno.test(
-  "an unported command says so instead of pretending",
+  "graph list prints the root graph table",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeAuditCorpus();
+    try {
+      const result = await runCliIn(
+        ["-c", "wiki.yml", "graph", "list"],
+        root.toString(),
+        ["--allow-all"],
+      );
+      assertEquals(result.code, EXIT_OK);
+      assertEquals(result.stderr, "");
+      const header = result.stdout.split("\n")[0] ?? "";
+      assert(/^name\s+kind\s+uri\s+commit\s+required_by$/.test(header), header);
+      assert(result.stdout.includes("root  root  "));
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+Deno.test(
+  "build writes a static page and reports generated files",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = Path.of(Deno.makeTempDirSync({ prefix: "wiki-cli-build-" }));
+    const wikiDir = root.joinpath("wiki");
+    Deno.mkdirSync(wikiDir.toString(), { recursive: true });
+    Deno.writeTextFileSync(
+      root.joinpath("wiki.yml").toString(),
+      "wiki:\n  input: [wiki]\n",
+    );
+    Deno.writeTextFileSync(
+      wikiDir.joinpath("Ethan.md").toString(),
+      "# Ethan\n\nA valid page.\n",
+    );
+    try {
+      const result = await runCliIn(
+        [
+          "-c",
+          "wiki.yml",
+          "build",
+          "--output-dir",
+          "published",
+          "--no-check",
+          "-v",
+        ],
+        root.toString(),
+        ["--allow-all"],
+      );
+      assertEquals(result.code, EXIT_OK, result.stderr);
+      assert(result.stdout.includes("Built 1 pages and 0 assets to published"));
+      const page = Deno.readTextFileSync(
+        root.joinpath("published", "wiki", "Ethan", "index.html").toString(),
+      );
+      assert(page.includes("A valid page."));
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+Deno.test(
+  "MCP help is available without loading a wiki",
   { permissions: { run: true } },
   async () => {
-    const result = await runCli(["build"]);
+    const result = await runCli(["mcp", "--help"]);
+    assertEquals(result.code, EXIT_OK);
+    assert(result.stdout.includes("Start a read-only MCP server"));
+  },
+);
+
+Deno.test(
+  "serve rejects an invalid URL style as a usage error",
+  { permissions: { run: true } },
+  async () => {
+    const result = await runCli(["serve", "--site-url-style", "bad"]);
     assertEquals(result.code, EXIT_USAGE);
-    assertEquals(result.stdout, "");
-    assert(
-      result.stderr.endsWith("Error: The 'build' command is not ported yet.\n"),
-    );
+    assert(result.stderr.includes("--site-url-style"));
   },
 );
 
