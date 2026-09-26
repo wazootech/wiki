@@ -69,9 +69,9 @@ Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, a
 
 ### TypeScript bindings
 
-The npm package preserves the `wazootech-wiki` name, the `wiki` executable, and the CommonJS/ESM/TypeScript SDK. Its SDK and CLI run the same Deno/TypeScript engine; do not introduce a Python subprocess or require users to install Deno separately. When changing `src/wiki/cli.ts` subcommands, flags, choices, or positional arguments, update the SDK mappings in `npm/src/wiki.ts` and its types/tests in the same change. Run `npm run test:npm` before landing those changes.
+The npm package preserves the `wazootech-wiki` name, the `wiki` executable, and the CommonJS/ESM/TypeScript SDK. Its SDK and CLI run the same Deno/TypeScript engine; do not introduce a Python subprocess or require users to install Deno separately. When changing `src/wiki/cli.ts` subcommands, flags, choices, or positional arguments, update the SDK mappings in `src/wiki.ts` and its types in `src/types.ts` plus tests under `tests/npm/` in the same change. Run `npm run test:npm` before landing those changes.
 
-The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. Verify the packed tarball's `wiki --help` path in CI with system Python blocked; keep the runtime invocation in `npm/src/runtime.ts` and `npm/bin/wiki.js` aligned.
+The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. Verify the packed tarball's `wiki --help` path in CI with system Python blocked; keep the runtime invocation in `src/runtime.ts` and `bin/wiki.js` aligned.
 
 ### Running validations
 
@@ -93,7 +93,7 @@ npm run test:npm
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
-The Deno `Wiki` API is the in-process library surface; the npm SDK is the stable Node.js API and CLI binding. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are in `npm/`.
+The Deno `Wiki` API is the in-process library surface; the npm SDK is the stable Node.js API and CLI binding. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are under `tests/npm/`.
 
 ### Deploy configuration
 

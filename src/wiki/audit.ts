@@ -282,7 +282,7 @@ function normalizeHeadingForDuplicate(text: string): string {
   return pySplitWhitespace(pyCasefold(pyStrip(plain))).join(" ");
 }
 
-/** Lint duplicate H2+ heading text in one document (markdownlint MD024). */
+/** Lint duplicate H2+ heading text in one document (MD024-style outline rule). */
 export function lintDuplicateHeadings(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
@@ -313,7 +313,7 @@ export function lintDuplicateHeadings(
   return warnings;
 }
 
-/** Lint heading depth increments (markdownlint MD001). */
+/** Lint heading depth increments (MD001-style outline rule). */
 export function lintHeadingLevels(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
@@ -343,9 +343,7 @@ export function lintHeadingLevels(
 /**
  * Lint editorial heading style: sentence case for H2+, and no numbering.
  *
- * ATX syntax is enforced by `wiki fmt` (mdformat) rather than reported here, so
- * a Setext heading is not an error — it is simply not a heading this lint reads
- * a warning out of.
+ * ATX syntax is enforced by Wiki's dprint-backed `fmt` command.
  */
 export function lintHeadings(
   config: Config,

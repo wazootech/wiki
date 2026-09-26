@@ -6,7 +6,7 @@ description: Auto-generated reference documentation for the wazootech-wiki Node.
 
 # TypeScript API Reference
 
-The `wazootech-wiki` npm package provides a type-safe SDK for Node.js projects. TypeDoc builds this reference from the public TSDoc annotations in `npm/src/`.
+The `wazootech-wiki` npm package provides a type-safe SDK for Node.js projects. TypeDoc builds this reference from the public TSDoc annotations in `src/`.
 
 - [Full Node.js SDK reference](https://wiki.wazoo.dev/assets/api/ts/)
 - [Deno API Reference](Deno_API_Reference.md) — JSR publication is pending the first tagged release.

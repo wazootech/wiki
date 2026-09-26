@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { WikiSetupError } from "./errors";
 
-const packageRoot = path.resolve(__dirname, "..", "..");
+const packageRoot = path.resolve(__dirname, "..");
 const packageRequire = createRequire(path.join(packageRoot, "package.json"));
 const engineEntry = path.join(packageRoot, "src", "wiki", "cli.ts");
 const denoConfig = path.join(packageRoot, "deno.json");

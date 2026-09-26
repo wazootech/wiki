@@ -11,31 +11,31 @@
     "url": "https://github.com/wazootech/wiki/issues"
   },
   "license": "MIT",
-  "main": "./npm/dist/index.js",
-  "module": "./npm/dist/index.mjs",
-  "types": "./npm/dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./npm/dist/index.d.ts",
-      "import": "./npm/dist/index.mjs",
-      "require": "./npm/dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
   "bin": {
-    "wiki": "npm/bin/wiki.js"
+    "wiki": "bin/wiki.js"
   },
   "scripts": {
-    "build": "tsup npm/src/index.ts npm/src/runtime.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims --silent",
+    "build": "tsup src/index.ts src/runtime.ts --format cjs,esm --dts --out-dir dist --clean --shims --silent",
     "prepack": "npm run build",
     "gendocs:ts": "typedoc",
-    "format": "prettier \"npm/**/*.ts\" --write",
-    "format:check": "prettier \"npm/**/*.ts\" --check",
-    "lint": "eslint npm/",
-    "test:npm": "npm run build && node npm/test-runtime.js && node npm/test-wiki-api.js"
+    "format": "prettier \"src/*.ts\" --write",
+    "format:check": "prettier \"src/*.ts\" --check",
+    "lint": "eslint src/*.ts",
+    "test:npm": "npm run build && node tests/npm/test-runtime.js && node tests/npm/test-wiki-api.js"
   },
   "files": [
-    "npm/bin/",
-    "npm/dist/",
+    "bin/",
+    "dist/",
     "deno.json",
     "deno.lock",
     "src/wiki/**/*.ts",

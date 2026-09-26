@@ -3,9 +3,9 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createWikiCommand } = require('./dist/runtime.js');
+const { createWikiCommand } = require('../../dist/runtime.js');
 
-const packageRoot = path.resolve(__dirname, '..');
+const packageRoot = path.resolve(__dirname, '../..');
 const command = createWikiCommand(['--help']);
 const [deno, ...args] = command;
 const config = path.join(packageRoot, 'deno.json');

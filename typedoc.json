@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["./npm/src/index.ts"],
+  "entryPoints": ["./src/index.ts"],
   "out": "./docs/assets/api/ts",
   "name": "wazootech-wiki TypeScript API",
   "includeVersion": true,

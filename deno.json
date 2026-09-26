@@ -13,13 +13,13 @@
       "LICENSE",
       "README.md",
       "deno.json",
-      "src/**/*.ts",
+      "src/wiki/**/*.ts",
       "src/wiki/index.html",
       "src/wiki/templates/**/*.yml"
     ]
   },
   "tasks": {
-    "check": "deno check src tests parity/run.ts",
+    "check": "deno check src/wiki tests parity/run.ts",
     "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net=127.0.0.1,localhost tests/",
     "parity": "deno run --allow-read --allow-write --allow-run --allow-env parity/run.ts",
     "bake:rules": "deno run --allow-read --allow-write scripts/bake_owl2rl_rules.ts",
@@ -55,42 +55,24 @@
   },
   "fmt": {
     "include": [
-      "src/**/*.ts",
+      "src/wiki/**/*.ts",
       "tests/**/*.ts",
       "parity/**/*.ts",
       "scripts/**/*.ts",
       "deno.json"
     ],
-    "exclude": [
-      "docs/",
-      "npm/",
-      "spike-reasoning/",
-      "probes/",
-      ".parity-tmp/"
-    ]
+    "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"]
   },
   "lint": {
     "include": [
-      "src/**/*.ts",
+      "src/wiki/**/*.ts",
       "tests/**/*.ts",
       "parity/**/*.ts",
       "scripts/**/*.ts"
     ],
-    "exclude": [
-      "docs/",
-      "npm/",
-      "spike-reasoning/",
-      "probes/",
-      ".parity-tmp/"
-    ]
+    "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"]
   },
-  "exclude": [
-    "docs/",
-    "npm/",
-    "spike-reasoning/",
-    "probes/",
-    ".parity-tmp/"
-  ],
+  "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,

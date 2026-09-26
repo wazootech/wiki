@@ -1,4 +1,4 @@
 #!/bin/sh
-staged=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^npm/.*\.(ts|tsx)$')
+staged=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^src/[^/]+\.(ts|tsx)$')
 [ -z "$staged" ] && exit 0
 exec npx --no-install prettier --check $staged

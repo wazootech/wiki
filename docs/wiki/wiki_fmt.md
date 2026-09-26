@@ -23,6 +23,8 @@ fmt:
 
 The option names and values follow the [mdformat-compatible configuration shape](https://mdformat.readthedocs.io/en/stable/users/configuration_file.html); that page documents the settings, not the formatter runtime. Unknown keys fail at config load; invalid values fail at load or when `wiki fmt` reads TOML.
 
+The `.mdformat.toml` lookup is retained so existing Python-era wikis can carry their formatter settings forward without renaming files. Wiki parses the TOML itself and formats with the Deno `dprint-plugin-markdown`; it does not install or invoke Python or `mdformat`.
+
 An empty mapping (`fmt: {}`) is valid and resolves to the same **Wiki CLI fmt defaults** as omitting `fmt` when no TOML file applies (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`).
 
 ### Pointer mode (optional TOML file)

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { Wiki } = require('./dist/index.js');
+const { Wiki } = require('../../dist/index.js');
 
 class TestWiki extends Wiki {
   constructor(options, result) {
@@ -15,7 +15,7 @@ class TestWiki extends Wiki {
 }
 
 async function main() {
-  const esm = await import('./dist/index.mjs');
+  const esm = await import('../../dist/index.mjs');
   assert.strictEqual(typeof esm.Wiki, 'function');
 
   const wiki = new TestWiki({ config: 'docs/wiki.yml', input: ['docs/wiki'], cwd: 'repo' });

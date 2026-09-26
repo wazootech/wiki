@@ -8,6 +8,8 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
+`wiki lint` is a wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on Wiki routes, internal-link resolution, `wiki:` CURIEs, and per-rule `wiki.yaml` severity. ESLint targets JavaScript and TypeScript, not Markdown; `wiki fmt` already owns mechanical Markdown formatting through dprint. A general Markdown linter would overlap a few optional outline rules but could not replace the route-aware checks, so this focused audit remains in the Wiki engine.
+
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
 ## Usage
