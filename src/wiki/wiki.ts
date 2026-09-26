@@ -4,7 +4,7 @@
  * Port of `wiki.py`, through `query`. The session owns config and graph
  * lifecycle; command methods are added as their dependencies land.
  *
- * Still absent: `build`, `render`, `export`, `link`, `serve`, and `init`.
+ * Still absent: `build`, `export`, `link`, `serve`, and `init`.
  *
  * Two port decisions are worth stating because they are visible from outside:
  *
@@ -35,13 +35,19 @@ import {
   loadGraph,
   loadQueryGraph,
 } from "./graph.ts";
+import { renderMarkdownFiles } from "./render.ts";
 import { type QueryFormat, runQuery } from "./format.ts";
 import { resolvePath } from "./jqfilter.ts";
 import { pyStr } from "./pyrepr.ts";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import { resolve as resolveSources } from "./sources.ts";
+import { pageRoutes, selectMarkdownPaths } from "./paths.ts";
 import type { GraphDescriptor } from "./schemas/sources.ts";
-import type { AuditReport, FmtReport } from "./schemas/reports.ts";
+import type {
+  AuditReport,
+  FmtReport,
+  RenderReport,
+} from "./schemas/reports.ts";
 
 export { usesNamedGraphs } from "./graph.ts";
 
@@ -59,6 +65,13 @@ export interface QueryOptions {
   readonly cache?: boolean;
   readonly jq?: string | null;
   readonly pretty?: boolean;
+}
+
+export interface RenderOptions {
+  readonly check?: boolean;
+  readonly reload?: boolean;
+  readonly cache?: boolean;
+  readonly noInference?: boolean;
 }
 
 /** The two `site:` values a session can override at run time. */
@@ -279,6 +292,38 @@ export class Wiki {
     });
     if (options.jq === undefined || options.jq === null) return result;
     return resolvePath(JSON.parse(result), options.jq).map(pyStr).join("\n");
+  }
+
+  async render(
+    files?: readonly Path[] | null,
+    options: RenderOptions = {},
+  ): Promise<RenderReport> {
+    const explicitFiles = files && files.length > 0 ? files : [];
+    if (explicitFiles.length > 0) {
+      selectMarkdownPaths(this.config, explicitFiles);
+    }
+    let reloadNext = options.reload ?? false;
+    const infer = !(options.noInference ?? false);
+    const report = await renderMarkdownFiles(this.config, {
+      dryRun: options.check ?? false,
+      explicitFiles,
+      baseIri: this.config.base_iri,
+      knownSlugs: new Set(pageRoutes(this.config).map((page) => page.route)),
+      queryGraph: async (query) => {
+        const graph = await loadQueryGraph(this.config, query, {
+          infer,
+          reload: reloadNext,
+          diskCache: options.cache ?? false,
+        });
+        reloadNext = false;
+        return graph;
+      },
+    });
+    if (options.cache && !options.check && report.updated_count > 0) {
+      await this.graph({ infer, reload: true, diskCache: true });
+      await this.dataset({ infer, reload: true, diskCache: true });
+    }
+    return report;
   }
 
   /**

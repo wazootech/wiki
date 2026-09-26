@@ -130,15 +130,23 @@ function formatPrettyTable(result: SparqlSelectResults): string {
   return [edge, line(vars), edge, ...values.map(line), edge].join("\n");
 }
 
-function wikiLink(value: string, baseIri: string): string {
+function wikiLink(
+  value: string,
+  baseIri: string,
+  knownSlugs?: ReadonlySet<string>,
+): string {
   if (!baseIri || !value.startsWith(baseIri)) return value;
   let slug = value.slice(baseIri.length);
   if (slug.endsWith(".md")) slug = slug.slice(0, -3);
-  if (slug.includes("/")) return value;
+  if (slug.includes("/") || (knownSlugs && !knownSlugs.has(slug))) return value;
   return `[${slug}](${slug}.md)`;
 }
 
-function formatMarkdown(result: SparqlSelectResults, baseIri: string): string {
+function formatMarkdown(
+  result: SparqlSelectResults,
+  baseIri: string,
+  knownSlugs?: ReadonlySet<string>,
+): string {
   const vars = result.head.vars;
   const rows = result.results.bindings;
   if (rows.length === 0) return "(no results)";
@@ -150,7 +158,8 @@ function formatMarkdown(result: SparqlSelectResults, baseIri: string): string {
   for (const row of rows) {
     lines.push(
       `| ${
-        vars.map((name) => wikiLink(scalar(row[name]), baseIri)).join(" | ")
+        vars.map((name) => wikiLink(scalar(row[name]), baseIri, knownSlugs))
+          .join(" | ")
       } |`,
     );
   }
@@ -194,7 +203,12 @@ export function detectQueryForm(query: string): string {
 export async function runQuery(
   graph: RdfGraph | RdfDataset,
   query: string,
-  options: { format?: string; baseIri?: string; pretty?: boolean } = {},
+  options: {
+    format?: string;
+    baseIri?: string;
+    knownSlugs?: ReadonlySet<string>;
+    pretty?: boolean;
+  } = {},
 ): Promise<string> {
   const format = normalizeQueryFormat(options.format ?? "table");
   if (
@@ -230,7 +244,11 @@ export async function runQuery(
   if (format === "csv") return formatCsv(response.data);
   if (format === "tsv") return formatTsv(response.data);
   if (format === "markdown") {
-    return formatMarkdown(response.data, options.baseIri ?? "");
+    return formatMarkdown(
+      response.data,
+      options.baseIri ?? "",
+      options.knownSlugs,
+    );
   }
   return options.pretty
     ? formatPrettyTable(response.data)

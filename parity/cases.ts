@@ -118,15 +118,15 @@ export const CASES: readonly ParityCase[] = [
     id: "render-check-micro",
     corpus: "micro",
     argv: micro("render", "--check"),
-    status: "pending",
-    note: "render is ported in phase 7",
+    status: "parity",
+    note: "Stale SPARQL blocks and their file list match the oracle.",
   },
   {
     id: "render-micro",
     corpus: "micro",
     argv: micro("render", "-v"),
-    status: "pending",
-    note: "mutating render; the harness re-stages the corpus between runs",
+    status: "parity",
+    note: "The harness re-stages the corpus between the mutating runs.",
   },
   {
     id: "export-micro",
@@ -168,7 +168,7 @@ export const CASES: readonly ParityCase[] = [
     status: "pending",
     note: "link is ported in phase 8",
   },
-  // --- The repository's own wiki: formatting and rendering still owed --------
+  // --- The repository's own wiki: one formatter divergence remains -----------
   {
     // The divergence is a *difference of opinion*, not a bug, and the probe
     // enumerated it before the port existed: `mdformat` considers this wiki
@@ -190,8 +190,8 @@ export const CASES: readonly ParityCase[] = [
     id: "render-check-docs",
     corpus: "docs",
     argv: docs("render", "--check"),
-    status: "pending",
-    note: "docs wiki has no stale SPARQL blocks",
+    status: "parity",
+    note: "The docs wiki has no stale SPARQL blocks in either implementation",
   },
 ];
 

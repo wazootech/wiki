@@ -323,6 +323,7 @@ export {
 export {
   type GraphOptions,
   type QueryOptions,
+  type RenderOptions,
   resolveRuntimeConfig,
   type RuntimeOverrides,
   Wiki,
