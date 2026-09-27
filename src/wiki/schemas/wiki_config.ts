@@ -46,10 +46,10 @@ import { Context } from "../context.ts";
 import { fnmatchCase } from "../fnmatch.ts";
 
 import {
-  InvalidConfError,
-  validateKeys,
-  validateValues,
-} from "../mdformat_conf.ts";
+  type FmtOptions,
+  InvalidFmtConfigError,
+  validateFmtOptions,
+} from "../fmt_config.ts";
 import { readTextTolerant } from "../parser.ts";
 import { pyRepr, pyStr, pyTypeName } from "../pyrepr.ts";
 import {
@@ -299,74 +299,43 @@ export function formatConfigValidationError(
   return new ValueError(`Invalid config file ${configName}: ${error.message}`);
 }
 
-/** Resolved `fmt:` configuration: inline options, or a path to a TOML file. */
+/** Resolved inline `fmt:` options. */
 export interface FmtConfig {
-  readonly options: Record<string, unknown> | null;
-  readonly toml: string | null;
+  readonly options: FmtOptions;
 }
 
 /** `true` when the value is already a resolved {@link FmtConfig}. */
 function isFmtConfig(value: unknown): value is FmtConfig {
-  return isMapping(value) &&
-    (Object.hasOwn(value, "options") || Object.hasOwn(value, "toml"));
+  return isMapping(value) && Object.hasOwn(value, "options");
 }
 
-/**
- * Validate and resolve a `fmt:` value.
- *
- * An inline mapping is checked against mdformat's option surface, because the
- * user is configuring *formatting behaviour* even though the dprint plugin
- * performs it; a string or path is treated as a pointer to a TOML file, and
- * must be relative to the config file so a cloned repo formats the same
- * everywhere.
- */
+/** Validate the inline `fmt:` mapping against the formatter options. */
 export function parseFmtConfig(
   fmtData: unknown,
   configName: string,
-  baseDir: string,
 ): FmtConfig | null {
   if (fmtData === null || fmtData === undefined) return null;
-  if (isFmtConfig(fmtData)) return fmtData;
+  const raw = isFmtConfig(fmtData) ? fmtData.options : fmtData;
 
-  if (isMapping(fmtData)) {
-    const options: Record<string, unknown> = { ...fmtData };
-    // mdformat spells "never wrap" as `wrap = "no"`; `false` is the YAML way of
-    // writing the same intent, so it is translated rather than rejected.
-    if (options["wrap"] === false) options["wrap"] = "no";
-    const confLabel = `${configName} fmt`;
-    try {
-      validateKeys(options, confLabel);
-      validateValues(options, confLabel);
-    } catch (error) {
-      if (error instanceof InvalidConfError) {
-        throw new ValueError(
-          `Invalid config file ${configName}: ${error.message}`,
-        );
-      }
-      throw error;
-    }
-    return { options, toml: null };
+  if (!isMapping(raw)) {
+    throw new ValueError(
+      `Invalid config file ${configName}: fmt must be a mapping`,
+    );
   }
 
-  if (typeof fmtData === "string") {
-    const text = fmtData.trim();
-    if (text === "") {
+  const options: Record<string, unknown> = { ...raw };
+  const confLabel = `${configName} fmt`;
+  try {
+    validateFmtOptions(options, confLabel);
+  } catch (error) {
+    if (error instanceof InvalidFmtConfigError) {
       throw new ValueError(
-        `Invalid config file ${configName}: fmt path must not be empty`,
+        `Invalid config file ${configName}: ${error.message}`,
       );
     }
-    const pathObj = text;
-    if (isAbsolute(pathObj)) {
-      throw new ValueError(
-        `Invalid config file ${configName}: fmt path must be relative to the config file`,
-      );
-    }
-    return { options: null, toml: join(baseDir, pathObj) };
+    throw error;
   }
-
-  throw new ValueError(
-    `Invalid config file ${configName}: fmt must be a mapping or path string`,
-  );
+  return { options };
 }
 
 /** Resolve a possibly-relative path against the config file's directory. */
@@ -610,10 +579,8 @@ const fmtField: FieldSpec = {
   defaultValue: null,
   before: (value) => {
     if (value === null || value === undefined) return null;
-    if (
-      isMapping(value) || typeof value === "string"
-    ) return value;
-    throw new ValueError("fmt must be a mapping or path string");
+    if (isMapping(value)) return value;
+    throw new ValueError("fmt must be a mapping");
   },
 };
 
@@ -917,7 +884,7 @@ function resolveRuntime(
   const sparql = values["sparql_service"] as unknown as SparqlServiceBlock;
   const sparqlPath = normalizeApiPath(sparql.path);
 
-  const fmt = parseFmtConfig(values["fmt"], configName, baseDir);
+  const fmt = parseFmtConfig(values["fmt"], configName);
 
   return {
     wiki: {

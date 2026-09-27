@@ -90,6 +90,7 @@ export type {
   SparqlServiceBlock,
   WikiBlock,
 } from "./schemas/wiki_config.ts";
+export type { FmtOptions, NewLineKind, TextWrap } from "./fmt_config.ts";
 export { coerceSeverity, type Severity } from "./schemas/rules.ts";
 export type { CheckConfig, LintConfig } from "./schemas/rules.ts";
 export {
@@ -293,16 +294,9 @@ export {
 } from "./graph_cache.ts";
 export { DocumentBatch } from "./batch.ts";
 export {
-  DEFAULT_FMT_EXTENSIONS,
-  DEFAULT_FMT_OPTS,
   describeFmtSource,
   formatMarkdown,
-  loadTomlOpts,
-  mdformatOptions,
-  readTomlOpts,
-  REGISTERED_FMT_EXTENSIONS,
-  renderDefaultMdformatToml,
-  resolveFmtTomlOpts,
+  resolveFmtOptions,
 } from "./fmt_util.ts";
 export {
   DEFAULT_LINE_WIDTH,

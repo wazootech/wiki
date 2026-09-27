@@ -599,7 +599,7 @@ function addQuads(target: RdfGraph, quads: Iterable<Quad>): void {
   }
 }
 
-/** A stable key for a path, matching `pathlib`'s case-insensitive Windows hash. */
+/** A stable key that accounts for case-insensitive Windows filesystem paths. */
 function pathKey(path: string): string {
   const value = path;
   return IS_WINDOWS ? value.toLowerCase() : value;

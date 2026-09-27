@@ -42,7 +42,7 @@ const DECODER = new TextDecoder();
 
 /** The formatter's entry point, with a placeholder path for its messages. */
 function format(text: string): string {
-  return formatMarkdownText(text, "Page.md", "no");
+  return formatMarkdownText(text, "Page.md");
 }
 
 /** A document whose only content is one fenced block. */
@@ -93,38 +93,57 @@ Deno.test("the yaml plugin loads at its pinned version", () => {
 });
 
 // ---------------------------------------------------------------------------
-// `wrap`
+// Native Deno/dprint Markdown options
 // ---------------------------------------------------------------------------
 
 const PARAGRAPH =
   "# H\n\nThis paragraph is long enough that a forty column wrap has something to do with it, clearly.\n";
 
-Deno.test("wrap: no leaves the paragraph on one line", () => {
-  assertEquals(format(PARAGRAPH), PARAGRAPH);
+Deno.test("textWrap: never leaves the paragraph on one line", () => {
+  assertEquals(
+    formatMarkdownText(PARAGRAPH, "Page.md", { textWrap: "never" }),
+    PARAGRAPH,
+  );
 });
 
-Deno.test("wrap: an integer wraps the paragraph to that column", () => {
+Deno.test("textWrap: always wraps to lineWidth", () => {
   assertEquals(
-    formatMarkdownText(PARAGRAPH, "Page.md", 40),
+    formatMarkdownText(PARAGRAPH, "Page.md", {
+      textWrap: "always",
+      lineWidth: 40,
+    }),
     "# H\n\nThis paragraph is long enough that a\n" +
       "forty column wrap has something to do\n" +
       "with it, clearly.\n",
   );
 });
 
-Deno.test("wrap: keep preserves the line breaks the page already had", () => {
+Deno.test("textWrap: maintain preserves existing line breaks", () => {
   const wrapped = "Long\nLines\nkept as they are even though they are short.\n";
   assertEquals(
-    formatMarkdownText(wrapped, "Page.md", "keep"),
+    formatMarkdownText(wrapped, "Page.md", { textWrap: "maintain" }),
     wrapped,
   );
 });
 
-Deno.test("wrap: an unusable value is a ValueError", () => {
+Deno.test("textWrap rejects values outside the dprint option set", () => {
   assertThrows(
-    () => formatMarkdownText("# H\n", "Page.md", "preserve"),
+    () =>
+      formatMarkdownText("# H\n", "Page.md", { textWrap: "preserve" } as never),
     ValueError,
-    "Invalid 'wrap' value: 'preserve'",
+    "Invalid 'textWrap' value in fmt",
+  );
+});
+
+Deno.test("newLineKind controls emitted line endings", () => {
+  const input = "# H\r\n\r\nText.\r\n";
+  assertEquals(
+    formatMarkdownText(input, "Page.md", { newLineKind: "lf" }),
+    "# H\n\nText.\n",
+  );
+  assertEquals(
+    formatMarkdownText(input, "Page.md", { newLineKind: "crlf" }),
+    "# H\r\n\r\nText.\r\n",
   );
 });
 

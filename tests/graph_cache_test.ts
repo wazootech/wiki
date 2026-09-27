@@ -363,11 +363,7 @@ Deno.test("a triple added twice is one triple in the cache file", async () => {
   });
 });
 
-Deno.test("the manifest orders paths by component, not by string", async () => {
-  // The oracle settles this one: the sorted recursive path walk compares
-  // `_parts_normcase`, so `notes/inner.md` sorts *before* `notes.md` even though
-  // `.` precedes the separator in the joined string. It reaches the digest, and
-  // a digest that disagrees with the oracle is a cold cache on every run.
+Deno.test("the manifest orders paths by standard string order", async () => {
   await withTempDir((root) => {
     const wikiDir = join(root, "wiki");
     Deno.mkdirSync(join(wikiDir, "notes"), { recursive: true });
@@ -383,11 +379,11 @@ Deno.test("the manifest orders paths by component, not by string", async () => {
 
     assertEquals(
       iterWikiFiles(config).map((path) => config.relativeToRoot(path)),
-      ["wiki/notes/inner.md", "wiki/notes.md"],
+      ["wiki/notes.md", "wiki/notes/inner.md"],
     );
     assertEquals(
       wikiManifest(config).files.map((entry) => entry.path),
-      ["wiki/notes/inner.md", "wiki/notes.md"],
+      ["wiki/notes.md", "wiki/notes/inner.md"],
     );
 
     // Whole-second mtimes, because the oracle records `st_mtime_ns` in
@@ -403,13 +399,10 @@ Deno.test("the manifest orders paths by component, not by string", async () => {
       Deno.utimeSync(file, PINNED_MTIME, PINNED_MTIME);
     }
 
-    // The oracle's own digest for exactly this fixture (`wiki_fingerprint` in a
-    // `PYTHONPATH=src` probe, Python 3.12.13), which is what makes this a
-    // byte-level check of the manifest order, the canonical JSON, and the
-    // SHA-256 together rather than of this port against itself.
+    // This pins the Deno manifest order, canonical JSON, and SHA-256 together.
     assertEquals(
       wikiFingerprint(config),
-      "3d673f9c38b503f03baceda746c99ed6cd08642009dc842292b86670e2e22338",
+      "c95975f1df367b766735201454a44cfe36277a79590b1583ebe68c7f5632a3dc",
     );
   });
 });

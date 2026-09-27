@@ -8,7 +8,7 @@ import {
   readText,
   relativeWithin,
   sortedTreePaths,
-  sortPathsByComponent,
+  sortPaths,
 } from "../src/wiki/fspath.ts";
 import { ValueError } from "../src/wiki/errors.ts";
 
@@ -38,10 +38,10 @@ Deno.test("path helpers read BOM-tolerant text and check symlinks", () => {
   }
 });
 
-Deno.test("path sorting compares components and traversal stays in-tree", () => {
+Deno.test("path sorting uses string order and traversal stays in-tree", () => {
   assertEquals(
-    sortPathsByComponent(["notes.md", "notes/inner.md", "notes"]),
-    ["notes", "notes/inner.md", "notes.md"],
+    sortPaths(["notes.md", "notes/inner.md", "notes"]),
+    ["notes", "notes.md", "notes/inner.md"],
   );
 
   const root = Deno.makeTempDirSync({ prefix: "wiki-fspath-walk-" });
@@ -51,7 +51,7 @@ Deno.test("path sorting compares components and traversal stays in-tree", () => 
     Deno.writeTextFileSync(join(root, "notes", "inner.md"), "# Inner\n");
     assertEquals(
       sortedTreePaths(root).map((path) => relative(root, path)),
-      ["notes", join("notes", "inner.md"), "notes.md"],
+      ["notes", "notes.md", join("notes", "inner.md")],
     );
   } finally {
     Deno.removeSync(root, { recursive: true });

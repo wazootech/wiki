@@ -78,43 +78,24 @@ export function relativeWithin(path: string, base: string): string {
   return result;
 }
 
-function comparisonParts(path: string): string[] {
-  const value = IS_WINDOWS ? path.toLowerCase() : path;
-  return value.split(/[\\/]+/);
-}
-
-export function sortPathsByComponent(paths: readonly string[]): string[] {
-  return [...paths].sort((a, b) => {
-    const left = comparisonParts(a);
-    const right = comparisonParts(b);
-    const shared = Math.min(left.length, right.length);
-    for (let index = 0; index < shared; index++) {
-      const leftPart = left[index]!;
-      const rightPart = right[index]!;
-      if (leftPart < rightPart) return -1;
-      if (leftPart > rightPart) return 1;
-    }
-    return left.length - right.length;
-  });
+export function sortPaths(paths: readonly string[]): string[] {
+  return [...paths].sort();
 }
 
 export function walkTree(root: string): string[] {
   const paths: string[] = [];
   const visit = (directory: string): void => {
-    const entries = [...Deno.readDirSync(directory)].filter((entry) =>
-      entry.isSymlink || entry.isFile || entry.isDirectory
-    );
-    const byPath = new Map<string, Deno.DirEntry>();
-    for (const entry of entries) byPath.set(join(directory, entry.name), entry);
-    for (const path of sortPathsByComponent([...byPath.keys()])) {
+    for (const entry of Deno.readDirSync(directory)) {
+      if (!entry.isSymlink && !entry.isFile && !entry.isDirectory) continue;
+      const path = join(directory, entry.name);
       paths.push(path);
-      if (byPath.get(path)?.isDirectory) visit(path);
+      if (entry.isDirectory) visit(path);
     }
   };
   visit(root);
-  return paths;
+  return sortPaths(paths);
 }
 
 export function sortedTreePaths(root: string): string[] {
-  return sortPathsByComponent(walkTree(root));
+  return walkTree(root);
 }

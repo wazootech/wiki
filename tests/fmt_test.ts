@@ -19,11 +19,9 @@
  *   site/renderer test that happens to live in this file; it belongs to the
  *   milestone that ports `render.py`/`publish.py`.
  *
- * One case is new: {@link "format_markdown rejects an extension the engine has no parser for"}.
- * The Python engine let `mdformat` refuse an unknown extension; neither the
- * plugin nor `deno fmt` before it had an extension surface, so the port has to
- * refuse it by hand or a typo in `fmt: extensions:` would silently format with
- * defaults.
+ * The formatter configuration is native to the Deno/dprint implementation.
+ * These tests verify that mdformat-only keys and `.mdformat.toml` files are not
+ * treated as compatibility inputs.
  *
  * The plugin's own guarantees — the version pin, the resolved configuration, and
  * which fence tags get delegated to which host formatter — live in
@@ -51,7 +49,7 @@ import { Config } from "../src/wiki/config.ts";
 import {
   describeFmtSource,
   formatMarkdown,
-  resolveFmtTomlOpts,
+  resolveFmtOptions,
 } from "../src/wiki/fmt_util.ts";
 
 import { BOM, parseFrontmatter, readTextTolerant } from "../src/wiki/parser.ts";
@@ -132,11 +130,6 @@ async function runCli(
     stderr: DECODER.decode(stderr),
   };
 }
-
-/** A `.mdformat.toml` body equivalent to `DEFAULT_FMT_OPTS`. */
-const TOML_DEFAULTS = 'wrap = "no"\n' +
-  'end_of_line = "lf"\n' +
-  'extensions = ["gfm", "front_matters", "wikilink"]\n';
 
 // ---------------------------------------------------------------------------
 // What the formatter must not mangle
@@ -269,20 +262,18 @@ Deno.test("format_markdown strips a leading BOM", async () => {
   }
 });
 
-Deno.test("format_markdown rejects an extension the engine has no parser for", () => {
-  // New in the port: the plugin has no extension surface, so a mistyped
-  // extension would otherwise format with defaults and report success.
+Deno.test("fmt rejects mdformat-only options", () => {
   const root = tempRoot();
   try {
-    const filePath = write(root, "Page.md", "# Title\n");
-    const config = new Config({
-      config_root: root,
-      fmt: { extensions: ["nope"] },
-    });
+    write(
+      root,
+      "wiki.yml",
+      "wiki:\n  input: [wiki]\nfmt:\n  extensions: [gfm]\n",
+    );
     assertThrows(
-      () => formatMarkdown("# Title\n", filePath, config),
+      () => Config.load(root),
       ValueError,
-      "The required 'nope' mdformat extension is not installed.",
+      "Invalid key 'extensions' in wiki.yml fmt",
     );
   } finally {
     cleanup(root);
@@ -293,148 +284,29 @@ Deno.test("format_markdown rejects an extension the engine has no parser for", (
 // Where the fmt options come from
 // ---------------------------------------------------------------------------
 
-Deno.test("describeFmtSource prefers an inline fmt block over .mdformat.toml", () => {
-  const root = tempRoot();
-  try {
-    write(root, ".mdformat.toml", 'wrap = "keep"\n');
-    const filePath = write(root, "page.md", "# Title\n");
-    const config = new Config({
-      config_root: root,
-      fmt: { wrap: "no", extensions: ["gfm", "front_matters", "wikilink"] },
-    });
-    assertEquals(
-      describeFmtSource(filePath, config),
-      "inline fmt in wiki config",
-    );
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("a fmt pointer to a missing file falls back to .mdformat.toml", () => {
-  const root = tempRoot();
-  try {
-    write(root, ".mdformat.toml", TOML_DEFAULTS);
-    const filePath = write(root, "page.md", "# Title\n");
-    const config = new Config({
-      config_root: root,
-      fmt: "missing.toml",
-    });
-    assertEquals(
-      describeFmtSource(filePath, config),
-      ".mdformat.toml at config root",
-    );
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("describeFmtSource names the file a fmt pointer points at", () => {
-  const root = tempRoot();
-  try {
-    write(root, "custom.toml", TOML_DEFAULTS);
-    const filePath = write(root, "page.md", "# Title\n");
-    const config = new Config({
-      config_root: root,
-      fmt: "custom.toml",
-    });
-    assertEquals(describeFmtSource(filePath, config), "fmt from custom.toml");
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("an invalid TOML file at the fmt pointer is a ValueError", () => {
-  const root = tempRoot();
-  try {
-    write(root, "bad.toml", 'wrap = "no"\n[broken\n');
-    const filePath = write(root, "page.md", "# Title\n");
-    const config = new Config({
-      config_root: root,
-      fmt: "bad.toml",
-    });
-    assertThrows(
-      () => formatMarkdown("# Title\n", filePath, config),
-      ValueError,
-      "Invalid TOML syntax",
-    );
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("an invalid .mdformat.toml at the config root is a ValueError", () => {
+Deno.test("inline fmt options take precedence over ignored .mdformat.toml", () => {
   const root = tempRoot();
   try {
     write(root, ".mdformat.toml", "[broken\n");
-    const filePath = write(root, "page.md", "# Title\n");
-    assertThrows(
-      () =>
-        formatMarkdown(
-          "# Title\n",
-          filePath,
-          new Config({ config_root: root }),
-        ),
-      ValueError,
-      "Invalid TOML syntax",
-    );
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("the fmt source walks up from the page to find .mdformat.toml", () => {
-  const root = tempRoot();
-  try {
-    const wiki = join(root, "wiki");
-    write(root, "wiki/.mdformat.toml", TOML_DEFAULTS);
-    const filePath = write(root, "wiki/sub/page.md", "# Title\n");
     const config = new Config({
       config_root: root,
-      wiki: { input: [wiki] },
+      fmt: { textWrap: "never" },
     });
-    const source = describeFmtSource(filePath, config).replaceAll("\\", "/");
-    assertStringIncludes(source, ".mdformat.toml");
-    assertStringIncludes(source, "wiki");
+    assertEquals(describeFmtSource(config), "inline fmt in wiki config");
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("pointer mode formats with .mdformat.toml", async () => {
+Deno.test("Wiki fmt ignores .mdformat.toml", () => {
   const root = tempRoot();
   try {
-    write(root, ".mdformat.toml", TOML_DEFAULTS);
-    write(root, "wiki.yml", "wiki:\n  input: [wiki]\nfmt: .mdformat.toml\n");
-    const filePath = write(root, "wiki/page.md", "# Title\n\nSome text  \n");
-    const config = Config.load(root);
-    assertEquals(
-      describeFmtSource(filePath, config),
-      "fmt from .mdformat.toml",
-    );
-    const formatted = await formatMarkdown(
-      readTextTolerant(filePath),
-      filePath,
-      config,
-    );
-    assert(!formatted.includes("Some text  \n"), formatted);
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("omitting fmt uses .mdformat.toml at the config root", async () => {
-  const root = tempRoot();
-  try {
-    write(root, ".mdformat.toml", TOML_DEFAULTS);
+    write(root, ".mdformat.toml", "[broken\n");
     write(root, "wiki.yml", "wiki:\n  input: [wiki]\n");
     const filePath = write(root, "wiki/page.md", "# Title\n\nSome text  \n");
     const config = Config.load(root);
-    assertEquals(
-      describeFmtSource(filePath, config),
-      ".mdformat.toml at config root",
-    );
-    const formatted = await formatMarkdown(
+    assertEquals(describeFmtSource(config), "Wiki CLI fmt defaults");
+    const formatted = formatMarkdown(
       readTextTolerant(filePath),
       filePath,
       config,
@@ -445,81 +317,62 @@ Deno.test("omitting fmt uses .mdformat.toml at the config root", async () => {
   }
 });
 
-Deno.test("inline, pointer, and omitted fmt produce the same bytes", async () => {
+Deno.test("native inline options and omitted fmt produce the same bytes", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
     const filePath = write(root, "page.md", original);
-
     const inlineConfig = new Config({
       config_root: root,
-      fmt: {
-        wrap: "no",
-        end_of_line: "lf",
-        extensions: ["gfm", "front_matters", "wikilink"],
-      },
+      fmt: { textWrap: "never", lineWidth: 80, newLineKind: "lf" },
     });
-    const inlineOut = await formatMarkdown(original, filePath, inlineConfig);
-
-    write(root, "pointer/.mdformat.toml", TOML_DEFAULTS);
-    write(
-      root,
-      "pointer/wiki.yml",
-      "wiki:\n  input: [wiki]\nfmt: .mdformat.toml\n",
-    );
-    const pointerOut = await formatMarkdown(
+    const inlineOut = formatMarkdown(original, filePath, inlineConfig);
+    const defaultsOut = formatMarkdown(
       original,
       filePath,
-      Config.load(join(root, "pointer")),
+      new Config({ config_root: root }),
     );
-
-    write(root, "omit/.mdformat.toml", TOML_DEFAULTS);
-    write(root, "omit/wiki.yml", "wiki:\n  input: [wiki]\n");
-    const omitOut = await formatMarkdown(
-      original,
-      filePath,
-      Config.load(join(root, "omit")),
-    );
-
-    assertEquals(inlineOut, pointerOut);
-    assertEquals(inlineOut, omitOut);
+    assertEquals(inlineOut, defaultsOut);
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("a YAML fmt block normalises wrap: no to a string", () => {
+Deno.test("a YAML fmt block accepts Deno/dprint option names", () => {
   const root = tempRoot();
   try {
     write(
       root,
       "wiki.yml",
-      "wiki:\n  input: [wiki]\nfmt:\n  wrap: no\n  end_of_line: lf\n" +
-        '  extensions: ["gfm", "front_matters", "wikilink"]\n',
+      "wiki:\n  input: [wiki]\nfmt:\n  textWrap: maintain\n  lineWidth: 72\n  newLineKind: crlf\n",
     );
-    assertEquals(Config.load(root).fmt?.options?.["wrap"], "no");
+    assertEquals(Config.load(root).fmt?.options, {
+      textWrap: "maintain",
+      lineWidth: 72,
+      newLineKind: "crlf",
+    });
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("absent fmt uses the wiki CLI defaults", async () => {
+Deno.test("absent fmt uses the wiki Deno formatter defaults", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
     write(root, "wiki.yml", "wiki:\n  input: [wiki]\n");
     const filePath = write(root, "page.md", original);
     const config = Config.load(root);
-    assertEquals(describeFmtSource(filePath, config), "Wiki CLI fmt defaults");
-    const formatted = await formatMarkdown(original, filePath, config);
+    assertEquals(describeFmtSource(config), "Wiki CLI fmt defaults");
+    const formatted = formatMarkdown(original, filePath, config);
     assert(!formatted.includes("Some text  \n"), formatted);
-    assertEquals(resolveFmtTomlOpts(filePath, config)[0]["wrap"], "no");
+    assertEquals(resolveFmtOptions(config)[0].textWrap, "never");
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("an empty inline fmt block merges the defaults", async () => {
+Deno.test("an empty inline fmt block merges the Deno formatter defaults", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
@@ -528,13 +381,10 @@ Deno.test("an empty inline fmt block merges the defaults", async () => {
     const absentConfig = Config.load(root);
     const emptyConfig = new Config({ config_root: root, fmt: {} });
     assertEquals(
-      await formatMarkdown(original, filePath, emptyConfig),
-      await formatMarkdown(original, filePath, absentConfig),
+      formatMarkdown(original, filePath, emptyConfig),
+      formatMarkdown(original, filePath, absentConfig),
     );
-    assertEquals(
-      describeFmtSource(filePath, emptyConfig),
-      "inline fmt in wiki config",
-    );
+    assertEquals(describeFmtSource(emptyConfig), "inline fmt in wiki config");
   } finally {
     cleanup(root);
   }

@@ -5,10 +5,12 @@
 ### Breaking
 
 - The Python engine, PyPI distribution, and Python-only tests/build/release tooling are retired. The `wazootech-wiki` npm package keeps its name, CLI command, and Node.js SDK but runs the Deno/TypeScript engine without requiring Python or a system Deno installation.
+- The `fmt:` configuration now uses native Deno/dprint options (`textWrap`, `lineWidth`, `newLineKind`). The old `wrap`, `end_of_line`, and `extensions` keys, TOML pointers, and `.mdformat.toml` discovery are not supported.
 - RDF/XML input remains supported; RDF/XML serialization is deferred. `export` and metadata negotiation return a clear unsupported-format result instead of substituting another RDF format.
 
 ### Changed
 
+- Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
 - The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. The release workflow will publish it on the first tagged release after the package is linked to this GitHub repository.
 - Standalone binaries are built with `deno compile` for Linux x64/arm64, Windows x64/arm64, and macOS x64/arm64; release assets are individual executables with `SHA256SUMS`.
 

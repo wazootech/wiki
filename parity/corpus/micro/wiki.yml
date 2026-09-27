@@ -48,9 +48,3 @@ lint:
   broken_links: warning
   filename_pattern: warning
   link_style: warning
-
-# Markdown formatting options (wiki fmt); inline mapping or TOML path.
-fmt:
-  wrap: "no"
-  end_of_line: lf
-  extensions: [gfm, front_matters, wikilink, toc, footnote]

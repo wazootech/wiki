@@ -29,11 +29,11 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 Three audit lanes map to three commands:
 
-| Lane       | Command      | YAML block | Purpose                                                                                |
-| ---------- | ------------ | ---------- | -------------------------------------------------------------------------------------- |
-| Integrity  | `wiki check` | `check:`   | SHACL, JSON Schema frontmatter, layout file existence                                  |
-| Convention | `wiki lint`  | `lint:`    | Links, filename pattern severity, headings, link style in prose                        |
-| Formatting | `wiki fmt`   | `fmt:`     | Mechanical Markdown via the Deno formatter; mdformat-compatible options and TOML paths |
+| Lane       | Command      | YAML block | Purpose                                                                                                |
+| ---------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------ |
+| Integrity  | `wiki check` | `check:`   | SHACL, JSON Schema frontmatter, layout file existence                                                  |
+| Convention | `wiki lint`  | `lint:`    | Links, filename pattern severity, headings, link style in prose                                        |
+| Formatting | `wiki fmt`   | `fmt:`     | Mechanical Markdown via the Deno formatter's native `textWrap`, `lineWidth`, and `newLineKind` options |
 
 **Rule placement:** Mechanical markdown belongs under **`fmt:`**. Wiki policy and link conventions belong under **`lint:`**. SHACL, JSON Schema, and layout keys belong under **`check:`** — never under `lint:`. See [Style Guide](Style_Guide.md) for the full matrix.
 
@@ -317,35 +317,22 @@ It is **opt-in by default** because enabling it exposes raw graph-query access i
 
 ## Formatting (`fmt`)
 
-Top-level **`fmt`** configures `wiki fmt`, the in-process Deno Markdown formatter. The option names remain mdformat-compatible. Two shapes are allowed — not both:
+Top-level **`fmt`** configures Wiki's in-process `dprint-plugin-markdown` formatter. The inline mapping uses native Deno/dprint option names:
 
 ```yaml
-fmt: # optional block — inline mapping (init writes)
-  wrap: "no"
-  end_of_line: lf
-  extensions: [gfm, front_matters, wikilink, toc, footnote]
-
-# Pointer mode (optional alternative):
-# fmt: .mdformat.toml
+fmt:
+  textWrap: never
+  lineWidth: 80
+  newLineKind: lf
 ```
 
-| Key / shape   | Required          | Default                                         | Init              | Audited by |
-| ------------- | ----------------- | ----------------------------------------------- | ----------------- | ---------- |
-| `wrap`        | optional (inline) | `"no"`                                          | writes            | `wiki fmt` |
-| `end_of_line` | optional (inline) | `lf`                                            | writes            | `wiki fmt` |
-| `extensions`  | optional (inline) | `[gfm, front_matters, wikilink, toc, footnote]` | writes            | `wiki fmt` |
-| TOML path     | optional          | unset — see fallback chain below                | omits (commented) | `wiki fmt` |
+| Option        | Values                        | Default | Effect                                                                   |
+| ------------- | ----------------------------- | ------- | ------------------------------------------------------------------------ |
+| `textWrap`    | `always`, `maintain`, `never` | `never` | Whether prose wraps to the configured width or preserves/avoids wrapping |
+| `lineWidth`   | Positive integer              | `80`    | Target width when `textWrap` is `always`                                 |
+| `newLineKind` | `auto`, `crlf`, `lf`          | `lf`    | Line ending emitted by the formatter                                     |
 
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`). See [wiki fmt](wiki_fmt.md) for the full resolution order.
-
-| Shape          | Example               | When to use                                 |
-| -------------- | --------------------- | ------------------------------------------- |
-| Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
-| Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
-
-Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
-
-In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`).
+Only an inline mapping is supported. TOML pointers, `.mdformat.toml` discovery, and mdformat-only keys such as `wrap`, `end_of_line`, and `extensions` are not supported. Existing values must be removed or rewritten using the native options above. Omitting `fmt` or using `fmt: {}` selects the Wiki CLI defaults. See [wiki fmt](wiki_fmt.md) for details.
 
 ## Page layout
 
@@ -494,18 +481,7 @@ When `link.style` is `standard`, `lint.link_style` (default `warning`) flags Obs
 
 ## Formatting (`fmt`)
 
-Top-level **`fmt`** configures `wiki fmt`, the in-process Deno Markdown formatter. The option names remain mdformat-compatible. Two shapes are allowed — not both:
-
-| Shape          | Example               | When to use                                 |
-| -------------- | --------------------- | ------------------------------------------- |
-| Inline mapping | `fmt: { wrap: "no" }` | Default; what `wiki init` writes            |
-| Relative path  | `fmt: custom.toml`    | Share one TOML file or keep fmt out of yaml |
-
-Omit `fmt` entirely to use fallbacks: `config_root/.mdformat.toml`, then upward search from each markdown file, then **Wiki CLI fmt defaults** (`wrap: "no"`, `end_of_line: lf`, extensions `gfm`, `front_matters`, `wikilink`, `toc`, `footnote`). See [wiki fmt](wiki_fmt.md) for the full resolution order.
-
-Invalid inline keys or values fail when the config loads. Invalid TOML syntax fails when `wiki fmt` reads the file.
-
-In library code, loaded `Config.fmt` is a `FmtConfig` with `options` (inline mapping) or `toml` (resolved path under `config_root`); yaml shapes above are unchanged.
+`wiki fmt` uses native Deno/dprint options under an inline `fmt:` mapping. The accepted options, defaults, and removed mdformat/TOML behavior are documented in [wiki fmt](wiki_fmt.md).
 
 ## Integrity checks (`check`)
 

@@ -481,17 +481,11 @@ export function renderWikiYaml(options: InitOptions): string {
     "#   enabled: false",
     "#   path: /api/sparql",
     "",
-    "# Markdown formatting options (wiki fmt); inline mapping or TOML path.",
+    "# Markdown formatting options (wiki fmt) use dprint plugin settings.",
     "fmt:",
-    "  # Line wrap width (no disables wrapping).",
-    '  wrap: "no"',
-    "  # Line ending style (lf or crlf).",
-    "  end_of_line: lf",
-    "  # mdformat extensions enabled for wiki markdown.",
-    "  extensions: [gfm, front_matters, wikilink, toc, footnote]",
-    "",
-    "# Pointer mode (optional TOML file relative to this file):",
-    "# fmt: .mdformat.toml",
+    "  textWrap: never",
+    "  lineWidth: 80",
+    "  newLineKind: lf",
   );
   return `${lines.join("\n")}\n`;
 }

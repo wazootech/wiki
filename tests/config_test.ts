@@ -487,7 +487,7 @@ Deno.test("top-level content must be a mapping", () => {
   });
 });
 
-Deno.test("inline fmt options are validated against mdformat's surface", () => {
+Deno.test("inline fmt options are validated against Deno/dprint's surface", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -496,14 +496,14 @@ Deno.test("inline fmt options are validated against mdformat's surface", () => {
         "wiki:",
         "  input: wiki",
         "fmt:",
-        "  wrap: 'no'",
-        "  extensions: [gfm, front_matters, wikilink]",
+        "  textWrap: never",
+        "  lineWidth: 80",
+        "  newLineKind: lf",
         "",
       ].join("\n"),
     );
     const config = Config.load(base);
-    assertEquals(config.fmt?.options?.["wrap"], "no");
-    assertEquals(config.fmt?.toml, null);
+    assertEquals(config.fmt?.options?.["textWrap"], "never");
   });
   withTempDir((base) => {
     writeFile(
@@ -511,15 +511,11 @@ Deno.test("inline fmt options are validated against mdformat's surface", () => {
       "wiki.json",
       JSON.stringify({
         wiki: { input: ["wiki"] },
-        fmt: { wrap: "no", extensions: ["gfm", "front_matters", "wikilink"] },
+        fmt: { textWrap: "never", lineWidth: 80, newLineKind: "lf" },
       }),
     );
     const config = Config.load(base);
-    assertEquals(config.fmt?.options?.["extensions"], [
-      "gfm",
-      "front_matters",
-      "wikilink",
-    ]);
+    assertEquals(config.fmt?.options?.["lineWidth"], 80);
   });
   withTempDir((base) => {
     writeFile(
@@ -531,55 +527,29 @@ Deno.test("inline fmt options are validated against mdformat's surface", () => {
   });
 });
 
-Deno.test("fmt accepts a relative path pointer and refuses an absolute one", () => {
+Deno.test("fmt accepts only an inline options mapping", () => {
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      "wiki:\n  input: wiki\nfmt:\n  textWrap: never\n",
+    );
+    assertEquals(Config.load(base).fmt?.options?.["textWrap"], "never");
+  });
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt: custom.toml\n");
-    const config = Config.load(base);
-    assertEquals(
-      config.fmt?.toml,
-      join(resolve(base), "custom.toml"),
-    );
-    assertEquals(config.fmt?.options, null);
-  });
-  withTempDir((base) => {
-    writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt:\n");
-    // An empty `fmt:` block is not a pointer to anything.
-    assertEquals(Config.load(base).fmt, null);
-  });
-  withTempDir((base) => {
-    const absolute = Deno.build.os === "windows"
-      ? "C:/etc/mdformat.toml"
-      : "/etc/mdformat.toml";
-    const pathFlavour = Deno.build.os === "windows"
-      ? "WindowsPath"
-      : "PosixPath";
-    writeFile(base, "wiki.yaml", `wiki:\n  input: wiki\nfmt: ${absolute}\n`);
-    const error = assertThrows(() => Config.load(base), ValueError);
-    // This one has no router branch of its own, so it falls through to the
-    // pydantic rendering — including the doubled prefix, which the oracle
-    // produces too and which a reader would otherwise think was a bug.
-    assertEquals(
-      error.message,
-      "Invalid config file wiki.yaml: 1 validation error for Config\n" +
-        "  Value error, Invalid config file wiki.yaml: fmt path must be relative " +
-        "to the config file [type=value_error, input_value={" +
-        `'wiki': {'input': 'wiki'}, 'fmt': '${absolute}', ` +
-        `'config_root': ${pathFlavour}('${
-          (resolve(base)).replaceAll("\\", "/")
-        }')}, input_type=dict]\n` +
-        "    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
+    assertThrows(
+      () => Config.load(base),
+      ValueError,
+      "fmt must be a mapping",
     );
   });
-});
-
-Deno.test("fmt must be a mapping or path string", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt: true\n");
-    const error = assertThrows(() => Config.load(base), ValueError);
-    // The router recognises this one and reports it as a single sentence.
-    assertEquals(
-      error.message,
-      "Invalid config file wiki.yaml: fmt must be a mapping or path string",
+    assertThrows(
+      () => Config.load(base),
+      ValueError,
+      "fmt must be a mapping",
     );
   });
 });

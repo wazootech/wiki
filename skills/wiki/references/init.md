@@ -125,7 +125,7 @@ Fresh `wiki init` writes:
 | ------- | --------------------------------------------------------------------------------------------------- |
 | `site:` | `layout`, `base_url`, `url_style` only                                                              |
 | `lint:` | `broken_links`, `filename_pattern`, `link_style` at `warning`                                       |
-| `fmt:`  | Inline mapping in `wiki.yml` (wrap, end_of_line, extensions) — init does not write `.mdformat.toml` |
+| `fmt:`  | Inline mapping in `wiki.yml` with native `textWrap`, `lineWidth`, and `newLineKind` options |
 
 Other `lint.*` keys (e.g. `headings`, `heading_levels`) are valid but init omits them (defaults are `off`).
 
@@ -164,4 +164,4 @@ Severity is `off`, `warning`, or `error`. Unknown top-level keys fail at config 
 
 Regex belongs in `wiki.filename_pattern`, not under `check:`.
 
-Fresh `wiki init` writes `fmt:` settings in `wiki.yml`; the Deno formatter uses these options and may read compatible `.mdformat.toml` settings during migration.
+Fresh `wiki init` writes native Deno/dprint `fmt:` settings in `wiki.yml`. TOML pointers and `.mdformat.toml` discovery are unsupported; existing mdformat-only keys are rejected.

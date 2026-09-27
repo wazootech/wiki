@@ -43,7 +43,13 @@ import * as markdownPlugin from "@dprint/markdown";
 import * as jsonPlugin from "@dprint/json";
 import * as typescriptPlugin from "@dprint/typescript";
 
-import { pyReprString } from "./pyrepr.ts";
+import {
+  DEFAULT_FMT_OPTIONS,
+  DEFAULT_LINE_WIDTH,
+  type FmtOptions,
+  type TextWrap,
+  validateFmtOptions,
+} from "./fmt_config.ts";
 
 /**
  * The plugin versions this module was written against.
@@ -66,14 +72,11 @@ export const FORMATTER_PLUGIN_VERSIONS = {
   laxMarkup: "0.3.2",
 } as const;
 
-/**
- * The line width `--line-width` defaults to, and the width the plugin uses when
- * `wrap` is not a number.
- */
-export const DEFAULT_LINE_WIDTH = 80;
+/** The default Deno/dprint Markdown line width. */
+export { DEFAULT_LINE_WIDTH };
 
 /** The `markdown` plugin config, minus `textWrap`. */
-function markdownPluginConfig(textWrap: string): Record<string, unknown> {
+function markdownPluginConfig(textWrap: TextWrap): Record<string, unknown> {
   return {
     textWrap,
     ignoreDirective: "deno-fmt-ignore",
@@ -277,7 +280,8 @@ function dispatch(host: Plugins, request: {
  * An unterminated fence is left exactly as the plugin produced it.
  */
 function formatHtmlFences(text: string, markup: Formatter): string {
-  const lines = text.split("\n");
+  const lineEnding = text.includes("\r\n") ? "\r\n" : "\n";
+  const lines = text.split(/\r\n|\n/);
   const out: string[] = [];
   let index = 0;
   while (index < lines.length) {
@@ -322,54 +326,26 @@ function formatHtmlFences(text: string, markup: Formatter): string {
     );
     index = end + 1;
   }
-  return out.join("\n");
+  return out.join(lineEnding);
 }
 
-/**
- * The `textWrap` and `lineWidth` a config's `wrap` value asks for.
- *
- * The three spellings are worth stating together because each belongs to a
- * different layer: the config says `no` / `keep` / a column number, the CLI flag
- * this replaced said `never` / `preserve` / `always`, and the plugin says
- * `never` / `maintain` / `always`. Only `maintain` differs from the flag — and
- * `"preserve"` is *accepted* by the plugin, diagnosed, and silently replaced by
- * its default, which is `maintain`. That coincidence is why the wrong value
- * would look right; `tests/formatter_test.ts` asserts the diagnostics stay empty.
- */
-function resolveWrap(
-  wrap: unknown,
-): { readonly textWrap: string; readonly lineWidth: number } {
-  if (wrap === "no" || wrap === undefined) {
-    return { textWrap: "never", lineWidth: DEFAULT_LINE_WIDTH };
-  }
-  if (wrap === "keep") {
-    return { textWrap: "maintain", lineWidth: DEFAULT_LINE_WIDTH };
-  }
-  if (typeof wrap === "number" && Number.isInteger(wrap)) {
-    return { textWrap: "always", lineWidth: wrap };
-  }
-  // `mdformat_conf.validateValues` rejected anything else, so this is
-  // unreachable for a config that came through the loader; a hand-built mapping
-  // is the only way here, and failing loudly beats guessing.
-  throw new ValueError(`Invalid 'wrap' value: ${pyReprString(String(wrap))}`);
-}
-
-/**
- * Format `text` with the `wrap` value from the wiki's fmt config.
- *
- * Synchronous by design: there is no child process left to await, which is what
- * lets `DocumentBatch.format` and `Wiki.format` be synchronous too.
- */
 export function formatMarkdownText(
   text: string,
   filePath: string,
-  wrap: unknown,
+  options: FmtOptions = {},
 ): string {
+  try {
+    validateFmtOptions(options as Record<string, unknown>, "fmt");
+  } catch (error) {
+    throw new ValueError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+  const resolved = { ...DEFAULT_FMT_OPTIONS, ...options };
   const host = loaded();
-  const { textWrap, lineWidth } = resolveWrap(wrap);
   host.markdown.setConfig(
-    { lineWidth },
-    markdownPluginConfig(textWrap),
+    { lineWidth: resolved.lineWidth, newLineKind: resolved.newLineKind },
+    markdownPluginConfig(resolved.textWrap),
   );
   host.markdown.setHostFormatter((request) => dispatch(host, request));
 

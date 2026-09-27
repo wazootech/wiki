@@ -288,8 +288,8 @@ function parseFileCommandArgs(
  *
  * The two modules this needs are imported here rather than at the top of the
  * file, which is what the Python command does too (its imports are inside the
- * function). The port keeps them there for a second reason: `fmt_util` pulls in
- * the TOML parser, the path helpers, and the formatter's WebAssembly plugins,
+ * function). The port keeps them there because `fmt_util` loads the formatter's
+ * WebAssembly plugins,
  * and `cli.ts` must stay importable — and cheap — without permissions so
  * `--version` keeps working.
  */
@@ -309,7 +309,7 @@ async function runFmtCommand(
       const probe = explicit ??
         (await import("./paths.ts")).iterMarkdownFiles(wiki.config)[0];
       if (probe !== undefined) {
-        console.log(`Using ${describeFmtSource(probe, wiki.config)}.`);
+        console.log(`Using ${describeFmtSource(wiki.config)}.`);
       }
     }
 

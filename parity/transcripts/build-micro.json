@@ -13,7 +13,7 @@
     "stdout": "  wiki/index.html\n  wiki/Alice/index.html\n  wiki/Bob/index.html\n  wiki/Index/index.html\n  wiki/lowercase-name/index.html\n\nBuilt 4 pages and 0 assets to _site\n",
     "stderr": "",
     "tree": {
-      "digest": "2f315444e6527a60b6c075bd173acfff5569c163218d8654e458250b5123fd7a",
+      "digest": "34f4ced1deae174b1dda699c8eb785bf8479f8e448580d8bebc8b8d0852b3f75",
       "changes": [
         {
           "path": "_site/wiki/Alice/index.html",
@@ -48,7 +48,7 @@
     "stdout": "  wiki/index.html\n  wiki/Alice/index.html\n  wiki/Bob/index.html\n  wiki/Index/index.html\n  wiki/lowercase-name/index.html\n\nBuilt 4 pages and 0 assets to _site\n",
     "stderr": "",
     "tree": {
-      "digest": "08a3c434484290cd0a6e51a2f35370e094810c474b3564a21a00143713f53af8",
+      "digest": "25c1c3eb0dd24c865c09a68ef8d5a839929790cbbdc74dd2163e681f4569eb78",
       "changes": [
         {
           "path": "_site/wiki/Alice/index.html",

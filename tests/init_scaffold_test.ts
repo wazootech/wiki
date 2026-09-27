@@ -156,7 +156,7 @@ Deno.test("renderWikiYaml safely emits option values and parses as YAML", () => 
   assertEquals(parsed.site?.layout, "layouts/default.html");
   assertEquals(parsed.wiki?.input, ["wiki", "content: #1"]);
   assertStringIncludes(rendered, "missing_layout_file: error");
-  assertStringIncludes(rendered, 'wrap: "no"');
+  assertStringIncludes(rendered, "textWrap: never");
 
   const root = tempRoot();
   try {

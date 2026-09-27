@@ -8,7 +8,7 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
-`wiki lint` is a wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on Wiki routes, internal-link resolution, `wiki:` CURIEs, and per-rule `wiki.yaml` severity. ESLint targets JavaScript and TypeScript, not Markdown; `wiki fmt` already owns mechanical Markdown formatting through dprint. A general Markdown linter would overlap a few optional outline rules but could not replace the route-aware checks, so this focused audit remains in the Wiki engine.
+`wiki lint` is a Wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on resolved Wiki routes, cross-page links, `wiki:` CURIEs, and per-rule `wiki.yaml` severity. The Deno-installable [`@eslint/markdown`](https://github.com/eslint/markdown) plugin offers general CommonMark/GFM rules, including heading increments, duplicate headings, and link-fragment checks, but using it requires the ESLint engine and configuration; it cannot replace Wiki's route- and CURIE-aware checks. Wiki keeps its focused audit and a few opt-in conventions; projects that want broader Markdown linting can run `@eslint/markdown` alongside it. Mechanical formatting remains `wiki fmt`'s job through dprint.
 
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
@@ -56,12 +56,12 @@ Route safety errors (spaces, unsafe URL characters) abort lint with errors befor
 
 ## Related CI commands
 
-| Command               | Purpose                                                                 |
-| --------------------- | ----------------------------------------------------------------------- |
-| `wiki fmt --check`    | Deno Markdown formatter consistency (`fmt:` options or compatible TOML) |
-| `wiki lint --strict`  | Conventions (`lint:` in yaml)                                           |
-| `wiki check --strict` | SHACL, JSON Schema frontmatter, route safety, layout frontmatter        |
-| `wiki render --check` | Stale inline SPARQL result blocks                                       |
+| Command               | Purpose                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `wiki fmt --check`    | Deno/dprint Markdown formatter consistency using native inline `fmt:` options |
+| `wiki lint --strict`  | Conventions (`lint:` in yaml)                                                 |
+| `wiki check --strict` | SHACL, JSON Schema frontmatter, route safety, layout frontmatter              |
+| `wiki render --check` | Stale inline SPARQL result blocks                                             |
 
 Run in that order in CI: `fmt`, then `lint`, then `check` — so mechanical fixes land before conventions and integrity checks.
 
