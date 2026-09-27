@@ -211,7 +211,9 @@ async function runAuditCommand(
     ? await wiki.check(files.length > 0 ? files : null, {
       strict: options.strict,
     })
-    : wiki.lint(files.length > 0 ? files : null, { strict: options.strict });
+    : await wiki.lint(files.length > 0 ? files : null, {
+      strict: options.strict,
+    });
   return exitAuditReport(report, options);
 }
 

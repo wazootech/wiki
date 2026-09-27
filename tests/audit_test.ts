@@ -97,7 +97,7 @@ Deno.test("filenames are linted against filename_pattern", () =>
   }));
 
 Deno.test("filename_pattern is a custom pattern, not a preset style", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     // `test_filename_pattern_reports_non_matching_names`: the same two files
     // pass under the default pattern and fail under an inverted one, which is
     // what makes the rule configurable rather than a naming policy.
@@ -107,7 +107,7 @@ Deno.test("filename_pattern is a custom pattern, not a preset style", () =>
       wiki: { input: [root], filename_pattern: "[A-Z][A-Za-z0-9_]*\\.md" },
     });
 
-    const report = runLint(config);
+    const report = await runLint(config);
     assert(report.ok);
     assertEquals(report.warnings.length, 1);
     assert(report.warnings[0]!.message.includes("ethan-davidson.md"));
@@ -185,7 +185,7 @@ Deno.test("a CURIE fragment and a YAML document target both resolve", () =>
   }));
 
 Deno.test("a wikilink target needs a path specifier, not a space", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     // `[[Ethan Davidson]]` is not `[[Ethan_Davidson]]`: wikilink resolution does
     // not space-normalize, so the pretty spelling is a broken link.
     write(root, "Ethan_Davidson.md", PAGE_FRONTMATTER);
@@ -196,7 +196,7 @@ Deno.test("a wikilink target needs a path specifier, not a space", () =>
     );
     const config = new Config({ wiki: { input: [root] } });
 
-    const report = runLint(config);
+    const report = await runLint(config);
     assert(
       report.warnings.some((issue) =>
         issue.message.includes("Broken WikiLink [Ethan Davidson]")
@@ -305,7 +305,7 @@ Deno.test("headings lint never reports Setext syntax, in any form", () =>
   }));
 
 Deno.test("heading levels increase by one at a time", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     const cases: readonly [string, number][] = [
       ["# A\n\n### C\n", 1],
       ["# A\n\n## B\n\n### C\n", 0],
@@ -314,15 +314,15 @@ Deno.test("heading levels increase by one at a time", () =>
       // Fenced headings are content, so they do not participate.
       ["## Real\n\n```md\n# Fake\n### Also fake\n```\n", 0],
     ];
-    cases.forEach(([body, expected], index) => {
+    for (const [index, [body, expected]] of cases.entries()) {
       const caseRoot = join(root, `case-${index}`);
       write(caseRoot, "Page.md", `${PAGE_FRONTMATTER}${body}`);
-      const warnings = lintHeadingLevels(
+      const warnings = await lintHeadingLevels(
         new Config({ wiki: { input: [caseRoot] } }),
       );
       assertEquals(warnings.length, expected, JSON.stringify(body));
       if (expected > 0) assert(warnings[0]!.includes("skips level h2"));
-    });
+    }
   }));
 
 Deno.test("duplicate heading text is reported from H2 down, case-insensitively", () =>
@@ -421,7 +421,7 @@ Deno.test("fenced wikilinks are broken links but not style violations", () =>
   }));
 
 Deno.test("run_lint routes each rule at its configured severity", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     // `test_run_lint_severity_and_promotion`, for one rule across all three
     // severities — the same routing every other rule shares.
     write(root, "Invalid_Name.md", "---\ntype: schema:WebPage\n---\n");
@@ -434,7 +434,7 @@ Deno.test("run_lint routes each rule at its configured severity", () =>
     };
 
     for (const severity of severities) {
-      const report = runLint(
+      const report = await runLint(
         new Config({ wiki: base, lint: { filename_pattern: severity } }),
       );
       assertEquals(report.ok, expected[severity].ok, severity);
@@ -448,7 +448,7 @@ Deno.test("run_lint routes each rule at its configured severity", () =>
   }));
 
 Deno.test("run_lint severity applies to the style rules too", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     // The four `test_run_lint_*_severity` tests: each rule reports into
     // `errors` and flips `ok` when it is configured as an error.
     const cases: readonly [string, string, string, string][] = [
@@ -478,7 +478,7 @@ Deno.test("run_lint severity applies to the style rules too", () =>
       const wiki = join(root, "wiki");
       Deno.mkdirSync(wiki, { recursive: true });
       write(root, "wiki/x.md", `${PAGE_FRONTMATTER}${body}`);
-      const report = runLint(
+      const report = await runLint(
         new Config({
           wiki: { input: [wiki] },
           config_root: root,
@@ -494,13 +494,13 @@ Deno.test("run_lint severity applies to the style rules too", () =>
   }));
 
 Deno.test("run_lint stops at an unsafe route instead of linting it", () =>
-  withRoot((root) => {
+  withRoot(async (root) => {
     // A route the site could not serve makes every link finding speculative, so
     // the safety error is the whole report. A space is the unsafe character
     // `test_paths.py` uses for this rule, because Windows will not create the
     // `?` variant of the same fixture.
     write(root, "Bad Name.md", PAGE_FRONTMATTER);
-    const report = runLint(new Config({ wiki: { input: [root] } }));
+    const report = await runLint(new Config({ wiki: { input: [root] } }));
     assertFalse(report.ok);
     assertEquals(report.errors.length, 1);
     assertEquals(report.errors[0]!.code, "route_safety");
@@ -841,4 +841,33 @@ Deno.test("run_check in scoped mode reports per-file findings", () =>
     assertEquals(results.errors.length, 1);
     assertEquals(results.errors[0]!.code, "missing_metadata");
     assertEquals(basename(results.errors[0]!.path!), "Plain.md");
+  }));
+
+Deno.test("ESLint heading findings preserve Wiki report severity and body line numbers", () =>
+  withRoot(async (root) => {
+    write(
+      root,
+      "Page.md",
+      "---\nheadline: Page\ntype: TechArticle\n---\n# A\n\n### C\n",
+    );
+    write(
+      root,
+      "Metadata_Title.md",
+      "---\ntitle: A metadata title\ntype: TechArticle\n---\n### Deep\n",
+    );
+    const config = new Config({
+      wiki: { input: [root] },
+      lint: { heading_levels: "warning" },
+    });
+
+    const direct = await lintHeadingLevels(config);
+    assertEquals(direct.length, 1);
+    assert(direct[0]!.includes("Page.md:4:"), direct[0]);
+    assert(direct[0]!.includes("Heading h3 skips level h2"));
+
+    const report = await runLint(config);
+    assert(report.ok);
+    assertEquals(report.warnings.length, 1);
+    assertEquals(report.warnings[0]!.code, "heading_levels");
+    assertEquals(report.warnings[0]!.severity, "warning");
   }));

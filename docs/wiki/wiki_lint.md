@@ -8,7 +8,9 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
-`wiki lint` is a Wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on resolved Wiki routes, cross-page links, `wiki:` CURIEs, and per-rule `wiki.yaml` severity. The Deno-installable [`@eslint/markdown`](https://github.com/eslint/markdown) plugin offers general CommonMark/GFM rules, including heading increments, duplicate headings, and link-fragment checks, but using it requires the ESLint engine and configuration; it cannot replace Wiki's route- and CURIE-aware checks. Wiki keeps its focused audit and a few opt-in conventions; projects that want broader Markdown linting can run `@eslint/markdown` alongside it. Mechanical formatting remains `wiki fmt`'s job through dprint.
+`wiki lint` is a Wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on resolved Wiki routes, cross-page links, `wiki:` CURIEs, and per-rule `wiki.yaml` severity.
+
+When `lint.heading_levels` is enabled, Wiki runs ESLint's in-process Markdown engine with `@eslint/markdown`'s `markdown/heading-increment` rule, then maps findings into Wiki's existing issue codes and severity report. It needs no external ESLint config or subprocess. Broken-link resolution, filename rules, editorial heading style, duplicate-heading policy, thematic breaks, and link style remain Wiki checks; generic Markdown rules do not replace route- or CURIE-aware behavior. Mechanical formatting remains `wiki fmt`'s job through dprint.
 
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
@@ -34,15 +36,15 @@ wiki lint --strict
 
 ### Configurable (`lint.*` in `wiki.yaml`)
 
-| Rule key             | What it audits                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------ |
-| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                    |
-| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                |
-| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
-| `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
-| `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |
-| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                             |
-| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                    |
+| Rule key             | What it audits                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                          |
+| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                      |
+| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**)       |
+| `heading_levels`     | Heading depth must increase by one level at a time (`@eslint/markdown`'s `markdown/heading-increment`) |
+| `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                       |
+| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                                   |
+| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                          |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
 

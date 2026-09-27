@@ -83,6 +83,7 @@ import { AuditReport, type Issue, severityIssues } from "./schemas/reports.ts";
 import type { CheckConfig, LintConfig } from "./schemas/rules.ts";
 import { checkShaclAll, checkShaclFile } from "./shacl.ts";
 import { LinkIndex } from "./wiki_links.ts";
+import { lintHeadingLevelsWithEslint } from "./lint/eslint.ts";
 
 /** The message text of a broken-link issue, which is all `lint` prints. */
 export function formatBrokenLink(issue: BrokenLink): string {
@@ -317,27 +318,8 @@ export function lintDuplicateHeadings(
 export function lintHeadingLevels(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
-): string[] {
-  const warnings: string[] = [];
-  for (const filePath of iterMarkdownFiles(config)) {
-    const route = routeForDocumentFile(config, filePath);
-    if (fileFilter !== null && !fileFilter.has(route)) continue;
-    const body = markdownBody(readTextTolerant(filePath));
-    let previousLevel = 0;
-    for (const heading of parseHeadings(body)) {
-      const level = heading.level;
-      if (previousLevel > 0 && level > previousLevel + 1) {
-        warnings.push(
-          `In ${
-            basename(filePath)
-          }:${heading.line_no}: Heading h${level} skips level ` +
-            `h${previousLevel + 1}; increase depth by one at a time.`,
-        );
-      }
-      previousLevel = level;
-    }
-  }
-  return warnings;
+): Promise<string[]> {
+  return lintHeadingLevelsWithEslint(config, fileFilter, "warning");
 }
 
 /**
@@ -656,10 +638,10 @@ export async function runCheck(
  * deliberate — links before style, filename before headings — because that is
  * the order a user fixes them in.
  */
-export function runLint(
+export async function runLint(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
-): AuditReport {
+): Promise<AuditReport> {
   let report = AuditReport.empty();
 
   const safetyIssues = validateRouteSafety(config);
@@ -691,7 +673,11 @@ export function runLint(
   report = applyIssues(
     report,
     "heading_levels",
-    lintHeadingLevels(config, fileFilter),
+    await lintHeadingLevelsWithEslint(
+      config,
+      fileFilter,
+      config.lint.heading_levels,
+    ),
     config.lint,
   );
   report = applyIssues(

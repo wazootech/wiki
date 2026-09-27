@@ -140,7 +140,7 @@ Deno.test("a scoped check reports per-document findings, a whole-wiki check does
   }
 });
 
-Deno.test("strict promotes a warning into an error and flips the report", () => {
+Deno.test("strict promotes a warning into an error and flips the report", async () => {
   const root = tempRoot();
   try {
     writeWiki(root, {
@@ -152,14 +152,14 @@ Deno.test("strict promotes a warning into an error and flips the report", () => 
     // page produces *two* warnings, not one: a wikilink is a broken link and a
     // style violation at once while `link.style` is `standard`, which is the
     // default. Both are the oracle's findings.
-    const lenient = wiki.lint();
+    const lenient = await wiki.lint();
     assert(lenient.ok);
     assertEquals(
       lenient.warnings.map((issue) => issue.code),
       ["broken_links", "link_style"],
     );
 
-    const strict = wiki.lint(null, { strict: true });
+    const strict = await wiki.lint(null, { strict: true });
     assertFalse(strict.ok);
     assertEquals(strict.errors.length, 2);
     assertEquals(strict.warnings.length, 0);

@@ -55,6 +55,30 @@ try {
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Usage: wiki/);
+
+  const pages = path.join(tempRoot, 'pages');
+  fs.mkdirSync(pages);
+  fs.writeFileSync(path.join(pages, 'Page.md'), '# Page\n\n### Deep\n');
+  const wikiConfig = path.join(tempRoot, 'wiki.yml');
+  fs.writeFileSync(wikiConfig, JSON.stringify({
+    wiki: { input: [pages] },
+    lint: { heading_levels: 'warning' },
+  }));
+  const [lintDeno, ...lintArgs] = createWikiCommand([
+    '-c',
+    wikiConfig,
+    'lint',
+    '--verbose',
+  ]);
+  const lintResult = spawnSync(lintDeno, lintArgs, {
+    cwd: tempRoot,
+    env,
+    encoding: 'utf8',
+    timeout: 120_000,
+  });
+  assert.ifError(lintResult.error);
+  assert.equal(lintResult.status, 0, lintResult.stderr);
+  assert.match(lintResult.stderr, /Heading h3 skips level h2/);
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }

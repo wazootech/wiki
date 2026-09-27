@@ -72,7 +72,7 @@ Deno.test("--strict promotes every warning and empties the warning list", () => 
   assertEquals(clean.applyStrict(), clean);
 });
 
-Deno.test("every issue code is the lint config key that controls it", () => {
+Deno.test("every issue code is the lint config key that controls it", async () => {
   const root = tempRoot();
   try {
     // The fixture is the Python one: a page whose wikilink is broken and
@@ -94,7 +94,7 @@ Deno.test("every issue code is the lint config key that controls it", () => {
       link: { style: "standard" },
     });
 
-    const report = runLint(config);
+    const report = await runLint(config);
     const codes = new Set<string>(
       report.errors.map((issue: Issue) => issue.code),
     );

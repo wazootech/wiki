@@ -7,12 +7,10 @@
  *
  * Two port decisions are worth stating because they are visible from outside:
  *
- * - **`preflight()` is `async`, and `check()` with it.** `check_shacl_all` reads
- *   the graph through `fetch`-capable loaders, so the sync/async split moves one
- *   level up from `audit.ts`. `lint()` stays synchronous, which is what keeps
- *   the common path — `wiki lint` over a corpus — free of await plumbing.
- *   {@link Wiki.format} is synchronous too, since the formatter stopped being a
- *   subprocess; only `check()` and `preflight()` remain asynchronous.
+ * - **`check()` and `preflight()` are async.** `check_shacl_all` reads the graph
+ *   through `fetch`-capable loaders, so the sync/async split moves one level up
+ *   from `audit.ts`. `lint()` is async too because its Markdown heading-level
+ *   rule uses ESLint's in-process API. `format()` remains synchronous.
  * - **Runtime overrides rebuild the config rather than mutating a copy of it.**
  *   Python's `model_copy(deep=True)` is pydantic machinery; {@link copyConfig}
  *   states what the copy actually has to guarantee (a new `site` and `wiki`
@@ -344,13 +342,13 @@ export class Wiki {
     return report;
   }
 
-  /** Run the convention audits: links, filenames, headings, link style. */
-  lint(
+  /** Run the convention audits: links, filenames, headings, and link style. */
+  async lint(
     files?: readonly string[] | null,
     options: { readonly strict?: boolean } = {},
-  ): AuditReport {
+  ): Promise<AuditReport> {
     const batch = new DocumentBatch(this.config, files ?? null);
-    let report = runLint(this.config, batch.routeFilter());
+    let report = await runLint(this.config, batch.routeFilter());
     if (options.strict ?? false) report = report.applyStrict();
     return report;
   }
@@ -686,6 +684,6 @@ export class Wiki {
    * often *cause* the integrity findings a user would otherwise chase.
    */
   async preflight(): Promise<AuditReport> {
-    return mergeResults(this.lint(), await this.check());
+    return mergeResults(await this.lint(), await this.check());
   }
 }

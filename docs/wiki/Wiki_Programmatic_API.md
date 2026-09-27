@@ -24,13 +24,17 @@ const wiki = Wiki.load("docs/wiki.yml");
 
 ### Validation reports
 
-`Wiki.check` and `Wiki.lint` return typed `AuditReport` values. Each report has `ok`, `errors`, and `warnings`; `applyStrict()` promotes warnings to errors.
+`Wiki.check` and `Wiki.lint` are asynchronous and return `Promise<AuditReport>` values. Each report has `ok`, `errors`, and `warnings`; `applyStrict()` promotes warnings to errors. When enabled, `lint.heading_levels` uses the in-process ESLint Markdown rule engine; route-aware links, CURIE resolution, and the remaining Wiki policies stay in Wiki.
 
 ```ts
+const lintReport = await wiki.lint(undefined, { strict: true });
 const report = await wiki.check(undefined, { strict: true });
-if (!report.ok) {
-  const [errors, warnings] = report.messages();
-  console.error([...errors, ...warnings].join("\n"));
+const [lintErrors, lintWarnings] = lintReport.messages();
+const [errors, warnings] = report.messages();
+if (!lintReport.ok || !report.ok) {
+  console.error(
+    [...lintErrors, ...lintWarnings, ...errors, ...warnings].join("\n"),
+  );
 }
 ```
 
