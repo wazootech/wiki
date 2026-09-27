@@ -1,4 +1,4 @@
-﻿"""Conservative auto-repair for broken internal wiki links."""
+"""Conservative auto-repair for broken internal wiki links."""
 
 from __future__ import annotations
 
