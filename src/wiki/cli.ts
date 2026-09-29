@@ -54,7 +54,7 @@ const USAGE_LINES = [
   `Try '${PROG_NAME} --help' for help.`,
 ];
 
-const ROOT_HELP_LINES = [
+const ROOT_HELP_HEADER_LINES = [
   `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...`,
   "",
   "  Query, validate, and manage your semantic LLM wiki.",
@@ -69,64 +69,6 @@ const ROOT_HELP_LINES = [
   "  --help             Show this message and exit.",
   "",
   "Commands:",
-  "  build    Build static HTML site from wiki documents.",
-  "  check    Integrity checks: SHACL, JSON Schema, routes, collisions,...",
-  "  export   Export document frontmatter as RDF or JSON-LD.",
-  "  fmt      Format markdown wiki pages with the Deno formatter.",
-  "  graph    Inspect read-only RDF named graph provenance.",
-  "  init     Scaffold a new wiki project in the current directory.",
-  "  install  Fetch and lock external data sources.",
-  "  link     Suggest or repair internal links for wiki pages.",
-  "  lint     Convention audits: links, filenames, headings, and link style.",
-  "  mcp      Start a read-only MCP server for the wiki graph.",
-  "  query    Run SPARQL SELECT or CONSTRUCT (query argument or stdin).",
-  "  remove   Remove a source from the config file, its cache, and wiki.lock.",
-  "  render   Render inline SPARQL blocks in markdown files.",
-  "  serve    Start a local HTTP server for browsing the wiki.",
-  "  update   Check locked sources for newer commits and update wiki.lock.",
-  "  upgrade  Check for updates and upgrade the wiki CLI.",
-];
-
-/** Every command the Python CLI declares, ported or not. */
-const KNOWN_COMMANDS: readonly string[] = [
-  "check",
-  "lint",
-  "link",
-  "graph",
-  "query",
-  "mcp",
-  "render",
-  "build",
-  "export",
-  "serve",
-  "init",
-  "fmt",
-  "install",
-  "i",
-  "update",
-  "remove",
-  "upgrade",
-];
-
-/** The commands this entrypoint implements today. */
-const PORTED_COMMANDS: readonly string[] = [
-  "check",
-  "lint",
-  "fmt",
-  "query",
-  "render",
-  "export",
-  "graph",
-  "link",
-  "build",
-  "serve",
-  "mcp",
-  "init",
-  "install",
-  "i",
-  "update",
-  "remove",
-  "upgrade",
 ];
 
 /** The flags each `FILE...` command accepts, so an unknown one is a usage error. */
@@ -1512,6 +1454,276 @@ async function runMcpCommand(
     return EXIT_FAILURE;
   }
 }
+interface CommandContext {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly configPath: string;
+  readonly wikiInputs: readonly string[];
+}
+
+interface CommandDefinition {
+  readonly names: readonly string[];
+  readonly description: string;
+  readonly run: (context: CommandContext) => Promise<number>;
+}
+
+const COMMANDS: readonly CommandDefinition[] = [
+  {
+    names: ["build"],
+    description: "Build static HTML site from wiki documents.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseBuildCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runBuildCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["check"],
+    description: "Integrity checks: SHACL, JSON Schema, routes, collisions,...",
+    run: async ({ command, args, configPath, wikiInputs }) => {
+      const parsed = parseFileCommandArgs(command, args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runAuditCommand(wiki, "check", parsed.files, parsed);
+    },
+  },
+  {
+    names: ["export"],
+    description: "Export document frontmatter as RDF or JSON-LD.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = await parseExportCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runExportCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["fmt"],
+    description: "Format markdown wiki pages with the Deno formatter.",
+    run: async ({ command, args, configPath, wikiInputs }) => {
+      const parsed = parseFileCommandArgs(command, args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runFmtCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["graph"],
+    description: "Inspect read-only RDF named graph provenance.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const graphCommand = args[0];
+      if (graphCommand === "--help" || graphCommand === "-h") {
+        console.log([
+          "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...",
+          "",
+          "  Inspect read-only RDF named graph provenance.",
+          "",
+          "Options:",
+          "  --help  Show this message and exit.",
+          "",
+          "Commands:",
+          "  list  List named graphs available to SPARQL GRAPH queries.",
+        ].join("\n"));
+        return EXIT_OK;
+      }
+      if (
+        graphCommand === "list" &&
+        (args[1] === "--help" || args[1] === "-h")
+      ) {
+        console.log([
+          "Usage: wiki graph list [OPTIONS]",
+          "",
+          "  List named graphs available to SPARQL GRAPH queries.",
+          "",
+          "Options:",
+          "  --help  Show this message and exit.",
+        ].join("\n"));
+        return EXIT_OK;
+      }
+      if (graphCommand === undefined) {
+        return graphUsageError("Missing command.");
+      }
+      if (graphCommand !== "list") {
+        return graphUsageError(`No such command '${graphCommand}'.`);
+      }
+      if (args.length > 1) {
+        return graphListUsageError(
+          `Got unexpected extra argument (${args[1]})`,
+        );
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      const descriptors = wiki.graphs();
+      const headers = ["name", "kind", "uri", "commit", "required_by"];
+      const rows = descriptors.map((descriptor) => [
+        descriptor.name,
+        descriptor.kind,
+        descriptor.uri,
+        descriptor.resolved_ref?.slice(0, 12) ?? "",
+        descriptor.required_by.join(","),
+      ]);
+      const widths = headers.map((header, index) =>
+        Math.max(header.length, ...rows.map((row) => row[index]!.length))
+      );
+      console.log(
+        headers.map((header, index) => header.padEnd(widths[index]!)).join(
+          "  ",
+        ),
+      );
+      console.log(widths.map((width) => "-".repeat(width)).join("  "));
+      for (const row of rows) {
+        console.log(
+          row.map((value, index) => value.padEnd(widths[index]!)).join("  "),
+        );
+      }
+      return EXIT_OK;
+    },
+  },
+  {
+    names: ["init"],
+    description: "Scaffold a new wiki project in the current directory.",
+    run: async ({ args }) => {
+      const parsed = parseInitCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      return await runInitCommand(parsed);
+    },
+  },
+  {
+    names: ["install", "i"],
+    description: "Fetch and lock external data sources.",
+    run: async ({ command, args, configPath, wikiInputs }) => {
+      const parsed = parseInstallCommandArgs(
+        args,
+        command === "i" ? "i" : "install",
+      );
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return runInstallCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["link"],
+    description: "Suggest or repair internal links for wiki pages.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseLinkCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runLinkCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["lint"],
+    description:
+      "Convention audits: links, filenames, headings, and link style.",
+    run: async ({ command, args, configPath, wikiInputs }) => {
+      const parsed = parseFileCommandArgs(command, args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runAuditCommand(wiki, "lint", parsed.files, parsed);
+    },
+  },
+  {
+    names: ["mcp"],
+    description: "Start a read-only MCP server for the wiki graph.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseMcpCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runMcpCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["query"],
+    description: "Run SPARQL SELECT or CONSTRUCT (query argument or stdin).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = await parseQueryCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runQueryCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["remove"],
+    description:
+      "Remove a source from the config file, its cache, and wiki.lock.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseRemoveCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return runRemoveCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["render"],
+    description: "Render inline SPARQL blocks in markdown files.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseRenderCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRenderCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["serve"],
+    description: "Start a local HTTP server for browsing the wiki.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseServeCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runServeCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["update"],
+    description: "Check locked sources for newer commits and update wiki.lock.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseUpdateCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return runUpdateCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["upgrade"],
+    description: "Check for updates and upgrade the wiki CLI.",
+    run: async ({ args }) => {
+      const parsed = parseUpgradeCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      return await runUpgradeCommand(parsed);
+    },
+  },
+];
+
+export const COMMAND_NAMES = COMMANDS.flatMap(({ names }) => names);
+
+const COMMAND_BY_NAME = new Map<string, CommandDefinition>();
+for (const command of COMMANDS) {
+  for (const name of command.names) COMMAND_BY_NAME.set(name, command);
+}
+
+const COMMAND_HELP_WIDTH = Math.max(
+  ...COMMANDS.map(({ names }) => names.join(", ").length),
+);
+const ROOT_HELP_LINES = [
+  ...ROOT_HELP_HEADER_LINES,
+  ...COMMANDS.map(({ names, description }) =>
+    `  ${names.join(", ").padEnd(COMMAND_HELP_WIDTH)}  ${description}`
+  ),
+];
 /**
  * Run the CLI and return the process exit code.
  *
@@ -1577,185 +1789,17 @@ export async function main(
     return EXIT_USAGE;
   }
 
-  if (!KNOWN_COMMANDS.includes(command)) {
+  const definition = COMMAND_BY_NAME.get(command);
+  if (definition === undefined) {
     return usageError(`Error: No such command '${command}'.`);
   }
 
-  if (!PORTED_COMMANDS.includes(command)) {
-    return usageError(`Error: The '${command}' command is not ported yet.`);
-  }
-
-  if (command === "init") {
-    const parsedInit = parseInitCommandArgs(argv.slice(index + 1));
-    if (typeof parsedInit === "number") return parsedInit;
-    return await runInitCommand(parsedInit);
-  }
-
-  if (command === "install" || command === "i") {
-    const parsedInstall = parseInstallCommandArgs(
-      argv.slice(index + 1),
-      command,
-    );
-    if (typeof parsedInstall === "number") return parsedInstall;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return runInstallCommand(wiki, parsedInstall);
-  }
-
-  if (command === "update") {
-    const parsedUpdate = parseUpdateCommandArgs(argv.slice(index + 1));
-    if (typeof parsedUpdate === "number") return parsedUpdate;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return runUpdateCommand(wiki, parsedUpdate);
-  }
-
-  if (command === "remove") {
-    const parsedRemove = parseRemoveCommandArgs(argv.slice(index + 1));
-    if (typeof parsedRemove === "number") return parsedRemove;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return runRemoveCommand(wiki, parsedRemove);
-  }
-
-  if (command === "upgrade") {
-    const parsedUpgrade = parseUpgradeCommandArgs(argv.slice(index + 1));
-    if (typeof parsedUpgrade === "number") return parsedUpgrade;
-    return await runUpgradeCommand(parsedUpgrade);
-  }
-
-  if (command === "build") {
-    const parsed = parseBuildCommandArgs(argv.slice(index + 1));
-    if (typeof parsed === "number") return parsed;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runBuildCommand(wiki, parsed);
-  }
-
-  if (command === "serve") {
-    const parsed = parseServeCommandArgs(argv.slice(index + 1));
-    if (typeof parsed === "number") return parsed;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runServeCommand(wiki, parsed);
-  }
-
-  if (command === "mcp") {
-    const parsed = parseMcpCommandArgs(argv.slice(index + 1));
-    if (typeof parsed === "number") return parsed;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runMcpCommand(wiki, parsed);
-  }
-
-  if (command === "link") {
-    const parsedLink = parseLinkCommandArgs(argv.slice(index + 1));
-    if (typeof parsedLink === "number") return parsedLink;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runLinkCommand(wiki, parsedLink);
-  }
-
-  if (command === "graph") {
-    const graphCommand = argv[index + 1];
-    if (graphCommand === "--help" || graphCommand === "-h") {
-      console.log(
-        "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n\n" +
-          "  Inspect read-only RDF named graph provenance.\n\n" +
-          "Options:\n" +
-          "  --help  Show this message and exit.\n\n" +
-          "Commands:\n" +
-          "  list  List named graphs available to SPARQL GRAPH queries.",
-      );
-      return EXIT_OK;
-    }
-    if (
-      graphCommand === "list" &&
-      (argv[index + 2] === "--help" || argv[index + 2] === "-h")
-    ) {
-      console.log(
-        "Usage: wiki graph list [OPTIONS]\n\n" +
-          "  List named graphs available to SPARQL GRAPH queries.\n\n" +
-          "Options:\n" +
-          "  --help  Show this message and exit.",
-      );
-      return EXIT_OK;
-    }
-    if (graphCommand === undefined) {
-      return graphUsageError("Missing command.");
-    }
-    if (graphCommand !== "list") {
-      return graphUsageError(`No such command '${graphCommand}'.`);
-    }
-    if (argv.length > index + 2) {
-      return graphListUsageError(
-        `Got unexpected extra argument (${argv[index + 2]})`,
-      );
-    }
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    const descriptors = wiki.graphs();
-    const headers = ["name", "kind", "uri", "commit", "required_by"];
-    const rows = descriptors.map((descriptor) => [
-      descriptor.name,
-      descriptor.kind,
-      descriptor.uri,
-      descriptor.resolved_ref?.slice(0, 12) ?? "",
-      descriptor.required_by.join(","),
-    ]);
-    const widths = headers.map((header, index) =>
-      Math.max(header.length, ...rows.map((row) => row[index]!.length))
-    );
-    console.log(
-      headers.map((header, index) => header.padEnd(widths[index]!)).join("  "),
-    );
-    console.log(widths.map((width) => "-".repeat(width)).join("  "));
-    for (const row of rows) {
-      console.log(
-        row.map((value, index) => value.padEnd(widths[index]!)).join("  "),
-      );
-    }
-    return EXIT_OK;
-  }
-
-  if (command === "query") {
-    const parsedQuery = await parseQueryCommandArgs(argv.slice(index + 1));
-    if (typeof parsedQuery === "number") return parsedQuery;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runQueryCommand(wiki, parsedQuery);
-  }
-
-  if (command === "render") {
-    const parsedRender = parseRenderCommandArgs(argv.slice(index + 1));
-    if (typeof parsedRender === "number") return parsedRender;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runRenderCommand(wiki, parsedRender);
-  }
-
-  if (command === "export") {
-    const parsedExport = await parseExportCommandArgs(argv.slice(index + 1));
-    if (typeof parsedExport === "number") return parsedExport;
-    const wiki = await loadWiki(configPath, wikiInputs);
-    if (typeof wiki === "number") return wiki;
-    return await runExportCommand(wiki, parsedExport);
-  }
-
-  const parsed = parseFileCommandArgs(command, argv.slice(index + 1));
-  if (typeof parsed === "number") return parsed;
-
-  const wiki = await loadWiki(configPath, wikiInputs);
-  if (typeof wiki === "number") return wiki;
-
-  if (command === "fmt") return await runFmtCommand(wiki, parsed);
-
-  return await runAuditCommand(
-    wiki,
-    command as "check" | "lint",
-    parsed.files,
-    parsed,
-  );
+  return await definition.run({
+    command,
+    args: argv.slice(index + 1),
+    configPath,
+    wikiInputs,
+  });
 }
 
 if (import.meta.main) {

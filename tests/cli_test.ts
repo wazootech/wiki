@@ -2,6 +2,7 @@ import { join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 import {
+  COMMAND_NAMES,
   EXIT_FAILURE,
   EXIT_OK,
   EXIT_USAGE,
@@ -101,14 +102,18 @@ Deno.test(
     assert(help.stdout.includes("Commands:\n  build"));
     assert(
       help.stdout.includes(
-        "  upgrade  Check for updates and upgrade the wiki CLI.",
+        "Format markdown wiki pages with the Deno formatter.",
       ),
     );
-    assert(
-      help.stdout.includes(
-        "  fmt      Format markdown wiki pages with the Deno formatter.",
-      ),
-    );
+    const commandSection =
+      help.stdout.split("Commands:\n")[1]?.split("\n\n")[0] ?? "";
+    const namesInHelp = commandSection.split("\n").flatMap((line) => {
+      const match = /^  (.+?)\s{2,}/.exec(line);
+      return match?.[1]?.split(", ") ?? [];
+    });
+    assertEquals([...namesInHelp].sort(), [...COMMAND_NAMES].sort());
+    assert(namesInHelp.includes("i"));
+    assertEquals(new Set(COMMAND_NAMES).size, COMMAND_NAMES.length);
 
     const empty = await runCli([]);
     assertEquals(empty.code, EXIT_USAGE);
