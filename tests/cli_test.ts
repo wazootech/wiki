@@ -108,7 +108,7 @@ Deno.test(
     const commandSection =
       help.stdout.split("Commands:\n")[1]?.split("\n\n")[0] ?? "";
     const namesInHelp = commandSection.split("\n").flatMap((line) => {
-      const match = /^  (.+?)\s{2,}/.exec(line);
+      const match = /^\s{2}(.+?)\s{2,}/.exec(line);
       return match?.[1]?.split(", ") ?? [];
     });
     assertEquals([...namesInHelp].sort(), [...COMMAND_NAMES].sort());

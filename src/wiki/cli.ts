@@ -1708,7 +1708,9 @@ const COMMANDS: readonly CommandDefinition[] = [
   },
 ];
 
-export const COMMAND_NAMES = COMMANDS.flatMap(({ names }) => names);
+export const COMMAND_NAMES: readonly string[] = COMMANDS.flatMap(({ names }) =>
+  names
+);
 
 const COMMAND_BY_NAME = new Map<string, CommandDefinition>();
 for (const command of COMMANDS) {
