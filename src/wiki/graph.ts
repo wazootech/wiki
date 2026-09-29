@@ -47,6 +47,7 @@ import { extract, LinkedMarkdownError } from "@wazoo/linked-markdown";
 import type { NamedNode, Quad, Term } from "./rdf.ts";
 import {
   blankNode,
+  factory,
   literal,
   namedNode,
   parseRdf,
@@ -605,6 +606,35 @@ function pathKey(path: string): string {
   return IS_WINDOWS ? value.toLowerCase() : value;
 }
 
+function scopeTurtleBlock(
+  quads: readonly Quad[],
+  filePath: string,
+  blockIndex: number,
+): Quad[] {
+  const scope = [...new TextEncoder().encode(`${filePath}:${blockIndex}`)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  const blankNodes = new Map<string, ReturnType<typeof blankNode>>();
+  const scopeTerm = (term: Term): Term => {
+    if (term.termType !== "BlankNode") return term;
+    let scoped = blankNodes.get(term.value);
+    if (scoped === undefined) {
+      scoped = blankNode(`wiki_${scope}_${blankNodes.size}`);
+      blankNodes.set(term.value, scoped);
+    }
+    return scoped;
+  };
+
+  return quads.map((item) =>
+    factory.quad(
+      scopeTerm(item.subject) as Quad["subject"],
+      item.predicate,
+      scopeTerm(item.object) as Quad["object"],
+      item.graph,
+    )
+  );
+}
+
 /** Parse a supported wiki document into the graph. */
 function processDocumentFile(
   graph: RdfGraph,
@@ -642,9 +672,18 @@ function processDocumentFile(
 
   // ` ```turtle ` blocks are the escape hatch for hand-written RDF inside a
   // page, so a malformed one must not take the whole graph down with it.
+  let blockIndex = 0;
   for (const match of content.matchAll(/```turtle\s*([\s\S]*?)```/g)) {
+    const currentBlockIndex = blockIndex++;
     try {
-      addQuads(graph, parseTurtle(match[1]!.trim()));
+      addQuads(
+        graph,
+        scopeTurtleBlock(
+          parseTurtle(match[1]!.trim()),
+          filePath,
+          currentBlockIndex,
+        ),
+      );
     } catch (error) {
       logger.warning(
         `Failed to parse turtle block in ${basename(filePath)}: ${

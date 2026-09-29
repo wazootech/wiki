@@ -202,6 +202,38 @@ Deno.test("a graph deduplicates, matches, and reports distinct terms", () => {
   assertEquals(graph.bindings.get("schema"), "https://schema.org/");
 });
 
+Deno.test("graph matching uses complete RDF term identity", () => {
+  const graph = new RdfGraph();
+  const subject = namedNode("https://example.org/subject");
+  const predicate = namedNode("https://example.org/predicate");
+  graph.add(subject, predicate, literal("x", { language: "en" }));
+
+  assertEquals(
+    [...graph.match(subject, predicate, literal("x", { language: "en" }))]
+      .length,
+    1,
+  );
+  assertEquals(
+    [...graph.match(subject, predicate, literal("x", { language: "fr" }))]
+      .length,
+    0,
+  );
+  assertEquals(
+    [...graph.match(subject, predicate, literal("x", {
+      datatype: "http://www.w3.org/2001/XMLSchema#token",
+    }))].length,
+    0,
+  );
+  assertEquals(
+    [...graph.match(subject, predicate, literal("x"))].length,
+    0,
+  );
+  assertEquals(
+    [...graph.match(subject, predicate, namedNode("x"))].length,
+    0,
+  );
+});
+
 Deno.test("a dataset keeps named graphs separate and unions them", () => {
   const dataset = new RdfDataset({ defaultUnion: true });
   const alice = namedNode("https://example.org/Alice");

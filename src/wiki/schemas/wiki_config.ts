@@ -437,25 +437,29 @@ function coerceImplicitTypesPolicy(value: unknown): string {
   return normalized;
 }
 
-/** Coerce `sparql_service.enabled`, accepting the string spellings YAML allows. */
-function coerceEnabled(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
+/** Coerce a boolean field, accepting the string spellings YAML allows. */
+function coerceBoolean(
+  value: unknown,
+  label: string,
+  nullIsFalse = false,
+): boolean {
+  if (value === undefined) return false;
+  if (value === null && nullIsFalse) return false;
   if (typeof value === "boolean") return value;
   if (typeof value === "number" && Number.isInteger(value)) {
     if (value === 0 || value === 1) return value === 1;
-    throw new ValueError(
-      `expected boolean enabled value, got ${pyRepr(value)}`,
-    );
   }
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
     if (["false", "0", "no", "off"].includes(normalized)) return false;
     if (["true", "1", "yes", "on"].includes(normalized)) return true;
-    throw new ValueError(
-      `expected boolean enabled value, got ${pyRepr(value)}`,
-    );
   }
-  throw new ValueError(`expected boolean enabled value, got ${pyRepr(value)}`);
+  throw new ValueError(`expected boolean ${label}, got ${pyRepr(value)}`);
+}
+
+/** Coerce `sparql_service.enabled`. */
+function coerceEnabled(value: unknown): boolean {
+  return coerceBoolean(value, "enabled value", true);
 }
 
 /** Coerce `link.style`, translating the legacy spellings with a warning. */
@@ -533,7 +537,10 @@ const graphBlockSpec: ModelSpec = {
         value === null || value === undefined ? null : normalizeBaseIri(value),
     }],
     ["content_predicate", { defaultValue: null }],
-    ["include_file_extension", { defaultValue: false }],
+    ["include_file_extension", {
+      defaultValue: false,
+      before: (value) => coerceBoolean(value, "include_file_extension"),
+    }],
     ["implicit_types", { factory: () => [], before: coerceImplicitTypes }],
     ["implicit_types_policy", {
       defaultValue: IMPLICIT_TYPES_POLICY,

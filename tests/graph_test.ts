@@ -637,6 +637,50 @@ Raw Body Text.
   }
 });
 
+Deno.test("separate Turtle fences keep blank-node labels in separate scopes", async () => {
+  clearAllProcessGraphs();
+  const root = tempRoot();
+  try {
+    write(
+      root,
+      "wiki/Scoped.md",
+      [
+        "```turtle",
+        '_:x <https://example.org/p> "first" .',
+        '_:x <https://example.org/q> "first" .',
+        "```",
+        "",
+        "```turtle",
+        '_:x <https://example.org/p> "second" .',
+        '_:x <https://example.org/q> "second" .',
+        "```",
+      ].join("\n"),
+    );
+    const config = Config.forRoot(root, { wiki: { input: ["wiki"] } });
+    const graph = await loadGraph(config, {
+      infer: false,
+      useCache: false,
+      diskCache: false,
+    });
+    const blankSubjects = [...graph.subjects()].filter((term) =>
+      term.termType === "BlankNode"
+    );
+
+    assertEquals(graph.size, 4);
+    assertEquals(blankSubjects.length, 2);
+    assertEquals(
+      new Set(blankSubjects.map((term) => term.value)).size,
+      2,
+    );
+    assertEquals(
+      [...graph.match(blankSubjects[0] ?? null, null, null)].length,
+      2,
+    );
+  } finally {
+    cleanup(root);
+  }
+});
+
 Deno.test("loadGraph warns about an unparseable file by name", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();

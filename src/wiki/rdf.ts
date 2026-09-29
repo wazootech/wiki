@@ -551,11 +551,13 @@ export class RdfGraph {
     object: Term | null = null,
   ): Generator<Quad> {
     for (const item of this.#quads) {
-      if (subject !== null && item.subject.value !== subject.value) continue;
-      if (predicate !== null && item.predicate.value !== predicate.value) {
+      if (subject !== null && termKey(item.subject) !== termKey(subject)) {
         continue;
       }
-      if (object !== null && item.object.value !== object.value) continue;
+      if (predicate !== null && termKey(item.predicate) !== termKey(predicate)) {
+        continue;
+      }
+      if (object !== null && termKey(item.object) !== termKey(object)) continue;
       yield item;
     }
   }

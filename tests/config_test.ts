@@ -70,6 +70,33 @@ Deno.test("Config has the documented defaults", () => {
   assertEquals(config.namespaces.get("schema"), DEFAULT_NAMESPACES["schema"]);
 });
 
+Deno.test("graph.include_file_extension coerces quoted YAML booleans", () => {
+  withTempDir((base) => {
+    writeFile(base, "wiki.yaml", "graph:\n  include_file_extension: 'false'\n");
+    assertEquals(Config.load(base).graph.include_file_extension, false);
+  });
+  withTempDir((base) => {
+    writeFile(base, "wiki.yaml", "graph:\n  include_file_extension: 'true'\n");
+    assertEquals(Config.load(base).graph.include_file_extension, true);
+  });
+  withTempDir((base) => {
+    writeFile(base, "wiki.yaml", "graph:\n  include_file_extension: 'maybe'\n");
+    assertThrows(
+      () => Config.load(base),
+      ValueError,
+      "expected boolean include_file_extension",
+    );
+  });
+  withTempDir((base) => {
+    writeFile(base, "wiki.yaml", "graph:\n  include_file_extension: null\n");
+    assertThrows(
+      () => Config.load(base),
+      ValueError,
+      "expected boolean include_file_extension",
+    );
+  });
+});
+
 Deno.test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yml", `\uFEFF${MINIMAL_WIKI_YAML}`);
