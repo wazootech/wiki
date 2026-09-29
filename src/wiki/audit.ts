@@ -48,7 +48,7 @@ import {
 } from "./document.ts";
 
 import { checkFrontmatterSchema } from "./frontmatter_schema.ts";
-import { parseHeadings } from "./headings.ts";
+import { headingPlainText, parseHeadings } from "./headings.ts";
 import {
   LAYOUT_FRONTMATTER_KEY,
   layoutFileIsValid,
@@ -71,7 +71,6 @@ import {
 } from "./paths.ts";
 import { pyReprString } from "./pyrepr.ts";
 import {
-  pyCasefold,
   pyIsDigit,
   pyIsLower,
   pyIsUpper,
@@ -83,7 +82,10 @@ import { AuditReport, type Issue, severityIssues } from "./schemas/reports.ts";
 import type { CheckConfig, LintConfig } from "./schemas/rules.ts";
 import { checkShaclAll, checkShaclFile } from "./shacl.ts";
 import { LinkIndex } from "./wiki_links.ts";
-import { lintHeadingLevelsWithEslint } from "./lint/eslint.ts";
+import {
+  lintDuplicateHeadingsWithEslint,
+  lintHeadingLevelsWithEslint,
+} from "./lint/eslint.ts";
 
 /** The message text of a broken-link issue, which is all `lint` prints. */
 export function formatBrokenLink(issue: BrokenLink): string {
@@ -139,13 +141,7 @@ const THEMATIC_BREAK_RE = /^(-{3,}|\*{3,}|_{3,})\s*$/m;
 const SETEXT_H2_UNDERLINE_RE = /^-{3,}\s*$/;
 
 /** A markdown link anywhere in a heading, image links included. */
-const MARKDOWN_LINK_IN_HEADING_RE = /!?\[[^\]]*\]\([^)]*\)/g;
-
-/** The prose a heading is asking to be judged on, with its links removed. */
-export function headingPlainText(text: string): string {
-  const plain = text.replace(MARKDOWN_LINK_IN_HEADING_RE, "");
-  return pyStripChars(pySplitWhitespace(plain).join(" "), " ,;:");
-}
+export { headingPlainText };
 
 /** A word stripped of the sentence punctuation a heading attaches to it. */
 function normalizeHeadingWord(word: string): string {
@@ -272,46 +268,11 @@ export function lintThematicBreaks(
   return warnings;
 }
 
-/**
- * The comparison key for duplicate headings.
- *
- * Inline code is unwrapped before folding, so ``## `Foo` `` and `## Foo` are
- * the same heading — the renderer would give them the same anchor.
- */
-function normalizeHeadingForDuplicate(text: string): string {
-  const plain = headingPlainText(text).replace(/`([^`\n]+)`/g, "$1");
-  return pySplitWhitespace(pyCasefold(pyStrip(plain))).join(" ");
-}
-
-/** Lint duplicate H2+ heading text in one document (MD024-style outline rule). */
 export function lintDuplicateHeadings(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
-): string[] {
-  const warnings: string[] = [];
-  for (const filePath of iterMarkdownFiles(config)) {
-    const route = routeForDocumentFile(config, filePath);
-    if (fileFilter !== null && !fileFilter.has(route)) continue;
-    const body = markdownBody(readTextTolerant(filePath));
-    const seen = new Map<string, number>();
-    for (const heading of parseHeadings(body)) {
-      if (heading.level <= 1) continue;
-      const key = normalizeHeadingForDuplicate(heading.text);
-      if (key === "") continue;
-      const first = seen.get(key);
-      if (first !== undefined) {
-        warnings.push(
-          `In ${
-            basename(filePath)
-          }:${heading.line_no}: Duplicate heading h${heading.level} ` +
-            `${pyReprString(heading.text)} (first at line ${first}).`,
-        );
-      } else {
-        seen.set(key, heading.line_no);
-      }
-    }
-  }
-  return warnings;
+): Promise<string[]> {
+  return lintDuplicateHeadingsWithEslint(config, fileFilter, "warning");
 }
 
 /** Lint heading depth increments (MD001-style outline rule). */
@@ -683,7 +644,11 @@ export async function runLint(
   report = applyIssues(
     report,
     "duplicate_headings",
-    lintDuplicateHeadings(config, fileFilter),
+    await lintDuplicateHeadingsWithEslint(
+      config,
+      fileFilter,
+      config.lint.duplicate_headings,
+    ),
     config.lint,
   );
   report = applyIssues(

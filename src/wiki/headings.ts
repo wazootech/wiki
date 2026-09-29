@@ -23,6 +23,7 @@
 
 import MarkdownIt from "markdown-it";
 import type { Token } from "markdown-it/index.js";
+import { pyCasefold, pySplitWhitespace, pyStripChars } from "./pystr.ts";
 
 /** One heading, as the lints, link index, and renderer see it. */
 export interface Heading {
@@ -32,6 +33,18 @@ export interface Heading {
   readonly text: string;
   /** The anchor id, deduplicated against earlier headings in the document. */
   readonly slug: string;
+}
+
+const MARKDOWN_LINK_IN_HEADING_RE = /!?\[[^\]]*\]\([^)]*\)/g;
+
+export function headingPlainText(text: string): string {
+  const plain = text.replace(MARKDOWN_LINK_IN_HEADING_RE, "");
+  return pyStripChars(pySplitWhitespace(plain).join(" "), " ,;:");
+}
+
+export function normalizeHeadingForDuplicate(text: string): string {
+  const plain = headingPlainText(text).replace(/`([^`\n]+)`/g, "$1");
+  return pySplitWhitespace(pyCasefold(plain)).join(" ");
 }
 
 /**

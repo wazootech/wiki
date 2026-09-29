@@ -325,20 +325,22 @@ Deno.test("heading levels increase by one at a time", () =>
     }
   }));
 
-Deno.test("duplicate heading text is reported from H2 down, case-insensitively", () =>
-  withRoot((root) => {
+Deno.test("ESLint duplicate heading lint preserves Wiki's H2+ normalization", () =>
+  withRoot(async (root) => {
     const cases: readonly [string, number][] = [
       ["## Foo\n\nBody.\n\n## Foo\n", 1],
-      // Two H1s are how a page states its title twice; markdownlint MD024
-      // exempts them and so does this.
       ["# Foo\n\n# Foo\n", 0],
       ["## Foo\n\n## foo\n", 1],
+      ["## `Foo`\n\n## Foo\n", 1],
+      ["## Foo\n\n### foo\n", 1],
+      ["## [Foo](target.md)\n\n## Foo\n", 0],
+      ["Foo\n---\n\nFoo\n---\n", 1],
       ["## Foo\n\n```\n## Foo\n```\n", 0],
     ];
-    cases.forEach(([body, expected], index) => {
+    for (const [index, [body, expected]] of cases.entries()) {
       const caseRoot = join(root, `case-${index}`);
       write(caseRoot, "Page.md", `${PAGE_FRONTMATTER}${body}`);
-      const warnings = lintDuplicateHeadings(
+      const warnings = await lintDuplicateHeadings(
         new Config({ wiki: { input: [caseRoot] } }),
       );
       assertEquals(warnings.length, expected, JSON.stringify(body));
@@ -346,7 +348,26 @@ Deno.test("duplicate heading text is reported from H2 down, case-insensitively",
         assert(warnings[0]!.includes("Duplicate heading"));
         assert(warnings[0]!.includes("first at line"));
       }
+    }
+  }));
+
+Deno.test("ESLint duplicate findings preserve Wiki report code and severity", () =>
+  withRoot(async (root) => {
+    write(
+      root,
+      "Page.md",
+      `${PAGE_FRONTMATTER}## Foo\n\n## Foo\n`,
+    );
+    const config = new Config({
+      wiki: { input: [root] },
+      lint: { duplicate_headings: "error" },
     });
+
+    const report = await runLint(config);
+    assertFalse(report.ok);
+    assertEquals(report.errors.length, 1);
+    assertEquals(report.errors[0]!.code, "duplicate_headings");
+    assertEquals(report.errors[0]!.severity, "error");
   }));
 
 Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
