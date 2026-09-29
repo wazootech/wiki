@@ -219,9 +219,13 @@ Deno.test("graph matching uses complete RDF term identity", () => {
     0,
   );
   assertEquals(
-    [...graph.match(subject, predicate, literal("x", {
-      datatype: "http://www.w3.org/2001/XMLSchema#token",
-    }))].length,
+    [...graph.match(
+      subject,
+      predicate,
+      literal("x", {
+        datatype: "http://www.w3.org/2001/XMLSchema#token",
+      }),
+    )].length,
     0,
   );
   assertEquals(

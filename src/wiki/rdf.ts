@@ -554,7 +554,9 @@ export class RdfGraph {
       if (subject !== null && termKey(item.subject) !== termKey(subject)) {
         continue;
       }
-      if (predicate !== null && termKey(item.predicate) !== termKey(predicate)) {
+      if (
+        predicate !== null && termKey(item.predicate) !== termKey(predicate)
+      ) {
         continue;
       }
       if (object !== null && termKey(item.object) !== termKey(object)) continue;
