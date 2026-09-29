@@ -85,6 +85,7 @@ import { LinkIndex } from "./wiki_links.ts";
 import {
   lintDuplicateHeadingsWithEslint,
   lintHeadingLevelsWithEslint,
+  lintMarkdownWithEslint,
 } from "./lint/eslint.ts";
 
 /** The message text of a broken-link issue, which is all `lint` prints. */
@@ -631,24 +632,20 @@ export async function runLint(
     lintHeadings(config, fileFilter),
     config.lint,
   );
+  const markdownLint = await lintMarkdownWithEslint(config, fileFilter, {
+    heading_levels: config.lint.heading_levels,
+    duplicate_headings: config.lint.duplicate_headings,
+  });
   report = applyIssues(
     report,
     "heading_levels",
-    await lintHeadingLevelsWithEslint(
-      config,
-      fileFilter,
-      config.lint.heading_levels,
-    ),
+    markdownLint.heading_levels,
     config.lint,
   );
   report = applyIssues(
     report,
     "duplicate_headings",
-    await lintDuplicateHeadingsWithEslint(
-      config,
-      fileFilter,
-      config.lint.duplicate_headings,
-    ),
+    markdownLint.duplicate_headings,
     config.lint,
   );
   report = applyIssues(

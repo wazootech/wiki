@@ -1,4 +1,5 @@
 import { basename, join } from "@std/path";
+import type { Linter } from "eslint";
 import type { Config } from "../config.ts";
 import { markdownBody } from "../document.ts";
 import { normalizeHeadingForDuplicate, parseHeadings } from "../headings.ts";
@@ -13,17 +14,50 @@ function eslintSeverity(severity: Severity): "error" | "off" | "warn" {
   return "off";
 }
 
-export async function lintHeadingLevelsWithEslint(
+export interface MarkdownLintSeverities {
+  readonly heading_levels: Severity;
+  readonly duplicate_headings: Severity;
+}
+
+export interface MarkdownLintIssues {
+  readonly heading_levels: string[];
+  readonly duplicate_headings: string[];
+}
+
+export async function lintMarkdownWithEslint(
   config: Config,
-  fileFilter: ReadonlySet<string> | null = null,
-  severity: Severity = "warning",
-): Promise<string[]> {
-  if (severity === "off") return [];
+  fileFilter: ReadonlySet<string> | null,
+  severities: MarkdownLintSeverities,
+): Promise<MarkdownLintIssues> {
+  const headingLevelsEnabled = severities.heading_levels !== "off";
+  const duplicateHeadingsEnabled = severities.duplicate_headings !== "off";
+  const issues: MarkdownLintIssues = {
+    heading_levels: [],
+    duplicate_headings: [],
+  };
+  if (!headingLevelsEnabled && !duplicateHeadingsEnabled) return issues;
 
   const [{ ESLint }, { default: markdown }] = await Promise.all([
     import("eslint"),
     import("@eslint/markdown"),
   ]);
+  const rules: Linter.RulesRecord = {
+    ...(headingLevelsEnabled
+      ? {
+        "markdown/heading-increment": [
+          eslintSeverity(severities.heading_levels),
+          { frontmatterTitle: "" },
+        ],
+      }
+      : {}),
+    ...(duplicateHeadingsEnabled
+      ? {
+        "markdown/no-duplicate-headings": eslintSeverity(
+          severities.duplicate_headings,
+        ),
+      }
+      : {}),
+  };
   const eslint = new ESLint({
     allowInlineConfig: false,
     overrideConfigFile: true,
@@ -31,50 +65,104 @@ export async function lintHeadingLevelsWithEslint(
       files: ["**/*.md"],
       language: "markdown/gfm",
       plugins: { markdown },
-      rules: {
-        "markdown/heading-increment": [eslintSeverity(severity), {
-          frontmatterTitle: "",
-        }],
-      },
+      rules,
     }],
   });
 
-  const warnings: string[] = [];
-  let index = 0;
+  let fileIndex = 0;
   for (const filePath of iterMarkdownFiles(config)) {
     const route = routeForDocumentFile(config, filePath);
     if (fileFilter !== null && !fileFilter.has(route)) continue;
 
     const body = markdownBody(readTextTolerant(filePath));
-    const [result] = await eslint.lintText(body, {
-      filePath: join(Deno.cwd(), `wiki-lint-${index++}.md`),
-    });
-    if (result === undefined) continue;
+    const eslintPath = join(Deno.cwd(), `wiki-lint-${fileIndex++}.md`);
 
-    for (const message of result.messages) {
-      const line = message.line ?? 1;
-      if (message.ruleId !== "markdown/heading-increment") {
-        warnings.push(`In ${basename(filePath)}:${line}: ${message.message}`);
-        continue;
+    if (headingLevelsEnabled) {
+      const [result] = await eslint.lintText(body, { filePath: eslintPath });
+      for (const message of result?.messages ?? []) {
+        if (message.ruleId !== "markdown/heading-increment") continue;
+        const line = message.line ?? 1;
+        const match = /^Heading level skipped from (\d+) to (\d+)\.$/.exec(
+          message.message,
+        );
+        if (match === null) {
+          issues.heading_levels.push(
+            `In ${basename(filePath)}:${line}: ${message.message}`,
+          );
+          continue;
+        }
+        const previousLevel = Number(match[1]);
+        const level = Number(match[2]);
+        issues.heading_levels.push(
+          `In ${basename(filePath)}:${line}: ` +
+            `Heading h${level} skips level h${previousLevel + 1}; ` +
+            "increase depth by one at a time.",
+        );
       }
-      const match = /^Heading level skipped from (\d+) to (\d+)\.$/.exec(
-        message.message,
-      );
-      if (match === null) {
-        warnings.push(`In ${basename(filePath)}:${line}: ${message.message}`);
-        continue;
+    }
+
+    if (duplicateHeadingsEnabled) {
+      const headings = parseHeadings(body);
+      const lines = body.split(/\r\n|\r|\n/);
+      const firstLines = new Map<string, number>();
+      const headingByLine = new Map<number, (typeof headings)[number]>();
+      const firstLineByDuplicate = new Map<number, number>();
+
+      for (const heading of headings) {
+        const lineIndex = heading.line_no - 1;
+        if (lineIndex < 0 || lineIndex >= lines.length) continue;
+        const isAtx = /^ {0,3}#{1,6}(?:\s|$)/.test(lines[lineIndex]!);
+        if (!isAtx && lineIndex + 1 < lines.length) lines[lineIndex + 1] = "";
+        if (heading.level <= 1) {
+          lines[lineIndex] = "";
+          continue;
+        }
+        const key = normalizeHeadingForDuplicate(heading.text);
+        if (key === "") {
+          lines[lineIndex] = "";
+          continue;
+        }
+        const firstLine = firstLines.get(key);
+        if (firstLine === undefined) {
+          firstLines.set(key, heading.line_no);
+        } else {
+          firstLineByDuplicate.set(heading.line_no, firstLine);
+        }
+        headingByLine.set(heading.line_no, heading);
+        lines[lineIndex] = `${"#".repeat(heading.level)} ${key}`;
       }
-      const previousLevel = Number(match[1]);
-      const level = Number(match[2]);
-      warnings.push(
-        `In ${basename(filePath)}:${line}: ` +
-          `Heading h${level} skips level h${previousLevel + 1}; ` +
-          "increase depth by one at a time.",
-      );
+
+      const [result] = await eslint.lintText(lines.join("\n"), {
+        filePath: eslintPath,
+      });
+      for (const message of result?.messages ?? []) {
+        if (message.ruleId !== "markdown/no-duplicate-headings") continue;
+        const line = message.line ?? 1;
+        const heading = headingByLine.get(line);
+        const firstLine = firstLineByDuplicate.get(line);
+        if (heading === undefined || firstLine === undefined) continue;
+        issues.duplicate_headings.push(
+          `In ${
+            basename(filePath)
+          }:${line}: Duplicate heading h${heading.level} ` +
+            `${pyReprString(heading.text)} (first at line ${firstLine}).`,
+        );
+      }
     }
   }
 
-  return warnings;
+  return issues;
+}
+
+export async function lintHeadingLevelsWithEslint(
+  config: Config,
+  fileFilter: ReadonlySet<string> | null = null,
+  severity: Severity = "warning",
+): Promise<string[]> {
+  return (await lintMarkdownWithEslint(config, fileFilter, {
+    heading_levels: severity,
+    duplicate_headings: "off",
+  })).heading_levels;
 }
 
 export async function lintDuplicateHeadingsWithEslint(
@@ -82,81 +170,8 @@ export async function lintDuplicateHeadingsWithEslint(
   fileFilter: ReadonlySet<string> | null = null,
   severity: Severity = "warning",
 ): Promise<string[]> {
-  if (severity === "off") return [];
-
-  const [{ ESLint }, { default: markdown }] = await Promise.all([
-    import("eslint"),
-    import("@eslint/markdown"),
-  ]);
-  const eslint = new ESLint({
-    allowInlineConfig: false,
-    overrideConfigFile: true,
-    overrideConfig: [{
-      files: ["**/*.md"],
-      language: "markdown/gfm",
-      plugins: { markdown },
-      rules: {
-        "markdown/no-duplicate-headings": eslintSeverity(severity),
-      },
-    }],
-  });
-
-  const warnings: string[] = [];
-  let index = 0;
-  for (const filePath of iterMarkdownFiles(config)) {
-    const route = routeForDocumentFile(config, filePath);
-    if (fileFilter !== null && !fileFilter.has(route)) continue;
-
-    const body = markdownBody(readTextTolerant(filePath));
-    const headings = parseHeadings(body);
-    const lines = body.split(/\r\n|\r|\n/);
-    const firstLines = new Map<string, number>();
-    const headingByLine = new Map<number, (typeof headings)[number]>();
-    const firstLineByDuplicate = new Map<number, number>();
-
-    for (const heading of headings) {
-      const lineIndex = heading.line_no - 1;
-      if (lineIndex < 0 || lineIndex >= lines.length) continue;
-      const isAtx = /^ {0,3}#{1,6}(?:\s|$)/.test(lines[lineIndex]!);
-      if (!isAtx && lineIndex + 1 < lines.length) lines[lineIndex + 1] = "";
-      if (heading.level <= 1) {
-        lines[lineIndex] = "";
-        continue;
-      }
-      const key = normalizeHeadingForDuplicate(heading.text);
-      if (key === "") {
-        lines[lineIndex] = "";
-        continue;
-      }
-      const firstLine = firstLines.get(key);
-      if (firstLine === undefined) {
-        firstLines.set(key, heading.line_no);
-      } else {
-        firstLineByDuplicate.set(heading.line_no, firstLine);
-      }
-      headingByLine.set(heading.line_no, heading);
-      lines[lineIndex] = `${"#".repeat(heading.level)} ${key}`;
-    }
-
-    const [result] = await eslint.lintText(lines.join("\n"), {
-      filePath: join(Deno.cwd(), `wiki-lint-duplicates-${index++}.md`),
-    });
-    if (result === undefined) continue;
-
-    for (const message of result.messages) {
-      if (message.ruleId !== "markdown/no-duplicate-headings") continue;
-      const line = message.line ?? 1;
-      const heading = headingByLine.get(line);
-      const firstLine = firstLineByDuplicate.get(line);
-      if (heading === undefined || firstLine === undefined) continue;
-      warnings.push(
-        `In ${
-          basename(filePath)
-        }:${line}: Duplicate heading h${heading.level} ` +
-          `${pyReprString(heading.text)} (first at line ${firstLine}).`,
-      );
-    }
-  }
-
-  return warnings;
+  return (await lintMarkdownWithEslint(config, fileFilter, {
+    heading_levels: "off",
+    duplicate_headings: severity,
+  })).duplicate_headings;
 }

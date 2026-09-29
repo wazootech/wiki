@@ -370,6 +370,24 @@ Deno.test("ESLint duplicate findings preserve Wiki report code and severity", ()
     assertEquals(report.errors[0]!.severity, "error");
   }));
 
+Deno.test("ESLint Markdown rules map together into Wiki severities", () =>
+  withRoot(async (root) => {
+    write(root, "Page.md", `${PAGE_FRONTMATTER}## Foo\n\n#### Foo\n`);
+    const config = new Config({
+      wiki: { input: [root] },
+      lint: { heading_levels: "warning", duplicate_headings: "error" },
+    });
+
+    const report = await runLint(config);
+    assertFalse(report.ok);
+    assertEquals(report.warnings.map((issue) => issue.code), [
+      "heading_levels",
+    ]);
+    assertEquals(report.errors.map((issue) => issue.code), [
+      "duplicate_headings",
+    ]);
+  }));
+
 Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
   withRoot((root) => {
     const wiki = join(root, "wiki");
