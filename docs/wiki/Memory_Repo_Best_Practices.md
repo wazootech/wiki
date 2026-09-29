@@ -59,6 +59,7 @@ A memory repo must be stable, unchanged, and replayable over time. It is the dur
 1. **Dedup by source identifier.** Every capture carries a source ID (`schema:identifier`); duplicate IDs within or across runs are skipped.
 1. **No TTL, no pruning.** Memory is the second-brain promise: nothing expires because of age. The repo is the memory, not a cache of it.
 1. **Run bookkeeping.** Each source keeps a `SUMMARY.json` that records the last run and its result; it doubles as the connector `status` output.
+1. **Stable derived pages.** Replaying identical source data leaves generated wiki pages untouched. Page-level run fields (`wazoo:source_run`, `wazoo:source_run_id`, and `wazoo:synced_at`) record the last run that changed the page and advance only when its source-derived content changes; source-wide run accounting stays in `raw/<source>/SUMMARY.json`.
 1. **Provenance, not copies.** Wiki pages reference captures through stable URLs or URIs (`raw:<source>/...` inside the repo, or `memory://<owner>/<source>/<path>` across repos) rather than inlining raw content.
 
 ## Datasets per source
@@ -104,7 +105,7 @@ Daily automation runs as a scheduled GitHub Actions workflow (`connector-cron.ym
 1. Captures and bookkeeping land in the same clone.
 1. Appraisal converts actionable captures into living records; the workflow generates and updates wiki pages from normalized data (a no-op until connectors emit appraised records).
 1. Gates: `wiki check` and `wiki fmt --check`, plus `scripts/memory_check.py --base origin/main` and the pytest suite.
-1. Commits one atomic change per run and pushes to `main` of the same repo; a run with no new captures is a no-op commit.
+1. Commits one atomic change per run and pushes to `main` of the same repo; unchanged source-derived wiki pages are not rewritten solely to restamp the run's provenance. A run may still change `SUMMARY.json` or the cursor when recording the completed sync.
 
 Hard gates are structurally enforced: validation runs before commit, and repository CI (`check.yml` + `memory-check.yml`) is the tripwire on push. Natural-language operators follow the atomic persistence protocol: one coherent transaction per commit, checkpoint commits when blocked, no destructive history operations without approval.
 
