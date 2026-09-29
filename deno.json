@@ -19,7 +19,7 @@
     ]
   },
   "tasks": {
-    "check": "deno check src/wiki tests parity/run.ts",
+    "check": "deno check src/wiki tests parity/run.ts docs/build.ts scripts/bake_owl2rl_rules.ts",
     "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net=127.0.0.1,localhost tests/",
     "parity": "deno run --allow-read --allow-write --allow-run --allow-env parity/run.ts",
     "bake:rules": "deno run --allow-read --allow-write scripts/bake_owl2rl_rules.ts",
@@ -61,20 +61,22 @@
       "tests/**/*.ts",
       "parity/**/*.ts",
       "scripts/**/*.ts",
+      "docs/build.ts",
       "deno.json"
     ],
-    "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"]
   },
   "lint": {
     "include": [
       "src/wiki/**/*.ts",
       "tests/**/*.ts",
       "parity/**/*.ts",
-      "scripts/**/*.ts"
+      "scripts/**/*.ts",
+      "docs/build.ts"
     ],
-    "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"]
   },
-  "exclude": ["docs/", "spike-reasoning/", "probes/", ".parity-tmp/"],
+  "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,

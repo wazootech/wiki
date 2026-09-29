@@ -527,7 +527,6 @@ function editLink(page: VirtualPage, repoRoot: string | null): string {
 
 function pageTokens(
   page: VirtualPage | null,
-  site: WikiSite,
   baseUrl: string,
   urlStyle: string,
   pagesJson: string,
@@ -599,7 +598,7 @@ function buildIndexHtml(
   const body = `<ul class="pages-list">\n${links.join("\n")}${
     links.length === 0 ? "" : "\n"
   }</ul>`;
-  const tokens = pageTokens(null, site, baseUrl, urlStyle, pagesJson, {
+  const tokens = pageTokens(null, baseUrl, urlStyle, pagesJson, {
     toc: "",
     backlinks: "",
     infobox: "",
@@ -732,7 +731,7 @@ export async function buildDocsSite(
       : redirectTo
       ? redirectLayout
       : defaultLayout;
-    const tokens = pageTokens(page, site, baseUrl, urlStyle, pagesJson, {
+    const tokens = pageTokens(page, baseUrl, urlStyle, pagesJson, {
       toc: buildTocHtml(page, baseUrl, urlStyle),
       backlinks: buildBacklinksHtml(page, site, baseUrl, urlStyle),
       infobox: buildInfoboxHtml(page, site, baseUrl, urlStyle),
