@@ -69,7 +69,8 @@ Options:
 
 Environment:
   WIKI_ORACLE_ROOT         Pinned Python checkout (${ORACLE_PIN}, ${ORACLE_PIN_SUBJECT})
-  WIKI_ORACLE              Executable override, when the venv is elsewhere
+  WIKI_ORACLE              Executable override; requires WIKI_ORACLE_ROOT unless
+                           --allow-oracle-drift is passed
 
 Cases: ${CASE_IDS.join(", ")}`;
 
@@ -229,10 +230,19 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  const oracle = resolveOracle((name) => Deno.env.get(name));
+  const oracle = resolveOracle(
+    (name) => Deno.env.get(name),
+    options.allowOracleDrift,
+  );
   const revision = oracle.root === undefined
     ? undefined
     : await readRevision(oracle.root);
+
+  if (revision === undefined) {
+    console.warn(
+      "warning: oracle revision is unverified; comparisons are against an explicit executable override.",
+    );
+  }
 
   if (revision !== undefined && !revisionMatchesPin(revision)) {
     const message = `oracle at ${oracle.root} is at ${revision}, not the ` +

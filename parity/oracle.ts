@@ -38,11 +38,20 @@ export class OracleNotConfiguredError extends Error {
         `${ORACLE_PIN_SUBJECT}). The harness expects the CLI at`,
         "`.venv/Scripts/wiki.exe` on Windows or `.venv/bin/wiki` elsewhere.",
         "",
-        "Set WIKI_ORACLE instead to point at the executable directly, for example",
-        "the wiki executable inside the pinned oracle checkout.",
+        "Set WIKI_ORACLE to override the executable inside that pinned checkout.",
       ].join("\n"),
     );
     this.name = "OracleNotConfiguredError";
+  }
+}
+
+export class OraclePinRequiredError extends Error {
+  constructor() {
+    super(
+      "WIKI_ORACLE is an unverified executable override. Set WIKI_ORACLE_ROOT " +
+        "to verify the pinned checkout, or pass --allow-oracle-drift.",
+    );
+    this.name = "OraclePinRequiredError";
   }
 }
 
@@ -68,11 +77,17 @@ export function venvWikiBin(root: string): string {
 }
 
 /** Resolve the oracle from the environment, or explain how to configure it. */
-export function resolveOracle(readEnv: EnvLookup): OracleCommand {
+export function resolveOracle(
+  readEnv: EnvLookup,
+  allowOracleDrift = false,
+): OracleCommand {
   const explicit = present(readEnv("WIKI_ORACLE"));
   const root = present(readEnv("WIKI_ORACLE_ROOT"));
 
   if (explicit !== undefined) {
+    if (root === undefined && !allowOracleDrift) {
+      throw new OraclePinRequiredError();
+    }
     return { bin: explicit, root };
   }
   if (root !== undefined) {
