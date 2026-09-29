@@ -7,7 +7,8 @@ import {
 
 Deno.test("an executable override requires a pinned checkout by default", () => {
   assertThrows(
-    () => resolveOracle((name) => name === "WIKI_ORACLE" ? "/tmp/wiki" : undefined),
+    () =>
+      resolveOracle((name) => name === "WIKI_ORACLE" ? "/tmp/wiki" : undefined),
     OraclePinRequiredError,
     "WIKI_ORACLE_ROOT",
   );

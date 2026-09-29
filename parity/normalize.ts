@@ -12,8 +12,8 @@
  * - **Line endings** — Click writes CRLF through text-mode stdout on Windows
  *   while `console.log` writes LF. Observed on the very first case: `wiki
  *   --version` emits `0.1.23\r\n`.
- * - **ANSI escapes** — the Python CLI renders through `rich`, which colours
- *   output; `@std/colors` decides independently. Colour is not contract.
+ * - **ANSI escapes** — the Python CLI can render through `rich`; the harness
+ *   strips terminal colour because it is not part of the command's semantics.
  * - **Scratch root path** — every case runs in a fresh copy of its corpus, so
  *   absolute paths differ per run *and* per machine. Observed in
  *   `lint --strict -v`, which prints the absolute path of a missing asset

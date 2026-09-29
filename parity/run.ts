@@ -86,10 +86,9 @@ function splitList(value: string): readonly string[] {
 /**
  * Parse the flag surface by hand.
  *
- * The project's declarative CLI parser (cliffy) arrives with the CLI port in
- * phase 9. The harness deliberately does not adopt it early: it has to keep
- * running against the *Python* CLI, so it should not be the thing that pins the
- * port's CLI conventions.
+ * The harness drives both the pinned Python oracle and the Deno CLI, so it
+ * owns a small shared option surface rather than depending on either runtime's
+ * argument parser.
  */
 export function parseArgs(argv: readonly string[]): Options {
   const corpora: string[] = [];

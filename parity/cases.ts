@@ -54,7 +54,8 @@ export const CASES: readonly ParityCase[] = [
     corpus: "micro",
     argv: ["--help"],
     status: "known",
-    note: "The Deno help names the Deno formatter instead of legacy mdformat.",
+    note:
+      "Root help adds the `i` alias, aligns names to the widest alias, and names the Deno formatter instead of legacy mdformat.",
   },
 
   // --- Core behavior and deliberate known differences -----------------------
@@ -64,7 +65,7 @@ export const CASES: readonly ParityCase[] = [
     argv: [],
     status: "known",
     note:
-      "The empty invocation's root help names the Deno formatter instead of legacy mdformat.",
+      "The empty invocation prints the same root help to stderr; its exit code remains 2.",
   },
   {
     // Ported, and deliberately *not* a gate: the only finding on this corpus is

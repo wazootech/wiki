@@ -85,10 +85,12 @@ without syntax-highlight markup. The tree digest and transcript preserve that
 visible difference explicitly.
 
 The fifth and sixth known cases are **`usage-help`** and
-**`usage-no-command`**. The root catalog is otherwise aligned, but the Deno CLI
-correctly describes its own formatter rather than naming the retired Python
-`mdformat` implementation. The empty invocation prints that same catalog to
-stderr, so its transcript records the same single-line difference.
+**`usage-no-command`**. Deno's root catalog is generated from the same command
+registry used for dispatch, includes the `i` alias for `install`, and aligns the
+labels to the widest alias. Python's Click help has different column spacing and
+no alias row; the Deno help also names its formatter rather than retired
+`mdformat`. The empty invocation prints the same root catalog to stderr and
+preserves exit code 2. The transcripts record these accepted text differences.
 
 Two `fmt` cases are gates rather than divergences. `fmt-check-micro` compares the
 stale-file list and exit code. `fmt-micro` also compares the changed-file tree
@@ -116,8 +118,8 @@ in `tests/parity_normalize_test.ts`. Currently enabled:
 - leading UTF-8 BOM removal (the engine strips BOMs on read — #312);
 - CRLF and lone CR folded to LF (Click writes CRLF on Windows; `--version`
   proves it);
-- ANSI escape removal (`rich` colours output; `@std/colors` decides
-  independently);
+- ANSI escape removal (the Python CLI can emit `rich` colour codes; terminal
+  colour is not part of the command's semantics);
 - the scratch directory's absolute path replaced with `<CORPUS>` (observed in
   `lint --strict -v`, which prints the absolute path of a missing asset
   directory);

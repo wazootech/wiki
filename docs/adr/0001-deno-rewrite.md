@@ -23,8 +23,8 @@ Rewrite the engine in Deno/TypeScript over RDF/JS, mirroring the Python module l
 ### Locked decisions
 
 - **In-toolchain site/build/serve.** No Vite or other external build carve-out for `site/`, `build`, and `serve`.
-- **Formatter is `dprint-plugin-markdown`, run in process.** This overrides open decision #2 in #273, which recommended porting `mdformat` instead, and it supersedes the `deno fmt` subprocess recorded in earlier drafts of this ADR. `deno fmt` *was* this plugin — but only under `deno run`: that route needs `Deno.execPath()` to be a Deno interpreter, and inside a `deno compile` standalone it is the binary itself, with `denort` carrying none of the tooling subcommands. Compiled binaries being a supported install path, the plugin is loaded directly through `@dprint/formatter` instead.
-- **ESLint backs opt-in Markdown linting, not Wiki semantics.** `lint.heading_levels` delegates to ESLint 9.39.5 with `@eslint/markdown` 8.0.3's `markdown/heading-increment` rule and maps diagnostics into Wiki's existing report and severity model. Broken-link routing, CURIE resolution, and other Wiki policies remain in Wiki. `Wiki.lint()` is asynchronous; the rule stays off by default. Under the release compile flags, the Linux x64 standalone grew from 157.16 MiB to 173.96 MiB (+16.80 MiB); compilation embeds these packages even when the rule is off.
+- **Formatter is `@dprint/markdown`, run in process.** This overrides open decision #2 in #273, which recommended porting `mdformat` instead, and it supersedes the `deno fmt` subprocess recorded in earlier drafts of this ADR. `deno fmt` *was* this plugin — but only under `deno run`: that route needs `Deno.execPath()` to be a Deno interpreter, and inside a `deno compile` standalone it is the binary itself, with `denort` carrying none of the tooling subcommands. Compiled binaries being a supported install path, the plugin is loaded directly through `@dprint/formatter` and imported from the `@dprint/markdown` alias instead.
+- **ESLint backs applicable opt-in Markdown lint rules, not Wiki semantics.** `lint.heading_levels` and `lint.duplicate_headings` delegate to ESLint 9.39.5 with `@eslint/markdown` 8.0.3's `markdown/heading-increment` and `markdown/no-duplicate-headings` rules, mapping diagnostics into Wiki's existing issue codes and severity model. Wiki keeps route-aware link and `wiki:` CURIE resolution, filename and editorial heading policies, and its Setext-aware thematic-break check. `Wiki.lint()` is asynchronous; both rules stay off by default. Under the release compile flags, the Linux x64 standalone grew from 157.16 MiB to 173.96 MiB (+16.80 MiB); compilation embeds these packages even when the rules are off.
 - **Validation parity is spec-close, not byte-identical.** The differential harness compares exit code plus *normalised* stdout/stderr, and compares normalized output-tree digests for mutating commands. Known-difference transcripts are committed as fixtures rather than chased to byte parity.
 - **Hard cutover in one PR.** No dual-publish, no long-lived transition branch on `main`.
 
@@ -43,31 +43,31 @@ The Python implementation is an oracle for supported core behavior, not a requir
 | `jsonschema` | `ajv` | Draft 2020-12. **The swap is not message-compatible and `wiki check` prints these messages**, so the port keeps ajv as the engine and replaces the reporting layer: `src/wiki/json_schema.ts` renders jsonschema 4.26's wording from ajv's `keyword`/`params`/`schema`, and reconstructs jsonschema's error *order* (ajv emits `required` before `additionalProperties` regardless of key order). Compiled with `validateSchema: false`, `strict: false`, `validateFormats: false`. 63-case corpus, verdict agrees on all 63, messages byte-identical after the layer ([evidence](../../probes/json-schema/FINDINGS.md)) |
 | `linked-markdown` | `@wazoo/linked-markdown` | Already exists |
 | `markdown-it-py` + `pygments` | `markdown-it` | Fenced-code HTML is not syntax-highlighted in the Deno renderer; the output-tree parity case records this visible difference. |
-| `mdformat` | **`dprint-plugin-markdown`** via `@dprint/formatter` | Reverses #273's recommendation; one-time docs reformat accepted. Every plugin is pinned to the exact version Deno 2.9.6 bundles, and the port's output is `deno fmt`'s output byte for byte on all 89 docs pages ([evidence](../../probes/fmt-dprint/FINDINGS.md)) |
-| `jinja2` | `nunjucks` | |
-| `beautifulsoup4` | `cheerio` | |
-| `rich` | `@std/colors` | |
-| `click` | `cliffy` | Core command behavior and exit codes are preserved; documented optional omissions are allowed |
-| `pydantic` | `zod` | Strict, with ported error messages |
+| `mdformat` | **`@dprint/markdown`** via `@dprint/formatter` | Reverses #273's recommendation; one-time docs reformat accepted. The package is pinned to the exact version Deno 2.9.6 bundles, and the port's output is `deno fmt`'s output byte for byte on all 89 docs pages ([evidence](../../probes/fmt-dprint/FINDINGS.md)) |
+| `jinja2` | Hand-written scaffold and layout rendering | `src/wiki/init_scaffold.ts` emits scaffold files directly; `src/wiki/site/layout.ts` substitutes Wiki template tokens. No general-purpose template engine is imported. |
+| `beautifulsoup4` | No replacement dependency | It is declared by the Python project but not imported by its `src/wiki/*.py` files; the Deno engine does not provide a general HTML DOM API. |
+| `rich` | Hand-written CLI formatting | `src/wiki/format.ts` builds query tables and text formats directly; no terminal-color package is imported. |
+| `click` | Hand-written argument parser | `src/wiki/cli.ts` keeps the CLI's parser, help, usage-error, and exit-code contract without adding Cliffy. |
+| `pydantic` | Internal schema validators | `src/wiki/schemas/model.ts`, `validation.ts`, and `wiki_config.ts` validate inputs; no Zod dependency is imported. |
 | `ruamel.yaml` | `yaml` | Comment-preserving |
-| `mcp` | `@modelcontextprotocol/sdk` | |
+| `mcp` | Hand-written stdio MCP subset | `src/wiki/mcp.ts` implements JSON-RPC initialization, ping, tools/list/call, and resources/list/read for the read-only Wiki tools and resources. It does not use `@modelcontextprotocol/sdk`. |
 | `http.server` | `Deno.serve` | |
 | `difflib.SequenceMatcher` | ported | `link-fix` parity only |
-| `@rdfjs/types` | `npm:@rdfjs/types@1.1.0` | Shared quad typing |
+| `@rdfjs/types` | `npm:@rdfjs/types@^2.0.1` | Shared quad typing |
 
 `nodeModulesDir: "auto"` became required in phase 5, when the first `npm:` dependencies landed (`@zazuko/env-node` for RDF IO, `n3` for Turtle output, `rdfjs-inference-engine` for OWL 2 RL); it is set in `deno.json` as the spike's config anticipated. It is what makes `node_modules/` appear locally — gitignored, and not a build input. `ajv` and `jsonld` are direct dependencies for validation and JSON-LD export; like the others they are plain npm packages with no Deno build step.
 
 ### Distribution
 
-**One TypeScript engine, three delivery paths.** `@wazoo/wiki` remains the native Deno/JSR library. The existing `wazootech-wiki` npm package is retained as a compatibility contract: preserve its `wiki` executable, CommonJS/ESM/type exports, and documented TypeScript SDK methods, but replace the Python bootstrap and runner with a Deno-backed implementation. npm consumers must not need system Python or a separate Deno installation; the package provisions the official Deno runtime and runs the packaged engine source. Deno-native users can use the JSR package. Users who need no package manager can download a `deno compile` binary.
+**One TypeScript engine, three planned delivery paths.** `@wazoo/wiki` is configured as the native Deno/JSR library, but the package has not yet been created and linked to this repository; the first tagged Deno release depends on that setup. The existing `wazootech-wiki` npm package is retained: preserve its `wiki` executable, CommonJS/ESM/type exports, and documented TypeScript SDK methods, but replace the Python bootstrap and runner with a Deno-backed implementation. npm's currently published package is still the Python CLI. At the first tagged Deno release, npm consumers will not need system Python or a separate Deno installation; the package will provision the official Deno runtime and run the packaged engine source. Standalone binaries will also be published with that release.
 
 The npm package is not a second engine: `src/wiki/` remains the single implementation, included with the npm package's Deno manifest and lockfile. The npm JavaScript/TypeScript layer translates its established API calls into Deno CLI invocations and preserves the current result/error/process behavior. Release versions are synchronized across `deno.json`, the npm package/lockfile, the CLI version constant, and the docs metadata; PyPI is retired.
 
 The Python oracle is pinned at `1bfb422` and kept only in a detached local worktree while the cutover is validated. The cutover PR removes Python engine, tests, packaging, CI/release paths, and the Python docs builder only after the pinned differential suite and mutating-output checks pass. The authored Markdown wiki and its custom Wikipedia theme remain; the site builder is replaced with Deno/TypeScript rather than dropping those behaviors.
 
-- **The library surface is `@wazoo/wiki`.** Deno users can import the package from JSR. The existing `wazootech-wiki` npm name remains installable and keeps its Node-facing SDK and `wiki` binary.
-- **The npm `wiki` command is Deno-backed.** It uses the Deno runtime distributed through npm and the Deno engine files packaged with the npm package. Python and a separately installed Deno runtime are not prerequisites.
-- **`deno compile` binaries remain a supported install path.** Self-contained executables for Linux x64/arm64, Windows x64/arm64, and macOS x64/arm64 are published on GitHub Releases with `SHA256SUMS`. The release build uses `--node-modules-dir=none --exclude-unused-npm` to embed engine dependencies without the local development tree.
+- **The library surface is `@wazoo/wiki`.** Its JSR package is not published yet; Deno users can import it after the first tagged release and repository link. The existing `wazootech-wiki` npm name retains its Node-facing SDK and `wiki` binary, but its currently published version still runs the Python engine.
+- **The cutover npm `wiki` command will be Deno-backed.** Starting with the first tagged Deno release, it will use the Deno runtime distributed through npm and the Deno engine files packaged with the npm package. Python and a separately installed Deno runtime will not be prerequisites.
+- **`deno compile` binaries are a supported install path after the first tagged Deno release.** The current workflow builds self-contained executables for Linux x64, Windows x64, and macOS ARM64, published on GitHub Releases with `SHA256SUMS`. The release build uses `--node-modules-dir=none --exclude-unused-npm` to embed engine dependencies without the local development tree.
 - **Release publication is one versioned cutover.** JSR, npm, and GitHub Release artifacts use the same `vX.Y.Z`; PyPI publishing and PyInstaller are removed. The release workflow keeps its canonical `.github/workflows/release.yml` path for npm trusted publishing.
 
 ### Oracle and transition discipline
@@ -87,17 +87,17 @@ Parity is judged by `deno task parity`, which runs the pinned oracle and the Den
 
 Two corpora pull in opposite directions: `micro` is hand-written and deliberately dirty (broken link, wikilink under `link.style: standard`, stale SPARQL blocks, a shape violation, a filename-pattern violation) so that commands must compare non-empty findings; `docs` is this repository's own clean wiki, where the target for four commands is silence and exit 0.
 
-The harness earned its keep on its first run. The scaffold assumed Click printed a two-line usage for an empty argv; the oracle prints the full group help. That divergence is now tracked as the `usage-no-command` case rather than living as a wrong comment in `cli.ts`.
+The harness earned its keep on its first run. The scaffold assumed Click printed a two-line usage for an empty argv; the oracle prints the full group help, and Deno preserves that contract. The `usage-no-command` transcript pins the exit status while recording the accepted text differences from Deno's unified, alias-aware command catalog.
 
 ## Consequences
 
 ### Runtime and tooling layout after cutover
 
-The rewrite is complete. `src/wiki/` is the sole engine; the Python source, tests, packaging, and docs builder were removed from the repository. A detached Python checkout exists only as a local differential oracle while the cutover is reviewed. Deno users run the JSR package, npm users keep the `wazootech-wiki` package and `wiki` executable, and standalone users get self-contained `deno compile` binaries. The npm adapter invokes the same TypeScript engine rather than maintaining a second implementation.
+The rewrite is complete. `src/wiki/` is the sole engine; the Python source, tests, packaging, and Python docs builder were removed from the repository. A detached Python checkout exists only as a local differential oracle while the cutover is reviewed. After the first tagged Deno release, Deno users will use the JSR package, npm users will get the Deno-backed `wazootech-wiki` package and `wiki` executable, and standalone users will get self-contained `deno compile` binaries. The npm adapter invokes the same TypeScript engine rather than maintaining a second implementation.
 
 - `eslint.config.mjs` ignores `src/wiki/**`; `tsconfig.json` includes only `src/*.ts`, keeping Node SDK tooling separate from the Deno engine.
 - The npm adapter sources live at the repository root in `src/*.ts`, its executable is `bin/wiki.js`, its Node regression tests are under `tests/npm/`, and its generated CJS/ESM/type output goes to root `dist/`.
-- `deno.json` scopes engine checks, formatting, linting, and JSR publication to `src/wiki/` so the Node-facing SDK remains a separate package surface.
+- `deno.json` type-checks the engine, parity runner, docs builder, and OWL 2 RL rule generator; formatting and linting include those TypeScript sources while excluding Markdown. JSR publication includes only the engine, keeping the Node-facing SDK a separate package surface.
 
 ### Deleted at cutover
 
