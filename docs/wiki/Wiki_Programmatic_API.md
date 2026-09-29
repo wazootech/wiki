@@ -77,7 +77,7 @@ The library also exposes formatting, inline SPARQL rendering, link analysis and 
 
 ## Node.js and npm SDK
 
-The `wazootech-wiki` npm package keeps its existing package name, `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. The SDK invokes the Deno-backed CLI; npm users do not need system Python or a separate Deno installation. Node.js 18 or newer is required.
+After the first tagged Deno release, the `wazootech-wiki` npm package will keep its existing package name, `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. The SDK will invoke the Deno-backed CLI; npm users will not need system Python or a separate Deno installation. Node.js 18 or newer is required. Until that release, the currently published npm package still runs the Python CLI.
 
 ```bash
 npm install wazootech-wiki

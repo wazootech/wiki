@@ -8,20 +8,19 @@ Run `bash skills/wiki/scripts/verify.sh` first (`.agents/skills/wiki/scripts/ver
 
 ## Detect
 
-```bash
-wiki --help
-wiki fmt --help
-```
+Use the verifier rather than help output alone: the legacy Python CLI also supports `wiki --help` and `wiki fmt --help`.
 
-- Both pass: confirm that `wiki` is on PATH and ready; stop.
-- `--help` passes but `fmt` fails: the command is stale or shadowed; follow **Stale CLI**.
-- Either command is missing: follow **Install when CLI is missing**.
+- Exit `0`: a Deno-backed CLI or verified Deno source checkout is ready.
+- Exit `2`: PATH contains a stale CLI and no usable Deno source checkout was found. Before the first tagged release, do not recommend `npm install -g wazootech-wiki@latest`; it still resolves to the legacy Python CLI. If working in the Wiki repository, use `deno run -A src/wiki/cli.ts`; otherwise explain that the Deno cutover package is not published yet.
+- Exit `1`: no supported Deno-backed CLI or source checkout was found. Follow the release-aware guidance below.
 
 ## Install when CLI is missing
 
-Tell the user the CLI was not found. Offer the install path that matches their environment. Installing software requires the user's approval.
+Before the first tagged Deno release, the npm, JSR, and standalone cutover distributions are unavailable. In the Wiki repository, contributors can run `deno run -A src/wiki/cli.ts`. Elsewhere, tell the user the Deno package is not released yet; do not install the legacy Python package as if it were the cutover. After release, offer the install path matching the user's environment. Installing software requires the user's approval.
 
 ### npm (Node.js 18 or newer)
+
+After the first tagged Deno release:
 
 ```bash
 npm install -g wazootech-wiki
@@ -29,11 +28,11 @@ wiki --help
 wiki fmt --help
 ```
 
-The npm package provides the `wiki` command, the TypeScript SDK, a bundled Deno runtime, and the Deno engine source. System Python and a separate Deno installation are not required. For a one-time invocation, `npx wazootech-wiki --help` runs the same package; installing through `npx` still downloads software.
+The package will provide the `wiki` command, TypeScript SDK, bundled Deno runtime, and Deno engine source. System Python and a separate Deno installation will not be required. For a one-time invocation, `npx wazootech-wiki --help` runs the same package; installing through `npx` still downloads software.
 
 ### Standalone executable
 
-Download the standalone binary matching the user's OS and architecture from [GitHub Releases](https://github.com/wazootech/wiki/releases) and verify it against `SHA256SUMS`. Release assets are individual binaries, not archives. On macOS/Linux, run `chmod +x wazootech-wiki-<os>-<arch>` and then `./wazootech-wiki-<os>-<arch> --help`; on Windows, run `wazootech-wiki-windows-<arch>.exe --help`. These binaries include their runtime and do not require Node.js, Python, or Deno.
+After the first tagged Deno release, download the standalone binary matching the user's OS and architecture from [GitHub Releases](https://github.com/wazootech/wiki/releases) and verify it against `SHA256SUMS`. Release assets are individual binaries, not archives. On macOS/Linux, run `chmod +x wazootech-wiki-<os>-<arch>` and then `./wazootech-wiki-<os>-<arch> --help`; on Windows, run `wazootech-wiki-windows-<arch>.exe --help`. These binaries include their runtime and do not require Node.js, Python, or Deno.
 
 ### Deno-native use
 
@@ -54,19 +53,14 @@ Before that release, contributors can run `deno run -A src/wiki/cli.ts` from the
 
 ## Verify
 
-After an approved install, run `wiki --help` and `wiki fmt --help` again, or re-run `verify.sh`.
+After an approved install, run `bash skills/wiki/scripts/verify.sh` again.
 
-- Both pass: confirm that `wiki` is on PATH and ready; stop.
+- Exit `0`: confirm that the verified Deno-backed CLI is ready; stop.
 - Failure: report the command output and do not claim success.
 
 ## Stale CLI
 
-Treat `--help` working while `fmt` is missing as an outdated or shadowed install.
-
-- Global npm install: with approval, run `npm install -g wazootech-wiki@latest`.
-- Deno global install: run `wiki upgrade --check`, then `wiki upgrade --yes` only with approval.
-- Standalone executable: use `wiki upgrade --check`; follow its GitHub Releases instructions to replace the binary.
-- On Windows, use `where wiki`; on macOS/Linux use `which -a wiki` to identify an older command earlier on PATH.
+Before the first tagged Deno release, a stale npm package cannot be upgraded to the cutover engine; use the verified repository source if available, or report that the package has not been released. After release, upgrade only the stale installation: npm with `npm install -g wazootech-wiki@latest`, Deno with `wiki upgrade --check` then `wiki upgrade --yes` only with approval, and standalone executables with `wiki upgrade --check` followed by the release's replacement instructions. On Windows use `where wiki`; on macOS/Linux use `which -a wiki` to locate an older executable earlier on PATH.
 
 Always rerun the capability probe before saying the CLI is ready.
 
@@ -75,14 +69,14 @@ Always rerun the capability probe before saying the CLI is ready.
 | Issue | Response |
 | --- | --- |
 | `wiki --help` works but `fmt` is missing | Find the shadowed executable, update the installation, and rerun the capability probe. |
-| npm package is missing | Confirm Node.js 18 or newer; install or upgrade `wazootech-wiki` with the user's approval. |
+| npm package is missing before the cutover release | Do not install npm `@latest` as the Deno CLI; use repository source if available or report that release is pending. |
 | Standalone binary is blocked | Verify the release checksum, then follow the operating system's unsigned-binary policy. |
-| Deno cannot resolve JSR | Check network access and use the published `@wazoo/wiki` package URL. |
+| Deno cannot resolve JSR | Check network access and confirm that the first tagged release has published `@wazoo/wiki`. |
 
 ## Programmatic API
 
-- Node.js and TypeScript projects use the SDK exported by the `wazootech-wiki` npm package.
-- Deno projects import the in-process API from `@wazoo/wiki` on JSR.
+- After release, Node.js and TypeScript projects use the SDK exported by the `wazootech-wiki` npm package.
+- After release, Deno projects import the in-process API from `@wazoo/wiki` on JSR.
 
 See [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md) for the current examples and stable exports.
 

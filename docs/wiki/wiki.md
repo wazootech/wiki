@@ -10,14 +10,18 @@ codeRepository: https://github.com/wazootech/wiki
 
 This page is the **documentation home** for **Wiki CLI** (`wiki`, distributed on npm as [**`wazootech-wiki`**](https://www.npmjs.com/package/wazootech-wiki)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
 
+The Deno-backed npm package, JSR module, and standalone binaries are not published yet. The currently published npm package still runs the Python CLI; the new distributions become available with the first tagged Deno release. See [Getting Started](Getting_Started.md#install) for source use now and install instructions after release.
+
+After that release, install with npm or use a standalone executable:
+
 ```bash
 npm install -g wazootech-wiki
 wiki --help
 ```
 
-Install globally from npm, run one-off commands with `npx wazootech-wiki`, or download a self-contained executable from [GitHub Releases](https://github.com/wazootech/wiki/releases). See [Getting Started](Getting_Started.md#install).
-
 ## Quickstart
+
+After the first tagged Deno release, install Wiki CLI and scaffold a wiki:
 
 ```bash
 npm install -g wazootech-wiki
@@ -28,7 +32,7 @@ wiki lint
 wiki serve
 ```
 
-See [Getting Started](Getting_Started.md) for a full walkthrough.
+Until then, run the Deno CLI from a repository checkout with `deno run -A src/wiki/cli.ts`. See [Getting Started](Getting_Started.md) for a full walkthrough.
 
 ## What wiki is
 

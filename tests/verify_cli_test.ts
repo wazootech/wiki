@@ -21,7 +21,8 @@ async function runVerifier(options: {
   const root = Deno.makeTempDirSync({ prefix: "wiki-verify-" });
   const bin = join(root, "bin");
   const wikiVersion = options.wikiVersion ?? "0.1.24";
-  const wikiFormat = options.wikiFormat ?? "Format markdown wiki pages with the Deno formatter.";
+  const wikiFormat = options.wikiFormat ??
+    "Format markdown wiki pages with the Deno formatter.";
   const wikiHelp = options.wikiHelp ?? true;
   const denoVersion = options.denoVersion ?? "0.1.24";
 
@@ -30,11 +31,11 @@ async function runVerifier(options: {
     "wiki",
     [
       "#!/usr/bin/env bash",
-      "if [[ \"$1\" == \"--version\" ]]; then",
+      'if [[ "$1" == "--version" ]]; then',
       `  printf '%s\\n' 'wiki, version ${wikiVersion}'`,
-      "elif [[ \"$1\" == \"fmt\" && \"$2\" == \"--help\" ]]; then",
+      'elif [[ "$1" == "fmt" && "$2" == "--help" ]]; then',
       `  printf '%s\\n' '${wikiFormat}'`,
-      "elif [[ \"$1\" == \"--help\" ]]; then",
+      'elif [[ "$1" == "--help" ]]; then',
       wikiHelp ? "  printf '%s\\n' 'Commands: fmt check'" : "  exit 1",
       "fi",
     ].join("\n"),
@@ -44,7 +45,7 @@ async function runVerifier(options: {
     "deno",
     [
       "#!/usr/bin/env bash",
-      "case \"$*\" in",
+      'case "$*" in',
       `  *--version) printf '%s\\n' 'wiki, version ${denoVersion}' ;;`,
       "  *'fmt --help') printf '%s\\n' 'Format markdown wiki pages with the Deno formatter.' ;;",
       "  *--help) printf '%s\\n' 'Commands: fmt check' ;;",
@@ -66,19 +67,36 @@ async function runVerifier(options: {
   }
 }
 
-Deno.test("verify rejects the retired Python CLI even when it exposes fmt", async () => {
+Deno.test("verify prefers the Deno source checkout over the retired Python CLI on PATH", async () => {
   const result = await runVerifier({
     wikiVersion: "0.1.23",
     wikiFormat: "Format markdown with mdformat.",
   });
+  assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  assertStringIncludes(
+    new TextDecoder().decode(result.stdout),
+    "wiki ready via Deno source checkout",
+  );
+});
+
+Deno.test("verify rejects the retired CLI when the source checkout is also stale", async () => {
+  const result = await runVerifier({
+    wikiVersion: "0.1.23",
+    wikiFormat: "Format markdown with mdformat.",
+    denoVersion: "0.1.23",
+  });
   assertEquals(result.code, 2);
-  assertStringIncludes(new TextDecoder().decode(result.stderr), "stale wiki on PATH");
+  assertStringIncludes(
+    new TextDecoder().decode(result.stderr),
+    "stale wiki on PATH",
+  );
 });
 
 Deno.test("verify requires the Deno formatter signature at the cutover version", async () => {
   const result = await runVerifier({
     wikiVersion: "0.1.24",
     wikiFormat: "Format markdown with mdformat.",
+    denoVersion: "0.1.23",
   });
   assertEquals(result.code, 2);
 });
@@ -86,7 +104,10 @@ Deno.test("verify requires the Deno formatter signature at the cutover version",
 Deno.test("verify accepts the Deno CLI at the cutover version", async () => {
   const result = await runVerifier();
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
-  assertStringIncludes(new TextDecoder().decode(result.stdout), "wiki ready on PATH");
+  assertStringIncludes(
+    new TextDecoder().decode(result.stdout),
+    "wiki ready on PATH",
+  );
 });
 
 Deno.test("verify checks the Deno identity on its source checkout fallback", async () => {

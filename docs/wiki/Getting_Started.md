@@ -10,14 +10,16 @@ description: Install the Deno-based wiki CLI and scaffold a new wiki.
 
 ### From npm
 
+The Deno-backed `wazootech-wiki` package is not published yet. The currently published npm package still runs the Python CLI. The cutover package and its Deno runtime will become available with the first tagged Deno release.
+
+After that release, install with Node.js 18 or newer:
+
 ```bash
 npm install -g wazootech-wiki
 wiki --help
 ```
 
-This installs the `wiki` command and provisions its Deno runtime from the npm package. Node.js 18 or newer is required; system Python and a separately installed Deno are not.
-
-Use `npx` without a global install:
+The package will provide the `wiki` command and bundled Deno runtime; system Python and a separately installed Deno will not be required. Use `npx` without a global install:
 
 ```bash
 npx wazootech-wiki --help
@@ -27,7 +29,7 @@ npx wazootech-wiki check
 
 ### From Deno
 
-The `@wazoo/wiki` JSR package is configured but has not been published yet. The first tagged release will publish it after the package is created and linked to this GitHub repository in JSR settings.
+The `@wazoo/wiki` JSR package is configured but has not been published yet. It will become available with the first tagged Deno release, after the package is created and linked to this GitHub repository in JSR settings.
 
 Until then, use the repository source:
 

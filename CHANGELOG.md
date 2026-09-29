@@ -12,7 +12,7 @@
 
 - Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
 - The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. The release workflow will publish it on the first tagged release after the package is linked to this GitHub repository.
-- Standalone binaries are built with `deno compile` for Linux x64/arm64, Windows x64/arm64, and macOS x64/arm64; release assets are individual executables with `SHA256SUMS`.
+- The release workflow builds standalone `deno compile` binaries for Linux x64, Windows x64, and macOS ARM64; release assets are individual executables with `SHA256SUMS`.
 
 ### Fixed
 

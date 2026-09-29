@@ -36,15 +36,15 @@ if command -v wiki >/dev/null 2>&1 && wiki_supports_deno wiki; then
   exit 0
 fi
 
-if wiki_help_ok; then
-  echo "verify.sh: stale wiki on PATH — upgrade wazootech-wiki (see references/install.md)" >&2
-  exit 2
-fi
-
 if source_checkout_ready; then
   echo "verify.sh: wiki ready via Deno source checkout"
   exit 0
 fi
 
-echo "verify.sh: supported wiki CLI not found — install wazootech-wiki (see references/install.md)" >&2
+if wiki_help_ok; then
+  echo "verify.sh: stale wiki on PATH — use the Deno source checkout or wait for the cutover release (see references/install.md)" >&2
+  exit 2
+fi
+
+echo "verify.sh: supported Deno Wiki CLI not found; the cutover package is not yet released (see references/install.md)" >&2
 exit 1

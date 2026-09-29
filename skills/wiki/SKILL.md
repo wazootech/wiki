@@ -13,7 +13,7 @@ description: >-
 
 # Wiki CLI Skill
 
-Procedural knowledge for coding agents working with [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command and the `wazootech-wiki` npm package). The TypeScript engine is available natively through `@wazoo/wiki` on JSR.
+Procedural knowledge for coding agents working with [Wiki CLI](https://github.com/wazootech/wiki) (`wiki` command and the `wazootech-wiki` npm package). The TypeScript engine will be available natively through `@wazoo/wiki` on JSR after the first tagged Deno release.
 
 Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `skills/` to `wiki.input`.
 
@@ -46,13 +46,13 @@ When the user asks for multiple intents in one message, pick the **blocking** wo
 Before any wiki command:
 
 1. Run `bash skills/wiki/scripts/verify.sh` (or `.agents/skills/wiki/scripts/verify.sh` when vendored).
-1. Exit `0` → use PATH `wiki`.
-1. Exit `2` (stale) → upgrade **`wazootech-wiki`** per [install.md](references/install.md).
-1. Exit `1` (missing) → stop and give the npm or standalone install options from [install.md](references/install.md). Do not install software without the user's approval.
+1. Exit `0` → use the verified Deno-backed CLI or the verified Deno source checkout.
+1. Exit `2` (stale) → if this is the Wiki CLI repository, use the verified Deno source checkout. Otherwise, the cutover package is not yet available; do not upgrade npm `@latest` expecting the Deno engine.
+1. Exit `1` (missing) → read [references/install.md](references/install.md). Until the first tagged Deno release, contributors can use the repository source; the new npm, JSR, and standalone distributions are not available.
 
-In the **Wiki CLI repository checkout**, if PATH `wiki` is unavailable, use `deno run -A src/wiki/cli.ts` only when Deno and the source checkout are present; verify `--help` and `fmt --help` first.
+In the **Wiki CLI repository checkout**, when the PATH `wiki` is missing or stale, use `deno run -A src/wiki/cli.ts` only when Deno and the source checkout are present; verify `--help` and `fmt --help` first.
 
-For a project that already has the package available, `npx wazootech-wiki <args>` is equivalent to `wiki <args>`. Deno-native projects can run `deno run -A jsr:@wazoo/wiki/cli <args>`.
+For a project that already has the cutover package available, `npx wazootech-wiki <args>` is equivalent to `wiki <args>`. Deno-native projects can run `deno run -A jsr:@wazoo/wiki/cli <args>` after the JSR release.
 
 ## Deterministic scripts
 

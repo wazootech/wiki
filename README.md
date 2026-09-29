@@ -7,7 +7,7 @@
 
 **Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in Obsidian, VS Code, or any editor — the CLI validates your documents, runs queries against them, and builds static sites. Drop a `wiki.yaml` in your folder and you're set.
 
-Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [npm](https://www.npmjs.com/package/wazootech-wiki) or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases).
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. After the first tagged Deno release, install via [npm](https://www.npmjs.com/package/wazootech-wiki) or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases). Before then, use the Deno source checkout.
 
 Starter templates: [wiki-templates](https://github.com/wazootech/wiki-templates) (monorepo with all starter templates). See [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
@@ -92,13 +92,16 @@ Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ### From npm
 
+The Deno-backed `wazootech-wiki` package is not published yet. The currently published npm package still runs the Python CLI. The cutover package, JSR module, and standalone executables will become available with the first tagged Deno release.
+
+After that release, install the npm package with Node.js 18 or newer:
+
 ```bash
 npm install -g wazootech-wiki
+wiki --help
 ```
 
-This installs the `wiki` command. The npm package includes the platform-matched Deno runtime and packaged engine source; system Python and a separate Deno installation are not required. Node.js 18 or newer is required.
-
-`npx wazootech-wiki` accepts the same commands and flags as the global `wiki` command.
+The package will include the platform-matched Deno runtime and engine source; system Python and a separate Deno installation will not be required. `npx wazootech-wiki` will accept the same commands and flags:
 
 ```bash
 npx wazootech-wiki --help
@@ -108,7 +111,7 @@ npx wazootech-wiki -c docs/wiki.yml check
 
 ### Standalone executable
 
-Self-contained Deno-compiled executables for Linux x64/arm64, Windows x64/arm64, and macOS x64/arm64 are published on [GitHub Releases](https://github.com/wazootech/wiki/releases) with `SHA256SUMS`. They do not require Node.js, Python, or Deno.
+After the first tagged Deno release, GitHub Releases will publish self-contained binaries for Linux x64, Windows x64, and macOS ARM64 with `SHA256SUMS`. Those are the three targets currently built by the release workflow. They are not published yet and will not require Node.js, Python, or Deno.
 
 ### From source
 
@@ -118,7 +121,7 @@ Install Deno, then run `deno task check`, `deno task lint`, `deno task fmt:check
 
 ### TypeScript SDK
 
-The npm package preserves its TypeScript SDK. It invokes the same Deno-backed engine as the `wiki` command.
+After the first tagged Deno release, the `wazootech-wiki` npm package will preserve its TypeScript SDK and use the same Deno-backed engine as the `wiki` command.
 
 ```bash
 npm install wazootech-wiki
