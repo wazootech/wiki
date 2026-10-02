@@ -347,6 +347,35 @@ class TestWikiFmt(unittest.TestCase):
             self.assertEqual(inline_out, pointer_out)
             self.assertEqual(inline_out, omit_out)
 
+    def test_fmt_writes_lf_endings_not_platform_default(self) -> None:
+        """wiki fmt must honor end_of_line, not os.linesep (Windows CRLF regression).
+
+        Path.write_text translates "\n" to os.linesep in text mode, so without an
+        explicit newline the formatter rewrote committed LF files as CRLF on
+        Windows, dirtying the tree against the repo's .gitattributes eol=lf.
+        """
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "wiki.yaml").write_text(
+                "wiki:\n  input: [wiki]\n"
+                "fmt:\n  wrap: no\n  end_of_line: lf\n"
+                '  extensions: ["gfm", "front_matters", "wikilink"]\n',
+                encoding="utf-8",
+            )
+            wiki_dir = root / "wiki"
+            wiki_dir.mkdir()
+            # Needs reformatting (trailing spaces) so the write path is exercised.
+            page = wiki_dir / "Page.md"
+            page.write_text("# Title\n\nSome text  \n", encoding="utf-8", newline="\n")
+
+            result = CliRunner().invoke(main, ["--config", str(root), "fmt"])
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn("Reformatted 1 file", result.output)
+
+            on_disk = page.read_bytes()
+            self.assertNotIn(b"\r\n", on_disk)
+            self.assertIn(b"\n", on_disk)
+
     def test_fmt_yaml_no_wrap_normalizes_to_string(self) -> None:
         with TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
