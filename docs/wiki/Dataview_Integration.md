@@ -41,10 +41,11 @@ TABLE description, softwareVersion as Version
 WHERE type = "schema:SoftwareApplication" OR type = "SoftwareApplication"
 SORT file.name ASC
 ```
-````
 
 ````
+
 #### Wiki CLI (SPARQL)
+
 ```sparql
 PREFIX schema: <https://schema.org/>
 
@@ -55,7 +56,7 @@ SELECT ?name ?description ?version WHERE {
      schema:softwareVersion ?version .
 }
 ORDER BY ?name
-````
+```
 
 ---
 
@@ -80,10 +81,8 @@ dv.table(
 );
 ````
 
-```
 ## Related
 
 - [Obsidian Integration](Obsidian_Integration.md) — executing CLI commands from Obsidian
 - [wiki](wiki.md) — command reference home
 - [SPARQL](SPARQL.md) — semantic web query background
-```
