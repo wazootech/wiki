@@ -41,7 +41,6 @@ TABLE description, softwareVersion as Version
 WHERE type = "schema:SoftwareApplication" OR type = "SoftwareApplication"
 SORT file.name ASC
 ```
-
 ````
 
 #### Wiki CLI (SPARQL)
