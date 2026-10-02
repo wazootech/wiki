@@ -8,7 +8,10 @@ on:
 
 jobs:
   deno-checks:
-    name: Deno Engine Checks
+    # This display name is the required status check context configured on
+    # main's branch protection, alongside "NPM Package Checks". Renaming it
+    # leaves the context unreported and every PR permanently blocked.
+    name: Run Tests and Audits
     runs-on: ubuntu-latest
 
     steps:

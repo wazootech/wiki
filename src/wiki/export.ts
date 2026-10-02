@@ -45,12 +45,22 @@ const RAW_FORMATS = new Set<ExportFormat>([
   "nquads",
 ]);
 
+/**
+ * Media types and shorthand that name an {@link ExportFormat}.
+ *
+ * `application/sparql-results+xml` is deliberately absent. It serializes a
+ * SPARQL *result set*, not an RDF graph, so it is not an alias for RDF/XML
+ * even though both are `+xml`. `sparql_service.ts` serves result sets as
+ * `application/sparql-results+json` only. Aliasing it here would route a
+ * result-set request to the RDF/XML serializer and report the deferred-writer
+ * error, which describes the wrong problem. Left unmapped, it fails as an
+ * unknown export format, which is actionable.
+ */
 const FORMAT_ALIASES: Readonly<Record<string, ExportFormat>> = {
   "application/ld+json": "json-ld",
   "application/n-quads": "nquads",
   "application/n-triples": "nt",
   "application/rdf+xml": "xml",
-  "application/sparql-results+xml": "xml",
   "application/trig": "trig",
   "application/x-turtle": "turtle",
   "jsonld": "json-ld",

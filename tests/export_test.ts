@@ -1,10 +1,11 @@
 import { join } from "@std/path";
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 
 import {
   normalizeExportFormat,
   normalizeExportMode,
 } from "../src/wiki/export.ts";
+import { ValueError } from "../src/wiki/errors.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function setup() {
@@ -38,6 +39,20 @@ Deno.test("export normalizes format aliases and defaults unknown API modes to ex
   assertEquals(normalizeExportFormat("text/n3"), "n3");
   assertEquals(normalizeExportMode("COMPACTED"), "compacted");
   assertEquals(normalizeExportMode("unknown"), "expanded");
+});
+
+Deno.test("export does not treat SPARQL results XML as RDF/XML", () => {
+  // A SPARQL result set is not an RDF graph. Aliasing this to `xml` routed the
+  // request to the RDF/XML serializer, whose writer is deferred, so the caller
+  // was told RDF/XML was unavailable rather than that the format was unknown.
+  assertThrows(
+    () => normalizeExportFormat("application/sparql-results+xml"),
+    ValueError,
+    "Invalid export format",
+  );
+  // The genuine RDF/XML media type still resolves, and reaching the serializer
+  // is what raises the deferred-writer error -- not alias resolution.
+  assertEquals(normalizeExportFormat("application/rdf+xml"), "xml");
 });
 
 Deno.test("export emits per-document dictionaries and expanded JSON-LD", async () => {
