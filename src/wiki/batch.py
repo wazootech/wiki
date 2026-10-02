@@ -62,7 +62,14 @@ class DocumentBatch:
                 if original != formatted:
                     report.stale_files.append(file_path)
                     if not check:
-                        file_path.write_text(formatted, encoding="utf-8")
+                        # newline="\n" pins the bytes we hand mdformat. Without it
+                        # text mode translates "\n" to os.linesep, so a Windows run
+                        # rewrites LF files as CRLF and silently overrides the
+                        # configured end_of_line, dirtying the tree against the
+                        # repo's .gitattributes eol=lf policy.
+                        file_path.write_text(
+                            formatted, encoding="utf-8", newline="\n"
+                        )
                         report.formatted_count += 1
                         if verbose:
                             report.verbose_lines.append(f"Formatted {file_path.name}")
