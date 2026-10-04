@@ -31,7 +31,11 @@ Four audit/format lanes (aligned with common CLI tooling):
 
 **Mechanical** — heading depth increments and duplicate headings are evaluated by the **embedded ESLint engine**. Wiki constructs an in-process `ESLint` instance over `@eslint/markdown`'s `markdown/heading-increment` and `markdown/no-duplicate-headings` rules, then maps the diagnostics into Wiki's existing issue codes and severity report. There is no external ESLint config, no `.eslintrc`, and no subprocess: a rule that only needs the Markdown AST should not require the user to adopt ESLint's configuration model.
 
-**Semantic** — broken links, `wiki:` CURIE resolution, filename patterns, editorial heading style, Setext-aware thematic breaks, and link style remain hand-written in Wiki. These need the route graph and the resolved configuration, neither of which ESLint can see. A Wiki ESLint _plugin_ (rules reading Wiki's own graph) is a reasonable future direction; today's split keeps the engine embedded and the graph rules where their input lives.
+**Semantic** — broken links, `wiki:` CURIE resolution, filename patterns, editorial heading style, Setext-aware thematic breaks, and link style remain hand-written in Wiki. The dividing line is not how mechanical a rule feels but **what input it needs**: an ESLint rule receives one file's text and a rule context, whereas these read the resolved `Config` and the route table. `lint_broken_links` resolves `wiki:` CURIEs, routes, and `link.renames` to decide whether a target exists — state no amount of Markdown AST provides.
+
+**Why not a Wiki ESLint plugin.** A plugin does not change that boundary. Its rules still receive `(node, context)` per file, so the route graph would have to be threaded through ESLint's context on every file: the same logic as `lint_broken_links`, behind a worse interface, plus a second dispatch layer to maintain. The embedded engine is kept because it earns its place on rules whose only input is text; the graph rules stay where their input lives.
+
+Of the graph-adjacent rules, `thematic_breaks` is the one genuinely mechanical case with no graph dependency — it stays hand-written only because `@eslint/markdown` 8.0.3 ships no rule for it (verified: its 21 rules cover headings, links, fences, and definitions, none for thematic breaks).
 
 Wiki keeps its own bookkeeping on top of the ESLint lane: the duplicate rule's H2+ scope and heading normalization, and the exact message wording the Python oracle emitted. See [wiki lint](wiki_lint.md) for the per-key detail.
 
