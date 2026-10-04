@@ -22,7 +22,7 @@ After that release, install the `wiki` command globally from JSR:
 deno install --global --allow-all --name wiki jsr:@wazoo/wiki/cli
 ```
 
-The `wazootech-wiki` npm package retains the Node.js-facing CLI and TypeScript SDK for existing npm consumers; see [TypeScript API Reference](TypeScript_API_Reference.md).
+The `wazootech-wiki` npm package ships the `wiki` command for npm consumers, bundling the Deno runtime; it exports no library API. See [TypeScript API Reference](TypeScript_API_Reference.md).
 
 ## Load a wiki
 

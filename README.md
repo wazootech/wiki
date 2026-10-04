@@ -119,34 +119,43 @@ Install Deno, then run `deno task check`, `deno task lint`, `deno task fmt:check
 
 ## Programmatic APIs
 
-### TypeScript SDK
+### Embedding in TypeScript
 
-After the first tagged Deno release, the `wazootech-wiki` npm package will preserve its TypeScript SDK and use the same Deno-backed engine as the `wiki` command.
-
-```bash
-npm install wazootech-wiki
-```
+The engine is a TypeScript library. Import it and call it in process — there is no
+subprocess and no wrapper:
 
 ```ts
-import { Wiki } from "wazootech-wiki";
+import { Wiki } from "jsr:@wazoo/wiki";
 
-const wiki = Wiki.load({ config: "docs/wiki.yml" });
-
-await wiki.check({ strict: true });
-
-const results = await wiki.query({
-  query: "SELECT ?s WHERE { ?s ?p ?o }",
-  format: "json",
-});
+const wiki = Wiki.load("docs/wiki.yml");
+const report = await wiki.check({ strict: true });
 ```
 
-CommonJS is supported too:
+Methods cover the whole surface: `check`, `lint`, `fmt`, `render`, `build`,
+`export`, `link`, `query`, `graph`, `serve`, `mcp`, `init`, `install`, `update`,
+`remove`, and `upgrade`. JSR publication follows the first tagged release.
 
-```js
-const { Wiki } = require("wazootech-wiki");
+### The `wazootech-wiki` npm package
+
+The npm package ships the `wiki` **command**, not a library API:
+
+```bash
+npm install -g wazootech-wiki
 ```
 
-Methods mirror the CLI surface (`check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `serve`, `init`, and `upgrade`) with camelCase TypeScript options. Report-producing commands return command results today; JSON-capable commands such as `query --format json` and JSON exports can return parsed data.
+```bash
+wiki -c docs/wiki.yml check --strict
+```
+
+It bundles the Deno runtime, so npm users need neither Python nor a separate
+Deno installation; Node.js 18 or newer is the only requirement.
+
+There is deliberately no `Wiki` class in this package. A wrapper that spawns the
+CLI can only hand back an exit code and captured strings, where the embedded
+library returns typed results — so the TypeScript SDK that used to be published
+here was removed rather than kept as a second, weaker way to do the same work.
+TypeScript callers embed the library; callers in languages that cannot embed
+JavaScript use the command.
 
 ## Local development
 

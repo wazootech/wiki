@@ -122,9 +122,6 @@ jobs:
       - name: Build and test npm package
         run: npm run test:npm
 
-      - name: Verify TypeScript API docs build
-        run: npm run gendocs:ts
-
       - name: Build static site
         run: deno run -A docs/build.ts --output-dir _site
 

@@ -61,9 +61,11 @@ Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, a
 
 ### TypeScript bindings
 
-The npm package preserves the `wazootech-wiki` name, the `wiki` executable, and the CommonJS/ESM/TypeScript SDK. Its SDK and CLI run the same Deno/TypeScript engine; do not introduce a Python subprocess or require users to install Deno separately. When changing `src/wiki/cli.ts` subcommands, flags, choices, or positional arguments, update the SDK mappings in `src/wiki.ts` and its types in `src/types.ts` plus tests under `tests/npm/` in the same change. Run `npm run test:npm` before landing those changes.
+The npm package preserves the `wazootech-wiki` name and the `wiki` executable, and ships **no library API** — the CLI is its only interface. TypeScript callers embed `src/wiki/mod.ts` in process instead. Do not reintroduce a `Wiki` wrapper class: the engine is Deno-only, so any npm wrapper can do no more than spawn the CLI and return an exit code plus captured text, which is strictly weaker than the typed in-process results. Do not introduce a Python subprocess or require users to install Deno separately.
 
-The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. Verify the packed tarball's `wiki --help` path in CI with system Python blocked; keep the runtime invocation in `src/runtime.ts` and `bin/wiki.js` aligned.
+The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. When changing `src/runtime.ts` or `bin/wiki.js`, keep them aligned and run `npm run test:npm`. Verify the packed tarball's CLI path in CI with system Python blocked.
+
+Languages that cannot embed JavaScript are served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
 
 ### Running validations
 

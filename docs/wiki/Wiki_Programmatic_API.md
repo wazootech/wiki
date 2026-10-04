@@ -75,33 +75,23 @@ if (!exported.ok) {
 
 The library also exposes formatting, inline SPARQL rendering, link analysis and repair, source management, local serving, and project scaffolding. Its generated TSDoc reference will be available on [JSR](https://jsr.io/@wazoo/wiki) after the first release.
 
-## Node.js and npm SDK
+## The `wazootech-wiki` npm package: command only
 
-After the first tagged Deno release, the `wazootech-wiki` npm package will keep its existing package name, `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. The SDK will invoke the Deno-backed CLI; npm users will not need system Python or a separate Deno installation. Node.js 18 or newer is required. Until that release, the currently published npm package still runs the Python CLI.
+The npm package publishes the `wiki` command and nothing else. It bundles the Deno runtime, so npm users need neither system Python nor a separate Deno installation; Node.js 18 or newer is the only requirement. Until the first tagged Deno release, the currently published npm package still runs the Python CLI.
 
 ```bash
-npm install wazootech-wiki
+npm install -g wazootech-wiki
 ```
 
-```ts
-import { Wiki } from "wazootech-wiki";
-
-const wiki = Wiki.load({ config: "docs/wiki.yml" });
-const report = await wiki.check({ strict: true });
-
-const results = await wiki.query({
-  query: "SELECT ?name WHERE { ?person <https://schema.org/name> ?name }",
-  format: "json",
-});
+```bash
+wiki -c docs/wiki.yml check --strict
 ```
 
-CommonJS remains supported:
+### Why there is no npm `Wiki` class
 
-```js
-const { Wiki } = require("wazootech-wiki");
-```
+This package previously exported a `Wiki` SDK whose every method spawned the CLI and returned an exit code plus captured output strings. That was a second, weaker path to work the library already does in process: a subprocess boundary discards the typed reports that make embedding worthwhile, and it forced TS and Node users to treat the library as a program to be invoked rather than code to be called.
 
-The npm SDK preserves command result output, exit codes, timeout and cancellation options, stdin, and inherited-stdio process methods for long-running commands such as `serve` and `mcp`. See [TypeScript API Reference](TypeScript_API_Reference.md).
+TypeScript callers embed the library (above). Callers in languages that cannot embed JavaScript use the command, and a generated client for those languages is planned work.
 
 ## Deferred RDF/XML output
 

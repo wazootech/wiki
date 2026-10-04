@@ -1,7 +1,14 @@
 import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
-import { WikiSetupError } from "./errors";
+
+/** Thrown when the bundled Deno runtime or local Wiki engine cannot start. */
+export class WikiSetupError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WikiSetupError";
+  }
+}
 
 const packageRoot = path.resolve(__dirname, "..");
 const packageRequire = createRequire(path.join(packageRoot, "package.json"));
@@ -30,6 +37,16 @@ export function getDenoExecutable(): string {
   }
 }
 
+/**
+ * Build the argv that runs the packaged Wiki CLI under the bundled Deno.
+ *
+ * This exists for `bin/wiki.js` alone. The engine is Deno-only — it uses
+ * `Deno.*` globals and `.ts` import extensions Node cannot resolve — so the
+ * executable has to shell out. It is deliberately *not* a library entrypoint:
+ * library consumers embed `src/wiki/mod.ts` and call the engine in process,
+ * because a subprocess wrapper can only return exit codes and captured
+ * strings where the real API returns typed results.
+ */
 export function createWikiCommand(args: readonly string[]): string[] {
   const packagedFiles: readonly [string, string][] = [
     ["Deno config", denoConfig],
