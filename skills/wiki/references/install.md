@@ -28,7 +28,7 @@ wiki --help
 wiki fmt --help
 ```
 
-The package will provide the `wiki` command, TypeScript SDK, bundled Deno runtime, and Deno engine source. System Python and a separate Deno installation will not be required. For a one-time invocation, `npx wazootech-wiki --help` runs the same package; installing through `npx` still downloads software.
+The package will provide the `wiki` command, a bundled Deno runtime, and the Deno engine source. It exports no library API: TypeScript callers embed the engine instead (see [Programmatic API](#programmatic-api)). System Python and a separate Deno installation will not be required. For a one-time invocation, `npx wazootech-wiki --help` runs the same package; installing through `npx` still downloads software.
 
 ### Standalone executable
 
@@ -75,8 +75,8 @@ Always rerun the capability probe before saying the CLI is ready.
 
 ## Programmatic API
 
-- After release, Node.js and TypeScript projects use the SDK exported by the `wazootech-wiki` npm package.
-- After release, Deno projects import the in-process API from `@wazoo/wiki` on JSR.
+- After release, TypeScript projects embed the in-process API from `@wazoo/wiki` on JSR. The npm package ships the `wiki` command only, with no `Wiki` class.
+- After release, Deno projects import the same in-process API from `@wazoo/wiki` on JSR.
 
 See [Wiki Programmatic API](https://github.com/wazootech/wiki/blob/main/docs/wiki/Wiki_Programmatic_API.md) for the current examples and stable exports.
 

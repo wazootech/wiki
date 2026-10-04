@@ -10,7 +10,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — the npm package name. It preserves the `wiki` executable and CommonJS, ESM, and TypeScript SDK entry points; its bundled Deno runtime means consumers need neither system Python nor a separately installed Deno.
+- **`wazootech-wiki`** — the npm package name. It preserves the `wiki` executable and its bundled Deno runtime, so consumers need neither system Python nor a separately installed Deno. It ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API.
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules

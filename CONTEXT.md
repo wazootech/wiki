@@ -7,7 +7,7 @@ Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and bod
 Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): Wiki is being cut over to a Deno/TypeScript engine over RDF/JS in PR [#317](https://github.com/wazootech/wiki/pull/317). [ADR 0001](docs/adr/0001-deno-rewrite.md) records the architecture, dependency choices, deferred RDF/XML output, and transition gates.
 
 - **Deno/TypeScript is the sole runtime after cutover.** The Python engine, packaging, tests, CI/release steps, and Python docs builder are removed or replaced; the pinned Python checkout is only a local differential oracle during the cutover.
-- **Keep the npm contract.** `wazootech-wiki` retains its `wiki` executable, CommonJS/ESM/type exports, and TypeScript SDK. Its runtime is Deno-backed and must not require system Python or a separately installed Deno. `@wazoo/wiki` remains the native JSR package; per-platform `deno compile` binaries remain available for direct downloads.
+- **Keep the npm contract.** `wazootech-wiki` retains its `wiki` executable and its CommonJS/ESM/type entry points for the command launcher. Its runtime is Deno-backed and must not require system Python or a separately installed Deno. `@wazoo/wiki` remains the native JSR package and is where TypeScript callers embed the engine; per-platform `deno compile` binaries remain available for direct downloads.
 - **Cutover gate status:** 21 pinned differential cases; 14 pass, 7 documented known differences, 0 pending, 0 failures. The suite compares normalized filesystem trees for mutating commands and includes an end-to-end RDF/XML ingestion fixture.
 - **Data and CLI contracts remain stable** — `wiki.yml`, `wiki.lock`, `.wiki/cache/*.nt|.nq`, `%wiki.*%` tokens, `<!-- sparql:start/end -->`, the SPARQL endpoint, supported subcommands, and exit codes are preserved. RDF/XML input remains supported; RDF/XML output is explicitly deferred and returns a clear unsupported-format error.
 
@@ -21,7 +21,7 @@ Kept for the reasoning trail. #44 decided to keep the **Python CLI as the source
 
 ## Architecture decision: Library-first API
 
-Superseded by the Deno/TypeScript cutover. The former Python library-first API (`Wiki`, Pydantic `AuditReport`, and symbols in `wiki.__all__`) no longer defines the public runtime contract. The current Deno API is exported from `src/wiki/mod.ts` as `@wazoo/wiki`; the npm package keeps its existing TypeScript SDK surface. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+Superseded by the Deno/TypeScript cutover. The former Python library-first API (`Wiki`, Pydantic `AuditReport`, and symbols in `wiki.__all__`) no longer defines the public runtime contract. The current Deno API is exported from `src/wiki/mod.ts` as `@wazoo/wiki`, and it is the only library API; the npm package ships the `wiki` command and no `Wiki` class. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
 
 ## Language
 
