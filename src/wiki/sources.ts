@@ -216,7 +216,11 @@ function parseUrlRef(url: string): [string, string | null] {
 }
 
 function inferNameFromUrl(url: string): string {
-  const tail = url.replace(/\/+$/, "").split("/").at(-1) ?? "";
+  // Split on both separators. A source URL may be a local path, and on Windows
+  // that path uses backslashes, so splitting on "/" alone returned the entire
+  // path as the source name -- which then tripped `assertSafeSourceName` and
+  // made `wiki install <local-path>` fail outright on Windows.
+  const tail = url.replace(/[\\/]+$/, "").split(/[\\/]/).at(-1) ?? "";
   const stem = tail.replace(/(?:\.wiki|\.git)$/i, "");
   return stem || "source";
 }
