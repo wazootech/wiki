@@ -32,6 +32,17 @@ export interface CommandResult {
   readonly stderr: string;
 }
 
+/**
+ * Why `wiki upgrade` declines to run, when JSR cannot answer.
+ *
+ * `unreachable` is a transient condition and keeps its error; `not-published`
+ * is a deliberate deferral until the first JSR release, so the command steps
+ * aside instead of failing. Both exit 0, and both say so on stdout: a caller
+ * that cannot tell "deferred" from "up to date" by exit code alone still sees
+ * which happened in the message.
+ */
+type DeferredReason = "not-published" | "unreachable";
+
 export type InstallTarget =
   | { readonly kind: "global"; readonly root: string }
   | { readonly kind: "standalone"; readonly path: string }
@@ -136,6 +147,16 @@ function latestVersionFromMetadata(metadata: unknown): string {
   return candidates[0]!.version;
 }
 
+class DeferredUpgradeError extends Error {
+  readonly reason: DeferredReason;
+
+  constructor(reason: DeferredReason, message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "DeferredUpgradeError";
+    this.reason = reason;
+  }
+}
+
 async function readLatestVersion(
   fetchMetadata: UpgradeDependencies["fetchMetadata"],
 ): Promise<string> {
@@ -143,25 +164,28 @@ async function readLatestVersion(
   try {
     response = await fetchMetadata(JSR_METADATA_URL);
   } catch (error) {
-    throw new UpgradeError(
+    throw new DeferredUpgradeError(
+      "unreachable",
       `Cannot reach JSR to check for updates: ${errorMessage(error)}.`,
       { cause: error },
     );
   }
   if (!response.ok) {
     if (response.status === 404) {
-      // The package is absent, not unreachable. That is still an error for
-      // --check, whose exit code reports "is an update available", and an
-      // unknown version must not read as up to date. But say how to upgrade
-      // anyway, so the command is not a dead end while JSR is unpublished.
-      throw new UpgradeError(
+      // A deliberate deferral, not a failure: JSR publication follows the
+      // first tagged Deno release (JSR_PUBLISH_ENABLED in release.yml), so
+      // there is nothing for this command to compare against yet.
+      throw new DeferredUpgradeError(
+        "not-published",
         [
-          `${JSR_PACKAGE} is not published on JSR (HTTP 404).`,
+          `${JSR_PACKAGE} is not published on JSR yet, so there is no version to compare against.`,
+          "Self-upgrade becomes available with the first JSR release; no action is needed now.",
           ...ALTERNATE_CHANNELS,
         ].join("\n"),
       );
     }
-    throw new UpgradeError(
+    throw new DeferredUpgradeError(
+      "unreachable",
       `Cannot reach JSR to check for updates: HTTP ${response.status} ${response.statusText}.`,
     );
   }
@@ -353,6 +377,15 @@ export async function runUpgrade(
   try {
     latest = await readLatestVersion(deps.fetchMetadata);
   } catch (error) {
+    // A deferred or unreachable registry is a no-op, not a failure: there is
+    // no update to apply either way, so installing nothing is correct and
+    // exiting non-zero would make every CI caller red for a condition that
+    // resolves itself at the first JSR release. The reason is printed so a
+    // caller can tell this apart from "you're up to date".
+    if (error instanceof DeferredUpgradeError) {
+      deps.stdout(error.message);
+      return 0;
+    }
     deps.stderr(`Error: ${errorMessage(error)}`);
     return 1;
   }

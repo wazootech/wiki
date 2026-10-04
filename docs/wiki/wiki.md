@@ -150,7 +150,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/ya
 - **Update** — check locked sources for newer commits ([wiki update](wiki_update.md))
 - **Remove** — delete a source from wiki.yml, cache, and lockfile ([wiki remove](wiki_remove.md))
 - **Init** — scaffold `wiki.yml` ([wiki init](wiki_init.md))
-- **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md))
+- **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md)); deferred until the first JSR release, when it reports that it is waiting and exits 0
 
 ## Supported file formats
 

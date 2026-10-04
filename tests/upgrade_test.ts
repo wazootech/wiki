@@ -116,33 +116,56 @@ Deno.test("metadata fallback selects the highest stable non-yanked version", asy
   assertEquals(state.stdout, ["Update available: 0.1.2 -> 0.1.9"]);
 });
 
-Deno.test("upgrade check surfaces JSR network and HTTP failures", async () => {
+Deno.test("upgrade steps aside when JSR cannot answer", async () => {
   const network = harness({
     fetchMetadata: () => Promise.reject(new Error("offline")),
   });
-  assertEquals(await runUpgrade(check, network.dependencies), 1);
-  assertStringIncludes(network.stderr[0]!, "Cannot reach JSR");
-  assertStringIncludes(network.stderr[0]!, "offline");
+  assertEquals(await runUpgrade(check, network.dependencies), 0);
+  assertStringIncludes(network.stdout[0]!, "Cannot reach JSR");
+  assertStringIncludes(network.stdout[0]!, "offline");
 
   const notPublished = harness({
     fetchMetadata: () =>
       Promise.resolve(new Response("not found", { status: 404 })),
   });
-  assertEquals(await runUpgrade(check, notPublished.dependencies), 1);
+  assertEquals(await runUpgrade(check, notPublished.dependencies), 0);
   assertStringIncludes(
-    notPublished.stderr[0]!,
-    "@wazoo/wiki is not published on JSR",
+    notPublished.stdout[0]!,
+    "@wazoo/wiki is not published on JSR yet",
   );
   // Not a dead end: while JSR is unpublished the npm and standalone channels
   // still work, so the message must say how to upgrade through them.
-  assertStringIncludes(notPublished.stderr[0]!, "npm update -g wazootech-wiki");
+  assertStringIncludes(notPublished.stdout[0]!, "npm update -g wazootech-wiki");
   assertStringIncludes(
-    notPublished.stderr[0]!,
+    notPublished.stdout[0]!,
     "https://github.com/wazootech/wiki/releases/latest",
   );
 });
 
-Deno.test("upgrade check surfaces non-404 JSR HTTP failures", async () => {
+Deno.test("a deferred registry never installs anything", async () => {
+  // The no-op has to stay a no-op: no install target is even resolved, so a
+  // deferred check cannot mutate the user's installation on its way out.
+  const state = harness({
+    fetchMetadata: () =>
+      Promise.resolve(new Response("not found", { status: 404 })),
+    findInstallTarget: () => {
+      throw new Error("findInstallTarget must not run when deferred");
+    },
+    runCommand: () => {
+      throw new Error("runCommand must not run when deferred");
+    },
+  });
+  assertEquals(
+    await runUpgrade(
+      { checkOnly: false, yes: true, verbose: false },
+      state.dependencies,
+    ),
+    0,
+  );
+  assertStringIncludes(state.stdout[0]!, "no version to compare against");
+});
+
+Deno.test("upgrade steps aside on non-404 JSR HTTP failures", async () => {
   const state = harness({
     fetchMetadata: () =>
       Promise.resolve(
@@ -153,8 +176,8 @@ Deno.test("upgrade check surfaces non-404 JSR HTTP failures", async () => {
       ),
   });
 
-  assertEquals(await runUpgrade(check, state.dependencies), 1);
-  assertStringIncludes(state.stderr[0]!, "HTTP 503 Service Unavailable");
+  assertEquals(await runUpgrade(check, state.dependencies), 0);
+  assertStringIncludes(state.stdout[0]!, "HTTP 503 Service Unavailable");
 });
 
 Deno.test("upgrade check rejects malformed JSR metadata", async () => {

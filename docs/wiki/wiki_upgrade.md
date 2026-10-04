@@ -8,6 +8,12 @@ description: Check for Wiki CLI updates and upgrade supported installations.
 
 The Deno-backed `wiki upgrade` command becomes available with the first tagged Deno release. Before then, the published npm package is still the Python CLI and no Deno standalone binary is available. After release, compare the installed CLI version with the latest JSR release. A global Deno installation can be upgraded in place; npm installations are updated with npm, and standalone binaries are replaced from GitHub Releases.
 
+## Deferred until the JSR release
+
+The command compares against the published `@wazoo/wiki` on JSR, and JSR publication follows the first tagged Deno release. Until it is published there is no version to compare against, so `wiki upgrade` **steps aside rather than failing**: it explains that it is waiting and exits **0**, having installed nothing. The same applies when JSR cannot be reached.
+
+This is a no-op, not a success report — the message says which happened, so "waiting for the first JSR release" is never mistaken for "you are up to date". Once the package is published, the command behaves as described below with no further change.
+
 ## Usage
 
 ```bash
