@@ -1,0 +1,35 @@
+{
+  "name": "docs",
+  "graphs": {
+    "graph": {
+      "False": {
+        "triples": 402,
+        "named": [
+          "N19844de68e42474bb2994de8b0fa152b"
+        ]
+      },
+      "True": {
+        "triples": 3367,
+        "named": [
+          "Nb6b58b6c40d64a0ba270f26f1afac4b3"
+        ]
+      }
+    },
+    "dataset": {
+      "False": {
+        "triples": 402,
+        "named": [
+          "https://wazootech.github.io/wiki/graphs/root",
+          "urn:x-rdflib:default"
+        ]
+      },
+      "True": {
+        "triples": 3473,
+        "named": [
+          "urn:x-rdflib:default",
+          "https://wazootech.github.io/wiki/graphs/root"
+        ]
+      }
+    }
+  }
+}

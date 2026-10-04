@@ -1,0 +1,13 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@dprint/formatter": "npm:@dprint/formatter@0.5.1",
+    "@dprint/markdown": "npm:@dprint/markdown@0.20.0",
+    "@dprint/json": "npm:@dprint/json@0.21.3",
+    "@dprint/typescript": "npm:@dprint/typescript@0.96.1",
+    "dprint-plugin-yaml": "npm:dprint-plugin-yaml@0.5.0",
+    "lax-markup": "npm:lax-markup@0.3.2",
+    "lax-css": "npm:lax-css@0.3.0",
+    "lax-sql": "npm:lax-sql@0.3.0"
+  }
+}

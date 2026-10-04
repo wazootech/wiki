@@ -1,0 +1,15 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix schema: <https://schema.org/> .
+@prefix micro: <https://example.org/probe/> .
+@prefix ex: <https://example.org/probe/> .
+
+# Conforms either way.
+ex:alice a schema:Person ;
+    schema:name "Alice" .
+
+# Fails `PersonShape` directly. Fails `AgentShape` *only* under RDFS inference,
+# because this node is never explicitly typed as an Agent.
+ex:bob a schema:Person .
+
+# Fails `AgentShape` directly, with or without inference.
+ex:dave a micro:Agent .

@@ -5,10 +5,10 @@
       "id": 1,
       "workflow": "install",
       "prompt": "I want to use wiki but don't have it installed",
-      "expected_output": "Install instructions for wazootech-wiki; optional pip with user approval; verify wiki --help and fmt capability; ready message without suggesting wiki init or scaffolding.",
+      "expected_output": "Install instructions for wazootech-wiki from npm with user approval; verify wiki --help and fmt capability; ready message without suggesting wiki init or scaffolding.",
       "files": [],
       "expectations": [
-        "Mentions pip install wazootech-wiki or equivalent install path",
+        "Mentions npm install -g wazootech-wiki or equivalent npm install path",
         "Runs or instructs verification with wiki --help",
         "Mentions fmt capability probe or wiki fmt --help",
         "Ends with installed and ready to go or equivalent success message when CLI works",
@@ -37,7 +37,7 @@
       "files": [],
       "expectations": [
         "Mentions stale or outdated wiki or wrong wiki on PATH",
-        "Recommends pip install --upgrade wazootech-wiki or wiki upgrade",
+        "Recommends npm update -g wazootech-wiki or npm install -g wazootech-wiki@latest",
         "Does not say installed and ready to go",
         "Does not suggest wiki init or scaffolding"
       ]
@@ -205,10 +205,10 @@
       "id": 16,
       "workflow": "deploy",
       "prompt": "Deploy nancy-kataria/wiki to GitHub Pages — wiki.yml at repo root, site.base_url is /wiki",
-      "expected_output": "Pip template, artifact _site/wiki, no uv sync, no committing _site.",
+      "expected_output": "Deno-native template, artifact _site/wiki, no Python setup, no committing _site.",
       "files": [],
       "expectations": [
-        "Uses pip install wazootech-wiki or pip template not uv sync without pyproject",
+        "Uses the Deno-native template or npm package; no retired PyPI/Python installation",
         "Artifact path is _site/wiki",
         "Does not commit _site to main or suggest deploy from a branch",
         "Does not use peaceiris or publish_dir ./_site"
@@ -217,14 +217,14 @@
     {
       "id": 17,
       "workflow": "deploy",
-      "prompt": "Fix CI: uv pip install wazootech-wiki fails with No virtual environment found",
-      "expected_output": "Replace uv pip hybrid with pip template; no setup-uv on standalone wiki.",
+      "prompt": "Fix CI: my GitHub Pages workflow still installs wazootech-wiki from retired PyPI. Update it for the current release.",
+      "expected_output": "Replace the Python/PyPI workflow with Deno setup and the Deno-native CLI template; preserve Pages artifact alignment.",
       "files": [],
       "expectations": [
-        "Recommends pip install wazootech-wiki or pip workflow template",
-        "Does not use uv pip install without uv venv or pyproject monorepo",
-        "Does not keep astral-sh/setup-uv for standalone wiki repos",
-        "Mentions No virtual environment found or equivalent uv pip footgun"
+        "Recommends denoland/setup-deno@v2 or the npm package with bundled runtime",
+        "Does not recommend pip, PyPI, uv, or system Python",
+        "Aligns artifact path with site.base_url",
+        "Mentions Deno-native command jsr:@wazoo/wiki/cli when using repository source"
       ]
     },
     {

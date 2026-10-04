@@ -1,32 +1,8 @@
 #!/usr/bin/env bash
-# Wiki CLI wiki audit — strict CI pipeline (fmt → lint → check → render).
-# Optionally runs wiki link --check when wired in .github/workflows/.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-
-find_uv() {
-  if command -v uv >/dev/null 2>&1; then
-    command -v uv
-    return 0
-  fi
-  local candidate=""
-  for candidate in \
-    "${HOME}/.local/bin/uv" \
-    "${HOME}/.local/bin/uv.exe" \
-    "${USERPROFILE:-}${USERPROFILE:+/}.local/bin/uv.exe" \
-    "${HOME}/AppData/Local/Programs/uv/uv.exe" \
-    "${LOCALAPPDATA:-}/Programs/uv/uv.exe" \
-    /mnt/c/Users/*/.local/bin/uv.exe \
-    /c/Users/*/.local/bin/uv.exe; do
-    if [[ -n "$candidate" && -x "$candidate" ]]; then
-      echo "$candidate"
-      return 0
-    fi
-  done
-  return 1
-}
 
 usage() {
   cat <<'EOF'
@@ -84,27 +60,16 @@ wiki_supports_fmt() {
   command -v wiki >/dev/null 2>&1 && wiki --help 2>&1 | grep -q 'fmt'
 }
 
-UV_BIN=""
-if UV_BIN="$(find_uv)"; then
-  :
-fi
+source_checkout_available() {
+  command -v deno >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/deno.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]]
+}
 
-if [[ -f "${REPO_ROOT}/pyproject.toml" && -n "$UV_BIN" ]]; then
-  run_wiki() { (cd "${REPO_ROOT}" && "${UV_BIN}" run wiki -c "$CONFIG" "$@"); }
-elif [[ -f "${REPO_ROOT}/pyproject.toml" ]] && command -v python3 >/dev/null 2>&1; then
-  run_wiki() { (cd "${REPO_ROOT}" && python3 -m wiki -c "$CONFIG" "$@"); }
-elif [[ -f "${REPO_ROOT}/pyproject.toml" ]] && command -v python >/dev/null 2>&1; then
-  run_wiki() { (cd "${REPO_ROOT}" && python -m wiki -c "$CONFIG" "$@"); }
-elif wiki_supports_fmt; then
+if wiki_supports_fmt; then
   run_wiki() { wiki -c "$CONFIG" "$@"; }
-elif [[ -n "$UV_BIN" ]]; then
-  run_wiki() { "${UV_BIN}" run wiki -c "$CONFIG" "$@"; }
-elif command -v python3 >/dev/null 2>&1; then
-  run_wiki() { python3 -m wiki -c "$CONFIG" "$@"; }
-elif command -v python >/dev/null 2>&1; then
-  run_wiki() { python -m wiki -c "$CONFIG" "$@"; }
+elif source_checkout_available; then
+  run_wiki() { (cd "${REPO_ROOT}" && deno run -A src/wiki/cli.ts -c "$CONFIG" "$@"); }
 else
-  echo "audit.sh: need uv, python -m wiki, or a current wiki on PATH" >&2
+  echo "audit.sh: supported wiki CLI not found; install wazootech-wiki or run from its Deno source checkout" >&2
   exit 127
 fi
 
@@ -126,13 +91,13 @@ run_stage() {
   fi
 }
 
-run_stage "fmt --check" fmt --check "${FILE_ARGS[@]+"${FILE_ARGS[@]}"}"
-run_stage "lint --strict" lint --strict -v "${FILE_ARGS[@]+"${FILE_ARGS[@]}"}"
-run_stage "check --strict" check --strict -v "${FILE_ARGS[@]+"${FILE_ARGS[@]}"}"
+run_stage "fmt --check" fmt --check "${FILE_ARGS[@]}"
+run_stage "lint --strict" lint --strict -v "${FILE_ARGS[@]}"
+run_stage "check --strict" check --strict -v "${FILE_ARGS[@]}"
 run_stage "render --check" render --check
 
 if [[ -d "${REPO_ROOT}/.github/workflows" ]] && grep -rqE 'wiki[[:space:]].*link.*--check|wiki[[:space:]]+link[[:space:]]+--check' "${REPO_ROOT}/.github/workflows" 2>/dev/null; then
-  run_stage "link --check" link --check "${FILE_ARGS[@]+"${FILE_ARGS[@]}"}"
+  run_stage "link --check" link --check "${FILE_ARGS[@]}"
 else
   echo "==> link --check (skipped — not wired in .github/workflows/)"
 fi

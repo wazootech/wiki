@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.2",
+    "@rdfjs/types": "npm:@rdfjs/types@1.1.0"
+  }
+}

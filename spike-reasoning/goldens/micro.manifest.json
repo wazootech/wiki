@@ -1,0 +1,35 @@
+{
+  "name": "micro",
+  "graphs": {
+    "graph": {
+      "False": {
+        "triples": 40,
+        "named": [
+          "N15edefcf15c04bbeaf677961aac44e21"
+        ]
+      },
+      "True": {
+        "triples": 235,
+        "named": [
+          "Nc944c74a4762413bb7c01a2eb49d5a94"
+        ]
+      }
+    },
+    "dataset": {
+      "False": {
+        "triples": 40,
+        "named": [
+          "https://wiki.example.org/graphs/root",
+          "urn:x-rdflib:default"
+        ]
+      },
+      "True": {
+        "triples": 341,
+        "named": [
+          "urn:x-rdflib:default",
+          "https://wiki.example.org/graphs/root"
+        ]
+      }
+    }
+  }
+}

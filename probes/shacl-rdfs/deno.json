@@ -1,0 +1,9 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.2",
+    "@zazuko/env": "npm:@zazuko/env@^3.0.0",
+    "rdf-validate-shacl": "npm:rdf-validate-shacl@^0.6.0",
+    "@rdfjs/types": "npm:@rdfjs/types@1.1.0"
+  }
+}

@@ -84,12 +84,12 @@ ORDER BY ?name
 ```
 -->
 
-| app | name | version |
-| --- | --- | --- |
-| [Linked_Markdown](Linked_Markdown.md) | Linked_Markdown |  |
-| [Obsidian](Obsidian.md) | Obsidian |  |
-| [Vivary](Vivary.md) | Vivary | 0.4.2 |
-| [wiki](wiki.md) | wiki | 0.1.23 |
+| app                                   | name            | version |
+| ------------------------------------- | --------------- | ------- |
+| [Linked_Markdown](Linked_Markdown.md) | Linked_Markdown |         |
+| [Obsidian](Obsidian.md)               | Obsidian        |         |
+| [Vivary](Vivary.md)                   | Vivary          | 0.4.2   |
+| [wiki](wiki.md)                       | wiki            | 0.1.24  |
 
 <!-- sparql:end -->
 
