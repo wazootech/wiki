@@ -9,6 +9,7 @@ import {
   createStaticSiteHandler,
   type StaticSiteHandlerHandle,
 } from "../src/wiki/site/server.ts";
+import { symlinksUnavailable } from "./support/symlink_support.ts";
 
 function writeFile(siteDir: string, path: string, content: string): string {
   const fullPath = resolve(siteDir, path);
@@ -160,9 +161,13 @@ Deno.test("rejects encoded path separators", async () => {
   }
 });
 
-Deno.test(
-  "does not follow symlinks outside the static site root",
-  async () => {
+Deno.test({
+  name: "does not follow symlinks outside the static site root",
+  // The escape guard is the whole point of this case, so it cannot be faked
+  // with a regular file -- it needs a real symlink, and therefore the same
+  // Windows privilege the fspath case documents.
+  ignore: symlinksUnavailable(),
+  fn: async () => {
     const siteDir = Deno.makeTempDirSync();
     const outsideDir = Deno.makeTempDirSync();
     writeFile(siteDir, "index.html", "<h1>Safe</h1>");
@@ -183,7 +188,7 @@ Deno.test(
       Deno.removeSync(outsideDir, { recursive: true });
     }
   },
-);
+});
 
 Deno.test(
   "optional polling endpoint detects file changes and closes its poller",
