@@ -313,6 +313,11 @@ Deno.test("failed clone retains Git stderr in the install error", () => {
       "Failed to clone",
     );
     assertStringIncludes(error.message, "fatal:");
-    assertStringIncludes(error.message, "does not exist");
+    // The point of the case is that git's own stderr survives into the error.
+    // Its wording is not stable across platforms or versions: git on Windows
+    // says "does not appear to be a git repository" where Linux says "does not
+    // exist". Assert on the path being echoed back and on a fatal marker,
+    // which hold for both, rather than on one platform's phrasing.
+    assertStringIncludes(error.message, "does-not-exist");
   });
 });

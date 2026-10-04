@@ -4,6 +4,44 @@ import { dirname, fromFileUrl, join } from "@std/path";
 const REPO_ROOT = dirname(dirname(fromFileUrl(import.meta.url)));
 const VERIFY_SCRIPT = join(REPO_ROOT, "skills/wiki/scripts/verify.sh");
 
+/**
+ * Locate a bash to run `verify.sh` with.
+ *
+ * The hardcoded `/usr/bin/bash` is a POSIX path. On Windows it resolves to
+ * nothing -- `C:\usr\bin\bash` does not exist -- and Deno fails the spawn with
+ * NotFound before the script is ever read, which surfaced as five unrelated
+ * test failures. Git for Windows installs bash under `bin/`, so look there too.
+ *
+ * Resolution order: an explicit override, the bare name (letting the OS search
+ * PATH), then the Git for Windows locations.
+ */
+function resolveBash(): string {
+  const override = Deno.env.get("WIKI_TEST_BASH");
+  if (override) return override;
+  const candidates = [
+    "bash",
+    "/usr/bin/bash",
+    "/bin/bash",
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+  ];
+  for (const candidate of candidates) {
+    try {
+      const { success } = new Deno.Command(candidate, {
+        args: ["--version"],
+        stdout: "null",
+        stderr: "null",
+      }).outputSync();
+      if (success) return candidate;
+    } catch {
+      // Not on PATH, or not executable here. Try the next candidate.
+    }
+  }
+  throw new Error(
+    "No bash found to run verify.sh. Set WIKI_TEST_BASH to its path.",
+  );
+}
+
 function createStub(root: string, name: string, content: string): void {
   const bin = join(root, "bin");
   Deno.mkdirSync(bin, { recursive: true });
@@ -55,10 +93,17 @@ async function runVerifier(options: {
   );
 
   try {
-    return await new Deno.Command("/usr/bin/bash", {
+    return await new Deno.Command(resolveBash(), {
       args: [VERIFY_SCRIPT],
       cwd: REPO_ROOT,
-      env: { PATH: `${bin}:/usr/bin:/bin` },
+      // PATH is `:`-separated on POSIX and `;`-separated on Windows. The
+      // stubs live in `bin`, and verify.sh has to find `deno` and `wiki`
+      // through the same PATH it hands to `command -v`.
+      env: {
+        PATH: Deno.build.os === "windows"
+          ? `${bin};${Deno.env.get("PATH") ?? ""}`
+          : `${bin}:/usr/bin:/bin`,
+      },
       stdout: "piped",
       stderr: "piped",
     }).output();
