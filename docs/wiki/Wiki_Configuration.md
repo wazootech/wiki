@@ -63,7 +63,7 @@ Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitra
 **Split keys** — policy lives in one block, severity or tooling in another:
 
 - **`wiki.filename_pattern`** — the regex string. **`lint.filename_pattern`** — how strictly to flag violations (`error`, `warning`, or `off`).
-- **`link.style`** — what `wiki link --apply` inserts (`standard` page links or `wikilink`). **`lint.link_style`** — whether Obsidian `[[wikilinks]]` in body prose are flagged when `link.style` is `standard`.
+- **`link.style`** — what `wiki link --apply` inserts (`standard` page links or `wikilink`). **`lint.link_style`** — whether Obsidian `[[wikilinks]]` in body prose are flagged when `link.style` is `standard`. `style` also still accepts the retired spellings `markdown` and `obsidian`, with a deprecation warning (see `link:` settings below).
 
 For why `check`, `lint`, `fmt`, and `wiki link` are separate commands, see [Design philosophies](Design_Philosophies.md#check-lint-fmt-and-link).
 
@@ -167,6 +167,14 @@ link: # optional block
 | `renames` | optional | `{}`                                  | commented example | `wiki link --fix-broken` |
 
 `wiki link --fix-broken` preserves the existing link kind in each file; only `--apply` uses `link.style`.
+
+**Retired spellings.** `markdown` and `obsidian` are still accepted as values for `style`, and `wiki init --link-style` accepts them too. Each prints a deprecation warning and rewrites the value to `standard` or `wikilink`:
+
+```text
+link.style: 'obsidian' is deprecated, use 'wikilink' instead (edit config file link.style and re-run)
+```
+
+They are accepted but never advertised: an invalid `--link-style` value lists only `standard` and `wikilink`. Rename the value in your config file to silence the warning.
 
 ## Integrity checks (`check:`)
 
