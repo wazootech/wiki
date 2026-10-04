@@ -1,5 +1,4 @@
 import { createRequire } from "node:module";
-import { errorText } from "./wiki/errors.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { WikiSetupError } from "./errors";
@@ -24,7 +23,7 @@ export function getDenoExecutable(): string {
     }
     return denoExecutable;
   } catch (error) {
-    const detail = errorText(error);
+    const detail = error instanceof Error ? error.message : String(error);
     throw new WikiSetupError(
       `Unable to start the bundled Deno runtime: ${detail}. Reinstall wazootech-wiki to restore its runtime dependency.`,
     );
