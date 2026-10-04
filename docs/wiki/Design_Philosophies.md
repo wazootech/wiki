@@ -14,16 +14,26 @@ description: Unix-style CLI design for the Wiki CLI tool.
 
 Four audit/format lanes (aligned with common CLI tooling):
 
-| Lane         | Command      | Config / tool                                                                                                                                                                |
-| ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Integrity    | `wiki check` | Always-on SHACL, JSON Schema frontmatter, routes, collisions, layout frontmatter (`check.*`) — **report only**                                                               |
-| Convention   | `wiki lint`  | `lint.broken_links`, `lint.filename_pattern`, `lint.headings`, `lint.heading_levels`, `lint.duplicate_headings`, `lint.thematic_breaks`, `lint.link_style` — **report only** |
-| Formatting   | `wiki fmt`   | Deno Markdown formatter (`@dprint/markdown`)                                                                                                                                 |
-| Link hygiene | `wiki link`  | Optional `link.renames`; `--apply` and `--fix-broken` require explicit flags                                                                                                 |
+| Lane         | Command      | Config / tool                                                                                                                                                                                                            |
+| ------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Integrity    | `wiki check` | Always-on SHACL, JSON Schema frontmatter, routes, collisions, layout frontmatter (`check.*`) — **report only**                                                                                                           |
+| Convention   | `wiki lint`  | `lint.heading_levels` + `lint.duplicate_headings` via the embedded ESLint engine; `lint.broken_links`, `lint.filename_pattern`, `lint.headings`, `lint.thematic_breaks`, `lint.link_style` Wiki-native — **report only** |
+| Formatting   | `wiki fmt`   | Deno Markdown formatter (`@dprint/markdown`)                                                                                                                                                                             |
+| Link hygiene | `wiki link`  | Optional `link.renames`; `--apply` and `--fix-broken` require explicit flags                                                                                                                                             |
 
 `wiki check` answers whether the wiki satisfies its **integrity contracts** (graph shapes and build/presentation invariants) — it never mutates prose. `wiki lint` answers whether content follows **wiki policy** (resolvable references and authoring conventions). `wiki link` answers whether plain text **should be a wikilink** (`--apply`) or whether a broken target reported by `lint` can be **repaired safely** (`--fix-broken`). Heuristic link enrichment is not a style convention, so it does not live under `wiki lint`.
 
 `wiki build` runs convention then integrity preflight (`lint` then `check`) unless `--no-check`. `wiki link` is never part of that preflight.
+
+### Mechanical rules come from ESLint; graph rules stay ours
+
+`wiki lint` splits by whether a rule is mechanical or semantic.
+
+**Mechanical** — heading depth increments and duplicate headings are evaluated by the **embedded ESLint engine**. Wiki constructs an in-process `ESLint` instance over `@eslint/markdown`'s `markdown/heading-increment` and `markdown/no-duplicate-headings` rules, then maps the diagnostics into Wiki's existing issue codes and severity report. There is no external ESLint config, no `.eslintrc`, and no subprocess: a rule that only needs the Markdown AST should not require the user to adopt ESLint's configuration model.
+
+**Semantic** — broken links, `wiki:` CURIE resolution, filename patterns, editorial heading style, Setext-aware thematic breaks, and link style remain hand-written in Wiki. These need the route graph and the resolved configuration, neither of which ESLint can see. A Wiki ESLint _plugin_ (rules reading Wiki's own graph) is a reasonable future direction; today's split keeps the engine embedded and the graph rules where their input lives.
+
+Wiki keeps its own bookkeeping on top of the ESLint lane: the duplicate rule's H2+ scope and heading normalization, and the exact message wording the Python oracle emitted. See [wiki lint](wiki_lint.md) for the per-key detail.
 
 ## Pipes and filters
 
