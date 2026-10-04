@@ -1,9 +1,13 @@
 import { dirname, join, resolve } from "@std/path";
-import { errorText } from "./errors.ts";
 import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
-import { ValueError } from "./errors.ts";
+import { errorText, ValueError } from "./errors.ts";
 import type { ScaffoldResult } from "./schemas/reports.ts";
-import { DEFAULT_WIKI_BASE, normalizeBaseIri } from "./schemas/wiki_config.ts";
+import {
+  DEFAULT_WIKI_BASE,
+  LEGACY_LINK_STYLE_MAP,
+  LINK_STYLES,
+  normalizeBaseIri,
+} from "./schemas/wiki_config.ts";
 
 export interface InitOptions {
   readonly graph_context_wiki: string;
@@ -97,15 +101,49 @@ const CONFIG_FILENAMES = [
   "wiki.json",
   "wiki.toml",
 ] as const;
-const LEGACY_LINK_STYLE_MAP: Readonly<Record<string, string>> = {
-  markdown: "standard",
-  obsidian: "wikilink",
-};
-const LINK_STYLES = new Set(["standard", "wikilink"]);
 const URL_STYLES = new Set(["dir", "file"]);
 const IMPLICIT_TYPES_POLICIES = new Set(["fallback", "append"]);
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
+
+/**
+ * Normalize a `--link-style` override, translating the legacy spellings.
+ *
+ * Mirrors `coerceLinkStyle` in `schemas/wiki_config.ts`; both read the same
+ * exported `LINK_STYLES` / `LEGACY_LINK_STYLE_MAP` so a new spelling or style
+ * only has to be taught once. The warning is keyed on `link_style` here and
+ * `link.style` in the schema, because the two report against different inputs.
+ */
+function normalizeInitLinkStyle(
+  value: string | null | undefined,
+): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = value.trim().toLowerCase();
+  const legacy = LEGACY_LINK_STYLE_MAP[normalized];
+  if (legacy !== undefined) {
+    console.warn(
+      `link_style: '${normalized}' is deprecated, use '${legacy}' instead (edit config file link.style and re-run)`,
+    );
+    return legacy;
+  }
+  if (!LINK_STYLES.has(normalized)) {
+    throw new ValueError(
+      `expected standard or wikilink, got ${JSON.stringify(value)}`,
+    );
+  }
+  return normalized;
+}
+
+/** Validate a `--site-url-style` override. */
+function normalizeInitUrlStyle(value: string | null | undefined): string {
+  const normalized = (value || DEFAULT_URL_STYLE).trim().toLowerCase();
+  if (!URL_STYLES.has(normalized)) {
+    throw new ValueError(
+      `Invalid site_url_style: ${JSON.stringify(value)}`,
+    );
+  }
+  return normalized;
+}
 
 export function normalizeBaseUrl(value: string): string {
   let text = String(value).trim();
@@ -178,32 +216,8 @@ export function detectOriginRepo(cwd: string): string | null {
 }
 
 function normalizeInitOptionStyles(options: InitOptions): InitOptions {
-  const siteUrlStyle = (options.site_url_style || DEFAULT_URL_STYLE).trim()
-    .toLowerCase();
-  if (!URL_STYLES.has(siteUrlStyle)) {
-    throw new ValueError(
-      `Invalid site_url_style: ${JSON.stringify(options.site_url_style)}`,
-    );
-  }
-
-  let linkStyle = options.link_style ?? null;
-  if (linkStyle !== null) {
-    linkStyle = linkStyle.trim().toLowerCase();
-    const legacy = LEGACY_LINK_STYLE_MAP[linkStyle];
-    if (legacy !== undefined) {
-      console.warn(
-        `link_style: '${linkStyle}' is deprecated, use '${legacy}' instead (edit config file link.style and re-run)`,
-      );
-      linkStyle = legacy;
-    }
-    if (!LINK_STYLES.has(linkStyle)) {
-      throw new ValueError(
-        `expected standard or wikilink, got ${
-          JSON.stringify(options.link_style)
-        }`,
-      );
-    }
-  }
+  const siteUrlStyle = normalizeInitUrlStyle(options.site_url_style);
+  const linkStyle = normalizeInitLinkStyle(options.link_style);
 
   let implicitTypesPolicy = options.graph_implicit_types_policy ?? null;
   if (implicitTypesPolicy !== null) {
@@ -251,32 +265,8 @@ export function resolveInitOptions(options: ResolveInitOptions): InitOptions {
     options.prompt_context_wiki?.(DEFAULT_WIKI_BASE) || DEFAULT_WIKI_BASE;
   const siteBaseUrl = options.site_base_url || inferredBaseUrl ||
     DEFAULT_BASE_URL;
-  const siteUrlStyle = (options.site_url_style || DEFAULT_URL_STYLE).trim()
-    .toLowerCase();
-  if (!URL_STYLES.has(siteUrlStyle)) {
-    throw new ValueError(
-      `Invalid site_url_style: ${JSON.stringify(options.site_url_style)}`,
-    );
-  }
-
-  let linkStyle = options.link_style ?? null;
-  if (linkStyle !== null) {
-    linkStyle = linkStyle.trim().toLowerCase();
-    const legacy = LEGACY_LINK_STYLE_MAP[linkStyle];
-    if (legacy !== undefined) {
-      console.warn(
-        `link_style: '${linkStyle}' is deprecated, use '${legacy}' instead (edit config file link.style and re-run)`,
-      );
-      linkStyle = legacy;
-    }
-    if (!LINK_STYLES.has(linkStyle)) {
-      throw new ValueError(
-        `expected standard or wikilink, got ${
-          JSON.stringify(options.link_style)
-        }`,
-      );
-    }
-  }
+  const siteUrlStyle = normalizeInitUrlStyle(options.site_url_style);
+  const linkStyle = normalizeInitLinkStyle(options.link_style);
 
   let implicitTypesPolicy = options.graph_implicit_types_policy ?? null;
   if (implicitTypesPolicy !== null) {
@@ -658,9 +648,7 @@ export function scaffoldWiki(
           );
         }
         return failure(
-          `git init failed: ${
-            errorText(error)
-          }`,
+          `git init failed: ${errorText(error)}`,
         );
       }
       if (result.code !== 0) {
@@ -680,9 +668,7 @@ export function scaffoldWiki(
     };
   } catch (error) {
     return failure(
-      `Failed to scaffold wiki: ${
-        errorText(error)
-      }`,
+      `Failed to scaffold wiki: ${errorText(error)}`,
     );
   }
 }

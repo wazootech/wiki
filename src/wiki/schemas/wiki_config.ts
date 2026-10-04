@@ -71,8 +71,20 @@ import {
   valueError,
 } from "./validation.ts";
 
-const LINK_STYLES: ReadonlySet<string> = new Set(["standard", "wikilink"]);
-const LEGACY_LINK_STYLE_MAP: Readonly<Record<string, string>> = {
+/** Accepted `link.style` values. */
+export const LINK_STYLES: ReadonlySet<string> = new Set([
+  "standard",
+  "wikilink",
+]);
+
+/**
+ * Deprecated `link.style` spellings and the value each maps to.
+ *
+ * Exported because `wiki init` accepts `--link-style` and must translate the
+ * same legacy spellings; keeping one table stops the scaffold and the config
+ * schema from drifting apart.
+ */
+export const LEGACY_LINK_STYLE_MAP: Readonly<Record<string, string>> = {
   markdown: "standard",
   obsidian: "wikilink",
 };

@@ -27,6 +27,7 @@
 import { pathExists } from "./fspath.ts";
 import { basename } from "@std/path";
 import { errorText, ValueError } from "./errors.ts";
+import { LEGACY_LINK_STYLE_MAP, LINK_STYLES } from "./schemas/wiki_config.ts";
 import { exitAuditReport } from "./cli_output.ts";
 
 import { VERSION } from "./version.ts";
@@ -844,9 +845,7 @@ async function runQueryCommand(
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Query Execution Error: ${
-        errorText(error)
-      }`,
+      `Query Execution Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1132,8 +1131,19 @@ function parseInitCommandArgs(
   };
   const choices: Readonly<Record<string, readonly string[]>> = {
     "--site-url-style": ["file", "dir"],
-    "--link-style": ["standard", "wikilink"],
+    // Derived from the schema so the flag, the scaffold, and the config
+    // validator cannot disagree about which link styles exist. The retired
+    // spellings are accepted too, because `link.style` in a config file has
+    // always honoured them -- the flag and the file must not disagree about
+    // which values are legal. `normalizeInitLinkStyle` then rewrites them.
+    "--link-style": [...LINK_STYLES, ...Object.keys(LEGACY_LINK_STYLE_MAP)]
+      .sort(),
     "--graph-implicit-types-policy": ["fallback", "append"],
+  };
+  // What a "Choose from" error names. Retired spellings stay accepted but are
+  // never advertised, so the message still points at the canonical value.
+  const advisedChoices: Readonly<Record<string, readonly string[]>> = {
+    "--link-style": [...LINK_STYLES].sort(),
   };
   for (let index = 0; index < args.length; index += 1) {
     const token = args[index]!;
@@ -1176,9 +1186,10 @@ function parseInitCommandArgs(
     }
     const allowed = choices[option];
     if (allowed !== undefined && !allowed.includes(value)) {
+      const suggested = advisedChoices[option] ?? allowed;
       return usageError(
         `Error: Invalid value for '${option}': '${value}'. Choose from ${
-          allowed.map((item) => `'${item}'`).join(", ")
+          suggested.map((item) => `'${item}'`).join(", ")
         }.`,
       );
     }
