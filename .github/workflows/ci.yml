@@ -60,6 +60,32 @@ jobs:
       - name: Verify Docs Wiki SPARQL Blocks are Up to Date
         run: deno run -A src/wiki/cli.ts -c docs/wiki.yml render --check
 
+  windows-tests:
+    # Platform coverage for the paths ubuntu-latest cannot exercise at all:
+    # source-name inference over backslash-separated paths, the symlink
+    # capability probe, bash resolution in verify_cli_test, and the git-stderr
+    # wording assertions. Each of those was fixed against a Windows host and
+    # would silently regress without a runner here.
+    #
+    # Not a required status check on main's branch protection -- it is advisory
+    # until the required contexts are updated, so a Windows failure will not
+    # block a merge.
+    name: Run Tests on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Run Deno unit tests
+        run: deno task test
+
   npm-checks:
     name: NPM Package Checks
     runs-on: ubuntu-latest
