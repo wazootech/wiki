@@ -64,7 +64,7 @@
       "docs/build.ts",
       "deno.json"
     ],
-    "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md", ".parity-tmp/"]
   },
   "lint": {
     "include": [
@@ -74,9 +74,9 @@
       "scripts/**/*.ts",
       "docs/build.ts"
     ],
-    "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md", ".parity-tmp/"]
   },
-  "exclude": ["docs/**/*.md", "spike-reasoning/", "probes/", ".parity-tmp/"],
+  "exclude": ["docs/**/*.md", ".parity-tmp/"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,

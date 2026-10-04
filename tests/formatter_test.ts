@@ -17,8 +17,8 @@
  *    a quiet restyle of fences that used to be left alone.
  *
  * The expected strings are the `deno fmt` output the pre-cutover engine produced
- * for the same input — `probes/fmt-dprint/verify-production.ts` re-checks the
- * whole corpus against that subprocess, and these cases pin the parts of it that
+ * for the same input — `probes/fmt-dprint/FINDINGS.md` records the whole-corpus
+ * check against that subprocess, and these cases pin the parts of it that
  * a corpus page cannot isolate.
  */
 

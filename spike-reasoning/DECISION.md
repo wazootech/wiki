@@ -15,17 +15,19 @@ Corpus: micro OWL2RL fixture suite + the docs wiki (402 asserted triples)
 
 An in-house fallback is **not needed up front** — the package passes every semantic check, compiles cleanly, and ships under MIT with zero eval/WASM — but one is **filed and verified** (see below) so switching is cheap if adoption fails.
 
-## Backup option (filed)
+## Backup option (filed, since removed)
 
-In case the adoption fails, an in-house fallback reasoner has been filed and verified:
+In case the adoption fails, an in-house fallback reasoner was filed and verified. The
+paths below are historical — the code was deleted with the rest of the scaffolding
+(see [Data appendix](#data-appendix-repro)) and is recoverable at revision `8cfc9fe`:
 
-- **`spike-reasoning/fallback/infer.ts`** — `OWL2RLFallback`, a zero-dependency OWL2RL
+- **`fallback/infer.ts`** — `OWL2RLFallback`, a zero-dependency OWL2RL
   subset reasoner over `@wazoo/sparql-engine` (its only couple: `dataFactory` + `termKey`).
   Semi-naive forward chaining to fixpoint (≤128 rounds) over forward indexes.
 - **API mirrors the adopted engine surface**, so the wiki adapter needs only a facade swap:
   `load(vocabulary)` (returns `""`), `getStaticClosure()`, `getStaticInconsistencies()`,
   `infer(data)`, `inferWithDiagnostics(data)`, `getRuntime()`.
-- **`spike-reasoning/fallback/run-fallback.ts`** — reproduces the same verdict JSON as
+- **`fallback/run-fallback.ts`** — reproduced the same verdict JSON as
   `spike.ts` (closure counts, rule-check matrix, inconsistencies, timings).
 
 Verified results (identical check matrix to the adopted engine):
@@ -128,9 +130,20 @@ so this gap is immaterial.
 
 ## Data appendix (repro)
 
-- `spike-reasoning/goldens/` — python goldens: `{docs,micro}.graph.{asserted,inferred,clean}.nt` + manifests.
-- `spike-reasoning/micro/` — fixture wiki (wiki.yml, axioms.ttl, instances.ttl, gregory.md).
-- `spike-reasoning/spike.ts` — comparison runner (modes `fs`/`no-fs`; 12 checks; closure diff).
-- `spike-reasoning/bake-rules.ts` — bakes `owl2rl-eyeling.n3` → `rules.ts` (embedded constant).
-- `spike-reasoning/spike-bin.exe` — compiled binary (clean-room verified).
+This memo is the retained artifact; the spike's scaffolding is not. The harnesses,
+the `micro/` fixture wiki, and the 2.9 MB of Python `.nt` goldens were deleted once
+the port landed — they were excluded from `check`, `lint`, and `fmt` throughout, and
+`spike-reasoning/rules.ts` turned out byte-identical to the shipped
+`src/wiki/owl2rl_rules.ts`, so nothing in them was the source of a shipped behavior.
+Retrieve any of it from the history of this file's directory (revision `8cfc9fe`):
+
+- `goldens/` — python goldens: `{docs,micro}.graph.{asserted,inferred,clean}.nt` + manifests.
+- `micro/` — fixture wiki (wiki.yml, axioms.ttl, instances.ttl, gregory.md).
+- `spike.ts` — comparison runner (modes `fs`/`no-fs`; 12 checks; closure diff).
+- `bake-rules.ts` — baked `owl2rl-eyeling.n3` → `rules.ts`, whose body is byte-identical
+  to the shipped `src/wiki/owl2rl_rules.ts` (superseded by `scripts/bake_owl2rl_rules.ts`).
+- `spike-bin.exe` — compiled binary (clean-room verified).
 - Raw outputs: `micro-spike.txt` / `docs-spike.txt` (JSON verdict + full named diffs).
+
+The `OWL2RLFallback` reasoner verified above was likewise deleted with the rest of the
+scaffolding; the numbers in this memo are the record of what it did.

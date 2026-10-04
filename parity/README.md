@@ -75,7 +75,7 @@ so neither formatter can drift unnoticed.
 The engine moved from a `deno fmt` subprocess to the dprint plugin in process
 without touching this case: the plugin is pinned to the version Deno 2.9.6
 bundles and the port reproduces `deno fmt`'s bytes on every page in the corpus
-(`probes/fmt-dprint/verify-production.ts`), so the recorded transcript is the
+(`probes/fmt-dprint/FINDINGS.md`), so the recorded transcript is the
 same transcript either way.
 
 The fourth known case is **`build-micro`**. Both engines build the same four pages

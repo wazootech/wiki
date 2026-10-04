@@ -24,7 +24,7 @@
  * Registering plugins through `@dprint/formatter`'s `createContext()` — which
  * routes by file extension over whatever is registered — gets both of those
  * wrong, so `dispatch` is written by hand instead. Measured before the cutover:
- * `probes/fmt-dprint/`.
+ * `probes/fmt-dprint/FINDINGS.md`.
  *
  * Two widths are in play and deno uses different ones per language: `json` and
  * `typescript` get the width the markdown plugin computed for the block, which
@@ -130,7 +130,7 @@ function denoTypescriptConfig(): Record<string, unknown> {
  * `trailing_comma` true, `format_comments` false,
  * `indent_block_sequence_in_map` true, `brace_spacing` true,
  * `bracket_spacing` false, `dash_spacing` one-space, `prefer_single_line` false)
- * is already the plugin default, which `probes/fmt-dprint/host-config.ts` prints
+ * is already the plugin default, which `probes/fmt-dprint/FINDINGS.md` records
  * rather than assumes.
  */
 function denoYamlConfig(): Record<string, unknown> {

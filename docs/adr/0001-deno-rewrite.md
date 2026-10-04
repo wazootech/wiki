@@ -4,7 +4,7 @@
 - **Date:** 2026-09-23
 - **Supersedes:** [#44 — Strategy: keep the Python CLI core; add TypeScript only at the edges](https://github.com/wazootech/wiki/issues/44)
 - **Tracking issue:** [#273](https://github.com/wazootech/wiki/issues/273)
-- **Evidence:** [`spike-reasoning/DECISION.md`](../../spike-reasoning/DECISION.md) and the goldens beside it
+- **Evidence:** [`spike-reasoning/DECISION.md`](../../spike-reasoning/DECISION.md)
 
 ## Context
 
@@ -116,7 +116,7 @@ The rewrite is complete. `src/wiki/` is the sole engine; the Python source, test
 - **OWL 2 RL closure is not triple-identical to `owlrl`'s.** Known and accepted at phase 5: inconsistency *reports* are not materialized as `owl:Nothing` typing, and the engine's extra SHACL reifications are kept (dropping them would be a silent semantic edit to `check`). Both are filtered-or-kept explicitly in one module (`infer.ts`) so the parity gate can flip either decision without touching a caller.
 - **Path ordering follows Deno/TypeScript string ordering.** The manifest sorts paths with JavaScript's default string order rather than reproducing Python `pathlib` component ordering. A file such as `notes.md` can therefore sort before `notes/inner.md`; this may change manifest order and cache fingerprints without changing graph content. That compatibility difference is accepted for the Deno implementation and is pinned by `tests/graph_cache_test.ts`.
 - **Windows line endings.** Python's Click writes CRLF to a redirected stdout; `console.log` writes LF. This is exactly why the harness normalises rather than comparing bytes.
-- **Committed goldens are LF-normalised.** `.gitattributes` sets `* text=auto eol=lf`, so the `.nt` goldens under `spike-reasoning/goldens/` — written with CRLF by `rdflib` on Windows — are stored as LF. The harness must normalise line endings when *reading goldens*, not only when comparing CLI output, or a fresh clone will disagree with the machine that produced them.
+- **Committed goldens are LF-normalised.** `.gitattributes` sets `* text=auto eol=lf`, so the oracle goldens under `probes/` — written with CRLF by Python on Windows — are stored as LF. The harness must normalise line endings when *reading goldens*, not only when comparing CLI output, or a fresh clone will disagree with the machine that produced them.
 
 ### Deferred
 
@@ -128,4 +128,5 @@ The rewrite is complete. `src/wiki/` is the sole engine; the Python source, test
 - [#44](https://github.com/wazootech/wiki/issues/44) — superseded decision
 - [#273](https://github.com/wazootech/wiki/issues/273) — tracking proposal
 - [`CONTEXT.md`](../../CONTEXT.md) — domain language
-- [`spike-reasoning/DECISION.md`](../../spike-reasoning/DECISION.md) — engine spike, fallback reasoner, and goldens
+- [`spike-reasoning/DECISION.md`](../../spike-reasoning/DECISION.md) — reasoning-engine spike and its fallback-reasoner verification
+- [`probes/`](../../probes/README.md) — per-investigation `FINDINGS.md` records and the oracle goldens the tests replay

@@ -1,4 +1,0 @@
----
-type: Person
-givenName: Gregory
----

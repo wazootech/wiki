@@ -1,14 +1,33 @@
 # Probes
 
 One directory per investigation the cutover needed, each holding the question,
-the harness that answered it, and `FINDINGS.md` recording what was decided.
+the `FINDINGS.md` recording what was decided, and the oracle data that decision
+rests on.
 
-These are **not** part of the engine. Nothing in `src/wiki/` imports them, they
-are excluded from `deno.json`'s `check`, `lint`, and `fmt`, and neither `files`
-in `package.json` nor `publish.include` in `deno.json` lists them — a
-`npm pack` ships zero bytes of this tree. They are excluded from static
-analysis precisely because they are throwaway: harnesses that print to stdout
-and write scratch output, not modules with contracts.
+These are **not** part of the engine. Nothing in `src/wiki/` imports them, and
+neither `files` in `package.json` nor `publish.include` in `deno.json` lists
+them — a `npm pack` ships zero bytes of this tree.
+
+## The harnesses are gone; the evidence is not
+
+This tree originally held a TypeScript harness per investigation. All of that
+scaffolding was deleted once the port landed, and with it the `exclude` entries
+this tree needed in `deno.json`. Two reasons:
+
+- The harnesses were throwaway by construction — they printed to stdout and
+  wrote scratch output, never modules with contracts. They carried 37 type
+  errors between them and were excluded from `check`, `lint`, and `fmt` for
+  exactly that reason.
+- Every check they performed outlived them in a stronger form. The oracle
+  comparisons the harnesses ran by hand are now assertions in `tests/`
+  (`fnmatch_test.ts` replays `fnmatch/golden.json`; `json_schema_test.ts`
+  replays `json-schema/corpus.json` against `json-schema/oracle/golden.json`;
+  `shacl_test.ts` embeds the `shacl-rdfs` fixture), and the version pins in
+  `FINDINGS.md` are what `deno.json` now depends on.
+
+What remains is the part with value: the recorded findings, and the golden data
+the tests replay. The deleted harnesses are in the history of this directory
+(revision `8cfc9fe`) if a question needs re-running.
 
 ## Why three Python files live here
 
@@ -43,6 +62,6 @@ the generators outlive them.
 | `rdf-io` | what replaces `rdflib` for IO? | `@zazuko/env-node` for parsing/serialising; base `@zazuko/env` registers nothing and fails silently, and its Turtle writer is really an N-Triples writer — hence the explicit writers |
 | `shacl-rdfs` | does `rdf-validate-shacl` need an RDFS closure pass to match `pyshacl`? | no — `raw == closed`, because `sh:targetClass` resolution already applies the subclass relation |
 
-`spike-reasoning/` is the same kind of artifact for the reasoning engine, and
-its `DECISION.md` records a verified fallback reasoner so the choice can be
-reversed cheaply. Its bulk is generated `.nt` goldens of the docs corpus.
+`spike-reasoning/` is the same kind of artifact for the reasoning engine. Its
+scaffolding is gone for the same reason; its `DECISION.md` is the whole of what
+remains, recording the engine choice and the verification behind it.
