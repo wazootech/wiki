@@ -1,7 +1,16 @@
-import { assertEquals, assertThrows } from "@std/assert";
 import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
+import { join } from "@std/path";
+import {
+  ORACLE_PIN,
   OraclePinRequiredError,
+  readRevision,
   resolveOracle,
+  revisionMatchesPin,
   venvWikiBin,
 } from "../parity/oracle.ts";
 
@@ -40,4 +49,30 @@ Deno.test("a pinned checkout resolves its platform-specific executable", () => {
   );
 
   assertEquals(oracle, { bin: venvWikiBin(root), root });
+});
+
+Deno.test("the pin comparison accepts an abbreviated revision", () => {
+  // `ORACLE_PIN` is a 7-character abbreviation, and `git rev-parse HEAD` returns
+  // the full 40. `startsWith` is what reconciles them; an equality check would
+  // reject every correctly-pinned checkout and make the pin unusable.
+  assertEquals(revisionMatchesPin(ORACLE_PIN), true);
+  assertEquals(revisionMatchesPin(`${ORACLE_PIN}0f4c2a1`), true);
+  assertEquals(revisionMatchesPin("deadbee"), false);
+  assertEquals(revisionMatchesPin(""), false);
+  // An explicit pin overrides the default, so a case can pin its own revision.
+  assertEquals(revisionMatchesPin("abc1234", "abc1234"), true);
+  assertEquals(revisionMatchesPin("abc1234", "def5678"), false);
+});
+
+Deno.test("reading the oracle revision surfaces git's own stderr", async () => {
+  // A missing or non-git checkout is the common case: someone points
+  // WIKI_ORACLE_ROOT at a venv that is not there. The message has to name the
+  // path, or the operator cannot tell which of several roots is wrong.
+  const missing = join(Deno.makeTempDirSync(), "not-a-checkout");
+  const error = await assertRejects(() => readRevision(missing), Error);
+  assertStringIncludes(error.message, missing);
+  // Git's own wording, not ours: a missing directory fails `chdir` before
+  // rev-parse ever runs, so asserting on the subcommand would be a
+  // platform-specific claim. The path is the part that must survive.
+  assertStringIncludes(error.message, "git revision");
 });
