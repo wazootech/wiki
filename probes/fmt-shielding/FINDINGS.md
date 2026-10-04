@@ -98,5 +98,5 @@ do change `schema:articleBody` literals, because the body is stored as-is.
 4. **Emphasis style is not configurable.** Deno exposes `--prose-wrap`,
    `--line-width`, `--indent-width`, `--single-quote`, `--use-tabs`, and
    `--no-semicolons`, and nothing for emphasis. `*x*` → `_x_` is unavoidable, and
-   is why `fmt-check-docs` in `parity/cases.ts` can never reach byte parity with
+   is why the `fmt-check-docs` differential case can never reach byte parity with
    `mdformat` — it is a `known` divergence by construction, not a bug to chase.

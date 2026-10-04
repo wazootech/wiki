@@ -34,7 +34,7 @@ the tests replay. The deleted harnesses are in the history of this directory
 `probes/fnmatch/generate-golden.py`, `probes/json-schema/oracle/generate.py`,
 and `probes/rdf-io/oracle/generate.py` are Python, in a repository whose
 premise is that the engine is no longer Python. That is deliberate, and the
-reason is the same reason `parity/` exists at all.
+reason is the same reason the now-removed `parity/` differential harness existed at all.
 
 The cutover replaces an implementation with a *reimplementation*. The only way
 to know the reimplementation is correct is to run both and compare. The Python
@@ -48,7 +48,7 @@ tree. Deleting these files would delete the ability to *regenerate* the goldens
 that justify the port, which is the one artifact worth keeping from the old
 implementation.
 
-They are kept until the first TypeScript release, alongside `parity/`. The
+They are kept until the first TypeScript release. The
 retained-value question for the golden files themselves is tracked separately;
 the generators outlive them.
 

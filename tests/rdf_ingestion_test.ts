@@ -5,7 +5,7 @@ import { loadGraph } from "../src/wiki/graph.ts";
 import { runQuery } from "../src/wiki/format.ts";
 
 const CONFIG_PATH = fromFileUrl(
-  new URL("../parity/corpus/micro/wiki.yml", import.meta.url),
+  new URL("./fixtures/micro/wiki.yml", import.meta.url),
 );
 
 Deno.test("configured RDF/XML input is ingested and queryable", async () => {
