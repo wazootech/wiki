@@ -133,6 +133,13 @@ Deno.test("upgrade check surfaces JSR network and HTTP failures", async () => {
     notPublished.stderr[0]!,
     "@wazoo/wiki is not published on JSR",
   );
+  // Not a dead end: while JSR is unpublished the npm and standalone channels
+  // still work, so the message must say how to upgrade through them.
+  assertStringIncludes(notPublished.stderr[0]!, "npm update -g wazootech-wiki");
+  assertStringIncludes(
+    notPublished.stderr[0]!,
+    "https://github.com/wazootech/wiki/releases/latest",
+  );
 });
 
 Deno.test("upgrade check surfaces non-404 JSR HTTP failures", async () => {

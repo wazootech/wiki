@@ -8,6 +8,18 @@ export const JSR_PACKAGE = "@wazoo/wiki";
 export const GITHUB_RELEASES_URL =
   "https://github.com/wazootech/wiki/releases/latest";
 
+/**
+ * How to upgrade an install that `deno install` cannot replace.
+ *
+ * Shared by the not-published and not-global paths so both give the same
+ * advice: the npm and standalone channels are available regardless of
+ * whether JSR publication has happened.
+ */
+const ALTERNATE_CHANNELS = [
+  "For an npm install, run npm update -g wazootech-wiki (global) or npm update wazootech-wiki (project-local).",
+  `Otherwise download the latest release from ${GITHUB_RELEASES_URL}.`,
+];
+
 export interface UpgradeOptions {
   readonly checkOnly: boolean;
   readonly yes: boolean;
@@ -138,8 +150,15 @@ async function readLatestVersion(
   }
   if (!response.ok) {
     if (response.status === 404) {
+      // The package is absent, not unreachable. That is still an error for
+      // --check, whose exit code reports "is an update available", and an
+      // unknown version must not read as up to date. But say how to upgrade
+      // anyway, so the command is not a dead end while JSR is unpublished.
       throw new UpgradeError(
-        `${JSR_PACKAGE} is not published on JSR (HTTP 404).`,
+        [
+          `${JSR_PACKAGE} is not published on JSR (HTTP 404).`,
+          ...ALTERNATE_CHANNELS,
+        ].join("\n"),
       );
     }
     throw new UpgradeError(
@@ -319,7 +338,7 @@ function updateUnavailableMessage(
   }
   return [
     "This wiki CLI is not installed as a global Deno command, so wiki upgrade cannot replace it.",
-    "For an npm install, run npm update -g wazootech-wiki (global) or npm update wazootech-wiki (project-local).",
+    ALTERNATE_CHANNELS[0]!,
     "To install or update a global Deno command, run:",
     `  deno install --global --force --allow-all --name wiki jsr:@wazoo/wiki@${latest}/cli`,
   ].join("\n");
