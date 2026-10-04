@@ -92,7 +92,7 @@ Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ### From npm
 
-The Deno-backed `wazootech-wiki` package is not published yet. The currently published npm package still runs the Python CLI. The cutover package, JSR module, and standalone executables will become available with the first tagged Deno release.
+The Deno-backed `wazootech-wiki` package is not published yet. The currently published npm package still runs the Python CLI. The cutover npm package and the standalone executables become available with the first tagged Deno release. The JSR module follows in a later release; JSR publication does not gate the npm release.
 
 After that release, install the npm package with Node.js 18 or newer:
 
