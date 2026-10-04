@@ -554,6 +554,60 @@ Deno.test("inline fmt options are validated against Deno/dprint's surface", () =
   });
 });
 
+Deno.test("retired mdformat fmt keys name their replacement", () => {
+  // Every pre-cutover vault can carry these, and the cutover is the first time
+  // they are read, so this error is where the migration has to be explained.
+  // A vault with both keys is the common case: reporting only the first one
+  // made the user edit, re-run, and discover the second.
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      'wiki:\n  input: wiki\nfmt:\n  wrap: "no"\n  end_of_line: lf\n',
+    );
+    const error = assertThrows(
+      () => Config.load(base),
+      ValueError,
+    ) as ValueError;
+    const message = error.message;
+    // Both keys in one report.
+    assertStringIncludes(message, "'wrap' and 'end_of_line'");
+    // Each maps to its Deno equivalent.
+    assertStringIncludes(message, "'wrap' is now 'textWrap'");
+    assertStringIncludes(message, "'end_of_line' is now 'newLineKind'");
+    // And the accepted surface is still named.
+    assertStringIncludes(message, "{'textWrap', 'lineWidth', 'newLineKind'}");
+  });
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      'wiki:\n  input: wiki\nfmt:\n  extensions:\n    - "*.md"\n',
+    );
+    const error = assertThrows(
+      () => Config.load(base),
+      ValueError,
+    ) as ValueError;
+    assertStringIncludes(error.message, "Invalid key 'extensions'");
+    assertStringIncludes(
+      error.message,
+      "has no equivalent and should be removed",
+    );
+  });
+  withTempDir((base) => {
+    // A genuine typo gets no invented mapping. Pointing an unknown key at the
+    // nearest retired name would send the user to a fix that does not apply.
+    writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt:\n  zzz: 1\n");
+    const error = assertThrows(
+      () => Config.load(base),
+      ValueError,
+    ) as ValueError;
+    assertStringIncludes(error.message, "Invalid key 'zzz'");
+    assertEquals(error.message.includes("is now"), false);
+    assertEquals(error.message.includes("has no equivalent"), false);
+  });
+});
+
 Deno.test("fmt accepts only an inline options mapping", () => {
   withTempDir((base) => {
     writeFile(
