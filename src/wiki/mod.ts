@@ -42,13 +42,18 @@ export {
   isRecord,
   linkedMarkdownMessage,
   parseFrontmatter,
-  pyStrip,
   readTextTolerant,
   splitDocumentBody,
   splitFrontmatterBody,
   splitLines,
 } from "./parser.ts";
-export { pyRepr, pyReprString, pyStr, pyTypeName } from "./pyrepr.ts";
+// The `py*` helpers in `pyrepr.ts` / `pystr.ts` / `sequence_matcher.ts`, plus
+// `pyStrip` from `parser.ts`, are deliberately NOT re-exported here. They
+// reproduce Python's exact stringification and whitespace handling so parity
+// output matches the oracle; they are an implementation detail of that goal,
+// not a domain concept. Exporting them would make `pyRepr` et al. published
+// API, and JSR treats every export as a semver commitment. Import them from
+// their own module if you are extending the parity layer.
 export {
   getLogger,
   type Logger,
@@ -272,14 +277,6 @@ export {
   runLint,
   titleCaseWordsAfterFirst,
 } from "./audit.ts";
-export {
-  pyCasefold,
-  pyIsDigit,
-  pyIsLower,
-  pyIsUpper,
-  pySplitWhitespace,
-  pyStripChars,
-} from "./pystr.ts";
 export {
   cacheDir,
   canonicalJson,

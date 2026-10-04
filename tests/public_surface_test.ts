@@ -43,6 +43,73 @@ function removeRoot(root: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// The published surface
+// ---------------------------------------------------------------------------
+
+/**
+ * The Python-parity helpers must not be reachable from the package entrypoint.
+ *
+ * `deno.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
+ * entrypoint as a semver commitment. The `py*` family exists only to reproduce
+ * Python's exact stringification and whitespace handling so parity output
+ * matches the oracle -- an implementation detail of the migration, not a domain
+ * concept a consumer should depend on. Removing them later would then be a
+ * breaking change to a released package.
+ *
+ * This pins the intent: if someone re-exports one "for convenience", the parity
+ * layer leaks back onto the public API and this test fails.
+ */
+const PARITY_INTERNALS: readonly string[] = [
+  "pyRepr",
+  "pyReprString",
+  "pyStr",
+  "pyTypeName",
+  "pyCasefold",
+  "pyIsDigit",
+  "pyIsLower",
+  "pyIsUpper",
+  "pySplitWhitespace",
+  "pyStripChars",
+  "pyStrip",
+];
+
+Deno.test("the entrypoint does not export Python-parity internals", () => {
+  const exported = Object.keys(wiki);
+  for (const name of PARITY_INTERNALS) {
+    assert(
+      !exported.includes(name),
+      `'${name}' is exported from mod.ts. Parity helpers are internal; ` +
+        "exporting them commits the package to them under JSR semver.",
+    );
+  }
+});
+
+Deno.test("the entrypoint still exports the documented domain API", () => {
+  const exported = Object.keys(wiki);
+  // A representative sample, not an exhaustive lock: the point is that the
+  // entrypoint keeps its real surface after the parity removals.
+  for (
+    const name of [
+      "Wiki",
+      "Config",
+      "VERSION",
+      "RdfGraph",
+      "runCheck",
+      "runLint",
+      "scaffoldWiki",
+      "parseRdf",
+      "serializeRdf",
+      "formatMarkdown",
+    ]
+  ) {
+    assert(
+      exported.includes(name),
+      `'${name}' should still be exported from mod.ts.`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
 // The CLI and the config file must agree on which link styles are legal
 // ---------------------------------------------------------------------------
 
