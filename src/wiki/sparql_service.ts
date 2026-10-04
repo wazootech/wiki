@@ -1,4 +1,5 @@
 import { detectQueryForm, isSparqlUpdate } from "./format.ts";
+import { errorText } from "./errors.ts";
 import { literal, namedNode, RdfGraph, serializeRdf } from "./rdf.ts";
 import type { Wiki } from "./wiki.ts";
 
@@ -271,7 +272,7 @@ export function createSparqlServiceHandler(
     } catch (error) {
       return errorResponse(
         400,
-        error instanceof Error ? error.message : String(error),
+        errorText(error),
       );
     }
     if (!new Set(["SELECT", "ASK", "CONSTRUCT", "DESCRIBE"]).has(form)) {
@@ -321,9 +322,7 @@ export function createSparqlServiceHandler(
     } catch (error) {
       return errorResponse(
         422,
-        `Query Execution Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `Query Execution Error: ${errorText(error)}`,
       );
     }
   };

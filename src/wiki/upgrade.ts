@@ -1,4 +1,4 @@
-import { UpgradeError } from "./errors.ts";
+import { errorText, UpgradeError } from "./errors.ts";
 import { basename, dirname, join, normalize } from "@std/path";
 
 import { VERSION } from "./version.ts";
@@ -303,7 +303,7 @@ const defaultDependencies: UpgradeDependencies = {
 };
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  return errorText(error);
 }
 
 function updateUnavailableMessage(

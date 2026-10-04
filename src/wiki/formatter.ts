@@ -37,7 +37,7 @@
  */
 
 import { basename } from "@std/path";
-import { ValueError } from "./errors.ts";
+import { errorText, ValueError } from "./errors.ts";
 import { createFromBuffer, type Formatter } from "@dprint/formatter";
 import * as markdownPlugin from "@dprint/markdown";
 import * as jsonPlugin from "@dprint/json";
@@ -338,7 +338,7 @@ export function formatMarkdownText(
     validateFmtOptions(options as Record<string, unknown>, "fmt");
   } catch (error) {
     throw new ValueError(
-      error instanceof Error ? error.message : String(error),
+      errorText(error),
     );
   }
   const resolved = { ...DEFAULT_FMT_OPTIONS, ...options };
@@ -358,7 +358,7 @@ export function formatMarkdownText(
   } catch (error) {
     throw new ValueError(
       `dprint-plugin-markdown failed on ${basename(filePath)}: ${
-        error instanceof Error ? error.message : String(error)
+        errorText(error)
       }`,
     );
   }

@@ -39,3 +39,16 @@ export class ValueError extends Error {
     this.name = "ValueError";
   }
 }
+
+/**
+ * Python's `str(exception)` for a caught value.
+ *
+ * A `WikiError` stringifies to its message in both languages, but JavaScript's
+ * `String(new Error("boom"))` is `"Error: boom"` where Python's is `"boom"` —
+ * and several failure messages are compared against the oracle, so the naive
+ * `String(error)` is wrong wherever the text is load-bearing.
+ */
+export function errorText(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

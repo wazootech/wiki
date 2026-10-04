@@ -1,4 +1,5 @@
 import { relativeWithin } from "./fspath.ts";
+import { errorText } from "./errors.ts";
 import { basename } from "@std/path";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import { readTextTolerant } from "./parser.ts";
@@ -137,9 +138,7 @@ export async function renderMarkdownFiles(
         }
       } catch (error) {
         renderErrors.push(
-          `Error rendering query in ${basename(file)}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          `Error rendering query in ${basename(file)}: ${errorText(error)}`,
         );
         errorCount += 1;
         parts.push(match[0]);

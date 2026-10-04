@@ -1,4 +1,5 @@
 import { dirname, join, resolve } from "@std/path";
+import { errorText } from "./errors.ts";
 import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
 import { ValueError } from "./errors.ts";
 import type { ScaffoldResult } from "./schemas/reports.ts";
@@ -554,7 +555,7 @@ function removeIfPresent(path: string, recursive = false): string | null {
     return null;
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) return null;
-    return `${path}: ${error instanceof Error ? error.message : String(error)}`;
+    return `${path}: ${errorText(error)}`;
   }
 }
 
@@ -658,7 +659,7 @@ export function scaffoldWiki(
         }
         return failure(
           `git init failed: ${
-            error instanceof Error ? error.message : String(error)
+            errorText(error)
           }`,
         );
       }
@@ -680,7 +681,7 @@ export function scaffoldWiki(
   } catch (error) {
     return failure(
       `Failed to scaffold wiki: ${
-        error instanceof Error ? error.message : String(error)
+        errorText(error)
       }`,
     );
   }
@@ -723,7 +724,7 @@ function cloneTemplateRepository(destination: string): TemplateCloneResult {
   } catch (error) {
     return {
       code: 1,
-      stderr: error instanceof Error ? error.message : String(error),
+      stderr: errorText(error),
     };
   }
 }
@@ -901,7 +902,7 @@ export function fetchTemplate(
   } catch (error) {
     return templateFailure(
       `Failed to initialize from template '${templateName}': ${
-        error instanceof Error ? error.message : String(error)
+        errorText(error)
       }`,
       created,
     );
@@ -911,7 +912,7 @@ export function fetchTemplate(
     } catch (error) {
       console.error(
         `Warning: could not remove template checkout ${tempRoot}: ${
-          error instanceof Error ? error.message : String(error)
+          errorText(error)
         }`,
       );
     }

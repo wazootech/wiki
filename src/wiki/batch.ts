@@ -31,7 +31,7 @@
  */
 
 import { basename } from "@std/path";
-import { ValueError } from "./errors.ts";
+import { errorText } from "./errors.ts";
 import type { Config } from "./config.ts";
 
 import { formatMarkdown } from "./fmt_util.ts";
@@ -150,12 +150,4 @@ export class DocumentBatch {
       verbose_lines: verboseLines,
     };
   }
-}
-
-/** Python's `str(exception)` for the formatter's failure message. */
-function errorText(error: unknown): string {
-  if (error instanceof ValueError || error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
 }

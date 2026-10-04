@@ -1,6 +1,7 @@
 /** External Git source lifecycle and lockfile resolution. */
 
 import { basename, extname, join, resolve as resolvePath } from "@std/path";
+import { errorText } from "./errors.ts";
 import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
@@ -788,9 +789,7 @@ export function resolve(config: Config): string[] {
       resolved.push(resolvedSourcePath({ name, path: locked.path }, repoDir));
     } catch (error) {
       logger.warning(
-        `Source '${name}': ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `Source '${name}': ${errorText(error)}`,
       );
     }
   }

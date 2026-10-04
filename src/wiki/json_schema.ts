@@ -54,6 +54,7 @@ import {
   type ErrorObject,
   type ValidateFunction,
 } from "ajv/dist/2020.js";
+import { errorText } from "./errors.ts";
 import { pyRepr } from "./pyrepr.ts";
 
 /** A validation failure, shaped the way `jsonschema.ValidationError` exposes one. */
@@ -125,7 +126,7 @@ export class JsonSchemaValidator {
       this.#validate = ajv.compile(schema as object);
     } catch (error) {
       throw new JsonSchemaCompileError(
-        error instanceof Error ? error.message : String(error),
+        errorText(error),
       );
     }
   }

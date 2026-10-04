@@ -23,6 +23,7 @@
  */
 
 import { basename, extname, isAbsolute, join } from "@std/path";
+import { errorText } from "./errors.ts";
 import { isFile, pathExists, walkTree } from "./fspath.ts";
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
@@ -510,9 +511,7 @@ export class Wiki {
               }
             } catch (error) {
               console.error(
-                `Error: ${
-                  error instanceof Error ? error.message : String(error)
-                }`,
+                `Error: ${errorText(error)}`,
               );
             }
             snapshot = this.watchSnapshot();

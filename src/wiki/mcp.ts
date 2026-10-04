@@ -1,4 +1,5 @@
 import { resolve } from "@std/path";
+import { errorText } from "./errors.ts";
 import { relativeWithin } from "./fspath.ts";
 import { detectQueryForm, normalizeQueryFormat } from "./format.ts";
 import { graphStats } from "./graph.ts";
@@ -465,7 +466,7 @@ function toolError(error: unknown): Record<string, unknown> {
   return {
     content: [{
       type: "text",
-      text: error instanceof Error ? error.message : String(error),
+      text: errorText(error),
     }],
     isError: true,
   };
@@ -525,7 +526,7 @@ export class WikiMcpServer {
       return protocolError(
         id,
         -32603,
-        error instanceof Error ? error.message : String(error),
+        errorText(error),
       );
     }
   }

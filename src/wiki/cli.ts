@@ -26,7 +26,7 @@
  */
 import { pathExists } from "./fspath.ts";
 import { basename } from "@std/path";
-import { ValueError } from "./errors.ts";
+import { errorText, ValueError } from "./errors.ts";
 import { exitAuditReport } from "./cli_output.ts";
 
 import { VERSION } from "./version.ts";
@@ -403,7 +403,7 @@ async function parseQueryCommandArgs(
     };
   } catch (error) {
     return usageError(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
   }
 }
@@ -616,7 +616,7 @@ async function parseExportCommandArgs(
     return { files, output, format: normalizeExportFormat(format), mode };
   } catch (error) {
     return usageError(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
   }
 }
@@ -649,7 +649,7 @@ async function runExportCommand(
       await Deno.writeTextFile(parsed.output, result.output);
     } catch (error) {
       console.error(
-        `Error: ${error instanceof Error ? error.message : String(error)}`,
+        `Error: ${errorText(error)}`,
       );
       return EXIT_FAILURE;
     }
@@ -845,7 +845,7 @@ async function runQueryCommand(
   } catch (error) {
     console.error(
       `Query Execution Error: ${
-        error instanceof Error ? error.message : String(error)
+        errorText(error)
       }`,
     );
     return EXIT_FAILURE;
@@ -1278,7 +1278,7 @@ function runInstallCommand(wiki: Wiki, url: string | null): number {
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1310,7 +1310,7 @@ function runUpdateCommand(wiki: Wiki, parsed: ParsedUpdateCommand): number {
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1323,7 +1323,7 @@ function runRemoveCommand(wiki: Wiki, name: string): number {
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1372,7 +1372,7 @@ async function runInitCommand(options: WikiInitOptions): Promise<number> {
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1395,7 +1395,7 @@ async function runBuildCommand(
     });
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1433,7 +1433,7 @@ async function runServeCommand(
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }
@@ -1449,7 +1449,7 @@ async function runMcpCommand(
     return EXIT_OK;
   } catch (error) {
     console.error(
-      `Error: ${error instanceof Error ? error.message : String(error)}`,
+      `Error: ${errorText(error)}`,
     );
     return EXIT_FAILURE;
   }

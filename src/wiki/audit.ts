@@ -36,7 +36,7 @@
  */
 
 import { basename, join, resolve } from "@std/path";
-import { ValueError } from "./errors.ts";
+import { errorText, ValueError } from "./errors.ts";
 import { buildAssetManifest } from "./assets.ts";
 import type { Config } from "./config.ts";
 import {
@@ -670,16 +670,4 @@ export function mergeResults(
   second: AuditReport,
 ): AuditReport {
   return first.merge(second);
-}
-
-/**
- * Python's `str(exception)` for the SHACL error message.
- *
- * A `WikiError` stringifies to its message in both languages, but JavaScript's
- * `String(new Error("boom"))` is `"Error: boom"` where Python's is `"boom"` —
- * and a `shacl_system_error` message is compared against the oracle.
- */
-function errorText(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
 }
