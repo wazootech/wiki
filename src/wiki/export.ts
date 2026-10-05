@@ -61,6 +61,7 @@ const FORMAT_ALIASES: Readonly<Record<string, ExportFormat>> = {
   "application/n-quads": "nquads",
   "application/n-triples": "nt",
   "application/rdf+xml": "xml",
+  "rdf/xml": "xml",
   "application/trig": "trig",
   "application/x-turtle": "turtle",
   "jsonld": "json-ld",
