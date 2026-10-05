@@ -56,29 +56,39 @@ const RAW_FORMATS = new Set<ExportFormat>([
  * error, which describes the wrong problem. Left unmapped, it fails as an
  * unknown export format, which is actionable.
  */
-const FORMAT_ALIASES: Readonly<Record<string, ExportFormat>> = {
-  "application/ld+json": "json-ld",
-  "application/n-quads": "nquads",
-  "application/n-triples": "nt",
-  "application/rdf+xml": "xml",
-  "rdf/xml": "xml",
-  "application/trig": "trig",
-  "application/x-turtle": "turtle",
-  "jsonld": "json-ld",
-  "n-quads": "nquads",
-  "n-triples": "nt",
-  "nq": "nquads",
-  "ntriples": "nt",
-  "rdf": "xml",
-  "text/n3": "n3",
-  "text/turtle": "turtle",
-  "tt": "turtle",
-  "ttl": "turtle",
-};
+const FORMAT_ALIASES: Readonly<Record<string, ExportFormat>> = Object.assign(
+  // A null prototype, so a format literally named `constructor` or `toString`
+  // resolves to nothing instead of inheriting `Object.prototype` members. The
+  // lookup below is fed a raw user-supplied string, so the inherited members
+  // were reachable as bogus exports.
+  Object.create(null) as Record<string, ExportFormat>,
+  {
+    "application/ld+json": "json-ld",
+    "application/n-quads": "nquads",
+    "application/n-triples": "nt",
+    "application/rdf+xml": "xml",
+    "rdf+xml": "xml",
+    "rdf/xml": "xml",
+    "application/trig": "trig",
+    "application/x-turtle": "turtle",
+    "jsonld": "json-ld",
+    "n-quads": "nquads",
+    "n-triples": "nt",
+    "nq": "nquads",
+    "ntriples": "nt",
+    "rdf": "xml",
+    "text/n3": "n3",
+    "text/turtle": "turtle",
+    "tt": "turtle",
+    "ttl": "turtle",
+  } as const,
+);
 
 export function normalizeExportFormat(format: string): ExportFormat {
   const raw = format.trim().toLowerCase();
-  const canonical = FORMAT_ALIASES[raw] ?? raw;
+  const canonical = Object.hasOwn(FORMAT_ALIASES, raw)
+    ? FORMAT_ALIASES[raw]!
+    : raw;
   if (
     canonical === "dict" || EXPORT_FORMATS.includes(canonical as ExportFormat)
   ) {

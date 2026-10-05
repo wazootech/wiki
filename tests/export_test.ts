@@ -36,9 +36,24 @@ function cleanup(root: string): void {
 Deno.test("export normalizes format aliases and defaults unknown API modes to expanded", () => {
   assertEquals(normalizeExportFormat("TURTLE"), "turtle");
   assertEquals(normalizeExportFormat("application/rdf+xml"), "xml");
+  assertEquals(normalizeExportFormat("rdf+xml"), "xml");
+  assertEquals(normalizeExportFormat("rdf/xml"), "xml");
   assertEquals(normalizeExportFormat("text/n3"), "n3");
   assertEquals(normalizeExportMode("COMPACTED"), "compacted");
   assertEquals(normalizeExportMode("unknown"), "expanded");
+});
+
+Deno.test("export rejects format names inherited from Object.prototype", () => {
+  // The alias table is keyed by a raw user-supplied string. With a normal
+  // object literal, `constructor` and `toString` resolved to inherited members
+  // and were reported as if they were valid formats.
+  for (const name of ["constructor", "toString", "valueOf", "hasOwnProperty"]) {
+    assertThrows(
+      () => normalizeExportFormat(name),
+      ValueError,
+      "Invalid export format",
+    );
+  }
 });
 
 Deno.test("export does not treat SPARQL results XML as RDF/XML", () => {
