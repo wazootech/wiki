@@ -20,7 +20,7 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 | Label               | Meaning                                                                                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Schema optional** | Key or block may be omitted; the schema applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                               |
+| **Schema optional** | Key or block may be omitted; the schema applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                             |
 | **Init**            | Written by `wiki init` ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)); omitting an Init key is the same as the schema default. |
 | **Recommended**     | Not enforced by schema, but you typically set it for a real wiki (for example `graph.context.wiki`, `wiki.filename_pattern`, `site.layout`).                            |
 | **Always on**       | Behavior not gated by yaml severities (route safety, URL collisions, built-in RDF prefixes).                                                                            |
