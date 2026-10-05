@@ -10,7 +10,7 @@ The CLI loads **Config** from `wiki.yml`, `wiki.yaml`, or `wiki.json` in the wor
 
 The in-memory **Config** model uses the same nested blocks as the file (`wiki`, `graph`, `site`, `link`, `check`, `lint`, `fmt`, `sparql_service`). There is no separate flat runtime shape. `Config.load()` validates the file, injects `config_root` (the directory containing the config file), and resolves relative paths under `wiki` and `site`. Library and test code can construct configs with `Config(wiki={...}, config_root=path)` or `Config.for_root(path, wiki={...})`.
 
-Config files are validated strictly through a Pydantic schema (`extra='forbid'` on every block). Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored.
+Config files are validated strictly by the TypeScript schema in [`src/wiki/schemas/wiki_config.ts`](https://github.com/wazootech/wiki/blob/main/src/wiki/schemas/wiki_config.ts), which forbids extra keys on every block. Unknown keys, removed aliases, wrong nested keys under `check`, `lint`, or `sparql_service`, invalid syntax, or a non-mapping top level all fail immediately instead of being ignored. An unknown key is reported by name against the accepted surface; the engine does not guess which key you meant.
 
 JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-LD compatible).
 
@@ -20,7 +20,7 @@ JSON configs may use `graph.context` or `graph.@context` for prefix maps (JSON-L
 
 | Label               | Meaning                                                                                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Schema optional** | Key or block may be omitted; Pydantic applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                               |
+| **Schema optional** | Key or block may be omitted; the schema applies a default. No yaml key is strictly required for `Config.load()` to succeed.                                               |
 | **Init**            | Written by `wiki init` ([`wiki.yml`](https://github.com/wazootech/wiki/blob/main/src/wiki/templates/wiki.yml)); omitting an Init key is the same as the schema default. |
 | **Recommended**     | Not enforced by schema, but you typically set it for a real wiki (for example `graph.context.wiki`, `wiki.filename_pattern`, `site.layout`).                            |
 | **Always on**       | Behavior not gated by yaml severities (route safety, URL collisions, built-in RDF prefixes).                                                                            |

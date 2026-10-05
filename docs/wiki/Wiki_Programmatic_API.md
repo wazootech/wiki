@@ -6,7 +6,7 @@ description: Stable Deno/TypeScript and npm entry points for validating, buildin
 
 # Wiki Programmatic API
 
-The Deno/TypeScript engine is the single Wiki implementation. Use its in-process API for Deno applications, or the compatible npm SDK from Node.js. The `wiki` CLI remains the primary user surface.
+The Deno/TypeScript engine is the single Wiki implementation. Use its in-process API for Deno and TypeScript applications. The npm package exposes a runtime/bootstrap API that locates the Deno runtime and builds the `wiki` command; it does not export a `Wiki` class. The `wiki` CLI remains the primary user surface.
 
 See [Design Philosophies](Design_Philosophies.md) for the CLI/library boundary. RDF/XML input remains supported; RDF/XML output is explicitly deferred from the Deno cutover.
 
