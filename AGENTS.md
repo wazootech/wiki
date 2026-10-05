@@ -87,7 +87,7 @@ npm run test:npm
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
-The Deno `Wiki` API is the in-process library surface; the npm SDK is the stable Node.js API and CLI binding. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are under `tests/npm/`.
+The Deno `Wiki` API is the in-process library surface; the npm package exposes the runtime/bootstrap API (src/runtime.ts) that bundles and runs the Deno-based CLI; the previous class-based Node.js SDK was removed. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are under `tests/npm/`.
 
 ### Deploy configuration
 
