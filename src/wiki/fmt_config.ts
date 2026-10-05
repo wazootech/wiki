@@ -19,26 +19,6 @@ const FMT_OPTION_KEYS = new Set(["textWrap", "lineWidth", "newLineKind"]);
 const TEXT_WRAP_VALUES = new Set(["always", "maintain", "never"]);
 const NEW_LINE_KIND_VALUES = new Set(["auto", "crlf", "lf"]);
 
-/**
- * Keys the retired Python/mdformat engine accepted, and what replaced them.
- *
- * Every vault written before the cutover can carry these, and the cutover is
- * the first time they are read, so the rejection is where the migration has to
- * be explained. Naming the replacement turns a dead end into a one-line edit.
- *
- * A key mapped to `null` has no equivalent and must simply be dropped;
- * `extensions` restricted formatting to a file list, which dprint applies to
- * the whole tree.
- */
-const RETIRED_FMT_KEYS: Readonly<Record<string, string | null>> = {
-  wrap: "textWrap",
-  end_of_line: "newLineKind",
-  extensions: null,
-  number: "lineWidth",
-  number_: "lineWidth",
-  mdformat: null,
-};
-
 export class InvalidFmtConfigError extends Error {
   constructor(message: string) {
     super(message);
@@ -66,20 +46,12 @@ export function validateFmtOptions(
     const named = listed.length === 1
       ? listed[0]!
       : `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}`;
-    // Only retired keys carry a replacement. An unrecognised key is a typo, and
-    // pointing it at the nearest retired name would invent a false mapping.
-    const hints = unknown
-      .filter((key) => Object.hasOwn(RETIRED_FMT_KEYS, key))
-      .map((key) => {
-        const replacement = RETIRED_FMT_KEYS[key] as string | null;
-        return replacement === null
-          ? `'${key}' has no equivalent and should be removed`
-          : `'${key}' is now '${replacement}'`;
-      });
+    // The accepted surface is named and every unknown key is listed at once.
+    // A per-key rename table is deliberately absent: AGENTS.md forbids rename
+    // hints, and the CHANGELOG's Migration section documents the key moves.
     throw new InvalidFmtConfigError(
       `Invalid key ${named} in ${label}. Keys must be one of ` +
-        "{'textWrap', 'lineWidth', 'newLineKind'}" +
-        (hints.length > 0 ? `. ${hints.join("; ")}.` : "."),
+        "{'textWrap', 'lineWidth', 'newLineKind'}.",
     );
   }
 

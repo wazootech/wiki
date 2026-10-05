@@ -554,11 +554,12 @@ Deno.test("inline fmt options are validated against Deno/dprint's surface", () =
   });
 });
 
-Deno.test("retired mdformat fmt keys name their replacement", () => {
-  // Every pre-cutover vault can carry these, and the cutover is the first time
-  // they are read, so this error is where the migration has to be explained.
-  // A vault with both keys is the common case: reporting only the first one
-  // made the user edit, re-run, and discover the second.
+Deno.test("unknown fmt keys are listed together, without rename hints", () => {
+  // A vault carrying both retired keys is the common case, and reporting only
+  // the first one made the user edit, re-run, and discover the second.
+  //
+  // There are deliberately no per-key rename hints: AGENTS.md forbids them, and
+  // the CHANGELOG's Migration section documents the key moves instead.
   withTempDir((base) => {
     writeFile(
       base,
@@ -572,11 +573,11 @@ Deno.test("retired mdformat fmt keys name their replacement", () => {
     const message = error.message;
     // Both keys in one report.
     assertStringIncludes(message, "'wrap' and 'end_of_line'");
-    // Each maps to its Deno equivalent.
-    assertStringIncludes(message, "'wrap' is now 'textWrap'");
-    assertStringIncludes(message, "'end_of_line' is now 'newLineKind'");
-    // And the accepted surface is still named.
+    // And the accepted surface is named.
     assertStringIncludes(message, "{'textWrap', 'lineWidth', 'newLineKind'}");
+    // No per-key mapping is offered for either key.
+    assertEquals(message.includes("is now"), false);
+    assertEquals(message.includes("has no equivalent"), false);
   });
   withTempDir((base) => {
     writeFile(
@@ -591,12 +592,12 @@ Deno.test("retired mdformat fmt keys name their replacement", () => {
     assertStringIncludes(error.message, "Invalid key 'extensions'");
     assertStringIncludes(
       error.message,
-      "has no equivalent and should be removed",
+      "{'textWrap', 'lineWidth', 'newLineKind'}",
     );
   });
   withTempDir((base) => {
-    // A genuine typo gets no invented mapping. Pointing an unknown key at the
-    // nearest retired name would send the user to a fix that does not apply.
+    // A genuine typo is reported the same way: named, and never mapped onto a
+    // nearest retired key that would send the user to a fix that does not apply.
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt:\n  zzz: 1\n");
     const error = assertThrows(
       () => Config.load(base),
