@@ -16,7 +16,7 @@ export class WikiCommandError extends Error {
   }
 }
 
-/** Thrown when the wazootech-wiki Python virtualenv cannot be set up or found. */
+/** Thrown when the packaged Deno runtime is incomplete. */
 export class WikiSetupError extends Error {
   constructor(message: string) {
     super(message);

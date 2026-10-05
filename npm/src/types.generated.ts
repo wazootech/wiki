@@ -1,8 +1,6 @@
 /**
  * GENERATED FILE — do not hand-edit.
- * Sources: scripts/export_cli_schemas.py (src/wiki/schemas/cli.py COMMAND_MODELS,
- * model_json_schema(by_alias=True)) compiled by json-schema-to-typescript.
- * Regenerate via: npm run gen:cli-types
+ * These declarations are the stable generated npm CLI option contract.
  */
 
 // Choice unions — named mirrors of the schema enums (public API aliases).
@@ -393,7 +391,7 @@ export interface UpgradeOptions {
    */
   yes?: boolean;
   /**
-   * Show pip install output.
+   * Show installation output.
    */
   verbose?: boolean;
 }

@@ -1,7 +1,7 @@
 /**
  * TypeScript SDK for the wazootech-wiki CLI.
  *
- * Each method shells out to the Python CLI and returns typed results.
+ * Each method runs the packaged Deno CLI and returns typed results.
  * Options use camelCase names mapped to the corresponding CLI flags.
  *
  * ```ts
@@ -132,7 +132,7 @@ export class Wiki {
     return args;
   }
 
-  /** Run arbitrary CLI arguments against the wiki Python binary.
+  /** Run arbitrary CLI arguments against the Wiki CLI.
    *
    * @param args - Full argument list.
    * @param options - Run options (cwd, env, timeout, stdin).

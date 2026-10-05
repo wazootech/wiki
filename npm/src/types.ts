@@ -14,9 +14,9 @@ export interface WikiLoadOptions {
   config?: string;
   /** Override ``wiki.input`` from the config file. */
   input?: readonly string[];
-  /** Working directory for the wiki CLI subprocess. */
+  /** Working directory for the wiki CLI process. */
   cwd?: string;
-  /** Environment variables for the wiki CLI subprocess. */
+  /** Environment variables for the wiki CLI process. */
   env?: NodeJS.ProcessEnv;
 }
 
@@ -51,17 +51,9 @@ export interface WikiCommandResult {
 }
 
 // ── Generated CLI option bags and choice unions ────────────────────────────
-// The command option bags and the choice-union aliases (UrlStyle, LinkStyle,
-// QueryFormat, McpMode, ExportFormat, ExportMode) are generated from the
-// Pydantic COMMAND_MODELS in src/wiki/schemas/cli.py
-// (scripts/export_cli_schemas.py + scripts/generate_cli_types.mjs via
-// `npm run gen:cli-types`); the drift test in npm/test-cli-drift.js fails when
-// the committed generated file falls out of sync with the models. The bags
-// below that merge SDK-only fields (e.g. parseJson, cwd/env) onto their
-// pure-CLI generated shape re-declare with `extends`; everything else
-// re-exports the generated declaration unchanged. Only the SDK-runtime layer
-// below (load/run options, results, subprocess types) is hand-authored — it
-// has no CLI counterpart and cannot be generated from COMMAND_MODELS.
+// The option bags and choice unions define the stable npm CLI contract;
+// SDK-only fields are added below, and runtime options/results are
+// hand-authored.
 export type {
   BuildOptions,
   CheckOptions,
