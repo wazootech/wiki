@@ -9,6 +9,7 @@ import {
   relativeWithin,
   sortedTreePaths,
   sortPaths,
+  walkTree,
 } from "../src/wiki/fspath.ts";
 import { ValueError } from "../src/wiki/errors.ts";
 import { symlinksUnavailable } from "./support/symlink_support.ts";
@@ -64,4 +65,32 @@ Deno.test("path sorting uses string order and traversal stays in-tree", () => {
   } finally {
     Deno.removeSync(root, { recursive: true });
   }
+});
+
+Deno.test({
+  name: "walkTree never follows or lists symlinks",
+  ignore: symlinksUnavailable(),
+  fn: () => {
+    const root = Deno.makeTempDirSync({ prefix: "wiki-fspath-walklink-" });
+    const outside = Deno.makeTempDirSync({ prefix: "wiki-fspath-walkout-" });
+    try {
+      Deno.writeTextFileSync(join(root, "real.md"), "# Real\n");
+      Deno.mkdirSync(join(root, "realdir"));
+      Deno.writeTextFileSync(join(root, "realdir", "inner.md"), "# Inner\n");
+      Deno.writeTextFileSync(join(outside, "secret.md"), "# Secret\n");
+      // A symlink to a file outside the tree, one to a directory outside it,
+      // and one looping back inside: none may be followed or listed, so a
+      // symlinked wiki input can neither leak outside files into the build
+      // nor let `fmt`/`render` write through the link.
+      Deno.symlinkSync(join(outside, "secret.md"), join(root, "evil.md"));
+      Deno.symlinkSync(outside, join(root, "evildir"));
+      Deno.symlinkSync(join(root, "realdir"), join(root, "loop"));
+
+      const rel = walkTree(root).map((path) => relative(root, path)).sort();
+      assertEquals(rel, ["real.md", "realdir", join("realdir", "inner.md")]);
+    } finally {
+      Deno.removeSync(root, { recursive: true });
+      Deno.removeSync(outside, { recursive: true });
+    }
+  },
 });

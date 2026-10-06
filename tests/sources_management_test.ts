@@ -1,5 +1,6 @@
 import { dirname, join } from "@std/path";
 import { pathExists, readText } from "../src/wiki/fspath.ts";
+import { symlinksUnavailable } from "./support/symlink_support.ts";
 import {
   assert,
   assertEquals,
@@ -319,5 +320,92 @@ Deno.test("failed clone retains Git stderr in the install error", () => {
     // exist". Assert on the path being echoed back and on a fatal marker,
     // which hold for both, rather than on one platform's phrasing.
     assertStringIncludes(error.message, "does-not-exist");
+  });
+});
+
+Deno.test("install rejects a transitive source path escaping its clone", () => {
+  withTempDir((root) => {
+    // The `path` of a transitive source comes from the *cloned remote repo's*
+    // config, so `../../..` would escape the clone dir into the victim's
+    // `.wiki/sources` cache — and `resolve()` would then serve it as a wiki
+    // input. The install must fail closed instead.
+    const evil = initRepo(root, "evil", { "evil.md": "# Evil\n" });
+    const parent = initRepo(root, "parent", {
+      "wiki.yml":
+        `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evil}\n    path: ../../..\n`,
+      "parent.md": "# Parent\n",
+    });
+    const wikiRoot = join(root, "wiki-root");
+    Deno.mkdirSync(wikiRoot);
+    const config = rootConfig(wikiRoot, [{ name: "parent", url: parent }]);
+
+    const error = assertThrows(() => install(config), Error);
+    assertStringIncludes(error.message, "escapes the cloned repository");
+  });
+});
+
+Deno.test({
+  name:
+    "install rejects a transitive source path via a symlink escaping its clone",
+  ignore: symlinksUnavailable(),
+  fn: () => {
+    withTempDir((root) => {
+      // A symlink inside the clone pointing outside it is the same escape
+      // through a different mechanism: the lexical `join` stays in-tree,
+      // but the resolved path does not.
+      const evilDir = join(root, "evil");
+      Deno.mkdirSync(evilDir, { recursive: true });
+      git(["init", "--initial-branch=main"], evilDir);
+      Deno.writeTextFileSync(join(evilDir, "evil.md"), "# Evil\n");
+      Deno.symlinkSync("..", join(evilDir, "link"));
+      git(["add", "."], evilDir);
+      git(
+        [
+          "-c",
+          "user.name=Wiki Tests",
+          "-c",
+          "user.email=wiki-tests@example.invalid",
+          "commit",
+          "-m",
+          "initial",
+        ],
+        evilDir,
+      );
+      const parent = initRepo(root, "parent", {
+        "wiki.yml":
+          `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evilDir}\n    path: link\n`,
+        "parent.md": "# Parent\n",
+      });
+      const wikiRoot = join(root, "wiki-root");
+      Deno.mkdirSync(wikiRoot);
+      const config = rootConfig(wikiRoot, [{ name: "parent", url: parent }]);
+
+      const error = assertThrows(() => install(config), Error);
+      assertStringIncludes(error.message, "escapes the cloned repository");
+    });
+  },
+});
+
+Deno.test("install accepts a transitive source rooted at its clone", () => {
+  withTempDir((root) => {
+    // The fix must not break the legitimate cases: no `path` (the repo root
+    // itself) and `path: "."` both select the clone dir.
+    const dep = initRepo(root, "dependency", { "dep.md": "# Dependency\n" });
+    for (const path of [null, "."]) {
+      const parent = initRepo(root, `parent-${path ?? "root"}`, {
+        "wiki.yml":
+          `wiki:\n  input: wiki\nsources:\n  - name: dep\n    type: git\n    url: ${dep}\n` +
+          (path === null ? "" : `    path: ${path}\n`),
+        "parent.md": "# Parent\n",
+      });
+      const wikiRoot = join(root, `wiki-root-${path ?? "root"}`);
+      Deno.mkdirSync(wikiRoot);
+      const config = rootConfig(wikiRoot, [{
+        name: "parent",
+        url: parent,
+      }]);
+      const lockfile = install(config);
+      assertEquals([...lockfile.sources.keys()], ["parent", "dep"]);
+    }
   });
 });

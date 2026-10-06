@@ -9,6 +9,7 @@ import { isSeq, parseDocument } from "yaml";
 import { type Config, CONFIG_FILENAMES } from "./config.ts";
 
 import { getLogger } from "./logging.ts";
+import { pathWithinRoot } from "./paths.ts";
 import { readTextTolerant } from "./parser.ts";
 import { pyRepr } from "./pyrepr.ts";
 import {
@@ -430,7 +431,38 @@ function resolvedSourcePath(
       } does not exist`,
     );
   }
-  return resolvePath(base);
+  const resolved = resolvePath(base);
+  // `path` comes from a *cloned remote repo's* config, so `../../..` — or a
+  // symlink inside the clone pointing outside it — would escape the clone
+  // dir into the victim's wiki inputs; reject it outright.
+  if (!sourcePathWithinRepo(resolved, repoDir)) {
+    throw new Error(
+      `Source ${pyRepr(source.name)}: path ${
+        pyRepr(source.path ?? null)
+      } escapes the cloned repository`,
+    );
+  }
+  return resolved;
+}
+
+/**
+ * `true` when `resolved` is the repository root itself or a path inside it,
+ * following symlinks. The root itself — selected by omitting `path`, or with
+ * one that normalises to it such as `"."` — is allowed: `pathWithinRoot` is
+ * strict and rejects the root, so the equality case is compared on
+ * realpaths. A dangling symlink counts as escaping: there is nothing inside
+ * the repo it can resolve to.
+ */
+function sourcePathWithinRepo(resolved: string, repoDir: string): boolean {
+  let realRoot: string;
+  let realResolved: string;
+  try {
+    realRoot = Deno.realPathSync(repoDir);
+    realResolved = Deno.realPathSync(resolved);
+  } catch {
+    return false;
+  }
+  return realResolved === realRoot || pathWithinRoot(realResolved, realRoot);
 }
 
 function discoverSources(repoDir: string): SourceConfig[] {

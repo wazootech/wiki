@@ -26,6 +26,7 @@ import {
 import { basename, extname, isAbsolute, join, resolve } from "@std/path";
 import { ValueError } from "./errors.ts";
 import { DOCUMENT_EXTENSIONS } from "./parser.ts";
+import { PY_WHITESPACE } from "./pystr.ts";
 import type { Config } from "./config.ts";
 
 import { quote } from "./urlquote.ts";
@@ -66,13 +67,8 @@ export function pathWithinRoot(path: string, root: string): boolean {
 
 /** `str.strip()` with Python's whitespace set, for the two helpers above. */
 function pyStrip(text: string): string {
-  return text.replace(
-    /^[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/,
-    "",
-  ).replace(
-    /[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/,
-    "",
-  );
+  const pattern = new RegExp(`^${PY_WHITESPACE}+|${PY_WHITESPACE}+$`, "g");
+  return text.replace(pattern, "");
 }
 
 /** Every document file under the configured inputs, sorted, minus exclusions. */

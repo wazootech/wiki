@@ -86,7 +86,12 @@ export function walkTree(root: string): string[] {
   const paths: string[] = [];
   const visit = (directory: string): void => {
     for (const entry of Deno.readDirSync(directory)) {
-      if (!entry.isSymlink && !entry.isFile && !entry.isDirectory) continue;
+      // Symlinks are never followed or listed: a symlinked entry in a wiki
+      // input — including one fetched by `wiki install` from a remote repo —
+      // must not let `fmt`/`render` write through it, nor `build`/`export`
+      // read through it. Matches the asset walk's precedent.
+      if (entry.isSymlink) continue;
+      if (!entry.isFile && !entry.isDirectory) continue;
       const path = join(directory, entry.name);
       paths.push(path);
       if (entry.isDirectory) visit(path);
