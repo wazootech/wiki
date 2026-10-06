@@ -418,3 +418,197 @@ Deno.test(
     );
   },
 );
+
+// ---------------------------------------------------------------------------
+// The link command, driven through the process contract
+// ---------------------------------------------------------------------------
+
+/**
+ * A wiki with one link opportunity (bare "Target Page" mention), one
+ * repairable broken fragment (`#targt-page`), and one unrepairable broken
+ * link. `standard` link style keeps the expected suggestion text stable.
+ */
+function writeLinkCorpus(): string {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-link-" });
+  const wiki = join(root, "wiki");
+  Deno.mkdirSync(wiki, { recursive: true });
+  Deno.writeTextFileSync(
+    join(root, "wiki.yml"),
+    "wiki:\n  input: [wiki]\nlink:\n  style: standard\n",
+  );
+  Deno.writeTextFileSync(
+    join(wiki, "Target_Page.md"),
+    "---\ntitle: Target Page\n---\n\n# Target Page\n\nContent here.\n",
+  );
+  Deno.writeTextFileSync(
+    join(wiki, "Source_Page.md"),
+    "---\ntitle: Source Page\n---\n\n# Source Page\n\nSee Target Page for details.\n\n" +
+      "A [frag](Target_Page.md#targt-page) link.\n",
+  );
+  return root;
+}
+
+async function runLinkIn(
+  args: readonly string[],
+  root: string,
+): Promise<CliResult> {
+  return await runCliIn(["-c", "wiki.yml", "link", ...args], root, [
+    "--allow-all",
+  ]);
+}
+
+Deno.test(
+  "link reports an opportunity on stdout and exits 0",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeLinkCorpus();
+    try {
+      const result = await runLinkIn([], root);
+      assertEquals(result.code, EXIT_OK);
+      assertEquals(result.stderr, "");
+      assertEquals(
+        result.stdout,
+        'Source_Page.md:5:5: "Target Page" -> [Target Page](Target_Page.md)\n',
+      );
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+Deno.test(
+  "link --check exits 1 while an opportunity remains, 0 once applied",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeLinkCorpus();
+    try {
+      // The command-level -c/--check shadows the global -c/--config that
+      // selects the config file: both must parse at once.
+      const failing = await runLinkIn(["--check"], root);
+      assertEquals(failing.code, EXIT_FAILURE);
+      assertEquals(failing.stderr, "");
+
+      const applied = await runLinkIn(["--apply"], root);
+      assertEquals(applied.code, EXIT_OK);
+
+      const page = Deno.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+      assert(page.includes("See [Target Page](Target_Page.md) for details."));
+
+      const passing = await runLinkIn(["--check"], root);
+      assertEquals(passing.code, EXIT_OK);
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+Deno.test(
+  "link --dry-run previews the apply without writing the file",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeLinkCorpus();
+    try {
+      const before = Deno.readTextFileSync(
+        join(root, "wiki", "Source_Page.md"),
+      );
+      const result = await runLinkIn(["--apply", "--dry-run"], root);
+      assertEquals(result.code, EXIT_OK);
+      assertEquals(
+        Deno.readTextFileSync(join(root, "wiki", "Source_Page.md")),
+        before,
+      );
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+Deno.test(
+  "link --fix-broken repairs an unambiguous fragment and writes the file",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeLinkCorpus();
+    try {
+      const result = await runLinkIn(["--fix-broken"], root);
+      assertEquals(result.code, EXIT_OK);
+      assertEquals(result.stderr, "");
+      assert(
+        result.stdout.includes(
+          "Target_Page.md#targt-page -> Target_Page.md#target-page",
+        ),
+      );
+      const page = Deno.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+      assert(page.includes("[frag](Target_Page.md#target-page)"));
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// The render command, driven through the process contract
+// ---------------------------------------------------------------------------
+
+/** Recursively copy a directory tree (fixture -> temp working copy). */
+function copyDirSync(from: string, to: string): void {
+  Deno.mkdirSync(to, { recursive: true });
+  for (const entry of Deno.readDirSync(from)) {
+    const source = join(from, entry.name);
+    const target = join(to, entry.name);
+    if (entry.isDirectory) {
+      copyDirSync(source, target);
+    } else if (entry.isFile) {
+      Deno.copyFileSync(source, target);
+    }
+  }
+}
+
+/**
+ * A working copy of the micro fixture, whose inline SPARQL blocks are
+ * deliberately stale so `render --check` fails and `render` has work to do.
+ */
+function writeRenderCorpus(): string {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-render-" });
+  const fixture = fromFileUrl(new URL("./fixtures/micro", import.meta.url));
+  copyDirSync(fixture, root);
+  return root;
+}
+
+Deno.test(
+  "render --check reports stale blocks on stderr and exits 1, then render writes them",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeRenderCorpus();
+    try {
+      const stale = await runCliIn(
+        ["-c", "wiki.yml", "render", "--check"],
+        root,
+        ["--allow-all"],
+      );
+      assertEquals(stale.code, EXIT_FAILURE);
+      assertEquals(stale.stdout, "");
+      assert(stale.stderr.includes("Inline SPARQL blocks are out of date"));
+
+      const rendered = await runCliIn(
+        ["-c", "wiki.yml", "render", "-v"],
+        root,
+        ["--allow-all"],
+      );
+      assertEquals(rendered.code, EXIT_OK, rendered.stderr);
+      assertEquals(rendered.stderr, "");
+      assert(rendered.stdout.includes("Rendered SPARQL: Updated 2 files."));
+
+      const alice = Deno.readTextFileSync(join(root, "wiki", "Alice.md"));
+      assert(alice.includes("<!-- sparql:end -->"));
+
+      const fresh = await runCliIn(
+        ["-c", "wiki.yml", "render", "--check"],
+        root,
+        ["--allow-all"],
+      );
+      assertEquals(fresh.code, EXIT_OK);
+    } finally {
+      removeCorpus(root);
+    }
+  },
+);

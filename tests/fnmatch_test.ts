@@ -84,3 +84,13 @@ Deno.test("unclosed bracket and star crossings behave like fnmatch", () => {
   // `fnmatch` matches newlines because it compiles with dot-all.
   assertEquals(fnmatchCase("a\nb.md", "*.md"), true);
 });
+
+Deno.test("a leading ] in a class is a literal, including after !", () => {
+  // Python's `translate` treats a `]` in first position (or right after the
+  // `!` negation) as a literal member of the class. The naive translation
+  // closes the class early and miscompiles the pattern.
+  assertEquals(fnmatchCase("]", "[]]"), true);
+  assertEquals(fnmatchCase("a", "[]]"), false);
+  assertEquals(fnmatchCase("abc", "[!]]*"), true);
+  assertEquals(fnmatchCase("]abc", "[!]]*"), false);
+});

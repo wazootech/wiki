@@ -39,6 +39,7 @@ import {
 } from "../src/wiki/graph.ts";
 import { clearAllProcessGraphs } from "../src/wiki/graph_cache.ts";
 import { type LogRecord, setLogSink } from "../src/wiki/logging.ts";
+import { parseFrontmatter } from "../src/wiki/parser.ts";
 import {
   blankNode,
   literal,
@@ -47,7 +48,9 @@ import {
   RDF_TYPE,
   RdfGraph,
   XSD_BOOLEAN,
+  XSD_DATE,
   XSD_DATETIME,
+  XSD_DOUBLE,
   XSD_INTEGER,
 } from "../src/wiki/rdf.ts";
 import { saveLockfile } from "../src/wiki/schemas/sources.ts";
@@ -1270,4 +1273,83 @@ givenName: Gregory
   } finally {
     cleanup(root);
   }
+});
+
+Deno.test("YAML date-only frontmatter becomes xsd:date with its lexical form", () => {
+  // End to end through the parser: PyYAML hands rdflib a `date` for
+  // `2026-05-30` and the oracle writes `"2026-05-30"^^xsd:date`. A bare
+  // `Date` would lose both the type and the spelling, so the parser records
+  // the lexical form at the YAML layer (see `scalars.ts`).
+  const config = new Config();
+  const attrs = parseFrontmatter(
+    "---\npublished: 2026-05-30\n---\n\nBody\n",
+  );
+  const graph = frontmatterToGraph(
+    { "@type": "TechArticle", "@id": "wiki:dates", ...attrs },
+    config.context,
+  );
+  const subject = namedNode(`${WIKI}dates`);
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}published`),
+      literal("2026-05-30", { datatype: XSD_DATE }),
+    ),
+  );
+});
+
+Deno.test("a zoned YAML timestamp keeps rdflib's +00:00 lexical form", () => {
+  // rdflib serialises a zoned datetime as `2026-05-30T00:00:00+00:00`;
+  // `Date#toISOString` would emit the `...000Z` form instead.
+  const config = new Config();
+  const attrs = parseFrontmatter(
+    "---\nupdated: 2026-05-30T00:00:00Z\n---\n\nBody\n",
+  );
+  const graph = frontmatterToGraph(
+    { "@type": "TechArticle", "@id": "wiki:dates", ...attrs },
+    config.context,
+  );
+  const subject = namedNode(`${WIKI}dates`);
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}updated`),
+      literal("2026-05-30T00:00:00+00:00", { datatype: XSD_DATETIME }),
+    ),
+  );
+});
+
+Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
+  // End to end through the parser: `30.0` parses to the number `30`, which
+  // the graph layer would otherwise type `xsd:integer` — or drop entirely,
+  // because a `WikiFloat` is `typeof "object"` and the old `pyTruthy` read
+  // it as an empty mapping. Python writes `"30.0"^^xsd:double`.
+  const config = new Config();
+  const attrs = parseFrontmatter(
+    "---\nscore: 30.0\ncount: 30\nnothing: 0.0\n---\n\nBody\n",
+  );
+  const graph = frontmatterToGraph(
+    { "@type": "TechArticle", "@id": "wiki:nums", ...attrs },
+    config.context,
+  );
+  const subject = namedNode(`${WIKI}nums`);
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}score`),
+      literal("30.0", { datatype: XSD_DOUBLE }),
+    ),
+  );
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}count`),
+      literal("30", { datatype: XSD_INTEGER }),
+    ),
+  );
+  // `0.0` is falsy in Python too, so no triple — matching the oracle.
+  assertEquals(
+    [...graph.match(subject, namedNode(`${SCHEMA}nothing`))].length,
+    0,
+  );
 });
