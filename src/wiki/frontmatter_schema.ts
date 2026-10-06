@@ -43,6 +43,7 @@ import {
   pyStrip,
   readTextTolerant,
 } from "./parser.ts";
+import { WikiFloat } from "./scalars.ts";
 import {
   iterDocumentFiles,
   pathWithinRoot,
@@ -433,6 +434,9 @@ function pyTruthy(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
+  // A `WikiFloat` is a `Number` subclass, so `typeof` reports "object":
+  // unwrap it before the mapping branch, mirroring Python's `bool(30.0)`.
+  if (value instanceof WikiFloat) return value.valueOf() !== 0;
   if (typeof value === "string") return value !== "";
   if (Array.isArray(value)) return value.length > 0;
   if (isRecord(value)) return Object.keys(value).length > 0;

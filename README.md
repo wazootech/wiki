@@ -109,13 +109,17 @@ npx wazootech-wiki init
 npx wazootech-wiki -c docs/wiki.yml check
 ```
 
+Supported platforms are the ones Deno ships binaries for: Windows and macOS on x64 or ARM64, and Linux on x64 or ARM64 with glibc. In particular musl-based Linux distributions (Alpine) are not supported: the install succeeds there, but every `wiki` invocation fails because no Deno binary exists for the platform.
+
+The first run needs network access: the package ships no vendored dependencies, so the JSR/npm module graph is fetched into `DENO_DIR` on first use and cached afterwards.
+
 ### Standalone executable
 
 After the first tagged Deno release, GitHub Releases will publish self-contained binaries for Linux x64, Windows x64, and macOS ARM64 with `SHA256SUMS`. Those are the three targets currently built by the release workflow. They are not published yet and will not require Node.js, Python, or Deno.
 
 ### From source
 
-Install Deno, then run `deno task check`, `deno task lint`, `deno task fmt:check`, and `deno task test`.
+Install Deno 2.9.6 — the version CI pins (`deno-version: 2.9.6` in the workflows), so a local run and CI agree — then run `deno task check`, `deno task lint`, `deno task fmt:check`, and `deno task test`.
 
 ## Programmatic APIs
 

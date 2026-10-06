@@ -303,6 +303,11 @@ export function resolveType(
 function pyTruthy(value: unknown): boolean {
   if (value === null || value === undefined || value === false) return false;
   if (value === 0 || value === "") return false;
+  // A `WikiFloat` is a `Number` subclass, so `typeof` reports "object" and
+  // `=== 0` never matches: unwrap it before the mapping branch, mirroring
+  // Python's `bool(30.0)`. Without this, a `30.0` frontmatter field is
+  // silently dropped from the graph.
+  if (value instanceof WikiFloat) return value.valueOf() !== 0;
   if (Array.isArray(value)) return value.length > 0;
   if (isRecord(value)) return Object.keys(value).length > 0;
   return true;

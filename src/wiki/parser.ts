@@ -136,8 +136,10 @@ function isYamlFrontmatter(content: string): boolean {
  * Extract frontmatter, annotating YAML timestamp and float scalars with the
  * lexical provenance the graph layer needs for rdflib-compatible literals.
  *
- * JSON-flavoured blocks are YAML-superset flow syntax, so the same
- * annotation applies; TOML blocks are left to the TOML parser's own types.
+ * Only YAML-flavoured blocks are annotated. `---json` blocks keep the JSON
+ * parser's native types (so `30.0` stays the number `30`, and there are no
+ * date scalars to annotate — JSON has no date literal), and TOML blocks
+ * keep the TOML parser's own types.
  */
 function extractFrontmatter(
   content: string,
