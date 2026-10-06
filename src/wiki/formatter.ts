@@ -42,6 +42,15 @@ import { createFromBuffer, type Formatter } from "@dprint/formatter";
 import * as markdownPlugin from "@dprint/markdown";
 import * as jsonPlugin from "@dprint/json";
 import * as typescriptPlugin from "@dprint/typescript";
+import * as cssPlugin from "lax-css";
+import * as markupPlugin from "lax-markup";
+// Side-effect import: `dprint-plugin-yaml` publishes only `plugin.wasm`
+// (plus this package.json), so nothing statically references the package
+// otherwise — and `deno compile --exclude-unused-npm` drops packages it
+// cannot see, which broke `wiki fmt` in every standalone release asset.
+// The import keeps the package in the binary's npm snapshot; the wasm bytes
+// themselves ride along via `--include` (see the compile invocations).
+import "dprint-plugin-yaml/package.json" with { type: "json" };
 
 import {
   DEFAULT_FMT_OPTIONS,
@@ -137,11 +146,22 @@ function denoYamlConfig(): Record<string, unknown> {
   return { ignore_comment_directive: "deno-fmt-ignore" };
 }
 
-/** `dprint-plugin-yaml` and `lax-markup` publish only `plugin.wasm`. */
-function wasmFromPackage(specifier: string): Uint8Array<ArrayBuffer> {
-  return new Uint8Array(
-    Deno.readFileSync(new URL(import.meta.resolve(specifier))),
+/**
+ * `dprint-plugin-yaml` publishes only `plugin.wasm`, next to its package.json.
+ *
+ * The package.json specifier is statically imported above, so
+ * `import.meta.resolve` finds the package in the compiled binary's npm
+ * snapshot; without that import `--exclude-unused-npm` drops it and the
+ * resolve fails with "Could not find constraint ... in the list of packages".
+ */
+function wasmAdjacentToPackageJson(
+  packageJsonSpecifier: string,
+): Uint8Array<ArrayBuffer> {
+  const url = new URL(
+    "./plugin.wasm",
+    import.meta.resolve(packageJsonSpecifier),
   );
+  return new Uint8Array(Deno.readFileSync(url));
 }
 
 /** `@dprint/*` packages export a `getPath()` helper instead. */
@@ -195,11 +215,11 @@ function loadPlugins(): Plugins {
     ),
     json: build(wasmFromPath(jsonPlugin.getPath()), denoJsonConfig()),
     yaml: build(
-      wasmFromPackage("dprint-plugin-yaml/plugin.wasm"),
+      wasmAdjacentToPackageJson("dprint-plugin-yaml/package.json"),
       denoYamlConfig(),
     ),
-    css: build(wasmFromPackage("lax-css/plugin.wasm"), {}),
-    markup: build(wasmFromPackage("lax-markup/plugin.wasm"), {}),
+    css: build(wasmFromPath(cssPlugin.getPath()), {}),
+    markup: build(wasmFromPath(markupPlugin.getPath()), {}),
   };
 }
 
@@ -256,6 +276,7 @@ function dispatch(host: Plugins, request: {
     case "less":
       return host.css.formatText(at(DEFAULT_LINE_WIDTH));
     case "yaml":
+    case "yml":
       return host.yaml.formatText(at(DEFAULT_LINE_WIDTH));
     default:
       return request.fileText;

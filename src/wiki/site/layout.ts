@@ -1,6 +1,10 @@
 import { isFile } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import type { VirtualPage } from "./types.ts";
+// Embedded at compile time: `deno compile` does not bundle the
+// `readTextFileSync(new URL(...))` below, which broke `wiki build` in every
+// standalone release asset.
+import fallbackLayoutHtml from "../index.html" with { type: "text" };
 
 function escapeHtml(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
@@ -12,7 +16,7 @@ function escapeHtml(value: string): string {
 
 function templateText(path: string | null): string {
   if (path !== null && isFile(path)) return readTextTolerant(path);
-  return Deno.readTextFileSync(new URL("../index.html", import.meta.url));
+  return fallbackLayoutHtml;
 }
 
 export function renderLayout(
