@@ -31,7 +31,7 @@
     "format:check": "prettier \"src/*.ts\" --check",
     "lint": "eslint src/*.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test:npm": "npm run build && node tests/npm/test-runtime.js"
+    "test:npm": "npm run typecheck && npm run build && node tests/npm/test-runtime.js"
   },
   "files": [
     "bin/",
