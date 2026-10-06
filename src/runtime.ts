@@ -31,10 +31,35 @@ export function getDenoExecutable(): string {
     return denoExecutable;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
+    if (isUnsupportedPlatform(detail)) {
+      // A reinstall cannot fix this: the platform itself has no Deno binary.
+      throw new WikiSetupError(
+        `Unable to start the bundled Deno runtime: ${detail}. ` +
+          `wazootech-wiki ships the platform-matched Deno runtime for ` +
+          `Windows/macOS/Linux on x64 or ARM64 (Linux needs glibc); ` +
+          `this platform is not supported, so reinstalling changes nothing. ` +
+          `Run the Wiki engine from a Deno source checkout instead.`,
+      );
+    }
     throw new WikiSetupError(
       `Unable to start the bundled Deno runtime: ${detail}. Reinstall wazootech-wiki to restore its runtime dependency.`,
     );
   }
+}
+
+/**
+ * `true` when the install failure is about the platform, not the install.
+ *
+ * The `deno` package's installer throws `Musl is not supported` on musl
+ * Linux and `Unsupported architecture` off x64/ARM64; matching on those
+ * messages is the only signal it gives, and both are pinned by the
+ * `deno@2.9.6` dependency.
+ */
+function isUnsupportedPlatform(detail: string): boolean {
+  return (
+    detail.includes("Musl is not supported") ||
+    detail.includes("Unsupported architecture")
+  );
 }
 
 /**
