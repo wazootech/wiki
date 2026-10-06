@@ -114,8 +114,18 @@ function translateClass(pattern: string, start: number, end: number): string {
 function buildClass(stuff: string): string {
   if (stuff === "") return "(?!)";
   if (stuff === "!") return ".";
-  if (stuff[0] === "!") return `[^${stuff.slice(1)}]`;
-  if (stuff[0] === "^" || stuff[0] === "[") return `[\\${stuff}]`;
+  if (stuff[0] === "!") {
+    const body = stuff.slice(1);
+    // A `]` immediately after the `!` is a literal member of the negated
+    // class, exactly as in the non-negated branch below.
+    const escaped = body.startsWith("]") ? `\\${body}` : body;
+    return `[^${escaped}]`;
+  }
+  // A leading `]`, `^`, or `[` is a literal member in Python's `re`: `[]]`
+  // matches `]`, while JavaScript would read `[]` as a never-matching class.
+  if (stuff[0] === "^" || stuff[0] === "[" || stuff[0] === "]") {
+    return `[\\${stuff}]`;
+  }
   return `[${stuff}]`;
 }
 

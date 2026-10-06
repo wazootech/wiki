@@ -25,8 +25,17 @@
 /** `Lu`, `Ll`, or `Lt`: Python's definition of a *cased* character. */
 const CASED = /[\p{Lu}\p{Ll}\p{Lt}]/u;
 
-/** `Nd` or `No`: the categories Python's `str.isdigit()` accepts. */
-const DIGIT = /[\p{Nd}\p{No}]/u;
+/**
+ * `Nd`, plus the `No` characters whose `Numeric_Type` is `Digit`.
+ *
+ * Python's `str.isdigit()` accepts `Numeric_Type=Digit` or `=Decimal`, which
+ * is wider than `Nd`: superscripts (`²`), subscripts, Ethiopic digits, and
+ * circled/parenthesized numbers qualify. Vulgar fractions (`½`, `⅓`, `¾`,
+ * `↉`) are `Numeric_Type=Numeric` and do *not* qualify — verified against
+ * Python 3.12 by enumerating every codepoint where `isdigit()` is true.
+ */
+const DIGIT =
+  /[\p{Nd}\u00B2-\u00B3\u00B9\u1369-\u1371\u19DA\u2070\u2074-\u2079\u2080-\u2089\u2460-\u2468\u2474-\u247C\u2488-\u2490\u24EA\u24F5-\u24FD\u24FF\u2776-\u277E\u2780-\u2788\u278A-\u2792\u{10A40}-\u{10A43}\u{10E60}-\u{10E68}\u{11052}-\u{1105A}\u{1F100}-\u{1F10A}]/u;
 
 /**
  * Python's `str.isupper()`: at least one cased character, and all of them
@@ -158,10 +167,15 @@ export function pyStripChars(text: string, chars: string): string {
  * Python's `str.split()` with no argument: split on runs of whitespace and drop
  * empty fields, which `"".split()` and `" a ".split()` both make a special case
  * of.
+ *
+ * The class is Python's whitespace set spelled out — `\s` also strips U+FEFF
+ * (which Python keeps) and misses U+001C–U+001F and U+0085 (which Python
+ * strips on) — verified against Python 3.12 by enumerating `str.isspace()`.
  */
+export const PY_WHITESPACE =
+  "[ \\t\\n\\v\\f\\r\\x1C-\\x1F\\x85\\xA0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]";
+
 export function pySplitWhitespace(text: string): string[] {
-  const parts = text.split(
-    /[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/,
-  );
+  const parts = text.split(new RegExp(`${PY_WHITESPACE}+`));
   return parts.filter((part) => part !== "");
 }
