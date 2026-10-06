@@ -57,10 +57,12 @@ import {
   RdfGraph,
   termKey,
   XSD_BOOLEAN,
+  XSD_DATE,
   XSD_DATETIME,
   XSD_DOUBLE,
   XSD_INTEGER,
 } from "./rdf.ts";
+import { WikiFloat, WikiTimestamp } from "./scalars.ts";
 import { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 
@@ -309,36 +311,37 @@ function pyTruthy(value: unknown): boolean {
 /**
  * A numeric literal the way rdflib infers one from a Python number.
  *
- * JavaScript has a single number type, so `30.0` and `30` are the same value
- * here and both become `xsd:integer`; Python's YAML reader hands rdflib a float
- * for `30.0` and gets `"30.0"^^xsd:double`. An integral value in that range is
- * indistinguishable at this layer — the fix belongs where YAML is parsed, not
- * here, and no test in the corpus depends on the difference.
+ * JavaScript has a single number type, so a bare `30.0` arrives as the number
+ * `30`; the parser marks such values as {@link WikiFloat} at the YAML layer,
+ * and only that flag distinguishes `"30.0"^^xsd:double` from `"30"^^xsd:integer`.
  */
-function numericLiteral(value: number): ReturnType<typeof literal> {
-  if (Number.isInteger(value)) {
-    return literal(String(value), { datatype: XSD_INTEGER });
+function numericLiteral(value: number | WikiFloat): ReturnType<typeof literal> {
+  const num = value instanceof WikiFloat ? value.valueOf() : value;
+  if (!(value instanceof WikiFloat) && Number.isInteger(num)) {
+    return literal(String(num), { datatype: XSD_INTEGER });
   }
   // Python's `str` keeps the `.0` on an integral float and switches to exponent
   // form outside 1e-4..1e16; JavaScript's does neither.
-  if (Math.abs(value) < 1e16 && value === Math.trunc(value)) {
-    return literal(`${value}.0`, { datatype: XSD_DOUBLE });
+  if (Math.abs(num) < 1e16 && num === Math.trunc(num)) {
+    return literal(`${num}.0`, { datatype: XSD_DOUBLE });
   }
-  return literal(String(value), { datatype: XSD_DOUBLE });
+  return literal(String(num), { datatype: XSD_DOUBLE });
 }
 
 /**
  * A `datetime`/`date` literal, typed the way rdflib types one.
  *
- * Python hands `resolve_object` a `datetime` (which has `.hour`) or a `date`
- * (which has `.isoformat` and `.year`) and rdflib types them `xsd:dateTime` and
- * `xsd:date`. A JavaScript `Date` carries a time in both cases, and YAML
- * resolves `2026-05-30` and `2026-05-30T00:00:00` to the same value, so a
- * date-only frontmatter value is typed `xsd:dateTime` where the oracle writes
- * `xsd:date`. Recording the lexical form at the parser is the fix; until then
- * this is a real, narrow divergence rather than a silent guess.
+ * The parser records the scalar's lexical form as a {@link WikiTimestamp}:
+ * date-only values become `xsd:date` and zoned values keep rdflib's `+00:00`
+ * spelling instead of `toISOString()`'s `Z`. A `Date` that did not come from
+ * YAML has no lexical form to record and keeps the previous rendering.
  */
 function temporalLiteral(value: Date): ReturnType<typeof literal> {
+  if (value instanceof WikiTimestamp) {
+    return literal(value.lexical, {
+      datatype: value.dateOnly ? XSD_DATE : XSD_DATETIME,
+    });
+  }
   return literal(value.toISOString(), { datatype: XSD_DATETIME });
 }
 
@@ -358,6 +361,14 @@ export function resolveObject(
   // empty blank node and loses its datatype entirely.
   if (value instanceof Date) {
     graph.add(subject, pred, temporalLiteral(value));
+    return;
+  }
+
+  // A `WikiFloat` is likewise an object (a `Number` subclass): unwrap it
+  // before the mapping branch. Only the parser's float-lexical flag tells
+  // `"30.0"^^xsd:double` apart from `"30"^^xsd:integer`.
+  if (value instanceof WikiFloat) {
+    graph.add(subject, pred, numericLiteral(value));
     return;
   }
 

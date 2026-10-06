@@ -31,6 +31,8 @@ import {
 } from "@wazoo/linked-markdown";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
+import { PY_WHITESPACE } from "./pystr.ts";
+import { annotateScalars } from "./scalars.ts";
 
 /** Document extensions the engine treats as wiki inputs. */
 export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
@@ -107,11 +109,52 @@ export function frontmatterError(content: string): string | null {
 /** Parsed frontmatter, or `null` when there is none or it does not parse. */
 export function parseFrontmatter(content: string): DataRecord | null {
   try {
-    return extract<DataRecord>(content).attrs;
+    const result = extractFrontmatter(content);
+    return result.attrs;
   } catch (error) {
     if (error instanceof LinkedMarkdownError) return null;
     throw error;
   }
+}
+
+/**
+ * `true` when the frontmatter block is YAML-flavoured (as opposed to JSON or
+ * TOML), mirroring the opener sniffing `@std/front-matter` performs inside
+ * linked-markdown's `extract`.
+ */
+function isYamlFrontmatter(content: string): boolean {
+  const text = content.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const firstLine = text.split("\n", 1)[0] ?? "";
+  if (/^---(json|toml)\b/i.test(firstLine)) return false;
+  if (/^=\s*(json|toml)\s*=/i.test(firstLine)) return false;
+  // `+++` opens a TOML block.
+  if (/^\+\+\+/.test(firstLine)) return false;
+  return true;
+}
+
+/**
+ * Extract frontmatter, annotating YAML timestamp and float scalars with the
+ * lexical provenance the graph layer needs for rdflib-compatible literals.
+ *
+ * JSON-flavoured blocks are YAML-superset flow syntax, so the same
+ * annotation applies; TOML blocks are left to the TOML parser's own types.
+ */
+function extractFrontmatter(
+  content: string,
+): { attrs: DataRecord; body: string; frontMatter: string | undefined } {
+  const result = extract<DataRecord>(content);
+  const attrs = isRecord(result.attrs) ? result.attrs : {};
+  const frontMatter = typeof result.frontMatter === "string"
+    ? result.frontMatter
+    : undefined;
+  if (frontMatter !== undefined && isYamlFrontmatter(content)) {
+    return {
+      attrs: annotateScalars(attrs, frontMatter),
+      body: result.body,
+      frontMatter,
+    };
+  }
+  return { attrs, body: result.body, frontMatter };
 }
 
 /** Add the default `wiki`/`foaf` context when a document does not declare one. */
@@ -167,7 +210,7 @@ export function frontmatterFromPath(
 ): DataRecord | null {
   try {
     const content = readTextTolerant(path);
-    const result = extract<DataRecord>(content);
+    const result = extractFrontmatter(content);
     const data = ensureContext(result.attrs);
     if (contentPredicate !== undefined && contentPredicate !== "") {
       const body = pyStrip(result.body);
@@ -192,7 +235,7 @@ export function splitFrontmatterBody(
   content: string,
 ): [DataRecord | null, string] {
   try {
-    const result = extract<DataRecord>(content);
+    const result = extractFrontmatter(content);
     return [result.attrs, pyStrip(result.body)];
   } catch (error) {
     if (error instanceof LinkedMarkdownError) return [null, content];
@@ -246,18 +289,14 @@ export function splitLines(text: string): string[] {
 /**
  * Match Python's `str.strip()`.
  *
- * JavaScript's `trim()` also strips U+FEFF, which Python does not — so a
- * BOM-led body would be judged empty on one side only.
+ * Strips exactly Python's whitespace set (see `PY_WHITESPACE`): JavaScript's
+ * `trim()` also strips U+FEFF, which Python does not — so a BOM-led body
+ * would be judged empty on one side only — while `\s` misses U+001C–U+001F
+ * and U+0085, which Python strips.
  */
 export function pyStrip(text: string): string {
-  return text.replace(
-    /^[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/,
-    "",
-  )
-    .replace(
-      /[\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/,
-      "",
-    );
+  const pattern = new RegExp(`^${PY_WHITESPACE}+|${PY_WHITESPACE}+$`, "g");
+  return text.replace(pattern, "");
 }
 
 /**
