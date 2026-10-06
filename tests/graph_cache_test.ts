@@ -103,7 +103,7 @@ Deno.test("the manifest describes each contributing file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const manifest = wikiManifest(config);
-    assertEquals(manifest.version, "0.1.24");
+    assertEquals(manifest.version, "0.2.0");
     assertEquals(manifest.files.length, 1);
     assertEquals(manifest.files[0]!.path, "wiki/page.md");
     assertEquals(manifest.files[0]!.size > 0, true);
@@ -402,7 +402,7 @@ Deno.test("the manifest orders paths by standard string order", async () => {
     // This pins the Deno manifest order, canonical JSON, and SHA-256 together.
     assertEquals(
       wikiFingerprint(config),
-      "c95975f1df367b766735201454a44cfe36277a79590b1583ebe68c7f5632a3dc",
+      "8e3e9d8c7524bd8277f7c7a427e0b8a259e40efc7980c1cc466fddd2f94337e4",
     );
   });
 });

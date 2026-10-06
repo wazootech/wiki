@@ -1,6 +1,6 @@
 {
   "name": "wazootech-wiki",
-  "version": "0.1.24",
+  "version": "0.2.0",
   "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "format": "prettier \"src/*.ts\" --write",
     "format:check": "prettier \"src/*.ts\" --check",
     "lint": "eslint src/*.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:npm": "npm run build && node tests/npm/test-runtime.js"
   },
   "files": [

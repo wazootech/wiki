@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "nodeModulesDir": "auto",
   "name": "@wazoo/wiki",
-  "version": "0.1.24",
+  "version": "0.2.0",
   "license": "MIT",
   "exports": {
     ".": "./src/wiki/mod.ts",
@@ -63,7 +63,7 @@
       "docs/build.ts",
       "deno.json"
     ],
-    "exclude": ["docs/**/*.md", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md"]
   },
   "lint": {
     "include": [
@@ -72,9 +72,9 @@
       "scripts/**/*.ts",
       "docs/build.ts"
     ],
-    "exclude": ["docs/**/*.md", ".parity-tmp/"]
+    "exclude": ["docs/**/*.md"]
   },
-  "exclude": ["docs/**/*.md", ".parity-tmp/"],
+  "exclude": ["docs/**/*.md"],
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,

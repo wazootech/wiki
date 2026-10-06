@@ -58,11 +58,11 @@ async function runVerifier(options: {
 } = {}): Promise<Deno.CommandOutput> {
   const root = Deno.makeTempDirSync({ prefix: "wiki-verify-" });
   const bin = join(root, "bin");
-  const wikiVersion = options.wikiVersion ?? "0.1.24";
+  const wikiVersion = options.wikiVersion ?? "0.2.0";
   const wikiFormat = options.wikiFormat ??
     "Format markdown wiki pages with the Deno formatter.";
   const wikiHelp = options.wikiHelp ?? true;
-  const denoVersion = options.denoVersion ?? "0.1.24";
+  const denoVersion = options.denoVersion ?? "0.2.0";
 
   createStub(
     root,
@@ -139,7 +139,7 @@ Deno.test("verify rejects the retired CLI when the source checkout is also stale
 
 Deno.test("verify requires the Deno formatter signature at the cutover version", async () => {
   const result = await runVerifier({
-    wikiVersion: "0.1.24",
+    wikiVersion: "0.2.0",
     wikiFormat: "Format markdown with mdformat.",
     denoVersion: "0.1.23",
   });
