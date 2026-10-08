@@ -21,7 +21,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Type-check the Deno engine
@@ -47,6 +47,20 @@ jobs:
           deno compile --node-modules-dir=none --frozen --allow-all --exclude-unused-npm --target x86_64-unknown-linux-gnu --output "$output" src/wiki/cli.ts
           "$output" --help
           "$output" -c docs/wiki.yml check --strict
+          # `fmt` and `build` are the two commands that broke in the
+          # standalone binary (formatter WASM dropped from the npm snapshot,
+          # `index.html` not bundled): exercise both, including a `yml` fence.
+          smoke="$RUNNER_TEMP/wiki-smoke"
+          mkdir -p "$smoke/wiki"
+          printf 'wiki:\n  input: [wiki]\n' > "$smoke/wiki.yml"
+          printf '# Smoke\n\n```yml\nkey:  value\n```\n' > "$smoke/wiki/Smoke.md"
+          (
+            cd "$smoke"
+            "$output" -c wiki.yml fmt
+            grep -q '^key: value$' wiki/Smoke.md
+            "$output" -c wiki.yml build --no-check
+            test -f _site/wiki/Smoke/index.html
+          )
 
       - name: Run Docs Wiki Integrity Audits
         run: deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
@@ -80,7 +94,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Run Deno unit tests
@@ -97,7 +111,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Set up Node
@@ -114,6 +128,9 @@ jobs:
 
       - name: Verify TypeScript ESLint
         run: npm run lint
+
+      - name: Type-check the npm entrypoint
+        run: npm run typecheck
 
       - name: Check npm and Deno version consistency
         run: |
@@ -144,3 +161,16 @@ jobs:
           esac
           PATH="$blocked_path:$PATH" npm install --prefix "$install_root" --no-audit --no-fund "$tarball"
           PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" --help
+          # `--help` never touches the tarball's non-TS payload
+          # (`src/wiki/index.html`, `src/wiki/templates/**/*.yml`) or any write
+          # path: scaffold a wiki and build it in the temp prefix. This also
+          # exercises the first-run network fetch of the JSR/npm graph into
+          # DENO_DIR, which `--help` never triggers.
+          fixture="$test_root/fixture"
+          mkdir -p "$fixture"
+          (
+            cd "$fixture"
+            PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" init
+            PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" build
+          )
+          test -f "$fixture/_site/wiki/index.html"

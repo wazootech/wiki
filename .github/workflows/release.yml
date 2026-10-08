@@ -23,7 +23,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Verify package and engine versions
@@ -50,6 +50,15 @@ jobs:
       - name: Validate JSR package contents
         run: deno publish --dry-run
 
+      # The release publishes the npm tarball, all three standalone binaries,
+      # and the GitHub release from this commit: it must not ship untested.
+      # (CI only runs on `main` pushes, so a tag push never triggers it.)
+      - name: Type-check the engine
+        run: deno task check
+
+      - name: Run the engine test suite
+        run: deno task test
+
   build-standalone:
     name: Build standalone (${{ matrix.slug }})
     needs: verify
@@ -75,7 +84,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Compile standalone executable
@@ -123,7 +132,7 @@ jobs:
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: 2.9.6
           cache: true
 
       - name: Publish to JSR (GitHub OIDC)
