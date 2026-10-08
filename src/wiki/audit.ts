@@ -54,12 +54,7 @@ import {
   layoutFileIsValid,
   resolveLayoutPath,
 } from "./layout.ts";
-import {
-  pyStrip,
-  readTextTolerant,
-  splitDocumentBody,
-  splitLines,
-} from "./parser.ts";
+import { readTextTolerant, splitDocumentBody, splitLines } from "./parser.ts";
 import {
   buildPageManifest,
   detectOutputCollisions,
@@ -69,14 +64,14 @@ import {
   validateFilenamePattern,
   validateRouteSafety,
 } from "./paths.ts";
-import { pyReprString } from "./pyrepr.ts";
+import { quoteString } from "./describe.ts";
 import {
-  pyIsDigit,
-  pyIsLower,
-  pyIsUpper,
-  pySplitWhitespace,
-  pyStripChars,
-} from "./pystr.ts";
+  isDigit,
+  isLowercase,
+  isUppercase,
+  splitWhitespace,
+  stripChars,
+} from "./text.ts";
 import type { BrokenLink } from "./schemas/domain.ts";
 import { AuditReport, type Issue, severityIssues } from "./schemas/reports.ts";
 import type { CheckConfig, LintConfig } from "./schemas/rules.ts";
@@ -146,7 +141,7 @@ export { headingPlainText };
 
 /** A word stripped of the sentence punctuation a heading attaches to it. */
 function normalizeHeadingWord(word: string): string {
-  return pyStripChars(word, ".,;:!?");
+  return stripChars(word, ".,;:!?");
 }
 
 /**
@@ -165,19 +160,19 @@ function isProperNounToken(word: string): boolean {
   // surrogate pair, and `isupper` on half a character is not a question with an
   // answer.
   const chars = [...token];
-  if (pyIsUpper(token) && chars.length > 1) return true;
-  if (chars.some((char) => pyIsDigit(char)) || token.includes("-")) {
+  if (isUppercase(token) && chars.length > 1) return true;
+  if (chars.some((char) => isDigit(char)) || token.includes("-")) {
     return true;
   }
   const [first, ...rest] = chars;
-  return pyIsUpper(first as string) &&
-    chars.some((char) => pyIsLower(char)) &&
-    rest.some((char) => pyIsUpper(char));
+  return isUppercase(first as string) &&
+    chars.some((char) => isLowercase(char)) &&
+    rest.some((char) => isUppercase(char));
 }
 
 /** A line that can be the text row of a Setext heading: not ATX, not a rule. */
 function isSetextTextLine(line: string): boolean {
-  const stripped = pyStrip(line);
+  const stripped = line.trim();
   if (stripped === "") return false;
   if (HEADING_LINE_RE.test(line)) return false;
   if (THEMATIC_BREAK_RE.test(stripped)) return false;
@@ -193,15 +188,15 @@ function isSetextTextLine(line: string): boolean {
  * is flagged and `## Deploying to GitHub Pages` is not.
  */
 export function titleCaseWordsAfterFirst(text: string): string[] {
-  const words = pySplitWhitespace(headingPlainText(text))
+  const words = splitWhitespace(headingPlainText(text))
     .map(normalizeHeadingWord)
     .filter((word) => word !== "");
   if (words.length < 2) return [];
   return words.slice(1).filter((word) => {
     const chars = [...word];
     return chars.length > 2 &&
-      pyIsUpper(chars[0] as string) &&
-      chars.some((char) => pyIsLower(char)) &&
+      isUppercase(chars[0] as string) &&
+      chars.some((char) => isLowercase(char)) &&
       !isProperNounToken(word);
   });
 }
@@ -235,7 +230,7 @@ export function lintThematicBreaks(
       const lineNo = index + 1;
       const lineStart = offset;
       const lineEnd = offset + line.length;
-      const stripped = pyStrip(line);
+      const stripped = line.trim();
       const inCode = spanOverlaps(lineStart, lineEnd, protectedSpans);
       const previousInCode = previousLine !== null &&
         spanOverlaps(previousLineStart, previousLineEnd, protectedSpans);
@@ -300,11 +295,11 @@ export function lintHeadings(
     const body = markdownBody(readTextTolerant(filePath));
     for (const heading of parseHeadings(body)) {
       const level = "#".repeat(heading.level);
-      const text = pyStrip(heading.text);
+      const text = heading.text.trim();
       if (NUMBERED_HEADING_RE.test(text)) {
         warnings.push(
           `In ${basename(filePath)}: Numbered heading ${level} ${
-            pyReprString(text)
+            quoteString(text)
           }; ` +
             "use unnumbered headings.",
         );
@@ -313,7 +308,7 @@ export function lintHeadings(
       if (heading.level > 1 && titleCaseWordsAfterFirst(text).length >= 2) {
         warnings.push(
           `In ${basename(filePath)}: H2+ heading ${level} ${
-            pyReprString(text)
+            quoteString(text)
           } looks like ` +
             "title case; use sentence case (capitalize only the first word and proper nouns).",
         );
@@ -349,7 +344,7 @@ export function lintLinkStyle(
       const lineNo = lineNumberForOffset(content, bodyOffset + start);
       warnings.push(
         `In ${basename(filePath)}:${lineNo}: Wikilink ${
-          pyReprString(match[0])
+          quoteString(match[0])
         }; ` +
           "use standard links ([display](Page.md)) per link.style.",
       );
@@ -431,12 +426,12 @@ export function checkLayoutFrontmatter(
     if (fmData === null) continue;
 
     const rawLayout = fmData[LAYOUT_FRONTMATTER_KEY];
-    if (typeof rawLayout !== "string" || pyStrip(rawLayout) === "") continue;
+    if (typeof rawLayout !== "string" || rawLayout.trim() === "") continue;
     const layoutPath = resolveLayoutPath(rawLayout, configRoot);
     if (!layoutFileIsValid(layoutPath, configRoot)) {
       missing.push(
         `In ${route}: ${LAYOUT_FRONTMATTER_KEY} ${
-          pyReprString(rawLayout)
+          quoteString(rawLayout)
         } must resolve ` +
           "to a readable .html file under the wiki config root.",
       );

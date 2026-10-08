@@ -43,8 +43,8 @@ import {
   isExternalLink,
   normalizePosixPath,
   posixDirname,
-  pyUnquote,
   splitTarget,
+  unquote,
 } from "./links.ts";
 import type { OutputEntry } from "./schemas/domain.ts";
 import { quote } from "./urlquote.ts";
@@ -139,7 +139,7 @@ export function resolveAssetPath(
 ): string | null {
   if (isExternalLink(target)) return null;
   const [pagePartRaw] = splitTarget(target);
-  const pagePart = pyUnquote(pagePartRaw.split("?")[0] as string)
+  const pagePart = unquote(pagePartRaw.split("?")[0] as string)
     .replaceAll("\\", "/")
     .trim();
   if (pagePart === "" || pagePart.startsWith("/")) return null;

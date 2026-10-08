@@ -148,7 +148,7 @@ function wordBoundariesOk(text: string, start: number, end: number): boolean {
   );
 }
 
-function pythonLineColumn(text: string, utf16Index: number): [number, number] {
+function lineColumn(text: string, utf16Index: number): [number, number] {
   const prefix = text.slice(0, utf16Index);
   const lineBreak = prefix.lastIndexOf("\n");
   const line = (prefix.match(/\n/g)?.length ?? 0) + 1;
@@ -224,7 +224,7 @@ export function findLinkOpportunities(
       ) continue;
       const target = aliasRoutes.get(caseFold(match[0]));
       if (target === undefined || target.route === sourceRoute) continue;
-      const [line, column] = pythonLineColumn(body, start);
+      const [line, column] = lineColumn(body, start);
       opportunities.push({
         source_route: sourceRoute,
         source_file: basename(filePath),

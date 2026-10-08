@@ -342,7 +342,7 @@ Deno.test("link.style accepts the two styles and translates the legacy names", (
   );
   assertStringIncludes(
     error.message,
-    "expected standard or wikilink, got 'not-a-style'",
+    'expected standard or wikilink, got "not-a-style"',
   );
 });
 
@@ -366,7 +366,7 @@ Deno.test("graph.implicit_types defaults and policy are validated", () => {
   );
   assertStringIncludes(
     error.message,
-    "expected fallback or append, got 'replace'",
+    'expected fallback or append, got "replace"',
   );
 });
 
@@ -434,8 +434,8 @@ Deno.test("a validation failure renders the way pydantic renders it", () => {
     [
       "1 validation error for Config",
       "lint.broken_links",
-      "  Value error, expected error, warning, or off, got 'maybe' " +
-      "[type=value_error, input_value='maybe', input_type=str]",
+      '  Value error, expected error, warning, or off, got "maybe" ' +
+      '[type=value_error, input_value="maybe", input_type=string]',
       "    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
     ].join("\n"),
   );
@@ -492,11 +492,11 @@ Deno.test("a null block is refused rather than defaulted", () => {
         "Invalid config file wiki.yaml: 2 validation errors for Config",
         "wiki",
         "  Input should be a valid dictionary or instance of WikiConfig " +
-        "[type=model_type, input_value=None, input_type=NoneType]",
+        "[type=model_type, input_value=null, input_type=null]",
         "    For further information visit https://errors.pydantic.dev/2.13/v/model_type",
         "site",
         "  Input should be a valid dictionary or instance of SiteConfig " +
-        "[type=model_type, input_value=None, input_type=NoneType]",
+        "[type=model_type, input_value=null, input_type=null]",
         "    For further information visit https://errors.pydantic.dev/2.13/v/model_type",
       ].join("\n"),
     );
@@ -693,14 +693,14 @@ Deno.test("formatConfigValidationError routes each error shape to its sentence",
         "maybe",
       ),
     ]),
-    "Invalid config file wiki.yml: Invalid lint.broken_links severity: 'maybe' " +
+    'Invalid config file wiki.yml: Invalid lint.broken_links severity: "maybe" ' +
       "(expected error, warning, or off)",
   );
   assertEquals(
     route([
       valueError(
         ["check", "filename_pattern"],
-        "expected error, warning, or off, got '[a-z]+'",
+        'expected error, warning, or off, got "[a-z]+"',
         "[a-z]+",
       ),
     ]),
@@ -711,11 +711,11 @@ Deno.test("formatConfigValidationError routes each error shape to its sentence",
     route([
       valueError(
         ["link", "style"],
-        "expected standard or wikilink, got 'nope'",
+        'expected standard or wikilink, got "nope"',
         "nope",
       ),
     ]),
-    "Invalid config file wiki.yml: Invalid link_style: 'nope' (expected standard or wikilink)",
+    'Invalid config file wiki.yml: Invalid link_style: "nope" (expected standard or wikilink)',
   );
   assertEquals(
     route([{

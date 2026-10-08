@@ -11,7 +11,7 @@ import { type Config, CONFIG_FILENAMES } from "./config.ts";
 import { getLogger } from "./logging.ts";
 import { pathWithinRoot } from "./paths.ts";
 import { readTextTolerant } from "./parser.ts";
-import { pyRepr } from "./pyrepr.ts";
+import { describeValue } from "./describe.ts";
 import {
   coerceSourceConfig,
   emptyLockfile,
@@ -60,7 +60,7 @@ function sourceRoot(config: Config): string {
 
 function assertSafeSourceName(name: string): void {
   if (!name || name === "." || name === ".." || /[\\/]/.test(name)) {
-    throw new Error(`Unsafe source name ${pyRepr(name)}`);
+    throw new Error(`Unsafe source name ${describeValue(name)}`);
   }
 }
 
@@ -169,7 +169,9 @@ function addToConfig(config: Config, source: SourceConfig): void {
   for (const existing of sources) {
     if (isRecord(existing) && existing["name"] === source.name) {
       throw new Error(
-        `Source ${pyRepr(source.name)} already exists in the config file`,
+        `Source ${
+          describeValue(source.name)
+        } already exists in the config file`,
       );
     }
   }
@@ -199,7 +201,7 @@ function removeFromConfig(config: Config, name: string): void {
     !(isRecord(entry) && entry["name"] === name)
   );
   if (remaining.length === sources.length) {
-    throw new Error(`Source ${pyRepr(name)} not found in config file`);
+    throw new Error(`Source ${describeValue(name)} not found in config file`);
   }
   if (remaining.length > 0) data["sources"] = remaining;
   else delete data["sources"];
@@ -364,7 +366,7 @@ function prepareRef(source: SourceConfig, repoDir: string): void {
     checkedGit(
       ["checkout", source.ref, "--"],
       repoDir,
-      `Failed to check out ref ${pyRepr(source.ref)} for ${source.url}`,
+      `Failed to check out ref ${describeValue(source.ref)} for ${source.url}`,
     );
     return;
   }
@@ -411,7 +413,7 @@ function resolveGitRef(ref: string, repoDir: string): string {
   if (result.code !== 0) {
     const details = gitDetails(result);
     throw new Error(
-      `Failed to resolve git ref ${pyRepr(ref)}${
+      `Failed to resolve git ref ${describeValue(ref)}${
         details ? `: ${details}` : ""
       }`,
     );
@@ -426,8 +428,8 @@ function resolvedSourcePath(
   const base = source.path ? join(repoDir, source.path) : repoDir;
   if (!pathExists(base)) {
     throw new Error(
-      `Source ${pyRepr(source.name)}: path ${
-        pyRepr(source.path ?? null)
+      `Source ${describeValue(source.name)}: path ${
+        describeValue(source.path ?? null)
       } does not exist`,
     );
   }
@@ -437,8 +439,8 @@ function resolvedSourcePath(
   // dir into the victim's wiki inputs; reject it outright.
   if (!sourcePathWithinRepo(resolved, repoDir)) {
     throw new Error(
-      `Source ${pyRepr(source.name)}: path ${
-        pyRepr(source.path ?? null)
+      `Source ${describeValue(source.name)}: path ${
+        describeValue(source.path ?? null)
       } escapes the cloned repository`,
     );
   }
@@ -534,7 +536,7 @@ function installTree(
         (existing.ref ?? null) !== (source.ref ?? null)
       ) {
         throw new Error(
-          `Source ${pyRepr(source.name)} conflict: already locked as ` +
+          `Source ${describeValue(source.name)} conflict: already locked as ` +
             `${existing.url}@${existing.ref || "HEAD"}, but ${
               parent ?? "root"
             } ` +
@@ -562,7 +564,7 @@ function installTree(
       lockedSource(source, resolvedRef, parent === null ? [] : [parent]),
     );
     logger.debug(
-      `Locked source ${pyRepr(source.name)} at ${
+      `Locked source ${describeValue(source.name)} at ${
         resolvedRef.slice(0, 12)
       } -> ${resolvedPath}`,
     );
@@ -646,8 +648,8 @@ function reportOrphans(config: Config, lockfile: Lockfile): void {
   for (const [name, entry] of lockfile.sources) {
     if (!topLevel.has(name) && entry.required_by.length > 0) {
       logger.warning(
-        `Source ${pyRepr(name)} (required_by=${
-          pyRepr(entry.required_by)
+        `Source ${describeValue(name)} (required_by=${
+          describeValue(entry.required_by)
         }) may be orphaned. ` +
           `Run 'wiki remove ${name}' to clean up.`,
       );
@@ -669,7 +671,7 @@ export function update(
   );
   if (sources.length === 0) {
     if (name) {
-      logger.warning(`Source ${pyRepr(name)} not found in config file.`);
+      logger.warning(`Source ${describeValue(name)} not found in config file.`);
     }
     return updateResult(updates);
   }
@@ -679,7 +681,7 @@ export function update(
     if (!locked) {
       logger.warning(
         `Source ${
-          pyRepr(source.name)
+          describeValue(source.name)
         } is not locked. Run 'wiki install' first.`,
       );
       continue;
@@ -762,12 +764,14 @@ function removeOrphans(
     if (pathExists(cacheDir)) {
       removeTree(cacheDir);
       logger.debug(
-        `Removed cache for orphaned transitive source ${pyRepr(orphan)}`,
+        `Removed cache for orphaned transitive source ${describeValue(orphan)}`,
       );
     }
     deleteLockedSource(lockfile, orphan);
     logger.debug(
-      `Removed orphaned transitive source ${pyRepr(orphan)} from lockfile`,
+      `Removed orphaned transitive source ${
+        describeValue(orphan)
+      } from lockfile`,
     );
     removeOrphans(config, lockfile, orphan);
   }
@@ -784,7 +788,7 @@ export function remove(config: Config, name: string): void {
   const cacheDir = sourceCacheDir(config, name);
   if (pathExists(cacheDir)) {
     removeTree(cacheDir);
-    logger.debug(`Removed cache for source ${pyRepr(name)}`);
+    logger.debug(`Removed cache for source ${describeValue(name)}`);
   }
 
   removeFromConfig(config, name);
@@ -792,7 +796,7 @@ export function remove(config: Config, name: string): void {
     deleteLockedSource(lockfile, name);
     removeOrphans(config, lockfile, name);
     saveLockfile(lockfile, lockfilePath(config));
-    logger.debug(`Removed lock entry for source ${pyRepr(name)}`);
+    logger.debug(`Removed lock entry for source ${describeValue(name)}`);
   }
 }
 

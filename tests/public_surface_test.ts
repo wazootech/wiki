@@ -47,38 +47,36 @@ function removeRoot(root: string): void {
 // ---------------------------------------------------------------------------
 
 /**
- * The Python-parity helpers must not be reachable from the package entrypoint.
+ * The internal helpers must not be reachable from the package entrypoint.
  *
  * `deno.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
- * entrypoint as a semver commitment. The `py*` family exists only to reproduce
- * Python's exact stringification and whitespace handling so parity output
- * matches the oracle -- an implementation detail of the migration, not a domain
- * concept a consumer should depend on. Removing them later would then be a
- * breaking change to a released package.
+ * entrypoint as a semver commitment. These answer implementation questions --
+ * how a diagnostic renders a value, whether a heading word is uppercase, how
+ * two strings differ -- rather than describing the domain, so a consumer should
+ * not build on them. Exporting one would make removing it later a breaking
+ * change to a released package.
  *
- * This pins the intent: if someone re-exports one "for convenience", the parity
- * layer leaks back onto the public API and this test fails.
+ * This pins the intent: if someone re-exports one "for convenience", the
+ * internals leak back onto the public API and this test fails.
  */
-const PARITY_INTERNALS: readonly string[] = [
-  "pyRepr",
-  "pyReprString",
-  "pyStr",
-  "pyTypeName",
-  "pyCasefold",
-  "pyIsDigit",
-  "pyIsLower",
-  "pyIsUpper",
-  "pySplitWhitespace",
-  "pyStripChars",
-  "pyStrip",
+const INTERNAL_HELPERS: readonly string[] = [
+  "describeValue",
+  "quoteString",
+  "describeText",
+  "describeType",
+  "isDigit",
+  "isLowercase",
+  "isUppercase",
+  "splitWhitespace",
+  "stripChars",
 ];
 
-Deno.test("the entrypoint does not export Python-parity internals", () => {
+Deno.test("the entrypoint does not export internal helpers", () => {
   const exported = Object.keys(wiki);
-  for (const name of PARITY_INTERNALS) {
+  for (const name of INTERNAL_HELPERS) {
     assert(
       !exported.includes(name),
-      `'${name}' is exported from mod.ts. Parity helpers are internal; ` +
+      `'${name}' is exported from mod.ts. These helpers are internal; ` +
         "exporting them commits the package to them under JSR semver.",
     );
   }

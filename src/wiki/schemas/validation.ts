@@ -17,7 +17,7 @@
  */
 
 import { ValueError } from "../errors.ts";
-import { pyRepr, pyTypeName } from "../pyrepr.ts";
+import { describeType, describeValue } from "../describe.ts";
 
 /** One validation failure, shaped like a pydantic error dictionary. */
 export interface ValidationIssue {
@@ -120,8 +120,8 @@ export function describeValidationError(
     if (issue.loc.length > 0) {
       rows.push(issue.loc.map((part) => String(part)).join("."));
     }
-    const input = pyRepr(issue.input);
-    const type = pyTypeName(issue.input);
+    const input = describeValue(issue.input);
+    const type = describeType(issue.input);
     rows.push(
       `  ${issue.msg} [type=${issue.type}, input_value=${input}, input_type=${type}]`,
     );

@@ -5,7 +5,7 @@ import { markdownBody } from "../document.ts";
 import { normalizeHeadingForDuplicate, parseHeadings } from "../headings.ts";
 import { readTextTolerant } from "../parser.ts";
 import { iterMarkdownFiles, routeForDocumentFile } from "../paths.ts";
-import { pyReprString } from "../pyrepr.ts";
+import { quoteString } from "../describe.ts";
 import type { Severity } from "../schemas/rules.ts";
 
 function eslintSeverity(severity: Severity): "error" | "off" | "warn" {
@@ -145,7 +145,7 @@ export async function lintMarkdownWithEslint(
           `In ${
             basename(filePath)
           }:${line}: Duplicate heading h${heading.level} ` +
-            `${pyReprString(heading.text)} (first at line ${firstLine}).`,
+            `${quoteString(heading.text)} (first at line ${firstLine}).`,
         );
       }
     }

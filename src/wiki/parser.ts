@@ -17,9 +17,9 @@
  *   `YamlSyntaxError`'s own prose from a different YAML implementation. The
  *   `code` prefix is identical and the verdict is identical; the cause body is a
  *   documented, spec-close difference rather than a bug to chase.
- * - **`strip()` is not `trim()`.** Python's `str.strip()` does not remove
- *   U+FEFF, JavaScript's `trim()` does. `pyStrip` keeps Python's set so a body
- *   predicate cannot start differing on a BOM-only difference.
+ * - **Bodies are trimmed with `trim()`.** A BOM or stray whitespace around a
+ *   body is dropped rather than preserved, so a BOM-only difference cannot
+ *   change whether a body predicate sees content.
  */
 
 import { readText } from "./fspath.ts";
@@ -31,7 +31,6 @@ import {
 } from "@wazoo/linked-markdown";
 import { parse as parseToml } from "@std/toml";
 import { parse as parseYaml } from "@std/yaml";
-import { PY_WHITESPACE } from "./pystr.ts";
 import { annotateScalars } from "./scalars.ts";
 
 /** Document extensions the engine treats as wiki inputs. */
@@ -215,7 +214,7 @@ export function frontmatterFromPath(
     const result = extractFrontmatter(content);
     const data = ensureContext(result.attrs);
     if (contentPredicate !== undefined && contentPredicate !== "") {
-      const body = pyStrip(result.body);
+      const body = result.body.trim();
       if (body !== "") data[contentPredicate] = body;
     }
     return data;
@@ -238,7 +237,7 @@ export function splitFrontmatterBody(
 ): [DataRecord | null, string] {
   try {
     const result = extractFrontmatter(content);
-    return [result.attrs, pyStrip(result.body)];
+    return [result.attrs, result.body.trim()];
   } catch (error) {
     if (error instanceof LinkedMarkdownError) return [null, content];
     throw error;
@@ -278,27 +277,13 @@ export function isRecord(value: unknown): value is DataRecord {
 }
 
 /**
- * Split on the line boundaries Python's `str.splitlines` recognises.
+ * Split on JavaScript's line terminators.
  *
- * JavaScript's `String.prototype.split("\n")` misses a bare `\r`, which is
- * exactly the line ending a Windows-edited file can contain mid-document.
+ * `\r\n` is tried before `\n`, so a Windows-edited file does not produce a
+ * trailing empty field on every line.
  */
 export function splitLines(text: string): string[] {
-  // deno-lint-ignore no-control-regex -- U+001C-U+001E are real splitlines boundaries.
-  return text.split(/\r\n|[\n\r\v\f\u001c-\u001e\u0085\u2028\u2029]/);
-}
-
-/**
- * Match Python's `str.strip()`.
- *
- * Strips exactly Python's whitespace set (see `PY_WHITESPACE`): JavaScript's
- * `trim()` also strips U+FEFF, which Python does not — so a BOM-led body
- * would be judged empty on one side only — while `\s` misses U+001C–U+001F
- * and U+0085, which Python strips.
- */
-export function pyStrip(text: string): string {
-  const pattern = new RegExp(`^${PY_WHITESPACE}+|${PY_WHITESPACE}+$`, "g");
-  return text.replace(pattern, "");
+  return text.split(/\r\n|[\n\r\u2028\u2029]/);
 }
 
 /**

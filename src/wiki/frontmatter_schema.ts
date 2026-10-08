@@ -40,7 +40,6 @@ import {
   type DataRecord,
   documentDataFromPath,
   isRecord,
-  pyStrip,
   readTextTolerant,
 } from "./parser.ts";
 import { WikiFloat } from "./scalars.ts";
@@ -50,7 +49,7 @@ import {
   resolveConfigRelativePath,
   routeForDocumentFile,
 } from "./paths.ts";
-import { pyStr } from "./pyrepr.ts";
+import { describeText, quoteString } from "./describe.ts";
 
 /** The frontmatter key naming a JSON Schema document. */
 export const JSON_SCHEMA_KEY = "wazoo:jsonSchema";
@@ -79,7 +78,7 @@ export type SchemaIssues = readonly [string[], string[]];
 export function coerceSchemaRefs(value: unknown): string[] | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") {
-    const text = pyStrip(value);
+    const text = value.trim();
     return text === "" ? null : [text];
   }
   if (Array.isArray(value)) {
@@ -90,7 +89,7 @@ export function coerceSchemaRefs(value: unknown): string[] | null {
           "wazoo:jsonSchema list items must be strings",
         );
       }
-      const text = pyStrip(item);
+      const text = item.trim();
       if (text === "") {
         throw new ValueError(
           "wazoo:jsonSchema list items must be non-empty strings",
@@ -149,7 +148,7 @@ export function normalizeTypeUri(typeToken: unknown, config: Config): string {
 
 /** `true` when a document binds a schema to a type class. */
 export function isSchemaBindingDocument(fmData: DataRecord): boolean {
-  if (!pyTruthy(fmData[TARGET_CLASS_KEY])) return false;
+  if (!isTruthy(fmData[TARGET_CLASS_KEY])) return false;
   try {
     return coerceSchemaRefs(fmData[JSON_SCHEMA_KEY]) !== null;
   } catch (error) {
@@ -279,7 +278,7 @@ export class SchemaLoader {
     const host = urlHostname(ref);
     if (host === null || !this.remoteSchemaHosts.has(host)) {
       return `remote schema host ${
-        pyReprStr(host ?? ref)
+        quoteString(host ?? ref)
       } is not allowed by check.remote_schema_hosts`;
     }
     return null;
@@ -430,7 +429,7 @@ function urlHostname(ref: string): string | null {
 }
 
 /** `!value`, in Python's sense, for the falsy checks this module inherits. */
-function pyTruthy(value: unknown): boolean {
+function isTruthy(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
@@ -441,11 +440,6 @@ function pyTruthy(value: unknown): boolean {
   if (Array.isArray(value)) return value.length > 0;
   if (isRecord(value)) return Object.keys(value).length > 0;
   return true;
-}
-
-/** Python's `repr` for a string, used by the host-policy message. */
-function pyReprStr(text: string): string {
-  return text.includes("'") && !text.includes('"') ? `"${text}"` : `'${text}'`;
 }
 
 /**
@@ -469,7 +463,7 @@ function effectiveSchemaRefs(
     for (const ref of registry.get(typeUri) ?? []) {
       if (seen.has(ref)) continue;
       seen.add(ref);
-      refs.push([ref, `via type ${pyStr(typeToken)}`]);
+      refs.push([ref, `via type ${describeText(typeToken)}`]);
     }
   }
 
@@ -499,15 +493,15 @@ function formatMissingRef(
 ): string {
   if (isRemoteSchemaRef(ref)) {
     return `In ${route}: wazoo:jsonSchema ${
-      pyReprStr(ref)
+      quoteString(ref)
     } could not be fetched (${detail}).`;
   }
   if (options.binding) {
     return `In ${route}: wazoo:jsonSchema on type binding ${
-      pyReprStr(ref)
+      quoteString(ref)
     } ${detail}.`;
   }
-  return `In ${route}: wazoo:jsonSchema ${pyReprStr(ref)} ${detail}.`;
+  return `In ${route}: wazoo:jsonSchema ${quoteString(ref)} ${detail}.`;
 }
 
 /** The issue for one schema validation failure. */
@@ -565,7 +559,7 @@ export async function checkFrontmatterSchema(
       filePath,
       config.graph.content_predicate ?? undefined,
     );
-    if (fmData === null || !pyTruthy(fmData)) continue;
+    if (fmData === null || !isTruthy(fmData)) continue;
 
     try {
       coerceSchemaRefs(fmData[JSON_SCHEMA_KEY]);

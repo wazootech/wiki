@@ -122,7 +122,7 @@ Deno.test("link formatting has exactly two styles and refuses anything else", ()
   assertThrows(
     () => formatInternalLink("Beta", "Beta page", "obsidian"),
     Error,
-    "expected standard or wikilink, got 'obsidian'",
+    'expected standard or wikilink, got "obsidian"',
   );
   assertEquals(markdownLinkTarget("docs/Alpha"), "docs/Alpha.md");
 });

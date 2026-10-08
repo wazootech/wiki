@@ -26,7 +26,6 @@ import {
 import { basename, extname, isAbsolute, join, resolve } from "@std/path";
 import { ValueError } from "./errors.ts";
 import { DOCUMENT_EXTENSIONS } from "./parser.ts";
-import { PY_WHITESPACE } from "./pystr.ts";
 import type { Config } from "./config.ts";
 
 import { quote } from "./urlquote.ts";
@@ -49,7 +48,7 @@ export const UNSAFE_ROUTE_CHARS: ReadonlySet<string> = new Set(["?", "#", "%"]);
  * rejected, and three copies of the resolver are three chances to forget.
  */
 export function resolveConfigRelativePath(raw: string, root: string): string {
-  const text = pyStrip(raw).replaceAll("\\", "/");
+  const text = raw.trim().replaceAll("\\", "/");
   const path = text;
   return resolve(isAbsolute(path) ? path : join(root, path));
 }
@@ -63,12 +62,6 @@ export function pathWithinRoot(path: string, root: string): boolean {
     throw error;
   }
   return true;
-}
-
-/** `str.strip()` with Python's whitespace set, for the two helpers above. */
-function pyStrip(text: string): string {
-  const pattern = new RegExp(`^${PY_WHITESPACE}+|${PY_WHITESPACE}+$`, "g");
-  return text.replace(pattern, "");
 }
 
 /** Every document file under the configured inputs, sorted, minus exclusions. */
