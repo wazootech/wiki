@@ -1,7 +1,9 @@
+import { walkSync } from "@std/fs";
 import {
   basename,
   isAbsolute,
   join,
+  normalize,
   relative,
   resolve,
   SEPARATOR,
@@ -82,22 +84,25 @@ export function sortPaths(paths: readonly string[]): string[] {
   return [...paths].sort();
 }
 
+/**
+ * Every file and directory under `root`, sorted, excluding `root` itself.
+ *
+ * Symlinks are never followed or listed: a symlinked entry in a wiki input —
+ * including one fetched by `wiki install` from a remote repo — must not let
+ * `fmt`/`render` write through it, nor `build`/`export` read through it. That
+ * is `@std/fs`'s `includeSymlinks: false` (`followSymlinks` already defaults to
+ * false), so the tree walk is the standard one rather than a hand-rolled
+ * recursion. Matches the asset walk's precedent.
+ */
 export function walkTree(root: string): string[] {
+  const rootPath = normalize(root);
   const paths: string[] = [];
-  const visit = (directory: string): void => {
-    for (const entry of Deno.readDirSync(directory)) {
-      // Symlinks are never followed or listed: a symlinked entry in a wiki
-      // input — including one fetched by `wiki install` from a remote repo —
-      // must not let `fmt`/`render` write through it, nor `build`/`export`
-      // read through it. Matches the asset walk's precedent.
-      if (entry.isSymlink) continue;
-      if (!entry.isFile && !entry.isDirectory) continue;
-      const path = join(directory, entry.name);
-      paths.push(path);
-      if (entry.isDirectory) visit(path);
-    }
-  };
-  visit(root);
+  for (const entry of walkSync(root, { includeSymlinks: false })) {
+    // `walkSync` yields the root itself first; callers want descendants only.
+    if (normalize(entry.path) === rootPath) continue;
+    if (!entry.isFile && !entry.isDirectory) continue;
+    paths.push(entry.path);
+  }
   return sortPaths(paths);
 }
 
