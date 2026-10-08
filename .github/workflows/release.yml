@@ -106,42 +106,11 @@ jobs:
           path: dist/standalone/wazootech-wiki-*
           if-no-files-found: error
 
-  publish-jsr:
-    name: Publish JSR
-    needs: verify
-    # Disabled until the @wazoo/wiki package is created and linked to this
-    # repository. `deno publish` fails on an unlinked package, and this job used
-    # to sit in `publish-github-release`'s `needs`, so a failure here skipped
-    # the GitHub Release and, transitively, the npm publish. JSR is deferred to
-    # a follow-up; npm and the standalone binaries ship without it.
-    #
-    # Enable by setting the repository variable JSR_PUBLISH_ENABLED=true after
-    # the package exists. Flip the variable, not this file.
-    if: >-
-      vars.JSR_PUBLISH_ENABLED == 'true' &&
-      github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.9.6
-          cache: true
-
-      - name: Publish to JSR (GitHub OIDC)
-        run: deno publish
-
   publish-github-release:
     name: Publish GitHub Release
-    # Deliberately NOT gated on publish-jsr: npm consumers must not depend on a
-    # JSR release happening. See the note on `publish-jsr`.
+    # JSR is not published from this workflow: `publish-jsr.yml` publishes
+    # @wazoo/wiki when a new version reaches `main`, so npm consumers never
+    # depend on a JSR release happening alongside a tag.
     needs: [verify, build-standalone]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest

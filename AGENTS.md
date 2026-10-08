@@ -100,7 +100,7 @@ The Deno `Wiki` API is the in-process library surface; the npm package exposes t
 
 A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
-Before the first release, create `@wazoo/wiki` on JSR and link it to `wazootech/wiki` in JSR package settings; the release workflow uses GitHub OIDC and cannot publish until that link exists. `.github/workflows/release.yml` verifies versions, dry-runs the JSR package contents, builds Deno standalone binaries, then publishes JSR, GitHub Release assets, and `wazootech-wiki` to npm with provenance. The workflow no longer publishes a Python package to PyPI. Do not publish packages by hand.
+`@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance. Neither workflow publishes a Python package to PyPI. Do not publish packages by hand.
 
 ### Config schema changes
 

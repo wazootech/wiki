@@ -1,0 +1,91 @@
+name: Publish JSR
+
+# `@wazoo/wiki` publishes the version that reaches `main`, not a tagged release.
+# The trigger is the CI workflow completing on `main`, so a publish can never
+# race ahead of the tests for the same commit. A `main` push whose version is
+# already on JSR is a no-op, which keeps repeated pushes (docs, CI, tooling)
+# from failing on an immutable registry.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-jsr:
+    name: Publish to JSR
+    # Set the repository variable JSR_PUBLISH_ENABLED=true to enable.
+    if: >-
+      vars.JSR_PUBLISH_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the verified commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.9.6
+          cache: true
+
+      - name: Read the package version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')"
+          test -n "$VERSION" || { echo "::error::deno.json has no version"; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "@wazoo/wiki version under test: $VERSION"
+
+      - name: Skip when the version is already on JSR
+        id: published
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://jsr.io/@wazoo/wiki/${VERSION}_meta.json")"
+          if [ "$STATUS" = "200" ]; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "@wazoo/wiki@${VERSION} is already on JSR; nothing to publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+            echo "@wazoo/wiki@${VERSION} is not on JSR yet (status ${STATUS}); publishing."
+          fi
+
+      - name: Validate the JSR package contents
+        if: steps.published.outputs.already == 'false'
+        run: deno publish --dry-run
+
+      - name: Publish to JSR (GitHub OIDC)
+        if: steps.published.outputs.already == 'false'
+        run: deno publish
+
+      - name: Verify the version is live on JSR
+        if: steps.published.outputs.already == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          for attempt in 1 2 3 4 5 6; do
+            STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://jsr.io/@wazoo/wiki/${VERSION}_meta.json")"
+            if [ "$STATUS" = "200" ]; then
+              echo "Verified @wazoo/wiki@${VERSION} on JSR."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/6: not visible yet (status ${STATUS}); waiting..."
+            sleep 10
+          done
+          echo "::error::@wazoo/wiki@${VERSION} not found on JSR after retries."
+          exit 1
