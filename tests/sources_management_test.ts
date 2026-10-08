@@ -389,16 +389,23 @@ Deno.test({
 Deno.test("install accepts a transitive source rooted at its clone", () => {
   withTempDir((root) => {
     // The fix must not break the legitimate cases: no `path` (the repo root
-    // itself) and `path: "."` both select the clone dir.
+    // itself) and `path: "."` both select the clone dir. Directory names come
+    // from `label`, never from `path`: Windows strips a trailing dot from a
+    // path component, so a dir named `parent-.` yields a clone destination
+    // (`wiki-root-./.wiki/sources/...`) that fails with `Invalid argument`.
     const dep = initRepo(root, "dependency", { "dep.md": "# Dependency\n" });
-    for (const path of [null, "."]) {
-      const parent = initRepo(root, `parent-${path ?? "root"}`, {
+    const cases = [
+      { label: "root", path: null },
+      { label: "dot", path: "." },
+    ] as const;
+    for (const { label, path } of cases) {
+      const parent = initRepo(root, `parent-${label}`, {
         "wiki.yml":
           `wiki:\n  input: wiki\nsources:\n  - name: dep\n    type: git\n    url: ${dep}\n` +
           (path === null ? "" : `    path: ${path}\n`),
         "parent.md": "# Parent\n",
       });
-      const wikiRoot = join(root, `wiki-root-${path ?? "root"}`);
+      const wikiRoot = join(root, `wiki-root-${label}`);
       Deno.mkdirSync(wikiRoot);
       const config = rootConfig(wikiRoot, [{
         name: "parent",
