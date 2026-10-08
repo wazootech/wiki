@@ -59,7 +59,7 @@ Read one reference per turn unless the user explicitly asked for a multi-step fl
 
 Integration and template proposals follow the [contributing guide in wazootech/wiki-templates](https://github.com/wazootech/wiki-templates/blob/main/CONTRIBUTING.md). Use it when comparing an external tool with Wiki CLI, drafting a template proposal issue, or turning an integration idea into a repeatable GitHub issue. It preserves the boundary between Wiki CLI and downstream integrations and files through the `integration-template.yml` issue form in `wazootech/wiki-templates`.
 
-Code-wiki **sync** lives inside the `wiki` skill as a routed workflow (`skills/wiki/references/sync.md`). It maintains *code wikis* (a repo's `docs/` folder, e.g. `wazootech/sparql-engine`) — the Git-anchored delta process that keeps documentation truthful to source after code changes: anchor at `docs/.sync-base`, diff `origin/main` forward, check file inventory with `git ls-tree`, edit only the affected pages, validate, and land. It defaults to drift-free docs — no line numbers, machine-specific measurements, or test counts — with an opt-in `detail_level` directive in the repo's `AGENTS.md` (`line-numbers`, `measurements`, or `full`) that re-enables the execute-to-verify steps (`deno doc --json` lines, runner counts, bench snapshots). A wholesale scheduled-sync template ships alongside it: [`skills/wiki/references/workflow-template-wiki-sync.yml`](https://github.com/wazootech/wiki/blob/main/skills/wiki/references/workflow-template-wiki-sync.yml).
+Code-wiki **sync** lives inside the `wiki` skill as a routed workflow (`skills/wiki/references/sync.md`). It maintains _code wikis_ (a repo's `docs/` folder, e.g. `wazootech/sparql-engine`) — the Git-anchored delta process that keeps documentation truthful to source after code changes: anchor at `docs/.sync-base`, diff `origin/main` forward, check file inventory with `git ls-tree`, edit only the affected pages, validate, and land. It defaults to drift-free docs — no line numbers, machine-specific measurements, or test counts — with an opt-in `detail_level` directive in the repo's `AGENTS.md` (`line-numbers`, `measurements`, or `full`) that re-enables the execute-to-verify steps (`deno doc --json` lines, runner counts, bench snapshots). A wholesale scheduled-sync template ships alongside it: [`skills/wiki/references/workflow-template-wiki-sync.yml`](https://github.com/wazootech/wiki/blob/main/skills/wiki/references/workflow-template-wiki-sync.yml).
 
 ## Scripts
 
@@ -90,12 +90,11 @@ See `skills/wiki/references/improve.md`, [Wiki Configuration](Wiki_Configuration
 
 ## Deploy workflow
 
-Align `site.base_url`, add `.github/workflows/deploy.yml` from wholesale templates, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions**. Requires **`wiki` on PATH** and an existing wiki config (`wiki.yml`, or legacy `wiki.yaml`).
+Align `site.base_url`, add `.github/workflows/deploy.yml` from the Deno-native template, set the correct `upload-pages-artifact` path, and remind you to enable **Pages → GitHub Actions**. Requires a supported Wiki CLI path and an existing wiki config (`wiki.yml`, or legacy `wiki.yaml`).
 
-Workflow assets (embed one template in full; substitute `CONFIG_PATH`, `SITE_BASE_URL`, `ARTIFACT_PATH` only):
+Workflow asset (embed the template in full; substitute `CONFIG_PATH`, `SITE_BASE_URL`, `ARTIFACT_PATH` only):
 
-- `skills/wiki/references/workflow-template-uv.yml` — uv monorepo
-- `skills/wiki/references/workflow-template-pip.yml` — pip standalone
+- `skills/wiki/references/workflow-template-deno.yml` — Deno-native JSR CLI
 
 See `skills/wiki/references/deploy.md` (which includes the Deploy Alignment Checklist) and [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md).
 
@@ -116,8 +115,7 @@ skills/
   wiki/references/deploy.md
   wiki/references/enrich.md
   wiki/references/sync.md
-  wiki/references/workflow-template-uv.yml
-  wiki/references/workflow-template-pip.yml
+  wiki/references/workflow-template-deno.yml
   wiki/references/workflow-template-wiki-sync.yml
 ```
 

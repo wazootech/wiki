@@ -87,15 +87,3 @@ lint:
 #   enabled: false
 #   path: /api/sparql
 
-# Markdown formatting options (wiki fmt); inline mapping or TOML path.
-fmt:
-  # Line wrap width (no disables wrapping).
-  wrap: "no"
-  # Line ending style (lf or crlf).
-  end_of_line: lf
-  # mdformat extensions enabled for wiki markdown.
-  extensions: [gfm, front_matters, wikilink, toc, footnote]
-
-# Pointer mode (optional TOML file relative to this file):
-# fmt: .mdformat.toml
-

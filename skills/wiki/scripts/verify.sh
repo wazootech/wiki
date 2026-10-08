@@ -1,78 +1,50 @@
 #!/usr/bin/env bash
-# Wiki CLI capability probe — deterministic install/stale gate for agents.
-# Exit 0: wiki ready (help + fmt). Exit 1: missing. Exit 2: stale (--help ok, fmt missing).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-find_uv() {
-  if command -v uv >/dev/null 2>&1; then
-    command -v uv
-    return 0
+wiki_supports_deno() {
+  local version help fmt_help major minor patch
+  version="$("$@" --version 2>&1)" || return 1
+  if [[ ! "$version" =~ ^wiki,\ version\ ([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    return 1
   fi
-  local candidate=""
-  for candidate in \
-    "${HOME}/.local/bin/uv" \
-    "${HOME}/.local/bin/uv.exe" \
-    "${USERPROFILE:-}${USERPROFILE:+/}.local/bin/uv.exe" \
-    "${HOME}/AppData/Local/Programs/uv/uv.exe" \
-    "${LOCALAPPDATA:-}/Programs/uv/uv.exe" \
-    /mnt/c/Users/*/.local/bin/uv.exe \
-    /c/Users/*/.local/bin/uv.exe; do
-    if [[ -n "$candidate" && -x "$candidate" ]]; then
-      echo "$candidate"
-      return 0
-    fi
-  done
-  return 1
-}
-
-wiki_supports_fmt() {
-  command -v wiki >/dev/null 2>&1 && wiki --help 2>&1 | grep -q 'fmt'
+  major="${BASH_REMATCH[1]}"
+  minor="${BASH_REMATCH[2]}"
+  patch="${BASH_REMATCH[3]}"
+  if (( 10#$major == 0 && (10#$minor < 1 || (10#$minor == 1 && 10#$patch < 24)) )); then
+    return 1
+  fi
+  help="$("$@" --help 2>&1)" || return 1
+  grep -q 'fmt' <<< "$help" || return 1
+  fmt_help="$("$@" fmt --help 2>&1)" || return 1
+  grep -qi 'Deno formatter' <<< "$fmt_help"
 }
 
 wiki_help_ok() {
   wiki --help >/dev/null 2>&1
 }
 
-run_checkout_wiki() {
-  local root="${REPO_ROOT}"
-  if [[ ! -f "${root}/pyproject.toml" ]]; then
-    return 1
-  fi
-  local uv_bin=""
-  if uv_bin="$(find_uv)"; then
-    (cd "${root}" && "${uv_bin}" run wiki --help >/dev/null 2>&1 && "${uv_bin}" run wiki fmt --help >/dev/null 2>&1)
-    return $?
-  fi
-  local py=""
-  if command -v python >/dev/null 2>&1; then
-    py=python
-  elif command -v python3 >/dev/null 2>&1; then
-    py=python3
-  fi
-  if [[ -n "$py" ]]; then
-    (cd "${root}" && "$py" -m wiki --help >/dev/null 2>&1 && "$py" -m wiki fmt --help >/dev/null 2>&1)
-    return $?
-  fi
-  return 1
+source_checkout_ready() {
+  command -v deno >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/deno.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]] && \
+    (cd "${REPO_ROOT}" && wiki_supports_deno deno run -A src/wiki/cli.ts)
 }
 
-if wiki_supports_fmt && wiki_help_ok; then
-  echo "verify-cli.sh: wiki ready on PATH"
+if command -v wiki >/dev/null 2>&1 && wiki_supports_deno wiki; then
+  echo "verify.sh: wiki ready on PATH"
+  exit 0
+fi
+
+if source_checkout_ready; then
+  echo "verify.sh: wiki ready via Deno source checkout"
   exit 0
 fi
 
 if wiki_help_ok; then
-  echo "verify-cli.sh: stale wiki on PATH — upgrade wazootech-wiki (see references/install.md)" >&2
+  echo "verify.sh: stale wiki on PATH — use the Deno source checkout or wait for the cutover release (see references/install.md)" >&2
   exit 2
 fi
 
-if run_checkout_wiki; then
-  echo "verify-cli.sh: wiki ready via uv run wiki / python -m wiki in checkout"
-  exit 0
-fi
-
-echo "verify-cli.sh: wiki not found — install wazootech-wiki (see references/install.md)" >&2
+echo "verify.sh: supported Deno Wiki CLI not found; the cutover package is not yet released (see references/install.md)" >&2
 exit 1

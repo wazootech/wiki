@@ -1,0 +1,76 @@
+{
+  "corpusTriples": 17,
+  "closedTriples": 19,
+  "agentTypedAfterClosure": [
+    "https://example.org/probe/alice",
+    "https://example.org/probe/bob",
+    "https://example.org/probe/dave"
+  ],
+  "firstRawResultShape": {
+    "dataset": "object",
+    "ns": "object",
+    "pointer": "b78",
+    "term": "b78"
+  },
+  "firstRawResultQuads": [
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type = http://www.w3.org/ns/shacl#ValidationResult",
+    "http://www.w3.org/ns/shacl#focusNode = https://example.org/probe/bob",
+    "http://www.w3.org/ns/shacl#resultMessage = Agent requires schema:name",
+    "http://www.w3.org/ns/shacl#resultPath = https://schema.org/name",
+    "http://www.w3.org/ns/shacl#resultSeverity = http://www.w3.org/ns/shacl#Violation",
+    "http://www.w3.org/ns/shacl#sourceConstraintComponent = http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+    "http://www.w3.org/ns/shacl#sourceShape = b1"
+  ],
+  "raw": {
+    "conforms": false,
+    "findings": [
+      {
+        "focusNode": "https://example.org/probe/bob",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Agent requires schema:name"
+      },
+      {
+        "focusNode": "https://example.org/probe/bob",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Person requires schema:name"
+      },
+      {
+        "focusNode": "https://example.org/probe/dave",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Agent requires schema:name"
+      }
+    ]
+  },
+  "closed": {
+    "conforms": false,
+    "findings": [
+      {
+        "focusNode": "https://example.org/probe/bob",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Agent requires schema:name"
+      },
+      {
+        "focusNode": "https://example.org/probe/bob",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Person requires schema:name"
+      },
+      {
+        "focusNode": "https://example.org/probe/dave",
+        "resultPath": "",
+        "constraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+        "severity": "http://www.w3.org/ns/shacl#Violation",
+        "message": "Agent requires schema:name"
+      }
+    ]
+  }
+}

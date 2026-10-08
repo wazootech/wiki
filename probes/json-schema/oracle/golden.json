@@ -1,0 +1,1751 @@
+{
+  "cases": [
+    {
+      "name": "required-single",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'familyName' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "givenName",
+            "familyName"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'familyName' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "required-all-missing",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'headline' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "headline",
+            "description"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'description' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "headline",
+            "description"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "'headline' is a required property",
+        "'description' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "required-list-order",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'zeta' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "zeta",
+            "alpha",
+            "mu"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'alpha' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "zeta",
+            "alpha",
+            "mu"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'mu' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "zeta",
+            "alpha",
+            "mu"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [],
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "'zeta' is a required property",
+        "'alpha' is a required property",
+        "'mu' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "required-and-type-same-object",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'count' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "count"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'count' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-string-got-string",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "message": "'seven' is not of type 'integer'",
+          "schema_path": [
+            "properties",
+            "x",
+            "type"
+          ],
+          "validator_value": "integer"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "'seven' is not of type 'integer'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-union",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "message": "7 is not of type 'string', 'null'",
+          "schema_path": [
+            "properties",
+            "x",
+            "type"
+          ],
+          "validator_value": [
+            "string",
+            "null"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "7 is not of type 'string', 'null'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-bool-is-not-integer",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "message": "True is not of type 'integer'",
+          "schema_path": [
+            "properties",
+            "x",
+            "type"
+          ],
+          "validator_value": "integer"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "True is not of type 'integer'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-null",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "message": "None is not of type 'string'",
+          "schema_path": [
+            "properties",
+            "x",
+            "type"
+          ],
+          "validator_value": "string"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "None is not of type 'string'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-float-integer",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "type",
+          "message": "1.5 is not of type 'integer'",
+          "schema_path": [
+            "properties",
+            "x",
+            "type"
+          ],
+          "validator_value": "integer"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "1.5 is not of type 'integer'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-array-and-object",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "a"
+          ],
+          "keyword": "type",
+          "message": "[1, 2] is not of type 'string'",
+          "schema_path": [
+            "properties",
+            "a",
+            "type"
+          ],
+          "validator_value": "string"
+        },
+        {
+          "path": [
+            "o"
+          ],
+          "keyword": "type",
+          "message": "'no' is not of type 'object'",
+          "schema_path": [
+            "properties",
+            "o",
+            "type"
+          ],
+          "validator_value": "object"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "a"
+        ],
+        [
+          "o"
+        ]
+      ],
+      "sorted_messages": [
+        "[1, 2] is not of type 'string'",
+        "'no' is not of type 'object'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "min-length-string",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "minLength",
+          "message": "'ab' is too short",
+          "schema_path": [
+            "properties",
+            "x",
+            "minLength"
+          ],
+          "validator_value": 3
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "'ab' is too short"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "max-length-string",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "maxLength",
+          "message": "'abcd' is too long",
+          "schema_path": [
+            "properties",
+            "x",
+            "maxLength"
+          ],
+          "validator_value": 3
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "'abcd' is too long"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "pattern-mismatch",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "slug"
+          ],
+          "keyword": "pattern",
+          "message": "'Not A Slug' does not match '^[a-z]+(-[a-z]+)*$'",
+          "schema_path": [
+            "properties",
+            "slug",
+            "pattern"
+          ],
+          "validator_value": "^[a-z]+(-[a-z]+)*$"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "slug"
+        ]
+      ],
+      "sorted_messages": [
+        "'Not A Slug' does not match '^[a-z]+(-[a-z]+)*$'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "min-length-array",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "minItems",
+          "message": "[] should be non-empty",
+          "schema_path": [
+            "properties",
+            "tags",
+            "minItems"
+          ],
+          "validator_value": 1
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "[] should be non-empty"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "max-items-array",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "maxItems",
+          "message": "['a', 'b', 'c'] is too long",
+          "schema_path": [
+            "properties",
+            "tags",
+            "maxItems"
+          ],
+          "validator_value": 2
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "['a', 'b', 'c'] is too long"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "unique-items",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "uniqueItems",
+          "message": "['a', 'a'] has non-unique elements",
+          "schema_path": [
+            "properties",
+            "tags",
+            "uniqueItems"
+          ],
+          "validator_value": true
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "['a', 'a'] has non-unique elements"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "items-nested-path",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "authors",
+            1
+          ],
+          "keyword": "required",
+          "message": "'name' is a required property",
+          "schema_path": [
+            "properties",
+            "authors",
+            "items",
+            "required"
+          ],
+          "validator_value": [
+            "name"
+          ]
+        },
+        {
+          "path": [
+            "authors",
+            2,
+            "name"
+          ],
+          "keyword": "type",
+          "message": "5 is not of type 'string'",
+          "schema_path": [
+            "properties",
+            "authors",
+            "items",
+            "properties",
+            "name",
+            "type"
+          ],
+          "validator_value": "string"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "authors",
+          1
+        ],
+        [
+          "authors",
+          2,
+          "name"
+        ]
+      ],
+      "sorted_messages": [
+        "'name' is a required property",
+        "5 is not of type 'string'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "enum-mismatch",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "status"
+          ],
+          "keyword": "enum",
+          "message": "'archived' is not one of ['draft', 'published']",
+          "schema_path": [
+            "properties",
+            "status",
+            "enum"
+          ],
+          "validator_value": [
+            "draft",
+            "published"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "status"
+        ]
+      ],
+      "sorted_messages": [
+        "'archived' is not one of ['draft', 'published']"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "const-mismatch",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "kind"
+          ],
+          "keyword": "const",
+          "message": "'page' was expected",
+          "schema_path": [
+            "properties",
+            "kind",
+            "const"
+          ],
+          "validator_value": "page"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "kind"
+        ]
+      ],
+      "sorted_messages": [
+        "'page' was expected"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "minimum-number",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "order"
+          ],
+          "keyword": "minimum",
+          "message": "-1 is less than the minimum of 0",
+          "schema_path": [
+            "properties",
+            "order",
+            "minimum"
+          ],
+          "validator_value": 0
+        }
+      ],
+      "sorted_paths": [
+        [
+          "order"
+        ]
+      ],
+      "sorted_messages": [
+        "-1 is less than the minimum of 0"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "exclusive-maximum",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "order"
+          ],
+          "keyword": "exclusiveMaximum",
+          "message": "10 is greater than or equal to the maximum of 10",
+          "schema_path": [
+            "properties",
+            "order",
+            "exclusiveMaximum"
+          ],
+          "validator_value": 10
+        }
+      ],
+      "sorted_paths": [
+        [
+          "order"
+        ]
+      ],
+      "sorted_messages": [
+        "10 is greater than or equal to the maximum of 10"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "multiple-of",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "multipleOf",
+          "message": "7 is not a multiple of 5",
+          "schema_path": [
+            "properties",
+            "n",
+            "multipleOf"
+          ],
+          "validator_value": 5
+        }
+      ],
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "7 is not a multiple of 5"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "additional-properties",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "message": "Additional properties are not allowed ('another', 'stray' were unexpected)",
+          "schema_path": [
+            "additionalProperties"
+          ],
+          "validator_value": false
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "Additional properties are not allowed ('another', 'stray' were unexpected)"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "additional-properties-pattern",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x-bad"
+          ],
+          "keyword": "type",
+          "message": "1 is not of type 'string'",
+          "schema_path": [
+            "patternProperties",
+            "^x-",
+            "type"
+          ],
+          "validator_value": "string"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "x-bad"
+        ]
+      ],
+      "sorted_messages": [
+        "1 is not of type 'string'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "nested-object-path",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "format-email-and-date-time",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "format-annotation-only",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "any-of-none-match",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "anyOf",
+          "message": "True is not valid under any of the given schemas",
+          "schema_path": [
+            "properties",
+            "value",
+            "anyOf"
+          ],
+          "validator_value": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "True is not valid under any of the given schemas"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "one-of-none-match",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "message": "[] is not valid under any of the given schemas",
+          "schema_path": [
+            "properties",
+            "value",
+            "oneOf"
+          ],
+          "validator_value": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "[] is not valid under any of the given schemas"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "one-of-multiple-match",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "message": "5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number'}",
+          "schema_path": [
+            "properties",
+            "value",
+            "oneOf"
+          ],
+          "validator_value": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            }
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number'}"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "all-of-failure",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "minLength",
+          "message": "'abc' is too short",
+          "schema_path": [
+            "properties",
+            "value",
+            "allOf",
+            1,
+            "minLength"
+          ],
+          "validator_value": 5
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "'abc' is too short"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "not-failure",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "not",
+          "message": "'a string' should not be valid under {'type': 'string'}",
+          "schema_path": [
+            "properties",
+            "value",
+            "not"
+          ],
+          "validator_value": {
+            "type": "string"
+          }
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "'a string' should not be valid under {'type': 'string'}"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "local-defs-ref",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "author"
+          ],
+          "keyword": "required",
+          "message": "'name' is a required property",
+          "schema_path": [
+            "properties",
+            "author",
+            "required"
+          ],
+          "validator_value": [
+            "name"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "author"
+        ]
+      ],
+      "sorted_messages": [
+        "'name' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "top-level-required-and-nested-error-order",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'type' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "type",
+            "title"
+          ]
+        },
+        {
+          "path": [
+            "title"
+          ],
+          "keyword": "type",
+          "message": "3 is not of type 'string'",
+          "schema_path": [
+            "properties",
+            "title",
+            "type"
+          ],
+          "validator_value": "string"
+        },
+        {
+          "path": [
+            "author"
+          ],
+          "keyword": "required",
+          "message": "'name' is a required property",
+          "schema_path": [
+            "properties",
+            "author",
+            "required"
+          ],
+          "validator_value": [
+            "name"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [],
+        [
+          "author"
+        ],
+        [
+          "title"
+        ]
+      ],
+      "sorted_messages": [
+        "'type' is a required property",
+        "'name' is a required property",
+        "3 is not of type 'string'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-key-after-properties-key",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "x"
+          ],
+          "keyword": "const",
+          "message": "1 was expected",
+          "schema_path": [
+            "properties",
+            "x",
+            "const"
+          ],
+          "validator_value": 1
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'y' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "y"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [],
+        [
+          "x"
+        ]
+      ],
+      "sorted_messages": [
+        "'y' is a required property",
+        "1 was expected"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "instance-root-not-object",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "type",
+          "message": "'a string' is not of type 'object'",
+          "schema_path": [
+            "type"
+          ],
+          "validator_value": "object"
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'a string' is not of type 'object'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "empty-schema",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "false-schema",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": null,
+          "message": "False schema does not allow 1",
+          "schema_path": [
+            "properties"
+          ],
+          "validator_value": null
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "False schema does not allow 1"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "true-schema",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "dependant-required",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "dependentRequired",
+          "message": "'billing_address' is a dependency of 'credit_card'",
+          "schema_path": [
+            "dependentRequired"
+          ],
+          "validator_value": {
+            "credit_card": [
+              "billing_address"
+            ]
+          }
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'billing_address' is a dependency of 'credit_card'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "contains-keyword",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "contains",
+          "message": "['a', 'b'] does not contain items matching the given schema",
+          "schema_path": [
+            "properties",
+            "tags",
+            "contains"
+          ],
+          "validator_value": {
+            "const": "wiki"
+          }
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "['a', 'b'] does not contain items matching the given schema"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "property-names-pattern",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "pattern",
+          "message": "'Good' does not match '^[a-z]+$'",
+          "schema_path": [
+            "propertyNames",
+            "pattern"
+          ],
+          "validator_value": "^[a-z]+$"
+        },
+        {
+          "path": [],
+          "keyword": "pattern",
+          "message": "'BAD' does not match '^[a-z]+$'",
+          "schema_path": [
+            "propertyNames",
+            "pattern"
+          ],
+          "validator_value": "^[a-z]+$"
+        }
+      ],
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "'Good' does not match '^[a-z]+$'",
+        "'BAD' does not match '^[a-z]+$'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "unevaluated-properties",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "unevaluatedProperties",
+          "message": "Unevaluated properties are not allowed ('b' was unexpected)",
+          "schema_path": [
+            "unevaluatedProperties"
+          ],
+          "validator_value": false
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "Unevaluated properties are not allowed ('b' was unexpected)"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "decimal-boundary-multiple",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "multipleOf",
+          "message": "0.3 is not a multiple of 0.1",
+          "schema_path": [
+            "properties",
+            "n",
+            "multipleOf"
+          ],
+          "validator_value": 0.1
+        }
+      ],
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "0.3 is not a multiple of 0.1"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "invalid-schema-keyword-type",
+      "constructed": true,
+      "validation_error": "UnknownType: Unknown type 'not a type' for validator with schema:\n    {'type': 'not a type'}\n\nWhile checking instance:\n    1"
+    },
+    {
+      "name": "invalid-schema-minimum-string",
+      "constructed": true,
+      "validation_error": "TypeError: '<' not supported between instances of 'int' and 'str'"
+    },
+    {
+      "name": "unresolvable-ref",
+      "constructed": true,
+      "validation_error": "_WrappedReferencingError: Unresolvable: https://example.org/absent.json"
+    },
+    {
+      "name": "order-additional-then-required",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "message": "Additional properties are not allowed ('b' was unexpected)",
+          "schema_path": [
+            "additionalProperties"
+          ],
+          "validator_value": false
+        },
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'a' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "a"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "Additional properties are not allowed ('b' was unexpected)",
+        "'a' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "order-required-then-additional",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'a' is a required property",
+          "schema_path": [
+            "required"
+          ],
+          "validator_value": [
+            "a"
+          ]
+        },
+        {
+          "path": [],
+          "keyword": "additionalProperties",
+          "message": "Additional properties are not allowed ('b' was unexpected)",
+          "schema_path": [
+            "additionalProperties"
+          ],
+          "validator_value": false
+        }
+      ],
+      "sorted_paths": [
+        [],
+        []
+      ],
+      "sorted_messages": [
+        "'a' is a required property",
+        "Additional properties are not allowed ('b' was unexpected)"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "min-properties",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "minProperties",
+          "message": "{'a': 1} does not have enough properties",
+          "schema_path": [
+            "minProperties"
+          ],
+          "validator_value": 2
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "{'a': 1} does not have enough properties"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "max-properties",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "maxProperties",
+          "message": "{'a': 1, 'b': 2} has too many properties",
+          "schema_path": [
+            "maxProperties"
+          ],
+          "validator_value": 1
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "{'a': 1, 'b': 2} has too many properties"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "if-then-branch",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'type' is a required property",
+          "schema_path": [
+            "then",
+            "required"
+          ],
+          "validator_value": [
+            "type"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'type' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "if-else-branch",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'name' is a required property",
+          "schema_path": [
+            "else",
+            "required"
+          ],
+          "validator_value": [
+            "name"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'name' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "dependent-schemas",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [],
+          "keyword": "required",
+          "message": "'b' is a required property",
+          "schema_path": [
+            "dependentSchemas",
+            "a",
+            "required"
+          ],
+          "validator_value": [
+            "b"
+          ]
+        }
+      ],
+      "sorted_paths": [
+        []
+      ],
+      "sorted_messages": [
+        "'b' is a required property"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "exclusive-minimum",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "exclusiveMinimum",
+          "message": "0 is less than or equal to the minimum of 0",
+          "schema_path": [
+            "properties",
+            "n",
+            "exclusiveMinimum"
+          ],
+          "validator_value": 0
+        }
+      ],
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "0 is less than or equal to the minimum of 0"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "maximum",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "maximum",
+          "message": "9 is greater than the maximum of 5",
+          "schema_path": [
+            "properties",
+            "n",
+            "maximum"
+          ],
+          "validator_value": 5
+        }
+      ],
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "9 is greater than the maximum of 5"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "min-contains",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "minContains",
+          "message": "Too few items match the given schema (expected at least 2 but only 1 matched)",
+          "schema_path": [
+            "properties",
+            "tags",
+            "contains"
+          ],
+          "validator_value": 2
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "Too few items match the given schema (expected at least 2 but only 1 matched)"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "type-number-bool",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "n"
+          ],
+          "keyword": "type",
+          "message": "True is not of type 'number'",
+          "schema_path": [
+            "properties",
+            "n",
+            "type"
+          ],
+          "validator_value": "number"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "n"
+        ]
+      ],
+      "sorted_messages": [
+        "True is not of type 'number'"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "integer-integral-float",
+      "constructed": true,
+      "raw": [],
+      "sorted_paths": [],
+      "sorted_messages": [],
+      "is_valid": true
+    },
+    {
+      "name": "one-of-three-matches",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "value"
+          ],
+          "keyword": "oneOf",
+          "message": "5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number', 'maximum': 100}, {'type': 'number'}",
+          "schema_path": [
+            "properties",
+            "value",
+            "oneOf"
+          ],
+          "validator_value": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "number",
+              "maximum": 100
+            }
+          ]
+        }
+      ],
+      "sorted_paths": [
+        [
+          "value"
+        ]
+      ],
+      "sorted_messages": [
+        "5 is valid under each of {'type': 'number', 'minimum': 0}, {'type': 'number', 'maximum': 100}, {'type': 'number'}"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "min-items-two",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "minItems",
+          "message": "['a'] is too short",
+          "schema_path": [
+            "properties",
+            "tags",
+            "minItems"
+          ],
+          "validator_value": 2
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "['a'] is too short"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "max-contains",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "tags"
+          ],
+          "keyword": "maxContains",
+          "message": "Too many items match the given schema (expected at most 1)",
+          "schema_path": [
+            "properties",
+            "tags",
+            "contains"
+          ],
+          "validator_value": 1
+        }
+      ],
+      "sorted_paths": [
+        [
+          "tags"
+        ]
+      ],
+      "sorted_messages": [
+        "Too many items match the given schema (expected at most 1)"
+      ],
+      "is_valid": false
+    },
+    {
+      "name": "tuple-items-prefix-items",
+      "constructed": true,
+      "raw": [
+        {
+          "path": [
+            "pair",
+            0
+          ],
+          "keyword": "type",
+          "message": "7 is not of type 'string'",
+          "schema_path": [
+            "properties",
+            "pair",
+            "prefixItems",
+            0,
+            "type"
+          ],
+          "validator_value": "string"
+        },
+        {
+          "path": [
+            "pair",
+            1
+          ],
+          "keyword": "type",
+          "message": "'x' is not of type 'integer'",
+          "schema_path": [
+            "properties",
+            "pair",
+            "prefixItems",
+            1,
+            "type"
+          ],
+          "validator_value": "integer"
+        }
+      ],
+      "sorted_paths": [
+        [
+          "pair",
+          0
+        ],
+        [
+          "pair",
+          1
+        ]
+      ],
+      "sorted_messages": [
+        "7 is not of type 'string'",
+        "'x' is not of type 'integer'"
+      ],
+      "is_valid": false
+    }
+  ]
+}

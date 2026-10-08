@@ -1,0 +1,21 @@
+{
+  "caseId": "check-micro",
+  "argv": [
+    "-c",
+    "wiki.yml",
+    "check",
+    "--strict",
+    "-v"
+  ],
+  "note": "SHACL report text: skeleton identical, terms rendered as N-Triples",
+  "oracle": {
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Errors:\n  - SHACL Validation Violation:\nValidation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: sh:Violation\n\tSource Shape: [ owl:sameAs <self> ; sh:message Literal(\"schema:Person requires schema:name\") ; sh:minCount Literal(\"1\", datatype=xsd:integer) ; sh:path schema:name ]\n\tFocus Node: wiki:Bob\n\tResult Path: schema:name\n\tMessage: schema:Person requires schema:name\n"
+  },
+  "deno": {
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "Errors:\n  - SHACL Validation Violation:\nValidation Report\nConforms: False\nResults (1):\nConstraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#MinCountConstraintComponent):\n\tSeverity: <http://www.w3.org/ns/shacl#Violation>\n\tSource Shape: _:b1\n\tFocus Node: <https://wiki.example.org/Bob>\n\tResult Path: <https://schema.org/name>\n\tMessage: schema:Person requires schema:name\n"
+  }
+}

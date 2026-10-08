@@ -1,0 +1,26 @@
+# Oracle-side corpus for the SHACL probe (issue #273, Phase 3).
+#
+# The same shapes and data the Deno probe validates, staged so the pinned Python
+# engine can be pointed at them: whatever `wiki check --strict -v` reports here
+# is the parity target.
+wiki:
+  input:
+    - wiki
+graph:
+  content_predicate: schema:articleBody
+  context:
+    "@vocab": https://schema.org/
+    schema: https://schema.org/
+    sh: http://www.w3.org/ns/shacl#
+    rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+    rdfs: http://www.w3.org/2000/01/rdf-schema#
+site:
+  base_url: /wiki
+  url_style: dir
+check:
+  missing_layout_file: error
+  frontmatter_schema: error
+  missing_schema_ref: error
+fmt:
+  wrap: "no"
+  end_of_line: lf

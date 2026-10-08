@@ -2,12 +2,27 @@
 
 ## Unreleased
 
+### Breaking
+
+- The Python engine, PyPI distribution, and Python-only tests/build/release tooling are retired. The `wazootech-wiki` npm package keeps its name and `wiki` command, but runs the Deno/TypeScript engine without requiring Python or a system Deno installation.
+- **Breaking:** the npm package's class-based Node.js SDK is removed. Its entrypoint is now the runtime/bootstrap API (`src/runtime.ts`: `createWikiCommand`, `getDenoExecutable`, `WikiSetupError`), which locates the bundled Deno runtime and builds the CLI invocation. TypeScript callers embed `@wazoo/wiki` instead of constructing a `Wiki` object through npm.
+- The `fmt:` configuration now uses native Deno/dprint options (`textWrap`, `lineWidth`, `newLineKind`). The old `wrap`, `end_of_line`, and `extensions` keys, TOML pointers, and `.mdformat.toml` discovery are not supported. An unknown `fmt:` key is rejected with the accepted surface named; the engine does not guess a replacement for a key it no longer accepts.
+- RDF/XML input remains supported; RDF/XML serialization is deferred. `export` and metadata negotiation return a clear unsupported-format result instead of substituting another RDF format.
+
+### Migration
+
+The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberately does **not** print a per-key rename hint when it rejects an unknown key — such tables drift from the schema and often suggest the wrong target — so the moves are recorded here instead.
+
+- In `fmt:`, replace `wrap` with `textWrap` (`always` | `maintain` | `never`), `end_of_line` with `newLineKind` (`auto` | `crlf` | `lf`), and `number` with `lineWidth` (a positive integer).
+- Delete the `fmt:` key `extensions`. dprint applies formatting to the whole tree, so restricting formatting to a file list has no equivalent.
+- Delete `fmt.mdformat`, `.mdformat.toml` discovery, and the TOML pointer forms of these settings; `wiki.yaml` is the only source.
+- npm consumers that constructed a `Wiki` object replace it with a `createWikiCommand(...)` / `getDenoExecutable()` call, or embed `@wazoo/wiki` directly.
+
 ### Changed
 
-- Standalone release binaries now ship for Linux (x64), macOS (arm64), and
-  Windows (x64). The macOS (Intel/x64) build is temporarily paused while
-  GitHub's `macos-13` runner pool is unavailable; the README download list
-  reflects the current set.
+- Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
+- The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. The release workflow will publish it on the first tagged release after the package is linked to this GitHub repository.
+- The release workflow builds standalone `deno compile` binaries for Linux x64, Windows x64, and macOS ARM64; release assets are individual executables with `SHA256SUMS`.
 
 ### Fixed
 

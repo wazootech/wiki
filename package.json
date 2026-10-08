@@ -1,47 +1,46 @@
 {
   "name": "wazootech-wiki",
-  "version": "0.1.23",
+  "version": "0.2.0",
   "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
   "repository": {
     "type": "git",
     "url": "https://github.com/wazootech/wiki.git"
   },
   "homepage": "https://github.com/wazootech/wiki",
-  "bugs": "https://github.com/wazootech/wiki/issues",
+  "bugs": {
+    "url": "https://github.com/wazootech/wiki/issues"
+  },
   "license": "MIT",
-  "main": "./npm/dist/index.js",
-  "module": "./npm/dist/index.mjs",
-  "types": "./npm/dist/index.d.ts",
+  "main": "./dist/runtime.js",
+  "module": "./dist/runtime.mjs",
+  "types": "./dist/runtime.d.ts",
   "exports": {
     ".": {
-      "types": "./npm/dist/index.d.ts",
-      "import": "./npm/dist/index.mjs",
-      "require": "./npm/dist/index.js"
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.mjs",
+      "require": "./dist/runtime.js"
     }
   },
   "bin": {
-    "wiki": "npm/bin/wiki.js"
+    "wiki": "bin/wiki.js"
   },
   "scripts": {
-    "build": "tsup npm/src/index.ts --format cjs,esm --dts --out-dir npm/dist --clean --shims --silent",
+    "build": "tsup src/runtime.ts --format cjs,esm --dts --out-dir dist --clean --shims --silent",
     "prepack": "npm run build",
-    "postinstall": "node npm/setup.js",
-    "preuninstall": "node npm/uninstall.js",
-    "setup": "node npm/setup.js",
-    "gendocs:python": "uv run sphinx-build -b html -W -c docs docs/api/python docs/assets/api/python",
-    "gendocs:ts": "typedoc",
-    "gen:cli-types": "uv run python scripts/export_cli_schemas.py && node scripts/generate_cli_types.mjs && prettier npm/src/types.generated.ts --write",
-    "format": "prettier \"npm/**/*.ts\" --write",
-    "format:check": "prettier \"npm/**/*.ts\" --check",
-    "lint": "eslint npm/",
-    "test:npm": "npm run build && node npm/test-setup-argv.js && node npm/test-wiki-api.js"
+    "format": "prettier \"src/*.ts\" --write",
+    "format:check": "prettier \"src/*.ts\" --check",
+    "lint": "eslint src/*.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:npm": "npm run typecheck && npm run build && node tests/npm/test-runtime.js"
   },
   "files": [
-    "npm/bin/",
-    "npm/dist/",
-    "npm/python.js",
-    "npm/setup.js",
-    "npm/uninstall.js",
+    "bin/",
+    "dist/",
+    "deno.json",
+    "deno.lock",
+    "src/wiki/**/*.ts",
+    "src/wiki/**/*.html",
+    "src/wiki/templates/**/*.yml",
     "package.json",
     "README.md",
     "LICENSE"
@@ -49,16 +48,17 @@
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "deno": "2.9.6"
+  },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "@types/node": "^24.0.0",
     "esbuild": "0.28.1",
     "eslint": "^9.20.0",
     "globals": "^16.0.0",
-    "json-schema-to-typescript": "^16.0.0",
     "prettier": "^3.9.5",
     "tsup": "^8.3.0",
-    "typedoc": "^0.28.0",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.24.0"
   },

@@ -6,7 +6,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["npm/dist/**", "node_modules/**", "docs/**", "src/**", "tests/**"],
+    ignores: ["dist/**", "node_modules/**", "docs/**", "src/wiki/**", "tests/**"],
   },
   {
     languageOptions: {

@@ -8,6 +8,10 @@ description: Convention audits for broken links, filename patterns, heading styl
 
 Run **convention** audits on the wiki: broken links, filename pattern, heading style, and internal link style.
 
+`wiki lint` is a Wiki-policy audit, not a general Markdown linter. Its distinctive checks depend on resolved Wiki routes, cross-page links, `wiki:` CURIEs, and per-rule `wiki.yaml` severity.
+
+When `lint.heading_levels` or `lint.duplicate_headings` is enabled, Wiki runs the in-process ESLint Markdown adapter with `@eslint/markdown`'s `markdown/heading-increment` and `markdown/no-duplicate-headings` rules. It maps those diagnostics into Wiki's existing issue codes and severity report without an external ESLint config or subprocess. Wiki keeps the duplicate rule's H2+ scope and heading normalization, along with broken-link resolution, `wiki:` CURIEs, filename rules, editorial heading style, Setext-aware thematic-break checks, and link style. Mechanical formatting remains `wiki fmt`'s job through dprint.
+
 Exits **0 silently** on success unless `-v` is set. See [Design Philosophies](Design_Philosophies.md).
 
 ## Usage
@@ -32,15 +36,15 @@ wiki lint --strict
 
 ### Configurable (`lint.*` in `wiki.yaml`)
 
-| Rule key             | What it audits                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------ |
-| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                    |
-| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                |
-| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**) |
-| `heading_levels`     | Heading depth must increase by one level at a time (MD001-inspired)                              |
-| `duplicate_headings` | Duplicate H2+ heading text in the same document (MD024-inspired)                                 |
-| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                             |
-| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                    |
+| Rule key             | What it audits                                                                                                          |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                           |
+| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                                       |
+| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**)                        |
+| `heading_levels`     | Heading depth must increase by one level at a time (`@eslint/markdown`'s `markdown/heading-increment`)                  |
+| `duplicate_headings` | Duplicate H2+ heading text in the same document (`@eslint/markdown`'s `markdown/no-duplicate-headings`, MD024-inspired) |
+| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                                                    |
+| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                           |
 
 Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
 
@@ -54,12 +58,12 @@ Route safety errors (spaces, unsafe URL characters) abort lint with errors befor
 
 ## Related CI commands
 
-| Command               | Purpose                                                          |
-| --------------------- | ---------------------------------------------------------------- |
-| `wiki fmt --check`    | mdformat consistency (`fmt:` in wiki config or fallback TOML)    |
-| `wiki lint --strict`  | Conventions (`lint:` in yaml)                                    |
-| `wiki check --strict` | SHACL, JSON Schema frontmatter, route safety, layout frontmatter |
-| `wiki render --check` | Stale inline SPARQL result blocks                                |
+| Command               | Purpose                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `wiki fmt --check`    | Deno/dprint Markdown formatter consistency using native inline `fmt:` options |
+| `wiki lint --strict`  | Conventions (`lint:` in yaml)                                                 |
+| `wiki check --strict` | SHACL, JSON Schema frontmatter, route safety, layout frontmatter              |
+| `wiki render --check` | Stale inline SPARQL result blocks                                             |
 
 Run in that order in CI: `fmt`, then `lint`, then `check` — so mechanical fixes land before conventions and integrity checks.
 

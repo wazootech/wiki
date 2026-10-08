@@ -1,0 +1,17 @@
+{
+  "caseId": "version",
+  "argv": [
+    "--version"
+  ],
+  "note": "The Deno cutover advances the package version to 0.1.24; the pinned Python oracle remains at 0.1.23.",
+  "oracle": {
+    "exitCode": 0,
+    "stdout": "wiki, version 0.1.23\n",
+    "stderr": ""
+  },
+  "deno": {
+    "exitCode": 0,
+    "stdout": "wiki, version 0.1.24\n",
+    "stderr": ""
+  }
+}

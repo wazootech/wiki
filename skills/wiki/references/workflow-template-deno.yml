@@ -1,0 +1,49 @@
+name: Deploy Wiki to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Check wiki integrity
+        run: deno run -A jsr:@wazoo/wiki/cli -c "CONFIG_PATH" check --strict -v
+
+      - name: Lint wiki conventions
+        run: deno run -A jsr:@wazoo/wiki/cli -c "CONFIG_PATH" lint --strict -v
+
+      - name: Build static site
+        run: deno run -A jsr:@wazoo/wiki/cli -c "CONFIG_PATH" build --output-dir _site --site-base-url "SITE_BASE_URL"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "ARTIFACT_PATH"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -88,7 +88,7 @@ Keep the source reference space as a union rather than forcing every source into
 
 ### Generated and verified
 
-`generated.by` is required within `generated`; `generated.at` records the last meaningful content change. The recommended actor is `wazootech-wiki/<version>`, matching the package identity in `pyproject.toml` and `package.json`. Do not emit both a package actor and an unrelated CLI actor for the same event; actor identity should remain stable and unambiguous.
+`generated.by` is required within `generated`; `generated.at` records the last meaningful content change. The recommended actor is `wazootech-wiki/<version>`, matching the package identity in `deno.json` and `package.json`. Do not emit both a package actor and an unrelated CLI actor for the same event; actor identity should remain stable and unambiguous.
 
 `verified` is a list of independent events, each with `by` and `at`. A producer may accept a bare mapping when reading, but should emit the list form. `wiki check`, `wiki lint`, and `wiki fmt` establish structural and presentation integrity; they do **not** verify claims against their sources. A successful CI run must not by itself cause a page to receive `verified`.
 

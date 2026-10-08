@@ -1,0 +1,60 @@
+[
+  {
+    "note": "Both sides build this graph term-by-term rather than parsing it, so a difference in output is a serializer difference and not a parser difference.",
+    "triples": [
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/knows",
+        "o": { "iri": "https://example.org/Bob" }
+      },
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/name",
+        "o": { "literal": "caf\u00e9 \u2615", "lang": "fr" }
+      },
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/description",
+        "o": { "literal": "line1\nline2 \"quoted\" \\ backslash\ttab" }
+      },
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/active",
+        "o": { "literal": "true", "datatype": "http://www.w3.org/2001/XMLSchema#boolean" }
+      },
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/age",
+        "o": { "literal": "42", "datatype": "http://www.w3.org/2001/XMLSchema#integer" }
+      },
+      {
+        "s": { "iri": "https://example.org/Alice" },
+        "p": "https://schema.org/dateModified",
+        "o": {
+          "literal": "2026-09-24T00:00:00+00:00",
+          "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+        }
+      },
+      {
+        "s": { "iri": "https://example.org/bob" },
+        "p": "https://schema.org/knows",
+        "o": { "blank": true }
+      },
+      {
+        "s": { "blank": true },
+        "p": "https://schema.org/name",
+        "o": { "literal": "anonymous" }
+      },
+      {
+        "s": { "iri": "https://example.org/Entity" },
+        "p": "http://www.w3.org/2000/01/rdf-schema#label",
+        "o": { "literal": "\u00fcml\u00e4ut in <angle> and & ampersand" }
+      },
+      {
+        "s": { "iri": "https://example.org/Entity" },
+        "p": "http://www.w3.org/2000/01/rdf-schema#comment",
+        "o": { "literal": "" }
+      }
+    ]
+  }
+]

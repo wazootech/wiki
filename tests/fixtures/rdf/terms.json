@@ -1,0 +1,58 @@
+{
+  "note": "Terms both sides build programmatically. Deliberately no blank nodes: rdflib labels them from a uuid4, so a blank-node golden could not be byte-compared even by the oracle. Every escaping case the two serializers treat differently lives here.",
+  "triples": [
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/name",
+      "o": { "literal": "plain literal" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/name",
+      "o": { "literal": "caf\u00e9 \u2615", "lang": "fr" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/description",
+      "o": { "literal": "single line \"quoted\" \\ backslash\ttab" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/text",
+      "o": { "literal": "line1\nline2 \"quoted\" \\ backslash\ttab" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/active",
+      "o": { "literal": "true", "datatype": "http://www.w3.org/2001/XMLSchema#boolean" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/age",
+      "o": { "literal": "42", "datatype": "http://www.w3.org/2001/XMLSchema#integer" }
+    },
+    {
+      "s": { "iri": "https://example.org/Alice" },
+      "p": "https://schema.org/dateModified",
+      "o": {
+        "literal": "2026-09-24T00:00:00+00:00",
+        "datatype": "http://www.w3.org/2001/XMLSchema#dateTime"
+      }
+    },
+    {
+      "s": { "iri": "https://example.org/Entity" },
+      "p": "http://www.w3.org/2000/01/rdf-schema#label",
+      "o": { "literal": "\u00fcml\u00e4ut in <angle> and & ampersand" }
+    },
+    {
+      "s": { "iri": "https://example.org/Entity" },
+      "p": "http://www.w3.org/2000/01/rdf-schema#comment",
+      "o": { "literal": "" }
+    },
+    {
+      "s": { "iri": "https://example.org/bob" },
+      "p": "https://schema.org/knows",
+      "o": { "iri": "https://example.org/Bob" }
+    }
+  ]
+}

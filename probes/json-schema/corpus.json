@@ -1,0 +1,550 @@
+{
+  "note": "Shared corpus for the frontmatter JSON Schema swap (jsonschema -> ajv). Both sides read this file verbatim. Cases are chosen for what wiki frontmatter schemas actually use, plus the keyword semantics where the two engines are known to disagree.",
+  "cases": [
+    {
+      "name": "required-single",
+      "schema": {
+        "type": "object",
+        "required": ["givenName", "familyName"],
+        "properties": {
+          "givenName": { "type": "string", "minLength": 1 },
+          "familyName": { "type": "string", "minLength": 1 }
+        }
+      },
+      "instance": { "givenName": "Ada" }
+    },
+    {
+      "name": "required-all-missing",
+      "schema": {
+        "type": "object",
+        "required": ["headline", "description"],
+        "properties": {
+          "headline": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "instance": {}
+    },
+    {
+      "name": "required-list-order",
+      "schema": {
+        "type": "object",
+        "required": ["zeta", "alpha", "mu"]
+      },
+      "instance": {}
+    },
+    {
+      "name": "required-and-type-same-object",
+      "schema": {
+        "type": "object",
+        "properties": { "count": { "type": "integer" } },
+        "required": ["count"]
+      },
+      "instance": {}
+    },
+    {
+      "name": "type-string-got-string",
+      "schema": { "type": "object", "properties": { "x": { "type": "integer" } } },
+      "instance": { "x": "seven" }
+    },
+    {
+      "name": "type-union",
+      "schema": { "type": "object", "properties": { "x": { "type": ["string", "null"] } } },
+      "instance": { "x": 7 }
+    },
+    {
+      "name": "type-bool-is-not-integer",
+      "schema": { "type": "object", "properties": { "x": { "type": "integer" } } },
+      "instance": { "x": true }
+    },
+    {
+      "name": "type-null",
+      "schema": { "type": "object", "properties": { "x": { "type": "string" } } },
+      "instance": { "x": null }
+    },
+    {
+      "name": "type-float-integer",
+      "schema": { "type": "object", "properties": { "x": { "type": "integer" } } },
+      "instance": { "x": 1.5 }
+    },
+    {
+      "name": "type-array-and-object",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "a": { "type": "string" },
+          "o": { "type": "object" }
+        }
+      },
+      "instance": { "a": [1, 2], "o": "no" }
+    },
+    {
+      "name": "min-length-string",
+      "schema": { "type": "object", "properties": { "x": { "type": "string", "minLength": 3 } } },
+      "instance": { "x": "ab" }
+    },
+    {
+      "name": "max-length-string",
+      "schema": { "type": "object", "properties": { "x": { "type": "string", "maxLength": 3 } } },
+      "instance": { "x": "abcd" }
+    },
+    {
+      "name": "pattern-mismatch",
+      "schema": {
+        "type": "object",
+        "properties": { "slug": { "type": "string", "pattern": "^[a-z]+(-[a-z]+)*$" } }
+      },
+      "instance": { "slug": "Not A Slug" }
+    },
+    {
+      "name": "min-length-array",
+      "schema": { "type": "object", "properties": { "tags": { "type": "array", "minItems": 1 } } },
+      "instance": { "tags": [] }
+    },
+    {
+      "name": "max-items-array",
+      "schema": {
+        "type": "object",
+        "properties": { "tags": { "type": "array", "maxItems": 2, "items": { "type": "string" } } }
+      },
+      "instance": { "tags": ["a", "b", "c"] }
+    },
+    {
+      "name": "unique-items",
+      "schema": {
+        "type": "object",
+        "properties": { "tags": { "type": "array", "uniqueItems": true } }
+      },
+      "instance": { "tags": ["a", "a"] }
+    },
+    {
+      "name": "items-nested-path",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": { "name": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "instance": { "authors": [{ "name": "ok" }, {}, { "name": 5 }] }
+    },
+    {
+      "name": "enum-mismatch",
+      "schema": {
+        "type": "object",
+        "properties": { "status": { "enum": ["draft", "published"] } }
+      },
+      "instance": { "status": "archived" }
+    },
+    {
+      "name": "const-mismatch",
+      "schema": { "type": "object", "properties": { "kind": { "const": "page" } } },
+      "instance": { "kind": "post" }
+    },
+    {
+      "name": "minimum-number",
+      "schema": { "type": "object", "properties": { "order": { "type": "number", "minimum": 0 } } },
+      "instance": { "order": -1 }
+    },
+    {
+      "name": "exclusive-maximum",
+      "schema": {
+        "type": "object",
+        "properties": { "order": { "type": "number", "exclusiveMaximum": 10 } }
+      },
+      "instance": { "order": 10 }
+    },
+    {
+      "name": "multiple-of",
+      "schema": { "type": "object", "properties": { "n": { "type": "integer", "multipleOf": 5 } } },
+      "instance": { "n": 7 }
+    },
+    {
+      "name": "additional-properties",
+      "schema": {
+        "type": "object",
+        "required": ["headline"],
+        "properties": { "headline": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "instance": { "headline": "Hi", "stray": 1, "another": 2 }
+    },
+    {
+      "name": "additional-properties-pattern",
+      "schema": {
+        "type": "object",
+        "properties": { "name": { "type": "string" } },
+        "patternProperties": { "^x-": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "instance": { "name": "n", "x-bad": 1 }
+    },
+    {
+      "name": "nested-object-path",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "object",
+            "required": ["name", "email"],
+            "properties": {
+              "name": { "type": "string" },
+              "email": { "type": "string", "format": "email" }
+            }
+          }
+        }
+      },
+      "instance": { "author": { "name": "Ada", "email": "not-an-email" } }
+    },
+    {
+      "name": "format-email-and-date-time",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "published": { "type": "string", "format": "date-time" },
+          "uri": { "type": "string", "format": "uri" }
+        }
+      },
+      "instance": { "email": "nope", "published": "yesterday", "uri": "not a uri" }
+    },
+    {
+      "name": "format-annotation-only",
+      "schema": {
+        "$comment": "jsonschema asserts `format` only when a format_checker is supplied; Draft202012Validator(schema) has none, so this instance is valid",
+        "type": "object",
+        "properties": { "email": { "type": "string", "format": "email" } }
+      },
+      "instance": { "email": "definitely not an email" }
+    },
+    {
+      "name": "any-of-none-match",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [{ "type": "string" }, { "type": "number" }]
+          }
+        }
+      },
+      "instance": { "value": true }
+    },
+    {
+      "name": "one-of-none-match",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "oneOf": [{ "type": "string" }, { "type": "number" }]
+          }
+        }
+      },
+      "instance": { "value": [] }
+    },
+    {
+      "name": "one-of-multiple-match",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "oneOf": [
+              { "type": "number" },
+              { "type": "number", "minimum": 0 }
+            ]
+          }
+        }
+      },
+      "instance": { "value": 5 }
+    },
+    {
+      "name": "all-of-failure",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "allOf": [
+              { "type": "string" },
+              { "minLength": 5 }
+            ]
+          }
+        }
+      },
+      "instance": { "value": "abc" }
+    },
+    {
+      "name": "not-failure",
+      "schema": {
+        "type": "object",
+        "properties": { "value": { "not": { "type": "string" } } }
+      },
+      "instance": { "value": "a string" }
+    },
+    {
+      "name": "local-defs-ref",
+      "schema": {
+        "type": "object",
+        "properties": { "author": { "$ref": "#/$defs/person" } },
+        "$defs": {
+          "person": {
+            "type": "object",
+            "required": ["name"],
+            "properties": { "name": { "type": "string" } }
+          }
+        }
+      },
+      "instance": { "author": {} }
+    },
+    {
+      "name": "top-level-required-and-nested-error-order",
+      "schema": {
+        "type": "object",
+        "required": ["type", "title"],
+        "properties": {
+          "type": { "type": "string" },
+          "title": { "type": "string" },
+          "author": {
+            "type": "object",
+            "required": ["name"],
+            "properties": { "name": { "type": "string" } }
+          }
+        }
+      },
+      "instance": { "author": {}, "title": 3 }
+    },
+    {
+      "name": "type-key-after-properties-key",
+      "schema": {
+        "properties": { "x": { "const": 1 } },
+        "required": ["y"],
+        "type": "object"
+      },
+      "instance": { "x": 2 }
+    },
+    {
+      "name": "instance-root-not-object",
+      "schema": { "type": "object", "required": ["a"] },
+      "instance": "a string"
+    },
+    {
+      "name": "empty-schema",
+      "schema": {},
+      "instance": { "anything": true }
+    },
+    {
+      "name": "false-schema",
+      "schema": { "type": "object", "properties": { "x": false } },
+      "instance": { "x": 1 }
+    },
+    {
+      "name": "true-schema",
+      "schema": { "type": "object", "properties": { "x": true } },
+      "instance": { "x": 1 }
+    },
+    {
+      "name": "dependant-required",
+      "schema": {
+        "type": "object",
+        "dependentRequired": { "credit_card": ["billing_address"] }
+      },
+      "instance": { "credit_card": "4111" }
+    },
+    {
+      "name": "contains-keyword",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "tags": { "type": "array", "contains": { "const": "wiki" } }
+        }
+      },
+      "instance": { "tags": ["a", "b"] }
+    },
+    {
+      "name": "property-names-pattern",
+      "schema": {
+        "type": "object",
+        "propertyNames": { "pattern": "^[a-z]+$" }
+      },
+      "instance": { "Good": 1, "BAD": 2 }
+    },
+    {
+      "name": "unevaluated-properties",
+      "schema": {
+        "type": "object",
+        "properties": { "a": { "type": "string" } },
+        "unevaluatedProperties": false
+      },
+      "instance": { "a": "x", "b": 1 }
+    },
+    {
+      "name": "decimal-boundary-multiple",
+      "schema": { "type": "object", "properties": { "n": { "multipleOf": 0.1 } } },
+      "instance": { "n": 0.3 }
+    },
+    {
+      "name": "invalid-schema-keyword-type",
+      "schema": { "type": "object", "properties": { "x": { "type": "not a type" } } },
+      "instance": { "x": 1 }
+    },
+    {
+      "name": "invalid-schema-minimum-string",
+      "schema": { "type": "object", "properties": { "x": { "type": "number", "minimum": "zero" } } },
+      "instance": { "x": 1 }
+    },
+    {
+      "name": "unresolvable-ref",
+      "schema": { "type": "object", "properties": { "x": { "$ref": "https://example.org/absent.json" } } },
+      "instance": { "x": 1 }
+    },
+    {
+      "name": "order-additional-then-required",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["a"]
+      },
+      "instance": { "b": 1 }
+    },
+    {
+      "name": "order-required-then-additional",
+      "schema": {
+        "type": "object",
+        "required": ["a"],
+        "additionalProperties": false
+      },
+      "instance": { "b": 1 }
+    },
+    {
+      "name": "min-properties",
+      "schema": { "type": "object", "minProperties": 2 },
+      "instance": { "a": 1 }
+    },
+    {
+      "name": "max-properties",
+      "schema": { "type": "object", "maxProperties": 1 },
+      "instance": { "a": 1, "b": 2 }
+    },
+    {
+      "name": "if-then-branch",
+      "schema": {
+        "type": "object",
+        "if": { "required": ["kind"] },
+        "then": { "required": ["type"] },
+        "else": { "required": ["name"] }
+      },
+      "instance": { "kind": "x" }
+    },
+    {
+      "name": "if-else-branch",
+      "schema": {
+        "type": "object",
+        "if": { "required": ["kind"] },
+        "then": { "required": ["type"] },
+        "else": { "required": ["name"] }
+      },
+      "instance": {}
+    },
+    {
+      "name": "dependent-schemas",
+      "schema": {
+        "type": "object",
+        "properties": { "a": { "type": "string" } },
+        "dependentSchemas": { "a": { "required": ["b"] } }
+      },
+      "instance": { "a": "x" }
+    },
+    {
+      "name": "exclusive-minimum",
+      "schema": {
+        "type": "object",
+        "properties": { "n": { "type": "number", "exclusiveMinimum": 0 } }
+      },
+      "instance": { "n": 0 }
+    },
+    {
+      "name": "maximum",
+      "schema": {
+        "type": "object",
+        "properties": { "n": { "maximum": 5 } }
+      },
+      "instance": { "n": 9 }
+    },
+    {
+      "name": "min-contains",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "contains": { "type": "string" },
+            "minContains": 2
+          }
+        }
+      },
+      "instance": { "tags": ["a", 1] }
+    },
+    {
+      "name": "type-number-bool",
+      "schema": { "type": "object", "properties": { "n": { "type": "number" } } },
+      "instance": { "n": true }
+    },
+    {
+      "name": "integer-integral-float",
+      "schema": { "type": "object", "properties": { "n": { "type": "integer" } } },
+      "instance": { "n": 2.0 }
+    },
+    {
+      "name": "one-of-three-matches",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "oneOf": [
+              { "type": "number" },
+              { "type": "number", "minimum": 0 },
+              { "type": "number", "maximum": 100 }
+            ]
+          }
+        }
+      },
+      "instance": { "value": 5 }
+    },
+    {
+      "name": "min-items-two",
+      "schema": {
+        "type": "object",
+        "properties": { "tags": { "type": "array", "minItems": 2 } }
+      },
+      "instance": { "tags": ["a"] }
+    },
+    {
+      "name": "max-contains",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "contains": { "type": "string" },
+            "maxContains": 1
+          }
+        }
+      },
+      "instance": { "tags": ["a", "b"] }
+    },
+    {
+      "name": "tuple-items-prefix-items",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pair": { "type": "array", "prefixItems": [{ "type": "string" }, { "type": "integer" }] }
+        }
+      },
+      "instance": { "pair": [7, "x"] }
+    }
+  ]
+}
