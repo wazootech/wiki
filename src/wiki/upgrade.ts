@@ -20,6 +20,20 @@ const ALTERNATE_CHANNELS = [
   `Otherwise download the latest release from ${GITHUB_RELEASES_URL}.`,
 ];
 
+/**
+ * The deferral shown whenever JSR holds no published version to compare
+ * against. Two response shapes reach this: a 404 (never registered) and a
+ * registered-but-unpublished package, which JSR serves as 200 with an empty
+ * `versions` map.
+ */
+function notPublishedMessage(): string {
+  return [
+    `${JSR_PACKAGE} is not published on JSR yet, so there is no version to compare against.`,
+    "Self-upgrade becomes available with the first JSR release; no action is needed now.",
+    ...ALTERNATE_CHANNELS,
+  ].join("\n");
+}
+
 export interface UpgradeOptions {
   readonly checkOnly: boolean;
   readonly yes: boolean;
@@ -175,14 +189,7 @@ async function readLatestVersion(
       // A deliberate deferral, not a failure: JSR publication follows the
       // first tagged Deno release (JSR_PUBLISH_ENABLED in release.yml), so
       // there is nothing for this command to compare against yet.
-      throw new DeferredUpgradeError(
-        "not-published",
-        [
-          `${JSR_PACKAGE} is not published on JSR yet, so there is no version to compare against.`,
-          "Self-upgrade becomes available with the first JSR release; no action is needed now.",
-          ...ALTERNATE_CHANNELS,
-        ].join("\n"),
-      );
+      throw new DeferredUpgradeError("not-published", notPublishedMessage());
     }
     throw new DeferredUpgradeError(
       "unreachable",
@@ -197,6 +204,17 @@ async function readLatestVersion(
       `Invalid JSR package metadata: ${errorMessage(error)}.`,
       { cause: error },
     );
+  }
+  // A package can be registered and linked to its repository while carrying
+  // no releases at all; JSR serves that as 200 with `latest: null` and an
+  // empty `versions` map, so the 404 branch above never fires for the live
+  // service. Treat the empty map as the same deferral, not as malformed
+  // metadata.
+  if (
+    isRecord(metadata) && isRecord(metadata.versions) &&
+    Object.keys(metadata.versions).length === 0
+  ) {
+    throw new DeferredUpgradeError("not-published", notPublishedMessage());
   }
   return latestVersionFromMetadata(metadata);
 }

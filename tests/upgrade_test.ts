@@ -180,12 +180,25 @@ Deno.test("upgrade steps aside on non-404 JSR HTTP failures", async () => {
   assertStringIncludes(state.stdout[0]!, "HTTP 503 Service Unavailable");
 });
 
+Deno.test("upgrade defers on a registered but unpublished JSR package", async () => {
+  // The live shape. The package is registered and linked to its repository,
+  // so JSR answers 200 rather than 404 and simply has no versions yet; the
+  // deferral has to key off that, not off the status code alone.
+  const state = harness({
+    fetchMetadata: () =>
+      Promise.resolve(Response.json({ latest: null, versions: {} })),
+  });
+  assertEquals(await runUpgrade(check, state.dependencies), 0);
+  assertStringIncludes(state.stdout[0]!, "@wazoo/wiki is not published on JSR");
+  assertStringIncludes(state.stdout[0]!, "npm update -g wazootech-wiki");
+});
+
 Deno.test("upgrade check rejects malformed JSR metadata", async () => {
   const state = harness({
-    fetchMetadata: () => Promise.resolve(Response.json({ versions: {} })),
+    fetchMetadata: () => Promise.resolve(Response.json({ latest: null })),
   });
   assertEquals(await runUpgrade(check, state.dependencies), 1);
-  assertStringIncludes(state.stderr[0]!, "no usable versions");
+  assertStringIncludes(state.stderr[0]!, "Invalid JSR package metadata");
 });
 
 Deno.test("declining the default confirmation never invokes the installer", async () => {
