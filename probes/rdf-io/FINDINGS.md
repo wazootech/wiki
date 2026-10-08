@@ -13,8 +13,34 @@ engine need not offer that:
 | serialize | N-Triples, N-Quads | that same cache — a **contract**, reused across processes |
 | serialize | Turtle, N3, TriG, RDF/XML, JSON-LD (expanded + compacted) | `export`, serve metadata views, SPARQL service |
 
-**Answer.** The store supplies a *Turtle parser* and nothing else. Everything
-else comes from two libraries, and **one format has no writer at all**.
+**Answer.** Serialization is the gap, not parsing. The engine's parser covers
+four formats (Turtle, TriG, N-Triples, N-Quads), so the parse column below is
+already handled. The engine's `serializeTurtle` emits N-Triples shape and
+nothing else, so N3, TriG and RDF/XML output plus RDF/XML and JSON-LD input come
+from libraries, and **one format has no writer at all**.
+
+## Correction, measured 2026-10-08
+
+This answer first read "the store supplies a *Turtle parser* and nothing else".
+That understated the parser and so overstated the gap. It is corrected here
+rather than silently rewritten.
+
+`parseTurtleQuads` from `jsr:@wazoo/sparql-engine@0.4.2` over one-quad fixtures:
+
+```
+N-Triples  parse OK  quads=1  graph=DefaultGraph/
+N-Quads    parse OK  quads=1  graph=NamedNode/https://example.org/g
+Turtle     parse OK  quads=1  graph=DefaultGraph/
+TriG       parse OK  quads=1  graph=DefaultGraph/
+```
+
+The engine parses every format in the *parse* column, so the libraries below are
+needed for **output**, plus the two input formats it does not read. The
+serializer side is unchanged: on a two-triple graph `serializeTurtle` returns
+`"<https://example.org/s> <https://example.org/p> \"o\" .\n"`, one triple per
+line with no prefix line.
+
+The upstream ask is filed as `wazootech/sparql-engine` #209.
 
 ## Method
 
