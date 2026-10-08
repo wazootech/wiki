@@ -118,7 +118,11 @@ export function annotateScalars(
 class CorrelationError extends Error {}
 
 /** Annotate one parsed value from its YAML CST node, in place where nested. */
-function annotateValue(node: Node | null, value: unknown, doc: Document): unknown {
+function annotateValue(
+  node: Node | null,
+  value: unknown,
+  doc: Document,
+): unknown {
   if (node === null || node === undefined) return value;
   if (isAlias(node)) {
     // Both parsers expand aliases, so the value at the alias position is
@@ -181,9 +185,7 @@ function annotateMap(map: YAMLMap, record: DataRecord, doc: Document): void {
     if (!isPair(pair)) throw new CorrelationError();
     const keyNode = pair.key;
     if (isScalar(keyNode) && String(keyNode.value) === "<<") {
-      const merged = isAlias(pair.value)
-        ? pair.value.resolve(doc)
-        : pair.value;
+      const merged = isAlias(pair.value) ? pair.value.resolve(doc) : pair.value;
       if (merged !== null && merged !== undefined && isMap(merged)) {
         annotateMerged(merged, record, overridden, doc);
       }
@@ -258,8 +260,9 @@ function timestampLexical(
   const match = YAML_TIMESTAMP_REGEXP.exec(raw);
   if (match === null) return null;
   const pad2 = (s: string): string => s.padStart(2, "0");
-  let lexical =
-    `${match[1]}-${pad2(match[2]!)}-${pad2(match[3]!)}T${pad2(match[4]!)}:${match[5]}:${match[6]}`;
+  let lexical = `${match[1]}-${pad2(match[2]!)}-${pad2(match[3]!)}T${
+    pad2(match[4]!)
+  }:${match[5]}:${match[6]}`;
   const fraction = match[7] ?? "";
   if (fraction !== "") {
     // Python's `isoformat()` pads the fraction to six digits and omits it
