@@ -53,3 +53,7 @@ skills-lock.json
 /probes/rdf-io/deno/*.txt
 /probes/rdf-io/oracle/*.txt
 /probes/rdf-io/oracle/report.json
+
+# Python bytecode (the PyPI binding's tests run against an installed wheel)
+__pycache__/
+*.pyc

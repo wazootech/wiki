@@ -11,7 +11,6 @@
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/toml@1": "1.0.11",
     "jsr:@std/toml@^1.0.3": "1.0.11",
-    "jsr:@std/yaml@*": "1.2.0",
     "jsr:@std/yaml@1": "1.2.0",
     "jsr:@std/yaml@^1.0.5": "1.2.0",
     "jsr:@wazoo/linked-markdown@0.1": "0.1.0",
