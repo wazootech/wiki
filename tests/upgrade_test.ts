@@ -284,6 +284,12 @@ Deno.test("non-global and standalone installs are not overwritten", async () => 
         state.stderr.join("\n"),
         "npm update -g wazootech-wiki",
       );
+    } else {
+      // A copied PyPI binary (uv tool / pipx on Windows) lands here too.
+      assertStringIncludes(
+        state.stderr.join("\n"),
+        "pip install -U wazootech-wiki",
+      );
     }
   }
 });

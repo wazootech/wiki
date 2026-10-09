@@ -464,6 +464,9 @@ function updateUnavailableMessage(
       "This is a standalone wiki binary; Deno install cannot replace it.",
       `Download the latest release from ${GITHUB_RELEASES_URL}`,
       "Verify SHA256SUMS, replace the binary, and ensure it is on your PATH.",
+      // On Windows, `uv tool` and `pipx` copy the binary out of the venv, so
+      // `isPypiInstall` cannot see its RECORD; name the PyPI route anyway.
+      `If it came from PyPI, upgrade it there instead. ${PYPI_UPGRADE}`,
     ].join("\n");
   }
   return [

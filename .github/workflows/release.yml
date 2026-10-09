@@ -224,7 +224,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release download "$GITHUB_REF_NAME" --dir release-assets \
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --dir release-assets \
             --pattern 'wazootech-wiki-*' --pattern SHA256SUMS
           cd release-assets
           sha256sum --check --strict SHA256SUMS
