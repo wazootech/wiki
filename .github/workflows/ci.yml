@@ -285,20 +285,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          exe=""
+          [ "$RUNNER_OS" = "Windows" ] && exe=".exe"
+          # Prints the venv's scripts directory; uv needs `python.exe` spelled
+          # out on Windows.
           venv() {
             uv venv -q "$RUNNER_TEMP/$1"
             if [ "$RUNNER_OS" = "Windows" ]; then echo "$RUNNER_TEMP/$1/Scripts"; else echo "$RUNNER_TEMP/$1/bin"; fi
           }
           platform="$(venv platform-venv)"
-          uv pip install --python "$platform/python" dist/wheels/*.whl
-          "$platform/python" -m unittest discover -s python/tests -v
+          uv pip install --python "$platform/python$exe" dist/wheels/*.whl
+          "$platform/python$exe" -m unittest discover -s python/tests -v
 
           # The fallback wheel against the real binary the platform wheel
           # just installed; WIKI_REQUIRE_E2E turns a missing binary into a
           # failure instead of a skip.
           fallback="$(venv fallback-venv)"
-          uv pip install --python "$fallback/python" dist/fallback/*.whl
-          binary="$platform/wiki"
-          [ -f "$binary.exe" ] && binary="$binary.exe"
-          WIKI_TEST_BINARY="$binary" WIKI_REQUIRE_E2E=1 \
-            "$fallback/python" -m unittest discover -s python/tests -v
+          uv pip install --python "$fallback/python$exe" dist/fallback/*.whl
+          WIKI_TEST_BINARY="$platform/wiki$exe" WIKI_REQUIRE_E2E=1 \
+            "$fallback/python$exe" -m unittest discover -s python/tests -v
