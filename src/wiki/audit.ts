@@ -476,7 +476,8 @@ export interface RunCheckOptions {
  *
  * The order of the appended errors is the order the CLI prints them, so it is
  * part of the contract: ill-formed shapes first (a shape that validates nothing
- * makes the SHACL verdict below meaningless), then SHACL (a violation can make
+ * makes the SHACL verdict below meaningless, so SHACL is skipped while any
+ * remain as errors), then SHACL (a violation can make
  * every later finding noise), then route safety, which *replaces* the collision check rather than
  * joining it — an unsafe route makes the manifest meaningless, so the collision
  * pass is skipped instead of reporting confusion on top of it.
@@ -489,6 +490,37 @@ export async function runCheck(
   const filePaths = options.filePaths ?? null;
   let report = AuditReport.empty();
 
+  // Ill-formed shapes come first. SHACL with a broken shape reports nothing
+  // trustworthy (a misspelled constraint never fires, so a green pass means
+  // nothing), so when shape_definition fails as an error, SHACL is skipped and
+  // a shacl_skipped warning says so.
+  const shapes = await lintShapeDefinitions(
+    config,
+    filePaths === null ? fileFilter : null,
+    { filePaths },
+  );
+  report = applyIssues(
+    report,
+    "shape_definition",
+    shapes.definitions,
+    config.check,
+  );
+  report = applyIssues(report, "shape_unused", shapes.unused, config.check);
+  const skipShacl = config.check.shape_definition === "error" &&
+    shapes.definitions.length > 0;
+  if (skipShacl) {
+    report = new AuditReport({
+      ok: report.ok,
+      errors: report.errors,
+      warnings: [...report.warnings, {
+        code: "shacl_skipped",
+        message: "SHACL validation skipped: fix the shape_definition " +
+          "errors first, or the SHACL verdict would be meaningless.",
+        severity: "warning",
+      }],
+    });
+  }
+
   if (filePaths !== null) {
     for (const filePath of filePaths) {
       const result = await checkShaclFile(filePath, config);
@@ -500,7 +532,7 @@ export async function runCheck(
           route: safeRoute(config, filePath),
           severity: "error",
         }]);
-      } else if (!result.conforms) {
+      } else if (!result.conforms && !skipShacl) {
         report = addErrors(report, [{
           code: "shacl_violation",
           message: `SHACL Validation Violation in ${
@@ -513,13 +545,6 @@ export async function runCheck(
         }]);
       }
     }
-
-    report = applyIssues(
-      report,
-      "shape_definition",
-      await lintShapeDefinitions(config, null, { filePaths }),
-      config.check,
-    );
 
     const [missingSchemaIssues, schemaValidationIssues] =
       await collectFrontmatterSchemaFindings(config, null, { filePaths });
@@ -538,18 +563,9 @@ export async function runCheck(
     return report;
   }
 
-  // Ill-formed shapes come first: a shape that validates nothing makes a green
-  // SHACL pass meaningless, so the reader should see why before trusting it.
-  report = applyIssues(
-    report,
-    "shape_definition",
-    await lintShapeDefinitions(config, fileFilter),
-    config.check,
-  );
-
   try {
-    const shacl = await checkShaclAll(config);
-    if (!shacl.conforms) {
+    const shacl = skipShacl ? null : await checkShaclAll(config);
+    if (shacl !== null && !shacl.conforms) {
       report = addErrors(report, [{
         code: "shacl_violation",
         message: `SHACL Validation Violation:\n${shacl.resultsText}`,

@@ -28,11 +28,14 @@
  *   `sh:datatype` §4.1.2, the property-pair parameters §4.5, and the members of
  *   `sh:ignoredProperties` §4.8.1) must compile to IRIs. A CURIE whose prefix
  *   the context does not declare compiles to a plain literal instead.
- * - **A node shape page applies to something.** The spec does not require a
- *   target, because a shape can be reached through `sh:node`, `sh:property`,
- *   `sh:qualifiedValueShape`, `sh:not`, or a logical list. So a page typed
- *   `sh:NodeShape` fails only when it has no target, is not also a class (the
- *   implicit class target, §2.1.3.1), and no other shape references it.
+ *
+ * Separately, under its own rule (`check.shape_unused`, default `warning`), a
+ * node shape page should apply to something. The spec does not require a
+ * target, because a shape can be reached through `sh:node`, `sh:property`,
+ * `sh:qualifiedValueShape`, `sh:not`, or a logical list, so this is a likely
+ * mistake rather than an ill-formed shape: a page typed `sh:NodeShape` is
+ * flagged only when it has no target, is not also a class (the implicit class
+ * target, §2.1.3.1), and no other shape references it.
  *
  * Turtle shapes (`.ttl` sources and fenced `turtle` blocks) are out of scope:
  * they have no frontmatter keys to point at.
@@ -676,22 +679,34 @@ function hasTarget(data: DataRecord, context: Context): boolean {
   });
 }
 
+/** The findings of {@link lintShapeDefinitions}, one list per rule. */
+export interface ShapeLintResult {
+  /** `check.shape_definition`: shapes that break a SHACL Core rule. */
+  readonly definitions: IssueDetail[];
+  /** `check.shape_unused`: node shapes that apply to nothing. */
+  readonly unused: IssueDetail[];
+}
+
 /**
  * Lint every document's SHACL terms, and the structure of every shape page.
  *
- * Returns one finding per problem, each naming the route and the key path.
- * `filePaths` scopes the pass to those files; references between shapes are
- * still read from the whole wiki, because a shape that another page references
- * needs no target of its own.
+ * Returns one finding per problem, each naming the route and the key path,
+ * split by rule. A rule set to `off` is not computed. `filePaths` scopes the
+ * pass to those files; references between shapes are still read from the
+ * whole wiki, because a shape that another page references needs no target of
+ * its own.
  */
 export async function lintShapeDefinitions(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
   options: { readonly filePaths?: readonly string[] | null } = {},
-): Promise<IssueDetail[]> {
-  if (config.check.shape_definition === "off") return [];
+): Promise<ShapeLintResult> {
+  const lintDefinitions = config.check.shape_definition !== "off";
+  const lintUnused = config.check.shape_unused !== "off";
+  const definitions: IssueDetail[] = [];
+  const unused: IssueDetail[] = [];
+  if (!lintDefinitions && !lintUnused) return { definitions, unused };
   const context = config.context;
-  const issues: IssueDetail[] = [];
   let referenced: Set<string> | null = null;
 
   for (const filePath of options.filePaths ?? iterDocumentFiles(config)) {
@@ -709,55 +724,58 @@ export async function lintShapeDefinitions(
     );
     if (data === null || Object.keys(data).length === 0) continue;
 
-    const findings = new Findings(route);
     const types = typeIris(data, config);
-    for (const type of types) {
-      const local = shLocal(type);
-      if (local !== null && !isShaclTerm(local)) {
-        findings.add(
-          "type",
-          `sh:${local} is not a term of the SHACL vocabulary.`,
-        );
-      }
-    }
     const isNodeShape = types.has(SH + "NodeShape");
     const isPropertyShape = types.has(SH + "PropertyShape");
-    lintShape(
-      data,
-      "",
-      isPropertyShape ? "property" : isNodeShape ? "node" : "other",
-      context,
-      findings,
-    );
 
-    if (isNodeShape && !isPropertyShape && !hasTarget(data, context)) {
-      const isClass = types.has(RDFS + "Class") || types.has(OWL + "Class");
-      if (!isClass) {
-        referenced ??= referencedShapes(
-          await loadGraph(config, { infer: false }),
-        );
-        const graph = frontmatterToGraph(data, config, { fileId: route });
-        const subjects = [
-          ...graph.match(
-            null,
-            namedNode(RDF_TYPE),
-            namedNode(SH + "NodeShape"),
-          ),
-        ].map((quad) => quad.subject.value);
-        if (!subjects.some((iri) => referenced!.has(iri))) {
+    if (lintDefinitions) {
+      const findings = new Findings(route);
+      for (const type of types) {
+        const local = shLocal(type);
+        if (local !== null && !isShaclTerm(local)) {
           findings.add(
-            "sh:targetClass",
-            "this node shape has no target (sh:targetClass, sh:targetNode, " +
-              "sh:targetSubjectsOf, sh:targetObjectsOf) and no other shape " +
-              "references it, so it validates nothing (SHACL §2.1).",
+            "type",
+            `sh:${local} is not a term of the SHACL vocabulary.`,
           );
         }
       }
+      lintShape(
+        data,
+        "",
+        isPropertyShape ? "property" : isNodeShape ? "node" : "other",
+        context,
+        findings,
+      );
+      for (const message of findings.messages) {
+        definitions.push({ message, path: filePath, route });
+      }
     }
 
-    for (const message of findings.messages) {
-      issues.push({ message, path: filePath, route });
+    if (
+      lintUnused && isNodeShape && !isPropertyShape &&
+      !hasTarget(data, context) &&
+      !types.has(RDFS + "Class") && !types.has(OWL + "Class")
+    ) {
+      referenced ??= referencedShapes(
+        await loadGraph(config, { infer: false }),
+      );
+      const graph = frontmatterToGraph(data, config, { fileId: route });
+      const subjects = [
+        ...graph.match(null, namedNode(RDF_TYPE), namedNode(SH + "NodeShape")),
+      ].map((quad) => quad.subject.value);
+      if (!subjects.some((iri) => referenced!.has(iri))) {
+        const findings = new Findings(route);
+        findings.add(
+          "sh:targetClass",
+          "this node shape has no target (sh:targetClass, sh:targetNode, " +
+            "sh:targetSubjectsOf, sh:targetObjectsOf) and no other shape " +
+            "references it, so it validates nothing (SHACL §2.1).",
+        );
+        for (const message of findings.messages) {
+          unused.push({ message, path: filePath, route });
+        }
+      }
     }
   }
-  return issues;
+  return { definitions, unused };
 }

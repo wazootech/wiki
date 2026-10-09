@@ -31,8 +31,8 @@ async function lintPage(
       write(root, name, content);
     }
     const config = new Config({ wiki: { input: [root] } });
-    const issues = await lintShapeDefinitions(config);
-    return issues.map((issue) => issue.message);
+    const { definitions, unused } = await lintShapeDefinitions(config);
+    return [...definitions, ...unused].map((issue) => issue.message);
   } finally {
     Deno.removeSync(root, { recursive: true });
   }
@@ -245,6 +245,117 @@ Deno.test("check reports shape_definition first, and off silences it", async () 
     );
     assertEquals(
       off.errors.filter((issue) => issue.code === "shape_definition"),
+      [],
+    );
+  } finally {
+    Deno.removeSync(root, { recursive: true });
+  }
+});
+
+Deno.test("an unused node shape is a shape_unused warning, not an error", async () => {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+  try {
+    write(
+      root,
+      "Shape.md",
+      `---
+'@type': sh:NodeShape
+sh:property:
+  - sh:path: schema:name
+    sh:minCount: 1
+---
+`,
+    );
+    const report = await runCheck(new Config({ wiki: { input: [root] } }));
+    assertEquals(
+      report.errors.filter((issue) => issue.code.startsWith("shape_")),
+      [],
+    );
+    const unused = report.warnings.filter((issue) =>
+      issue.code === "shape_unused"
+    );
+    assertEquals(unused.length, 1);
+    assert(unused[0]!.message.includes("has no target"));
+
+    const off = await runCheck(
+      new Config({ wiki: { input: [root] }, check: { shape_unused: "off" } }),
+    );
+    assertEquals(
+      off.warnings.filter((issue) => issue.code === "shape_unused"),
+      [],
+    );
+
+    const strict = await runCheck(
+      new Config({ wiki: { input: [root] }, check: { shape_unused: "error" } }),
+    );
+    assertEquals(strict.ok, false);
+    assert(strict.errors.some((issue) => issue.code === "shape_unused"));
+  } finally {
+    Deno.removeSync(root, { recursive: true });
+  }
+});
+
+Deno.test("SHACL is skipped while a shape page is ill-formed", async () => {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+  try {
+    // The shape is valid SHACL apart from the typo, and Ada violates it.
+    write(
+      root,
+      "Shape.md",
+      `---
+'@type': sh:NodeShape
+sh:targetClass: schema:Person
+sh:property:
+  - sh:path: schema:email
+    sh:minCount: 1
+    sh:maxCont: 1
+---
+`,
+    );
+    write(
+      root,
+      "Ada.md",
+      `---
+type: Person
+name: Ada
+---
+`,
+    );
+    const config = new Config({ wiki: { input: [root] } });
+
+    for (
+      const report of [
+        await runCheck(config),
+        await runCheck(config, {
+          filePaths: [join(root, "Shape.md"), join(root, "Ada.md")],
+        }),
+      ]
+    ) {
+      assert(report.errors.some((issue) => issue.code === "shape_definition"));
+      assertEquals(
+        report.errors.filter((issue) => issue.code === "shacl_violation"),
+        [],
+      );
+      assert(report.warnings.some((issue) => issue.code === "shacl_skipped"));
+    }
+
+    // With the typo fixed, SHACL runs and reports Ada.
+    write(
+      root,
+      "Shape.md",
+      `---
+'@type': sh:NodeShape
+sh:targetClass: schema:Person
+sh:property:
+  - sh:path: schema:email
+    sh:minCount: 1
+---
+`,
+    );
+    const fixed = await runCheck(new Config({ wiki: { input: [root] } }));
+    assert(fixed.errors.some((issue) => issue.code === "shacl_violation"));
+    assertEquals(
+      fixed.warnings.filter((issue) => issue.code === "shacl_skipped"),
       [],
     );
   } finally {

@@ -186,6 +186,7 @@ check: # optional block
   frontmatter_schema: error # default error; init writes
   missing_schema_ref: error # default error; init writes
   shape_definition: error # default error
+  shape_unused: warning # default warning
 ```
 
 | Key                   | Required | Default | Init   | Audited by                           |
@@ -194,6 +195,7 @@ check: # optional block
 | `frontmatter_schema`  | optional | `error` | writes | JSON Schema validation failures      |
 | `missing_schema_ref`  | optional | `error` | writes | unloadable `wazoo:jsonSchema` refs   |
 | `shape_definition`    | optional | `error` | —      | ill-formed SHACL shape pages         |
+| `shape_unused`        | optional | `warning` | —    | node shapes that validate nothing    |
 
 Build-safety rules (unsafe URL characters, spaces in routes) and output URL collision detection always apply regardless of `check` settings.
 
@@ -503,6 +505,7 @@ Under `check`, each rule is `error`, `warning`, or `off`:
 | `frontmatter_schema`  | `error` | Frontmatter that fails JSON Schema validation                                    |
 | `missing_schema_ref`  | `error` | `wazoo:jsonSchema` paths or URLs that cannot be loaded                           |
 | `shape_definition`    | `error` | Ill-formed SHACL shape pages (see [wiki check](wiki_check.md#shape-definitions)) |
+| `shape_unused`        | `warning` | Node shape pages that validate nothing (see [wiki check](wiki_check.md#shape-definitions)) |
 | `remote_schema_refs`  | `allow` | Policy for remote `http(s)` schema refs: `allow`, `deny`, or `allowlist`         |
 | `remote_schema_hosts` | `[]`    | Hostnames permitted when `remote_schema_refs` is `allowlist`                     |
 

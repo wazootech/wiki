@@ -24,12 +24,18 @@
     {
       "s": { "iri": "https://example.org/Alice" },
       "p": "https://schema.org/active",
-      "o": { "literal": "true", "datatype": "http://www.w3.org/2001/XMLSchema#boolean" }
+      "o": {
+        "literal": "true",
+        "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+      }
     },
     {
       "s": { "iri": "https://example.org/Alice" },
       "p": "https://schema.org/age",
-      "o": { "literal": "42", "datatype": "http://www.w3.org/2001/XMLSchema#integer" }
+      "o": {
+        "literal": "42",
+        "datatype": "http://www.w3.org/2001/XMLSchema#integer"
+      }
     },
     {
       "s": { "iri": "https://example.org/Alice" },
