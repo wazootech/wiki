@@ -496,6 +496,99 @@ Deno.test("a top-level sh:in on a property shape page is an RDF list too", () =>
   assertEquals(listMembers(graph, ins[0]!.object), [SCHEMA + "Open"]);
 });
 
+Deno.test("a one-member sh:path list stays a predicate path (SHACL §2.3.1.1)", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:PropertyShape",
+    "@id": "wiki:name-property",
+    "sh:path": ["schema:name"],
+    "sh:minCount": 1,
+  }, context);
+  const paths = [...graph.match(null, namedNode(sh + "path"))];
+  assertEquals(paths.map((quad) => quad.object.value), [SCHEMA + "name"]);
+  assertEquals([...graph.match(null, namedNode(RDF_FIRST))].length, 0);
+});
+
+Deno.test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:NodeShape",
+    "@id": "wiki:knows-shape",
+    "sh:property": [
+      { "sh:path": ["schema:knows", "schema:name"] },
+      { "sh:path": { "sh:inversePath": ["schema:knows", "schema:name"] } },
+    ],
+  }, context);
+  for (const key of ["path", "inversePath"]) {
+    const heads = [...graph.match(null, namedNode(sh + key))]
+      .filter((quad) =>
+        quad.object.termType === "BlankNode" &&
+        [...graph.match(quad.object, namedNode(RDF_FIRST))].length > 0
+      );
+    assertEquals(heads.length, 1, key);
+    assertEquals(listMembers(graph, heads[0]!.object), [
+      SCHEMA + "knows",
+      SCHEMA + "name",
+    ]);
+  }
+});
+
+Deno.test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:PropertyShape",
+    "@id": "wiki:label-property",
+    "sh:path": {
+      "sh:alternativePath": [
+        "schema:name",
+        ["schema:author", "schema:name"],
+        ["schema:alternateName"],
+      ],
+    },
+  }, context);
+  const alternatives = [
+    ...graph.match(null, namedNode(sh + "alternativePath")),
+  ];
+  assertEquals(alternatives.length, 1);
+  const members = listMembers(graph, alternatives[0]!.object);
+  assertEquals(members.length, 3);
+  assertEquals(members[0], SCHEMA + "name");
+  // A nested list member is itself a sequence path...
+  const sequence = [...graph.match(null, namedNode(RDF_FIRST))]
+    .find((quad) => quad.object.termType === "BlankNode")!.object;
+  assertEquals(listMembers(graph, sequence), [
+    SCHEMA + "author",
+    SCHEMA + "name",
+  ]);
+  // ...and a one-member one collapses to its predicate path.
+  assertEquals(members[2], SCHEMA + "alternateName");
+});
+
+Deno.test("a list inside an sh:in list nests instead of repeating rdf:first", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:PropertyShape",
+    "@id": "wiki:nested-in",
+    "sh:path": "schema:status",
+    "sh:in": [["schema:Open", "schema:Shipped"], null],
+  }, context);
+  const ins = [...graph.match(null, namedNode(sh + "in"))];
+  assertEquals(ins.length, 1);
+  // `listMembers` asserts exactly one `rdf:first` and `rdf:rest` per cell, and
+  // the null member is dropped rather than leaving a cell without `rdf:first`.
+  const outer = listMembers(graph, ins[0]!.object);
+  assertEquals(outer.length, 1);
+  const inner = [...graph.match(ins[0]!.object, namedNode(RDF_FIRST))][0]!;
+  assertEquals(listMembers(graph, inner.object), [
+    SCHEMA + "Open",
+    SCHEMA + "Shipped",
+  ]);
+});
+
 Deno.test("a plain list nested in a list of mappings repeats the predicate", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
