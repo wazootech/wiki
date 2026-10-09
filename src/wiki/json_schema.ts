@@ -55,7 +55,7 @@ import {
   type ValidateFunction,
 } from "ajv/dist/2020.js";
 import { errorText } from "./errors.ts";
-import { pyRepr } from "./pyrepr.ts";
+import { describeValue } from "./describe.ts";
 
 /** A validation failure, shaped the way `jsonschema.ValidationError` exposes one. */
 export interface JsonSchemaError {
@@ -176,7 +176,7 @@ function parentSchema(error: ErrorObject): JsonValue | null {
 }
 
 /** Python's `sorted()` over strings, which is by code point. */
-function pySortStrings(values: readonly string[]): string[] {
+function sortedStrings(values: readonly string[]): string[] {
   // JavaScript's default sort is by UTF-16 code unit, which disagrees with
   // Python only for astral characters compared against U+E000-U+FFFF. The
   // comparator is spelled out so that difference stays visible rather than
@@ -188,7 +188,7 @@ function pySortStrings(values: readonly string[]): string[] {
 function extrasMessage(extras: readonly unknown[]): string {
   const verb = extras.length === 1 ? "was" : "were";
   return `${
-    extras.map((extra) => pyRepr(extra)).join(", ")
+    extras.map((extra) => describeValue(extra)).join(", ")
   } ${verb} unexpected`;
 }
 
@@ -239,8 +239,8 @@ interface RenderContext {
 function typeMessage(error: ErrorObject, instance: unknown): string {
   const raw = param(error, "type");
   const types = Array.isArray(raw) ? raw : [raw];
-  return `${pyRepr(instance)} is not of type ${
-    types.map((type) => pyRepr(type)).join(", ")
+  return `${describeValue(instance)} is not of type ${
+    types.map((type) => describeValue(type)).join(", ")
   }`;
 }
 
@@ -261,14 +261,16 @@ function oneOfMessage(instance: unknown, schema: unknown): string {
     if (validator !== null && validator.isValid(instance)) matches.push(index);
   }
   if (matches.length <= 1) {
-    return `${pyRepr(instance)} is not valid under any of the given schemas`;
+    return `${
+      describeValue(instance)
+    } is not valid under any of the given schemas`;
   }
   const [first, ...others] = matches;
   const ordered = [...others, first as number];
   const reprs = ordered
-    .map((index) => pyRepr(subschemas[index]))
+    .map((index) => describeValue(subschemas[index]))
     .join(", ");
-  return `${pyRepr(instance)} is valid under each of ${reprs}`;
+  return `${describeValue(instance)} is valid under each of ${reprs}`;
 }
 
 /**
@@ -297,7 +299,7 @@ function containsMessage(
   const minimum = typeof minContains === "number" ? minContains : 1;
   if (matches === 0) {
     return `${
-      pyRepr(instance)
+      describeValue(instance)
     } does not contain items matching the given schema`;
   }
   return `Too few items match the given schema (expected at least ${minimum} but only ${matches} matched)`;
@@ -313,47 +315,56 @@ function containsMessage(
 const RENDERERS: Readonly<Record<string, (ctx: RenderContext) => string>> = {
   type: ({ error, instance }) => typeMessage(error, instance),
   required: ({ error }) =>
-    `${pyRepr(param(error, "missingProperty"))} is a required property`,
-  minLength: ({ instance }) => `${pyRepr(instance)} is too short`,
-  maxLength: ({ instance }) => `${pyRepr(instance)} is too long`,
+    `${describeValue(param(error, "missingProperty"))} is a required property`,
+  minLength: ({ instance }) => `${describeValue(instance)} is too short`,
+  maxLength: ({ instance }) => `${describeValue(instance)} is too long`,
   pattern: ({ error, instance }) =>
-    `${pyRepr(instance)} does not match ${pyRepr(param(error, "pattern"))}`,
+    `${describeValue(instance)} does not match ${
+      describeValue(param(error, "pattern"))
+    }`,
   minItems: ({ error, instance }) =>
-    `${pyRepr(instance)} ${
+    `${describeValue(instance)} ${
       param(error, "limit") === 1 ? "should be non-empty" : "is too short"
     }`,
-  maxItems: ({ instance }) => `${pyRepr(instance)} is too long`,
-  uniqueItems: ({ instance }) => `${pyRepr(instance)} has non-unique elements`,
+  maxItems: ({ instance }) => `${describeValue(instance)} is too long`,
+  uniqueItems: ({ instance }) =>
+    `${describeValue(instance)} has non-unique elements`,
   minProperties: ({ instance }) =>
-    `${pyRepr(instance)} does not have enough properties`,
+    `${describeValue(instance)} does not have enough properties`,
   maxProperties: ({ instance }) =>
-    `${pyRepr(instance)} has too many properties`,
+    `${describeValue(instance)} has too many properties`,
   enum: ({ instance, schema }) =>
-    `${pyRepr(instance)} is not one of ${pyRepr(schema)}`,
-  const: ({ schema }) => `${pyRepr(schema)} was expected`,
+    `${describeValue(instance)} is not one of ${describeValue(schema)}`,
+  const: ({ schema }) => `${describeValue(schema)} was expected`,
   minimum: ({ instance, schema }) =>
-    `${pyRepr(instance)} is less than the minimum of ${pyRepr(schema)}`,
+    `${describeValue(instance)} is less than the minimum of ${
+      describeValue(schema)
+    }`,
   exclusiveMinimum: ({ instance, schema }) =>
-    `${pyRepr(instance)} is less than or equal to the minimum of ${
-      pyRepr(schema)
+    `${describeValue(instance)} is less than or equal to the minimum of ${
+      describeValue(schema)
     }`,
   maximum: ({ instance, schema }) =>
-    `${pyRepr(instance)} is greater than the maximum of ${pyRepr(schema)}`,
+    `${describeValue(instance)} is greater than the maximum of ${
+      describeValue(schema)
+    }`,
   exclusiveMaximum: ({ instance, schema }) =>
-    `${pyRepr(instance)} is greater than or equal to the maximum of ${
-      pyRepr(schema)
+    `${describeValue(instance)} is greater than or equal to the maximum of ${
+      describeValue(schema)
     }`,
   multipleOf: ({ instance, schema }) =>
-    `${pyRepr(instance)} is not a multiple of ${pyRepr(schema)}`,
+    `${describeValue(instance)} is not a multiple of ${describeValue(schema)}`,
   dependentRequired: ({ error }) =>
-    `${pyRepr(param(error, "missingProperty"))} is a dependency of ${
-      pyRepr(param(error, "property"))
+    `${describeValue(param(error, "missingProperty"))} is a dependency of ${
+      describeValue(param(error, "property"))
     }`,
   anyOf: ({ instance }) =>
-    `${pyRepr(instance)} is not valid under any of the given schemas`,
+    `${describeValue(instance)} is not valid under any of the given schemas`,
   oneOf: ({ instance, schema }) => oneOfMessage(instance, schema),
   not: ({ instance, schema }) =>
-    `${pyRepr(instance)} should not be valid under ${pyRepr(schema)}`,
+    `${describeValue(instance)} should not be valid under ${
+      describeValue(schema)
+    }`,
   contains: ({ error, instance, schema }) =>
     containsMessage(error, instance, schema),
   maxContains: ({ error }) =>
@@ -365,7 +376,7 @@ const RENDERERS: Readonly<Record<string, (ctx: RenderContext) => string>> = {
   unevaluatedProperties: ({ error }) =>
     `Unevaluated properties are not allowed (${
       extrasMessage(
-        pySortStrings([String(param(error, "unevaluatedProperty"))]),
+        sortedStrings([String(param(error, "unevaluatedProperty"))]),
       )
     })`,
 };
@@ -386,14 +397,16 @@ function additionalPropertiesMessage(
   if (isRecord(patterns)) {
     const verb = names.length === 1 ? "does" : "do";
     return `${
-      pySortStrings(names).map((name) => pyRepr(name)).join(", ")
+      sortedStrings(names).map((name) => describeValue(name)).join(", ")
     } ${verb} not match any of the regexes: ${
-      pySortStrings(Object.keys(patterns)).map((pattern) => pyRepr(pattern))
+      sortedStrings(Object.keys(patterns)).map((pattern) =>
+        describeValue(pattern)
+      )
         .join(", ")
     }`;
   }
   return `Additional properties are not allowed (${
-    extrasMessage(pySortStrings(names))
+    extrasMessage(sortedStrings(names))
   })`;
 }
 
@@ -529,7 +542,7 @@ function project(
           path: valuePath.slice(0, -1),
           keyword: error.keyword,
           message: `False schema does not allow ${
-            pyRepr(instanceAt(instance, valuePath))
+            describeValue(instanceAt(instance, valuePath))
           }`,
         },
       });
@@ -573,8 +586,8 @@ function project(
   }
 
   for (const group of collapsed.values()) {
-    const names = pySortStrings(group.names.map((name) => String(name)));
-    const body = names.map((name) => pyRepr(name)).join(", ");
+    const names = sortedStrings(group.names.map((name) => String(name)));
+    const body = names.map((name) => describeValue(name)).join(", ");
     const message = group.error.keyword === "additionalProperties"
       ? additionalPropertiesGroupMessage(group.error, names, body)
       : `Unevaluated properties are not allowed (${extrasMessage(names)})`;
@@ -622,7 +635,9 @@ function additionalPropertiesGroupMessage(
   if (isRecord(patterns)) {
     const verb = names.length === 1 ? "does" : "do";
     return `${body} ${verb} not match any of the regexes: ${
-      pySortStrings(Object.keys(patterns)).map((pattern) => pyRepr(pattern))
+      sortedStrings(Object.keys(patterns)).map((pattern) =>
+        describeValue(pattern)
+      )
         .join(", ")
     }`;
   }

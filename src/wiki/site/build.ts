@@ -5,7 +5,7 @@ import { isExternalLink } from "../links.ts";
 import { parseLayoutFromFrontmatter } from "../layout.ts";
 
 import { splitDocumentBody } from "../parser.ts";
-import { pyStr } from "../pyrepr.ts";
+import { describeText } from "../describe.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "../paths.ts";
 import {
   outlineForMarkdown,
@@ -63,7 +63,7 @@ function chooseTitle(
   if (
     candidate !== undefined && candidate !== null && String(candidate) !== ""
   ) {
-    return pyStr(candidate);
+    return describeText(candidate);
   }
   return titleFromMarkdown(body, route);
 }

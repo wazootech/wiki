@@ -401,7 +401,7 @@ Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
 
     const warnings = lintLinkStyle(config);
     assertEquals(warnings.length, 1);
-    assert(warnings[0]!.includes("Wikilink '[[Target]]'"));
+    assert(warnings[0]!.includes('Wikilink "[[Target]]"'));
 
     // An inline code span and a fence are examples, not links.
     write(

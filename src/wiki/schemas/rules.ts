@@ -8,7 +8,7 @@
  */
 
 import { ValueError } from "../errors.ts";
-import { pyRepr } from "../pyrepr.ts";
+import { describeValue } from "../describe.ts";
 import { type ModelSpec, validateModel } from "./model.ts";
 import type { ValidationIssue } from "./validation.ts";
 
@@ -26,7 +26,9 @@ export function coerceSeverity(value: unknown): Severity {
   if (value === false || value === "false") return "off";
   if (value === true || value === "true") return "error";
   if (value === "error" || value === "warning" || value === "off") return value;
-  throw new ValueError(`expected error, warning, or off, got ${pyRepr(value)}`);
+  throw new ValueError(
+    `expected error, warning, or off, got ${describeValue(value)}`,
+  );
 }
 
 /** The `check:` block: document-schema enforcement during build. */
@@ -54,7 +56,7 @@ function coerceRemoteSchemaRefs(value: unknown): string {
   if (value === null || value === undefined) return "allow";
   if (typeof value !== "string") {
     throw new ValueError(
-      `expected allow, deny, or allowlist, got ${pyRepr(value)}`,
+      `expected allow, deny, or allowlist, got ${describeValue(value)}`,
     );
   }
   const normalized = value.trim().toLowerCase();
@@ -63,7 +65,7 @@ function coerceRemoteSchemaRefs(value: unknown): string {
     normalized !== "allowlist"
   ) {
     throw new ValueError(
-      `expected allow, deny, or allowlist, got ${pyRepr(value)}`,
+      `expected allow, deny, or allowlist, got ${describeValue(value)}`,
     );
   }
   return normalized;
@@ -98,7 +100,7 @@ function coerceRemoteSchemaHosts(value: unknown): string[] {
     return hosts;
   }
   throw new ValueError(
-    `expected remote_schema_hosts string or list, got ${pyRepr(value)}`,
+    `expected remote_schema_hosts string or list, got ${describeValue(value)}`,
   );
 }
 

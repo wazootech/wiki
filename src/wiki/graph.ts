@@ -71,11 +71,10 @@ import {
   type DataRecord,
   documentDataFromPath,
   isRecord,
-  pyStrip,
   readTextTolerant,
 } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
-import { pyRepr, pyStr } from "./pyrepr.ts";
+import { describeText, describeValue } from "./describe.ts";
 import {
   type GraphDescriptor,
   loadLockfile,
@@ -141,8 +140,8 @@ function sourceResolvedPath(source: SourceConfig, repoDir: string): string {
   const base = source.path ? join(repoDir, source.path) : repoDir;
   if (!pathExists(base)) {
     throw new Error(
-      `Source ${pyRepr(source.name)}: path ${
-        pyRepr(source.path)
+      `Source ${describeValue(source.name)}: path ${
+        describeValue(source.path)
       } does not exist`,
     );
   }
@@ -296,11 +295,11 @@ export function resolveType(
     if (context.vocab) return namedNode(`${context.vocab}${value}`);
     return null;
   }
-  return namedNode(pyStr(value));
+  return namedNode(describeText(value));
 }
 
 /** Python truthiness, which is not JavaScript truthiness for `[]` and `{}`. */
-function pyTruthy(value: unknown): boolean {
+function isTruthy(value: unknown): boolean {
   if (value === null || value === undefined || value === false) return false;
   if (value === 0 || value === "") return false;
   // A `WikiFloat` is a `Number` subclass, so `typeof` reports "object" and
@@ -378,7 +377,7 @@ export function resolveObject(
   }
 
   if (isRecord(value)) {
-    if (pyTruthy(value["@id"])) {
+    if (isTruthy(value["@id"])) {
       let uri = String(value["@id"]);
       const expanded = uri.includes(":") ? expandCurie(uri, context) : null;
       if (expanded !== null) uri = expanded;
@@ -437,7 +436,7 @@ export function resolveObject(
     return;
   }
   if (value !== null && value !== undefined) {
-    graph.add(subject, pred, literal(pyStr(value)));
+    graph.add(subject, pred, literal(describeText(value)));
   }
 }
 
@@ -496,7 +495,7 @@ export function effectiveTypes(
   data: DataRecord,
   context: Context | Config,
 ): unknown[] {
-  const declared = pyTruthy(data["@type"]) ? data["@type"] : data["type"];
+  const declared = isTruthy(data["@type"]) ? data["@type"] : data["type"];
   const frontmatterTypes = normalizeTypeList(declared);
 
   let implicitTypes: readonly string[] = [];
@@ -556,15 +555,15 @@ export function frontmatterToGraph(
 
   const record: DataRecord = data ?? {};
   const types = effectiveTypes(record, context);
-  if (!pyTruthy(record) || types.length === 0) return graph;
+  if (!isTruthy(record) || types.length === 0) return graph;
 
-  let docId = pyTruthy(record["@id"]) ? record["@id"] : record["id"];
-  if (!pyTruthy(docId)) {
+  let docId = isTruthy(record["@id"]) ? record["@id"] : record["id"];
+  if (!isTruthy(docId)) {
     // No `@id` and no route to derive one from: Python returns a *fresh*
     // unbound `Graph()` here rather than the graph built above. The triple set
     // is empty either way, so returning the bound graph is indistinguishable —
     // and one less place for a namespace binding to mysteriously vanish.
-    if (!pyTruthy(fileId)) return graph;
+    if (!isTruthy(fileId)) return graph;
     docId = `${rdfContext.baseIri}${fileId}${
       includeFileExtension ? fileExt : ""
     }`;
@@ -589,12 +588,12 @@ export function frontmatterToGraph(
       for (const item of value) {
         resolveObject(key, item, graph, subject, rdfContext);
       }
-    } else if (pyTruthy(value)) {
+    } else if (isTruthy(value)) {
       resolveObject(key, value, graph, subject, rdfContext);
     }
   }
 
-  if (pyTruthy(body) && pyTruthy(contentPredicate)) {
+  if (isTruthy(body) && isTruthy(contentPredicate)) {
     resolveObject(contentPredicate!, body, graph, subject, rdfContext);
   }
 
@@ -662,11 +661,11 @@ function processDocumentFile(
     let body: string | null = null;
     if (
       extname(filePath).toLowerCase() === ".md" &&
-      pyTruthy(config.graph.content_predicate)
+      isTruthy(config.graph.content_predicate)
     ) {
       const content = readTextTolerant(filePath);
       try {
-        body = pyStrip(extract<DataRecord>(content).body);
+        body = extract<DataRecord>(content).body.trim();
       } catch (error) {
         if (!(error instanceof LinkedMarkdownError)) throw error;
       }

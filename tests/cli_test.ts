@@ -198,7 +198,7 @@ Deno.test(
         result.stderr,
         "Warnings:\n" +
           "  - In Page: Broken WikiLink [Missing] points to non-existent document.\n" +
-          "  - In Page.md:6: Wikilink '[[Missing]]'; use standard links " +
+          '  - In Page.md:6: Wikilink "[[Missing]]"; use standard links ' +
           "([display](Page.md)) per link.style.\n",
       );
     } finally {
@@ -244,7 +244,7 @@ Deno.test(
       assertEquals(result.stdout, "");
       assert(
         result.stderr.includes(
-          "In Page: wazoo:layout 'layouts/missing.html' must resolve to a " +
+          'In Page: wazoo:layout "layouts/missing.html" must resolve to a ' +
             "readable .html file under the wiki config root.",
         ),
         result.stderr,

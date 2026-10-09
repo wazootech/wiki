@@ -21,6 +21,7 @@
  *   climbing out of it.
  */
 
+import { quoteString } from "./describe.ts";
 import { ValueError } from "./errors.ts";
 import { headingSlug } from "./headings.ts";
 import { pageUrl } from "./paths.ts";
@@ -72,11 +73,11 @@ export function splitTarget(target: string): [string, string | null] {
 /** The anchor id a fragment names, slugged the way GitHub slugs headings. */
 export function fragmentId(fragment: string | null): string {
   if (!fragment) return "";
-  return headingSlug(pyUnquote(fragment).trim());
+  return headingSlug(unquote(fragment).trim());
 }
 
 /** `urllib.parse.unquote`. */
-export function pyUnquote(text: string): string {
+export function unquote(text: string): string {
   try {
     return decodeURIComponent(text.replace(/\+/g, "%2B"));
   } catch {
@@ -141,7 +142,7 @@ export function resolvePageRoute(
   target: string,
 ): string | null {
   const [pagePartRaw] = splitTarget(target);
-  let pagePart = pyUnquote(pagePartRaw).replaceAll("\\", "/").trim();
+  let pagePart = unquote(pagePartRaw).replaceAll("\\", "/").trim();
   if (pagePart.startsWith("/")) return null;
   const suffix = suffixOf(pagePart);
   if (
@@ -226,10 +227,6 @@ export function formatInternalLink(
     return `[[${targetRoute}|${display}]]`;
   }
   throw new ValueError(
-    `expected standard or wikilink, got ${pyReprStr(style)}`,
+    `expected standard or wikilink, got ${quoteString(style)}`,
   );
-}
-
-function pyReprStr(text: string): string {
-  return text.includes("'") && !text.includes('"') ? `"${text}"` : `'${text}'`;
 }

@@ -233,7 +233,7 @@ Deno.test("resolveObject maps datatypes the way rdflib does", () => {
   // The catch-all stringifies. Python's tuple renders `(1, 2)`; JavaScript has
   // only arrays, and renders `[1, 2]`.
   resolveObject("tup", [1, 2], graph, subject, context);
-  assert(graph.has(subject, namedNode(SCHEMA + "tup"), literal("[1, 2]")));
+  assert(graph.has(subject, namedNode(SCHEMA + "tup"), literal("[1,2]")));
 });
 
 Deno.test("a nested mapping without @type becomes a blank node", () => {
@@ -1322,7 +1322,7 @@ Deno.test("a zoned YAML timestamp keeps rdflib's +00:00 lexical form", () => {
 Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
   // End to end through the parser: `30.0` parses to the number `30`, which
   // the graph layer would otherwise type `xsd:integer` — or drop entirely,
-  // because a `WikiFloat` is `typeof "object"` and the old `pyTruthy` read
+  // because a `WikiFloat` is `typeof "object"` and the old `isTruthy` read
   // it as an empty mapping. Python writes `"30.0"^^xsd:double`.
   const config = new Config();
   const attrs = parseFrontmatter(

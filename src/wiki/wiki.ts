@@ -51,7 +51,7 @@ import {
 import { formatInternalLink } from "./links.ts";
 import { type QueryFormat, runQuery } from "./format.ts";
 import { resolvePath } from "./jqfilter.ts";
-import { pyStr } from "./pyrepr.ts";
+import { describeText } from "./describe.ts";
 import type { RdfDataset, RdfGraph } from "./rdf.ts";
 import {
   install as installSources,
@@ -385,7 +385,9 @@ export class Wiki {
       pretty: options.pretty ?? false,
     });
     if (options.jq === undefined || options.jq === null) return result;
-    return resolvePath(JSON.parse(result), options.jq).map(pyStr).join("\n");
+    return resolvePath(JSON.parse(result), options.jq).map(describeText).join(
+      "\n",
+    );
   }
 
   async render(

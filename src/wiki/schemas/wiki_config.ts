@@ -51,7 +51,7 @@ import {
   validateFmtOptions,
 } from "../fmt_config.ts";
 import { readTextTolerant } from "../parser.ts";
-import { pyRepr, pyStr, pyTypeName } from "../pyrepr.ts";
+import { describeText, describeType, describeValue } from "../describe.ts";
 import {
   type FieldSpec,
   isMapping,
@@ -143,7 +143,7 @@ function coerceStrOrList(value: unknown): string[] {
   if (typeof value === "string") return [value];
   if (Array.isArray(value)) return value.map((item) => String(item));
   throw new ValueError(
-    `expected string or list of strings, got ${pyTypeName(value)}`,
+    `expected string or list of strings, got ${describeType(value)}`,
   );
 }
 
@@ -153,7 +153,7 @@ function coerceImplicitTypes(value: unknown): string[] {
   if (typeof value === "string") return [value];
   if (Array.isArray(value)) return value.map((item) => String(item));
   throw new ValueError(
-    `expected string or list of strings, got ${pyTypeName(value)}`,
+    `expected string or list of strings, got ${describeType(value)}`,
   );
 }
 
@@ -163,7 +163,7 @@ function coercePathList(value: unknown): string[] {
   if (typeof value === "string") return [value];
   if (Array.isArray(value)) return value.map(String);
   throw new ValueError(
-    `expected string, path, or list, got ${pyTypeName(value)}`,
+    `expected string, path, or list, got ${describeType(value)}`,
   );
 }
 
@@ -180,7 +180,7 @@ function severityError(
 ): ValueError {
   if (
     blockName === "check" && field === "filename_pattern" &&
-    looksLikeRegex(pyStr(bad))
+    looksLikeRegex(describeText(bad))
   ) {
     return new ValueError(
       "check.filename_pattern must be error, warning, or off; " +
@@ -189,7 +189,7 @@ function severityError(
   }
   return new ValueError(
     `Invalid ${blockName}.${field} severity: ${
-      pyRepr(bad)
+      describeValue(bad)
     } (expected error, warning, or off)`,
   );
 }
@@ -267,7 +267,7 @@ export function formatConfigValidationError(
       if (block === "link" && field === "style") {
         return new ValueError(
           `Invalid config file ${configName}: Invalid link_style: ${
-            pyRepr(issue.input)
+            describeValue(issue.input)
           } ` +
             `(expected standard or wikilink)`,
         );
@@ -362,8 +362,8 @@ function parsePageLayoutPath(
   baseDir: string,
 ): string | null {
   if (layoutRaw === null || layoutRaw === undefined) return null;
-  if (pyStr(layoutRaw).trim() === "") return null;
-  const pathObj = pyStr(layoutRaw).trim();
+  if (describeText(layoutRaw).trim() === "") return null;
+  const pathObj = describeText(layoutRaw).trim();
   return resolve(isAbsolute(pathObj) ? pathObj : join(baseDir, pathObj));
 }
 
@@ -442,9 +442,11 @@ export interface SparqlServiceBlock {
 /** Coerce `graph.implicit_types_policy`. */
 function coerceImplicitTypesPolicy(value: unknown): string {
   if (value === null || value === undefined) return IMPLICIT_TYPES_POLICY;
-  const normalized = pyStr(value).trim().toLowerCase();
+  const normalized = describeText(value).trim().toLowerCase();
   if (!IMPLICIT_TYPES_POLICIES.has(normalized)) {
-    throw new ValueError(`expected fallback or append, got ${pyRepr(value)}`);
+    throw new ValueError(
+      `expected fallback or append, got ${describeValue(value)}`,
+    );
   }
   return normalized;
 }
@@ -466,7 +468,9 @@ function coerceBoolean(
     if (["false", "0", "no", "off"].includes(normalized)) return false;
     if (["true", "1", "yes", "on"].includes(normalized)) return true;
   }
-  throw new ValueError(`expected boolean ${label}, got ${pyRepr(value)}`);
+  throw new ValueError(
+    `expected boolean ${label}, got ${describeValue(value)}`,
+  );
 }
 
 /** Coerce `sparql_service.enabled`. */
@@ -478,7 +482,9 @@ function coerceEnabled(value: unknown): boolean {
 function coerceLinkStyle(value: unknown): string {
   if (value === null || value === undefined) return DEFAULT_LINK_STYLE;
   if (typeof value !== "string") {
-    throw new ValueError(`expected standard or wikilink, got ${pyRepr(value)}`);
+    throw new ValueError(
+      `expected standard or wikilink, got ${describeValue(value)}`,
+    );
   }
   const normalized = value.trim().toLowerCase();
   const legacy = LEGACY_LINK_STYLE_MAP[normalized];
@@ -490,7 +496,9 @@ function coerceLinkStyle(value: unknown): string {
     return legacy;
   }
   if (!LINK_STYLES.has(normalized)) {
-    throw new ValueError(`expected standard or wikilink, got ${pyRepr(value)}`);
+    throw new ValueError(
+      `expected standard or wikilink, got ${describeValue(value)}`,
+    );
   }
   return normalized;
 }
@@ -502,7 +510,7 @@ function coerceGraphContext(
   if (value === null || value === undefined) return null;
   if (!isMapping(value)) {
     throw new ValueError(
-      `expected a mapping for the graph context, got ${pyTypeName(value)}`,
+      `expected a mapping for the graph context, got ${describeType(value)}`,
     );
   }
   const context: Record<string, string | null> = {};
@@ -512,7 +520,7 @@ function coerceGraphContext(
     else {
       throw new ValueError(
         `expected the graph context value for '${prefix}' to be a string, got ${
-          pyTypeName(uri)
+          describeType(uri)
         }`,
       );
     }
@@ -622,7 +630,7 @@ const configSpec: ModelSpec = {
     ["sparql_service", { model: () => sparqlServiceSpec }],
     ["config_root", {
       factory: () => Deno.cwd(),
-      before: (value) => pyStr(value),
+      before: (value) => describeText(value),
     }],
   ],
 };
@@ -645,7 +653,9 @@ function validateSources(value: unknown): unknown {
     }
     const name = String(item["name"]);
     if (seen.has(name)) {
-      throw new ValueError(`Duplicate source name: ${pyRepr(item["name"])}`);
+      throw new ValueError(
+        `Duplicate source name: ${describeValue(item["name"])}`,
+      );
     }
     seen.add(name);
   }

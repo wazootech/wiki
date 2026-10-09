@@ -47,13 +47,12 @@ export {
   splitFrontmatterBody,
   splitLines,
 } from "./parser.ts";
-// The `py*` helpers in `pyrepr.ts` / `pystr.ts` / `sequence_matcher.ts`, plus
-// `pyStrip` from `parser.ts`, are deliberately NOT re-exported here. They
-// reproduce Python's exact stringification and whitespace handling so parity
-// output matches the oracle; they are an implementation detail of that goal,
-// not a domain concept. Exporting them would make `pyRepr` et al. published
-// API, and JSR treats every export as a semver commitment. Import them from
-// their own module if you are extending the parity layer.
+// `describe.ts`, `text.ts`, and `sequence_matcher.ts` are deliberately NOT
+// re-exported here. They hold implementation detail -- rendering values for
+// diagnostic messages, the case and digit predicates the heading lints need,
+// and the diff behind link repair -- rather than a domain concept a consumer
+// should build on, and JSR treats every export as a semver commitment. Import
+// them from their own module if you are extending them.
 export {
   getLogger,
   type Logger,

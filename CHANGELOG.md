@@ -21,7 +21,8 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 ### Changed
 
 - Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
-- The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. The release workflow will publish it on the first tagged release after the package is linked to this GitHub repository.
+- The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. It publishes whenever a new version reaches `main`, gated on the `JSR_PUBLISH_ENABLED` repository variable; a tag is not required.
+- Python's string emulation is gone. The `pyRepr` / `pyStr` / `pyTypeName` / `pyStrip` / `pyCasefold` / `pyIsUpper` / `pyIsLower` / `pyIsDigit` / `pySplitWhitespace` / `pyStripChars` / `pySortStrings` / `pyTruthy` helpers and their `pystr.ts` / `pyrepr.ts` modules are replaced by native TypeScript: diagnostics render values with `JSON.stringify`, whitespace handling uses JavaScript's own whitespace class and line terminators, and the case/digit predicates use Unicode property escapes. This changes the wording of some diagnostics — `got 'maybe'` is now `got "maybe"`, and `[1, 2]` is now `[1,2]` — and the JSON Schema oracle replay now compares the verdict and instance paths rather than byte-identical message text. ([#330](https://github.com/wazootech/wiki/issues/330))
 - The release workflow builds standalone `deno compile` binaries for Linux x64, Windows x64, and macOS ARM64; release assets are individual executables with `SHA256SUMS`.
 
 ### Fixed

@@ -42,9 +42,9 @@ import {
   fragmentId,
   isExternalLink,
   markdownLinkIsPage,
-  pyUnquote,
   resolvePageRoute,
   splitTarget,
+  unquote,
 } from "./links.ts";
 import {
   type DataRecord,
@@ -200,7 +200,7 @@ export class LinkIndex {
             const start = match.index ?? 0;
             const end = start + match[0].length;
             if (spanOverlaps(start, end, protectedSpans)) continue;
-            const target = pyUnquote(
+            const target = unquote(
               (match[2] as string).split("?")[0] as string,
             );
             if (isExternalLink(target)) continue;
@@ -373,7 +373,7 @@ function indexPageLinks(
     const start = match.index ?? 0;
     const end = start + match[0].length;
     if (spanOverlaps(start, end, protectedSpans)) continue;
-    const rawTarget = pyUnquote((match[2] as string).split("?")[0] as string);
+    const rawTarget = unquote((match[2] as string).split("?")[0] as string);
     if (isExternalLink(rawTarget) || !markdownLinkIsPage(rawTarget)) continue;
     record(rawTarget);
   }
