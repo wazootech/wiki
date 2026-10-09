@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 — 2026-10-09
+
+The first full release of the Deno/TypeScript engine. 0.2.0 was published to JSR only, from `main`, and had the `wiki fmt` JSR crash fixed below; npm, PyPI and the standalone binaries go straight from 0.1.23 to 0.2.1.
 
 ### Breaking
 
