@@ -29,6 +29,13 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 
 ### Fixed
 
+- Lists nested in frontmatter compile per the SHACL and RDF specs instead of
+  one stringified literal. `sh:in`, `sh:languageIn`, `sh:ignoredProperties`,
+  `sh:and`, `sh:or`, `sh:xone`, and `sh:alternativePath` become SHACL lists; a
+  list under `sh:path` or another path parameter is a sequence path, and a
+  one-member list stays a predicate path; any other nested list repeats the
+  predicate. Shape extraction keeps every cell of a list nested in a list.
+  ([#305](https://github.com/wazootech/wiki/issues/305))
 - `wiki update` now works for unpinned git sources: the cache clone is
   detached before fetching so git no longer refuses to update its own
   checked-out branch, and the working tree is re-checked-out afterward.
