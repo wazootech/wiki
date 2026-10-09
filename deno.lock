@@ -14,7 +14,7 @@
     "jsr:@std/yaml@1": "1.2.0",
     "jsr:@std/yaml@^1.0.5": "1.2.0",
     "jsr:@wazoo/linked-markdown@0.1": "0.1.0",
-    "jsr:@wazoo/sparql-engine@0.4.2": "0.4.2",
+    "jsr:@wazoo/sparql-engine@0.4.3": "0.4.3",
     "npm:@dprint/formatter@0.5.1": "0.5.1",
     "npm:@dprint/json@0.21.3": "0.21.3",
     "npm:@dprint/markdown@0.20.0": "0.20.0",
@@ -93,8 +93,8 @@
         "jsr:@std/front-matter"
       ]
     },
-    "@wazoo/sparql-engine@0.4.2": {
-      "integrity": "24e3923a302cd2b73a2ddb2726c8550c53e565e6100477ed80a18777364c7a38",
+    "@wazoo/sparql-engine@0.4.3": {
+      "integrity": "727583ede208f1534d60ef9a878ad1a8c34c3d71a99c9a27679dde7fa82b41f8",
       "dependencies": [
         "npm:@rdfjs/types"
       ]
@@ -2640,7 +2640,7 @@
       "jsr:@std/toml@1",
       "jsr:@std/yaml@1",
       "jsr:@wazoo/linked-markdown@0.1",
-      "jsr:@wazoo/sparql-engine@0.4.2",
+      "jsr:@wazoo/sparql-engine@0.4.3",
       "npm:@dprint/formatter@0.5.1",
       "npm:@dprint/json@0.21.3",
       "npm:@dprint/markdown@0.20.0",

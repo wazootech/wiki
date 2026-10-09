@@ -767,6 +767,13 @@ function scopeTurtleBlock(
   );
 }
 
+/** The bodies of a page's ` ```turtle ` blocks, in document order. */
+function turtleBlocks(content: string): string[] {
+  return [...content.matchAll(/```turtle\s*([\s\S]*?)```/g)].map((match) =>
+    match[1]!.trim()
+  );
+}
+
 /** Parse a supported wiki document into the graph. */
 function processDocumentFile(
   graph: RdfGraph,
@@ -804,17 +811,11 @@ function processDocumentFile(
 
   // ` ```turtle ` blocks are the escape hatch for hand-written RDF inside a
   // page, so a malformed one must not take the whole graph down with it.
-  let blockIndex = 0;
-  for (const match of content.matchAll(/```turtle\s*([\s\S]*?)```/g)) {
-    const currentBlockIndex = blockIndex++;
+  for (const [currentBlockIndex, text] of turtleBlocks(content).entries()) {
     try {
       addQuads(
         graph,
-        scopeTurtleBlock(
-          parseTurtle(match[1]!.trim()),
-          filePath,
-          currentBlockIndex,
-        ),
+        scopeTurtleBlock(parseTurtle(text), filePath, currentBlockIndex),
       );
     } catch (error) {
       logger.warning(
@@ -867,6 +868,70 @@ async function processInputDir(
       );
     }
   }
+}
+
+/**
+ * One hand-written RDF source in the wiki: a page's ` ```turtle ` block, or an
+ * RDF data file under `wiki.input` (`.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`,
+ * `.xml`, `.jsonld`).
+ */
+export interface RdfSource {
+  readonly path: string;
+  /** The page's route, for a block; `null` for a data file. */
+  readonly route: string | null;
+  /** The block's 1-based position in its page; `null` for a data file. */
+  readonly block: number | null;
+  /** The source's own triples, blank nodes as the parser labelled them. */
+  readonly quads: readonly Quad[];
+}
+
+/**
+ * Every RDF source the graph loads besides frontmatter, parsed on its own.
+ *
+ * A source that does not parse is skipped: loading the graph already warns
+ * about it, and a linter has nothing to say about triples it cannot read.
+ */
+export async function rdfSources(config: Config): Promise<RdfSource[]> {
+  const documentFiles = new Set(iterDocumentFiles(config).map(pathKey));
+  const sources: RdfSource[] = [];
+  for (const inputDir of config.wiki.input) {
+    if (!pathExists(inputDir)) continue;
+    for (const filePath of sortedTreePaths(inputDir)) {
+      if (!isFile(filePath) || config.isExcluded(filePath)) continue;
+      const extension = extname(filePath).toLowerCase();
+      try {
+        if (documentFiles.has(pathKey(filePath))) {
+          if (extension !== ".md") continue;
+          const route = routeForDocumentFile(config, filePath);
+          const blocks = turtleBlocks(readTextTolerant(filePath));
+          for (const [index, text] of blocks.entries()) {
+            try {
+              sources.push({
+                path: filePath,
+                route,
+                block: index + 1,
+                quads: parseTurtle(text),
+              });
+            } catch {
+              // Reported by the graph loader.
+            }
+          }
+          continue;
+        }
+        const format = EXT_FORMAT_MAP.get(extension);
+        if (format === undefined) continue;
+        sources.push({
+          path: filePath,
+          route: null,
+          block: null,
+          quads: await parseRdf(readTextTolerant(filePath), format),
+        });
+      } catch {
+        // Reported by the graph loader.
+      }
+    }
+  }
+  return sources;
 }
 
 /** Load asserted triples from all wiki sources without inference. */

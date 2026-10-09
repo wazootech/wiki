@@ -37,23 +37,35 @@
  * flagged only when it has no target, is not also a class (the implicit class
  * target, §2.1.3.1), and no other shape references it.
  *
- * Turtle shapes (`.ttl` sources and fenced `turtle` blocks) are out of scope:
- * they have no frontmatter keys to point at.
+ * Shapes written in RDF (fenced `turtle` blocks and RDF data files such as
+ * `.ttl`) get the same rules over their triples (#342). Their findings name
+ * the source and the shape, since there is no frontmatter key to point at.
+ * Shapes from installed sources are not linted: their own wiki owns them.
  */
 
 import type { Config } from "./config.ts";
 import { type Context, OWL, RDFS, SH } from "./context.ts";
 import { describeValue } from "./describe.ts";
 import { ValueError } from "./errors.ts";
-import { effectiveTypes, frontmatterToGraph, loadGraph } from "./graph.ts";
+import {
+  effectiveTypes,
+  frontmatterToGraph,
+  loadGraph,
+  rdfSources,
+} from "./graph.ts";
 import { type DataRecord, documentDataFromPath, isRecord } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
+import { resolve } from "@std/path";
 import {
   namedNode,
+  type Quad,
   RDF_FIRST,
+  RDF_NIL,
   RDF_REST,
   RDF_TYPE,
   type RdfGraph,
+  type Term,
+  termKey,
 } from "./rdf.ts";
 import type { IssueDetail } from "./schemas/reports.ts";
 
@@ -708,6 +720,8 @@ export async function lintShapeDefinitions(
   if (!lintDefinitions && !lintUnused) return { definitions, unused };
   const context = config.context;
   let referenced: Set<string> | null = null;
+  const referencedShapeIris = async (): Promise<Set<string>> =>
+    referenced ??= referencedShapes(await loadGraph(config, { infer: false }));
 
   for (const filePath of options.filePaths ?? iterDocumentFiles(config)) {
     let route: string;
@@ -756,14 +770,12 @@ export async function lintShapeDefinitions(
       !hasTarget(data, context) &&
       !types.has(RDFS + "Class") && !types.has(OWL + "Class")
     ) {
-      referenced ??= referencedShapes(
-        await loadGraph(config, { infer: false }),
-      );
+      const shapeIris = await referencedShapeIris();
       const graph = frontmatterToGraph(data, config, { fileId: route });
       const subjects = [
         ...graph.match(null, namedNode(RDF_TYPE), namedNode(SH + "NodeShape")),
       ].map((quad) => quad.subject.value);
-      if (!subjects.some((iri) => referenced!.has(iri))) {
+      if (!subjects.some((iri) => shapeIris.has(iri))) {
         const findings = new Findings(route);
         findings.add(
           "sh:targetClass",
@@ -775,6 +787,420 @@ export async function lintShapeDefinitions(
           unused.push({ message, path: filePath, route });
         }
       }
+    }
+  }
+
+  const rdf = await lintRdfShapes(
+    config,
+    fileFilter,
+    options.filePaths ?? null,
+    { definitions: lintDefinitions, unused: lintUnused },
+    referencedShapeIris,
+  );
+  definitions.push(...rdf.definitions);
+  unused.push(...rdf.unused);
+  return { definitions, unused };
+}
+
+// ---------------------------------------------------------------------------
+// RDF sources: ` ```turtle ` blocks and RDF data files (#342)
+// ---------------------------------------------------------------------------
+
+/** One source's triples, indexed by subject and by object. */
+class TripleIndex {
+  readonly bySubject = new Map<string, Quad[]>();
+  readonly byObject = new Map<string, Quad[]>();
+
+  constructor(readonly quads: readonly Quad[]) {
+    for (const item of quads) {
+      push(this.bySubject, termKey(item.subject), item);
+      push(this.byObject, termKey(item.object), item);
+    }
+  }
+
+  out(node: Term): Quad[] {
+    return this.bySubject.get(termKey(node)) ?? [];
+  }
+
+  incoming(node: Term): Quad[] {
+    return this.byObject.get(termKey(node)) ?? [];
+  }
+
+  values(node: Term, predicate: string): Term[] {
+    return this.out(node)
+      .filter((item) => item.predicate.value === predicate)
+      .map((item) => item.object);
+  }
+
+  /** The members of the RDF list at `node`, or `null` if it is not one. */
+  list(node: Term): Term[] | null {
+    if (node.termType === "NamedNode" && node.value === RDF_NIL) return [];
+    if (node.termType !== "BlankNode") return null;
+    const members: Term[] = [];
+    const seen = new Set<string>();
+    let cell: Term = node;
+    while (cell.termType === "BlankNode" && !seen.has(cell.value)) {
+      seen.add(cell.value);
+      const first = this.values(cell, RDF_FIRST);
+      const rest = this.values(cell, RDF_REST);
+      if (first.length !== 1 || rest.length !== 1) return null;
+      members.push(first[0]!);
+      cell = rest[0]!;
+    }
+    return cell.termType === "NamedNode" && cell.value === RDF_NIL
+      ? members
+      : null;
+  }
+}
+
+function push(map: Map<string, Quad[]>, key: string, item: Quad): void {
+  const list = map.get(key);
+  if (list === undefined) map.set(key, [item]);
+  else list.push(item);
+}
+
+/** `prefix:local` for an IRI under a declared namespace, else `<iri>`. */
+function compactIri(iri: string, context: Context): string {
+  let best: [string, string] | null = null;
+  for (const [prefix, namespace] of context.namespaces) {
+    if (
+      namespace !== "" && iri.startsWith(namespace) &&
+      (best === null || namespace.length > best[1].length)
+    ) {
+      best = [prefix, namespace];
+    }
+  }
+  if (best === null && iri.startsWith(SH)) return `sh:${iri.slice(SH.length)}`;
+  return best === null ? `<${iri}>` : `${best[0]}:${iri.slice(best[1].length)}`;
+}
+
+function describeTerm(term: Term, context: Context): string {
+  if (term.termType === "NamedNode") return compactIri(term.value, context);
+  if (term.termType === "Literal") return JSON.stringify(term.value);
+  return "[ ]";
+}
+
+/**
+ * Where a node sits, for a message: an IRI as itself, a blank node as the
+ * chain of triples that reaches it from a named node, e.g.
+ * `ex:PersonShape sh:property [ ] sh:path`.
+ */
+function locate(node: Term, index: TripleIndex, context: Context): string {
+  const parts: string[] = [];
+  const seen = new Set<string>();
+  let current: Term = node;
+  while (current.termType === "BlankNode" && !seen.has(current.value)) {
+    seen.add(current.value);
+    const parent = index.incoming(current)[0];
+    if (parent === undefined) break;
+    if (parent.predicate.value !== RDF_REST) {
+      parts.unshift(
+        parent.predicate.value === RDF_FIRST
+          ? "( )"
+          : `${compactIri(parent.predicate.value, context)} [ ]`,
+      );
+    }
+    current = parent.subject;
+  }
+  parts.unshift(
+    current.termType === "BlankNode" ? "[ ]" : describeTerm(current, context),
+  );
+  return parts.join(" ");
+}
+
+/** Collects one source's findings, each prefixed with the source. */
+class SourceFindings {
+  readonly messages: string[] = [];
+  constructor(
+    readonly label: string,
+    readonly index: TripleIndex,
+    readonly context: Context,
+  ) {}
+
+  add(node: Term, predicate: string | null, message: string): void {
+    const at = locate(node, this.index, this.context) +
+      (predicate === null ? "" : ` ${compactIri(predicate, this.context)}`);
+    this.messages.push(`In ${this.label}: ${at}: ${message}`);
+  }
+}
+
+/** Lint a property path value (§2.3.1). */
+function lintPathTerm(
+  node: Term,
+  holder: Term,
+  predicate: string,
+  findings: SourceFindings,
+  seen: Set<string> = new Set(),
+): void {
+  const { index } = findings;
+  if (node.termType === "NamedNode") return;
+  if (node.termType !== "BlankNode") {
+    findings.add(
+      holder,
+      predicate,
+      `${describeTerm(node, findings.context)} is not an IRI, so it is not a ` +
+        "property path (SHACL §2.3.1).",
+    );
+    return;
+  }
+  if (seen.has(node.value)) return;
+  seen.add(node.value);
+
+  const members = index.list(node);
+  if (members !== null) {
+    if (members.length < 2) {
+      findings.add(
+        holder,
+        predicate,
+        "a sequence path is a list of at least two paths (SHACL §2.3.1.1).",
+      );
+    }
+    for (const member of members) {
+      lintPathTerm(member, holder, predicate, findings, seen);
+    }
+    return;
+  }
+
+  const out = index.out(node);
+  const forms = out.filter((item) => {
+    const local = shLocal(item.predicate.value);
+    return local !== null && PATH_FORMS.has(local);
+  });
+  if (forms.length !== 1 || out.length !== 1) {
+    findings.add(
+      holder,
+      predicate,
+      "a complex path is a blank node with exactly one triple, whose " +
+        "predicate is one of sh:inversePath, sh:alternativePath, " +
+        "sh:zeroOrMorePath, sh:oneOrMorePath, or sh:zeroOrOnePath " +
+        "(SHACL §2.3.1).",
+    );
+  }
+  for (const item of forms) {
+    if (shLocal(item.predicate.value) === "alternativePath") {
+      const alternatives = index.list(item.object);
+      if (alternatives === null || alternatives.length < 2) {
+        findings.add(
+          node,
+          item.predicate.value,
+          "sh:alternativePath takes a list of at least two paths " +
+            "(SHACL §2.3.1.3).",
+        );
+      }
+      for (const member of alternatives ?? []) {
+        lintPathTerm(member, node, item.predicate.value, findings, seen);
+      }
+    } else {
+      lintPathTerm(item.object, node, item.predicate.value, findings, seen);
+    }
+  }
+}
+
+/** Lint one RDF source's shapes: the same SHACL Core rules as frontmatter. */
+async function lintSource(
+  index: TripleIndex,
+  findings: SourceFindings,
+  unused: SourceFindings | null,
+  referenced: () => Promise<Set<string>>,
+): Promise<void> {
+  const typed = (local: string) =>
+    index.quads
+      .filter((item) =>
+        item.predicate.value === RDF_TYPE && item.object.value === SH + local
+      )
+      .map((item) => item.subject);
+  const objectsOf = (local: string) =>
+    index.quads
+      .filter((item) => item.predicate.value === SH + local)
+      .map((item) => item.object);
+  // A shape this source only references, by IRI, is defined (and linted)
+  // wherever its own triples are.
+  const defined = (node: Term) =>
+    node.termType === "BlankNode" || index.out(node).length > 0;
+
+  // Vocabulary.
+  for (const item of index.quads) {
+    const predicate = shLocal(item.predicate.value);
+    if (predicate !== null && !SHACL_PROPERTIES.has(predicate)) {
+      findings.add(
+        item.subject,
+        item.predicate.value,
+        `sh:${predicate} is not a property of the SHACL vocabulary.`,
+      );
+    }
+    for (const term of [item.subject, item.object]) {
+      if (term.termType !== "NamedNode") continue;
+      const local = shLocal(term.value);
+      if (local !== null && !isShaclTerm(local)) {
+        findings.add(
+          item.subject,
+          item.predicate.value,
+          `sh:${local} is not a term of the SHACL vocabulary.`,
+        );
+      }
+    }
+  }
+
+  // Property shapes need exactly one sh:path (§2.3); node shapes have none
+  // (§2.2, and §4.7.1 for the values of sh:node).
+  const propertyShapes = new Map<string, Term>();
+  for (const node of [...typed("PropertyShape"), ...objectsOf("property")]) {
+    if (defined(node)) propertyShapes.set(termKey(node), node);
+  }
+  for (const node of propertyShapes.values()) {
+    const paths = index.values(node, SH + "path");
+    if (paths.length !== 1) {
+      findings.add(
+        node,
+        null,
+        `a property shape needs exactly one sh:path, found ${paths.length} ` +
+          "(SHACL §2.3).",
+      );
+    }
+  }
+  const nodeShapes = new Map<string, Term>();
+  for (const node of [...typed("NodeShape"), ...objectsOf("node")]) {
+    if (defined(node) && !propertyShapes.has(termKey(node))) {
+      nodeShapes.set(termKey(node), node);
+    }
+  }
+  for (const node of nodeShapes.values()) {
+    if (index.values(node, SH + "path").length > 0) {
+      findings.add(
+        node,
+        SH + "path",
+        "a node shape cannot have sh:path (SHACL §2.2); put a path " +
+          "constraint in a property shape under sh:property.",
+      );
+    }
+  }
+
+  // Paths, IRI-valued parameters, and sh:nodeKind.
+  for (const item of index.quads) {
+    const local = shLocal(item.predicate.value);
+    if (local === null) continue;
+    if (local === "path") {
+      lintPathTerm(item.object, item.subject, item.predicate.value, findings);
+    } else if (local === "ignoredProperties") {
+      const members = index.list(item.object);
+      if (members === null) {
+        findings.add(
+          item.subject,
+          item.predicate.value,
+          "sh:ignoredProperties takes a list of IRIs (SHACL §4.8.1).",
+        );
+      }
+      for (const member of members ?? []) {
+        if (member.termType !== "NamedNode") {
+          findings.add(
+            item.subject,
+            item.predicate.value,
+            `${
+              describeTerm(member, findings.context)
+            } is not an IRI (SHACL §4.8.1).`,
+          );
+        }
+      }
+    } else if (IRI_VALUED.has(local) && item.object.termType !== "NamedNode") {
+      findings.add(
+        item.subject,
+        item.predicate.value,
+        `${
+          describeTerm(item.object, findings.context)
+        } is not an IRI; sh:${local} takes an IRI.`,
+      );
+    } else if (
+      local === "nodeKind" &&
+      !(item.object.termType === "NamedNode" &&
+        NODE_KINDS.has(shLocal(item.object.value) ?? ""))
+    ) {
+      findings.add(
+        item.subject,
+        item.predicate.value,
+        `${
+          describeTerm(item.object, findings.context)
+        } is not one of the six node kinds (SHACL §4.1.3).`,
+      );
+    }
+  }
+
+  if (unused === null) return;
+  for (const node of nodeShapes.values()) {
+    if (
+      index.values(node, RDF_TYPE).every((t) => t.value !== SH + "NodeShape")
+    ) {
+      continue;
+    }
+    const predicates = new Set(
+      index.out(node).map((item) => item.predicate.value),
+    );
+    if ([...TARGETS].some((local) => predicates.has(SH + local))) continue;
+    const types = new Set(index.values(node, RDF_TYPE).map((t) => t.value));
+    if (types.has(RDFS + "Class") || types.has(OWL + "Class")) continue;
+    const isReferenced = node.termType === "BlankNode"
+      ? index.incoming(node).length > 0
+      : (await referenced()).has(node.value);
+    if (!isReferenced) {
+      unused.add(
+        node,
+        null,
+        "this node shape has no target (sh:targetClass, sh:targetNode, " +
+          "sh:targetSubjectsOf, sh:targetObjectsOf) and no other shape " +
+          "references it, so it validates nothing (SHACL §2.1).",
+      );
+    }
+  }
+}
+
+/** Whether a triple touches the SHACL namespace at all. */
+function isShaclRelevant(item: Quad): boolean {
+  return [item.subject, item.predicate, item.object].some((term) =>
+    term.termType === "NamedNode" && term.value.startsWith(SH)
+  );
+}
+
+/**
+ * Lint the shapes written in RDF rather than frontmatter: ` ```turtle `
+ * blocks and RDF data files under `wiki.input`. Findings name the source and
+ * the shape (an IRI, or the triples that reach a blank node from one), since
+ * there is no frontmatter key to point at.
+ */
+async function lintRdfShapes(
+  config: Config,
+  fileFilter: ReadonlySet<string> | null,
+  filePaths: readonly string[] | null,
+  lint: { readonly definitions: boolean; readonly unused: boolean },
+  referenced: () => Promise<Set<string>>,
+): Promise<ShapeLintResult> {
+  const definitions: IssueDetail[] = [];
+  const unused: IssueDetail[] = [];
+  const scoped = filePaths === null
+    ? null
+    : new Set(filePaths.map((path) => resolve(path)));
+  for (const source of await rdfSources(config)) {
+    if (scoped !== null && !scoped.has(resolve(source.path))) continue;
+    if (
+      fileFilter !== null &&
+      (source.route === null || !fileFilter.has(source.route))
+    ) continue;
+    if (!source.quads.some(isShaclRelevant)) continue;
+    const label = source.route === null
+      ? config.relativeToRoot(source.path)
+      : `${source.route} (turtle block ${source.block})`;
+    const index = new TripleIndex(source.quads);
+    const findings = new SourceFindings(label, index, config.context);
+    const unusedFindings = lint.unused
+      ? new SourceFindings(label, index, config.context)
+      : null;
+    await lintSource(index, findings, unusedFindings, referenced);
+    const detail = (message: string): IssueDetail => ({
+      message,
+      path: source.path,
+      route: source.route,
+    });
+    if (lint.definitions) definitions.push(...findings.messages.map(detail));
+    if (unusedFindings !== null) {
+      unused.push(...unusedFindings.messages.map(detail));
     }
   }
   return { definitions, unused };
