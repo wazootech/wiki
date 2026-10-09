@@ -1,8 +1,9 @@
 """Python binding for the Wiki CLI.
 
-``wazootech-wiki`` 0.2.0 and later is a binding, not an engine: it runs the
-Deno/TypeScript engine (vendored in this package) on the Deno runtime from the
-``deno`` PyPI package. See ``docs/wiki/Python_API_Reference.md``.
+``wazootech-wiki`` 0.2.0 and later ships the Wiki CLI as a native binary, not
+a Python engine: each platform wheel embeds the ``deno compile`` standalone
+for its target and installs it as ``wiki``. This package finds that binary and
+runs it. See ``docs/wiki/Python_API_Reference.md``.
 """
 
 from __future__ import annotations

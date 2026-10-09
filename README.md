@@ -115,14 +115,14 @@ The first run needs network access: the package ships no vendored dependencies, 
 
 ### From PyPI
 
-From 0.2.0, `wazootech-wiki` on PyPI is a Python binding over the same Deno engine. Once 0.2.0 is published, it needs Python 3.10 or newer:
+From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. Once 0.2.0 is published, it needs Python 3.10 or newer:
 
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
 
-The wheel bundles the engine source, and its `deno` dependency supplies the runtime, so no separate Deno install is needed. Version 0.1.23, the last Python engine release, is what `pip` installs until then. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
+There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and ARM64, so no Deno or Node.js install is needed. Version 0.1.23, the last Python engine release, is what `pip` installs until then. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
 
 ### Standalone executable
 

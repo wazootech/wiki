@@ -1,9 +1,14 @@
-"""Locate a Deno runtime and build the argv that runs the packaged Wiki engine.
+"""Locate the Wiki binary and build the argv that runs it.
 
-This is the Python twin of ``src/runtime.ts``. The engine is Deno-only, and
-CPython cannot embed the Deno runtime, so every call crosses a process
-boundary. This module keeps that boundary small and honest: it resolves a
-runtime, checks the vendored engine is present, and returns an argv.
+Each platform wheel embeds the ``deno compile`` standalone for its target in
+``.data/scripts/``, so pip installs it as ``wiki`` (``wiki.exe``) straight onto
+``PATH`` with no Python in between, the way ruff and uv ship. This module is
+for Python callers: it finds that installed binary and runs it.
+
+The ``py3-none-any`` fallback wheel, which pip picks only where no platform
+wheel fits (musl Linux, for example), carries no binary. Its ``wiki`` console
+script is :mod:`wiki.__main__`, which runs a standalone ``wazootech-wiki``
+from ``PATH``.
 """
 
 from __future__ import annotations
@@ -11,31 +16,40 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sysconfig
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from typing import Literal, Union
 
-ENGINE_ROOT = Path(__file__).resolve().parent / "_engine"
-DENO_CONFIG = ENGINE_ROOT / "deno.json"
-DENO_LOCK = ENGINE_ROOT / "deno.lock"
-ENGINE_ENTRY = ENGINE_ROOT / "src" / "wiki" / "cli.ts"
+try:
+    # Written into each wheel by `scripts/build_wheel.py`; absent from a
+    # source checkout or a plain `pip install .`, which build the fallback.
+    from ._build import BUNDLED, TARGET
+except ImportError:  # pragma: no cover - only outside a built wheel
+    BUNDLED, TARGET = False, None
 
-#: The executable name a `deno compile` standalone from GitHub Releases is
-#: expected to have once it is on ``PATH``.
+#: The name of the standalone binary on GitHub Releases, as the fallback wheel
+#: expects to find it on ``PATH``. ``wiki`` itself is never looked up: in the
+#: fallback wheel it is this launcher, and running it would recurse.
 STANDALONE_NAME = "wazootech-wiki"
 
-RuntimeKind = Literal["bundled", "path", "standalone"]
+#: Set in the environment of every binary this package starts. A launcher
+#: that starts with it already set has been pointed back at itself.
+LAUNCHER_ENV = "WAZOOTECH_WIKI_LAUNCHER"
+
+RuntimeKind = Literal["env", "bundled", "path"]
 StrPath = Union[str, "os.PathLike[str]"]
 
 
 class WikiSetupError(RuntimeError):
-    """Raised when no Deno runtime is found or the vendored engine is missing."""
+    """Raised when no Wiki binary can be found for this install."""
 
 
 @dataclass(frozen=True)
 class Runtime:
-    """The executable that runs the engine, and where it came from."""
+    """The binary that runs the Wiki CLI, and where it came from."""
 
     kind: RuntimeKind
     executable: str
@@ -56,78 +70,83 @@ class WikiResult:
         return self.returncode == 0
 
 
-def _bundled_deno() -> str | None:
-    """The binary from the ``deno`` PyPI dependency, if it is installed."""
+def _binary_name() -> str:
+    return "wiki" + (".exe" if os.name == "nt" else "")
+
+
+def _bundled_binary() -> Path | None:
+    """The binary this wheel installed, wherever pip put the scripts.
+
+    The dist-info ``RECORD`` holds the installed path of every file, the
+    binary included, so it is right for venvs, ``--user``, ``--prefix``, and
+    ``uv tool`` alike. The ``sysconfig`` scripts directories are the fallback
+    for an installer that wrote no usable ``RECORD``.
+    """
+    name = _binary_name()
     try:
-        from deno import find_deno_bin
-    except ImportError:
-        return None
-    try:
-        return find_deno_bin()
-    except FileNotFoundError:
-        return None
+        files = distribution("wazootech-wiki").files or []
+    except PackageNotFoundError:
+        files = []
+    for entry in files:
+        if entry.name == name and ".." in entry.parts:
+            located = Path(str(entry.locate())).resolve()
+            if located.is_file():
+                return located
+    for scheme in (sysconfig.get_default_scheme(), f"{os.name}_user"):
+        try:
+            scripts = sysconfig.get_path("scripts", scheme)
+        except KeyError:
+            continue
+        candidate = Path(scripts) / name
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def find_runtime() -> Runtime:
-    """Resolve the runtime, in the order #325 specifies.
+    """Resolve the Wiki binary, first match wins.
 
-    1. the binary from the ``deno`` PyPI dependency (the default; matches npm)
-    2. ``deno`` on ``PATH`` (a developer override)
-    3. a ``deno compile`` standalone named ``wazootech-wiki`` on ``PATH``
+    1. ``WIKI_BINARY``: an explicit path to a Wiki binary
+    2. the binary embedded in this platform wheel
+    3. in the fallback wheel only, a standalone ``wazootech-wiki`` on ``PATH``
     """
-    bundled = _bundled_deno()
-    if bundled is not None:
-        return Runtime("bundled", bundled)
-    on_path = shutil.which("deno")
+    override = os.environ.get("WIKI_BINARY")
+    if override:
+        if not Path(override).is_file():
+            raise WikiSetupError(f"WIKI_BINARY is set to {override}, which is not a file.")
+        return Runtime("env", override)
+    if BUNDLED:
+        bundled = _bundled_binary()
+        if bundled is None:
+            raise WikiSetupError(
+                f"The Wiki binary this wheel ships for {TARGET} is missing "
+                "from the scripts directory. Reinstall wazootech-wiki."
+            )
+        return Runtime("bundled", str(bundled))
+    on_path = shutil.which(STANDALONE_NAME)
     if on_path is not None:
         return Runtime("path", on_path)
-    standalone = shutil.which(STANDALONE_NAME)
-    if standalone is not None:
-        return Runtime("standalone", standalone)
     raise WikiSetupError(
-        "Unable to find a Deno runtime for the Wiki engine. wazootech-wiki "
-        "depends on the `deno` PyPI package, which ships Deno for "
-        "Windows/macOS/Linux on x64 or ARM64; reinstall wazootech-wiki to "
-        "restore it, put `deno` on PATH, or put a standalone "
-        f"`{STANDALONE_NAME}` binary from "
-        "https://github.com/wazootech/wiki/releases on PATH."
+        "wazootech-wiki has no Wiki binary for this platform (there are wheels "
+        "for Linux glibc, macOS, and Windows on x64 and ARM64; musl Linux, "
+        f"such as Alpine, has none). Put a standalone `{STANDALONE_NAME}` on "
+        "PATH, or set WIKI_BINARY to one. Standalone binaries: "
+        "https://github.com/wazootech/wiki/releases."
     )
 
 
 def create_wiki_command(args: Sequence[str]) -> list[str]:
-    """Build the argv that runs the Wiki CLI with ``args``.
-
-    Mirrors ``createWikiCommand`` in ``src/runtime.ts`` flag for flag. A
-    standalone binary already embeds the engine, so it takes ``args`` directly.
-    """
+    """Build the argv that runs the Wiki CLI with ``args``."""
     if isinstance(args, str):
         raise TypeError("args must be a sequence of strings, not a string")
-    runtime = find_runtime()
-    if runtime.kind == "standalone":
-        return [runtime.executable, *args]
-    for name, path in (
-        ("Deno config", DENO_CONFIG),
-        ("Deno lockfile", DENO_LOCK),
-        ("Wiki engine", ENGINE_ENTRY),
-    ):
-        if not path.is_file():
-            raise WikiSetupError(
-                f"The packaged {name} is missing at {path}. "
-                "Reinstall wazootech-wiki."
-            )
-    return [
-        runtime.executable,
-        "run",
-        "--node-modules-dir=none",
-        "--allow-all",
-        "--config",
-        str(DENO_CONFIG),
-        "--lock",
-        str(DENO_LOCK),
-        "--frozen",
-        str(ENGINE_ENTRY),
-        *args,
-    ]
+    return [find_runtime().executable, *args]
+
+
+def child_env(env: Mapping[str, str] | None = None) -> dict[str, str]:
+    """``env`` (default ``os.environ``), marked so a recursive launch fails."""
+    marked = dict(os.environ if env is None else env)
+    marked[LAUNCHER_ENV] = "1"
+    return marked
 
 
 def run(
@@ -148,7 +167,7 @@ def run(
     completed = subprocess.run(
         command,
         cwd=cwd,
-        env=None if env is None else dict(env),
+        env=child_env(env),
         input=input,
         capture_output=True,
         encoding="utf-8",
