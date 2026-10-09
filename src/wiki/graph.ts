@@ -52,6 +52,9 @@ import {
   namedNode,
   parseRdf,
   parseTurtle,
+  RDF_FIRST,
+  RDF_NIL,
+  RDF_REST,
   RDF_TYPE,
   RdfDataset,
   RdfGraph,
@@ -64,7 +67,7 @@ import {
 } from "./rdf.ts";
 import { WikiFloat, WikiTimestamp } from "./scalars.ts";
 import { Config } from "./config.ts";
-import type { Context } from "./context.ts";
+import { type Context, SH } from "./context.ts";
 
 import { getLogger } from "./logging.ts";
 import {
@@ -349,6 +352,96 @@ function temporalLiteral(value: Date): ReturnType<typeof literal> {
   return literal(value.toISOString(), { datatype: XSD_DATETIME });
 }
 
+/**
+ * SHACL parameters whose every value is a SHACL list rather than repeated
+ * triples (SHACL §4.4.4, §4.6, §4.8.1, §4.8.3, §2.3.1.3). Repeating `sh:in`
+ * asserts several values where the spec allows at most one, and a stringified
+ * list is a one-member enum of its own text (wiki#305).
+ */
+const SHACL_LIST_PARAMETERS: ReadonlySet<string> = new Set(
+  ["in", "languageIn", "ignoredProperties", "and", "or", "xone"].map(
+    (local) => `${SH}${local}`,
+  ),
+);
+
+/**
+ * SHACL parameters whose value is a property path (SHACL §2.3.1). A list here
+ * is a sequence path, which the spec requires to have at least two members, so
+ * a one-member list collapses to its member: `sh:path: [schema:name]` stays the
+ * predicate path `schema:name`.
+ */
+const SHACL_PATH_PARAMETERS: ReadonlySet<string> = new Set(
+  ["path", "inversePath", "zeroOrMorePath", "oneOrMorePath", "zeroOrOnePath"]
+    .map((local) => `${SH}${local}`),
+);
+
+/** `sh:alternativePath`: always a SHACL list, and each member is a path. */
+const SHACL_ALTERNATIVE_PATH = `${SH}alternativePath`;
+
+/** Add `value` as a property path: a list is a sequence path (SHACL §2.3.1.2). */
+function addPath(
+  pred: NamedNode,
+  value: unknown,
+  graph: RdfGraph,
+  subject: Term,
+  context: Context,
+): void {
+  if (!Array.isArray(value)) {
+    addObject(pred, value, graph, subject, context);
+    return;
+  }
+  const members = listMembers(value, pred);
+  if (members.length === 0) {
+    logger.warning(
+      `Empty list for <${pred.value}> is not a SHACL path; skipped.`,
+    );
+  } else if (members.length === 1) {
+    addPath(pred, members[0], graph, subject, context);
+  } else {
+    graph.add(subject, pred, rdfList(members, graph, context, true));
+  }
+}
+
+/** A list's members without `null`s, warning that RDF has no null to keep. */
+function listMembers(items: readonly unknown[], pred: NamedNode): unknown[] {
+  const members = items.filter((item) => item !== null && item !== undefined);
+  if (members.length !== items.length) {
+    logger.warning(`Dropped null members from the list for <${pred.value}>.`);
+  }
+  return members;
+}
+
+/**
+ * Build a SHACL list (`rdf:first`/`rdf:rest`, exactly one of each per cell)
+ * and return its head. A list member that is itself a list becomes a nested
+ * list, never repeated `rdf:first` triples; when `paths` is set, members are
+ * property paths and follow {@link addPath}.
+ */
+function rdfList(
+  members: readonly unknown[],
+  graph: RdfGraph,
+  context: Context,
+  paths: boolean,
+): Term {
+  const first = namedNode(RDF_FIRST);
+  let head: Term = namedNode(RDF_NIL);
+  for (let index = members.length - 1; index >= 0; index--) {
+    const cell = blankNode();
+    const member = members[index];
+    if (paths) {
+      addPath(first, member, graph, cell, context);
+    } else if (Array.isArray(member)) {
+      const nested = listMembers(member, first);
+      graph.add(cell, first, rdfList(nested, graph, context, false));
+    } else {
+      addObject(first, member, graph, cell, context);
+    }
+    graph.add(cell, namedNode(RDF_REST), head);
+    head = cell;
+  }
+  return head;
+}
+
 /** Add a predicate-object pair, recursively handling nested structures. */
 export function resolveObject(
   key: string,
@@ -359,6 +452,34 @@ export function resolveObject(
 ): void {
   const pred = resolvePredicate(key, context);
   if (pred === null) return;
+  addObject(pred, value, graph, subject, context);
+}
+
+/** {@link resolveObject} once the key has resolved to a predicate. */
+function addObject(
+  pred: NamedNode,
+  value: unknown,
+  graph: RdfGraph,
+  subject: Term,
+  context: Context,
+): void {
+  // A list is one triple per item, at any depth: a list nested inside a list of
+  // mappings must not fall through to the stringifying catch-all (wiki#305).
+  // SHACL's list-valued parameters are the exception and become an RDF list.
+  if (Array.isArray(value)) {
+    if (SHACL_PATH_PARAMETERS.has(pred.value)) {
+      addPath(pred, value, graph, subject, context);
+    } else if (pred.value === SHACL_ALTERNATIVE_PATH) {
+      const members = listMembers(value, pred);
+      graph.add(subject, pred, rdfList(members, graph, context, true));
+    } else if (SHACL_LIST_PARAMETERS.has(pred.value)) {
+      const members = listMembers(value, pred);
+      graph.add(subject, pred, rdfList(members, graph, context, false));
+    } else {
+      for (const item of value) addObject(pred, item, graph, subject, context);
+    }
+    return;
+  }
 
   // A `Date` is an object in JavaScript but not a `dict` in Python, so it has to
   // be excluded from the mapping branch: otherwise `2026-05-30` becomes an
@@ -584,11 +705,7 @@ export function frontmatterToGraph(
   const skipKeys = new Set(["id", "type", "@type"]);
   for (const [key, value] of Object.entries(record)) {
     if (key.startsWith("@") || skipKeys.has(key)) continue;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        resolveObject(key, item, graph, subject, rdfContext);
-      }
-    } else if (isTruthy(value)) {
+    if (Array.isArray(value) || isTruthy(value)) {
       resolveObject(key, value, graph, subject, rdfContext);
     }
   }

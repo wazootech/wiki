@@ -46,6 +46,29 @@ sh:property:
 
 When you run `wiki check`, any page with `type: Project` is automatically validated against these constraints.
 
+### Lists and property paths
+
+A YAML list in frontmatter usually means one triple per item. The SHACL parameters whose value the [SHACL](https://www.w3.org/TR/shacl/) specification defines as a list compile to an RDF list instead, at any depth: `sh:in`, `sh:languageIn`, `sh:ignoredProperties`, `sh:and`, `sh:or`, `sh:xone`, and `sh:alternativePath`. Under `sh:path` (and `sh:inversePath`, `sh:zeroOrMorePath`, `sh:oneOrMorePath`, `sh:zeroOrOnePath`), a list of two or more items is a sequence path, and a one-item list is the same as the bare item:
+
+```yaml
+---
+type: sh:NodeShape
+sh:targetClass: schema:Project
+sh:property:
+  - sh:path: schema:status
+    sh:in:
+      - schema:ActiveActionStatus
+      - schema:CompletedActionStatus
+  - sh:path: [schema:author, schema:name]
+    sh:minCount: 1
+  - sh:path:
+      sh:alternativePath: [schema:alternateName, [schema:author, schema:name]]
+    sh:minCount: 1
+---
+```
+
+Here the second property checks the author's name (a sequence path), and the third accepts either an `alternateName` or an author's name.
+
 ### JSON Schema (optional)
 
 On the same shape document, add `wazoo:jsonSchema` beside `sh:targetClass` to validate frontmatter with [JSON Schema](https://json-schema.org/) in parallel with SHACL:

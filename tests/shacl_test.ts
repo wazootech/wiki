@@ -20,12 +20,13 @@ import { dirname, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
 
-import { loadGraph } from "../src/wiki/graph.ts";
+import { frontmatterToGraph, loadGraph } from "../src/wiki/graph.ts";
 import {
   checkShaclAll,
   checkShaclFile,
   formatReport,
   loadShapes,
+  validateShacl,
 } from "../src/wiki/shacl.ts";
 import { parseTurtle, RDF_FIRST, RdfGraph } from "../src/wiki/rdf.ts";
 
@@ -293,6 +294,49 @@ Deno.test("loadShapes follows the property lists it extracts", () => {
     .filter((quad) => quad.predicate.value === RDF_FIRST)
     .map((quad) => quad.object.value);
   assertEquals(firsts.length, 3);
+});
+
+Deno.test("loadShapes keeps every cell of a list nested in a list (#305)", async () => {
+  // `sh:alternativePath ( schema:alternateName ( schema:author schema:name ) )`:
+  // the inner sequence path's head is a list *element*, so `rdf:rest*` from
+  // `sh:` objects alone stops after its first cell and the validator reads a
+  // truncated list. Built from frontmatter, the way a shape page compiles.
+  const context = new Config().context;
+  const graph = new RdfGraph();
+  const pages = [
+    frontmatterToGraph({
+      "@type": "sh:NodeShape",
+      "@id": "wiki:Label_Shape",
+      "sh:targetClass": "schema:Thing",
+      "sh:property": [{
+        "sh:path": {
+          "sh:alternativePath": [
+            "schema:alternateName",
+            ["schema:author", "schema:name"],
+          ],
+        },
+        "sh:minCount": 1,
+      }],
+    }, context),
+    frontmatterToGraph({
+      "@type": "schema:Thing",
+      "@id": "wiki:Ann",
+      "schema:author": { "schema:name": "Ann" },
+    }, context),
+    frontmatterToGraph({ "@type": "schema:Thing", "@id": "wiki:Bob" }, context),
+  ];
+  for (const page of pages) for (const quad of page) graph.addQuad(quad);
+
+  const shapes = loadShapes(graph);
+  const firsts = [...shapes].filter((quad) =>
+    quad.predicate.value === RDF_FIRST
+  );
+  assertEquals(firsts.length, 4);
+
+  const outcome = await validateShacl(graph, shapes);
+  assertEquals(outcome.conforms, false);
+  assert(outcome.resultsText.includes("Bob"));
+  assert(!outcome.resultsText.includes("Ann"));
 });
 
 Deno.test("formatReport omits the lines pyshacl omits", () => {

@@ -70,14 +70,18 @@ const SHAPE_TYPES: ReadonlySet<string> = new Set([
  * 2. every triple of a node explicitly typed `sh:NodeShape`/`sh:PropertyShape`;
  * 3. every triple of a node that is the *object* of an `sh:` predicate
  *    (anonymous constraint blocks);
- * 4. every triple of a node reachable from such an object by `rdf:rest*` (the
- *    cons cells of an RDF list); and
+ * 4. every triple of a node reachable from such an object by
+ *    `(rdf:rest|rdf:first)*` (the cons cells of an RDF list, including the
+ *    cells of a list nested as a member of another); and
  * 5. every triple of each list *element* — the `rdf:first` of any of those
  *    nodes — because a list of property shapes holds the shapes themselves.
  *
  * Branch 5 is the one that is easy to miss and impossible to notice when it is
  * missing: the constraint block validates anyway, and only a list-valued
- * `sh:property`/`sh:in` silently loses its contents.
+ * `sh:property`/`sh:in` silently loses its contents. Branch 4 follows
+ * `rdf:first` as well as `rdf:rest` for the same reason one level down: a
+ * sequence path nested in `sh:alternativePath` (SHACL §2.3.1.3) is a list whose
+ * head is a list element, and `rdf:rest*` alone truncates it after one cell.
  */
 export function loadShapes(dataGraph: RdfGraph): RdfGraph {
   const shapes = new RdfGraph();
@@ -93,22 +97,24 @@ export function loadShapes(dataGraph: RdfGraph): RdfGraph {
     }
   }
 
-  // Branch 4: `(rdf:rest)*` from every list head, the head included.
-  const restReachable = new Set<string>(shObjects);
-  const restOf = new Map<string, string[]>();
+  // Branch 4: `(rdf:rest|rdf:first)*` from every list head, the head included.
+  const listReachable = new Set<string>(shObjects);
+  const listEdges = new Map<string, string[]>();
   for (const quad of quads) {
-    if (quad.predicate.value !== RDF_REST) continue;
+    if (
+      quad.predicate.value !== RDF_REST && quad.predicate.value !== RDF_FIRST
+    ) continue;
     const from = termKey(quad.subject);
-    const list = restOf.get(from) ?? [];
+    const list = listEdges.get(from) ?? [];
     list.push(termKey(quad.object));
-    restOf.set(from, list);
+    listEdges.set(from, list);
   }
-  const pending = [...restReachable];
+  const pending = [...listReachable];
   while (pending.length > 0) {
     const node = pending.pop() as string;
-    for (const next of restOf.get(node) ?? []) {
-      if (restReachable.has(next)) continue;
-      restReachable.add(next);
+    for (const next of listEdges.get(node) ?? []) {
+      if (listReachable.has(next)) continue;
+      listReachable.add(next);
       pending.push(next);
     }
   }
@@ -117,7 +123,7 @@ export function loadShapes(dataGraph: RdfGraph): RdfGraph {
   const listElements = new Set<string>();
   for (const quad of quads) {
     if (quad.predicate.value !== RDF_FIRST) continue;
-    if (!restReachable.has(termKey(quad.subject))) continue;
+    if (!listReachable.has(termKey(quad.subject))) continue;
     listElements.add(termKey(quad.object));
   }
 
@@ -136,7 +142,7 @@ export function loadShapes(dataGraph: RdfGraph): RdfGraph {
       quad.predicate.value.startsWith(SH) ||
       typedShapes.has(subject) ||
       shObjects.has(subject) ||
-      restReachable.has(subject) ||
+      listReachable.has(subject) ||
       listElements.has(subject)
     ) {
       shapes.addQuad(quad);
