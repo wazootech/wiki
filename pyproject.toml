@@ -14,7 +14,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wazootech-wiki"
-version = "0.2.0"
+version = "0.2.1"
 description = "The Wiki CLI as a native binary, with a typed Python API for running it"
 readme = "python/README.md"
 license = "MIT"

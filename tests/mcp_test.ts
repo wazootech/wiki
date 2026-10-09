@@ -49,7 +49,7 @@ Deno.test("describeWiki reports factual config, graph, namespace, and vocabulary
   try {
     const description = await describeWiki(makeWiki(root));
 
-    assertEquals(description.version, "0.2.0");
+    assertEquals(description.version, "0.2.1");
     assertEquals(description.config, "wiki.yaml");
     assertEquals(description.inputs, ["wiki"]);
     assert(description.graph.triples > 0);
