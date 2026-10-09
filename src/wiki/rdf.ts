@@ -4,15 +4,16 @@
  *
  * `rdflib` is three things to the Python engine, and the port needs all three:
  * a term model, a graph container, and an IO library. The reasoning spike
- * verified the first two (`@wazoo/sparql-engine`), but its IO coverage is one
- * format deep — it parses Turtle and nothing else — and neither
+ * verified the first two (`@wazoo/sparql-engine`), but it writes no
+ * serialization at all — it parses Turtle, TriG, N-Triples, and N-Quads and
+ * emits nothing — and neither
  * `@zazuko/env` nor `@zazuko/env-node` provides what the plan assumed
  * (see `probes/rdf-io/FINDINGS.md`). So IO is assembled here, deliberately, in
  * one module, with the choices written down:
  *
  * | format | parse | write |
  * |---|---|---|
- * | Turtle, TriG, N-Triples, N-Quads, RDF/XML, JSON-LD | `@zazuko/env-node` | — |
+ * | Turtle, TriG, N-Triples, N-Quads, RDF/XML, JSON-LD (non-Turtle surfaces) | `@zazuko/env-node` | — |
  * | Turtle (` ```turtle ` blocks, `.ttl`) | `@wazoo/sparql-engine` | — |
  * | N-Triples | — | this module, ported from rdflib's `NTSerializer` |
  * | N-Quads | — | this module, ported from `format.py`'s hand-rolled writer |
@@ -368,8 +369,9 @@ export function serializeNquadsDataset(quads: readonly Quad[]): string {
  * Parse Turtle with the store's own parser.
  *
  * Used for ` ```turtle ` blocks and `.ttl` files so a block parses exactly as
- * the query engine would see it; the other formats go through the registry
- * below, because the store's parser is Turtle-only.
+ * the query engine would see it. The other formats go through the registry
+ * below: the store's parser also accepts TriG, N-Triples, and N-Quads, but
+ * routing only the Turtle path through it is deliberate.
  */
 export function parseTurtle(text: string): Quad[] {
   return parseTurtleQuads(text) as unknown as Quad[];

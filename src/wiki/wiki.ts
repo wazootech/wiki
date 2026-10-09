@@ -3,7 +3,7 @@
  *
  * Deno/TypeScript implementation of the Python `Wiki` session API. The session
  * owns configuration and graph lifecycle; implementation-specific deferrals are
- * recorded in `docs/adr/0001-deno-rewrite.md`.
+ * recorded in `CONTEXT.md`.
  *
  * Two port decisions are worth stating because they are visible from outside:
  *

@@ -1,6 +1,6 @@
 # Probe: does `deno fmt` survive the wiki's markdown contract?
 
-**Question.** [ADR 0001](../../docs/adr/0001-deno-rewrite.md) locks `deno fmt` as
+**Question.** The cutover locks `deno fmt` as
 the replacement for `mdformat`, and names three things that must not be mangled:
 SPARQL blocks, frontmatter, and tables. The plan's fallback was a "shielding
 layer" that would hide those regions from the formatter. Does one turn out to be

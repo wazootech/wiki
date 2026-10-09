@@ -6,7 +6,7 @@ binary `Deno.execPath()` is *the binary*, not a Deno interpreter, and `denort` �
 the runtime `deno compile` embeds — is built without the tooling subcommands, so
 `deno fmt` is not linked into it at all. The current `formatterExecutable()` papers over this with
 `Deno.build.standalone ? "deno" : Deno.execPath()`, which means a compiled
-`wiki fmt` needs a `deno` on `PATH` — exactly the audience the ADR says compiled
+`wiki fmt` needs a `deno` on `PATH` — exactly the audience the cutover says compiled
 binaries are for.
 
 This probe asks whether the formatter can instead be **the same dprint plugin,
@@ -307,7 +307,7 @@ works under `deno compile`. The cutover took all three decisions it left open:
    plugins out of its embedded `node_modules` with no `--include` and no runtime
    permissions, so committing the blobs would buy nothing.
 
-It also deleted the two defects the subprocess introduced: the false ADR claim in
+It also deleted the two defects the subprocess introduced: the false claim in
 `formatterExecutable()`'s docstring, and the uncaught `NotFound` —
 `command.spawn()` threw synchronously, so a compiled binary without `deno` on
 `PATH` died with a raw `NotFound: No such file or directory (os error 2)` instead

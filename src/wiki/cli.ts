@@ -22,7 +22,7 @@
  *
  * Line endings differ from the Python CLI on Windows: Click writes `\r\n`
  * through text-mode stdout, while `console.error` writes `\n`. The migration
- * targets normalised output, not byte parity — see the ADR.
+ * targets normalised output, not byte parity — see CONTEXT.md.
  */
 import { pathExists } from "./fspath.ts";
 import { basename } from "@std/path";

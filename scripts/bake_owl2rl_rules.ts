@@ -2,7 +2,7 @@
  * Bake the OWL 2 RL ruleset into a TypeScript constant.
  *
  * `rdfjs-inference-engine` reads its bundled ruleset from
- * `rules/owl2rl/owl2rl-eyeling.n3` on disk. The ADR ships the engine as a
+ * `rules/owl2rl/owl2rl-eyeling.n3` on disk. The cutover ships the engine as a
  * `deno compile` binary, and the reasoning spike verified the failure mode that
  * matters: a precompiled *runtime* constructor swallows the baked background
  * facts, while embedding the rule *text* and calling `load()` reproduces the

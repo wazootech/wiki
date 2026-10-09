@@ -23,6 +23,6 @@ the docs-corpus formatting result. None is an unexplained mismatch.
 
 Nothing reads these files at test time. They are kept because they are the only
 surviving evidence that the port was ever compared against the engine it
-replaced; without them the ADR's parity claim would rest on assertion alone. The
+replaced; without them the parity claim would rest on assertion alone. The
 goldens that the test suite *does* replay live separately, under
 `tests/fixtures/rdf/` and `probes/`.

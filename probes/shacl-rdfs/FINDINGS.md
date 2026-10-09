@@ -84,7 +84,7 @@ Constraint Violation in MinCountConstraintComponent (http://www.w3.org/ns/shacl#
 
 `owl:sameAs <self>`, the blank-node structure rendering, and
 `Literal("1", datatype=xsd:integer)` are `rdflib` artifacts. Reproducing them
-byte-for-byte would mean porting `rdflib`'s `__str__`. This confirms ADR 0001's
+byte-for-byte would mean porting `rdflib`'s `__str__`. This confirms the cutover's
 spec-close decision was the right one, and it is precisely what the harness's
 `known` transcripts exist for: `check-micro` becomes a `known` case with the
 oracle's rendering committed beside the port's.
@@ -117,13 +117,13 @@ Verified versions: `rdf-validate-shacl@0.6.5`, `@zazuko/env@3.0.1`,
 @zazuko/env@3.0.1 peer @rdfjs/types@^2: resolved to 1.1.0
 ```
 
-`@zazuko/env` wants `@rdfjs/types@^2` while the ADR pins `1.1.0`. It runs, but
+`@zazuko/env` wants `@rdfjs/types@^2` while the cutover pins `1.1.0`. It runs, but
 phase 6 should either move the pin to v2 or record the override deliberately
 rather than shipping a warning nobody read.
 
 ## Consequences
 
-1. **Drop the RDFS closure pass** from the plan and from ADR 0001's dependency
+1. **Drop the RDFS closure pass** from the plan and from the cutover's dependency
    table. It buys nothing for class-targeted shapes, and it is one fewer
    hand-rolled piece of reasoning to get wrong.
 2. **Phase 6 keeps `audit.py:120,137`'s behaviour but not its mechanism.** The

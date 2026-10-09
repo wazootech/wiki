@@ -9,15 +9,13 @@
  * routing logic. One place to change, one place to test.
  *
  * Fidelity boundary: the *terminal* messages the routers produce (unknown keys,
- * severity, link style, `fmt` type) are byte-identical. The catch-all
- * `str(ValidationError)` fallback reproduces pydantic 2.13's layout but not its
- * repr truncation of long inputs, so a nested-model failure that reaches the
- * fallback is spec-close rather than byte-close. The differential harness decides
- * whether that ever reaches a user.
+ * severity, link style, `fmt` type) are byte-identical. The catch-all fallback
+ * is this engine's own plain report rather than a reproduction of
+ * `str(ValidationError)`: the routers read the issue *shape*, and nothing
+ * outside this module depends on pydantic's rendering.
  */
 
 import { ValueError } from "../errors.ts";
-import { describeType, describeValue } from "../describe.ts";
 
 /** One validation failure, shaped like a pydantic error dictionary. */
 export interface ValidationIssue {
@@ -26,9 +24,6 @@ export interface ValidationIssue {
   readonly msg: string;
   readonly input?: unknown;
 }
-
-/** Pydantic version the fallback formatting is modelled on. */
-const PYDANTIC_VERSION = "2.13";
 
 /**
  * Raised where Python raises `pydantic.ValidationError`.
@@ -58,7 +53,7 @@ export function extraForbidden(
   return {
     type: "extra_forbidden",
     loc,
-    msg: "Extra inputs are not permitted",
+    msg: "unexpected key",
     input,
   };
 }
@@ -66,15 +61,15 @@ export function extraForbidden(
 /**
  * Build a `value_error` issue, the shape a `field_validator` failure produces.
  *
- * pydantic prefixes the validator's message with `"Value error, "`, which the
- * routers match on — so the prefix is part of the contract, not decoration.
+ * `msg` is the validator's own sentence, rendered as written. The routers match
+ * on `type` and on the validator's own phrases, not on a wrapper prefix.
  */
 export function valueError(
   loc: readonly (string | number)[],
   message: string,
   input: unknown,
 ): ValidationIssue {
-  return { type: "value_error", loc, msg: `Value error, ${message}`, input };
+  return { type: "value_error", loc, msg: message, input };
 }
 
 /** Build a `model_type` issue for a block that should have been a mapping. */
@@ -86,7 +81,7 @@ export function modelType(
   return {
     type: "model_type",
     loc,
-    msg: `Input should be a valid dictionary or instance of ${modelLabel}`,
+    msg: `expected a mapping or ${modelLabel}`,
     input,
   };
 }
@@ -99,36 +94,29 @@ export function missing(
   return {
     type: "missing",
     loc,
-    msg: "Field required",
+    msg: "required value is missing",
     input,
   };
 }
 
-/** Render an issue list the way `str(pydantic.ValidationError)` does. */
+/**
+ * Render an issue list as the fallback report a user sees.
+ *
+ * This is the port's own format: plain lines naming the location and the
+ * failure. The routers read the issue shape, so the rendering is not bound to
+ * pydantic's layout.
+ */
 export function describeValidationError(
   modelName: string,
   issues: readonly ValidationIssue[],
 ): string {
   const count = issues.length;
-  const header = `${count} validation error${
-    count === 1 ? "" : "s"
-  } for ${modelName}`;
+  const header = `${count} problem${count === 1 ? "" : "s"} in ${modelName}`;
   const lines = issues.map((issue) => {
-    const rows: string[] = [];
-    // A model-level failure has no location, and pydantic then prints no
-    // location line at all rather than an empty one.
-    if (issue.loc.length > 0) {
-      rows.push(issue.loc.map((part) => String(part)).join("."));
-    }
-    const input = describeValue(issue.input);
-    const type = describeType(issue.input);
-    rows.push(
-      `  ${issue.msg} [type=${issue.type}, input_value=${input}, input_type=${type}]`,
-    );
-    rows.push(
-      `    For further information visit https://errors.pydantic.dev/${PYDANTIC_VERSION}/v/${issue.type}`,
-    );
-    return rows.join("\n");
+    // A model-level failure has no location, so it renders as a bare line
+    // rather than an empty location prefix.
+    const where = issue.loc.map((part) => String(part)).join(".");
+    return where === "" ? `  ${issue.msg}` : `  ${where}: ${issue.msg}`;
   });
   return [header, ...lines].join("\n");
 }

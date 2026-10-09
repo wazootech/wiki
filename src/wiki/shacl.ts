@@ -2,7 +2,7 @@
  * SHACL validation over `rdf-validate-shacl`.
  *
  * There is no Python module for this file: `audit.py` calls `pyshacl` inline,
- * and the ADR swaps that library for `rdf-validate-shacl`. Three things the
+ * and the cutover swaps that library for `rdf-validate-shacl`. Three things the
  * phase-3b probe settled are encoded here, and one of them is a *correction*
  * the port had to make to the probe's own conclusion.
  *

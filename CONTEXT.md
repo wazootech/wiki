@@ -4,7 +4,7 @@ Semantic knowledge **toolchain** for Markdown wikis: compile frontmatter and bod
 
 ## Architecture decision: Deno/TypeScript engine
 
-Issue [#273](https://github.com/wazootech/wiki/issues/273) supersedes [#44](https://github.com/wazootech/wiki/issues/44): Wiki is being cut over to a Deno/TypeScript engine over RDF/JS in PR [#317](https://github.com/wazootech/wiki/pull/317). [ADR 0001](docs/adr/0001-deno-rewrite.md) records the architecture, dependency choices, deferred RDF/XML output, and transition gates.
+Issue [#273](https://github.com/wazootech/wiki/issues/273) superseded [#44](https://github.com/wazootech/wiki/issues/44): Wiki was cut over to a Deno/TypeScript engine over RDF/JS in PR [#317](https://github.com/wazootech/wiki/pull/317), merged 2026-10-08 as `9eedb0f`. This section is the record, replacing the standalone ADR that tracked the rewrite while it was in flight: it fixes the runtime, the dependency choices, the deferred RDF/XML output, and the transition gates.
 
 - **Deno/TypeScript is the sole runtime after cutover.** The Python engine, packaging, tests, CI/release steps, and Python docs builder are removed or replaced; the pinned Python checkout is only a local differential oracle during the cutover.
 - **Keep the npm contract.** `wazootech-wiki` retains its `wiki` executable and its CommonJS/ESM/type entry points for the command launcher. Its runtime is Deno-backed and must not require system Python or a separately installed Deno. `@wazoo/wiki` remains the native JSR package and is where TypeScript callers embed the engine; per-platform `deno compile` binaries remain available for direct downloads.

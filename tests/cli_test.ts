@@ -28,7 +28,7 @@ interface CliResult {
  * Output is compared with `\n`, not `\r\n`. The Python CLI writes CRLF on
  * Windows through text-mode stdout; the migration targets normalised output
  * rather than byte parity, for the reason recorded in
- * `docs/adr/0001-deno-rewrite.md`.
+ * `CONTEXT.md`.
  */
 async function runCli(args: readonly string[]): Promise<CliResult> {
   return await runCliIn(args, undefined, []);
