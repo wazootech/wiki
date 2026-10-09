@@ -113,6 +113,17 @@ Supported platforms are the ones Deno ships binaries for: Windows and macOS on x
 
 The first run needs network access: the package ships no vendored dependencies, so the JSR/npm module graph is fetched into `DENO_DIR` on first use and cached afterwards.
 
+### From PyPI
+
+From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. Once 0.2.0 is published, it needs Python 3.10 or newer:
+
+```bash
+pip install wazootech-wiki
+wiki --help
+```
+
+There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and ARM64, so no Deno or Node.js install is needed. Version 0.1.23, the last Python engine release, is what `pip` installs until then. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
+
 ### Standalone executable
 
 After the first tagged Deno release, GitHub Releases will publish self-contained binaries for Linux x64, Windows x64, and macOS ARM64 with `SHA256SUMS`. Those are the three targets currently built by the release workflow. They are not published yet and will not require Node.js, Python, or Deno.

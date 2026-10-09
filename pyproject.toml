@@ -1,0 +1,52 @@
+# `wazootech-wiki` on PyPI (#325): the Wiki CLI as a native binary, the way
+# ruff and uv ship. `scripts/build_wheel.py` builds one `py3-none-<platform>`
+# wheel per `deno compile` target, with the standalone binary in
+# `.data/scripts/` so pip installs it as `wiki`, plus a binary-less
+# `py3-none-any` fallback whose `wiki` runs a standalone from PATH. This file
+# is the metadata source for both; a plain `pip install .` builds the fallback.
+#
+# `version` is one of the release version surfaces; `tests/version_test.ts`
+# keeps it in agreement with `deno.json`, `package.json`, and the engine.
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wazootech-wiki"
+version = "0.2.0"
+description = "The Wiki CLI as a native binary, with a typed Python API for running it"
+readme = "python/README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+# Stdlib only.
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/wazootech/wiki"
+Issues = "https://github.com/wazootech/wiki/issues"
+Changelog = "https://github.com/wazootech/wiki/blob/main/CHANGELOG.md"
+
+[project.scripts]
+wiki = "wiki.__main__:entry"
+
+# A plain `pip install .` (this build backend) produces the fallback: the
+# launcher alone. Release wheels come from `scripts/build_wheel.py`.
+[tool.hatch.build.targets.wheel]
+only-include = ["python/wiki"]
+exclude = ["__pycache__", "*.pyc", "_build.py"]
+
+[tool.hatch.build.targets.wheel.sources]
+"python/wiki" = "wiki"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["python/wiki", "python/README.md", "LICENSE", "pyproject.toml"]
+exclude = ["__pycache__", "*.pyc", "_build.py"]

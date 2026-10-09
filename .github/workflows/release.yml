@@ -34,8 +34,9 @@ jobs:
           NPM_VERSION="$(node -p 'require("./package.json").version')"
           DENO_VERSION="$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')"
           ENGINE_VERSION="$(sed -n 's/^export const VERSION = "\([^"]*\)";/\1/p' src/wiki/version.ts)"
-          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" || {
-            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION"
+          PYPI_VERSION="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pyproject.toml)"
+          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" && test "$NPM_VERSION" = "$PYPI_VERSION" || {
+            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION pyproject.toml=$PYPI_VERSION"
             exit 1
           }
           echo "version=$NPM_VERSION" >> "$GITHUB_OUTPUT"
@@ -50,7 +51,7 @@ jobs:
       - name: Validate JSR package contents
         run: deno publish --dry-run
 
-      # The release publishes the npm tarball, all three standalone binaries,
+      # The release publishes the npm tarball, all six standalone binaries,
       # and the GitHub release from this commit: it must not ship untested.
       # (CI only runs on `main` pushes, so a tag push never triggers it.)
       - name: Type-check the engine
@@ -70,11 +71,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Every `deno compile --target`. The PyPI wheels embed these, one
+          # per target, so the list must match TARGETS in build_wheel.py.
           - slug: linux-x64
             target: x86_64-unknown-linux-gnu
+          - slug: linux-arm64
+            target: aarch64-unknown-linux-gnu
           - slug: windows-x64
             target: x86_64-pc-windows-msvc
             extension: .exe
+          - slug: windows-arm64
+            target: aarch64-pc-windows-msvc
+            extension: .exe
+          - slug: macos-x64
+            target: x86_64-apple-darwin
           - slug: macos-arm64
             target: aarch64-apple-darwin
     steps:
@@ -179,4 +189,111 @@ jobs:
             sleep 10
           done
           echo "::error::wazootech-wiki@${VERSION} not found on registry after retries."
+          exit 1
+
+  publish-pypi:
+    name: Publish PyPI
+    # Set the repository variable PYPI_PUBLISH_ENABLED=true, and trust this
+    # workflow and the `pypi` environment as a Trusted Publisher on the
+    # `wazootech-wiki` PyPI project, to enable. No API token is stored.
+    #
+    # Each platform wheel embeds the standalone binary for its target, so the
+    # wheels are built from the GitHub Release's own assets, after the release
+    # exists and its SHA256SUMS verifies them: a wheel can never ship a binary
+    # the release does not, or ship before it.
+    needs: [verify, publish-github-release]
+    if: >-
+      vars.PYPI_PUBLISH_ENABLED == 'true' &&
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Download and verify the release binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --dir release-assets \
+            --pattern 'wazootech-wiki-*' --pattern SHA256SUMS
+          cd release-assets
+          sha256sum --check --strict SHA256SUMS
+
+      - name: Build one wheel per target, plus the fallback
+        run: |
+          set -euo pipefail
+          while read -r slug target; do
+            binary="release-assets/wazootech-wiki-$slug"
+            [ -f "$binary.exe" ] && binary="$binary.exe"
+            python scripts/build_wheel.py --binary "$binary" --target "$target" --out dist
+          done <<'TARGETS'
+          linux-x64 x86_64-unknown-linux-gnu
+          linux-arm64 aarch64-unknown-linux-gnu
+          macos-x64 x86_64-apple-darwin
+          macos-arm64 aarch64-apple-darwin
+          windows-x64 x86_64-pc-windows-msvc
+          windows-arm64 aarch64-pc-windows-msvc
+          TARGETS
+          python scripts/build_wheel.py --pure --out dist
+          test "$(ls dist/*.whl | wc -l)" -eq 7
+          uvx twine check --strict dist/*.whl
+          ls -l dist
+
+      # The same installed-artifact tests CI runs: the release must not ship
+      # a wheel nobody installed.
+      - name: Test the Linux x64 and fallback wheels from clean venvs
+        run: |
+          set -euo pipefail
+          uv venv -q "$RUNNER_TEMP/platform-venv"
+          uv pip install --python "$RUNNER_TEMP/platform-venv/bin/python" dist/*-manylinux_2_27_x86_64.whl
+          "$RUNNER_TEMP/platform-venv/bin/python" -m unittest discover -s python/tests -v
+          uv venv -q "$RUNNER_TEMP/fallback-venv"
+          uv pip install --python "$RUNNER_TEMP/fallback-venv/bin/python" dist/*-py3-none-any.whl
+          WIKI_TEST_BINARY="$RUNNER_TEMP/platform-venv/bin/wiki" WIKI_REQUIRE_E2E=1 \
+            "$RUNNER_TEMP/fallback-venv/bin/python" -m unittest discover -s python/tests -v
+
+      - name: Skip when the version is already on PyPI
+        id: published
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
+          if [ "$STATUS" = "200" ]; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "wazootech-wiki ${VERSION} is already on PyPI; skipping publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to PyPI (Trusted Publishing / OIDC)
+        if: steps.published.outputs.already == 'false'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+      - name: Verify PyPI publish
+        if: steps.published.outputs.already == 'false'
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          for attempt in 1 2 3 4 5 6; do
+            STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
+            if [ "$STATUS" = "200" ]; then
+              echo "Verified wazootech-wiki ${VERSION} on PyPI."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/6: version not visible yet (status ${STATUS}); waiting..."
+            sleep 10
+          done
+          echo "::error::wazootech-wiki ${VERSION} not found on PyPI after retries."
           exit 1

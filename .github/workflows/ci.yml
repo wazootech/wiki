@@ -174,3 +174,133 @@ jobs:
             PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" build
           )
           test -f "$fixture/_site/wiki/index.html"
+
+  pypi-wheels:
+    # Not a required status check on main's branch protection yet; advisory
+    # until the required contexts are updated.
+    name: PyPI Wheel (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.9.6
+          cache: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      # The same flags as release.yml's `build-standalone`, cross-compiled.
+      - name: Compile the standalone binary
+        run: >-
+          deno compile --node-modules-dir=none --frozen --allow-all
+          --exclude-unused-npm --target "${{ matrix.target }}"
+          --output "dist/standalone/wazootech-wiki" src/wiki/cli.ts
+
+      # build_wheel.py refuses a binary whose architecture or platform floor
+      # (glibc symbol versions, macOS LC_BUILD_VERSION) does not match the
+      # tag, and a wheel over PyPI's 100 MB file limit.
+      - name: Build and check the platform wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary=dist/standalone/wazootech-wiki
+          [ -f "$binary.exe" ] && binary="$binary.exe"
+          python scripts/build_wheel.py --binary "$binary" --target "${{ matrix.target }}" --out dist/wheels
+          uvx twine check --strict dist/wheels/*.whl
+          uvx check-wheel-contents dist/wheels/*.whl
+          case "${{ matrix.target }}" in
+            *linux*)
+              uvx auditwheel show dist/wheels/*.whl
+              echo "objdump newest GLIBC_ need: $(objdump -T "$binary" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)"
+              ;;
+          esac
+          ls -l "$binary" dist/wheels/*.whl | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi-wheel-${{ matrix.target }}
+          path: dist/wheels/*.whl
+          if-no-files-found: error
+
+  pypi-tests:
+    name: PyPI Package Checks (${{ matrix.os }})
+    needs: pypi-wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # No setup-deno: the wheel must run with no Deno anywhere.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Download the platform wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-wheel-${{ matrix.target }}
+          path: dist/wheels
+
+      - name: Build the fallback wheel
+        run: python scripts/build_wheel.py --pure --out dist/fallback
+
+      # Tests run against installed wheels, never the source tree, so a
+      # resource missing from the artifact fails here (#316). The end-to-end
+      # tests strip PATH, so nothing but the installed binary can answer.
+      - name: Install each wheel into a clean venv and test it
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=""
+          [ "$RUNNER_OS" = "Windows" ] && exe=".exe"
+          # Prints the venv's scripts directory; uv needs `python.exe` spelled
+          # out on Windows.
+          venv() {
+            uv venv -q "$RUNNER_TEMP/$1"
+            if [ "$RUNNER_OS" = "Windows" ]; then echo "$RUNNER_TEMP/$1/Scripts"; else echo "$RUNNER_TEMP/$1/bin"; fi
+          }
+          platform="$(venv platform-venv)"
+          uv pip install --python "$platform/python$exe" dist/wheels/*.whl
+          "$platform/python$exe" -m unittest discover -s python/tests -v
+
+          # The fallback wheel against the real binary the platform wheel
+          # just installed; WIKI_REQUIRE_E2E turns a missing binary into a
+          # failure instead of a skip.
+          fallback="$(venv fallback-venv)"
+          uv pip install --python "$fallback/python$exe" dist/fallback/*.whl
+          WIKI_TEST_BINARY="$platform/wiki$exe" WIKI_REQUIRE_E2E=1 \
+            "$fallback/python$exe" -m unittest discover -s python/tests -v

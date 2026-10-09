@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
   type CommandResult,
   type InstallTarget,
+  isPypiInstall,
   JSR_METADATA_URL,
   runUpgrade,
   type UpgradeDependencies,
@@ -283,6 +284,12 @@ Deno.test("non-global and standalone installs are not overwritten", async () => 
         state.stderr.join("\n"),
         "npm update -g wazootech-wiki",
       );
+    } else {
+      // A copied PyPI binary (uv tool / pipx on Windows) lands here too.
+      assertStringIncludes(
+        state.stderr.join("\n"),
+        "pip install -U wazootech-wiki",
+      );
     }
   }
 });
@@ -323,4 +330,97 @@ Deno.test("verbose mode exposes installer invocation and output", async () => {
   assertStringIncludes(state.stdout.join("\n"), "jsr:@wazoo/wiki@0.1.4/cli");
   assertStringIncludes(state.stdout.join("\n"), "installed package");
   assertStringIncludes(state.stderr.join("\n"), "installer detail");
+});
+
+Deno.test("a PyPI-installed binary points at pip instead of being overwritten", async () => {
+  const state = harness({
+    findInstallTarget: () =>
+      Promise.resolve({ kind: "pypi", path: "/venv/bin/wiki" }),
+  });
+  assertEquals(await runUpgrade(automaticUpgrade, state.dependencies), 1);
+  assertEquals(state.commands, []);
+  const message = state.stderr.join("\n");
+  assertStringIncludes(message, "installed from PyPI");
+  assertStringIncludes(message, "pip install -U wazootech-wiki");
+  assertStringIncludes(message, "uv tool upgrade wazootech-wiki");
+});
+
+Deno.test("the unpublished-JSR deferral names the PyPI channel too", async () => {
+  const state = harness({
+    fetchMetadata: () =>
+      Promise.resolve(new Response("not found", { status: 404 })),
+  });
+  assertEquals(await runUpgrade(check, state.dependencies), 0);
+  assertStringIncludes(state.stdout[0]!, "pip install -U wazootech-wiki");
+});
+
+/**
+ * Lay out a Python prefix with the binary at `scriptRel` and, when `record`
+ * is given, a `wazootech_wiki` dist-info under `siteRel` whose RECORD holds
+ * those lines. Returns the binary's path.
+ */
+async function pythonPrefix(
+  scriptRel: string,
+  siteRel: string,
+  record?: readonly string[],
+  distInfo = "wazootech_wiki-0.2.0.dist-info",
+): Promise<string> {
+  const root = await Deno.makeTempDir({ prefix: "wiki-pypi-" });
+  const binary = `${root}/${scriptRel}`;
+  await Deno.mkdir(binary.slice(0, binary.lastIndexOf("/")), {
+    recursive: true,
+  });
+  await Deno.writeFile(binary, new Uint8Array());
+  if (record) {
+    const info = `${root}/${siteRel}/${distInfo}`;
+    await Deno.mkdir(info, { recursive: true });
+    await Deno.writeTextFile(`${info}/RECORD`, record.join("\n") + "\n");
+  }
+  return binary;
+}
+
+Deno.test("isPypiInstall finds the RECORD entry in every Python layout", async () => {
+  const layouts: [string, string, string][] = [
+    // POSIX venv, `pip install --user`, and `uv tool install`.
+    ["bin/wiki", "lib/python3.12/site-packages", "../../../bin/wiki"],
+    // Debian's system pip.
+    ["bin/wiki", "lib/python3/dist-packages", "../../../bin/wiki"],
+    // Windows venv or system Python.
+    ["Scripts/wiki.exe", "Lib/site-packages", "../../Scripts/wiki.exe"],
+    // Windows `pip install --user` (%APPDATA%\Python\Python312).
+    ["Scripts/wiki.exe", "site-packages", "../Scripts/wiki.exe"],
+  ];
+  for (const [script, site, entry] of layouts) {
+    const binary = await pythonPrefix(script, site, [
+      "wiki/__init__.py,sha256=abc,10",
+      `${entry},sha256=def,159622069`,
+      "wazootech_wiki-0.2.0.dist-info/RECORD,,",
+    ]);
+    assertEquals(isPypiInstall(binary), true, script + " in " + site);
+  }
+});
+
+Deno.test("isPypiInstall needs RECORD to list this exact binary", async () => {
+  // A standalone copied into a scripts directory beside an unrelated install.
+  const copied = await pythonPrefix(
+    "bin/wiki",
+    "lib/python3.12/site-packages",
+    ["wiki/__init__.py,sha256=abc,10", "../../../bin/other,sha256=def,1"],
+  );
+  assertEquals(isPypiInstall(copied), false);
+  // A scripts directory with no wazootech_wiki dist-info at all.
+  assertEquals(
+    isPypiInstall(
+      await pythonPrefix("bin/wiki", "lib/python3.12/site-packages"),
+    ),
+    false,
+  );
+  // Another package's RECORD naming a `wiki` script does not count.
+  const foreign = await pythonPrefix(
+    "bin/wiki",
+    "lib/python3.12/site-packages",
+    ["../../../bin/wiki,sha256=def,1"],
+    "some_other_wiki-1.0.dist-info",
+  );
+  assertEquals(isPypiInstall(foreign), false);
 });

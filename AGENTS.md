@@ -10,7 +10,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — the npm package name. It preserves the `wiki` executable and its bundled Deno runtime, so consumers need neither system Python nor a separately installed Deno. It ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API.
+- **`wazootech-wiki`** — the npm and PyPI package name. Both preserve the `wiki` executable and need no separately installed Deno: npm bundles a Deno runtime plus the engine source (and needs no Python), and PyPI embeds the `deno compile` standalone binary in per-platform wheels. The npm package ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API. The PyPI package adds a thin subprocess API; see [Python binding](#python-binding).
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules
@@ -65,7 +65,11 @@ The npm package preserves the `wazootech-wiki` name and the `wiki` executable, a
 
 The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. When changing `src/runtime.ts` or `bin/wiki.js`, keep them aligned and run `npm run test:npm`. Verify the packed tarball's CLI path in CI with system Python blocked.
 
-Languages that cannot embed JavaScript are served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
+Python is served by the binding below. Other languages that cannot embed JavaScript would be served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
+
+### Python binding
+
+`wazootech-wiki` on PyPI (from 0.2.0) ships the Wiki CLI as a native binary, the way ruff and uv do, not an engine port. `scripts/build_wheel.py` wraps each `deno compile` target's standalone binary in a `py3-none-<platform>` wheel, under `.data/scripts/`, so pip installs it as `wiki` with no Python in the hot path; it refuses a binary whose architecture or platform floor (glibc symbol versions, macOS `LC_BUILD_VERSION`) does not match the tag. Its `TARGETS` must match the `build-standalone` matrix in `release.yml`. `python/wiki/` is the typed API that finds and runs that binary, plus a `py3-none-any` fallback wheel (`--pure`) whose `wiki` console script runs a standalone `wazootech-wiki` from `PATH`, never `wiki` itself. The launcher's process handling mirrors `bin/wiki.js`: when changing signal forwarding or exit codes in one, change `python/wiki/__main__.py` or `bin/wiki.js` to match. `wiki upgrade` recognizes a pip-installed binary through the dist-info `RECORD` (`isPypiInstall` in `src/wiki/upgrade.ts`) and defers to pip, as it does to npm. CPython cannot embed Deno, so the Python API is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (build it with `scripts/build_wheel.py`, install it into a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
 
 ### Running validations
 
@@ -98,9 +102,9 @@ The Deno `Wiki` API is the in-process library surface; the npm package exposes t
 
 ### Release workflow
 
-A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
+A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
-`@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance. Neither workflow publishes a Python package to PyPI. Do not publish packages by hand.
+`@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries for all six `deno compile` targets, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance and to PyPI through Trusted Publishing. The PyPI wheels are built from the published release assets after `SHA256SUMS` verifies them, so a wheel never ships before, or differently from, its release binary. The PyPI job is gated on the repository variable `PYPI_PUBLISH_ENABLED=true` and on a `pypi` environment trusted by the PyPI project. Do not publish packages by hand.
 
 ### Config schema changes
 
