@@ -7,4 +7,4 @@
  * Kept as a literal rather than read from `deno.json` at runtime so that
  * `deno compile` binaries need no filesystem access to report their version.
  */
-export const VERSION = "0.2.1";
+export const VERSION = "0.2.2";

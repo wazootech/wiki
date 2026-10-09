@@ -84,7 +84,7 @@ While any of these fail as errors, `wiki check` skips SHACL validation and says 
 
 Separately, `check.shape_unused` (default `warning`) flags a node shape page that validates nothing: it has no target, is not also a class, and no other shape reaches it through `sh:node`, `sh:property`, `sh:qualifiedValueShape`, `sh:not`, `sh:and`, `sh:or`, or `sh:xone` (§2.1). SHACL allows such a shape, so this is a warning rather than an error; set it to `error` to enforce it or `off` to silence it.
 
-Turtle shapes (`.ttl` files and fenced `turtle` blocks) are not linted, because they have no frontmatter key to point at.
+Shapes written in RDF get the same checks over their triples: fenced `turtle` blocks, and RDF data files under `wiki.input` (`.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld`). With no frontmatter key to point at, a finding names the source and the shape instead: an IRI, or the triples that reach a blank node from one, for example `In shapes/Person.ttl: ex:PersonShape sh:property [ ] sh:minCont: …` or `In Person_Shape (turtle block 1): …`. A prefix declared only inside the Turtle prints as a full IRI. Shapes from installed sources are not linted; their own wiki's `wiki check` covers them.
 
 ### JSON Schema (optional)
 

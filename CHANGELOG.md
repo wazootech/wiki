@@ -1,8 +1,18 @@
 # Changelog
 
+## 0.2.2 — 2026-10-09
+
+### Added
+
+- `check.shape_definition` and `check.shape_unused` also lint shapes written in RDF: fenced `turtle` blocks and RDF data files under `wiki.input` (`.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld`). The rules are the same as for frontmatter shape pages, applied to the triples; a finding names the source and the shape (an IRI, or the triples that reach a blank node from one). Shapes from installed sources are still not linted. ([#342](https://github.com/wazootech/wiki/issues/342))
+
+### Fixed
+
+- A fenced `turtle` block with a nested blank-node property list, such as `sh:property [ sh:path [ sh:inversePath ex:knows ] ; sh:minCount 1 ]`, now links the outer node. `@wazoo/sparql-engine` 0.4.2 linked the inner one, so the property shape lost its path and the constraint silently stopped applying. The pin moves to 0.4.3. ([sparql-engine#210](https://github.com/wazootech/sparql-engine/issues/210))
+
 ## 0.2.1 — 2026-10-09
 
-The first full release of the Deno/TypeScript engine. 0.2.0 was published to JSR only, from `main`, and had the `wiki fmt` JSR crash fixed below; npm, PyPI and the standalone binaries go straight from 0.1.23 to 0.2.1.
+Published to JSR. 0.2.0 was published to JSR only, from `main`, and had the `wiki fmt` JSR crash fixed below. npm, PyPI and the standalone binaries go straight from 0.1.23 to the first tagged 0.2.x release.
 
 ### Breaking
 

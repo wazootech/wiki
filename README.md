@@ -115,7 +115,7 @@ The first run needs network access: the package ships no vendored dependencies, 
 
 ### From PyPI
 
-From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. Once 0.2.1 is published, it needs Python 3.10 or newer:
+From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. Once 0.2.2 is published, it needs Python 3.10 or newer:
 
 ```bash
 pip install wazootech-wiki

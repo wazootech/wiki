@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
   "nodeModulesDir": "auto",
   "name": "@wazoo/wiki",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "MIT",
   "exports": {
     ".": "./src/wiki/mod.ts",
@@ -40,7 +40,7 @@
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",
     "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0",
-    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.2",
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.3",
     "@zazuko/env": "npm:@zazuko/env@^3.0.0",
     "@zazuko/env-node": "npm:@zazuko/env-node@^3.0.0",
     "ajv": "npm:ajv@^8.17.1",
