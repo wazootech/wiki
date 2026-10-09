@@ -22,13 +22,58 @@ import type { OutputEntry } from "./domain.ts";
 /** The two severities an issue can carry. */
 export type IssueSeverity = "error" | "warning";
 
+/**
+ * A shape that declared a failing SHACL constraint, named rather than by blank
+ * node: blank-node labels change between runs and must never be an identity.
+ */
+export interface ShapeRef {
+  readonly iri: string;
+  readonly targetClass: readonly string[];
+  readonly label: string | null;
+}
+
+/**
+ * One structured finding inside an issue — what `wiki check -f json` reports
+ * per field. `check` says which validator produced it, and only the fields that
+ * validator knows are set.
+ */
+export interface CheckResult {
+  readonly check: "shacl" | "jsonSchema";
+  readonly message: string;
+  /** The SHACL focus node IRI; `null` for a blank node. */
+  readonly focusNode?: string | null;
+  /** The SHACL result path IRI (the field), when the constraint has one. */
+  readonly resultPath?: string | null;
+  /** The SHACL result severity IRI, e.g. `sh:Violation` expanded. */
+  readonly shaclSeverity?: string | null;
+  readonly sourceConstraintComponent?: string | null;
+  /** Empty when the source shape could not be named; never a blank node. */
+  readonly sourceShapes?: readonly ShapeRef[];
+  /** The offending value, when the constraint reports one. */
+  readonly value?: string | null;
+  /** The JSON Schema reference that failed or could not be loaded. */
+  readonly schema?: string;
+  /** How the schema applied, e.g. `via type "schema:Thing"`. */
+  readonly via?: string | null;
+  /** The JSON Schema instance path into the frontmatter. */
+  readonly instancePath?: readonly (string | number)[];
+  readonly keyword?: string;
+}
+
 /** One audit finding. */
 export interface Issue {
   readonly code: string;
   readonly message: string;
   readonly path?: string | null;
   readonly severity?: IssueSeverity;
+  /** The document route the issue is about, when it is about one. */
+  readonly route?: string | null;
+  /** Structured detail for machine-readable output; the message stays canonical. */
+  readonly results?: readonly CheckResult[];
 }
+
+/** An issue before a rule assigns its code and severity. */
+export type IssueDetail = Omit<Issue, "code" | "severity">;
 
 /** The result of an audit pass: whether it passed, and why not. */
 export class AuditReport {
@@ -81,13 +126,20 @@ export class AuditReport {
   }
 }
 
-/** An issue list plus the severity a rule assigned it. */
+/**
+ * An issue list plus the severity a rule assigned it. Each entry is a bare
+ * message or an {@link IssueDetail} carrying the structured fields too.
+ */
 export function severityIssues(
   code: string,
-  messages: readonly string[],
+  messages: readonly (string | IssueDetail)[],
   severity: IssueSeverity,
 ): Issue[] {
-  return messages.map((message) => ({ code, message, severity }));
+  return messages.map((entry) =>
+    typeof entry === "string"
+      ? { code, message: entry, severity }
+      : { ...entry, code, severity }
+  );
 }
 
 /** What `link fix` did. */

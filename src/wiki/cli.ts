@@ -74,7 +74,7 @@ const ROOT_HELP_HEADER_LINES = [
 
 /** The flags each `FILE...` command accepts, so an unknown one is a usage error. */
 const FILE_COMMAND_FLAGS: Readonly<Record<string, readonly string[]>> = {
-  check: ["-v", "--verbose", "--strict"],
+  check: ["-v", "--verbose", "--strict", "-f", "--format", "--json"],
   lint: ["-v", "--verbose", "--strict"],
   fmt: ["-v", "--verbose", "--check"],
 };
@@ -89,6 +89,10 @@ const FILE_COMMAND_HELP: Readonly<Record<string, string>> = {
     "Options:",
     "  -v, --verbose  Show integrity audit warnings.",
     "  --strict       Elevate all warnings to errors and exit with code 1.",
+    "  -f, --format [text|json]",
+    "                 Output format (default: text). json writes a structured",
+    "                 report to stdout; the text report still goes to stderr.",
+    "  --json         Shorthand for --format json.",
     "  --help         Show this message and exit.",
   ].join("\n"),
   lint: [
@@ -148,7 +152,11 @@ async function runAuditCommand(
   wiki: Wiki,
   command: "check" | "lint",
   files: readonly string[],
-  options: { readonly verbose: boolean; readonly strict: boolean },
+  options: {
+    readonly verbose: boolean;
+    readonly strict: boolean;
+    readonly format?: "text" | "json";
+  },
 ): Promise<number> {
   const report = command === "check"
     ? await wiki.check(files.length > 0 ? files : null, {
@@ -157,6 +165,19 @@ async function runAuditCommand(
     : await wiki.lint(files.length > 0 ? files : null, {
       strict: options.strict,
     });
+  if (options.format === "json") {
+    // The payload goes to stdout before the exit code is decided, so CI can
+    // read it and still fail on it; the human report stays on stderr.
+    const { buildCheckEnvelope } = await import("./check_report.ts");
+    const presented = options.strict ? report.applyStrict() : report;
+    console.log(
+      JSON.stringify(
+        buildCheckEnvelope(presented, wiki.config, files),
+        null,
+        2,
+      ),
+    );
+  }
   return exitAuditReport(report, options);
 }
 
@@ -189,14 +210,42 @@ function parseFileCommandArgs(
   readonly verbose: boolean;
   readonly strict: boolean;
   readonly check: boolean;
+  readonly format: "text" | "json";
 } | number {
   const flags = FILE_COMMAND_FLAGS[command] ?? [];
   const files: string[] = [];
   let verbose = false;
   let strict = false;
   let check = false;
+  let format: "text" | "json" = "text";
 
-  for (const token of args) {
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--json" && flags.includes("--json")) {
+      format = "json";
+      continue;
+    }
+    if (
+      (token === "-f" || token === "--format" ||
+        token.startsWith("--format=")) && flags.includes("--format")
+    ) {
+      let value: string | undefined;
+      if (token.startsWith("--format=")) {
+        value = token.slice("--format=".length);
+      } else {
+        value = args[++i];
+        if (value === undefined) {
+          return usageError(`Error: Option '${token}' requires an argument.`);
+        }
+      }
+      if (value !== "text" && value !== "json") {
+        return usageError(
+          `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+        );
+      }
+      format = value;
+      continue;
+    }
     if (token === "-v" || token === "--verbose") {
       verbose = true;
       continue;
@@ -225,7 +274,7 @@ function parseFileCommandArgs(
     files.push(path);
   }
 
-  return { files, verbose, strict, check };
+  return { files, verbose, strict, check, format };
 }
 
 /**

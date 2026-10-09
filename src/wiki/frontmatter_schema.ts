@@ -33,6 +33,7 @@ import { isFile } from "./fspath.ts";
 import { basename, resolve } from "@std/path";
 import { ValueError } from "./errors.ts";
 import type { Config } from "./config.ts";
+import type { IssueDetail } from "./schemas/reports.ts";
 
 import { effectiveTypes, resolveType } from "./graph.ts";
 import { JsonSchemaValidator, sortByInstancePath } from "./json_schema.ts";
@@ -65,6 +66,9 @@ export const MAX_SCHEMA_BYTES = 1_000_000;
 
 /** The two issue lists `check_frontmatter_schema` returns. */
 export type SchemaIssues = readonly [string[], string[]];
+
+/** {@link SchemaIssues} with each issue's document and structured detail. */
+export type SchemaFindings = readonly [IssueDetail[], IssueDetail[]];
 
 /**
  * Normalize `wazoo:jsonSchema` to a non-empty list of strings, or `null` when
@@ -504,6 +508,28 @@ function formatMissingRef(
   return `In ${route}: wazoo:jsonSchema ${quoteString(ref)} ${detail}.`;
 }
 
+/** A JSON Schema issue with its document and one structured result. */
+function schemaFinding(
+  message: string,
+  filePath: string,
+  route: string,
+  detail: {
+    readonly schema: string;
+    readonly via?: string | null;
+    readonly instancePath?: readonly (string | number)[];
+    readonly keyword?: string;
+    /** The bare validator message, without the route and schema framing. */
+    readonly message?: string;
+  },
+): IssueDetail {
+  return {
+    message,
+    path: filePath,
+    route,
+    results: [{ check: "jsonSchema", message, ...detail }],
+  };
+}
+
 /** The issue for one schema validation failure. */
 function formatValidationError(
   route: string,
@@ -528,6 +554,27 @@ export async function checkFrontmatterSchema(
   fileFilter: ReadonlySet<string> | null = null,
   options: { readonly filePaths?: readonly string[] | null } = {},
 ): Promise<SchemaIssues> {
+  const [missing, validation] = await collectFrontmatterSchemaFindings(
+    config,
+    fileFilter,
+    options,
+  );
+  return [
+    missing.map((issue) => issue.message),
+    validation.map((issue) => issue.message),
+  ];
+}
+
+/**
+ * {@link checkFrontmatterSchema}, keeping each issue's document path, route,
+ * schema reference, and instance path for `wiki check -f json`. The messages
+ * are the same strings, in the same order.
+ */
+export async function collectFrontmatterSchemaFindings(
+  config: Config,
+  fileFilter: ReadonlySet<string> | null = null,
+  options: { readonly filePaths?: readonly string[] | null } = {},
+): Promise<SchemaFindings> {
   if (
     config.check.frontmatter_schema === "off" &&
     config.check.missing_schema_ref === "off"
@@ -540,8 +587,8 @@ export async function checkFrontmatterSchema(
     remoteSchemaRefs: config.check.remote_schema_refs,
     remoteSchemaHosts: config.check.remote_schema_hosts,
   });
-  const missingIssues: string[] = [];
-  const validationIssues: string[] = [];
+  const missingIssues: IssueDetail[] = [];
+  const validationIssues: IssueDetail[] = [];
 
   const candidates = options.filePaths ?? iterDocumentFiles(config);
 
@@ -565,7 +612,11 @@ export async function checkFrontmatterSchema(
       coerceSchemaRefs(fmData[JSON_SCHEMA_KEY]);
     } catch (error) {
       if (!(error instanceof ValueError)) throw error;
-      validationIssues.push(`In ${route}: ${error.message}.`);
+      validationIssues.push({
+        message: `In ${route}: ${error.message}.`,
+        path: filePath,
+        route,
+      });
       continue;
     }
 
@@ -580,7 +631,12 @@ export async function checkFrontmatterSchema(
         const { error } = await loader.loadSchema(ref);
         if (error !== null && config.check.missing_schema_ref !== "off") {
           missingIssues.push(
-            formatMissingRef(route, ref, error, { binding: true }),
+            schemaFinding(
+              formatMissingRef(route, ref, error, { binding: true }),
+              filePath,
+              route,
+              { schema: ref },
+            ),
           );
         }
       }
@@ -596,7 +652,12 @@ export async function checkFrontmatterSchema(
       if (error !== null) {
         if (config.check.missing_schema_ref !== "off") {
           missingIssues.push(
-            formatMissingRef(route, ref, error, { binding: false }),
+            schemaFinding(
+              formatMissingRef(route, ref, error, { binding: false }),
+              filePath,
+              route,
+              { schema: ref, via },
+            ),
           );
         }
         continue;
@@ -605,7 +666,18 @@ export async function checkFrontmatterSchema(
       for (const failure of sortByInstancePath(validator.errors(instance))) {
         if (config.check.frontmatter_schema === "off") continue;
         validationIssues.push(
-          formatValidationError(route, ref, failure, via),
+          schemaFinding(
+            formatValidationError(route, ref, failure, via),
+            filePath,
+            route,
+            {
+              schema: ref,
+              via,
+              instancePath: failure.path,
+              keyword: failure.keyword,
+              message: failure.message,
+            },
+          ),
         );
       }
     }

@@ -37,12 +37,13 @@
 import rdf from "@zazuko/env";
 import SHACLValidator from "rdf-validate-shacl";
 import type { DatasetCore, Quad, Term } from "@rdfjs/types";
-import { SH } from "./context.ts";
+import { RDFS, SH } from "./context.ts";
 import type { Config } from "./config.ts";
 import { frontmatterToGraph, loadGraph } from "./graph.ts";
 
 import { documentDataFromPath } from "./parser.ts";
 import { routeForDocumentFile } from "./paths.ts";
+import type { CheckResult, ShapeRef } from "./schemas/reports.ts";
 import {
   ntTerm,
   RDF_FIRST,
@@ -151,6 +152,8 @@ export interface ShaclOutcome {
   readonly conforms: boolean;
   /** pyshacl's `results_text`; see {@link formatReport} for the divergence. */
   readonly resultsText: string;
+  /** The same results, structured; see {@link structuredResult}. */
+  readonly results: readonly CheckResult[];
 }
 
 /** RDF/JS dataset the validator accepts, built from the port's containers. */
@@ -174,7 +177,95 @@ export async function validateShacl(
   return {
     conforms: report.conforms,
     resultsText: formatReport(report.conforms, report.results),
+    results: report.results.map((result) =>
+      structuredResult(result, shapesGraph)
+    ),
   };
+}
+
+/**
+ * One validation result as plain data, for `wiki check -f json`.
+ *
+ * Blank nodes are never serialized: their labels change between runs, so a
+ * blank focus node or value is `null`. The source shape is named by a lookup
+ * against the shapes graph instead — see {@link namedSourceShapes}.
+ */
+export function structuredResult(
+  result: ReportableResult,
+  shapesGraph: RdfGraph,
+): CheckResult {
+  const messages = (result.message ?? []).map((term) => term.value);
+  return {
+    check: "shacl",
+    message: messages.join(" "),
+    focusNode: stableTermValue(result.focusNode),
+    resultPath: result.path?.termType === "NamedNode"
+      ? result.path.value
+      : null,
+    shaclSeverity: stableTermValue(result.severity),
+    sourceConstraintComponent: stableTermValue(
+      result.sourceConstraintComponent,
+    ),
+    sourceShapes: result.sourceShape
+      ? namedSourceShapes(result.sourceShape, shapesGraph)
+      : [],
+    value: stableTermValue(result.value ?? undefined),
+  };
+}
+
+function stableTermValue(term: Term | undefined): string | null {
+  if (term === undefined || term.termType === "BlankNode") return null;
+  return term.value;
+}
+
+/**
+ * The named shapes a result's `sh:sourceShape` belongs to.
+ *
+ * A property shape written inline in a shape page is a blank node, so the
+ * shape a reader recognises is the named node holding it through
+ * `sh:property`. The join is on term identity within the shapes graph this
+ * process built — never structural, because two shapes can declare the same
+ * `sh:path` — and a source shape with no named owner yields an empty list
+ * rather than a guessed one.
+ */
+export function namedSourceShapes(
+  sourceShape: Term,
+  shapesGraph: RdfGraph,
+): ShapeRef[] {
+  const quads = shapesGraph.toArray();
+  const sourceKey = termKey(sourceShape);
+  const owners: Term[] = [];
+  const seen = new Set<string>();
+  const push = (term: Term) => {
+    const key = termKey(term);
+    if (term.termType !== "NamedNode" || seen.has(key)) return;
+    seen.add(key);
+    owners.push(term);
+  };
+  for (const quad of quads) {
+    if (
+      quad.predicate.value === `${SH}property` &&
+      termKey(quad.object) === sourceKey
+    ) {
+      push(quad.subject);
+    }
+  }
+  if (owners.length === 0) push(sourceShape);
+
+  return owners.map((owner) => {
+    const ownerKey = termKey(owner);
+    const targetClass: string[] = [];
+    let label: string | null = null;
+    for (const quad of quads) {
+      if (termKey(quad.subject) !== ownerKey) continue;
+      if (quad.predicate.value === `${SH}targetClass`) {
+        targetClass.push(quad.object.value);
+      } else if (quad.predicate.value === `${RDFS}label` && label === null) {
+        label = quad.object.value;
+      }
+    }
+    return { iri: owner.value, targetClass, label };
+  });
 }
 
 /** The subset of a validation result this module reports. */
@@ -186,6 +277,7 @@ interface ReportableResult {
   readonly sourceConstraintComponent?: Term;
   readonly sourceShape?: Term;
   readonly message?: readonly Term[];
+  readonly value?: Term | null;
 }
 
 /**
@@ -274,6 +366,7 @@ export async function checkShaclAll(config: Config): Promise<ShaclOutcome> {
     return {
       conforms: true,
       resultsText: "The data graph is empty. Nothing to validate.",
+      results: [],
     };
   }
 
