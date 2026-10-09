@@ -50,10 +50,16 @@ wiki check -f json wiki/Some_Page.md
 | `missing_layout_file` | `wazoo:layout` paths that do not resolve to a readable `.html` file |
 | `frontmatter_schema`  | Frontmatter that fails JSON Schema validation                       |
 | `missing_schema_ref`  | `wazoo:jsonSchema` paths or URLs that cannot be loaded              |
+| `shape_definition`    | Ill-formed SHACL shape pages (see [below](#shape-definitions))      |
+| `shape_unused`        | Node shape pages that validate nothing                              |
 | `remote_schema_refs`  | Policy for remote schema URLs: `allow`, `deny`, or `allowlist`      |
 | `remote_schema_hosts` | Hostnames allowed when `remote_schema_refs` is `allowlist`          |
 
-Default: `missing_layout_file`, `frontmatter_schema`, and `missing_schema_ref` are `error`. `remote_schema_refs` defaults to `allow`.
+Default: `missing_layout_file`, `frontmatter_schema`, `missing_schema_ref`, and `shape_definition` are `error`. `shape_unused` is `warning`. `remote_schema_refs` defaults to `allow`.
+
+### Shape definitions
+
+A shape page is ordinary frontmatter, so a misspelled `sh:` key compiles to an inert triple and the constraint it meant to declare never fires. `shape_definition` runs before SHACL and fails the check when a page, or a shape nested in it, breaks a SHACL Core rule: an unknown `sh:` term, a property shape without `sh:path`, a malformed path, or a non-IRI value for an IRI-valued parameter. While any remain as errors, SHACL validation is skipped and a `shacl_skipped` warning says so, because a broken shape makes the SHACL verdict meaningless. A node shape that applies to nothing is reported separately, under `shape_unused`, as a warning by default. Each finding names the route and the key path, for example `In Purchase_Shape: sh:property[0].sh:minCont: …`, and appears in `wiki check -f json` under the code `shape_definition`. See [SHACL](SHACL.md#shape-page-checks) for the rules.
 
 ### JSON Schema frontmatter
 

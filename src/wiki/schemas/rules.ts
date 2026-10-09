@@ -36,6 +36,8 @@ export interface CheckConfig {
   readonly missing_layout_file: Severity;
   readonly frontmatter_schema: Severity;
   readonly missing_schema_ref: Severity;
+  readonly shape_definition: Severity;
+  readonly shape_unused: Severity;
   readonly remote_schema_refs: "allow" | "deny" | "allowlist";
   readonly remote_schema_hosts: readonly string[];
 }
@@ -111,6 +113,8 @@ export const checkConfigSpec: ModelSpec = {
     ["missing_layout_file", { defaultValue: "error", before: coerceSeverity }],
     ["frontmatter_schema", { defaultValue: "error", before: coerceSeverity }],
     ["missing_schema_ref", { defaultValue: "error", before: coerceSeverity }],
+    ["shape_definition", { defaultValue: "error", before: coerceSeverity }],
+    ["shape_unused", { defaultValue: "warning", before: coerceSeverity }],
     ["remote_schema_refs", {
       defaultValue: "allow",
       before: coerceRemoteSchemaRefs,
