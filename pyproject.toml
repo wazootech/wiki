@@ -1,0 +1,73 @@
+# `wazootech-wiki` on PyPI: a typed Python binding over the Deno/TypeScript
+# engine (#325). This is not an engine manifest. The wheel carries the engine
+# source verbatim and runs it on the Deno runtime from the `deno` PyPI package,
+# the same shape as the npm package (`bin/wiki.js` + `src/runtime.ts`).
+#
+# `version` is one of the release version surfaces; `tests/version_test.ts`
+# keeps it in agreement with `deno.json`, `package.json`, and the engine.
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wazootech-wiki"
+version = "0.2.0"
+description = "Python binding for the Wiki CLI: runs the Deno/TypeScript engine on a bundled Deno runtime"
+readme = "python/README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+# `denoland/deno_pypi` publishes this with a PEP 740 attestation (Trusted
+# Publishing from its `release.yml`). Pinned to the Deno the engine, CI, and
+# the npm package's `deno` dependency all use.
+dependencies = ["deno==2.9.6"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/wazootech/wiki"
+Issues = "https://github.com/wazootech/wiki/issues"
+Changelog = "https://github.com/wazootech/wiki/blob/main/CHANGELOG.md"
+
+[project.scripts]
+wiki = "wiki.__main__:entry"
+
+# The engine files mirror `package.json`'s `files` list: `src/wiki/**/*.ts`,
+# the packaged `index.html` layout, the `templates/` YAML, the Deno config and
+# lockfile, and `package.json` itself. The installed-wheel tests
+# (`python/tests/`) build a `--site-layout minimal` project, so a resource the
+# wheel drops fails there rather than in a user's `wiki build` (#316).
+[tool.hatch.build.targets.wheel]
+only-include = ["python/wiki", "src/wiki"]
+exclude = ["__pycache__", "*.pyc"]
+
+[tool.hatch.build.targets.wheel.sources]
+"python/wiki" = "wiki"
+"src/wiki" = "wiki/_engine/src/wiki"
+
+[tool.hatch.build.targets.wheel.force-include]
+"deno.json" = "wiki/_engine/deno.json"
+"deno.lock" = "wiki/_engine/deno.lock"
+# `deno.lock` also records `package.json`'s npm dependencies, so `--frozen`
+# fails unless the manifest Deno resolved it against sits beside it, exactly
+# as it does in the npm tarball.
+"package.json" = "wiki/_engine/package.json"
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+  "python/wiki",
+  "python/README.md",
+  "src/wiki",
+  "deno.json",
+  "deno.lock",
+  "package.json",
+  "LICENSE",
+  "pyproject.toml",
+]
+exclude = ["__pycache__", "*.pyc"]

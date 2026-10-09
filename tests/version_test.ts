@@ -1,4 +1,5 @@
 import { assertEquals } from "@std/assert";
+import { parse as parseToml } from "@std/toml";
 import { VERSION } from "../src/wiki/version.ts";
 
 const ROOT = new URL("../", import.meta.url);
@@ -35,6 +36,13 @@ Deno.test("VERSION matches package-lock.json", async () => {
   const root = (lock as { packages?: Record<string, { version?: string }> })
     .packages?.[""];
   assertEquals(root?.version, VERSION);
+});
+
+Deno.test("VERSION matches pyproject.toml", async () => {
+  const project = parseToml(
+    await Deno.readTextFile(new URL("pyproject.toml", ROOT)),
+  ).project as { version?: unknown } | undefined;
+  assertEquals(project?.version, VERSION);
 });
 
 Deno.test("VERSION matches the docs wiki metadata", async () => {

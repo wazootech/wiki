@@ -72,5 +72,5 @@ RDF/XML parsing remains supported for `.rdf` and `.xml` wiki inputs. RDF/XML ser
 
 - [Wiki Programmatic API](Wiki_Programmatic_API.md)
 - [TypeScript API Reference](TypeScript_API_Reference.md)
-- [Python API Reference (retired)](Python_API_Reference.md)
+- [Python API Reference](Python_API_Reference.md)
 - [wiki](wiki.md) — command reference

@@ -101,6 +101,6 @@ The engine parses RDF/XML from `.rdf` and `.xml` wiki inputs. RDF/XML serializat
 
 - [Deno API Reference](Deno_API_Reference.md)
 - [TypeScript API Reference](TypeScript_API_Reference.md)
-- [Python API Reference (retired)](Python_API_Reference.md)
+- [Python API Reference](Python_API_Reference.md)
 - [Wiki CLI](wiki.md)
 - [Wiki Configuration](Wiki_Configuration.md)

@@ -34,8 +34,9 @@ jobs:
           NPM_VERSION="$(node -p 'require("./package.json").version')"
           DENO_VERSION="$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')"
           ENGINE_VERSION="$(sed -n 's/^export const VERSION = "\([^"]*\)";/\1/p' src/wiki/version.ts)"
-          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" || {
-            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION"
+          PYPI_VERSION="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pyproject.toml)"
+          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" && test "$NPM_VERSION" = "$PYPI_VERSION" || {
+            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION pyproject.toml=$PYPI_VERSION"
             exit 1
           }
           echo "version=$NPM_VERSION" >> "$GITHUB_OUTPUT"
@@ -179,4 +180,72 @@ jobs:
             sleep 10
           done
           echo "::error::wazootech-wiki@${VERSION} not found on registry after retries."
+          exit 1
+
+  publish-pypi:
+    name: Publish PyPI
+    # Set the repository variable PYPI_PUBLISH_ENABLED=true, and trust this
+    # workflow and the `pypi` environment as a Trusted Publisher on the
+    # `wazootech-wiki` PyPI project, to enable. No API token is stored.
+    needs: [verify, publish-github-release]
+    if: >-
+      vars.PYPI_PUBLISH_ENABLED == 'true' &&
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build the sdist and wheel
+        run: uv build
+
+      # The same installed-artifact tests CI runs: the release must not ship
+      # a wheel nobody installed.
+      - name: Test the wheel from a clean venv
+        run: |
+          uv venv "$RUNNER_TEMP/wheel-venv"
+          uv pip install --python "$RUNNER_TEMP/wheel-venv/bin/python" dist/wazootech_wiki-*.whl
+          "$RUNNER_TEMP/wheel-venv/bin/python" -m unittest discover -s python/tests -v
+
+      - name: Skip when the version is already on PyPI
+        id: published
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
+          if [ "$STATUS" = "200" ]; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "wazootech-wiki ${VERSION} is already on PyPI; skipping publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to PyPI (Trusted Publishing / OIDC)
+        if: steps.published.outputs.already == 'false'
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Verify PyPI publish
+        if: steps.published.outputs.already == 'false'
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          for attempt in 1 2 3 4 5 6; do
+            STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
+            if [ "$STATUS" = "200" ]; then
+              echo "Verified wazootech-wiki ${VERSION} on PyPI."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/6: version not visible yet (status ${STATUS}); waiting..."
+            sleep 10
+          done
+          echo "::error::wazootech-wiki ${VERSION} not found on PyPI after retries."
           exit 1

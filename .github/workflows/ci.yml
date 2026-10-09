@@ -174,3 +174,42 @@ jobs:
             PATH="$blocked_path:$PATH" "$install_root/node_modules/.bin/wiki" build
           )
           test -f "$fixture/_site/wiki/index.html"
+
+  python-checks:
+    # Not a required status check on main's branch protection yet; advisory
+    # until the required contexts are updated.
+    name: PyPI Package Checks (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # No setup-deno: the wheel must run on the `deno` PyPI dependency alone.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build the sdist and wheel
+        run: uv build
+
+      # Tests run against the installed wheel, never the source tree, so a
+      # resource missing from the artifact fails here (#316). The end-to-end
+      # tests strip PATH, so no system Deno, Node, or Python can stand in.
+      - name: Install the wheel into a clean venv and test it
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv venv "$RUNNER_TEMP/wheel-venv"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python="$RUNNER_TEMP/wheel-venv/Scripts/python.exe"
+          else
+            python="$RUNNER_TEMP/wheel-venv/bin/python"
+          fi
+          uv pip install --python "$python" dist/wazootech_wiki-*.whl
+          "$python" -m unittest discover -s python/tests -v

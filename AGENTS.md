@@ -10,7 +10,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — the npm package name. It preserves the `wiki` executable and its bundled Deno runtime, so consumers need neither system Python nor a separately installed Deno. It ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API.
+- **`wazootech-wiki`** — the npm and PyPI package name. It preserves the `wiki` executable and its bundled Deno runtime, so consumers need neither system Python nor a separately installed Deno. It ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API.
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules
@@ -67,6 +67,10 @@ The npm runtime is delivered through the `deno` npm dependency and the TypeScrip
 
 Languages that cannot embed JavaScript are served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
 
+### Python binding
+
+`wazootech-wiki` on PyPI (from 0.2.0) is a typed binding over the engine, not an engine port: `python/wiki/` resolves a Deno runtime (the `deno` PyPI dependency, then `deno` on `PATH`, then a standalone `wazootech-wiki`) and runs the packaged engine with the same argv as `src/runtime.ts`. `pyproject.toml` packs the engine files beside it under `wiki/_engine/`, mirroring `package.json`'s `files`. When changing `src/runtime.ts`, change `python/wiki/_runtime.py` to match. CPython cannot embed Deno, so the binding is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (`uv build`, a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
+
 ### Running validations
 
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
@@ -98,9 +102,9 @@ The Deno `Wiki` API is the in-process library surface; the npm package exposes t
 
 ### Release workflow
 
-A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
+A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
-`@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance. Neither workflow publishes a Python package to PyPI. Do not publish packages by hand.
+`@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance and to PyPI through Trusted Publishing. The PyPI job is gated on the repository variable `PYPI_PUBLISH_ENABLED=true` and on a `pypi` environment trusted by the PyPI project. Do not publish packages by hand.
 
 ### Config schema changes
 

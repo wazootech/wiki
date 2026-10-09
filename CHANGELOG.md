@@ -4,7 +4,8 @@
 
 ### Breaking
 
-- The Python engine, PyPI distribution, and Python-only tests/build/release tooling are retired. The `wazootech-wiki` npm package keeps its name and `wiki` command, but runs the Deno/TypeScript engine without requiring Python or a system Deno installation.
+- The Python engine and its Python-only tests/build/release tooling are retired. The `wazootech-wiki` npm package keeps its name and `wiki` command, but runs the Deno/TypeScript engine without requiring Python or a system Deno installation.
+- **Breaking:** `wazootech-wiki` on PyPI changes from an engine to a binding at 0.2.0. The wheel carries the Deno/TypeScript engine and runs it on the Deno runtime from the `deno` PyPI package; the 0.1.x Python library API is removed. ([#324](https://github.com/wazootech/wiki/issues/324), [#325](https://github.com/wazootech/wiki/issues/325))
 - **Breaking:** the npm package's class-based Node.js SDK is removed. Its entrypoint is now the runtime/bootstrap API (`src/runtime.ts`: `createWikiCommand`, `getDenoExecutable`, `WikiSetupError`), which locates the bundled Deno runtime and builds the CLI invocation. TypeScript callers embed `@wazoo/wiki` instead of constructing a `Wiki` object through npm.
 - The `fmt:` configuration now uses native Deno/dprint options (`textWrap`, `lineWidth`, `newLineKind`). The old `wrap`, `end_of_line`, and `extensions` keys, TOML pointers, and `.mdformat.toml` discovery are not supported. An unknown `fmt:` key is rejected with the accepted surface named; the engine does not guess a replacement for a key it no longer accepts.
 - RDF/XML input remains supported; RDF/XML serialization is deferred. `export` and metadata negotiation return a clear unsupported-format result instead of substituting another RDF format.
@@ -16,6 +17,7 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 - In `fmt:`, replace `wrap` with `textWrap` (`always` | `maintain` | `never`), `end_of_line` with `newLineKind` (`auto` | `crlf` | `lf`), and `number` with `lineWidth` (a positive integer).
 - Delete the `fmt:` key `extensions`. dprint applies formatting to the whole tree, so restricting formatting to a file list has no equivalent.
 - Delete `fmt.mdformat`, `.mdformat.toml` discovery, and the TOML pointer forms of these settings; `wiki.yaml` is the only source.
+- PyPI consumers: `pip install wazootech-wiki` (0.2.0+) still installs a `wiki` command, now backed by the Deno engine with no separate Deno install. Python code that imported the 0.1.x engine (`from wiki import Wiki`, `wiki.audit`, and so on) has no 0.2.0 equivalent; call the CLI through `wiki.run([...])`, which returns a typed `WikiResult`, or pin `wazootech-wiki<0.2` to stay on the frozen Python engine. Version 0.1.23 receives no further fixes. See the Python API Reference.
 - npm consumers that constructed a `Wiki` object replace it with a `createWikiCommand(...)` / `getDenoExecutable()` call, or embed `@wazoo/wiki` directly.
 
 ### Changed
