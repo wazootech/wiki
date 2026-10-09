@@ -10,7 +10,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — the npm and PyPI package name. It preserves the `wiki` executable and its bundled Deno runtime, so consumers need neither system Python nor a separately installed Deno. It ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API.
+- **`wazootech-wiki`** — the npm and PyPI package name. Both preserve the `wiki` executable and bundle a Deno runtime, so consumers need no separately installed Deno (and npm consumers no Python). The npm package ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API. The PyPI package adds a thin subprocess API; see [Python binding](#python-binding).
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules
@@ -65,11 +65,11 @@ The npm package preserves the `wazootech-wiki` name and the `wiki` executable, a
 
 The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. When changing `src/runtime.ts` or `bin/wiki.js`, keep them aligned and run `npm run test:npm`. Verify the packed tarball's CLI path in CI with system Python blocked.
 
-Languages that cannot embed JavaScript are served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
+Python is served by the binding below. Other languages that cannot embed JavaScript would be served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
 
 ### Python binding
 
-`wazootech-wiki` on PyPI (from 0.2.0) is a typed binding over the engine, not an engine port: `python/wiki/` resolves a Deno runtime (the `deno` PyPI dependency, then `deno` on `PATH`, then a standalone `wazootech-wiki`) and runs the packaged engine with the same argv as `src/runtime.ts`. `pyproject.toml` packs the engine files beside it under `wiki/_engine/`, mirroring `package.json`'s `files`. When changing `src/runtime.ts`, change `python/wiki/_runtime.py` to match. CPython cannot embed Deno, so the binding is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (`uv build`, a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
+`wazootech-wiki` on PyPI (from 0.2.0) is a typed binding over the engine, not an engine port: `python/wiki/` resolves a Deno runtime (the `deno` PyPI dependency, then `deno` on `PATH`, then a standalone `wazootech-wiki`) and runs the packaged engine with the same argv as `src/runtime.ts`. `pyproject.toml` packs the engine files beside it under `wiki/_engine/`, mirroring `package.json`'s `files`. When changing `src/runtime.ts`, change `python/wiki/_runtime.py` to match; when changing `bin/wiki.js` (signal forwarding, exit codes), change `python/wiki/__main__.py` to match. CPython cannot embed Deno, so the binding is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (`uv build`, a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
 
 ### Running validations
 

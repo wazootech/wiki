@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import sysconfig
@@ -23,6 +24,7 @@ from pathlib import Path
 from unittest import mock
 
 import wiki
+from wiki import __main__ as cli
 from wiki import _runtime
 
 ENGINE = _runtime.ENGINE_ROOT
@@ -52,8 +54,10 @@ PUBLIC = {
 def wiki_script() -> str:
     name = "wiki" + (sysconfig.get_config_var("EXE") or "")
     path = Path(sysconfig.get_path("scripts")) / name
+    # Fail rather than skip: a wheel without its console script is exactly the
+    # installed-artifact defect these tests exist to catch.
     if not path.is_file():
-        raise unittest.SkipTest(f"console script not installed at {path}")
+        raise AssertionError(f"console script not installed at {path}")
     return str(path)
 
 
@@ -158,6 +162,47 @@ class RuntimeResolutionTest(unittest.TestCase):
     def test_string_args_are_rejected(self) -> None:
         with self.assertRaises(TypeError):
             wiki.create_wiki_command("check")  # type: ignore[arg-type]
+
+
+class ConsoleScriptTest(unittest.TestCase):
+    """``wiki.__main__`` against a fake child, for ``bin/wiki.js`` parity."""
+
+    def fake_child(self, wait: object) -> mock.MagicMock:
+        child = mock.MagicMock()
+        child.wait.side_effect = wait
+        return child
+
+    def run_main(self, child: mock.MagicMock) -> int:
+        with mock.patch.object(cli, "create_wiki_command", return_value=["deno"]),                 mock.patch.object(cli.subprocess, "Popen", return_value=child):
+            return cli.main(["check"])
+
+    def test_exit_code_passes_through(self) -> None:
+        self.assertEqual(self.run_main(self.fake_child(lambda: 3)), 3)
+
+    def test_death_by_signal_is_128_plus_n(self) -> None:
+        self.assertEqual(self.run_main(self.fake_child(lambda: -15)), 143)
+        self.assertEqual(self.run_main(self.fake_child(lambda: -2)), 130)
+
+    def test_setup_error_exits_1(self) -> None:
+        with mock.patch.object(
+            cli, "create_wiki_command", side_effect=wiki.WikiSetupError("no runtime")
+        ):
+            self.assertEqual(cli.main(["check"]), 1)
+
+    @unittest.skipUnless(os.name == "posix", "signal forwarding is POSIX-only")
+    def test_sigterm_is_forwarded_to_the_child(self) -> None:
+        # `bin/wiki.js` forwards SIGINT and SIGTERM; a kill aimed at the wrapper
+        # alone must reach the engine rather than orphan it.
+        before = signal.getsignal(signal.SIGTERM)
+
+        def wait() -> int:
+            os.kill(os.getpid(), signal.SIGTERM)
+            return -signal.SIGTERM
+
+        child = self.fake_child(wait)
+        self.assertEqual(self.run_main(child), 128 + signal.SIGTERM)
+        child.send_signal.assert_called_once_with(signal.SIGTERM)
+        self.assertEqual(signal.getsignal(signal.SIGTERM), before)
 
 
 class EndToEndTest(unittest.TestCase):
