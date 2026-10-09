@@ -2,7 +2,7 @@
 
 `frontmatter_schema.py` does not implement JSON Schema; it hands the whole
 language to `jsonschema`'s `Draft202012Validator` and prints
-`e.message` in `wiki check` output. The ADR swaps that dependency for `ajv`, so
+`e.message` in `wiki check` output. The cutover swaps that dependency for `ajv`, so
 the question this probe answers is narrow and load-bearing: **how much of
 `jsonschema`'s behaviour can `ajv` be held to, and what has to be reconstructed
 around it?**

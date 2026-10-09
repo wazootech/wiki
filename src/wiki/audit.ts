@@ -5,7 +5,7 @@
  * behind one name, and the port keeps that shape because the split is the
  * migration's, not the reader's:
  *
- * - **SHACL** lives in `shacl.ts`. `audit.py` calls `pyshacl` inline and the ADR
+ * - **SHACL** lives in `shacl.ts`. `audit.py` calls `pyshacl` inline and CONTEXT.md
  *   swaps the library for `rdf-validate-shacl`, so the four functions that had
  *   to change (`load_shapes`, `check_shacl_file`, `check_shacl_all`, and the
  *   report text) are one module rather than scattered through this one.

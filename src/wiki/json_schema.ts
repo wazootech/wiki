@@ -2,7 +2,7 @@
  * JSON Schema validation, with a reporting layer that speaks `jsonschema`.
  *
  * There is no Python counterpart to this file: `frontmatter_schema.py` delegates
- * the entire language to `jsonschema`, and the ADR swaps that dependency for
+ * the entire language to `jsonschema`, and the cutover swaps that dependency for
  * `ajv`. The swap is *not* behaviour-preserving on the two things `wiki check`
  * puts in front of a user, so this module is where the difference is contained:
  *

@@ -3,7 +3,7 @@
  *
  * Port of `src/wiki/infer.py`, which is 23 lines of `owlrl`
  * (`DeductiveClosure(OWLRL_Semantics).expand(graph)`). The library swap is
- * `rdfjs-inference-engine` (ADR 0001; the reasoning spike compared the two on
+ * `rdfjs-inference-engine` (the cutover record; the reasoning spike compared the two on
  * the micro OWL 2 RL suite and on the docs wiki), and it changes the shape of
  * the work rather than only the call:
  *

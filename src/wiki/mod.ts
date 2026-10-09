@@ -3,12 +3,12 @@
  *
  * The Python engine remains the comparison oracle for supported behavior until
  * the migration gate passes. Deliberately deferred capabilities are documented
- * in the ADR; this file only re-exports what has actually been ported. Modules are ported one milestone at a time into this directory
+ * in CONTEXT.md; this file only re-exports what has actually been ported. Modules are ported one milestone at a time into this directory
  * alongside their Python counterparts (`audit.py` → `audit.ts`,
  * `graph_cache.py` → `graph_cache.ts`), and the published surface grows with
  * them rather than being scaffolded up front.
  *
- * See `docs/adr/0001-deno-rewrite.md` for the migration decision and the
+ * See `CONTEXT.md` for the migration decision and the
  * ordering of the remaining work.
  */
 export { VERSION } from "./version.ts";

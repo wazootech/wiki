@@ -1,6 +1,6 @@
 # Probe: what replaces `rdflib` as an IO library?
 
-**Question.** ADR 0001 swaps `rdflib` for `@wazoo/sparql-engine`, which the
+**Question.** The cutover swaps `rdflib` for `@wazoo/sparql-engine`, which the
 reasoning spike verified for stores, term semantics, and SPARQL evaluation. But
 the Python engine also uses rdflib as an *input/output* library, and a SPARQL
 engine need not offer that:

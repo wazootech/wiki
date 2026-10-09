@@ -4,7 +4,7 @@
  * The Python suite is the spec: every assertion below exists in the oracle's
  * tests, so a divergence is a port bug rather than a judgement call. The
  * `formatConfigValidationError` case at the end is the exception — it is new,
- * and it pins the pydantic-shaped error *routing* directly, which the
+ * and it pins the validation-error *routing* directly, which the
  * filesystem cases only reach indirectly.
  */
 
@@ -424,7 +424,7 @@ Deno.test("config invalid at construction is refused without a file", () => {
   );
 });
 
-Deno.test("a validation failure renders the way pydantic renders it", () => {
+Deno.test("a validation failure renders a plain report", () => {
   const error = assertThrows(
     () => new Config({ lint: { broken_links: "maybe" } }),
     SchemaValidationError,
@@ -432,11 +432,8 @@ Deno.test("a validation failure renders the way pydantic renders it", () => {
   assertEquals(
     error.message,
     [
-      "1 validation error for Config",
-      "lint.broken_links",
-      '  Value error, expected error, warning, or off, got "maybe" ' +
-      '[type=value_error, input_value="maybe", input_type=string]',
-      "    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
+      "1 problem in Config",
+      '  lint.broken_links: expected error, warning, or off, got "maybe"',
     ].join("\n"),
   );
 });
@@ -482,22 +479,16 @@ Deno.test("a null block is refused rather than defaulted", () => {
   }
   // A *bare* block key is not an empty block: YAML reads `wiki:` as null, so
   // two of them produce two model_type failures and the router, which handles
-  // a single one, falls through to the pydantic rendering.
+  // a single one, falls through to the plain report.
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "wiki:\nsite:\n");
     const error = assertThrows(() => Config.load(base), ValueError);
     assertEquals(
       error.message,
       [
-        "Invalid config file wiki.yaml: 2 validation errors for Config",
-        "wiki",
-        "  Input should be a valid dictionary or instance of WikiConfig " +
-        "[type=model_type, input_value=null, input_type=null]",
-        "    For further information visit https://errors.pydantic.dev/2.13/v/model_type",
-        "site",
-        "  Input should be a valid dictionary or instance of SiteConfig " +
-        "[type=model_type, input_value=null, input_type=null]",
-        "    For further information visit https://errors.pydantic.dev/2.13/v/model_type",
+        "Invalid config file wiki.yaml: 2 problems in Config",
+        "  wiki: expected a mapping or WikiConfig",
+        "  site: expected a mapping or SiteConfig",
       ].join("\n"),
     );
   });
@@ -748,10 +739,10 @@ Deno.test("formatConfigValidationError routes each error shape to its sentence",
     }]),
     "Invalid config file wiki.yml: site must be a mapping",
   );
-  // A failure that matches no branch falls back to the full pydantic rendering.
+  // A failure that matches no branch falls back to the plain report.
   assertStringIncludes(
     route([valueError(["sources"], "Duplicate source name: 'a'", [])]),
-    "1 validation error for Config",
+    "1 problem in Config",
   );
 });
 

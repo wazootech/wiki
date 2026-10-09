@@ -22,7 +22,7 @@
  *   renders `json.JSONDecodeError` (`Expecting value: line 1 column 1 (char 0)`);
  *   `JSON.parse` renders its own prose. The `could not be read as JSON (...)`
  *   frame, the issue's classification, and the exit code are identical, so this
- *   is spec-close by the ADR's rule rather than a bug to chase.
+ *   is spec-close by that rule rather than a bug to chase.
  *
  * Remote fetching is likewise environment-dependent by nature (DNS failures,
  * TLS errors) and is never byte-compared; the tests exercise it through an
