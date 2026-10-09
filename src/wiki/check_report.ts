@@ -81,8 +81,15 @@ export interface CheckIssue {
   readonly route: string | null;
 }
 
+/**
+ * The envelope's format version. Adding a field is not a version change;
+ * renaming, removing, or changing the meaning of one is, and bumps this.
+ */
+export const CHECK_REPORT_VERSION = 1;
+
 /** The `wiki check -f json` payload. */
 export interface CheckEnvelope {
+  readonly version: typeof CHECK_REPORT_VERSION;
   readonly ok: boolean;
   readonly documents: readonly CheckDocument[];
   readonly issues: readonly CheckIssue[];
@@ -293,6 +300,7 @@ export function buildCheckEnvelope(
   }
 
   return {
+    version: CHECK_REPORT_VERSION,
     ok: report.ok,
     documents: [...entries.values()].map((entry) => ({
       ...entry.doc,

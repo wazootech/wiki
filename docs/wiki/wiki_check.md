@@ -73,6 +73,7 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 
 ```json
 {
+  "version": 1,
   "ok": false,
   "documents": [
     {
@@ -119,10 +120,11 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 }
 ```
 
+- **`version`** is the envelope's format version, currently `1`. New fields can appear without a bump; renaming, removing, or changing the meaning of a field bumps it.
 - **`issues`** lists every issue the text report shows, with the same `code`, `severity`, and `message`. Warnings are always included, with or without `-v`.
 - **`documents`** groups the document-level issues by page. Each SHACL result and JSON Schema failure gets its own entry in `results`. In scoped mode every `FILE` gets an entry, even when it conforms. In full-wiki mode, only documents with findings are listed.
 - **`frontmatterKeys`** are the frontmatter spellings of `resultPath`, resolved through the wiki context. A key the page already uses is listed alone. For a missing field, the list holds the spellings that would satisfy it.
-- **`sourceShapes`** names the shape page that declared the failing constraint, with its `sh:targetClass` and `rdfs:label`. Blank nodes are never serialized because their labels change between runs. A constraint that has no named shape gives an empty list.
+- **`sourceShapes`** names the shape page that declared the failing constraint (SHACL's `sh:sourceShape`), with its `sh:targetClass` and `rdfs:label`. A named `sh:PropertyShape` page is named itself, even when a node shape lists it under `sh:property`. An inline property shape is named by the node shape page that holds it. Blank nodes are never serialized because their labels change between runs. A constraint that has no named shape gives an empty list.
 - JSON Schema results (`check: "jsonSchema"`) carry `schema`, `instancePath`, and `keyword`. SHACL results (`check: "shacl"`) carry `resultPath`, `sourceConstraintComponent`, and `value`. A result whose focus node matches no document is listed under a document with `path: null`. It is never dropped.
 
 ### Related CI commands

@@ -20,7 +20,7 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 
 ### Added
 
-- `wiki check -f json` (alias `--json`) writes a structured report to stdout. For each failing document it gives the field (`resultPath` plus `frontmatterKeys`), the constraint component, the named source shape, and the message. JSON Schema failures carry their schema and instance path. The text report and exit codes are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
+- `wiki check -f json` (alias `--json`) writes a structured report to stdout, versioned by a top-level `version` field (currently `1`). For each failing document it gives the field (`resultPath` plus `frontmatterKeys`), the constraint component, the named source shape, and the message. JSON Schema failures carry their schema and instance path. The text report and exit codes are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
 
 ### Changed
 

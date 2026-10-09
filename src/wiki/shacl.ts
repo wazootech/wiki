@@ -242,15 +242,21 @@ export function namedSourceShapes(
     seen.add(key);
     owners.push(term);
   };
-  for (const quad of quads) {
-    if (
-      quad.predicate.value === `${SH}property` &&
-      termKey(quad.object) === sourceKey
-    ) {
-      push(quad.subject);
+  // A named source shape is the shape itself (SHACL §3.6 `sh:sourceShape`),
+  // even when a node shape also lists it under `sh:property`: the constraint
+  // belongs to that page, not to the shape that references it.
+  if (sourceShape.termType === "NamedNode") {
+    push(sourceShape);
+  } else {
+    for (const quad of quads) {
+      if (
+        quad.predicate.value === `${SH}property` &&
+        termKey(quad.object) === sourceKey
+      ) {
+        push(quad.subject);
+      }
     }
   }
-  if (owners.length === 0) push(sourceShape);
 
   return owners.map((owner) => {
     const ownerKey = termKey(owner);

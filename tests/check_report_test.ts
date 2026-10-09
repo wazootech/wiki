@@ -99,7 +99,11 @@ Deno.test(
       assert(result.stderr.includes("Results (2):"), result.stderr);
 
       const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      assertEquals(Object.keys(payload).sort(), ["documents", "issues", "ok"]);
+      assertEquals(
+        Object.keys(payload).sort(),
+        ["documents", "issues", "ok", "version"],
+      );
+      assertEquals(payload.version, 1);
       assertEquals(payload.ok, false);
       assertEquals(payload.documents.length, 1);
 
@@ -172,6 +176,58 @@ Deno.test(
 );
 
 Deno.test(
+  "check --json names a referenced property shape page as the source shape",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    // SHACL's sh:sourceShape is the shape the constraint belongs to. A named
+    // sh:PropertyShape page keeps that identity even when a node shape lists
+    // it under sh:property; an inline constraint inside sh:or still resolves
+    // to the named node shape that holds it.
+    const root = writeVault({
+      "wiki/Name_Property.md":
+        "---\n'@type': sh:PropertyShape\nrdfs:label: Name Property\nsh:path: schema:name\nsh:minCount: 1\n---\n",
+      "wiki/Thing_Shape.md": [
+        "---",
+        "'@type': sh:NodeShape",
+        "sh:targetClass: schema:Thing",
+        "sh:property:",
+        "  - '@id': wiki:Name_Property",
+        "  - sh:path: schema:email",
+        "    sh:or:",
+        "      - sh:datatype: xsd:string",
+        "      - sh:nodeKind: sh:IRI",
+        "---",
+        "",
+      ].join("\n"),
+      "wiki/T.md": "---\ntype: schema:Thing\nschema:email: 5\n---\n",
+    });
+    try {
+      const result = await check(root, ["--json"]);
+      assertEquals(result.code, EXIT_FAILURE);
+      const payload = JSON.parse(result.stdout) as CheckEnvelope;
+      const results = payload.documents[0]!.results;
+      const byComponent = new Map(
+        results.map((item) => [item.sourceConstraintComponent, item]),
+      );
+      assertEquals(
+        byComponent.get(`${SH}MinCountConstraintComponent`)!.sourceShapes
+          .map((shape) => [shape.route, shape.label]),
+        [["Name_Property", "Name Property"]],
+      );
+      const or = byComponent.get(`${SH}OrConstraintComponent`)!;
+      assertEquals(or.resultPath, `${SCHEMA}email`);
+      assertEquals(or.value, "5");
+      assertEquals(
+        or.sourceShapes.map((shape) => shape.route),
+        ["Thing_Shape"],
+      );
+    } finally {
+      Deno.removeSync(root, { recursive: true });
+    }
+  },
+);
+
+Deno.test(
   "check -f json on a conforming document is a well-formed passing payload",
   { permissions: { run: true, read: true, write: true } },
   async () => {
@@ -185,6 +241,7 @@ Deno.test(
       assertEquals(result.code, EXIT_OK);
       assertEquals(result.stderr, "");
       assertEquals(JSON.parse(result.stdout), {
+        version: 1,
         ok: true,
         documents: [{
           path: "wiki/Good.md",

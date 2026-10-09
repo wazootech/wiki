@@ -180,6 +180,7 @@ export {
 } from "./schemas/reports.ts";
 export {
   buildCheckEnvelope,
+  CHECK_REPORT_VERSION,
   type CheckDocument,
   type CheckDocumentResult,
   type CheckEnvelope,
