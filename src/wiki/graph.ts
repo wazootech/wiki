@@ -52,6 +52,9 @@ import {
   namedNode,
   parseRdf,
   parseTurtle,
+  RDF_FIRST,
+  RDF_NIL,
+  RDF_REST,
   RDF_TYPE,
   RdfDataset,
   RdfGraph,
@@ -64,7 +67,7 @@ import {
 } from "./rdf.ts";
 import { WikiFloat, WikiTimestamp } from "./scalars.ts";
 import { Config } from "./config.ts";
-import type { Context } from "./context.ts";
+import { type Context, SH } from "./context.ts";
 
 import { getLogger } from "./logging.ts";
 import {
@@ -349,6 +352,34 @@ function temporalLiteral(value: Date): ReturnType<typeof literal> {
   return literal(value.toISOString(), { datatype: XSD_DATETIME });
 }
 
+/**
+ * SHACL parameters whose value is a single RDF list rather than repeated
+ * triples. Repeating `sh:in` would assert several one-member enums, and SHACL
+ * engines read a non-list `sh:in` as no enum at all (wiki#305).
+ */
+const SHACL_LIST_PARAMETERS: ReadonlySet<string> = new Set(
+  ["in", "languageIn", "ignoredProperties", "and", "or", "xone", "path"].map(
+    (local) => `${SH}${local}`,
+  ),
+);
+
+/** Build an RDF collection (`rdf:first`/`rdf:rest`) and return its head. */
+function rdfList(
+  items: readonly unknown[],
+  graph: RdfGraph,
+  context: Context,
+): Term {
+  const members = items.filter((item) => item !== null && item !== undefined);
+  let head: Term = namedNode(RDF_NIL);
+  for (let index = members.length - 1; index >= 0; index--) {
+    const cell = blankNode();
+    addObject(namedNode(RDF_FIRST), members[index], graph, cell, context);
+    graph.add(cell, namedNode(RDF_REST), head);
+    head = cell;
+  }
+  return head;
+}
+
 /** Add a predicate-object pair, recursively handling nested structures. */
 export function resolveObject(
   key: string,
@@ -359,6 +390,28 @@ export function resolveObject(
 ): void {
   const pred = resolvePredicate(key, context);
   if (pred === null) return;
+  addObject(pred, value, graph, subject, context);
+}
+
+/** {@link resolveObject} once the key has resolved to a predicate. */
+function addObject(
+  pred: NamedNode,
+  value: unknown,
+  graph: RdfGraph,
+  subject: Term,
+  context: Context,
+): void {
+  // A list is one triple per item, at any depth: a list nested inside a list of
+  // mappings must not fall through to the stringifying catch-all (wiki#305).
+  // SHACL's list-valued parameters are the exception and become an RDF list.
+  if (Array.isArray(value)) {
+    if (SHACL_LIST_PARAMETERS.has(pred.value)) {
+      graph.add(subject, pred, rdfList(value, graph, context));
+    } else {
+      for (const item of value) addObject(pred, item, graph, subject, context);
+    }
+    return;
+  }
 
   // A `Date` is an object in JavaScript but not a `dict` in Python, so it has to
   // be excluded from the mapping branch: otherwise `2026-05-30` becomes an
@@ -584,11 +637,7 @@ export function frontmatterToGraph(
   const skipKeys = new Set(["id", "type", "@type"]);
   for (const [key, value] of Object.entries(record)) {
     if (key.startsWith("@") || skipKeys.has(key)) continue;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        resolveObject(key, item, graph, subject, rdfContext);
-      }
-    } else if (isTruthy(value)) {
+    if (Array.isArray(value) || isTruthy(value)) {
       resolveObject(key, value, graph, subject, rdfContext);
     }
   }

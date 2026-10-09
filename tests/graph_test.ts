@@ -45,6 +45,9 @@ import {
   literal,
   namedNode,
   type Quad,
+  RDF_FIRST,
+  RDF_NIL,
+  RDF_REST,
   RDF_TYPE,
   RdfGraph,
   XSD_BOOLEAN,
@@ -230,10 +233,18 @@ Deno.test("resolveObject maps datatypes the way rdflib does", () => {
     ),
   );
 
-  // The catch-all stringifies. Python's tuple renders `(1, 2)`; JavaScript has
-  // only arrays, and renders `[1, 2]`.
+  // A list is one triple per item rather than a stringified literal (#305).
   resolveObject("tup", [1, 2], graph, subject, context);
-  assert(graph.has(subject, namedNode(SCHEMA + "tup"), literal("[1,2]")));
+  for (const lexical of ["1", "2"]) {
+    assert(
+      graph.has(
+        subject,
+        namedNode(SCHEMA + "tup"),
+        literal(lexical, { datatype: XSD_INTEGER }),
+      ),
+    );
+  }
+  assertEquals([...graph.match(subject, namedNode(SCHEMA + "tup"))].length, 2);
 });
 
 Deno.test("a nested mapping without @type becomes a blank node", () => {
@@ -428,6 +439,72 @@ Deno.test("identical nested frontmatter yields distinct blank nodes (#144)", () 
   assertEquals(blanks.length, 2);
   assertEquals(new Set(blanks.map((item) => item.object.value)).size, 2);
   for (const item of blanks) assertEquals(item.object.termType, "BlankNode");
+});
+
+/** The members of the RDF list headed at `head`, in order. */
+function listMembers(graph: RdfGraph, head: Quad["object"]): string[] {
+  const members: string[] = [];
+  let cell = head;
+  while (cell.value !== RDF_NIL) {
+    const first = [...graph.match(cell, namedNode(RDF_FIRST))];
+    const rest = [...graph.match(cell, namedNode(RDF_REST))];
+    assertEquals(first.length, 1);
+    assertEquals(rest.length, 1);
+    members.push(first[0]!.object.value);
+    cell = rest[0]!.object;
+  }
+  return members;
+}
+
+Deno.test("sh:in nested in a list of mappings compiles to an RDF list (#305)", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:NodeShape",
+    "@id": "wiki:status-shape",
+    "sh:targetClass": "schema:Thing",
+    "sh:property": [{
+      "sh:path": "schema:status",
+      "sh:in": ["schema:Open", "schema:Shipped", "draft"],
+    }],
+  }, context);
+
+  const ins = [...graph.match(null, namedNode(sh + "in"))];
+  assertEquals(ins.length, 1);
+  assertEquals(ins[0]!.object.termType, "BlankNode");
+  assertEquals(listMembers(graph, ins[0]!.object), [
+    SCHEMA + "Open",
+    SCHEMA + "Shipped",
+    "draft",
+  ]);
+  // A single `sh:path` stays a plain IRI, not a one-member sequence path.
+  const paths = [...graph.match(null, namedNode(sh + "path"))];
+  assertEquals(paths.map((quad) => quad.object.value), [SCHEMA + "status"]);
+});
+
+Deno.test("a top-level sh:in on a property shape page is an RDF list too", () => {
+  const context = new Config().context;
+  const sh = ns(context, "sh");
+  const graph = frontmatterToGraph({
+    "@type": "sh:PropertyShape",
+    "@id": "wiki:status-property",
+    "sh:path": "schema:status",
+    "sh:in": ["schema:Open"],
+  }, context);
+  const ins = [...graph.match(null, namedNode(sh + "in"))];
+  assertEquals(ins.length, 1);
+  assertEquals(listMembers(graph, ins[0]!.object), [SCHEMA + "Open"]);
+});
+
+Deno.test("a plain list nested in a list of mappings repeats the predicate", () => {
+  const context = new Config().context;
+  const graph = frontmatterToGraph({
+    "@type": "Person",
+    "@id": "wiki:gregory",
+    knowsAbout: [{ name: "Topic", keywords: ["a", "b"] }],
+  }, context);
+  const keywords = [...graph.match(null, namedNode(SCHEMA + "keywords"))];
+  assertEquals(keywords.map((quad) => quad.object.value).sort(), ["a", "b"]);
 });
 
 Deno.test("the wazoo layout predicate is emitted and nothing else", () => {
