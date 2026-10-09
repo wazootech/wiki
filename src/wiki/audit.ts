@@ -47,7 +47,7 @@ import {
   WIKILINK_FULL_REGEX,
 } from "./document.ts";
 
-import { checkFrontmatterSchema } from "./frontmatter_schema.ts";
+import { collectFrontmatterSchemaFindings } from "./frontmatter_schema.ts";
 import { headingPlainText, parseHeadings } from "./headings.ts";
 import {
   LAYOUT_FRONTMATTER_KEY,
@@ -73,7 +73,12 @@ import {
   stripChars,
 } from "./text.ts";
 import type { BrokenLink } from "./schemas/domain.ts";
-import { AuditReport, type Issue, severityIssues } from "./schemas/reports.ts";
+import {
+  AuditReport,
+  type Issue,
+  type IssueDetail,
+  severityIssues,
+} from "./schemas/reports.ts";
 import type { CheckConfig, LintConfig } from "./schemas/rules.ts";
 import { checkShaclAll, checkShaclFile } from "./shacl.ts";
 import { LinkIndex } from "./wiki_links.ts";
@@ -369,7 +374,7 @@ export function lintLinkStyle(
 export function applyIssues(
   report: AuditReport,
   ruleKey: string,
-  issues: readonly string[],
+  issues: readonly (string | IssueDetail)[],
   rules: CheckConfig | LintConfig,
 ): AuditReport {
   const severity = (rules as unknown as Record<string, unknown>)[ruleKey];
@@ -391,6 +396,16 @@ export function applyIssues(
       ...severityIssues(ruleKey, issues, "warning"),
     ],
   });
+}
+
+/** A document's route, or `null` when it has no safe one. */
+function safeRoute(config: Config, filePath: string): string | null {
+  try {
+    return routeForDocumentFile(config, filePath);
+  } catch (error) {
+    if (error instanceof ValueError) return null;
+    throw error;
+  }
 }
 
 /** Append errors, flipping the report to not-ok. */
@@ -480,6 +495,7 @@ export async function runCheck(
           code: "missing_metadata",
           message: `No valid document metadata found in ${basename(filePath)}`,
           path: filePath,
+          route: safeRoute(config, filePath),
           severity: "error",
         }]);
       } else if (!result.conforms) {
@@ -489,13 +505,15 @@ export async function runCheck(
             basename(filePath)
           }:\n${result.resultsText}`,
           path: filePath,
+          route: safeRoute(config, filePath),
           severity: "error",
+          results: result.results,
         }]);
       }
     }
 
     const [missingSchemaIssues, schemaValidationIssues] =
-      await checkFrontmatterSchema(config, null, { filePaths });
+      await collectFrontmatterSchemaFindings(config, null, { filePaths });
     report = applyIssues(
       report,
       "missing_schema_ref",
@@ -518,6 +536,7 @@ export async function runCheck(
         code: "shacl_violation",
         message: `SHACL Validation Violation:\n${shacl.resultsText}`,
         severity: "error",
+        results: shacl.results,
       }]);
     }
   } catch (error) {
@@ -567,7 +586,7 @@ export async function runCheck(
   );
 
   const [missingSchemaIssues, schemaValidationIssues] =
-    await checkFrontmatterSchema(config, fileFilter);
+    await collectFrontmatterSchemaFindings(config, fileFilter);
   report = applyIssues(
     report,
     "missing_schema_ref",

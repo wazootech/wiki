@@ -18,6 +18,7 @@ wiki check wiki/Some_Page.md
 wiki check wiki/A.md wiki/B.md
 wiki check -v
 wiki check --strict
+wiki check -f json wiki/Some_Page.md
 ```
 
 ## Options
@@ -27,6 +28,8 @@ wiki check --strict
 | `FILE...`         | Optional documents; otherwise entire wiki (scoped mode: SHACL + JSON Schema per file) |
 | `-v`, `--verbose` | Print warnings                                                                        |
 | `--strict`        | Treat warnings as errors (exit 1)                                                     |
+| `-f`, `--format`  | `text` (default) or `json`; see [JSON output](#json-output)                           |
+| `--json`          | Shorthand for `--format json`                                                         |
 
 ## What is checked
 
@@ -63,6 +66,66 @@ Broken links, filename pattern, and heading style are **not** part of `wiki chec
 `wiki check path/to/Page.md` (or multiple paths) runs **SHACL and JSON Schema** per file. Route safety, output collisions, and layout frontmatter rules are **full-wiki only**. Cross-document SHACL interactions may only appear in a full-wiki check. Broken links on those pages require `wiki lint` with the same paths.
 
 `--strict` applies only when warnings exist; scoped mode does not emit warnings today.
+
+## JSON output
+
+`wiki check -f json` writes a structured report to **stdout** so editors and CI can tell which document, which frontmatter field, which shape, and which constraint failed without parsing the text report. The text report still goes to stderr, and the exit code is unchanged (1 when the check fails, 0 otherwise).
+
+```json
+{
+  "version": 1,
+  "ok": false,
+  "documents": [
+    {
+      "path": "wiki/CSS.md",
+      "route": "CSS",
+      "focusNode": "https://wiki.example.org/CSS",
+      "conforms": false,
+      "results": [
+        {
+          "code": "shacl_violation",
+          "severity": "error",
+          "check": "shacl",
+          "message": "Article must have a description.",
+          "resultPath": "https://schema.org/description",
+          "frontmatterKeys": ["description", "schema:description"],
+          "shaclSeverity": "http://www.w3.org/ns/shacl#Violation",
+          "sourceConstraintComponent": "http://www.w3.org/ns/shacl#MinCountConstraintComponent",
+          "sourceShapes": [
+            {
+              "iri": "https://wiki.example.org/Article_Shape",
+              "route": "Article_Shape",
+              "path": "wiki/Article_Shape.md",
+              "targetClass": ["https://schema.org/Article"],
+              "label": "Article Shape"
+            }
+          ],
+          "value": null,
+          "schema": null,
+          "instancePath": null,
+          "keyword": null
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "code": "shacl_violation",
+      "severity": "error",
+      "message": "SHACL Validation Violation in CSS.md: ...",
+      "path": "wiki/CSS.md",
+      "route": "CSS"
+    }
+  ]
+}
+```
+
+- **`version`** is the envelope's format version, currently `1`. New fields can appear without a bump; renaming, removing, or changing the meaning of a field bumps it.
+- **`issues`** lists every issue the text report shows, with the same `code`, `severity`, and `message`. Warnings are always included, with or without `-v`.
+- **`documents`** groups the document-level issues by page. Each SHACL result and JSON Schema failure gets its own entry in `results`. In scoped mode every `FILE` gets an entry, even when it conforms. In full-wiki mode, only documents with findings are listed.
+- **`frontmatterKeys`** are the frontmatter spellings of `resultPath`, resolved through the wiki context. A key the page already uses is listed alone. For a missing field, the list holds the spellings that would satisfy it.
+- **`sourceShapes`** names the shape page that declared the failing constraint (SHACL's `sh:sourceShape`), with its `sh:targetClass` and `rdfs:label`. A named `sh:PropertyShape` page is named itself, even when a node shape lists it under `sh:property`. An inline property shape is named by the node shape page that holds it. Blank nodes are never serialized because their labels change between runs. A constraint that has no named shape gives an empty list.
+- JSON Schema results (`check: "jsonSchema"`) carry `schema`, `instancePath`, and `keyword`. SHACL results (`check: "shacl"`) carry `resultPath`, `sourceConstraintComponent`, and `value`. A result whose focus node matches no document is listed under a document with `path: null`. It is never dropped.
 
 ### Related CI commands
 

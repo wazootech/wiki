@@ -18,6 +18,10 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 - Delete `fmt.mdformat`, `.mdformat.toml` discovery, and the TOML pointer forms of these settings; `wiki.yaml` is the only source.
 - npm consumers that constructed a `Wiki` object replace it with a `createWikiCommand(...)` / `getDenoExecutable()` call, or embed `@wazoo/wiki` directly.
 
+### Added
+
+- `wiki check -f json` (alias `--json`) writes a structured report to stdout, versioned by a top-level `version` field (currently `1`). For each failing document it gives the field (`resultPath` plus `frontmatterKeys`), the constraint component, the named source shape, and the message. JSON Schema failures carry their schema and instance path. The text report and exit codes are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
+
 ### Changed
 
 - Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
