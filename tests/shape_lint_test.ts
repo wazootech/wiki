@@ -95,6 +95,26 @@ sh:minCount: 1
   assert(page[0]!.startsWith("In Shape: sh:path: "));
 });
 
+Deno.test("a node shape cannot have sh:path (SHACL §2.2, §4.7.1)", async () => {
+  const page = await lintPage(`'@type': sh:NodeShape
+sh:targetClass: schema:Thing
+sh:path: schema:name
+`);
+  assertEquals(page.length, 1, page.join("\n"));
+  assert(page[0]!.startsWith("In Shape: sh:path: "));
+  assert(page[0]!.includes("cannot have sh:path"));
+
+  const viaNode = await lintPage(`'@type': sh:NodeShape
+sh:targetClass: schema:Thing
+sh:property:
+  - sh:path: schema:address
+    sh:node:
+      sh:path: schema:streetAddress
+`);
+  assertEquals(viaNode.length, 1, viaNode.join("\n"));
+  assert(viaNode[0]!.startsWith("In Shape: sh:property[0].sh:node.sh:path: "));
+});
+
 Deno.test("ill-formed property paths fail (SHACL §2.3.1)", async () => {
   const messages = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: schema:Thing

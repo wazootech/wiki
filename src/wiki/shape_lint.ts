@@ -514,17 +514,19 @@ function isShaclTerm(local: string): boolean {
 
 /**
  * Walk one mapping. `kind` is what the spec says the node is: a property shape
- * needs `sh:path`; anything else is checked for vocabulary and nested shapes.
+ * needs `sh:path` (§2.3), a node shape must not have one (§2.2, and §4.7.1 for
+ * the values of `sh:node`), and anything else is checked for vocabulary and
+ * nested shapes.
  */
 function lintShape(
   shape: DataRecord,
   where: string,
-  kind: "property" | "other",
+  kind: "property" | "node" | "other",
   context: Context,
   findings: Findings,
 ): void {
   const prefix = where === "" ? "" : `${where}.`;
-  let hasPath = false;
+  let pathKey: string | null = null;
 
   for (const [key, value] of Object.entries(shape)) {
     if (key.startsWith("@") || (where === "" && SKIP_KEYS.has(key))) continue;
@@ -553,7 +555,7 @@ function lintShape(
       continue;
     }
 
-    if (local === "path") hasPath = true;
+    if (local === "path") pathKey = at;
     if (PATH_VALUED.has(local)) {
       lintPath(value, at, context, findings);
       continue;
@@ -590,7 +592,11 @@ function lintShape(
     }
 
     if (SHAPE_VALUED.has(local) || SHAPE_LISTS.has(local)) {
-      const childKind = local === "property" ? "property" : "other";
+      const childKind = local === "property"
+        ? "property"
+        : local === "node"
+        ? "node"
+        : "other";
       (Array.isArray(value) ? value : [value]).forEach((item, index) => {
         if (isBlankMapping(item)) {
           lintShape(
@@ -608,10 +614,17 @@ function lintShape(
     lintValues(value, at, context, findings);
   }
 
-  if (kind === "property" && !hasPath) {
+  if (kind === "property" && pathKey === null) {
     findings.add(
       where === "" ? "sh:path" : where,
       "a property shape needs exactly one sh:path (SHACL §2.3).",
+    );
+  }
+  if (kind === "node" && pathKey !== null) {
+    findings.add(
+      pathKey,
+      "a node shape cannot have sh:path (SHACL §2.2); put a path constraint " +
+        "in a property shape under sh:property.",
     );
   }
 }
@@ -712,7 +725,7 @@ export async function lintShapeDefinitions(
     lintShape(
       data,
       "",
-      isPropertyShape ? "property" : "other",
+      isPropertyShape ? "property" : isNodeShape ? "node" : "other",
       context,
       findings,
     );
