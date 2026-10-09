@@ -180,12 +180,15 @@ jobs:
       - name: Verify npm publish
         run: |
           VERSION="${{ needs.verify.outputs.version }}"
-          for attempt in 1 2 3 4 5 6; do
+          # The registry can take minutes to serve a new version (v0.2.2
+          # published fine but was invisible for over a minute), so poll for
+          # up to five minutes before calling the publish failed.
+          for attempt in $(seq 1 30); do
             if npm view "wazootech-wiki@${VERSION}" version 2>/dev/null | grep -qx "${VERSION}"; then
               echo "Verified wazootech-wiki@${VERSION} on registry."
               exit 0
             fi
-            echo "Attempt ${attempt}/6: version not visible yet; waiting..."
+            echo "Attempt ${attempt}/30: version not visible yet; waiting..."
             sleep 10
           done
           echo "::error::wazootech-wiki@${VERSION} not found on registry after retries."
