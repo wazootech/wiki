@@ -142,6 +142,18 @@ function denoTypescriptConfig(): Record<string, unknown> {
  * is already the plugin default, which `probes/fmt-dprint/FINDINGS.md` records
  * rather than assumes.
  */
+/**
+ * The `dprint-plugin-yaml` package.json, as a full `npm:` specifier.
+ *
+ * Not the bare `dprint-plugin-yaml/package.json` alias: JSR rewrites bare
+ * specifiers in import statements on publish, but never in
+ * `import.meta.resolve` arguments, so run from JSR the bare alias fails with
+ * "not a dependency" and `wiki fmt` crashes. `formatter_test.ts` pins this
+ * version to deno.json's.
+ */
+export const YAML_PLUGIN_PACKAGE_JSON =
+  "npm:dprint-plugin-yaml@0.5.0/package.json";
+
 function denoYamlConfig(): Record<string, unknown> {
   return { ignore_comment_directive: "deno-fmt-ignore" };
 }
@@ -215,7 +227,7 @@ function loadPlugins(): Plugins {
     ),
     json: build(wasmFromPath(jsonPlugin.getPath()), denoJsonConfig()),
     yaml: build(
-      wasmAdjacentToPackageJson("dprint-plugin-yaml/package.json"),
+      wasmAdjacentToPackageJson(YAML_PLUGIN_PACKAGE_JSON),
       denoYamlConfig(),
     ),
     css: build(wasmFromPath(cssPlugin.getPath()), {}),
