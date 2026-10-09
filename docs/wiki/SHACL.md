@@ -21,7 +21,9 @@ wiki:
     - shapes
 ```
 
-Markdown and data files under `shapes/` compile into the same wiki graph as wiki articles; `wiki check` extracts `sh:NodeShape` triples and runs PySHACL against every document. This repository keeps shapes alongside articles under `wiki/` instead ([Software Application Shape](Software_Application_Shape.md)); both layouts work.
+Markdown and data files under `shapes/` compile into the same wiki graph as wiki articles; `wiki check` extracts `sh:NodeShape` triples and validates every document against them with [rdf-validate-shacl](https://github.com/zazuko/rdf-validate-shacl).
+
+The validator applies `rdfs:subClassOf` when it resolves `sh:targetClass`, so a shape on a class also targets instances of its subclasses. It does not run a full RDFS inference pass first, which the pre-0.2.0 Python engine (PySHACL with `inference="rdfs"`) did. A constraint whose meaning depends on inferred triples, such as `sh:class` over an inferred type or `sh:path` over an `rdfs:subPropertyOf`, only sees triples the wiki states explicitly. This repository keeps shapes alongside articles under `wiki/` instead ([Software Application Shape](Software_Application_Shape.md)); both layouts work.
 
 To constrain a class (for example `schema:Project`), create `shapes/Project_Shape.md` using a [Style Guide](Style_Guide.md) Wikipedia-style filename and frontmatter like [Software Application Shape](Software_Application_Shape.md):
 
@@ -92,7 +94,7 @@ Pure `.ttl` or `.trig` files in `shapes/` also load when that directory is liste
 
 ## Related
 
-- [wiki check](wiki_check.md) — PySHACL and JSON Schema frontmatter validation
+- [wiki check](wiki_check.md) — SHACL and JSON Schema frontmatter validation
 - [wiki lint](wiki_lint.md) — prose and link conventions (separate from shapes)
 - [Style Guide](Style_Guide.md) — shape authoring and filenames
 - [Software Application Shape](Software_Application_Shape.md) — example `sh:NodeShape`
