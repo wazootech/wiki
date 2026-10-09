@@ -35,6 +35,7 @@ import {
   DEFAULT_LINE_WIDTH,
   formatMarkdownText,
   FORMATTER_PLUGIN_VERSIONS,
+  YAML_PLUGIN_PACKAGE_JSON,
 } from "../src/wiki/formatter.ts";
 
 const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
@@ -49,6 +50,19 @@ function format(text: string): string {
 function fenced(tag: string, body: string): string {
   return `# ${tag}\n\n\`\`\`${tag}\n${body}\n\`\`\`\n`;
 }
+
+Deno.test("the yaml plugin's runtime specifier matches deno.json", () => {
+  // JSR rewrites bare specifiers only in import statements, so the string that
+  // formatter.ts resolves at runtime is a full npm: specifier. It must name the
+  // version deno.json pins, or the snapshot and the runtime disagree.
+  const config = JSON.parse(
+    Deno.readTextFileSync(new URL("../deno.json", import.meta.url)),
+  );
+  assertEquals(
+    YAML_PLUGIN_PACKAGE_JSON,
+    `${config.imports["dprint-plugin-yaml"]}/package.json`,
+  );
+});
 
 // ---------------------------------------------------------------------------
 // The pinned plugin versions

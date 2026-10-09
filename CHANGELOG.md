@@ -35,6 +35,7 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 
 ### Fixed
 
+- `wiki fmt` no longer crashes with `Import "dprint-plugin-yaml/package.json" not a dependency` when the CLI runs from JSR (`deno run jsr:@wazoo/wiki/cli`). JSR rewrites bare specifiers in import statements on publish but not in `import.meta.resolve` arguments, so the YAML plugin is now resolved by its full `npm:` specifier, pinned to `deno.json` by a test.
 - Lists nested in frontmatter compile per the SHACL and RDF specs instead of
   one stringified literal. `sh:in`, `sh:languageIn`, `sh:ignoredProperties`,
   `sh:and`, `sh:or`, `sh:xone`, and `sh:alternativePath` become SHACL lists; a
