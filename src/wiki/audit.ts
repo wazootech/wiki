@@ -48,6 +48,7 @@ import {
 } from "./document.ts";
 
 import { collectFrontmatterSchemaFindings } from "./frontmatter_schema.ts";
+import { lintShapeDefinitions } from "./shape_lint.ts";
 import { headingPlainText, parseHeadings } from "./headings.ts";
 import {
   LAYOUT_FRONTMATTER_KEY,
@@ -470,12 +471,13 @@ export interface RunCheckOptions {
 }
 
 /**
- * Run the integrity checks: SHACL, route safety, output collisions, layout,
- * and JSON Schema frontmatter.
+ * Run the integrity checks: shape definitions, SHACL, route safety, output
+ * collisions, layout, and JSON Schema frontmatter.
  *
  * The order of the appended errors is the order the CLI prints them, so it is
- * part of the contract: SHACL first (a violation can make every later finding
- * noise), then route safety, which *replaces* the collision check rather than
+ * part of the contract: ill-formed shapes first (a shape that validates nothing
+ * makes the SHACL verdict below meaningless), then SHACL (a violation can make
+ * every later finding noise), then route safety, which *replaces* the collision check rather than
  * joining it — an unsafe route makes the manifest meaningless, so the collision
  * pass is skipped instead of reporting confusion on top of it.
  */
@@ -512,6 +514,13 @@ export async function runCheck(
       }
     }
 
+    report = applyIssues(
+      report,
+      "shape_definition",
+      await lintShapeDefinitions(config, null, { filePaths }),
+      config.check,
+    );
+
     const [missingSchemaIssues, schemaValidationIssues] =
       await collectFrontmatterSchemaFindings(config, null, { filePaths });
     report = applyIssues(
@@ -528,6 +537,15 @@ export async function runCheck(
     );
     return report;
   }
+
+  // Ill-formed shapes come first: a shape that validates nothing makes a green
+  // SHACL pass meaningless, so the reader should see why before trusting it.
+  report = applyIssues(
+    report,
+    "shape_definition",
+    await lintShapeDefinitions(config, fileFilter),
+    config.check,
+  );
 
   try {
     const shacl = await checkShaclAll(config);

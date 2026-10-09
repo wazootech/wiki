@@ -22,6 +22,7 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 
 ### Added
 
+- `wiki check` lints SHACL shape pages before validating with them (`check.shape_definition`, default `error`). A misspelled `sh:` key, type, or value, a property shape without `sh:path`, a malformed property path (including a one-path `sh:alternativePath` and a path CURIE with an undeclared prefix), a non-IRI value for an IRI-valued parameter, an invalid `sh:nodeKind`, and a node shape page that has no target and no referrer each fail the check, naming the route and the key path. The vocabulary is generated from the SHACL namespace document. Findings appear in `wiki check -f json` under the code `shape_definition`. ([#306](https://github.com/wazootech/wiki/issues/306))
 - `wiki check -f json` (alias `--json`) writes a structured report to stdout, versioned by a top-level `version` field (currently `1`). For each failing document it gives the field (`resultPath` plus `frontmatterKeys`), the constraint component, the named source shape, and the message. JSON Schema failures carry their schema and instance path. The text report and exit codes are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
 
 ### Changed

@@ -69,6 +69,18 @@ sh:property:
 
 Here the second property checks the author's name (a sequence path), and the third accepts either an `alternateName` or an author's name.
 
+### Shape page checks
+
+`wiki check` lints every shape page before it validates anything with it (`check.shape_definition`, default `error`). It follows the [SHACL Core](https://www.w3.org/TR/shacl/) rules for well-formed shapes:
+
+- **Vocabulary.** Every `sh:` key must be a property the [SHACL vocabulary](http://www.w3.org/ns/shacl.ttl) defines, and every `sh:` type or value must be one of its terms. `sh:patern` or `type: sh:NodeShap` fails instead of silently doing nothing.
+- **Property shapes** need exactly one `sh:path` (SHACL §2.3), whether they are a page typed `sh:PropertyShape` or an item under `sh:property`.
+- **Paths** must be well-formed (§2.3.1): an IRI, a list of paths (a sequence), or a mapping with exactly one of `sh:inversePath`, `sh:alternativePath`, `sh:zeroOrMorePath`, `sh:oneOrMorePath`, or `sh:zeroOrOnePath`. `sh:alternativePath` needs at least two paths. A CURIE whose prefix the wiki does not declare compiles to a plain string, not an IRI, so it is rejected.
+- **IRI-valued parameters** (`sh:targetClass`, `sh:targetSubjectsOf`, `sh:targetObjectsOf`, `sh:class`, `sh:datatype`, `sh:equals`, `sh:disjoint`, `sh:lessThan`, `sh:lessThanOrEquals`, and each member of `sh:ignoredProperties`) must be IRIs, and `sh:nodeKind` must be one of its six kinds (§4.1.3).
+- **Targets.** A node shape page with no target, that is not also a class and that no other shape reaches through `sh:node`, `sh:property`, `sh:qualifiedValueShape`, `sh:not`, `sh:and`, `sh:or`, or `sh:xone`, validates nothing and fails (§2.1).
+
+Turtle shapes (`.ttl` files and fenced `turtle` blocks) are not linted, because they have no frontmatter key to point at.
+
 ### JSON Schema (optional)
 
 On the same shape document, add `wazoo:jsonSchema` beside `sh:targetClass` to validate frontmatter with [JSON Schema](https://json-schema.org/) in parallel with SHACL:
