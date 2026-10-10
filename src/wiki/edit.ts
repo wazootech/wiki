@@ -689,9 +689,21 @@ async function validate(
     }
   }
 
-  const before = await scopedAudit(config, touched, backlinkRoutes);
+  // One route set for both runs. Computing it per run from the documents that
+  // exist would lint nothing before a pure create (its route does not exist
+  // yet) and the new route after, so every wiki-wide, path-less lint finding
+  // would show up only in the after run and count as introduced.
+  const lintRoutes = new Set(backlinkRoutes);
+  for (const path of touched) {
+    const route = safeRoute(config, path);
+    if (route !== null && extname(path).toLowerCase() === ".md") {
+      lintRoutes.add(route);
+    }
+  }
+
+  const before = await scopedAudit(config, touched, lintRoutes);
   return await withOverlay(overlay, async () => {
-    const after = await scopedAudit(config, touched, backlinkRoutes);
+    const after = await scopedAudit(config, touched, lintRoutes);
     const introduced = newIssues(before.report, after.report).map((issue) =>
       checkIssue(config, issue)
     );
@@ -703,7 +715,7 @@ async function validate(
 async function scopedAudit(
   config: Config,
   touched: readonly string[],
-  extraRoutes: ReadonlySet<string>,
+  lintRoutes: ReadonlySet<string>,
 ): Promise<{ report: AuditReport; documents: string[] }> {
   const existing = new Set(iterDocumentFiles(config).map(overlayKey));
   const documents = touched.filter((path) => existing.has(overlayKey(path)));
@@ -720,14 +732,9 @@ async function scopedAudit(
     );
   }
 
-  const routes = new Set(extraRoutes);
-  for (const path of documents) {
-    const route = safeRoute(config, path);
-    if (route !== null && extname(path).toLowerCase() === ".md") {
-      routes.add(route);
-    }
+  if (lintRoutes.size > 0) {
+    report = report.merge(await runLint(config, new Set(lintRoutes)));
   }
-  if (routes.size > 0) report = report.merge(await runLint(config, routes));
 
   const safety = validateRouteSafety(config);
   if (safety.length > 0) {
