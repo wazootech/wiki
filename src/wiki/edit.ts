@@ -35,7 +35,16 @@ import {
   type CheckIssue,
 } from "./check_report.ts";
 import type { Config } from "./config.ts";
+import {
+  EditOpError,
+  patchContent,
+  requiredFields,
+  scaffoldPage,
+  setField,
+  typeKey,
+} from "./edit_ops.ts";
 import { ValueError } from "./errors.ts";
+import { formatMarkdown } from "./fmt_util.ts";
 import {
   type FileOverlay,
   isSymlink,
@@ -69,15 +78,21 @@ export type EditTarget =
  * `expect` is checked against the file as it is on disk before the edit, even
  * when an earlier op in the same edit touched it.
  *
- * `set`, `patch`, and `move` are part of the contract now so plans can be
- * written against it, and are rejected as not yet supported until their
- * handlers land (wiki#355 slices 3 and 4).
+ * A `create` takes either the page's full `content`, or a typed scaffold:
+ * `type` (a class such as `schema:Purchase`), `frontmatter`, and `body`, from
+ * which the page is built with the type's required fields first and an H1.
+ *
+ * `move` is part of the contract now so plans can be written against it, and
+ * is rejected as not yet supported until its handler lands (wiki#355 slice 4).
  */
 export type EditOp =
   | {
     readonly op: "create";
     readonly path: string;
-    readonly content: string;
+    readonly content?: string;
+    readonly type?: string;
+    readonly frontmatter?: Readonly<Record<string, unknown>>;
+    readonly body?: string;
     readonly expect?: "absent";
   }
   | {
@@ -92,7 +107,12 @@ export type EditOp =
     readonly path: string;
     readonly field: string;
     /** `null` removes the field. */
-    readonly value: unknown;
+    readonly value?: unknown;
+    /**
+     * The value as YAML source, kept verbatim (`"12.00"` stays `12.00`, where
+     * the JSON `12.00` is the number `12`). Exclusive with `value`.
+     */
+    readonly yaml?: string;
     readonly expect?: string;
   }
   | {
@@ -224,7 +244,7 @@ export async function applyEdit(
       conflicts.push(conflict);
       continue;
     }
-    stage(op, plan);
+    await stage(config, op, plan);
   }
 
   const files = [...plans.values()]
@@ -293,17 +313,27 @@ const SUPPORTED_OPS: ReadonlySet<string> = new Set([
   "create",
   "replace",
   "delete",
+  "set",
+  "patch",
 ]);
 
 /** The op kinds the contract names, supported or not. */
 const KNOWN_OPS: ReadonlySet<string> = new Set([
   ...SUPPORTED_OPS,
-  "set",
-  "patch",
   "move",
 ]);
 
-type SupportedOp = Extract<EditOp, { op: "create" | "replace" | "delete" }>;
+type SupportedOp = Exclude<EditOp, { op: "move" }>;
+
+const PATCH_MODES: ReadonlySet<string> = new Set([
+  "append",
+  "prepend",
+  "replace",
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
 /**
  * Check an edit's shape before touching anything.
@@ -345,20 +375,93 @@ function validateShape(edit: WikiEdit): SupportedOp[] {
     if (typeof op.path !== "string" || op.path === "") {
       throw new EditUsageError(`${where}.path must be a non-empty string.`);
     }
-    if (kind !== "delete" && typeof op.content !== "string") {
-      throw new EditUsageError(`${where}.content must be a string.`);
-    }
-    if (op.expect !== undefined && typeof op.expect !== "string") {
-      throw new EditUsageError(`${where}.expect must be a string.`);
-    }
-    if (
-      kind === "create" && op.expect !== undefined && op.expect !== "absent"
-    ) {
-      throw new EditUsageError(`${where}: a create can only expect "absent".`);
-    }
+    validateOpFields(kind, op, where);
     ops.push(op as unknown as SupportedOp);
   });
   return ops;
+}
+
+/** The per-kind field checks behind {@link validateShape}. */
+function validateOpFields(
+  kind: string,
+  op: Record<string, unknown>,
+  where: string,
+): void {
+  if (op.expect !== undefined && typeof op.expect !== "string") {
+    throw new EditUsageError(`${where}.expect must be a string.`);
+  }
+  const optionalString = (key: string) => {
+    if (op[key] !== undefined && typeof op[key] !== "string") {
+      throw new EditUsageError(`${where}.${key} must be a string.`);
+    }
+  };
+  switch (kind) {
+    case "create": {
+      if (op.expect !== undefined && op.expect !== "absent") {
+        throw new EditUsageError(
+          `${where}: a create can only expect "absent".`,
+        );
+      }
+      const scaffold = op.type !== undefined || op.frontmatter !== undefined ||
+        op.body !== undefined;
+      if (op.content !== undefined && scaffold) {
+        throw new EditUsageError(
+          `${where}: give either content, or type/frontmatter/body, not both.`,
+        );
+      }
+      if (op.content === undefined && !scaffold) {
+        throw new EditUsageError(
+          `${where}: a create needs content, or a type/frontmatter/body scaffold.`,
+        );
+      }
+      optionalString("content");
+      optionalString("type");
+      optionalString("body");
+      if (op.frontmatter !== undefined && !isRecord(op.frontmatter)) {
+        throw new EditUsageError(`${where}.frontmatter must be an object.`);
+      }
+      return;
+    }
+    case "replace":
+      if (typeof op.content !== "string") {
+        throw new EditUsageError(`${where}.content must be a string.`);
+      }
+      return;
+    case "delete":
+      return;
+    case "set":
+      if (typeof op.field !== "string" || op.field === "") {
+        throw new EditUsageError(`${where}.field must be a non-empty string.`);
+      }
+      if (("value" in op) === (op.yaml !== undefined)) {
+        throw new EditUsageError(
+          `${where}: a set needs exactly one of value (null removes the field) or yaml.`,
+        );
+      }
+      optionalString("yaml");
+      return;
+    case "patch": {
+      const target = op.target;
+      const valid = isRecord(target) && (
+        (typeof target.heading === "string" && target.heading !== "") ||
+        target.frontmatter === true || target.body === true
+      );
+      if (!valid) {
+        throw new EditUsageError(
+          `${where}.target must be {"heading": "..."}, {"frontmatter": true}, or {"body": true}.`,
+        );
+      }
+      if (typeof op.mode !== "string" || !PATCH_MODES.has(op.mode)) {
+        throw new EditUsageError(
+          `${where}.mode must be one of append, prepend, replace.`,
+        );
+      }
+      if (typeof op.content !== "string") {
+        throw new EditUsageError(`${where}.content must be a string.`);
+      }
+      return;
+    }
+  }
 }
 
 /**
@@ -442,16 +545,45 @@ function checkExpect(
   };
 }
 
-function stage(op: SupportedOp, plan: FilePlan): void {
+/**
+ * Apply one op to a file's staged text.
+ *
+ * `set` and `patch` re-run `wiki fmt` on their result only when the page was
+ * already fmt-clean, so an edit to an unformatted page does not smuggle an
+ * unrelated reformat into its diff. A typed create is always formatted: it is
+ * new text, and it should arrive the way `fmt` would leave it.
+ */
+async function stage(
+  config: Config,
+  op: SupportedOp,
+  plan: FilePlan,
+): Promise<void> {
   switch (op.op) {
-    case "create":
+    case "create": {
       if (plan.after !== null) {
         throw new EditUsageError(
           `${op.path}: cannot create a file that exists; use "replace".`,
         );
       }
-      plan.after = op.content;
+      if (op.content !== undefined) {
+        plan.after = op.content;
+        return;
+      }
+      const type = op.type ?? null;
+      const fields = Object.entries(op.frontmatter ?? {}).map((
+        [key, json],
+      ) => [key, { json }] as const);
+      const page = scaffoldPage({
+        path: plan.path,
+        typeKey: typeKey(config),
+        type,
+        required: type === null ? [] : await requiredFields(config, type),
+        fields,
+        body: op.body ?? null,
+      });
+      plan.after = formatIfMarkdown(config, plan.path, page);
       return;
+    }
     case "replace":
       if (plan.after === null) {
         throw new EditUsageError(
@@ -466,7 +598,47 @@ function stage(op: SupportedOp, plan: FilePlan): void {
       }
       plan.after = null;
       return;
+    case "set":
+    case "patch": {
+      const current = plan.after;
+      if (current === null) {
+        throw new EditUsageError(`${op.path}: the file does not exist.`);
+      }
+      if (extname(plan.path).toLowerCase() !== ".md") {
+        throw new EditUsageError(
+          `${op.path}: ${op.op} applies to Markdown pages; use "replace" for data documents.`,
+        );
+      }
+      let next: string;
+      try {
+        next = op.op === "set"
+          ? setField(
+            current,
+            op.path,
+            op.field,
+            op.yaml !== undefined
+              ? { yaml: op.yaml }
+              : op.value === null
+              ? null
+              : { json: op.value },
+          )
+          : patchContent(current, op.path, op.target, op.mode, op.content);
+      } catch (error) {
+        if (error instanceof EditOpError) {
+          throw new EditUsageError(error.message);
+        }
+        throw error;
+      }
+      const clean = formatIfMarkdown(config, plan.path, current) === current;
+      plan.after = clean ? formatIfMarkdown(config, plan.path, next) : next;
+      return;
+    }
   }
+}
+
+function formatIfMarkdown(config: Config, path: string, text: string): string {
+  if (extname(path).toLowerCase() !== ".md") return text;
+  return formatMarkdown(text, path, config);
 }
 
 function unchanged(plan: FilePlan): boolean {

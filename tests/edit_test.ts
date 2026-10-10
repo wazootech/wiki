@@ -331,11 +331,12 @@ Deno.test("ops this version cannot apply are a clear usage error", async () => {
       () =>
         wiki.edit({
           ops: [{
-            op: "set",
+            op: "move",
             path: "wiki/Good.md",
-            field: "schema:headline",
-            value: "x",
-          }],
+            from: "wiki/Good.md",
+            to: "wiki/Moved.md",
+            // deno-lint-ignore no-explicit-any
+          } as any],
         }),
       EditUsageError,
     );
