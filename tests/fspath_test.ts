@@ -1,15 +1,19 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { join, relative } from "@std/path";
 import {
+  activeOverlay,
+  fileStat,
   isDirectory,
   isFile,
   isSymlink,
+  overlayKey,
   pathExists,
   readText,
   relativeWithin,
   sortedTreePaths,
   sortPaths,
   walkTree,
+  withOverlay,
 } from "../src/wiki/fspath.ts";
 import { ValueError } from "../src/wiki/errors.ts";
 import { symlinksUnavailable } from "./support/symlink_support.ts";
@@ -93,4 +97,56 @@ Deno.test({
       Deno.removeSync(outside, { recursive: true });
     }
   },
+});
+
+Deno.test("an overlay stages creates, edits, and deletes for every read", async () => {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-overlay-" });
+  try {
+    const kept = join(root, "kept.md");
+    const gone = join(root, "gone.md");
+    Deno.writeTextFileSync(kept, "old");
+    Deno.writeTextFileSync(gone, "bye");
+    const created = join(root, "new", "deep", "page.md");
+    const overlay = {
+      id: "o1",
+      files: new Map<string, string | null>([
+        [overlayKey(kept), "new text"],
+        [overlayKey(gone), null],
+        [overlayKey(created), "hello"],
+      ]),
+    };
+
+    await withOverlay(overlay, async () => {
+      // Survives an await: AsyncLocalStorage carries the overlay through.
+      await Promise.resolve();
+      assertEquals(activeOverlay()?.id, "o1");
+      assertEquals(readText(kept), "new text");
+      assertThrows(() => readText(gone), Deno.errors.NotFound);
+      assertEquals(pathExists(gone), false);
+      assertEquals(isFile(created), true);
+      assertEquals(isDirectory(join(root, "new")), true);
+      assertEquals(isDirectory(created), false);
+      assertEquals(fileStat(created).size, 5);
+      assertEquals(
+        walkTree(root).map((path) => relative(root, path)),
+        sortPaths([
+          "kept.md",
+          "new",
+          join("new", "deep"),
+          join("new", "deep", "page.md"),
+        ]),
+      );
+    });
+
+    // Outside the overlay, the disk is untouched and authoritative.
+    assertEquals(activeOverlay(), undefined);
+    assertEquals(readText(kept), "old");
+    assertEquals(isFile(created), false);
+    assertEquals(walkTree(root).map((path) => relative(root, path)), [
+      "gone.md",
+      "kept.md",
+    ]);
+  } finally {
+    Deno.removeSync(root, { recursive: true });
+  }
 });
