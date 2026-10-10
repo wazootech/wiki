@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.3 — 2026-10-10
 
 ### Added
 
@@ -272,7 +272,7 @@ link:
 - `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`, `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives layout chrome, `{{ site.manifest.json }}` / `{{ site.manifest.url }}` placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
 - `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
 
-## Unreleased
+## 0.2.3 — 2026-10-10
 
 ### Added
 
