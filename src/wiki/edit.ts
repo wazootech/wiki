@@ -190,7 +190,15 @@ interface FilePlan {
   after: string | null;
 }
 
-/** Apply (or dry-run) an edit against `config`'s wiki. */
+/**
+ * Apply (or dry-run) an edit against `config`'s wiki.
+ *
+ * Validation is scoped, not whole-wiki: it re-checks the touched documents and
+ * the pages that link to deleted ones. A page whose SHACL result depends on a
+ * touched page without linking to it (say an `sh:class` constraint on an IRI
+ * that page defines) is not re-validated, so an accepted edit can still break
+ * it. `wiki check` over the whole wiki remains the full gate; run it in CI.
+ */
 export async function applyEdit(
   config: Config,
   edit: WikiEdit,
@@ -679,9 +687,14 @@ export function commitFiles(
   const token = crypto.randomUUID().slice(0, 8);
   const temps = new Map<FilePlan, string>();
   const done: FilePlan[] = [];
+  // Directories this commit creates, so a rollback can take them away again.
+  const createdDirs: string[] = [];
   try {
     for (const plan of plans) {
       if (plan.after === null) continue;
+      for (const dir of missingAncestors(dirname(plan.path))) {
+        if (!createdDirs.includes(dir)) createdDirs.push(dir);
+      }
       io.mkdir(dirname(plan.path));
       const temp = join(
         dirname(plan.path),
@@ -709,7 +722,41 @@ export function commitFiles(
       }
     }
     for (const plan of done.reverse()) restore(plan);
+    removeEmptyDirs(createdDirs);
     throw error;
+  }
+}
+
+/** `dir` and its ancestors that do not exist yet, outermost first. */
+function missingAncestors(dir: string): string[] {
+  const missing: string[] = [];
+  let cursor = resolve(dir);
+  while (true) {
+    try {
+      Deno.statSync(cursor);
+      break;
+    } catch {
+      missing.unshift(cursor);
+    }
+    const parent = dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+  }
+  return missing;
+}
+
+/**
+ * Remove directories a failed commit created, deepest first, but only while
+ * empty: anything another process put there in the meantime is not ours.
+ */
+function removeEmptyDirs(dirs: readonly string[]): void {
+  const deepestFirst = [...dirs].sort((a, b) => b.length - a.length);
+  for (const dir of deepestFirst) {
+    try {
+      Deno.removeSync(dir);
+    } catch {
+      // Not empty, or already gone: either way it is not ours to remove.
+    }
   }
 }
 

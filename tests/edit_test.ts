@@ -390,6 +390,33 @@ Deno.test("a commit that fails midway restores every file byte for byte", () => 
   }
 });
 
+Deno.test("a failed commit removes the directories it created", () => {
+  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-dirs-" });
+  try {
+    const nested = join(root, "new", "deep", "Page.md");
+    const sibling = join(root, "Top.md");
+    const plans: FilePlan[] = [
+      { path: nested, before: null, after: "# Page\n" },
+      { path: sibling, before: null, after: "# Top\n" },
+    ];
+    let renames = 0;
+    assertThrows(() =>
+      commitFiles(plans, {
+        writeFile: (path, data) => Deno.writeFileSync(path, data),
+        mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
+        remove: (path) => Deno.removeSync(path),
+        rename: (from, to) => {
+          if (++renames === 2) throw new Error("disk full");
+          Deno.renameSync(from, to);
+        },
+      })
+    );
+    assertEquals([...Deno.readDirSync(root)].map((entry) => entry.name), []);
+  } finally {
+    cleanup(root);
+  }
+});
+
 async function runEdit(
   root: string,
   args: readonly string[],
