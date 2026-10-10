@@ -340,12 +340,6 @@ function errorMessage(error: unknown): string {
 }
 
 /**
- * Record the outbound page links of one document in the backlink index.
- *
- * Python passes `config` and `file_path` here and reads neither; the port
- * drops both, as it does for `_page_target_issue`'s `label`.
- */
-/**
  * The page routes one document links to, in first-link order.
  *
  * The same scan {@link LinkIndex.fromConfig} inverts into backlinks, run for a
@@ -361,6 +355,12 @@ export function outboundPageRoutes(
   return [...targets.keys()];
 }
 
+/**
+ * Record the outbound page links of one document in the backlink index.
+ *
+ * Python passes `config` and `file_path` here and reads neither; the port
+ * drops both, as it does for `_page_target_issue`'s `label`.
+ */
 function indexPageLinks(
   sourceRoute: string,
   content: string,
