@@ -40,7 +40,7 @@
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",
     "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0",
-    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.3",
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.4.4",
     "@zazuko/env": "npm:@zazuko/env@^3.0.0",
     "@zazuko/env-node": "npm:@zazuko/env-node@^3.0.0",
     "ajv": "npm:ajv@^8.17.1",

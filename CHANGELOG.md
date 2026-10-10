@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Large TriG named graphs load in linear time. `@wazoo/sparql-engine` 0.4.3 parsed a `<g> { ... }` block in quadratic time (8,000 quads took ~19 s), so RDF data files with big named graphs were slow to index. The pin moves to 0.4.4. ([sparql-engine#175](https://github.com/wazootech/sparql-engine/issues/175))
 - The PyPI release uploads the platform wheels before the binary-less `py3-none-any` fallback. Uploaded fallback-first, an install in the seconds while an upload was in flight could see only the fallback, take it on a platform that has a wheel, and get a `wiki` that fails with "no Wiki binary for this platform". A re-run of the job now finishes an upload that stopped partway instead of skipping the version, and the job checks that all 7 wheels are listed.
 
 ## 0.2.2 — 2026-10-09
