@@ -18,7 +18,7 @@ Spawn **one** executor subagent with `isolation: "worktree"`.
 
 The subagent prompt must contain:
 
-1. **The full plan file text, inlined.**
+1. **The full plan file text, inlined**, plus its `plans/NNN-*.edit.json` when the plan has one (see [plan.md](plan.md#edit-plans)).
 1. The executor preamble:
 
 > You are the executor for the implementation plan below. Follow it step by
@@ -51,6 +51,7 @@ Review like a tech lead reviewing a PR against the spec — never fix anything y
    `wiki -c <config> fmt --check`
    `wiki -c <config> lint --strict`
    `wiki -c <config> check --strict`
+1. **Edit plans**: when the plan carried a `WikiEdit` JSON, the executor's `wiki edit --apply --json` report must show `"status": "applied"` and the same `files[]` as the advisor's dry run. Exit `3` from the executor means the plan went stale: BLOCK, re-`show` the files, and rewrite the edit JSON; never send the executor back with fresh hashes it did not plan against.
 1. **Scope compliance**: `git -C <worktree> diff --stat` against the plan's in-scope list. Any file outside scope fails review.
 1. **Read the full diff.** Judge it against the intent (does it actually resolve the markdown or config error?) and conventions (Wikipedia-style names, heading cases, standard links).
 
