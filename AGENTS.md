@@ -49,6 +49,8 @@ Wiki CLI aims to be a one-stop semantic Markdown wiki toolchain, similar in spir
 
 Before adding a subcommand, ask whether it strengthens the semantic Markdown wiki toolchain. If it belongs to validation, graph construction, RDF/JSON-LD/SPARQL interoperability, static publishing, local preview, or CI-friendly checks, it may belong in Wiki CLI. If it is generic authoring, Obsidian app control, vault search, daily notes, task/tag dashboards, sync, history, PDF/print conversion, or generic file/process automation, use or document existing primitives instead.
 
+Guarded semantic writes are in scope (#353): operations whose meaning depends on the wiki's semantics — creating a page of a known type, setting a typed frontmatter field, patching a heading section, moving or deleting a page with its inbound links — validated against shapes, routes, and the link graph before anything is written. They share one core (`Wiki.edit()`, #355) that the CLI verbs, `wiki mcp` (#356), and any later adapter wrap. Blind file writes, app-control verbs, and Git commits stay out: the CLI never commits.
+
 Do not add Wiki CLI features that duplicate existing primitives unless there is a clear semantic-wiki reason:
 
 - Use Obsidian CLI or Obsidian plugins for app/vault authoring workflows: daily notes, append/read current note, templates, task lists, tags, tag dashboards, vault search, plugin reload, DevTools, screenshots, DOM/CSS inspection, and sync.
