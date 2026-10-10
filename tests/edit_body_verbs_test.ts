@@ -469,3 +469,81 @@ Deno.test("an unformatted page is not reformatted by an unrelated set", async ()
     cleanup(root);
   }
 });
+
+const HISTORY = `---
+'@type': schema:Article
+schema:headline: History
+---
+
+# History
+
+## Log
+
+- 2026-09-14 — Created.
+- 2026-09-15 — Tightened.
+
+## Next
+
+Plans.
+`;
+
+async function patchLog(
+  mode: "append" | "prepend",
+  content: string,
+): Promise<string> {
+  const root = writeWiki({ "History.md": HISTORY });
+  try {
+    const report = await Wiki.load(root).edit({
+      ops: [{
+        op: "patch",
+        path: "wiki/History.md",
+        target: { heading: "Log" },
+        mode,
+        content,
+      }],
+    }, { apply: true });
+    assertEquals(report.status, "applied", JSON.stringify(report.introduced));
+    return read(root, "wiki/History.md");
+  } finally {
+    cleanup(root);
+  }
+}
+
+Deno.test("patch keeps a list tight when appending an item to it", async () => {
+  assertEquals(
+    await patchLog("append", "- 2026-10-10 — Test entry.\n"),
+    HISTORY.replace(
+      "- 2026-09-15 — Tightened.\n",
+      "- 2026-09-15 — Tightened.\n- 2026-10-10 — Test entry.\n",
+    ),
+  );
+});
+
+Deno.test("patch keeps a list tight when prepending an item to it", async () => {
+  assertEquals(
+    await patchLog("prepend", "- 2026-09-01 — Drafted."),
+    HISTORY.replace(
+      "## Log\n\n- 2026-09-14",
+      "## Log\n\n- 2026-09-01 — Drafted.\n- 2026-09-14",
+    ),
+  );
+});
+
+Deno.test("patch separates blocks that are not items of the same list", async () => {
+  // A paragraph after a list, and an ordered item after `-` items (a new list in
+  // CommonMark), both keep the blank line.
+  assertEquals(
+    await patchLog("append", "Done."),
+    HISTORY.replace(
+      "- 2026-09-15 — Tightened.\n",
+      "- 2026-09-15 — Tightened.\n\nDone.\n",
+    ),
+  );
+  assertEquals(
+    await patchLog("append", "1. First."),
+    HISTORY.replace(
+      "- 2026-09-15 — Tightened.\n",
+      "- 2026-09-15 — Tightened.\n\n1. First.\n",
+    ),
+  );
+});

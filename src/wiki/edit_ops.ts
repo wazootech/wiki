@@ -135,6 +135,24 @@ function trimBlankLines(lines: readonly string[]): string[] {
   return lines.slice(start, end);
 }
 
+const LIST_ITEM_RE = /^\s*(?:([-*+])|\d{1,9}([.)]))\s/;
+
+/**
+ * The list a line's item belongs to, or `null` for a non-item: the bullet
+ * character, or the ordered delimiter. CommonMark starts a new list when either
+ * changes, so only lines of the same family continue one list.
+ */
+function listFamily(line: string | undefined): string | null {
+  const match = line === undefined ? null : LIST_ITEM_RE.exec(line);
+  if (match === null) return null;
+  return match[1] ?? `ordered${match[2]}`;
+}
+
+/**
+ * Join two blocks, one blank line apart, except where they meet as items of
+ * the same list: a blank line there would turn a tight list loose (and split
+ * the change log an agent appended to), so the items join directly.
+ */
 function joinBlocks(
   mode: PatchMode,
   existing: readonly string[],
@@ -143,9 +161,12 @@ function joinBlocks(
   if (mode === "replace") return [...added];
   if (existing.length === 0) return [...added];
   if (added.length === 0) return [...existing];
-  return mode === "append"
-    ? [...existing, "", ...added]
-    : [...added, "", ...existing];
+  const [first, second] = mode === "append"
+    ? [existing, added]
+    : [added, existing];
+  const family = listFamily(first.at(-1));
+  const sameList = family !== null && family === listFamily(second[0]);
+  return sameList ? [...first, ...second] : [...first, "", ...second];
 }
 
 /**
