@@ -106,21 +106,28 @@ Design rationale for silence, pipes, and flat subcommands: [Design philosophies]
 
 ## Ecosystem templates
 
-GitHub **template repositories** in the [wazootech](https://github.com/wazootech) org sit at the edges of the toolchain — publish surfaces, query UIs, and starter vaults — while Wiki CLI owns the semantic layer ([Design philosophies](Design_Philosophies.md)). This section is the canonical registry.
+Starter templates sit at the edges of the toolchain — publish surfaces, query UIs, and starter vaults — while Wiki CLI owns the semantic layer ([Design philosophies](Design_Philosophies.md)). Each is one subdirectory of the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo, and this section is the canonical registry. Install one into an empty directory with [`wiki init --template <name>`](wiki_init.md):
 
-| Template                                                                     | Description                                                                                   |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| [generic](https://github.com/wazootech/wiki-templates/tree/main/generic)     | Generic Wiki CLI project (`wiki init` parity plus deploy)                                     |
-| [yasgui](https://github.com/wazootech/wiki-templates/tree/main/yasgui)       | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL                       |
-| [llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/llm-wiki)   | [LLM Wiki](LLM_Wiki.md) starter vault with agent-oriented pages and gardening hooks           |
-| [nextjs](https://github.com/wazootech/wiki-templates/tree/main/nextjs)       | Next.js SSG consumer of `wiki export` JSON-LD                                                 |
-| [quartz](https://github.com/wazootech/wiki-templates/tree/main/quartz)       | Quartz static site from a compatible vault plus `wiki check` CI                               |
-| [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/cocoindex) | CocoIndex incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes |
-| [mintlify](https://github.com/wazootech/wiki-templates/tree/main/mintlify)   | Mintlify or Holocron docs site from a compatible vault                                        |
-| [holocron](https://github.com/wazootech/wiki-templates/tree/main/holocron)   | Holocron docs site from a Wiki CLI-compatible vault                                           |
-| [astro](https://github.com/wazootech/wiki-templates/tree/main/astro)         | Astro SSG consumer of `wiki export` JSON-LD                                                   |
-| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia) | Wikipedia-themed layout for Wiki CLI-generated sites                                          |
-| [camunda](https://github.com/wazootech/wiki-templates/tree/main/camunda)     | Camunda BPMN/DMN governance knowledge base with SHACL shapes                                  |
+```sh
+wiki init --template llm-wiki
+```
+
+| Template                                                                             | Description                                                                                   |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| [generic](https://github.com/wazootech/wiki-templates/tree/main/generic)             | Generic Wiki CLI project (`wiki init` parity plus deploy)                                     |
+| [yasgui](https://github.com/wazootech/wiki-templates/tree/main/yasgui)               | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL                       |
+| [llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/llm-wiki)           | [LLM Wiki](LLM_Wiki.md) starter vault with agent-oriented pages and gardening hooks           |
+| [nextjs](https://github.com/wazootech/wiki-templates/tree/main/nextjs)               | Next.js SSG consumer of `wiki export` JSON-LD                                                 |
+| [quartz](https://github.com/wazootech/wiki-templates/tree/main/quartz)               | Quartz static site from a compatible vault plus `wiki check` CI                               |
+| [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/cocoindex)         | CocoIndex incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes |
+| [mintlify](https://github.com/wazootech/wiki-templates/tree/main/mintlify)           | Mintlify or Holocron docs site from a compatible vault                                        |
+| [holocron](https://github.com/wazootech/wiki-templates/tree/main/holocron)           | Holocron docs site from a Wiki CLI-compatible vault                                           |
+| [astro](https://github.com/wazootech/wiki-templates/tree/main/astro)                 | Astro SSG consumer of `wiki export` JSON-LD                                                   |
+| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia)         | Wikipedia-themed layout for Wiki CLI-generated sites                                          |
+| [camunda](https://github.com/wazootech/wiki-templates/tree/main/camunda)             | Camunda BPMN/DMN governance knowledge base with SHACL shapes                                  |
+| [workspace-cli](https://github.com/wazootech/wiki-templates/tree/main/workspace-cli) | Composed workspace of independently owned sub-wiki repos with named-graph provenance          |
+
+To propose a template or integration, [open an issue](https://github.com/wazootech/wiki-templates/issues/new) in wiki-templates describing the tool it connects and the Wiki CLI outputs it consumes; to build one, follow its [contributing guide](https://github.com/wazootech/wiki-templates/blob/main/CONTRIBUTING.md) and open a PR that adds a subdirectory and a catalog row.
 
 ### Artifact contract
 
