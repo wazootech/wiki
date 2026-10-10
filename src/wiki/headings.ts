@@ -119,3 +119,68 @@ export function headingIds(markdown: string): Set<string> {
   for (const heading of parseHeadings(markdown)) ids.add(heading.slug);
   return ids;
 }
+
+/** One heading's section: where it starts, where its content starts and ends. */
+export interface SectionRange {
+  readonly level: number;
+  readonly text: string;
+  readonly slug: string;
+  /** 0-based index of the heading's first line. */
+  readonly start: number;
+  /** 0-based index of the first line after the heading (a setext heading is two lines). */
+  readonly contentStart: number;
+  /**
+   * 0-based index one past the section's last line: the next heading at the
+   * same or a higher level, or the end of the document.
+   */
+  readonly end: number;
+}
+
+/**
+ * The sections whose heading is `heading`, matched on its text, its plain text
+ * (links stripped), or its anchor slug.
+ *
+ * Lines come from `markdown-it` token maps, not a `#` scan, so a `#` inside a
+ * fenced block is never a heading, which is the whole reason `wiki patch`
+ * targets sections through the parser (wiki#355). More than one match is
+ * returned as-is; the caller decides that ambiguity is an error.
+ */
+export function findSections(
+  markdown: string,
+  heading: string,
+): SectionRange[] {
+  const tokens = headingParser().parse(markdown, {});
+  const slugger = new GitHubHeadingSlugger();
+  const all: Array<Omit<SectionRange, "end">> = [];
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index] as Token;
+    if (token.type !== "heading_open" || token.map === null) continue;
+    const next = tokens[index + 1];
+    const text = next !== undefined && next.type === "inline"
+      ? next.content
+      : "";
+    all.push({
+      level: Number(token.tag.slice(1)),
+      text,
+      slug: slugger.slug(text),
+      start: token.map[0] as number,
+      contentStart: token.map[1] as number,
+    });
+  }
+  const lineCount = markdown.split("\n").length;
+  const wanted = heading.trim();
+  const sections: SectionRange[] = [];
+  all.forEach((section, index) => {
+    if (
+      section.text !== wanted && headingPlainText(section.text) !== wanted &&
+      section.slug !== wanted
+    ) {
+      return;
+    }
+    const next = all.slice(index + 1).find((later) =>
+      later.level <= section.level
+    );
+    sections.push({ ...section, end: next?.start ?? lineCount });
+  });
+  return sections;
+}
