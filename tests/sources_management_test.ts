@@ -1,6 +1,6 @@
 import { dirname, join } from "@std/path";
 import { pathExists, readText } from "../src/wiki/fspath.ts";
-import { symlinksUnavailable } from "./support/symlink_support.ts";
+import { gitSymlinksUnavailable } from "./support/symlink_support.ts";
 import {
   assert,
   assertEquals,
@@ -347,7 +347,7 @@ Deno.test("install rejects a transitive source path escaping its clone", () => {
 Deno.test({
   name:
     "install rejects a transitive source path via a symlink escaping its clone",
-  ignore: symlinksUnavailable(),
+  ignore: gitSymlinksUnavailable(),
   fn: () => {
     withTempDir((root) => {
       // A symlink inside the clone pointing outside it is the same escape
