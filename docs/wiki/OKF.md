@@ -22,12 +22,12 @@ The audit covered the canonical OKF v0.2 specification, the OpenWiki migration p
 
 The relevant Wiki CLI anchors are:
 
-- `src/wiki/parser.py:20-24, 67-78` parses Markdown frontmatter as a YAML mapping, preserves nested values, adds a default `@context`, and optionally adds the body under the configured content predicate.
-- `src/wiki/graph.py:146-159` resolves frontmatter keys as CURIEs, `wiki.*` keys, or terms under `@vocab`; it does not contain OKF-specific aliases.
-- `src/wiki/graph.py:175-223` recursively converts mappings to blank nodes, absolute HTTP values to URI objects, known CURIEs to URI objects, and unknown CURIE-like values to literals.
-- `src/wiki/graph.py:289-342` skips only `id`, `type`, and `@type` as structural keys, then passes every other frontmatter field through to RDF.
-- `src/wiki/context.py:10-29` provides `schema`, `dcterms`, `foaf`, `dc`, and `wazoo` bindings, but a binding alone does not map an unprefixed OKF key to a different predicate.
-- `src/wiki/cli.py:426-479` and `src/wiki/wiki.py:348-427` implement the current export surface: `dict`, `json-ld`, Turtle, XML, N3, N-Triples, TriG, and N-Quads.
+- `src/wiki/parser.ts` parses Markdown frontmatter as a YAML mapping, preserves nested values, adds a default `@context`, and optionally adds the body under the configured content predicate.
+- `src/wiki/graph.ts` resolves frontmatter keys as CURIEs, `wiki.*` keys, or terms under `@vocab`; it does not contain OKF-specific aliases.
+- `src/wiki/graph.ts` recursively converts mappings to blank nodes, absolute HTTP values to URI objects, known CURIEs to URI objects, and unknown CURIE-like values to literals.
+- `src/wiki/graph.ts` skips only `id`, `type`, and `@type` as structural keys, then passes every other frontmatter field through to RDF.
+- `src/wiki/context.ts` provides `schema`, `dcterms`, `foaf`, `dc`, and `wazoo` bindings, but a binding alone does not map an unprefixed OKF key to a different predicate.
+- `src/wiki/export.ts` (`EXPORT_FORMATS`) implements the current export surface: `dict`, `json-ld`, Turtle, XML, N3, N-Triples, TriG, and N-Quads.
 - `docs/wiki.yml:16-34` sets `@vocab` to `https://schema.org/`, configures `schema:articleBody`, and does not define `raw:` or `memory:` prefixes.
 
 A direct export probe using the proposed fields confirmed the current behavior: `sources`, `generated`, `verified`, `status`, `stale_after`, and `okf_version` become `schema:*` predicates under this wiki configuration; nested mappings become blank nodes; `stale_after` becomes an `xsd:dateTime` literal; and an unknown value such as `raw:calendar/abc` remains a literal rather than becoming a URI.
@@ -120,7 +120,7 @@ The future shape should be paired with fixtures for absent families, a complete 
 
 ## `wiki export --okf` profile
 
-The current export machinery is the wrong layer for producing OKF directly. `src/wiki/wiki.py:348-427` loads frontmatter and serializes RDF; it does not copy Markdown bodies, preserve the original YAML spelling, create bundle directories, or write indexes. An OKF profile must therefore be a bundle exporter, not an RDF serializer with a different label.
+The current export machinery is the wrong layer for producing OKF directly. `src/wiki/export.ts` loads frontmatter and serializes RDF; it does not copy Markdown bodies, preserve the original YAML spelling, create bundle directories, or write indexes. An OKF profile must therefore be a bundle exporter, not an RDF serializer with a different label.
 
 A future `wiki export --okf` should:
 
