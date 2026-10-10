@@ -354,24 +354,19 @@ Deno.test("edits are confined to wiki documents under wiki.input", async () => {
   }
 });
 
-Deno.test("ops this version cannot apply are a clear usage error", async () => {
+Deno.test("malformed ops are a clear usage error", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
     const error = await assertRejects(
       () =>
         wiki.edit({
-          ops: [{
-            op: "move",
-            path: "wiki/Good.md",
-            from: "wiki/Good.md",
-            to: "wiki/Moved.md",
-            // deno-lint-ignore no-explicit-any
-          } as any],
+          // deno-lint-ignore no-explicit-any
+          ops: [{ op: "move", from: "wiki/Good.md" } as any],
         }),
       EditUsageError,
     );
-    assert(error.message.includes("not yet supported"), error.message);
+    assert(error.message.includes("ops[0].to"), error.message);
     await assertRejects(
       // deno-lint-ignore no-explicit-any
       () => wiki.edit({ ops: [{ op: "frobnicate" } as any] }),
@@ -510,12 +505,12 @@ Deno.test(
       assertEquals(read(root, "wiki/Good.md"), GOOD);
 
       assertEquals((await runEdit(root, [], "not json")).code, EXIT_USAGE);
-      const unsupported = JSON.stringify({
-        ops: [{ op: "move", from: "wiki/Good.md", to: "wiki/G.md" }],
+      const malformed = JSON.stringify({
+        ops: [{ op: "move", from: "wiki/Good.md" }],
       });
-      const usage = await runEdit(root, [], unsupported);
+      const usage = await runEdit(root, [], malformed);
       assertEquals(usage.code, EXIT_USAGE);
-      assert(usage.stderr.includes("not yet supported"), usage.stderr);
+      assert(usage.stderr.includes("ops[0].to"), usage.stderr);
 
       const applied = await runEdit(root, ["--apply"], valid);
       assertEquals(applied.code, EXIT_OK, applied.stderr);

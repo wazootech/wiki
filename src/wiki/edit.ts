@@ -43,16 +43,23 @@ import {
   setField,
   typeKey,
 } from "./edit_ops.ts";
+import { splitFrontmatterText } from "./document.ts";
 import { ValueError } from "./errors.ts";
 import { formatMarkdown } from "./fmt_util.ts";
 import {
   type FileOverlay,
   isSymlink,
   overlayKey,
+  readText,
   relativeWithin,
   withOverlay,
 } from "./fspath.ts";
-import { DOCUMENT_EXTENSIONS } from "./parser.ts";
+import {
+  pruneLinksTo,
+  rewriteLinkTargets,
+  rewriteMetadataRefs,
+} from "./link_fix.ts";
+import { DOCUMENT_EXTENSIONS, documentDataFromPath } from "./parser.ts";
 import {
   buildPageManifest,
   detectOutputCollisions,
@@ -82,8 +89,10 @@ export type EditTarget =
  * `type` (a class such as `schema:Purchase`), `frontmatter`, and `body`, from
  * which the page is built with the type's required fields first and an H1.
  *
- * `move` is part of the contract now so plans can be written against it, and
- * is rejected as not yet supported until its handler lands (wiki#355 slice 4).
+ * A `move` relocates a page and repoints every link to it (see
+ * {@link rewriteLinkTargets}); its `expect` applies to `from`, and `to` must
+ * not exist. A `delete` refuses while other pages link to the page, unless
+ * `pruneLinks` turns those links into plain text.
  */
 export type EditOp =
   | {
@@ -101,7 +110,13 @@ export type EditOp =
     readonly content: string;
     readonly expect?: string;
   }
-  | { readonly op: "delete"; readonly path: string; readonly expect?: string }
+  | {
+    readonly op: "delete";
+    readonly path: string;
+    readonly expect?: string;
+    /** Replace inbound links with their label text instead of refusing. */
+    readonly pruneLinks?: boolean;
+  }
   | {
     readonly op: "set";
     readonly path: string;
@@ -145,7 +160,8 @@ export interface EditOptions {
 /**
  * - `dry_run`: valid, not written (no `apply`).
  * - `applied`: written.
- * - `rejected`: introduces errors and was not written (no `force`).
+ * - `rejected`: introduces errors (or would leave links dangling) and was not
+ *   written (no `force`).
  * - `conflict`: an `expect` precondition failed; nothing was validated or written.
  */
 export type EditStatus = "dry_run" | "applied" | "rejected" | "conflict";
@@ -227,15 +243,29 @@ export async function applyEdit(
   const ops = validateShape(edit);
   const plans = new Map<string, FilePlan>();
   const conflicts: EditConflict[] = [];
-
-  for (const op of ops) {
-    const path = targetPath(config, op.path);
+  const moves: StagedMove[] = [];
+  // Deletes that would leave links dangling: reported as errors of their own,
+  // because a broken link is only a lint *warning* and would not block.
+  const guards: CheckIssue[] = [];
+  const planFor = (path: string): FilePlan => {
     let plan = plans.get(overlayKey(path));
     if (plan === undefined) {
       plan = { path, before: readBytes(path), after: null };
       plan.after = plan.before === null ? null : decode(plan.before);
       plans.set(overlayKey(path), plan);
     }
+    return plan;
+  };
+
+  for (const op of ops) {
+    if (op.op === "move") {
+      const staged = stageMove(config, op, plans, planFor);
+      if ("conflict" in staged) conflicts.push(staged.conflict);
+      else moves.push(staged.move);
+      continue;
+    }
+    const path = targetPath(config, op.path);
+    const plan = planFor(path);
     const conflict = checkExpect(config, path, op.expect, plan.before);
     if (conflict !== null) {
       // Staging against a file that is not what the caller thinks it is would
@@ -243,6 +273,11 @@ export async function applyEdit(
       // exists"); the conflict is the real answer.
       conflicts.push(conflict);
       continue;
+    }
+    if (op.op === "delete" && plan.after !== null) {
+      guards.push(
+        ...guardDelete(config, plans, planFor, plan, op.pruneLinks ?? false),
+      );
     }
     await stage(config, op, plan);
   }
@@ -254,6 +289,9 @@ export async function applyEdit(
   if (conflicts.length > 0) {
     return report("conflict", files, conflicts, [], null);
   }
+  if (guards.length > 0 && !(options.force ?? false)) {
+    return report("rejected", files, [], guards, null);
+  }
 
   const overlay: FileOverlay = {
     id: crypto.randomUUID(),
@@ -261,7 +299,9 @@ export async function applyEdit(
       [...plans.values()].map((plan) => [overlayKey(plan.path), plan.after]),
     ),
   };
-  const { introduced, envelope } = await validate(config, plans, overlay);
+  const validated = await validate(config, plans, overlay, moves);
+  const envelope = validated.envelope;
+  const introduced = [...guards, ...validated.introduced];
   const blocking = introduced.some((issue) => issue.severity === "error");
   if (blocking && !(options.force ?? false)) {
     return report("rejected", files, [], introduced, envelope);
@@ -290,6 +330,213 @@ export async function applyEdit(
   return report("applied", files, [], introduced, envelope);
 }
 
+/** A move as staged, kept so validation can match findings across it. */
+interface StagedMove {
+  readonly fromPath: string;
+  readonly toPath: string;
+  /** `null` when the path is not route-safe; validation then rejects it. */
+  readonly oldRoute: string | null;
+  readonly newRoute: string | null;
+  /** The page's derived IRI before and after, or `null` with an explicit `@id`. */
+  readonly oldIri: string | null;
+  readonly newIri: string | null;
+}
+
+/** A throwaway overlay of everything staged so far. */
+function overlayOf(plans: ReadonlyMap<string, FilePlan>): FileOverlay {
+  return {
+    id: crypto.randomUUID(),
+    files: new Map(
+      [...plans.values()].map((plan) => [overlayKey(plan.path), plan.after]),
+    ),
+  };
+}
+
+function isMarkdown(path: string): boolean {
+  return extname(path).toLowerCase() === ".md";
+}
+
+function relativePath(config: Config, path: string): string {
+  return config.relativeToRoot(path).replaceAll("\\", "/");
+}
+
+/** An `@id` or `id` the page sets itself: its IRI then survives a move. */
+function hasExplicitId(data: Record<string, unknown> | null): boolean {
+  if (data === null) return false;
+  return [data["@id"], data["id"]].some((value) =>
+    value !== undefined && value !== null && value !== ""
+  );
+}
+
+/**
+ * The pages (route, path) whose body links to `route` in the staged tree, not
+ * counting the page itself.
+ */
+function backlinkers(
+  config: Config,
+  plans: ReadonlyMap<string, FilePlan>,
+  route: string,
+): Array<readonly [string, string]> {
+  return withOverlay(overlayOf(plans), () => {
+    const sources = new Set(
+      LinkIndex.fromConfig(config).backlinksTo(route).filter((source) =>
+        source !== route
+      ),
+    );
+    const found: Array<readonly [string, string]> = [];
+    for (const path of iterDocumentFiles(config)) {
+      const source = safeRoute(config, path);
+      if (source !== null && sources.has(source)) found.push([source, path]);
+    }
+    return found;
+  });
+}
+
+/**
+ * Stage a `move`: the page to its new path with its own relative links
+ * re-derived from its new directory, every page linking to it repointed, and
+ * every metadata reference to it (`wiki:` CURIE, or its derived IRI) rewritten.
+ */
+function stageMove(
+  config: Config,
+  op: MoveOp,
+  plans: Map<string, FilePlan>,
+  planFor: (path: string) => FilePlan,
+): { move: StagedMove } | { conflict: EditConflict } {
+  const from = targetPath(config, op.from);
+  const to = targetPath(config, op.to);
+  if (overlayKey(from) === overlayKey(to)) {
+    throw new EditUsageError(`${op.from}: a move needs a different target.`);
+  }
+  if (extname(from).toLowerCase() !== extname(to).toLowerCase()) {
+    throw new EditUsageError(
+      `${op.to}: a move keeps the document's extension (${extname(from)}).`,
+    );
+  }
+  const fromPlan = planFor(from);
+  const toPlan = planFor(to);
+  const conflict = checkExpect(config, from, op.expect, fromPlan.before);
+  if (conflict !== null) return { conflict };
+  if (toPlan.after !== null) {
+    return {
+      conflict: {
+        path: relativePath(config, to),
+        expected: "absent",
+        actual: contentHash(toPlan.before ?? toPlan.after),
+      },
+    };
+  }
+  const content = fromPlan.after;
+  if (content === null) {
+    throw new EditUsageError(`${op.from}: cannot move a missing file.`);
+  }
+
+  const oldRoute = safeRoute(config, from);
+  const newRoute = safeRoute(config, to);
+  const explicitId = withOverlay(
+    overlayOf(plans),
+    () =>
+      hasExplicitId(
+        documentDataFromPath(from, config.graph.content_predicate ?? undefined),
+      ),
+  );
+  const base = config.context.baseIri;
+  const derived = !explicitId && base !== "";
+  const move: StagedMove = {
+    fromPath: from,
+    toPath: to,
+    oldRoute,
+    newRoute,
+    oldIri: derived && oldRoute !== null ? `${base}${oldRoute}` : null,
+    newIri: derived && newRoute !== null ? `${base}${newRoute}` : null,
+  };
+  if (oldRoute === null || newRoute === null) {
+    // Nothing can be repointed at an unsafe route; route safety rejects it.
+    toPlan.after = content;
+    fromPlan.after = null;
+    return { move };
+  }
+
+  const linkers = backlinkers(config, plans, oldRoute);
+  const documents = withOverlay(
+    overlayOf(plans),
+    () => iterDocumentFiles(config),
+  );
+  const routeMap = new Map([[oldRoute, newRoute]]);
+  const refs = [{ from: `wiki:${oldRoute}`, to: `wiki:${newRoute}` }];
+  if (move.oldIri !== null && move.newIri !== null) {
+    refs.push({ from: move.oldIri, to: move.newIri });
+  }
+
+  let moved = isMarkdown(from)
+    ? rewriteLinkTargets(content, oldRoute, routeMap, newRoute)
+    : content;
+  moved = rewriteRefsIn(from, moved, refs);
+  toPlan.after = moved;
+  fromPlan.after = null;
+
+  for (const [source, path] of linkers) {
+    if (!isMarkdown(path)) continue;
+    const plan = planFor(path);
+    if (plan.after === null) continue;
+    plan.after = rewriteLinkTargets(plan.after, source, routeMap);
+  }
+  for (const path of documents) {
+    if (overlayKey(path) === overlayKey(from)) continue;
+    const current = plans.get(overlayKey(path))?.after ?? readText(path);
+    if (!refs.some((ref) => current.includes(ref.from))) continue;
+    const next = rewriteRefsIn(path, current, refs);
+    if (next !== current) planFor(path).after = next;
+  }
+  return { move };
+}
+
+/** Rewrite metadata references: a page's frontmatter, or a whole data file. */
+function rewriteRefsIn(
+  path: string,
+  text: string,
+  refs: ReadonlyArray<{ readonly from: string; readonly to: string }>,
+): string {
+  if (!isMarkdown(path)) return rewriteMetadataRefs(text, refs);
+  const { prefix } = splitFrontmatterText(text);
+  if (prefix === "") return text;
+  return rewriteMetadataRefs(prefix, refs) + text.slice(prefix.length);
+}
+
+/**
+ * The dangling links a delete would leave, as `dangling_links` errors (one per
+ * linking page), or none when `prune` rewrites those links to plain text.
+ */
+function guardDelete(
+  config: Config,
+  plans: Map<string, FilePlan>,
+  planFor: (path: string) => FilePlan,
+  plan: FilePlan,
+  prune: boolean,
+): CheckIssue[] {
+  const route = safeRoute(config, plan.path);
+  if (route === null) return [];
+  const linkers = backlinkers(config, plans, route).filter(([, path]) =>
+    isMarkdown(path)
+  );
+  if (prune) {
+    for (const [source, path] of linkers) {
+      const linker = planFor(path);
+      if (linker.after === null) continue;
+      linker.after = pruneLinksTo(linker.after, source, new Set([route]));
+    }
+    return [];
+  }
+  return linkers.map(([source, path]) => ({
+    code: "dangling_links",
+    severity: "error",
+    message: `${source} links to ${route}, which this edit deletes; remove ` +
+      `the links first, or prune them (pruneLinks, wiki rm --prune-links).`,
+    path: relativePath(config, path),
+    route: source,
+  }));
+}
+
 function report(
   status: EditStatus,
   files: readonly EditFileChange[],
@@ -308,22 +555,18 @@ function report(
   };
 }
 
-/** The op kinds this build can apply. */
-const SUPPORTED_OPS: ReadonlySet<string> = new Set([
+/** The op kinds the contract names. */
+const KNOWN_OPS: ReadonlySet<string> = new Set([
   "create",
   "replace",
   "delete",
   "set",
   "patch",
-]);
-
-/** The op kinds the contract names, supported or not. */
-const KNOWN_OPS: ReadonlySet<string> = new Set([
-  ...SUPPORTED_OPS,
   "move",
 ]);
 
-type SupportedOp = Exclude<EditOp, { op: "move" }>;
+type FileOp = Exclude<EditOp, { op: "move" }>;
+type MoveOp = Extract<EditOp, { op: "move" }>;
 
 const PATCH_MODES: ReadonlySet<string> = new Set([
   "append",
@@ -342,7 +585,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * every field the handlers read is checked here, and the message names the op
  * by index so the agent can fix its plan.
  */
-function validateShape(edit: WikiEdit): SupportedOp[] {
+function validateShape(edit: WikiEdit): EditOp[] {
   if (
     edit === null || typeof edit !== "object" || !Array.isArray(edit.ops)
   ) {
@@ -351,7 +594,7 @@ function validateShape(edit: WikiEdit): SupportedOp[] {
   if (edit.ops.length === 0) {
     throw new EditUsageError("The edit has no ops.");
   }
-  const ops: SupportedOp[] = [];
+  const ops: EditOp[] = [];
   edit.ops.forEach((raw, index) => {
     const where = `ops[${index}]`;
     const op = raw as unknown as Record<string, unknown>;
@@ -366,17 +609,14 @@ function validateShape(edit: WikiEdit): SupportedOp[] {
         }.`,
       );
     }
-    if (!SUPPORTED_OPS.has(kind)) {
-      throw new EditUsageError(
-        `${where}: the "${kind}" op is not yet supported by this version of ` +
-          `wiki; use "replace" with the page's full new content.`,
-      );
-    }
-    if (typeof op.path !== "string" || op.path === "") {
-      throw new EditUsageError(`${where}.path must be a non-empty string.`);
+    const pathKeys = kind === "move" ? ["from", "to"] : ["path"];
+    for (const key of pathKeys) {
+      if (typeof op[key] !== "string" || op[key] === "") {
+        throw new EditUsageError(`${where}.${key} must be a non-empty string.`);
+      }
     }
     validateOpFields(kind, op, where);
-    ops.push(op as unknown as SupportedOp);
+    ops.push(op as unknown as EditOp);
   });
   return ops;
 }
@@ -428,6 +668,11 @@ function validateOpFields(
       }
       return;
     case "delete":
+      if (op.pruneLinks !== undefined && typeof op.pruneLinks !== "boolean") {
+        throw new EditUsageError(`${where}.pruneLinks must be a boolean.`);
+      }
+      return;
+    case "move":
       return;
     case "set":
       if (typeof op.field !== "string" || op.field === "") {
@@ -555,7 +800,7 @@ function checkExpect(
  */
 async function stage(
   config: Config,
-  op: SupportedOp,
+  op: FileOp,
   plan: FilePlan,
 ): Promise<void> {
   switch (op.op) {
@@ -673,6 +918,7 @@ async function validate(
   config: Config,
   plans: ReadonlyMap<string, FilePlan>,
   overlay: FileOverlay,
+  moves: readonly StagedMove[] = [],
 ): Promise<{ introduced: CheckIssue[]; envelope: CheckEnvelope }> {
   const touched = [...plans.values()].map((plan) => plan.path);
   const deleted = [...plans.values()]
@@ -702,9 +948,13 @@ async function validate(
   }
 
   const before = await scopedAudit(config, touched, lintRoutes);
+  // A moved page's findings are anchored to its old route, path, and IRI
+  // before the edit and to its new ones after; re-anchor the before side so a
+  // finding the page already had does not count as introduced by the move.
+  const beforeReport = remapReport(before.report, moves);
   return await withOverlay(overlay, async () => {
     const after = await scopedAudit(config, touched, lintRoutes);
-    const introduced = newIssues(before.report, after.report).map((issue) =>
+    const introduced = newIssues(beforeReport, after.report).map((issue) =>
       checkIssue(config, issue)
     );
     const envelope = buildCheckEnvelope(after.report, config, after.documents);
@@ -772,6 +1022,68 @@ function safeRoute(config: Config, path: string): string | null {
   }
 }
 
+/** {@link remapIssue} over a whole report. */
+function remapReport(
+  report: AuditReport,
+  moves: readonly StagedMove[],
+): AuditReport {
+  if (moves.length === 0) return report;
+  return new AuditReport({
+    ok: report.ok,
+    errors: report.errors.map((issue) => remapIssue(issue, moves)),
+    warnings: report.warnings.map((issue) => remapIssue(issue, moves)),
+  });
+}
+
+/** A pre-move finding, re-anchored to where the moved page now lives. */
+function remapIssue(issue: Issue, moves: readonly StagedMove[]): Issue {
+  for (const move of moves) {
+    const onRoute = move.oldRoute !== null && issue.route === move.oldRoute;
+    const onPath = typeof issue.path === "string" &&
+      overlayKey(issue.path) === overlayKey(move.fromPath);
+    // Lint findings often carry no route or path, only a message that opens
+    // with the page's route or file name (`In Beta:`, `In Beta.md:3:`).
+    const prefixes: Array<readonly [string, string]> = [
+      [`In ${basename(move.fromPath)}:`, `In ${basename(move.toPath)}:`],
+    ];
+    if (move.oldRoute !== null && move.newRoute !== null) {
+      prefixes.push([`In ${move.oldRoute}:`, `In ${move.newRoute}:`]);
+    }
+    const prefixed = prefixes.find(([old]) => issue.message.startsWith(old));
+    if (!onRoute && !onPath && prefixed === undefined) continue;
+    let message = issue.message;
+    if (prefixed !== undefined) {
+      message = prefixed[1] + message.slice(prefixed[0].length);
+    }
+    if (onRoute || onPath) {
+      message = message.replaceAll(
+        basename(move.fromPath),
+        basename(move.toPath),
+      );
+    }
+    const remapIri = (value: string | null | undefined) => {
+      if (!value || move.oldIri === null || move.newIri === null) return value;
+      const rest = value.slice(move.oldIri.length);
+      return value.startsWith(move.oldIri) && /^(?:$|[.#])/.test(rest)
+        ? move.newIri + rest
+        : value;
+    };
+    return {
+      ...issue,
+      message,
+      ...(onRoute ? { route: move.newRoute } : {}),
+      ...(onPath ? { path: move.toPath } : {}),
+      ...(issue.results === undefined ? {} : {
+        results: issue.results.map((result) => ({
+          ...result,
+          focusNode: remapIri(result.focusNode) ?? null,
+        })),
+      }),
+    };
+  }
+  return issue;
+}
+
 /**
  * Identity of a finding for the before/after comparison.
  *
@@ -784,7 +1096,10 @@ function issueKeys(issue: Issue): string[] {
   const anchor = issue.route ?? (issue.path ? overlayKey(issue.path) : "");
   const results = issue.results ?? [];
   if (results.length === 0) {
-    return [[issue.code, anchor, issue.message].join("\0")];
+    // A wikilink quoted in a message (`link_style`) is the link's text, which
+    // a move rewrites; the finding (a wikilink on that line) is the same one.
+    const message = issue.message.replace(/\[\[[^\]]*\]\]/g, "[[]]");
+    return [[issue.code, anchor, message].join("\0")];
   }
   return results.map((result) =>
     [

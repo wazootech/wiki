@@ -1,9 +1,18 @@
 import { extname } from "@std/path";
-import { LinkIndex } from "./wiki_links.ts";
+import {
+  LinkIndex,
+  type PageLinkMatch,
+  pageLinkMatches,
+} from "./wiki_links.ts";
 import type { Config } from "./config.ts";
 import { splitFrontmatterText, WIKILINK_FULL_REGEX } from "./document.ts";
 
-import { fragmentId, resolvePageRoute, splitTarget } from "./links.ts";
+import {
+  fragmentId,
+  posixDirname,
+  resolvePageRoute,
+  splitTarget,
+} from "./links.ts";
 import { readTextTolerant } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
 import { GitHubHeadingSlugger } from "./headings.ts";
@@ -179,6 +188,175 @@ function replaceTargetInMatch(
   const match = MARKDOWN_LINK_FULL_RE.exec(fullMatch);
   if (match === null) return fullMatch;
   return `${match[1]}${replacementTarget}${match[3]}`;
+}
+
+/** `posixpath.relpath(to, fromDir)` for wiki routes (no `..` above the root). */
+function posixRelative(fromDir: string, to: string): string {
+  const from = fromDir === "" ? [] : fromDir.split("/");
+  const target = to === "" ? [] : to.split("/");
+  let shared = 0;
+  while (
+    shared < from.length && shared < target.length &&
+    from[shared] === target[shared]
+  ) {
+    shared += 1;
+  }
+  const ups = from.slice(shared).map(() => "..");
+  return [...ups, ...target.slice(shared)].join("/") || ".";
+}
+
+/** The page part of a link target with its extension, if it had one. */
+function targetSuffix(pagePart: string): string {
+  const name = pagePart.slice(pagePart.lastIndexOf("/") + 1);
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot) : "";
+}
+
+/**
+ * Percent-encode what would end a markdown link destination early.
+ *
+ * The engine's link scanner reads a destination up to the first `)`, so a
+ * target written with a raw `(payment)` qualifier is read as `…_(payment` and
+ * reported broken. Encoding parentheses and spaces keeps a rewritten link one
+ * the engine itself resolves; other characters are left as written.
+ */
+function encodeMarkdownDestination(path: string): string {
+  return path.replaceAll(" ", "%20").replaceAll("(", "%28").replaceAll(
+    ")",
+    "%29",
+  );
+}
+
+/**
+ * The target text for a link to `newRoute` written from `newSourceRoute`, in
+ * the style of the target it replaces: same extension (or none), same `./`
+ * prefix, same fragment, wikilink or markdown form.
+ */
+function restyledTarget(
+  match: PageLinkMatch,
+  newSourceRoute: string,
+  newRoute: string,
+): string {
+  const [pagePart, fragment] = splitTarget(match.target);
+  let path = posixRelative(posixDirname(newSourceRoute), newRoute);
+  path += targetSuffix(pagePart);
+  if (pagePart.startsWith("./") && !path.startsWith("../")) path = `./${path}`;
+  if (match.kind === "Markdown link") path = encodeMarkdownDestination(path);
+  return fragment === null ? path : `${path}#${fragment}`;
+}
+
+/** `full_match` with its target swapped, in the link's own syntax. */
+function withTarget(match: PageLinkMatch, target: string): string {
+  if (match.kind === "WikiLink") {
+    const parsed = new RegExp(WIKILINK_FULL_REGEX.source).exec(match.fullMatch);
+    if (parsed === null) return match.fullMatch;
+    const display = parsed[2];
+    return display === undefined ? `[[${target}]]` : `[[${target}|${display}]]`;
+  }
+  const parsed = MARKDOWN_LINK_FULL_RE.exec(match.fullMatch);
+  if (parsed === null) return match.fullMatch;
+  // A query string the scanner dropped (`Page.md?x`) belongs to the link, not
+  // the route, so it survives the rewrite.
+  const raw = parsed[2] ?? "";
+  const query = raw.includes("?") ? raw.slice(raw.indexOf("?")) : "";
+  return `${parsed[1]}${target}${query}${parsed[3]}`;
+}
+
+/**
+ * Point a page's links at moved pages: the pure core of `wiki mv`.
+ *
+ * `routeMap` maps old routes to new ones, exactly; nothing is guessed (unlike
+ * {@link findBrokenLinkFixes}, which repairs links fuzzily). When the page
+ * itself moves, pass its new route as `newSourceRoute` so relative links are
+ * re-derived from its new directory. Same-page `#fragment` links and links the
+ * move does not affect are left byte-for-byte alone. The links considered are
+ * exactly the ones the backlink index counts ({@link pageLinkMatches}).
+ */
+export function rewriteLinkTargets(
+  content: string,
+  sourceRoute: string,
+  routeMap: ReadonlyMap<string, string>,
+  newSourceRoute: string = sourceRoute,
+): string {
+  const matches = pageLinkMatches(sourceRoute, content);
+  let out = content;
+  for (const match of [...matches].reverse()) {
+    if (match.route === null) continue;
+    const [pagePart] = splitTarget(match.target);
+    if (pagePart === "") continue;
+    const newRoute = routeMap.get(match.route) ?? match.route;
+    if (resolvePageRoute(newSourceRoute, match.target) === newRoute) continue;
+    const replacement = withTarget(
+      match,
+      restyledTarget(match, newSourceRoute, newRoute),
+    );
+    out = out.slice(0, match.start) + replacement + out.slice(match.end);
+  }
+  return out;
+}
+
+/**
+ * Replace every link to one of `routes` with its plain text: the
+ * `--prune-links` half of `wiki rm`. `[label](X.md)` becomes `label`,
+ * `[[X|label]]` becomes `label`, and `[[X]]` becomes `X`.
+ */
+export function pruneLinksTo(
+  content: string,
+  sourceRoute: string,
+  routes: ReadonlySet<string>,
+): string {
+  const matches = pageLinkMatches(sourceRoute, content);
+  let out = content;
+  for (const match of [...matches].reverse()) {
+    if (match.route === null || !routes.has(match.route)) continue;
+    let text: string;
+    if (match.kind === "WikiLink") {
+      const parsed = new RegExp(WIKILINK_FULL_REGEX.source).exec(
+        match.fullMatch,
+      );
+      text = parsed?.[2] ?? splitTarget(match.target)[0];
+    } else {
+      text = /^!?\[([^\]]*)\]/.exec(match.fullMatch)?.[1] ?? "";
+    }
+    out = out.slice(0, match.start) + text + out.slice(match.end);
+  }
+  return out;
+}
+
+/** Metadata keys that hold a document's own identity, never a reference. */
+const IDENTITY_KEY_LINE = /^\s*(?:-\s*)?["']?(?:@id|id)["']?\s*:/;
+
+/**
+ * Rewrite references to moved pages in metadata text: `wiki:` CURIEs (which
+ * name a route) and, when given, full page IRIs.
+ *
+ * The edit is textual and token-exact, so the YAML or JSON around it keeps its
+ * formatting: a reference matches only as a whole scalar (bounded by quotes,
+ * whitespace, `,`, `[`, `]`, or line ends), with an optional `.md` and
+ * `#fragment` carried over. Lines that set the document's own `@id`/`id` are
+ * left alone: an explicit identity does not change when the file moves.
+ */
+export function rewriteMetadataRefs(
+  text: string,
+  refs: ReadonlyArray<{ readonly from: string; readonly to: string }>,
+): string {
+  if (refs.length === 0) return text;
+  const escape = (value: string) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.split(/(?<=\n)/).map((line) => {
+    if (IDENTITY_KEY_LINE.test(line)) return line;
+    let out = line;
+    for (const { from, to } of refs) {
+      const pattern = new RegExp(
+        `(?<=^|[\\s"'\\[,])${
+          escape(from)
+        }(?=(?:\\.md)?(?:#[^\\s"',\\]]*)?(?:$|[\\s"',\\]]))`,
+        "g",
+      );
+      out = out.replace(pattern, to);
+    }
+    return out;
+  }).join("");
 }
 
 export function applyBrokenLinkFixes(
