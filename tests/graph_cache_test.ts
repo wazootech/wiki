@@ -9,7 +9,12 @@
  */
 
 import { basename, extname, join } from "@std/path";
-import { pathExists, readText } from "../src/wiki/fspath.ts";
+import {
+  overlayKey,
+  pathExists,
+  readText,
+  withOverlay,
+} from "../src/wiki/fspath.ts";
 import {
   assertEquals,
   assertNotEquals,
@@ -405,5 +410,32 @@ Deno.test("the manifest orders paths by standard string order", async () => {
       wikiFingerprint(config),
       "7786df8293f382f0e8b470e78f738bd0ce70b4603ac43f52fa523d57eb8975e3",
     );
+  });
+});
+
+Deno.test("an edit overlay gets its own fingerprint and sees staged files", async () => {
+  await withTempDir((root) => {
+    const { wikiDir, page, config } = wiki(root);
+    const onDisk = wikiFingerprint(config);
+    const created = join(wikiDir, "staged.md");
+    const overlay = {
+      id: "test-overlay",
+      files: new Map<string, string | null>([
+        [overlayKey(created), "---\ntype: Person\n---\n"],
+      ]),
+    };
+    // Before the fix this threw NotFound: the manifest stat'ed every listed
+    // file on disk, and a staged page has no file yet.
+    const staged = withOverlay(overlay, () => wikiFingerprint(config));
+    assertNotEquals(staged, onDisk);
+    // Same staged tree under a different overlay id must not share a key, or
+    // the in-process cache could serve one edit's graph to another.
+    const again = withOverlay(
+      { ...overlay, id: "other-overlay" },
+      () => wikiFingerprint(config),
+    );
+    assertNotEquals(again, staged);
+    assertEquals(wikiFingerprint(config), onDisk);
+    assertEquals(readText(page), "---\ntype: Person\ngivenName: Ada\n---\n");
   });
 });
