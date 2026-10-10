@@ -544,6 +544,10 @@ const wikiBlockSpec: ModelSpec = {
         value === null || value === undefined ? [] : coerceStrOrList(value),
     }],
     ["filename_pattern", { defaultValue: null }],
+    ["allow_unknown_keys", {
+      defaultValue: false,
+      before: (value) => coerceBoolean(value, "allow_unknown_keys"),
+    }],
   ],
 };
 
@@ -861,7 +865,11 @@ interface ResolvedConfig {
 function resolveConfig(data: ConfigInput, configName = ""): ResolvedConfig {
   const issues: ValidationIssue[] = [];
   const values = validateModel(configSpec, data, [], issues);
-  if (issues.length > 0) throw new SchemaValidationError("Config", issues);
+  const wiki = values["wiki"] as { allow_unknown_keys?: boolean } | undefined;
+  const reported = wiki?.allow_unknown_keys === true
+    ? issues.filter(isNotTopLevelExtra)
+    : issues;
+  if (reported.length > 0) throw new SchemaValidationError("Config", reported);
 
   try {
     return resolveRuntime(values, configName);
@@ -877,6 +885,14 @@ function resolveConfig(data: ConfigInput, configName = ""): ResolvedConfig {
     }
     throw error;
   }
+}
+
+/**
+ * `wiki.allow_unknown_keys` drops only unknown top-level keys: a typo inside a
+ * wiki block (`lint:`, `check:`, ...) is still reported.
+ */
+function isNotTopLevelExtra(issue: ValidationIssue): boolean {
+  return !(issue.type === "extra_forbidden" && issue.loc.length === 1);
 }
 
 /** Absolute-path and normalisation pass, as `Config._resolve_runtime` does. */

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `wiki.allow_unknown_keys: true` accepts unknown top-level config keys instead of failing at load. It defaults to `false`, so typos are still caught, and unknown keys inside a wiki block are rejected either way. ([#129](https://github.com/wazootech/wiki/issues/129))
+
 ### Fixed
 
 - The PyPI release uploads the platform wheels before the binary-less `py3-none-any` fallback. Uploaded fallback-first, an install in the seconds while an upload was in flight could see only the fallback, take it on a platform that has a wheel, and get a `wiki` that fails with "no Wiki binary for this platform". A re-run of the job now finishes an upload that stopped partway instead of skipping the version, and the job checks that all 7 wheels are listed.
