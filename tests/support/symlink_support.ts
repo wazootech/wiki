@@ -36,3 +36,21 @@ export function canCreateSymlinks(): boolean {
 export function symlinksUnavailable(): boolean {
   return !canCreateSymlinks();
 }
+
+/**
+ * Whether a git clone on this host checks symlinks out as symlinks.
+ *
+ * Git for Windows defaults `core.symlinks` to `false`, so a cloned symlink
+ * lands as a plain file holding its target path, even where the process can
+ * create symlinks itself. Tests that clone a repo containing a symlink need
+ * both.
+ */
+export function gitSymlinksUnavailable(): boolean {
+  if (symlinksUnavailable()) return true;
+  const output = new Deno.Command("git", {
+    args: ["config", "--get", "core.symlinks"],
+    stdout: "piped",
+    stderr: "null",
+  }).outputSync();
+  return new TextDecoder().decode(output.stdout).trim() === "false";
+}
