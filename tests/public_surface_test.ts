@@ -101,6 +101,8 @@ Deno.test("the entrypoint still exports the documented domain API", () => {
       "applyEdit",
       "contentHash",
       "EditUsageError",
+      "showDocument",
+      "documentRefs",
     ]
   ) {
     assert(
