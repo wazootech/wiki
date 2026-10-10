@@ -238,7 +238,7 @@ jobs:
           while read -r slug target; do
             binary="release-assets/wazootech-wiki-$slug"
             [ -f "$binary.exe" ] && binary="$binary.exe"
-            python scripts/build_wheel.py --binary "$binary" --target "$target" --out dist
+            python scripts/build_wheel.py --binary "$binary" --target "$target" --out dist/platform
           done <<'TARGETS'
           linux-x64 x86_64-unknown-linux-gnu
           linux-arm64 aarch64-unknown-linux-gnu
@@ -247,10 +247,11 @@ jobs:
           windows-x64 x86_64-pc-windows-msvc
           windows-arm64 aarch64-pc-windows-msvc
           TARGETS
-          python scripts/build_wheel.py --pure --out dist
-          test "$(ls dist/*.whl | wc -l)" -eq 7
-          uvx twine check --strict dist/*.whl
-          ls -l dist
+          python scripts/build_wheel.py --pure --out dist/fallback
+          test "$(ls dist/platform/*.whl | wc -l)" -eq 6
+          test "$(ls dist/fallback/*.whl | wc -l)" -eq 1
+          uvx twine check --strict dist/platform/*.whl dist/fallback/*.whl
+          ls -l dist/platform dist/fallback
 
       # The same installed-artifact tests CI runs: the release must not ship
       # a wheel nobody installed.
@@ -258,45 +259,43 @@ jobs:
         run: |
           set -euo pipefail
           uv venv -q "$RUNNER_TEMP/platform-venv"
-          uv pip install --python "$RUNNER_TEMP/platform-venv/bin/python" dist/*-manylinux_2_27_x86_64.whl
+          uv pip install --python "$RUNNER_TEMP/platform-venv/bin/python" dist/platform/*-manylinux_2_27_x86_64.whl
           "$RUNNER_TEMP/platform-venv/bin/python" -m unittest discover -s python/tests -v
           uv venv -q "$RUNNER_TEMP/fallback-venv"
-          uv pip install --python "$RUNNER_TEMP/fallback-venv/bin/python" dist/*-py3-none-any.whl
+          uv pip install --python "$RUNNER_TEMP/fallback-venv/bin/python" dist/fallback/*-py3-none-any.whl
           WIKI_TEST_BINARY="$RUNNER_TEMP/platform-venv/bin/wiki" WIKI_REQUIRE_E2E=1 \
             "$RUNNER_TEMP/fallback-venv/bin/python" -m unittest discover -s python/tests -v
 
-      - name: Skip when the version is already on PyPI
-        id: published
-        run: |
-          VERSION="${{ needs.verify.outputs.version }}"
-          STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
-            "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
-          if [ "$STATUS" = "200" ]; then
-            echo "already=true" >> "$GITHUB_OUTPUT"
-            echo "wazootech-wiki ${VERSION} is already on PyPI; skipping publish."
-          else
-            echo "already=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish to PyPI (Trusted Publishing / OIDC)
-        if: steps.published.outputs.already == 'false'
+      # Platform wheels upload first and the binary-less fallback last. While
+      # an upload is in flight, PyPI's index lists only the files sent so far,
+      # and an installer that sees only the fallback takes it on a platform
+      # that has a wheel of its own: that `wiki` then fails for want of a
+      # binary. Uploaded in this order, a partial index never lists the
+      # fallback alone. `skip-existing` lets a re-run finish an upload that
+      # stopped partway, instead of skipping the whole version.
+      - name: Publish platform wheels to PyPI (Trusted Publishing / OIDC)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: dist/
+          packages-dir: dist/platform/
+          skip-existing: true
+
+      - name: Publish the fallback wheel to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/fallback/
+          skip-existing: true
 
       - name: Verify PyPI publish
-        if: steps.published.outputs.already == 'false'
         run: |
           VERSION="${{ needs.verify.outputs.version }}"
-          for attempt in 1 2 3 4 5 6; do
-            STATUS="$(curl -s -o /dev/null -w '%{http_code}' \
-              "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json")"
-            if [ "$STATUS" = "200" ]; then
-              echo "Verified wazootech-wiki ${VERSION} on PyPI."
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            FILES="$(curl -s "https://pypi.org/pypi/wazootech-wiki/${VERSION}/json"               | jq -r '[.urls[].filename | select(endswith(".whl"))] | length' 2>/dev/null || echo 0)"
+            if [ "$FILES" = "7" ]; then
+              echo "Verified all 7 wazootech-wiki ${VERSION} wheels on PyPI."
               exit 0
             fi
-            echo "Attempt ${attempt}/6: version not visible yet (status ${STATUS}); waiting..."
+            echo "Attempt ${attempt}/12: ${FILES:-0}/7 wheels visible; waiting..."
             sleep 10
           done
-          echo "::error::wazootech-wiki ${VERSION} not found on PyPI after retries."
+          echo "::error::wazootech-wiki ${VERSION} does not list all 7 wheels on PyPI after retries."
           exit 1

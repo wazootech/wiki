@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The PyPI release uploads the platform wheels before the binary-less `py3-none-any` fallback. Uploaded fallback-first, an install in the seconds while an upload was in flight could see only the fallback, take it on a platform that has a wheel, and get a `wiki` that fails with "no Wiki binary for this platform". A re-run of the job now finishes an upload that stopped partway instead of skipping the version, and the job checks that all 7 wheels are listed.
+
 ## 0.2.2 — 2026-10-09
 
 ### Added
