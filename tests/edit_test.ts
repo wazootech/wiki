@@ -246,6 +246,37 @@ Deno.test("pre-existing errors elsewhere do not block an edit", async () => {
   }
 });
 
+Deno.test("a create does not introduce pre-existing wiki-wide lint findings", async () => {
+  const root = writeWiki();
+  try {
+    // A configured asset directory that does not exist: a path-less lint
+    // warning that is there before the edit and after it.
+    Deno.writeTextFileSync(
+      join(root, "wiki.yml"),
+      "wiki:\n  input: [wiki]\n  assets: [missing_assets]\n",
+    );
+    const wiki = Wiki.load(root);
+    const lint = await wiki.lint();
+    assert(
+      lint.warnings.some((issue) =>
+        issue.message.includes("Asset directory does not exist")
+      ),
+      JSON.stringify(lint.warnings),
+    );
+    const report = await wiki.edit({
+      ops: [{
+        op: "create",
+        path: "wiki/Fresh.md",
+        content: OTHER.replaceAll("Other", "Fresh"),
+      }],
+    });
+    assertEquals(report.status, "dry_run");
+    assertEquals(report.introduced, [], JSON.stringify(report.introduced));
+  } finally {
+    cleanup(root);
+  }
+});
+
 Deno.test("editing an already-broken page is not blocked by its old error", async () => {
   const root = writeWiki();
   try {
