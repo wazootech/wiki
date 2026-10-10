@@ -259,6 +259,48 @@ Deno.test("camelCase top-level keys are unknown keys, not silent no-ops", () => 
   });
 });
 
+Deno.test("wiki.allow_unknown_keys accepts unknown top-level keys", () => {
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      "name: Acme\nnavigation: [a, b]\nwiki:\n  allow_unknown_keys: true\n  input: pages\n",
+    );
+    const config = Config.load(base);
+    assertEquals(config.wiki.input, [join(base, "pages")]);
+  });
+});
+
+Deno.test("wiki.allow_unknown_keys still rejects unknown keys inside a block", () => {
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      "name: Acme\nwiki:\n  allow_unknown_keys: true\nsite:\n  title: Acme\n",
+    );
+    const error = assertThrows(() => Config.load(base), ValueError);
+    assertEquals(
+      error.message,
+      "Invalid config file wiki.yaml: unknown site keys: title",
+    );
+  });
+});
+
+Deno.test("wiki.allow_unknown_keys defaults to rejecting unknown keys", () => {
+  withTempDir((base) => {
+    writeFile(
+      base,
+      "wiki.yaml",
+      "name: Acme\nwiki:\n  allow_unknown_keys: false\n",
+    );
+    assertThrows(
+      () => Config.load(base),
+      ValueError,
+      "unknown top-level keys: name",
+    );
+  });
+});
+
 Deno.test("unknown keys inside a block name the block", () => {
   const cases: [string, string][] = [
     [

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `wiki.allow_unknown_keys: true` accepts unknown top-level config keys instead of failing at load. It defaults to `false`, so typos are still caught, and unknown keys inside a wiki block are rejected either way. ([#129](https://github.com/wazootech/wiki/issues/129))
+
 ### Fixed
 
 - Large TriG named graphs load in linear time. `@wazoo/sparql-engine` 0.4.3 parsed a `<g> { ... }` block in quadratic time (8,000 quads took ~19 s), so RDF data files with big named graphs were slow to index. The pin moves to 0.4.4. ([sparql-engine#175](https://github.com/wazootech/sparql-engine/issues/175))

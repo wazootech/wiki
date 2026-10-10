@@ -84,18 +84,22 @@ wiki: # optional block
   assets: [assets] # default [assets] if assets/ exists, else []; init writes
   exclude: [] # default []; init omits
   filename_pattern: "[A-Za-z0-9_()-]+\\.md" # no default; recommended; init writes
+  allow_unknown_keys: false # default false; init omits
 ```
 
-| Key                | Required               | Default                                     | Init   | Audited by                                 |
-| ------------------ | ---------------------- | ------------------------------------------- | ------ | ------------------------------------------ |
-| `input`            | optional               | `[wiki]`                                    | writes | indexing (`build`, `check`, `lint`, `fmt`) |
-| `assets`           | optional               | `[assets]` when `assets/` exists, else `[]` | writes | `wiki build` (static copy)                 |
-| `exclude`          | optional               | `[]`                                        | omits  | indexing (skipped paths)                   |
-| `filename_pattern` | optional (recommended) | unset — no regex check until set            | writes | `wiki lint` (`lint.filename_pattern`)      |
+| Key                  | Required               | Default                                     | Init   | Audited by                                 |
+| -------------------- | ---------------------- | ------------------------------------------- | ------ | ------------------------------------------ |
+| `input`              | optional               | `[wiki]`                                    | writes | indexing (`build`, `check`, `lint`, `fmt`) |
+| `assets`             | optional               | `[assets]` when `assets/` exists, else `[]` | writes | `wiki build` (static copy)                 |
+| `exclude`            | optional               | `[]`                                        | omits  | indexing (skipped paths)                   |
+| `filename_pattern`   | optional (recommended) | unset — no regex check until set            | writes | `wiki lint` (`lint.filename_pattern`)      |
+| `allow_unknown_keys` | optional               | `false`                                     | omits  | config load                                |
 
 Page URLs come from paths under `wiki.input`: `wiki/Alice.md` → `/wiki/Alice/` with default `site.base_url` and `site.url_style: dir`. `index.md` in a folder owns that folder’s route (for example `wiki/index.md` → `/wiki/`).
 
 See [Filename conventions](#filename-conventions) for regex patterns.
+
+Unknown top-level keys fail at load, so a typo such as `lnit:` is caught. Set `wiki.allow_unknown_keys: true` to accept them instead. Unknown keys inside a wiki block (`site:`, `lint:`, ...) are still rejected.
 
 ## Graph (`graph:`)
 
