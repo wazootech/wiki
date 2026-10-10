@@ -1677,6 +1677,182 @@ async function runEditCommand(
   }
 }
 
+const SHOW_HELP = [
+  "Usage: wiki show [OPTIONS] PATH",
+  "",
+  "  Describe one page as the engine sees it: frontmatter, compacted JSON-LD,",
+  "  heading outline, outbound links, and the content hash to pass as an edit",
+  '  op\'s "expect". PATH is relative to the config root, as in wiki edit.',
+  "",
+  "Options:",
+  "  --field KEY  Print only this frontmatter field (exit 1 when it is unset).",
+  "  -f, --format [text|json]",
+  "               Output format (default: text).",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+const REFS_HELP = [
+  "Usage: wiki refs [OPTIONS] PATH",
+  "",
+  "  List the pages that link to PATH and the pages PATH links to.",
+  "  PATH is relative to the config root, as in wiki edit.",
+  "",
+  "Options:",
+  "  -f, --format [text|json]",
+  "               Output format (default: text).",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+interface ParsedReadCommand {
+  readonly path: string;
+  readonly field: string | null;
+  readonly format: "text" | "json";
+}
+
+/** Shared parser for `show` and `refs`: one PATH, a format, and `show`'s `--field`. */
+function parseReadCommandArgs(
+  command: "show" | "refs",
+  args: readonly string[],
+): ParsedReadCommand | number {
+  let path: string | null = null;
+  let field: string | null = null;
+  let format: "text" | "json" = "text";
+  const invalidFormat = (value: string) =>
+    usageError(
+      `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+    );
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(command === "show" ? SHOW_HELP : REFS_HELP);
+      return EXIT_OK;
+    }
+    if (token === "--json") {
+      format = "json";
+    } else if (token === "-f" || token === "--format") {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      if (value !== "text" && value !== "json") return invalidFormat(value);
+      format = value;
+    } else if (token.startsWith("--format=")) {
+      const value = token.slice("--format=".length);
+      if (value !== "text" && value !== "json") return invalidFormat(value);
+      format = value;
+    } else if (command === "show" && token === "--field") {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      field = value;
+    } else if (command === "show" && token.startsWith("--field=")) {
+      field = token.slice("--field=".length);
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else if (path === null) {
+      path = token;
+    } else {
+      return usageError(`Error: Got unexpected extra argument (${token}).`);
+    }
+  }
+  if (path === null) return usageError("Error: Missing argument 'PATH'.");
+  return { path, field, format };
+}
+
+/** Render a frontmatter value on one line: strings bare, the rest as JSON. */
+function fieldText(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+async function runShowCommand(
+  wiki: Wiki,
+  parsed: ParsedReadCommand,
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let report;
+  try {
+    report = await wiki.show(parsed.path);
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+
+  if (parsed.field !== null) {
+    const frontmatter = report.frontmatter ?? {};
+    if (!Object.hasOwn(frontmatter, parsed.field)) {
+      console.error(`Error: ${report.path} has no field '${parsed.field}'.`);
+      return EXIT_FAILURE;
+    }
+    const value = frontmatter[parsed.field];
+    console.log(
+      parsed.format === "json"
+        ? JSON.stringify(value, null, 2)
+        : fieldText(value),
+    );
+    return EXIT_OK;
+  }
+
+  if (parsed.format === "json") {
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_OK;
+  }
+  const lines = [`${report.path} (${report.route})`, `hash: ${report.hash}`];
+  if (report.frontmatter !== null) {
+    lines.push("frontmatter:");
+    for (const [key, value] of Object.entries(report.frontmatter)) {
+      lines.push(`  ${key}: ${fieldText(value)}`);
+    }
+  }
+  if (report.headings.length > 0) {
+    lines.push("headings:");
+    for (const heading of report.headings) {
+      lines.push(
+        `  ${"#".repeat(heading.level)} ${heading.text} (line ${heading.line})`,
+      );
+    }
+  }
+  if (report.links.length > 0) {
+    lines.push("links:");
+    for (const link of report.links) lines.push(`  ${link.path ?? link.route}`);
+  }
+  console.log(lines.join("\n"));
+  return EXIT_OK;
+}
+
+async function runRefsCommand(
+  wiki: Wiki,
+  parsed: ParsedReadCommand,
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let report;
+  try {
+    report = wiki.refs(parsed.path);
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+  if (parsed.format === "json") {
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_OK;
+  }
+  const lines = [`${report.path} (${report.route})`];
+  lines.push(`inbound (${report.inbound.length}):`);
+  for (const ref of report.inbound) lines.push(`  ${ref.path ?? ref.route}`);
+  lines.push(`outbound (${report.outbound.length}):`);
+  for (const ref of report.outbound) lines.push(`  ${ref.path ?? ref.route}`);
+  console.log(lines.join("\n"));
+  return EXIT_OK;
+}
+
 interface CommandContext {
   readonly command: string;
   readonly args: readonly string[];
@@ -1887,6 +2063,17 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
+    names: ["refs"],
+    description: "List the pages linking to and from one page.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("refs", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRefsCommand(wiki, parsed);
+    },
+  },
+  {
     names: ["remove"],
     description:
       "Remove a source from the config file, its cache, and wiki.lock.",
@@ -1918,6 +2105,17 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runServeCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["show"],
+    description: "Describe one page: frontmatter, JSON-LD, outline, hash.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("show", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runShowCommand(wiki, parsed);
     },
   },
   {

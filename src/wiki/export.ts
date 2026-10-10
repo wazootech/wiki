@@ -141,6 +141,27 @@ async function serializeDocument(
   return await serializeRdf(quads, format, { prefixes: config.namespaces });
 }
 
+/**
+ * One document's frontmatter as compacted JSON-LD, as `wiki export` writes it.
+ *
+ * `wiki show` reports the graph view of a page next to its raw frontmatter;
+ * this keeps that view byte-for-byte the one `export -f json-ld -m compacted`
+ * produces rather than a second compiler.
+ */
+export async function documentJsonLd(
+  config: Config,
+  filePath: string,
+  data: Record<string, unknown>,
+): Promise<unknown> {
+  return await serializeDocument(
+    data,
+    filePath,
+    config,
+    "json-ld",
+    "compacted",
+  );
+}
+
 export async function exportFrontmatter(
   config: Config,
   files: readonly string[] | null = null,

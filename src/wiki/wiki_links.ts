@@ -340,6 +340,22 @@ function errorMessage(error: unknown): string {
 }
 
 /**
+ * The page routes one document links to, in first-link order.
+ *
+ * The same scan {@link LinkIndex.fromConfig} inverts into backlinks, run for a
+ * single page, so `wiki refs` reports outbound links by exactly the rules that
+ * decide inbound ones. Unresolvable targets are dropped, as they are there.
+ */
+export function outboundPageRoutes(
+  sourceRoute: string,
+  content: string,
+): string[] {
+  const targets = new Map<string, string[]>();
+  indexPageLinks(sourceRoute, content, targets);
+  return [...targets.keys()];
+}
+
+/**
  * Record the outbound page links of one document in the backlink index.
  *
  * Python passes `config` and `file_path` here and reads neither; the port
