@@ -15,7 +15,7 @@ wiki refs wiki/Alpha.md
 wiki refs wiki/Alpha.md --json
 ```
 
-`PATH` is relative to the config root, as in `wiki edit` and [wiki show](wiki_show.md).
+`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md) and [wiki show](wiki_show.md).
 
 ## Options
 

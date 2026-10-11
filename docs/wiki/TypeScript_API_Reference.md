@@ -15,7 +15,7 @@ const wiki = Wiki.load("docs/wiki.yml");
 const report = await wiki.check({ strict: true });
 ```
 
-Every operation is a typed method on the library's `Wiki` class: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `query`, `graph`, `serve`, `mcp`, `init`, `install`, `update`, `remove`, and `upgrade`. Report-producing calls return structured results rather than captured text.
+Every operation is a typed method on the library's `Wiki` class: `check`, `lint`, `fmt`, `render`, `build`, `export`, `link`, `edit`, `show`, `refs`, `query`, `graph`, `serve`, `mcp`, `init`, `install`, `update`, `remove`, and `upgrade`. Report-producing calls return structured results rather than captured text.
 
 ## The npm package is command-only
 
