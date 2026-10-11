@@ -3,10 +3,11 @@ name: wiki
 description: >-
   Manages Wiki CLI end to end — install and verify wazootech-wiki, scaffold with wiki init,
   audit vault hygiene (fmt, lint, check, render), enrich wikis from raw source material,
+  edit pages through validated write verbs (new, set, patch, mv, rm, edit),
   plan and execute vault improvements, deploy to GitHub Pages, and keep code wikis
   (docs/) in sync with their source via Git-anchored delta sync.
   Use whenever the user mentions wiki, Wiki CLI, wazootech-wiki, wiki init, wiki.yml, wiki.yaml, broken links,
-  lint/check failures, pre-PR wiki review, GitHub Pages for a wiki, docs drift, syncing documentation
+  lint/check failures, creating, renaming, or deleting wiki pages, pre-PR wiki review, GitHub Pages for a wiki, docs drift, syncing documentation
   after source changes, or getting started with semantic markdown — even if they do not say "skill".
   Route to one workflow reference, complete that job, and stop.
 ---
@@ -21,6 +22,7 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 
 1. **Deterministic work belongs in scripts and the CLI** — run `skills/wiki/scripts/verify.sh` and `skills/wiki/scripts/audit.sh` instead of reimplementing validator pipelines in prose.
 1. **One workflow per turn** — read the matching reference below, finish that job, stop. Do not chain install → create → deploy unless the user asked for the full flow.
+1. **Structural edits go through the engine** — create a page, set a frontmatter field, patch a section, move, or delete with the write verbs (`wiki new`, `set`, `patch`, `mv`, `rm`, or a batched `wiki edit`): `wiki show` for the hash, dry run, then `--apply --expect <hash>`. Never hand-write frontmatter or chase inbound links by search when a verb covers the change. See [references/edit.md](references/edit.md); fall back to hand edits only when `verify.sh` reports the write verbs unavailable.
 1. **Advisor-executor model for vault changes** — survey and plan changes as a read-only advisor; dispatch executor subagents to apply edits in isolated worktrees, and review their diffs. Never directly edit user files without approval.
 1. **Deploy uses a wholesale Deno template** — embed [workflow-template-deno.yml](references/workflow-template-deno.yml) in full; substitute placeholders only.
 1. **No config migration shims** — unknown wiki config keys fail at load; document upgrades in CHANGELOG and wiki docs only.
@@ -34,6 +36,7 @@ Skills under `skills/` are agent knowledge — **not** wiki pages. Do not add `s
 | Audit, improve, pre-PR, lint/check failures  | [references/improve.md](references/improve.md) | Findings report delivered        |
 | Formatting, linting, check categories detail | [references/audit.md](references/audit.md)     | Audit criteria verified          |
 | Ingest raw material into wiki pages         | [references/enrich.md](references/enrich.md)   | Change report delivered          |
+| Create, rename, move, delete a page; set a field; patch a section | [references/edit.md](references/edit.md) | Edit applied and checks pass |
 | Generate handoff plans, plans layout         | [references/plan.md](references/plan.md)       | Plan file written                |
 | Execute plans, review diff, publish issues   | [references/loop.md](references/loop.md)       | Executor output verified         |
 | GitHub Pages, deploy workflow, CI publish    | [references/deploy.md](references/deploy.md)   | Workflow + URLs summarized       |
@@ -46,7 +49,7 @@ When the user asks for multiple intents in one message, pick the **blocking** wo
 Before any wiki command:
 
 1. Run `bash skills/wiki/scripts/verify.sh` (or `.agents/skills/wiki/scripts/verify.sh` when vendored).
-1. Exit `0` → use the verified Deno-backed CLI or the verified Deno source checkout.
+1. Exit `0` → use the verified Deno-backed CLI or the verified Deno source checkout. It also prints whether the write verbs are available (`write verbs available` or `write verbs unavailable`); the latter routes structural edits to the hand-edit fallback in [references/edit.md](references/edit.md).
 1. Exit `2` (stale) → if this is the Wiki CLI repository, use the verified Deno source checkout. Otherwise, the cutover package is not yet available; do not upgrade npm `@latest` expecting the Deno engine.
 1. Exit `1` (missing) → read [references/install.md](references/install.md). Until the first tagged Deno release, contributors can use the repository source; the new npm, JSR, and standalone distributions are not available.
 
@@ -72,6 +75,7 @@ bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 | [references/improve.md](references/improve.md) | Recon, audit, vet, and planning workflow                                  |
 | [references/audit.md](references/audit.md)     | Audit check categories and style spot-check                               |
 | [references/enrich.md](references/enrich.md)   | Ingest raw material into canonical wiki pages with semantic frontmatter    |
+| [references/edit.md](references/edit.md)       | Write verbs: `show`, `new`, `set`, `patch`, `mv`, `rm`, `edit`; the dry-run → apply → `expect` loop |
 | [references/plan.md](references/plan.md)       | Hand-off plans format and layout                                          |
 | [references/loop.md](references/loop.md)       | Running executors, reviewing work, reconciling backlog, publishing issues |
 | [references/deploy.md](references/deploy.md)   | GitHub Pages workflow and alignment checklist                             |

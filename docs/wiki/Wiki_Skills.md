@@ -1,7 +1,7 @@
 ---
 type: TechArticle
 headline: Wiki CLI Agent Skills
-description: Procedural knowledge for coding agents — install, scaffold, improve, and deploy wikis.
+description: Procedural knowledge for coding agents — install, scaffold, edit, improve, and deploy wikis.
 ---
 
 # Wiki CLI Agent Skills
@@ -47,13 +47,14 @@ Project-local copies under `.agents/skills/` do not update automatically. Avoid 
 
 The **`wiki`** skill routes operational workflows to focused references:
 
-| Intent                         | Reference                           | Stop when                        |
-| ------------------------------ | ----------------------------------- | -------------------------------- |
-| CLI missing or stale           | `skills/wiki/references/install.md` | CLI verified or blocker reported |
-| New wiki / `wiki init`         | `skills/wiki/references/init.md`    | Scaffold summarized              |
-| Audit / pre-PR / lint failures | `skills/wiki/references/improve.md` | Findings report delivered        |
-| GitHub Pages / CI deploy       | `skills/wiki/references/deploy.md`  | Workflow + URLs summarized       |
-| Docs out of sync with source   | `skills/wiki/references/sync.md`    | Sync PR opened and validated     |
+| Intent                             | Reference                           | Stop when                        |
+| ---------------------------------- | ----------------------------------- | -------------------------------- |
+| CLI missing or stale               | `skills/wiki/references/install.md` | CLI verified or blocker reported |
+| New wiki / `wiki init`             | `skills/wiki/references/init.md`    | Scaffold summarized              |
+| Audit / pre-PR / lint failures     | `skills/wiki/references/improve.md` | Findings report delivered        |
+| Create, rename, delete, set, patch | `skills/wiki/references/edit.md`    | Edit applied and checks pass     |
+| GitHub Pages / CI deploy           | `skills/wiki/references/deploy.md`  | Workflow + URLs summarized       |
+| Docs out of sync with source       | `skills/wiki/references/sync.md`    | Sync PR opened and validated     |
 
 Read one reference per turn unless the user explicitly asked for a multi-step flow (for example install → create → deploy).
 
@@ -68,7 +69,7 @@ bash skills/wiki/scripts/verify.sh
 bash skills/wiki/scripts/audit.sh -c path/to/wiki.yml [FILE...]
 ```
 
-`verify.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
+`verify.sh` exits `0` when `wiki` and `fmt` capability pass, `1` when missing, `2` when stale. On `0` it also prints whether the write verbs are available; an older CLI without them is still ready, and the skill falls back to hand edits. `audit.sh` runs fmt → lint → check → render (`--strict` / `--check`), then `wiki link --check` only when wired in `.github/workflows/`.
 
 ## Install workflow
 
@@ -81,6 +82,14 @@ See `skills/wiki/references/install.md`.
 Non-interactive `wiki init` for wiki project structure (config, starter pages), then a short **tweak** step: replace the starter first page, and optionally uncomment blocks in `wiki.yml`. Requires **`wiki` on PATH** before any init or file edits. Default post-init `wiki check --strict` with opt-out.
 
 See `skills/wiki/references/init.md` and [wiki init](wiki_init.md).
+
+## Edit workflow
+
+Structural changes go through the engine's write verbs instead of hand-written Markdown: [wiki new](wiki_new.md) for a typed page, [wiki set](wiki_set.md) for a frontmatter field, [wiki patch](wiki_patch.md) for a section, [wiki mv](wiki_mv.md) and [wiki rm](wiki_rm.md) for renames and deletes that keep inbound links whole, and [wiki edit](wiki_edit.md) to batch several into one atomic change. The agent reads the page with [wiki show](wiki_show.md) to get its content hash, dry-runs the change, then applies it with that hash as `expect`, so a page that changed in between is refused (exit `3`) rather than overwritten. A change that would introduce a check or lint error is rejected (exit `1`) before anything is written.
+
+The advisor-executor model carries over: an improvement plan whose fixes are structural ships a dry-run-clean edit JSON next to the Markdown plan, and the executor applies exactly that. When `verify.sh` reports the write verbs unavailable, agents edit by hand and validate with `fmt`, `lint`, and `check` as before.
+
+See `skills/wiki/references/edit.md`.
 
 ## Improve workflow
 
@@ -114,6 +123,7 @@ skills/
   wiki/references/loop.md
   wiki/references/deploy.md
   wiki/references/enrich.md
+  wiki/references/edit.md
   wiki/references/sync.md
   wiki/references/workflow-template-deno.yml
   wiki/references/workflow-template-wiki-sync.yml

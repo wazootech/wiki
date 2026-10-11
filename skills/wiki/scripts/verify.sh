@@ -31,13 +31,27 @@ source_checkout_ready() {
     (cd "${REPO_ROOT}" && wiki_supports_deno deno run -A src/wiki/cli.ts)
 }
 
+# The write verbs (wiki edit, new, set, patch, mv, rm) arrived after the CLI
+# above qualifies as Deno-backed, so a ready CLI may still lack them. Report
+# which, without changing the exit code: an older CLI is still a working CLI,
+# and the skill routes structural edits to the hand-edit fallback.
+report_write_verbs() {
+  if "$@" edit --help >/dev/null 2>&1; then
+    echo "verify.sh: write verbs available (wiki edit)"
+  else
+    echo "verify.sh: write verbs unavailable; hand-edit fallback (see references/edit.md)"
+  fi
+}
+
 if command -v wiki >/dev/null 2>&1 && wiki_supports_deno wiki; then
   echo "verify.sh: wiki ready on PATH"
+  report_write_verbs wiki
   exit 0
 fi
 
 if source_checkout_ready; then
   echo "verify.sh: wiki ready via Deno source checkout"
+  (cd "${REPO_ROOT}" && report_write_verbs deno run -A src/wiki/cli.ts)
   exit 0
 fi
 

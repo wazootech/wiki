@@ -26,9 +26,16 @@ tracking. The wiki is not a scratchpad — it is synthesized, verified memory.
    stakeholder confirmation.
 4. Update existing pages before creating new ones. Registers are indexes;
    create or promote entity pages only when the item needs lifecycle tracking.
-5. Keep semantic frontmatter current. Add or adjust saved queries when a
+   Create typed pages with `wiki new <path> --type <class> --set …` so the
+   type's required fields are scaffolded and checked before the page exists;
+   append dated entries with `wiki patch --heading "Change log" --append`; and
+   batch a new page with the register line that indexes it into one
+   `wiki edit` so they land together. See [edit.md](edit.md); write the prose
+   itself as ordinary Markdown.
+5. Keep semantic frontmatter current with `wiki set <path> <field> <value>`
+   rather than hand-written YAML. Add or adjust saved queries when a
    recurring operating question cannot be answered from the existing wiki
-   model.
+   model, and run `wiki render && wiki fmt` after edits that feed one.
 6. Summarize durable conclusions in canonical pages. Keep raw notes separate
    when they are public-safe and useful for later traceability.
 7. Verify (see verification below).

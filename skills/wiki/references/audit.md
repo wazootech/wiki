@@ -84,7 +84,7 @@ Every audit finding must be reported in the following format:
 - **Effort**: S (hours) / M (a day-ish) / L (multi-day) — estimate for the fix, including running formatters and tests.
 - **Risk**: What the fix could break; LOW/MED/HIGH plus one line why.
 - **Confidence**: HIGH (read the code, certain) / MED (strong signal, needs verification) / LOW (smell, needs investigation).
-- **Fix sketch**: 1–3 sentences detailing how to repair it using the CLI or edits.
+- **Fix sketch**: 1–3 sentences detailing how to repair it using the CLI or edits. Name the write verb when one covers the fix (`wiki set` for a missing or wrong frontmatter value, `wiki mv` for a filename-convention rename, `wiki rm --prune-links` for a dead stub, `wiki patch` for a section) — see [edit.md](edit.md).
 ```
 
 ## Prioritization rubric

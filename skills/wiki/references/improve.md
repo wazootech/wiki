@@ -56,6 +56,7 @@ Generate self-contained plans for the chosen findings:
 
 - Write independent plan files under `plans/NNN-short-slug.md` following the template in [references/plan.md](plan.md).
 - Ensure all context (excerpts, file paths, commands) is fully inlined so the executor requires no external context.
+- When a finding's fix is structural (missing required field, page to rename or delete, section to replace) and `verify.sh` reports the write verbs available, ship the fix as a dry-run-clean `WikiEdit` JSON beside the plan (see [plan.md](plan.md#edit-plans)) rather than prose steps.
 - Create/update `plans/README.md` containing the execution order and status table.
 
 ## Invocation variants
