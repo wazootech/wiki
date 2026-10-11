@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- `wiki mcp --allow-write` lists page-edit tools that wrap `wiki edit`:
+  `wiki_edit_apply` plus single-op `wiki_page_create`, `wiki_page_set_field`,
+  `wiki_page_patch`, `wiki_page_move` and `wiki_page_delete`. Each defaults to a
+  dry run, returns the `wiki edit --json` report, and reports rejections and
+  `expect` conflicts as `isError` results instead of JSON-RPC errors. Without
+  the flag the server stays read-only, and `wiki_page_show` and `wiki_page_refs`
+  are listed either way ([#356](https://github.com/wazootech/wiki/issues/356)).
+
 ### Changed
 
 - A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
