@@ -33,6 +33,12 @@ import {
   type EditReport,
   type WikiEdit,
 } from "./edit.ts";
+import {
+  documentRefs,
+  type RefsReport,
+  showDocument,
+  type ShowReport,
+} from "./show.ts";
 import { buildStaticSite } from "./site/publish.ts";
 import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
@@ -358,6 +364,20 @@ export class Wiki {
    */
   edit(edit: WikiEdit, options: EditOptions = {}): Promise<EditReport> {
     return applyEdit(this.config, edit, options);
+  }
+
+  /**
+   * One page as the engine sees it: frontmatter, compacted JSON-LD, heading
+   * outline, outbound links, and the content hash an edit passes as `expect`.
+   * `path` is relative to the config root, as in `edit()`.
+   */
+  show(path: string): Promise<ShowReport> {
+    return showDocument(this.config, path);
+  }
+
+  /** The pages that link to, and are linked from, one page. */
+  refs(path: string): RefsReport {
+    return documentRefs(this.config, path);
   }
 
   /** Run the convention audits: links, filenames, headings, and link style. */

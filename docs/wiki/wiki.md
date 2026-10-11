@@ -275,9 +275,11 @@ ORDER BY ?command
 | [wiki_lint](wiki_lint.md)       | Convention audits for broken links, filename patterns, heading style, and internal link style.      |
 | [wiki_mcp](wiki_mcp.md)         | Run a read-only MCP server for querying the wiki graph.                                             |
 | [wiki_query](wiki_query.md)     | Run SPARQL SELECT or CONSTRUCT against the wiki graph.                                              |
+| [wiki_refs](wiki_refs.md)       | List the pages that link to a page and the pages it links to.                                       |
 | [wiki_remove](wiki_remove.md)   | Remove a data source from wiki.yml, its cache, and wiki.lock.                                       |
 | [wiki_render](wiki_render.md)   | Update inline SPARQL result tables in markdown files.                                               |
 | [wiki_serve](wiki_serve.md)     | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                     |
+| [wiki_show](wiki_show.md)       | Describe one page as the engine sees it, with the content hash an edit expects.                     |
 | [wiki_update](wiki_update.md)   | Check locked sources for newer commits and update wiki.lock.                                        |
 | [wiki_upgrade](wiki_upgrade.md) | Check for Wiki CLI updates and upgrade supported installations.                                     |
 

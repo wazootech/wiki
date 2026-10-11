@@ -203,6 +203,16 @@ export {
   type WikiEdit,
 } from "./edit.ts";
 export {
+  documentRefs,
+  type PageRef,
+  type RefsReport,
+  resolveDocumentPath,
+  SHOW_REPORT_VERSION,
+  showDocument,
+  type ShowHeading,
+  type ShowReport,
+} from "./show.ts";
+export {
   blankNode,
   canParse,
   canSerialize,
