@@ -298,6 +298,25 @@ wiki remove solar-system
 
 See [wiki install](wiki_install.md) and [wiki remove](wiki_remove.md).
 
+### Contributing changes to a source
+
+An installed source is a read-only input. To change one, change its upstream repository and pull the result back in; never edit the installed copy.
+
+- **Local resolution** (`wiki install`) is a cache: a shallow clone under `.wiki/sources/<name>/repo/`, pinned by `wiki.lock`. It is not committed and is not a place to author.
+- **Vendoring** (copying the pages into your own repository) makes them yours: they are then ordinary root pages and no longer track upstream. Wiki has no vendoring command or config yet ([#150](https://github.com/wazootech/wiki/issues/150)); copy the files and remove the source with `wiki remove`.
+- **Upstream contribution** keeps the source a dependency and sends the change to its owner:
+
+1. Clone the source's repository normally, outside `.wiki/`, and branch (fork it first when you cannot push). It is a wiki in its own right, so use its `wiki file` verbs and its own checks there.
+2. Open a pull request upstream.
+3. Until it merges, point your wiki at the branch: set the source's `url` to your fork (if you forked) and `ref` to the branch, then run `wiki update <name>`. This moves the `wiki.lock` entry to the branch's head.
+4. After it merges, set `url` and `ref` back and run `wiki update <name>` again. Commit `wiki.yml` and `wiki.lock`.
+
+To follow upstream without contributing, run `wiki update` (or `wiki update <name>`); `wiki update --dry-run` shows what would move.
+
+Do not edit files in `.wiki/sources/`. The edit verbs (`wiki file set`, `patch`, `mv`, `rm`, and `wiki edit`) refuse any path under `.wiki/`. A hand edit there survives `wiki install`, stays uncommitted, and is not in `wiki.lock`, so nobody else sees it. It also breaks `wiki update`: when upstream changes the same file, the update fails with git's "local changes would be overwritten" error until you discard the edit (`git -C .wiki/sources/<name>/repo checkout -- .`).
+
+SPARQL Update and in-place writes to sources are not supported; see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
+
 For the product framing behind recursive source composition, see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
 
 ## Serve API

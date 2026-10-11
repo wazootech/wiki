@@ -42,4 +42,5 @@ The `.wiki/` source cache directory (and the `_site/` build output) should not b
 ## Related
 
 - [wiki remove](wiki_remove.md)
+- [Contributing changes to a source](Wiki_Configuration.md#contributing-changes-to-a-source)
 - [Wiki Configuration](Wiki_Configuration.md#external-data-sources-sources)
