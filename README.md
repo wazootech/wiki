@@ -31,15 +31,17 @@ Adoption path: [Wiki CLI](docs/wiki/wiki.md) in the docs wiki.
 
 ## Key features
 
-Three capabilities, one toolchain:
+Everything you need for knowledge management, one toolchain:
 
-| Capability       | Commands                                                    | What you get                                                                    |
-| ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **Trust**        | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt)           | Integrity checks (SHACL, JSON Schema), wiki conventions, automated formatting   |
-| **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export) | Semantic queries (SPARQL), live inline tables, data exports (JSON-LD, Turtle)   |
-| **Publish**      | [`build`](#build), [`serve`](#serve), [`link`](#link)       | Static HTML with infoboxes and metadata viewer, local preview, wikilink hygiene |
+| Capability       | Commands                                                                                                                                   | What you get                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| **Trust**        | [`check`](#check), [`lint`](#lint), [`fmt`](#fmt)                                                                                          | Integrity checks (SHACL, JSON Schema), wiki conventions, automated formatting                |
+| **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export), [`mcp`](#mcp)                                                                 | Semantic queries (SPARQL), live inline tables, data exports (JSON-LD, Turtle), an MCP server |
+| **Publish**      | [`build`](#build), [`serve`](#serve), [`link`](#link)                                                                                      | Static HTML with infoboxes and metadata viewer, local preview, wikilink hygiene              |
+| **Edit**         | [`file`](#file), [`edit`](#edit)                                                                                                           | Validated, link-aware page edits that are dry runs until you pass `--apply`                  |
+| **Sources**      | [`install`](#install-update-and-remove), [`update`](#install-update-and-remove), [`remove`](#install-update-and-remove), [`graph`](#graph) | Pinned external wikis and data as named graphs, with provenance you can query with `GRAPH`   |
 
-Also: [`init`](#init) scaffolds `wiki.yaml`; `wiki query --pretty` renders Rich tables in the terminal; YAML and JSON frontmatter feed into the same queryable model; per-page layouts via `wazoo:layout`.
+Also: [`init`](#init) scaffolds `wiki.yaml`; [`upgrade`](#upgrade) updates the CLI itself; `wiki query --pretty` renders Rich tables in the terminal; YAML and JSON frontmatter feed into the same queryable model; per-page layouts via `wazoo:layout`.
 
 ## Agent skills
 
@@ -585,6 +587,85 @@ wiki export -f json-ld -o wiki-export.json
 ```
 
 The `--format` choices are `dict`, `json-ld`, `turtle`, `n3`, `nt`, `trig`, and `nquads`. RDF/XML parsing remains supported for input `.rdf` and `.xml` files. RDF/XML output is deferred from the Deno cutover; `-f xml` returns a clear unsupported-format error.
+
+### `file`
+
+Create, change, move, delete, or inspect one wiki document (`.md`, `.yaml`, `.yml`, `.json`, `.toml` under `wiki.input`). These are validated, link-aware edits, not plain file operations: each write verb is checked against `check` and `lint` first and is a dry run unless you pass `--apply`.
+
+```bash
+wiki file new wiki/Alice.md --type schema:Person --set "schema:name=Alice" --apply
+wiki file set wiki/Alice.md schema:email alice@example.org --apply
+wiki file patch wiki/Alice.md --heading Notes --append --content "Met at the summit." --apply
+wiki file mv wiki/Alice.md wiki/People/Alice.md --apply
+wiki file rm wiki/Old_Draft.md --prune-links --apply
+wiki file show wiki/Alice.md --json
+wiki file refs wiki/Alice.md
+```
+
+`mv` repoints every link and metadata reference to the moved page, and `rm` refuses while other pages link to it unless you pass `--prune-links`. See [wiki file](docs/wiki/wiki_file.md).
+
+### `edit`
+
+Validate a batch of edits across many files and, with `--apply`, write them atomically. The input is JSON (`{"ops": [...]}`), read from `--from FILE` or stdin; each op is `create`, `replace`, `delete`, `set`, `patch`, or `move`. Nothing is written if the batch introduces `check` or `lint` errors (unless `--force`) or an op's `expect` hash no longer matches the file. Exit codes: `0` valid or applied, `1` rejected, `2` usage, `3` conflict.
+
+```bash
+wiki edit --from changes.json            # validate and report only
+wiki edit --from changes.json --apply    # write atomically
+wiki edit --from changes.json --json     # machine-readable report
+```
+
+The `wiki file` write verbs are shorthand for one-operation edits. See [wiki edit](docs/wiki/wiki_edit.md).
+
+### `mcp`
+
+Start a local [Model Context Protocol](https://modelcontextprotocol.io/) server over stdio so agents can run SPARQL and inspect pages. It is read-only by default; `--allow-write` also lists the page-edit tools, which wrap `wiki edit` and default to a dry run.
+
+```bash
+wiki mcp
+wiki mcp --cache
+wiki mcp --allow-write
+
+# Register with Claude Code
+claude mcp add wiki -- wiki -c docs/wiki.yml mcp
+```
+
+See [wiki mcp](docs/wiki/wiki_mcp.md) for the tool list.
+
+### `install`, `update`, and `remove`
+
+Manage external wikis and data declared under `sources:` in `wiki.yaml`. Each source is a git repository pinned in `wiki.lock`, cached under `.wiki/sources/`, and loaded as its own named graph.
+
+```bash
+wiki install                                     # fetch and lock every declared source
+wiki install EthanThatOneKid/solar-system-wiki   # add one source (owner/repo or URL, optional #ref)
+wiki update --dry-run                            # report newer commits without touching wiki.lock
+wiki update                                      # move locked sources to their latest commits
+wiki remove solar-system-wiki                    # drop a source from config, cache, and lockfile
+```
+
+Transitive `sources:` are resolved recursively. Commit `wiki.lock` so builds are reproducible. See [wiki install](docs/wiki/wiki_install.md), [wiki update](docs/wiki/wiki_update.md), and [wiki remove](docs/wiki/wiki_remove.md). `wiki remove` removes a source; deleting a page is `wiki file rm`.
+
+### `graph`
+
+List the named graphs a composed wiki holds: the root plus one per installed source. The listed URI is what a SPARQL `GRAPH` clause addresses, which is how you ask which source a result came from.
+
+```bash
+wiki graph list
+wiki query 'SELECT ?g ?s WHERE { GRAPH ?g { ?s a <https://schema.org/Person> } }'
+```
+
+`graph list` is read-only discovery. See [wiki graph](docs/wiki/wiki_graph.md).
+
+### `upgrade`
+
+Check for a newer release and upgrade the CLI. It defers to npm or pip when the binary was installed through them.
+
+```bash
+wiki upgrade --check   # exits 1 when outdated
+wiki upgrade --yes     # skip the confirmation prompt
+```
+
+See [wiki upgrade](docs/wiki/wiki_upgrade.md).
 
 ### Global options
 
