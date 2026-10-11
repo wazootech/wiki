@@ -338,7 +338,11 @@ Deno.test("stdio transport can be injected and tested without a process or netwo
 
 interface ToolResult {
   isError: boolean;
-  structuredContent?: Record<string, any>;
+  structuredContent?: {
+    status?: string;
+    hash?: string;
+    [key: string]: unknown;
+  };
   content: { type: string; text: string }[];
 }
 
