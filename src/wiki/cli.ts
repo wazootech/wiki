@@ -1526,8 +1526,9 @@ const EDIT_HELP = [
   "",
   "  Validate a batch of page edits and, with --apply, write them atomically.",
   "",
-  '  The edit is JSON: {"ops": [...]}, each op one of create, replace, or',
-  "  delete. Paths are relative to the config root. Nothing is written without",
+  '  The edit is JSON: {"ops": [...]}, each op one of create, replace, delete,',
+  "  set, or patch (wiki new, set, and patch build one for you). Paths are",
+  "  relative to the config root. Nothing is written without",
   "  --apply, and nothing is written if the edit introduces check or lint errors",
   '  (unless --force) or an op\'s "expect" hash no longer matches the file.',
   "",
@@ -1609,7 +1610,6 @@ async function runEditCommand(
   wiki: Wiki,
   parsed: ParsedEditCommand,
 ): Promise<number> {
-  const { EditUsageError } = await import("./edit.ts");
   let text: string;
   try {
     text = parsed.from === "-"
@@ -1627,11 +1627,32 @@ async function runEditCommand(
     return usageError(`Error: The edit is not valid JSON: ${errorText(error)}`);
   }
 
+  return await applyAndReport(wiki, edit, parsed);
+}
+
+interface EditRunOptions {
+  readonly apply: boolean;
+  readonly force: boolean;
+  readonly format: "text" | "json";
+}
+
+/**
+ * Apply one edit and report it: the shared tail of `wiki edit` and the verbs
+ * built on it (`new`, `set`, `patch`). `extra` adds verb-specific fields to the
+ * JSON report, such as `new`'s missing required fields.
+ */
+async function applyAndReport(
+  wiki: Wiki,
+  edit: unknown,
+  options: EditRunOptions,
+  extra: Readonly<Record<string, unknown>> = {},
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
   let report;
   try {
     report = await wiki.edit(edit as Parameters<Wiki["edit"]>[0], {
-      apply: parsed.apply,
-      force: parsed.force,
+      apply: options.apply,
+      force: options.force,
     });
   } catch (error) {
     if (error instanceof EditUsageError) {
@@ -1641,8 +1662,8 @@ async function runEditCommand(
     return EXIT_FAILURE;
   }
 
-  if (parsed.format === "json") {
-    console.log(JSON.stringify(report, null, 2));
+  if (options.format === "json") {
+    console.log(JSON.stringify({ ...report, ...extra }, null, 2));
   }
   // The human summary always goes to stderr, as `check -f json` does, so a
   // JSON consumer can read stdout and still see why the run failed.
@@ -1675,6 +1696,333 @@ async function runEditCommand(
       console.error("Edit written.");
       return EXIT_OK;
   }
+}
+
+/** Options every write verb takes, listed once for the help texts. */
+const WRITE_VERB_OPTIONS = [
+  "  --expect HASH  Refuse unless the file's SHA-256 still matches (from wiki",
+  "                 show), so a stale read never clobbers a newer write.",
+  "  --apply        Write the edit. Without it, validate and report only.",
+  "  --force        Write even if the edit introduces errors.",
+  "  -f, --format [text|json]",
+  "                 Output format (default: text). json writes the edit",
+  "                 report to stdout.",
+  "  --json         Shorthand for --format json.",
+  "  --help         Show this message and exit.",
+];
+
+const WRITE_VERB_EXIT_CODES =
+  "  Exit codes: 0 valid (or applied), 1 rejected, 2 usage, 3 conflict.";
+
+const NEW_HELP = [
+  "Usage: wiki new [OPTIONS] PATH",
+  "",
+  "  Create a page of a known type, as a wiki edit (see wiki edit).",
+  "",
+  "  The type's required fields (SHACL sh:minCount, JSON Schema required) come",
+  "  first in the frontmatter, then the other --set fields, then an H1 from",
+  "  headline or name. A required field you do not --set is left out, so the",
+  "  edit is rejected and the report names it. When PATH is a directory, the",
+  "  filename comes from the title (Opal Security -> Opal_Security.md).",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --type CLASS   The page's type, e.g. schema:Purchase.",
+  "  --set KEY=VALUE",
+  "                 A frontmatter field; VALUE is YAML (repeatable).",
+  "  --body TEXT    Markdown to put under the H1.",
+  ...WRITE_VERB_OPTIONS.filter((line) =>
+    !line.startsWith("  --expect") && !line.startsWith("                 show)")
+  ),
+].join("\n");
+
+const SET_HELP = [
+  "Usage: wiki set [OPTIONS] PATH FIELD [VALUE]",
+  "",
+  "  Set one frontmatter field, as a wiki edit (see wiki edit).",
+  "",
+  "  VALUE is YAML and is written as given (12.00 stays 12.00). FIELD is taken",
+  "  literally (schema:price is one key). Comments and key order are kept.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --unset        Remove FIELD instead of setting it.",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+const PATCH_HELP = [
+  "Usage: wiki patch [OPTIONS] PATH",
+  "",
+  "  Append to, prepend to, or replace a section of a page, as a wiki edit.",
+  "",
+  "  The target is the lines under a heading (up to the next heading at the",
+  "  same or a higher level), the body, or the frontmatter. Headings match on",
+  "  their text or anchor slug; a heading that matches twice is an error.",
+  "  Content comes from --content, or stdin.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --heading TEXT  Target the section under this heading.",
+  "  --body          Target the whole body.",
+  "  --frontmatter   Target the frontmatter YAML.",
+  "  --append | --prepend | --replace",
+  "                  Where the content goes (exactly one).",
+  "  --content TEXT  The content (default: read stdin).",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+interface VerbArgs {
+  readonly positionals: string[];
+  readonly values: Map<string, string[]>;
+  readonly flags: Set<string>;
+  readonly run: EditRunOptions;
+  readonly expect: string | undefined;
+}
+
+/**
+ * The shared argument parser for `new`, `set`, and `patch`: the write options
+ * every verb takes, plus the verb's own `valueOptions` and `flagOptions`.
+ */
+function parseVerbArgs(
+  args: readonly string[],
+  help: string,
+  spec: {
+    readonly valueOptions: readonly string[];
+    readonly flagOptions: readonly string[];
+    readonly expect: boolean;
+  },
+): VerbArgs | number {
+  const positionals: string[] = [];
+  const values = new Map<string, string[]>();
+  const flags = new Set<string>();
+  let apply = false;
+  let force = false;
+  let format: "text" | "json" = "text";
+  let expect: string | undefined;
+  const valueOptions = new Set([
+    ...spec.valueOptions,
+    "-f",
+    "--format",
+    ...(spec.expect ? ["--expect"] : []),
+  ]);
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(help);
+      return EXIT_OK;
+    }
+    let name = token;
+    let value: string | undefined;
+    if (token.startsWith("--") && token.includes("=")) {
+      name = token.slice(0, token.indexOf("="));
+      value = token.slice(token.indexOf("=") + 1);
+    }
+    if (valueOptions.has(name)) {
+      value ??= args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${name}' requires an argument.`);
+      }
+      if (name === "-f" || name === "--format") {
+        if (value !== "text" && value !== "json") {
+          return usageError(
+            `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+          );
+        }
+        format = value;
+      } else if (name === "--expect") {
+        expect = value;
+      } else {
+        values.set(name, [...(values.get(name) ?? []), value]);
+      }
+    } else if (token === "--apply") {
+      apply = true;
+    } else if (token === "--force") {
+      force = true;
+    } else if (token === "--json") {
+      format = "json";
+    } else if (spec.flagOptions.includes(token)) {
+      flags.add(token);
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      positionals.push(token);
+    }
+  }
+  return {
+    positionals,
+    values,
+    flags,
+    run: { apply, force, format },
+    expect,
+  };
+}
+
+async function runNewCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, NEW_HELP, {
+    valueOptions: ["--type", "--set", "--body"],
+    flagOptions: [],
+    expect: false,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki new takes exactly one PATH.");
+  }
+  const {
+    requiredFields,
+    scaffoldPage,
+    scaffoldTitle,
+    titleFilename,
+    typeKey,
+  } = await import("./edit_ops.ts");
+  const { EditOpError } = await import("./edit_ops.ts");
+  const { isDirectory } = await import("./fspath.ts");
+  const { join, resolve } = await import("@std/path");
+
+  const fields: Array<readonly [string, { yaml: string }]> = [];
+  for (const entry of parsed.values.get("--set") ?? []) {
+    const at = entry.indexOf("=");
+    if (at <= 0) {
+      return usageError(`Error: --set takes KEY=VALUE; got '${entry}'.`);
+    }
+    fields.push([entry.slice(0, at), { yaml: entry.slice(at + 1) }]);
+  }
+  const type = parsed.values.get("--type")?.at(-1) ?? null;
+
+  let path = parsed.positionals[0]!;
+  try {
+    if (
+      /[\\/]$/.test(path) ||
+      isDirectory(resolve(wiki.config.config_root, path))
+    ) {
+      const title = scaffoldTitle(fields);
+      if (title === null) {
+        return usageError(
+          "Error: PATH is a directory, so the filename comes from the title; --set headline=... or name=....",
+        );
+      }
+      path = join(path, titleFilename(title));
+    }
+    const required = type === null
+      ? []
+      : await requiredFields(wiki.config, type);
+    const content = scaffoldPage({
+      path,
+      typeKey: typeKey(wiki.config),
+      type,
+      required,
+      fields,
+      body: parsed.values.get("--body")?.at(-1) ?? null,
+    });
+    const supplied = new Set(fields.map(([key]) => key));
+    const missing = required.filter((key) => !supplied.has(key));
+    if (missing.length > 0) {
+      console.error(`missing required fields: ${missing.join(", ")}`);
+    }
+    return await applyAndReport(
+      wiki,
+      { ops: [{ op: "create", path, content, expect: "absent" }] },
+      parsed.run,
+      { required, missing },
+    );
+  } catch (error) {
+    if (error instanceof EditOpError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+async function runSetCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, SET_HELP, {
+    valueOptions: [],
+    flagOptions: ["--unset"],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  const unset = parsed.flags.has("--unset");
+  const wanted = unset ? 2 : 3;
+  if (parsed.positionals.length !== wanted) {
+    return usageError(
+      unset
+        ? "Error: wiki set --unset takes PATH and FIELD."
+        : "Error: wiki set takes PATH, FIELD, and VALUE (or --unset).",
+    );
+  }
+  const [path, field, value] = parsed.positionals as [string, string, string?];
+  const op = unset
+    ? { op: "set", path, field, value: null }
+    : { op: "set", path, field, yaml: value };
+  return await applyAndReport(
+    wiki,
+    { ops: [{ ...op, ...(parsed.expect ? { expect: parsed.expect } : {}) }] },
+    parsed.run,
+  );
+}
+
+async function runPatchCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, PATCH_HELP, {
+    valueOptions: ["--heading", "--content"],
+    flagOptions: [
+      "--body",
+      "--frontmatter",
+      "--append",
+      "--prepend",
+      "--replace",
+    ],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki patch takes exactly one PATH.");
+  }
+  const heading = parsed.values.get("--heading")?.at(-1);
+  const targets = [
+    heading !== undefined,
+    parsed.flags.has("--body"),
+    parsed.flags.has("--frontmatter"),
+  ].filter(Boolean).length;
+  if (targets !== 1) {
+    return usageError(
+      "Error: give exactly one target: --heading TEXT, --body, or --frontmatter.",
+    );
+  }
+  const modes = (["append", "prepend", "replace"] as const).filter((mode) =>
+    parsed.flags.has(`--${mode}`)
+  );
+  if (modes.length !== 1) {
+    return usageError(
+      "Error: give exactly one of --append, --prepend, or --replace.",
+    );
+  }
+  const content = parsed.values.get("--content")?.at(-1) ??
+    await new Response(Deno.stdin.readable).text();
+  const target = heading !== undefined
+    ? { heading }
+    : parsed.flags.has("--body")
+    ? { body: true }
+    : { frontmatter: true };
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "patch",
+      path: parsed.positionals[0]!,
+      target,
+      mode: modes[0],
+      content,
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
 }
 
 const SHOW_HELP = [
@@ -2052,6 +2400,32 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
+    names: ["new"],
+    description: "Create a page of a known type (an edit; --apply to write).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(NEW_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runNewCommand(wiki, args);
+    },
+  },
+  {
+    names: ["patch"],
+    description: "Append to, prepend to, or replace a page section (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(PATCH_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runPatchCommand(wiki, args);
+    },
+  },
+  {
     names: ["query"],
     description: "Run SPARQL SELECT or CONSTRUCT (query argument or stdin).",
     run: async ({ args, configPath, wikiInputs }) => {
@@ -2105,6 +2479,19 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runServeCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["set"],
+    description: "Set or remove one frontmatter field (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(SET_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runSetCommand(wiki, args);
     },
   },
   {
