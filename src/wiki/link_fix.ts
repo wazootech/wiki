@@ -5,7 +5,11 @@ import {
   pageLinkMatches,
 } from "./wiki_links.ts";
 import type { Config } from "./config.ts";
-import { splitFrontmatterText, WIKILINK_FULL_REGEX } from "./document.ts";
+import {
+  MARKDOWN_LINK_PARTS_REGEX,
+  splitFrontmatterText,
+  WIKILINK_FULL_REGEX,
+} from "./document.ts";
 
 import {
   fragmentId,
@@ -19,7 +23,6 @@ import { GitHubHeadingSlugger } from "./headings.ts";
 import { getCloseMatches } from "./sequence_matcher.ts";
 import type { BrokenLink, BrokenLinkFix } from "./schemas/domain.ts";
 
-const MARKDOWN_LINK_FULL_RE = /^(!?\[[^\]]*\]\()([^)]+)(\))$/;
 const FUZZY_ROUTE_CUTOFF = 0.86;
 
 function compareCodePoints(left: string, right: string): number {
@@ -185,7 +188,7 @@ function replaceTargetInMatch(
       ? `[[${replacementTarget}]]`
       : `[[${replacementTarget}|${display}]]`;
   }
-  const match = MARKDOWN_LINK_FULL_RE.exec(fullMatch);
+  const match = MARKDOWN_LINK_PARTS_REGEX.exec(fullMatch);
   if (match === null) return fullMatch;
   return `${match[1]}${replacementTarget}${match[3]}`;
 }
