@@ -1564,7 +1564,7 @@ Deno.test("falsy frontmatter values are emitted, absences are not (#374)", () =>
   }
 });
 
-Deno.test("inference keeps one literal per numeric value (#367)", async () => {
+Deno.test("inference keeps one literal per numeric value (#367)", () => {
   // `1`^^xsd:integer and `1.0`^^xsd:double are value-equal to the bundled
   // dt-eq rule, and eq-rep-o used to copy each onto the other's subject, so a
   // `price: 1.00` page failed `sh:maxCount 1`.
@@ -1605,7 +1605,7 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
   assertEquals(prices("frac").length, 1);
 });
 
-Deno.test("inference works on a named graph and derives into it (#382)", async () => {
+Deno.test("inference works on a named graph and derives into it (#382)", () => {
   // A named graph's quads carry their graph term; handing them to the engine
   // as-is serialized `{` into the N3 text and skipped reasoning entirely.
   const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
