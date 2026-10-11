@@ -1519,11 +1519,48 @@ Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
       literal("30", { datatype: XSD_INTEGER }),
     ),
   );
-  // `0.0` is falsy in Python too, so no triple — matching the oracle.
-  assertEquals(
-    [...graph.match(subject, namedNode(`${SCHEMA}nothing`))].length,
-    0,
+  // `0.0` is a value, not an absence (#374): it is a typed literal.
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}nothing`),
+      literal("0.0", { datatype: XSD_DOUBLE }),
+    ),
   );
+});
+
+Deno.test("falsy frontmatter values are emitted, absences are not (#374)", () => {
+  const config = new Config();
+  const attrs = parseFrontmatter(
+    '---\nprice: 0\nfree: false\nnote: ""\nnone: null\nlist: []\nmap: {}\n---\n\nBody\n',
+  );
+  const graph = frontmatterToGraph(
+    { "@type": "Product", "@id": "wiki:falsy", ...attrs },
+    config.context,
+  );
+  const subject = namedNode(`${WIKI}falsy`);
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}price`),
+      literal("0", { datatype: XSD_INTEGER }),
+    ),
+  );
+  assert(
+    graph.has(
+      subject,
+      namedNode(`${SCHEMA}free`),
+      literal("false", { datatype: XSD_BOOLEAN }),
+    ),
+  );
+  assert(graph.has(subject, namedNode(`${SCHEMA}note`), literal("")));
+  for (const absent of ["none", "list", "map"]) {
+    assertEquals(
+      [...graph.match(subject, namedNode(`${SCHEMA}${absent}`))].length,
+      0,
+      absent,
+    );
+  }
 });
 
 Deno.test("inference keeps one literal per numeric value (#367)", async () => {
@@ -1537,6 +1574,7 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
     float: "1.00",
     other: "2.00",
     frac: "3.50",
+    zero: "0.00",
   };
   const graph = new RdfGraph();
   for (const [id, value] of Object.entries(values)) {
@@ -1559,6 +1597,9 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
   ]);
   assertEquals(prices("float"), [
     termKey(literal("1.0", { datatype: XSD_DOUBLE })),
+  ]);
+  assertEquals(prices("zero"), [
+    termKey(literal("0.0", { datatype: XSD_DOUBLE })),
   ]);
   assertEquals(prices("other").length, 1);
   assertEquals(prices("frac").length, 1);

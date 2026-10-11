@@ -316,6 +316,22 @@ function isTruthy(value: unknown): boolean {
 }
 
 /**
+ * Whether a frontmatter value says anything. Only absence is dropped: `null`,
+ * an empty list and an empty mapping. `0`, `0.0`, `false` and `""` are values
+ * and become literals (wiki#374), unlike Python's `bool()`, which the retired
+ * oracle used and which {@link isTruthy} still mirrors for structural keys.
+ */
+function isPresent(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  // A `WikiFloat` is a `Number` object with no own keys: it must be recognized
+  // before the mapping branch reads it as an empty mapping.
+  if (value instanceof WikiFloat) return true;
+  if (Array.isArray(value)) return value.length > 0;
+  if (isRecord(value)) return Object.keys(value).length > 0;
+  return true;
+}
+
+/**
  * A numeric literal the way rdflib infers one from a Python number.
  *
  * JavaScript has a single number type, so a bare `30.0` arrives as the number
@@ -705,9 +721,7 @@ export function frontmatterToGraph(
   const skipKeys = new Set(["id", "type", "@type"]);
   for (const [key, value] of Object.entries(record)) {
     if (key.startsWith("@") || skipKeys.has(key)) continue;
-    if (Array.isArray(value) || isTruthy(value)) {
-      resolveObject(key, value, graph, subject, rdfContext);
-    }
+    if (isPresent(value)) resolveObject(key, value, graph, subject, rdfContext);
   }
 
   if (isTruthy(body) && isTruthy(contentPredicate)) {
