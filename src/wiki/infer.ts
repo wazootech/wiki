@@ -48,7 +48,13 @@ import type { Config } from "./config.ts";
 import type { Context } from "./context.ts";
 import { getLogger } from "./logging.ts";
 import { OWL2RL_N3 } from "./owl2rl_rules.ts";
-import { type NamedNode, type Quad, type RdfGraph, termKey } from "./rdf.ts";
+import {
+  type NamedNode,
+  type Quad,
+  type RdfGraph,
+  termKey,
+  triple,
+} from "./rdf.ts";
 
 const logger = getLogger("wiki.infer");
 
@@ -122,7 +128,13 @@ export function applyInference(
   _context: Context | Config,
 ): RdfGraph {
   try {
-    const asserted = graph.toArray();
+    // A dataset's named graph holds quads that carry their graph term, and the
+    // engine serializes what it is given to N3 text, where a graph term is a
+    // `{` it cannot parse (#382). Reason over the triples alone; `graph.add`
+    // below puts each derived triple back into this graph.
+    const asserted = graph.toArray().map((item) =>
+      triple(item.subject, item.predicate as NamedNode, item.object)
+    );
     const engine = new InferenceEngine();
     engine.load(
       [{ n3: OWL2RL_RULES, label: "rules/owl2rl" }],
