@@ -6,6 +6,7 @@ import {
   EXIT_FAILURE,
   EXIT_OK,
   EXIT_USAGE,
+  FILE_COMMAND_NAMES,
   PROG_NAME,
 } from "../src/wiki/cli.ts";
 
@@ -612,3 +613,38 @@ Deno.test(
     }
   },
 );
+
+Deno.test("wiki file groups the single-file verbs", async () => {
+  const help = await runCli(["file", "--help"]);
+  assertEquals(help.code, EXIT_OK);
+  assert(
+    help.stdout.startsWith("Usage: wiki file [OPTIONS] COMMAND [ARGS]..."),
+  );
+  const commandSection = help.stdout.split("Commands:\n")[1] ?? "";
+  const names = commandSection.split("\n").flatMap((line) => {
+    const match = /^\s{2}(\S+)\s{2,}/.exec(line);
+    return match?.[1] ? [match[1]] : [];
+  });
+  assertEquals(names.sort(), [...FILE_COMMAND_NAMES].sort());
+  assertEquals(
+    [...FILE_COMMAND_NAMES].sort(),
+    ["mv", "new", "patch", "refs", "rm", "set", "show"],
+  );
+  // The verbs are not top-level, and `edit` (the batch engine) stays there.
+  for (const verb of FILE_COMMAND_NAMES) {
+    assert(!COMMAND_NAMES.includes(verb), verb);
+  }
+  assert(COMMAND_NAMES.includes("edit"));
+
+  const bare = await runCli(["new", "x.md"]);
+  assertEquals(bare.code, EXIT_USAGE);
+  assert(bare.stderr.includes(`Did you mean '${PROG_NAME} file new'?`));
+
+  const missing = await runCli(["file"]);
+  assertEquals(missing.code, EXIT_USAGE);
+  assert(missing.stderr.includes("Error: Missing command."));
+
+  const unknown = await runCli(["file", "touch"]);
+  assertEquals(unknown.code, EXIT_USAGE);
+  assert(unknown.stderr.includes("Error: No such command 'touch'."));
+});

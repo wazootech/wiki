@@ -142,6 +142,18 @@ function graphUsageError(detail: string): number {
   return EXIT_USAGE;
 }
 
+function fileUsageError(detail: string): number {
+  console.error(
+    [
+      `Usage: ${PROG_NAME} file [OPTIONS] COMMAND [ARGS]...`,
+      `Try '${PROG_NAME} file --help' for help.`,
+      "",
+      `Error: ${detail}`,
+    ].join("\n"),
+  );
+  return EXIT_USAGE;
+}
+
 function graphListUsageError(detail: string): number {
   console.error(
     [
@@ -1524,10 +1536,10 @@ async function runMcpCommand(
 const EDIT_HELP = [
   "Usage: wiki edit [OPTIONS]",
   "",
-  "  Validate a batch of page edits and, with --apply, write them atomically.",
+  "  Validate a batch of file edits and, with --apply, write them atomically.",
   "",
   '  The edit is JSON: {"ops": [...]}, each op one of create, replace, delete,',
-  "  set, patch, or move (wiki new, set, patch, mv, and rm build one for you).",
+  "  set, patch, or move (wiki file new, set, patch, mv, and rm build one for you).",
   "  Paths are relative to the config root. Nothing is written without",
   "  --apply, and nothing is written if the edit introduces check or lint errors",
   '  (unless --force) or an op\'s "expect" hash no longer matches the file.',
@@ -1715,9 +1727,9 @@ const WRITE_VERB_EXIT_CODES =
   "  Exit codes: 0 valid (or applied), 1 rejected, 2 usage, 3 conflict.";
 
 const NEW_HELP = [
-  "Usage: wiki new [OPTIONS] PATH",
+  "Usage: wiki file new [OPTIONS] PATH",
   "",
-  "  Create a page of a known type, as a wiki edit (see wiki edit).",
+  "  Create a file of a known type, as a wiki edit (see wiki edit).",
   "",
   "  The type's required fields (SHACL sh:minCount, JSON Schema required) come",
   "  first in the frontmatter, then the other --set fields, then an H1 from",
@@ -1738,7 +1750,7 @@ const NEW_HELP = [
 ].join("\n");
 
 const SET_HELP = [
-  "Usage: wiki set [OPTIONS] PATH FIELD [VALUE]",
+  "Usage: wiki file set [OPTIONS] PATH FIELD [VALUE]",
   "",
   "  Set one frontmatter field, as a wiki edit (see wiki edit).",
   "",
@@ -1753,7 +1765,7 @@ const SET_HELP = [
 ].join("\n");
 
 const PATCH_HELP = [
-  "Usage: wiki patch [OPTIONS] PATH",
+  "Usage: wiki file patch [OPTIONS] PATH",
   "",
   "  Append to, prepend to, or replace a section of a page, as a wiki edit.",
   "",
@@ -2026,9 +2038,9 @@ async function runPatchCommand(
 }
 
 const MV_HELP = [
-  "Usage: wiki mv [OPTIONS] FROM TO",
+  "Usage: wiki file mv [OPTIONS] FROM TO",
   "",
-  "  Move or rename a page, as a wiki edit (see wiki edit).",
+  "  Move or rename a file, as a wiki edit (see wiki edit).",
   "",
   "  Every page that links to FROM is repointed at TO, in the link's own style",
   "  (wikilink or markdown, extension, ./ prefix, #fragment kept); FROM's own",
@@ -2043,9 +2055,9 @@ const MV_HELP = [
 ].join("\n");
 
 const RM_HELP = [
-  "Usage: wiki rm [OPTIONS] PATH",
+  "Usage: wiki file rm [OPTIONS] PATH",
   "",
-  "  Delete a page, as a wiki edit (see wiki edit).",
+  "  Delete a file, as a wiki edit (see wiki edit).",
   "",
   "  Refuses (exit 1, naming each linking page) while other pages link to",
   "  PATH, unless --prune-links turns those links into their plain label text.",
@@ -2105,9 +2117,9 @@ async function runRmCommand(
 }
 
 const SHOW_HELP = [
-  "Usage: wiki show [OPTIONS] PATH",
+  "Usage: wiki file show [OPTIONS] PATH",
   "",
-  "  Describe one page as the engine sees it: frontmatter, compacted JSON-LD,",
+  "  Describe one file as the engine sees it: frontmatter, compacted JSON-LD,",
   "  heading outline, outbound links, and the content hash to pass as an edit",
   '  op\'s "expect". PATH is relative to the config root, as in wiki edit.',
   "",
@@ -2120,9 +2132,9 @@ const SHOW_HELP = [
 ].join("\n");
 
 const REFS_HELP = [
-  "Usage: wiki refs [OPTIONS] PATH",
+  "Usage: wiki file refs [OPTIONS] PATH",
   "",
-  "  List the pages that link to PATH and the pages PATH links to.",
+  "  List the files that link to PATH and the files PATH links to.",
   "  PATH is relative to the config root, as in wiki edit.",
   "",
   "Options:",
@@ -2318,7 +2330,7 @@ const COMMANDS: readonly CommandDefinition[] = [
   },
   {
     names: ["edit"],
-    description: "Validate page edits and write them atomically (--apply).",
+    description: "Validate a batch of file edits and write them atomically.",
     run: async ({ args, configPath, wikiInputs }) => {
       const parsed = parseEditCommandArgs(args);
       if (typeof parsed === "number") return parsed;
@@ -2336,6 +2348,31 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runExportCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["file"],
+    description:
+      "Create, change, move, delete, or inspect one wiki document file.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const fileCommand = args[0];
+      if (fileCommand === "--help" || fileCommand === "-h") {
+        console.log(FILE_HELP_LINES.join("\n"));
+        return EXIT_OK;
+      }
+      if (fileCommand === undefined) {
+        return fileUsageError("Missing command.");
+      }
+      const definition = FILE_COMMAND_BY_NAME.get(fileCommand);
+      if (definition === undefined) {
+        return fileUsageError(`No such command '${fileCommand}'.`);
+      }
+      return await definition.run({
+        command: fileCommand,
+        args: args.slice(1),
+        configPath,
+        wikiInputs,
+      });
     },
   },
   {
@@ -2479,45 +2516,6 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
-    names: ["mv"],
-    description: "Move or rename a page and repoint its links (an edit).",
-    run: async ({ args, configPath, wikiInputs }) => {
-      if (args.includes("--help") || args.includes("-h")) {
-        console.log(MV_HELP);
-        return EXIT_OK;
-      }
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runMvCommand(wiki, args);
-    },
-  },
-  {
-    names: ["new"],
-    description: "Create a page of a known type (an edit; --apply to write).",
-    run: async ({ args, configPath, wikiInputs }) => {
-      if (args.includes("--help") || args.includes("-h")) {
-        console.log(NEW_HELP);
-        return EXIT_OK;
-      }
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runNewCommand(wiki, args);
-    },
-  },
-  {
-    names: ["patch"],
-    description: "Append to, prepend to, or replace a page section (an edit).",
-    run: async ({ args, configPath, wikiInputs }) => {
-      if (args.includes("--help") || args.includes("-h")) {
-        console.log(PATCH_HELP);
-        return EXIT_OK;
-      }
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runPatchCommand(wiki, args);
-    },
-  },
-  {
     names: ["query"],
     description: "Run SPARQL SELECT or CONSTRUCT (query argument or stdin).",
     run: async ({ args, configPath, wikiInputs }) => {
@@ -2526,17 +2524,6 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runQueryCommand(wiki, parsed);
-    },
-  },
-  {
-    names: ["refs"],
-    description: "List the pages linking to and from one page.",
-    run: async ({ args, configPath, wikiInputs }) => {
-      const parsed = parseReadCommandArgs("refs", args);
-      if (typeof parsed === "number") return parsed;
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runRefsCommand(wiki, parsed);
     },
   },
   {
@@ -2563,19 +2550,6 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
-    names: ["rm"],
-    description: "Delete a page, refusing while pages link to it (an edit).",
-    run: async ({ args, configPath, wikiInputs }) => {
-      if (args.includes("--help") || args.includes("-h")) {
-        console.log(RM_HELP);
-        return EXIT_OK;
-      }
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runRmCommand(wiki, args);
-    },
-  },
-  {
     names: ["serve"],
     description: "Start a local HTTP server for browsing the wiki.",
     run: async ({ args, configPath, wikiInputs }) => {
@@ -2584,30 +2558,6 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runServeCommand(wiki, parsed);
-    },
-  },
-  {
-    names: ["set"],
-    description: "Set or remove one frontmatter field (an edit).",
-    run: async ({ args, configPath, wikiInputs }) => {
-      if (args.includes("--help") || args.includes("-h")) {
-        console.log(SET_HELP);
-        return EXIT_OK;
-      }
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runSetCommand(wiki, args);
-    },
-  },
-  {
-    names: ["show"],
-    description: "Describe one page: frontmatter, JSON-LD, outline, hash.",
-    run: async ({ args, configPath, wikiInputs }) => {
-      const parsed = parseReadCommandArgs("show", args);
-      if (typeof parsed === "number") return parsed;
-      const wiki = await loadWiki(configPath, wikiInputs);
-      if (typeof wiki === "number") return wiki;
-      return await runShowCommand(wiki, parsed);
     },
   },
   {
@@ -2630,6 +2580,130 @@ const COMMANDS: readonly CommandDefinition[] = [
       return await runUpgradeCommand(parsed);
     },
   },
+];
+
+/**
+ * FILE_COMMANDS are the single-file verbs, grouped under `wiki file`. Each is
+ * sugar over one `wiki edit` (or a read), so the batch engine stays top-level.
+ */
+const FILE_COMMANDS: readonly CommandDefinition[] = [
+  {
+    names: ["mv"],
+    description: "Move or rename a file and repoint links to it (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(MV_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runMvCommand(wiki, args);
+    },
+  },
+  {
+    names: ["new"],
+    description: "Create a file of a known type (an edit; --apply to write).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(NEW_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runNewCommand(wiki, args);
+    },
+  },
+  {
+    names: ["patch"],
+    description: "Append to, prepend to, or replace a file section (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(PATCH_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runPatchCommand(wiki, args);
+    },
+  },
+  {
+    names: ["refs"],
+    description: "List the files linking to and from one file.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("refs", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRefsCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["rm"],
+    description: "Delete a file, refusing while others link to it (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(RM_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRmCommand(wiki, args);
+    },
+  },
+  {
+    names: ["set"],
+    description: "Set or remove one frontmatter field (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(SET_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runSetCommand(wiki, args);
+    },
+  },
+  {
+    names: ["show"],
+    description: "Describe one file: frontmatter, JSON-LD, outline, hash.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("show", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runShowCommand(wiki, parsed);
+    },
+  },
+];
+
+const FILE_COMMAND_BY_NAME = new Map<string, CommandDefinition>();
+for (const command of FILE_COMMANDS) {
+  for (const name of command.names) FILE_COMMAND_BY_NAME.set(name, command);
+}
+
+/** FILE_COMMAND_NAMES lists the `wiki file` subcommands. */
+export const FILE_COMMAND_NAMES: readonly string[] = FILE_COMMANDS.flatMap(
+  ({ names }) => names,
+);
+
+const FILE_HELP_WIDTH = Math.max(
+  ...FILE_COMMANDS.map(({ names }) => names.join(", ").length),
+);
+const FILE_HELP_LINES = [
+  `Usage: ${PROG_NAME} file [OPTIONS] COMMAND [ARGS]...`,
+  "",
+  "  Create, change, move, delete, or inspect one wiki document file",
+  "  (.md, .yaml, .yml, .json, .toml under wiki.input). These are validated,",
+  "  link-aware edits, not plain file operations: each builds one wiki edit",
+  "  (see wiki edit), and write verbs are dry runs unless --apply.",
+  "",
+  "Options:",
+  "  --help  Show this message and exit.",
+  "",
+  "Commands:",
+  ...FILE_COMMANDS.map(({ names, description }) =>
+    `  ${names.join(", ").padEnd(FILE_HELP_WIDTH)}  ${description}`
+  ),
 ];
 
 export const COMMAND_NAMES: readonly string[] = COMMANDS.flatMap(({ names }) =>
@@ -2717,6 +2791,11 @@ export async function main(
 
   const definition = COMMAND_BY_NAME.get(command);
   if (definition === undefined) {
+    if (FILE_COMMAND_BY_NAME.has(command)) {
+      return usageError(
+        `Error: No such command '${command}'. Did you mean '${PROG_NAME} file ${command}'?`,
+      );
+    }
     return usageError(`Error: No such command '${command}'.`);
   }
 

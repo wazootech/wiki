@@ -6,7 +6,7 @@ description: Change a wiki through validated, atomic edits instead of hand-writt
 
 # `wiki edit`
 
-Apply a batch of page changes as one edit: validate it against the wiki's shapes, routes, and links before anything is written, then write every file or none. `wiki edit` takes the edit as JSON; [wiki new](wiki_new.md), [wiki set](wiki_set.md), [wiki patch](wiki_patch.md), [wiki mv](wiki_mv.md), and [wiki rm](wiki_rm.md) build a one-op edit for you and share its flags, report, and exit codes. [wiki show](wiki_show.md) and [wiki refs](wiki_refs.md) are the read side.
+Apply a batch of page changes as one edit: validate it against the wiki's shapes, routes, and links before anything is written, then write every file or none. `wiki edit` takes the edit as JSON; [wiki file new](wiki_file_new.md), [wiki file set](wiki_file_set.md), [wiki file patch](wiki_file_patch.md), [wiki file mv](wiki_file_mv.md), and [wiki file rm](wiki_file_rm.md) build a one-op edit for you and share its flags, report, and exit codes. [wiki file show](wiki_file_show.md) and [wiki file refs](wiki_file_refs.md) are the read side.
 
 ## Why
 
@@ -26,24 +26,24 @@ cat plan.json | wiki edit --json      # read the edit from stdin
 
 An edit is `{"ops": [...]}`. Paths are relative to the config root (or absolute), never to the working directory, so a plan can be handed between agents unchanged.
 
-| Op        | Fields                                                     | What it does                                                                                                                                                                                                             |
-| --------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `create`  | `path`, `content` or `type`/`frontmatter`/`body`, `expect` | Create a page from full `content`, or scaffold it from a class `type` (such as `schema:Purchase`): the type's required fields first, then the rest of `frontmatter`, then an H1 and `body`.                              |
-| `replace` | `path`, `content`, `expect`                                | Replace a file's whole content.                                                                                                                                                                                          |
-| `set`     | `path`, `field`, `value` or `yaml`, `expect`               | Set one top-level frontmatter field; `value: null` removes it. `yaml` passes the value as YAML source, kept verbatim (`"12.00"` stays `12.00`, where the JSON number `12.00` becomes `12`). See [wiki set](wiki_set.md). |
-| `patch`   | `path`, `target`, `mode`, `content`, `expect`              | `target` is `{"heading": "Change log"}`, `{"frontmatter": true}`, or `{"body": true}`; `mode` is `append`, `prepend`, or `replace`. See [wiki patch](wiki_patch.md).                                                     |
-| `move`    | `from`, `to`, `expect`                                     | Move a page and repoint every link and metadata reference to it. `expect` applies to `from`; `to` must not exist. See [wiki mv](wiki_mv.md).                                                                             |
-| `delete`  | `path`, `pruneLinks`, `expect`                             | Delete a page. Refused while other pages link to it, unless `pruneLinks` turns those links into plain text. See [wiki rm](wiki_rm.md).                                                                                   |
+| Op        | Fields                                                     | What it does                                                                                                                                                                                                                       |
+| --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create`  | `path`, `content` or `type`/`frontmatter`/`body`, `expect` | Create a page from full `content`, or scaffold it from a class `type` (such as `schema:Purchase`): the type's required fields first, then the rest of `frontmatter`, then an H1 and `body`.                                        |
+| `replace` | `path`, `content`, `expect`                                | Replace a file's whole content.                                                                                                                                                                                                    |
+| `set`     | `path`, `field`, `value` or `yaml`, `expect`               | Set one top-level frontmatter field; `value: null` removes it. `yaml` passes the value as YAML source, kept verbatim (`"12.00"` stays `12.00`, where the JSON number `12.00` becomes `12`). See [wiki file set](wiki_file_set.md). |
+| `patch`   | `path`, `target`, `mode`, `content`, `expect`              | `target` is `{"heading": "Change log"}`, `{"frontmatter": true}`, or `{"body": true}`; `mode` is `append`, `prepend`, or `replace`. See [wiki file patch](wiki_file_patch.md).                                                     |
+| `move`    | `from`, `to`, `expect`                                     | Move a page and repoint every link and metadata reference to it. `expect` applies to `from`; `to` must not exist. See [wiki file mv](wiki_file_mv.md).                                                                             |
+| `delete`  | `path`, `pruneLinks`, `expect`                             | Delete a page. Refused while other pages link to it, unless `pruneLinks` turns those links into plain text. See [wiki file rm](wiki_file_rm.md).                                                                                   |
 
-`expect` is the SHA-256 of the file's raw bytes, as [wiki show](wiki_show.md) reports it, or `"absent"` for a create. It is checked against the file on disk before the edit, even when an earlier op in the same edit touched that file.
+`expect` is the SHA-256 of the file's raw bytes, as [wiki file show](wiki_file_show.md) reports it, or `"absent"` for a create. It is checked against the file on disk before the edit, even when an earlier op in the same edit touched that file.
 
 ## The `expect` loop
 
-1. `wiki show PATH --json` and keep its `hash`.
+1. `wiki file show PATH --json` and keep its `hash`.
 2. Build the edit with `"expect": "<hash>"` on each op and dry-run it.
 3. Apply it with `--apply`. Each file in the report carries its new `after` hash, which is the `expect` for the next edit.
 
-If another agent changed the file in between, the edit exits `3` and writes nothing. Re-read the page with `wiki show`, rebuild the edit against what is there now, and retry. Never `--force` past a conflict: `--force` overrides validation errors, not stale reads.
+If another agent changed the file in between, the edit exits `3` and writes nothing. Re-read the page with `wiki file show`, rebuild the edit against what is there now, and retry. Never `--force` past a conflict: `--force` overrides validation errors, not stale reads.
 
 ## Validation
 
@@ -54,6 +54,8 @@ Validation is scoped, not whole-wiki: it covers the pages the edit touches and t
 ## Writing
 
 Nothing is written without `--apply`. With it, every new file content goes to a sibling temp file first, then each is renamed over its target, and deletes go last. If any step fails, every file already written is restored to its exact original bytes, new files and directories are removed, and the error is reported. Just before writing, each file is compared with what was read once more, so a change that landed during validation is still a conflict.
+
+Rollback happens inside the running process. If the process is killed partway through writing a multi-file edit (a hard crash, power loss, `kill -9`), files already renamed into place stay written and the rest do not; rerun `wiki edit` (or check the files) after an interruption.
 
 Writes land only on wiki documents under `wiki.input`. Installed sources and the `.wiki/` cache are read-only, and so are symlinks and excluded paths.
 
@@ -132,6 +134,6 @@ A dry run reports `status: "dry_run"` and the three files' `after` hashes, or `s
 
 ## See also
 
-- [wiki show](wiki_show.md) and [wiki refs](wiki_refs.md) — read a page and its links before editing
+- [wiki file show](wiki_file_show.md) and [wiki file refs](wiki_file_refs.md) — read a page and its links before editing
 - [wiki check](wiki_check.md) — the whole-wiki gate
 - [Wiki Programmatic API](Wiki_Programmatic_API.md) — `Wiki.edit()` in process

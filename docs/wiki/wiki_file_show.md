@@ -1,19 +1,19 @@
 ---
 type: TechArticle
-headline: wiki show
+headline: wiki file show
 description: Describe one page as the engine sees it, with the content hash an edit expects.
 ---
 
-# `wiki show`
+# `wiki file show`
 
 Print one page the way the engine reads it: parsed frontmatter, the same frontmatter as compacted JSON-LD, the heading outline, the pages it links to, and the SHA-256 of the file's bytes. That hash is what a [wiki edit](wiki_edit.md) op takes as `expect`, so reading a page with `show` and then editing it is safe against another agent changing it in between.
 
 ## Usage
 
 ```bash
-wiki show wiki/Alpha.md
-wiki show wiki/Alpha.md --json
-wiki show wiki/Alpha.md --field schema:headline
+wiki file show wiki/Alpha.md
+wiki file show wiki/Alpha.md --json
+wiki file show wiki/Alpha.md --field schema:headline
 wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 ```
 
@@ -64,6 +64,6 @@ wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 
 ## See also
 
-- [wiki refs](wiki_refs.md) — who links to a page
+- [wiki file refs](wiki_file_refs.md) — who links to a page
 - [wiki edit](wiki_edit.md) — validated, atomic page edits
 - [wiki export](wiki_export.md) — whole-wiki RDF and JSON-LD

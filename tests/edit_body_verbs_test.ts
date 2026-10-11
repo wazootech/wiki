@@ -355,6 +355,7 @@ Deno.test(
     try {
       // Missing schema:price: rejected, the report names it, nothing written.
       const missing = await runCli(root, [
+        "file",
         "new",
         "wiki/",
         "--type",
@@ -371,6 +372,7 @@ Deno.test(
       assert(missing.stderr.includes("missing required fields: schema:price"));
 
       const created = await runCli(root, [
+        "file",
         "new",
         "wiki/",
         "--type",
@@ -387,6 +389,7 @@ Deno.test(
       assert(read(root, "wiki/Neon_plan.md").includes("schema:price: 5.00\n"));
 
       const again = await runCli(root, [
+        "file",
         "new",
         "wiki/Neon_plan.md",
         "--set",
@@ -395,6 +398,7 @@ Deno.test(
       assertEquals(again.code, EXIT_CONFLICT, again.stderr);
 
       const stale = await runCli(root, [
+        "file",
         "set",
         PAGE,
         "schema:price",
@@ -407,6 +411,7 @@ Deno.test(
       assertEquals(read(root, PAGE), LEDGER);
 
       const set = await runCli(root, [
+        "file",
         "set",
         PAGE,
         "schema:price",
@@ -420,13 +425,14 @@ Deno.test(
 
       const patched = await runCli(
         root,
-        ["patch", PAGE, "--heading", "Notes", "--append", "--apply"],
+        ["file", "patch", PAGE, "--heading", "Notes", "--append", "--apply"],
         "From stdin.\n",
       );
       assertEquals(patched.code, EXIT_OK, patched.stderr);
       assert(read(root, PAGE).endsWith("Nested.\n\nFrom stdin.\n"));
 
       const twoModes = await runCli(root, [
+        "file",
         "patch",
         PAGE,
         "--body",
@@ -437,6 +443,7 @@ Deno.test(
       ]);
       assertEquals(twoModes.code, EXIT_USAGE);
       const ambiguous = await runCli(root, [
+        "file",
         "patch",
         PAGE,
         "--heading",
@@ -446,8 +453,14 @@ Deno.test(
         "x",
       ]);
       assertEquals(ambiguous.code, EXIT_USAGE);
-      assertEquals((await runCli(root, ["set", PAGE])).code, EXIT_USAGE);
-      assertEquals((await runCli(root, ["new", "--help"])).code, EXIT_OK);
+      assertEquals(
+        (await runCli(root, ["file", "set", PAGE])).code,
+        EXIT_USAGE,
+      );
+      assertEquals(
+        (await runCli(root, ["file", "new", "--help"])).code,
+        EXIT_OK,
+      );
     } finally {
       cleanup(root);
     }
