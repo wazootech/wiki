@@ -6,7 +6,7 @@ description: Delete a page, refusing while other pages link to it unless their l
 
 # `wiki rm`
 
-Delete a page. While other pages link to it, `wiki rm` refuses and names each linking page, so a delete never leaves a link dangling by accident. The change is a `wiki edit` delete op, so it is validated before it is written, and written only with `--apply`.
+Delete a page. While other pages link to it, `wiki rm` refuses and names each linking page, so a delete never leaves a link dangling by accident. The change is a [wiki edit](wiki_edit.md) delete op, so it is validated before it is written, and written only with `--apply`.
 
 ## Usage
 
@@ -28,7 +28,7 @@ Only body links are guarded. A `wiki:` CURIE that names the page in another page
 | `--expect HASH`  | —       | Refuse unless the file's SHA-256 still matches; take it from [wiki show](wiki_show.md). |
 | `--apply`        | off     | Write the change. Without it, validate and report only.                                 |
 | `--force`        | off     | Delete even though links would dangle, or errors are introduced (they are reported).    |
-| `-f`, `--format` | `text`  | `text` or `json` (the `wiki edit` report).                                              |
+| `-f`, `--format` | `text`  | `text` or `json` (the [wiki edit](wiki_edit.md) report).                                |
 | `--json`         | —       | Shorthand for `--format json`.                                                          |
 
 ## Exit codes
