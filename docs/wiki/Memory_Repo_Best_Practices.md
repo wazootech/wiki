@@ -126,6 +126,10 @@ Each split is its own reviewable change: move the subtree, re-point provenance l
 - **Step 3 — Calendar reference connector:** wire `ConnectorBase` + Google Calendar end-to-end through fetch, bookkeeping, page generation, and the daily cron loop. Tracked in [memory#1](https://github.com/EthanThatOneKid/memory/issues/1). Legacy discussion lives in the archived tracker at [ethanpedia#45](https://github.com/EthanThatOneKid/ethanpedia/issues/45).
 - **Step 4 — replicate:** move each remaining connector onto the same pattern; stream-only provider imports stay gated on the [deferred imports ruling](https://github.com/EthanThatOneKid/ethanpedia/issues/28).
 
+## Cross-wiki identity
+
+When a raw capture keyed by `schema:identifier` later has to be matched to a curated page in another wiki, keep the generated record under its own filename and reconcile it with `owl:sameAs` on the curated page; a same-basename overlap is a `wiki check` error. See [Cross-Wiki Identity](Cross_Wiki_Identity.md).
+
 ## Related
 
 - [Second Brain](Second_Brain.md) — the conceptual model a memory repo implements

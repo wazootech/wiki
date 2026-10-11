@@ -317,7 +317,7 @@ Do not edit files in `.wiki/sources/`. The edit verbs (`wiki file set`, `patch`,
 
 SPARQL Update and in-place writes to sources are not supported; see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
 
-For the product framing behind recursive source composition, see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md).
+For the product framing behind recursive source composition, see [Recursive Semantic Datasets](Recursive_Semantic_Datasets.md). For what happens when a source describes the same entity as your root wiki, see [Cross-Wiki Identity](Cross_Wiki_Identity.md).
 
 ## Serve API
 
