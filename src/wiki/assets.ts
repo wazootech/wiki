@@ -75,9 +75,11 @@ export function auditAssets(config: Config): string[] {
     if (config.isExcluded(assetDir)) continue;
     const usable = pathExists(assetDir) && isDirectory(assetDir) &&
       !isSymlink(assetDir);
-    if (!pathExists(assetDir)) {
-      warnings.push(`Asset directory does not exist: ${assetDir}`);
-    } else if (isSymlink(assetDir)) {
+    // A missing directory is not a finding: nothing references it, and a link
+    // into it is already reported per link (`missing_asset`). `wiki init` and
+    // Git (which does not track an empty directory) both leave it absent.
+    if (!pathExists(assetDir)) continue;
+    if (isSymlink(assetDir)) {
       warnings.push(
         `Asset directory is a symlink and will not be copied: ${assetDir}`,
       );
