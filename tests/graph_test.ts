@@ -43,6 +43,7 @@ import { parseFrontmatter } from "../src/wiki/parser.ts";
 import {
   blankNode,
   literal,
+  type NamedNode,
   namedNode,
   type Quad,
   RDF_FIRST,
@@ -50,6 +51,7 @@ import {
   RDF_REST,
   RDF_TYPE,
   RdfGraph,
+  termKey,
   XSD_BOOLEAN,
   XSD_DATE,
   XSD_DATETIME,
@@ -1522,4 +1524,42 @@ Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
     [...graph.match(subject, namedNode(`${SCHEMA}nothing`))].length,
     0,
   );
+});
+
+Deno.test("inference keeps one literal per numeric value (#367)", async () => {
+  // `1`^^xsd:integer and `1.0`^^xsd:double are value-equal to the bundled
+  // dt-eq rule, and eq-rep-o used to copy each onto the other's subject, so a
+  // `price: 1.00` page failed `sh:maxCount 1`.
+  const { applyInference } = await import("../src/wiki/infer.ts");
+  const config = new Config();
+  const values: Record<string, string> = {
+    int: "1",
+    float: "1.00",
+    other: "2.00",
+    frac: "3.50",
+  };
+  const graph = new RdfGraph();
+  for (const [id, value] of Object.entries(values)) {
+    const attrs = parseFrontmatter(`---\nprice: ${value}\n---\n\nBody\n`);
+    for (
+      const quad of frontmatterToGraph(
+        { "@type": "Product", "@id": `wiki:${id}`, ...attrs },
+        config.context,
+      )
+    ) {
+      graph.add(quad.subject, quad.predicate as NamedNode, quad.object);
+    }
+  }
+  applyInference(graph, config);
+  const prices = (id: string) =>
+    [...graph.match(namedNode(`${WIKI}${id}`), namedNode(`${SCHEMA}price`))]
+      .map(({ object }) => termKey(object));
+  assertEquals(prices("int"), [
+    termKey(literal("1", { datatype: XSD_INTEGER })),
+  ]);
+  assertEquals(prices("float"), [
+    termKey(literal("1.0", { datatype: XSD_DOUBLE })),
+  ]);
+  assertEquals(prices("other").length, 1);
+  assertEquals(prices("frac").length, 1);
 });

@@ -33,6 +33,14 @@
  *   the *data* graph, so dropping them would be a silent semantic edit made on
  *   the engine's behalf. If the parity gate prefers owlrl's blind spot here, the
  *   filter belongs in this module and nowhere else.
+ * - **Literal equality (`dt-eq`) is not loaded.** The bundled rule declares
+ *   `"1"^^xsd:integer owl:sameAs "1.0"^^xsd:double`, and `eq-rep-o` then copies
+ *   each literal onto every subject holding an equal-valued one, so one
+ *   `price: 1.00` gained a second `price` and failed `sh:maxCount 1` (#367).
+ *   A literal `owl:sameAs` triple can never be stored in the graph, so those
+ *   alternate lexical forms were the rule's only visible effect. OWL 2 also
+ *   keeps the `xsd:double` and `owl:real` value spaces disjoint, so the
+ *   cross-datatype case is wrong as well as unwanted.
  */
 
 import { InferenceEngine } from "rdfjs-inference-engine";
@@ -58,6 +66,35 @@ function isEngineInternal(quad: Quad): boolean {
     quad.object.value.startsWith(namespace)
   );
 }
+
+/**
+ * The bundled ruleset minus `dt-eq` (see the module comment). The rule is cut
+ * by its exact text, so a re-bake that changes it fails here at load instead of
+ * silently bringing literal equality back.
+ */
+const DT_EQ_RULE = `{ ?n1 internal:term ?lt1 .
+  ?n2 internal:term ?lt2 .
+  ?lt1 log:notEqualTo ?lt2 .
+  ?lt1 dt:datatype ?dt1 .
+  ?dt1 log:notEqualTo xsd:string .
+  ?dt1 log:notEqualTo rdf:langString .
+  ?lt1 dt:sameValueAs ?lt2 . }
+=> { ?lt1 owl:sameAs ?lt2 . } .`;
+
+function withoutRule(rules: string, rule: string): string {
+  const normalized = rules.replaceAll("\r\n", "\n");
+  const parts = normalized.split(rule);
+  if (parts.length !== 2) {
+    throw new Error(
+      `Expected exactly one dt-eq rule in the OWL 2 RL ruleset; found ${
+        parts.length - 1
+      }. Re-check src/wiki/infer.ts after re-baking the rules.`,
+    );
+  }
+  return parts.join("");
+}
+
+const OWL2RL_RULES = withoutRule(OWL2RL_N3, DT_EQ_RULE);
 
 /** A stable key for a quad, excluding the graph (the caller is one graph). */
 function tripleKey(quad: Quad): string {
@@ -88,7 +125,7 @@ export function applyInference(
     const asserted = graph.toArray();
     const engine = new InferenceEngine();
     engine.load(
-      [{ n3: OWL2RL_N3, label: "rules/owl2rl" }],
+      [{ n3: OWL2RL_RULES, label: "rules/owl2rl" }],
       asserted,
       { selectRuntimeRules: false },
     );

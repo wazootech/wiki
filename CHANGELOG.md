@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Inference no longer copies numeric literals between pages. The bundled OWL 2
+  RL `dt-eq` rule treated `1` (`xsd:integer`) and `1.00` (`xsd:double`) as the
+  same value, so each page holding one also gained the other, and a page with
+  `price: 1.00` failed `sh:maxCount 1` in a whole-wiki `check`. The rule is no
+  longer loaded ([#367](https://github.com/wazootech/wiki/issues/367)).
+
 ## 0.3.0 — 2026-10-11
 
 ### Added
@@ -18,10 +28,9 @@
   They act on wiki document files only (`.md`, `.yaml`, `.yml`, `.json`,
   `.toml`). Nothing is written without `--apply`. In process, the same
   operations are `Wiki.edit()`, `Wiki.show()`, and `Wiki.refs()`.
-- Exit code `3` means a conflict: an op's `expect` hash (from
-  `wiki file show`) no longer matches the file, so another writer changed it
-  and nothing was written.
-  `0`, `1`, and `2` keep their meanings.
+- Exit code `3` means a conflict: an op's `expect` hash (from `wiki file show`)
+  no longer matches the file, so another writer changed it and nothing was
+  written. `0`, `1`, and `2` keep their meanings.
 
 ## 0.2.3 — 2026-10-10
 
