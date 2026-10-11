@@ -35,7 +35,7 @@ Deferred work includes:
 
 - SPARQL Update mapped back to Markdown or YAML files.
 - Editing installed source caches in place.
-- Fork, branch, worktree, or pull request workflows for upstream contribution.
+- Tooling for fork, branch, worktree, or pull request workflows for upstream contribution. The manual workflow is described in [Contributing changes to a source](Wiki_Configuration.md#contributing-changes-to-a-source).
 - Live remote SPARQL federation.
 - DVC-backed artifact storage.
 - Worlds runtime execution over composed graphs.
