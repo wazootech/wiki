@@ -79,6 +79,29 @@ Deno.test("a markdown link produces a backlink", () => {
   }
 });
 
+Deno.test("a link to a parenthesized stem resolves (balanced parentheses)", () => {
+  // `DeepSeek_(payment).md` is how memory names a record about an entity. The
+  // link regex used to stop at the first `)`, so the target read as
+  // `./DeepSeek_(payment` and the link was reported broken.
+  const root = tempRoot();
+  try {
+    write(
+      root,
+      "wiki/Ledger.md",
+      "# Ledger\n\nSee [DeepSeek (payment)](./DeepSeek_(payment).md) and " +
+        "[Other](./Other.md).",
+    );
+    write(root, "wiki/DeepSeek_(payment).md", "# DeepSeek (payment)\n");
+    write(root, "wiki/Other.md", "# Other\n");
+    const index = LinkIndex.fromConfig(configFor(root));
+    assertEquals(index.brokenLinks(), []);
+    assertEquals(index.backlinksTo("DeepSeek_(payment)"), ["Ledger"]);
+    assertEquals(index.backlinksTo("Other"), ["Ledger"]);
+  } finally {
+    cleanup(root);
+  }
+});
+
 Deno.test("an asset link is not a page backlink", () => {
   const root = tempRoot();
   try {

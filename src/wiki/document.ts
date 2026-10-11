@@ -21,14 +21,33 @@ import { extract, LinkedMarkdownError } from "@wazoo/linked-markdown";
 /** `[[slug]]` or `[[slug|display]]`. */
 export const WIKILINK_REGEX = /\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g;
 
+/**
+ * A link destination: any run of characters with parentheses balanced one
+ * level deep, as CommonMark allows. `[^)]+` stopped at the first `)`, so
+ * `./DeepSeek_(payment).md` read as `./DeepSeek_(payment` and every link to a
+ * Wikipedia-style qualified stem was reported broken.
+ */
+const LINK_DESTINATION = String.raw`(?:[^()]|\([^()]*\))+`;
+
 /** `[display](target)` and `![alt](target)`. */
-export const MARKDOWN_LINK_REGEX = /!?\[[^\]]*\]\(([^)]+)\)/g;
+export const MARKDOWN_LINK_REGEX = new RegExp(
+  String.raw`!?\[[^\]]*\]\((${LINK_DESTINATION})\)`,
+  "g",
+);
 
 /** `[[slug]]` / `[[slug|display]]`, capturing both groups. */
 export const WIKILINK_FULL_REGEX = /\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g;
 
 /** `[display](target)` / `![alt](target)`, capturing both groups. */
-export const MARKDOWN_LINK_FULL_REGEX = /!?\[([^\]]*)\]\(([^)]+)\)/g;
+export const MARKDOWN_LINK_FULL_REGEX = new RegExp(
+  String.raw`!?\[([^\]]*)\]\((${LINK_DESTINATION})\)`,
+  "g",
+);
+
+/** One whole markdown link, split into prefix, destination, and `)`. */
+export const MARKDOWN_LINK_PARTS_REGEX = new RegExp(
+  String.raw`^(!?\[[^\]]*\]\()(${LINK_DESTINATION})(\))$`,
+);
 
 /** Fenced code blocks. */
 export const FENCED_CODE_RE = /```[\s\S]*?```/g;
