@@ -360,8 +360,9 @@ export function renderWikiYaml(options: InitOptions): string {
   for (const input of inputs) lines.push(`    - ${yamlString(input)}`);
   lines.push(
     "  # Static files for custom CSS, logos, favicons (copied on wiki build).",
-    "  assets:",
-    "    - assets",
+    '  # Defaults to ["assets"] when that directory exists; uncomment to list more.',
+    "  # assets:",
+    "  #   - assets",
     "  # Full-filename regex for markdown files (lint.filename_pattern severity).",
     '  filename_pattern: "[A-Za-z0-9_()-]+\\\\.md"',
     "  # Glob patterns skipped when indexing (POSIX paths relative to config root).",

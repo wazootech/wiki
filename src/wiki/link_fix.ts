@@ -13,6 +13,7 @@ import {
 
 import {
   fragmentId,
+  parseMarkdownDestination,
   posixDirname,
   resolvePageRoute,
   splitTarget,
@@ -190,7 +191,8 @@ function replaceTargetInMatch(
   }
   const match = MARKDOWN_LINK_PARTS_REGEX.exec(fullMatch);
   if (match === null) return fullMatch;
-  return `${match[1]}${replacementTarget}${match[3]}`;
+  const { before, after } = parseMarkdownDestination(match[2] ?? "");
+  return `${match[1]}${before}${replacementTarget}${after}${match[3]}`;
 }
 
 /** `posixpath.relpath(to, fromDir)` for wiki routes (no `..` above the root). */
@@ -264,9 +266,11 @@ function withTarget(match: PageLinkMatch, target: string): string {
   if (parsed === null) return match.fullMatch;
   // A query string the scanner dropped (`Page.md?x`) belongs to the link, not
   // the route, so it survives the rewrite.
-  const raw = parsed[2] ?? "";
+  const { before, target: raw, after } = parseMarkdownDestination(
+    parsed[2] ?? "",
+  );
   const query = raw.includes("?") ? raw.slice(raw.indexOf("?")) : "";
-  return `${parsed[1]}${target}${query}${parsed[3]}`;
+  return `${parsed[1]}${before}${target}${query}${after}${parsed[3]}`;
 }
 
 /**

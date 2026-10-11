@@ -43,6 +43,7 @@ import {
   fragmentId,
   isExternalLink,
   markdownLinkIsPage,
+  parseMarkdownDestination,
   resolvePageRoute,
   splitTarget,
   unquote,
@@ -202,7 +203,9 @@ export class LinkIndex {
             const end = start + match[0].length;
             if (spanOverlaps(start, end, protectedSpans)) continue;
             const target = unquote(
-              (match[2] as string).split("?")[0] as string,
+              parseMarkdownDestination(match[2] as string).target.split(
+                "?",
+              )[0] as string,
             );
             if (isExternalLink(target)) continue;
             if (markdownLinkIsPage(target)) {
@@ -406,7 +409,11 @@ export function pageLinkMatches(
     const start = match.index ?? 0;
     const end = start + match[0].length;
     if (spanOverlaps(start, end, protectedSpans)) continue;
-    const target = unquote((match[2] as string).split("?")[0] as string);
+    const target = unquote(
+      parseMarkdownDestination(match[2] as string).target.split(
+        "?",
+      )[0] as string,
+    );
     if (isExternalLink(target) || !markdownLinkIsPage(target)) continue;
     matches.push({
       kind: "Markdown link",
@@ -468,7 +475,11 @@ function pageTargetIssue(
   if (fragment) {
     const targetFragment = fragmentId(fragment);
     const ids = headingIdsByRoute.get(route) ?? new Set<string>();
-    if (!ids.has(targetFragment)) return "missing_heading";
+    // `#top` is the HTML spec's own "scroll to the top of the document", so it
+    // needs no heading to land on.
+    if (!ids.has(targetFragment) && fragment.toLowerCase() !== "top") {
+      return "missing_heading";
+    }
   }
   return null;
 }

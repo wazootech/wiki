@@ -277,3 +277,59 @@ Deno.test("pageLinkMatches skips links inside inline and fenced code (#362)", ()
     "[[Beta]]",
   ]);
 });
+
+Deno.test("valid CommonMark link forms are not findings (#376)", () => {
+  // `--strict` fails only on what a user can and should fix, so a link that
+  // CommonMark accepts must not be reported: a title, an angle-bracketed
+  // destination, a non-http URL, and links inside a tilde fence or a comment.
+  const root = tempRoot();
+  try {
+    write(root, "wiki/Home.md", "# Home\n");
+    write(
+      root,
+      "wiki/Page.md",
+      [
+        "# Page",
+        "",
+        "[a](Home.md \"A title\") [b](<Home.md>) [c](<Home.md> 't')",
+        "[d](Home.md#home (paren)) [e](<https://example.com/a b>)",
+        "[f](ftp://example.com/a) [g](obsidian://open?vault=v) [h](//cdn.example.com/a)",
+        "",
+        "~~~",
+        "[x](Missing.md)",
+        "~~~",
+        "",
+        "<!-- [y](Missing.md) -->",
+        "",
+      ].join("\n"),
+    );
+    const index = LinkIndex.fromConfig(configFor(root));
+    assertEquals(index.brokenLinks().map((issue) => issue.message), []);
+    assertEquals(index.backlinksTo("Home"), ["Page"]);
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("a titled link that is broken is still reported by its target (#376)", () => {
+  const root = tempRoot();
+  try {
+    write(root, "wiki/Page.md", '# Page\n\n[x](Nope.md "A title")\n');
+    const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
+    assertEquals(issues.map((issue) => issue.raw_target), ["Nope.md"]);
+    assertEquals(issues[0]?.issue_kind, "missing_document");
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("#top needs no heading, any other missing fragment still does (#376)", () => {
+  const root = tempRoot();
+  try {
+    write(root, "wiki/Page.md", "# Page\n\n[a](#top) [b](#nope)\n");
+    const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
+    assertEquals(issues.map((issue) => issue.raw_target), ["#nope"]);
+  } finally {
+    cleanup(root);
+  }
+});

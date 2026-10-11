@@ -43,10 +43,58 @@ export const PAGE_LINK_EXTENSIONS: ReadonlySet<string> = new Set([
   ".json",
 ]);
 
-/** `true` for a link the engine will not try to resolve inside the wiki. */
+/**
+ * `true` for a link the engine will not try to resolve inside the wiki.
+ *
+ * Beyond the named schemes, anything of the form `scheme://` or `//host` is a
+ * URL by construction (`ftp://`, `obsidian://`, `vscode://`), so it is never a
+ * wiki path. A bare `Talk:Page.md` carries no `//` and stays a wiki path.
+ */
 export function isExternalLink(target: string): boolean {
+  if (target.startsWith("//")) return true;
+  if (/^[A-Za-z][A-Za-z0-9+.\-]*:\/\//.test(target)) return true;
   const scheme = schemeOf(target).toLowerCase();
   return EXTERNAL_SCHEMES.has(scheme);
+}
+
+/**
+ * A markdown link destination split around its target: `before` and `after`
+ * hold the `<` `>` brackets, whitespace, and `"title"` that surround it, so a
+ * rewrite can swap the target and keep the rest byte for byte.
+ */
+export interface MarkdownDestination {
+  readonly before: string;
+  readonly target: string;
+  readonly after: string;
+}
+
+/**
+ * Split the raw text between a link's parentheses into target and decoration.
+ *
+ * CommonMark allows `(<Page.md>)`, `(Page.md "Title")`, and both together. The
+ * link scanner captures all of it, so treating the capture as the target made
+ * every titled link "point to a missing asset" and left it out of backlinks.
+ * Text that does not parse as one destination plus an optional title (a bare
+ * space in the path, say) is returned whole as the target, as before.
+ */
+export function parseMarkdownDestination(raw: string): MarkdownDestination {
+  const wrapped = /^(\s*<)([^<>\r\n]*)(>[\s\S]*)$/.exec(raw);
+  if (wrapped !== null) {
+    return {
+      before: wrapped[1] as string,
+      target: wrapped[2] as string,
+      after: wrapped[3] as string,
+    };
+  }
+  const titled = /^(\s*)(\S+?)(\s+(?:"[^"]*"|'[^']*'|\([^()]*\)))?(\s*)$/.exec(
+    raw,
+  );
+  if (titled === null) return { before: "", target: raw, after: "" };
+  return {
+    before: titled[1] as string,
+    target: titled[2] as string,
+    after: `${titled[3] ?? ""}${titled[4] ?? ""}`,
+  };
 }
 
 /**

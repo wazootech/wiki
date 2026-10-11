@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The link audit no longer reports valid CommonMark as broken, which `--strict`
+  turned into a failing exit. A link with a title (`[a](Page.md "Title")`), an
+  angle-bracketed destination (`[a](<Page.md>)`), or a `scheme://` or `//host`
+  URL (`ftp://`, `obsidian://`) now resolves like its plain form; a titled link
+  is also counted as a backlink and kept, title and all, when `wiki file mv`
+  rewrites it. A `#top` link needs no heading. Links inside a `~~~` fence or an
+  HTML comment are skipped like those inside a backtick fence. `wiki init` no
+  longer writes an explicit `assets: [assets]` into the config it scaffolds
+  ([#376](https://github.com/wazootech/wiki/issues/376)).
+
 ## 0.4.0 — 2026-10-11
 
 ### Added

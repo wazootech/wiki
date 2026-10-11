@@ -112,6 +112,18 @@ Deno.test("rewriteLinkTargets keeps each link's own style", () => {
   );
 });
 
+Deno.test("rewriteLinkTargets keeps a link's title and angle brackets (#376)", () => {
+  const out = rewriteLinkTargets(
+    'See [a](Beta.md "The title") and [b](<Beta.md#Bio> "t").',
+    "Alpha",
+    new Map([["Beta", "people/Beta"]]),
+  );
+  assertEquals(
+    out,
+    'See [a](people/Beta.md "The title") and [b](<people/Beta.md#Bio> "t").',
+  );
+});
+
 Deno.test("only an unbalanced parenthesis is percent-encoded", () => {
   const out = rewriteLinkTargets(
     "See [Beta](Beta.md) and [[Beta]].",
