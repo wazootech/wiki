@@ -22,6 +22,44 @@ Configure `wiki.filename_pattern` in [Wiki Configuration](Wiki_Configuration.md)
 
 **Enforcer:** `lint.filename_pattern` (warning by default).
 
+### Filename strategies
+
+A page's filename is its default graph identity, so the naming choice is also a modeling choice. Two strategies work, and one wiki can mix them by record type.
+
+|                | Semantic filenames                                               | Opaque filenames                                                         |
+| -------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Example        | `The_Lost_Boys.md`                                               | `01JZQ4V9N1M9X6R4M6ZQ2HTR2K.md` (a [ULID](https://github.com/ulid/spec)) |
+| Graph identity | Derived from the filename                                        | The explicit `@id`                                                       |
+| Display label  | The filename, or `schema:name`                                   | `schema:name`                                                            |
+| Rename a title | Rename the file (`wiki file mv` repoints links)                  | Edit `schema:name`; the path never moves                                 |
+| Best for       | Hand-authored, durable entities: people, places, movies, devices | Generated, imported, high-volume, event-like or mutable-label records    |
+
+Use semantic filenames where people browse, grep and link pages directly. Use opaque filenames where software creates the records: watch or listen history, observations, imports, automation runs, logs, reviews and transcripts. Choose per record type by asking who primarily creates and maintains it.
+
+An opaque page carries its identity and label in frontmatter:
+
+```yaml
+# wiki/01JZQ4V9N1M9X6R4M6ZQ2HTR2K.md
+---
+'@id': wiki:WatchAction_01JZQ4V9N1M9X6R4M6ZQ2HTR2K
+'@type': schema:WatchAction
+schema:name: Watched The Lost Boys
+schema:object:
+  '@id': wiki:Movie_The_Lost_Boys
+schema:startTime: 2026-07-12
+---
+```
+
+The filename is a stable storage key, `@id` is the graph identity, and `schema:name` is the human-readable label. The event points at a semantic page (`wiki/The_Lost_Boys.md` with `@id: wiki:Movie_The_Lost_Boys`) by its `@id`, so the canonical entity keeps a readable name while its history records stay opaque.
+
+Tradeoffs:
+
+- **Gains:** paths survive title changes, there are no collision suffixes, and generated records need no naming logic.
+- **Costs:** the file listing and PR diffs are harder to scan, hand-written Markdown links to an opaque page are unreadable (query the graph by name instead), and search and navigation lean on tooling.
+- **Identity is yours to keep honest.** Without an `@id`, an opaque page's subject is the filename-derived IRI (`.../01JZQ4V9N1M9X6R4M6ZQ2HTR2K`), which is valid but means the ULID leaks into the graph. Nothing requires `@id` or `schema:name` by default.
+
+Enforce the expectations with a [SHACL](SHACL.md) shape, for example `sh:minCount 1` on `schema:name` for `schema:WatchAction`; `wiki check` then fails an opaque page that has no label. Keep `wiki.filename_pattern` permissive enough for the opaque names (the pattern above already admits ULIDs).
+
 ## Prose and headings
 
 - Use **ATX `#` headings only**; do not use underlined Setext headings (`===` / `---`). Wiki tooling indexes ATX for titles, TOC, and fragment links.
