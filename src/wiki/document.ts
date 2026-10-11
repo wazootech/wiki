@@ -49,8 +49,11 @@ export const MARKDOWN_LINK_PARTS_REGEX = new RegExp(
   String.raw`^(!?\[[^\]]*\]\()(${LINK_DESTINATION})(\))$`,
 );
 
-/** Fenced code blocks. */
-export const FENCED_CODE_RE = /```[\s\S]*?```/g;
+/** Fenced code blocks, with backtick or tilde fences. */
+export const FENCED_CODE_RE = /(```|~~~)[\s\S]*?\1/g;
+
+/** HTML comments, which render as nothing and so link to nothing. */
+export const HTML_COMMENT_RE = /<!--[\s\S]*?-->/g;
 
 /** Inline code spans. */
 export const INLINE_CODE_RE = /`[^`\n]*`/g;
@@ -166,9 +169,11 @@ export function bodyCodeSpans(
   const spans: (readonly [number, number])[] = [
     ...protectedInlineCodeSpans(body),
   ];
-  for (const match of body.matchAll(FENCED_CODE_RE)) {
-    if (match.index === undefined) continue;
-    spans.push([match.index, match.index + match[0].length]);
+  for (const re of [FENCED_CODE_RE, HTML_COMMENT_RE]) {
+    for (const match of body.matchAll(re)) {
+      if (match.index === undefined) continue;
+      spans.push([match.index, match.index + match[0].length]);
+    }
   }
   return spans;
 }

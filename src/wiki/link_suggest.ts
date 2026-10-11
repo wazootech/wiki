@@ -21,7 +21,7 @@ type Page = {
 
 type Span = readonly [number, number];
 
-const FENCED_CODE_RE = /```[\s\S]*?```/g;
+const FENCED_CODE_RE = /(```|~~~)[\s\S]*?\1/g;
 const INLINE_CODE_RE = /`[^`\n]+`/g;
 const MIN_ALIAS_LENGTH = 4;
 

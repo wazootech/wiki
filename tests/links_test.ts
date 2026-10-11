@@ -15,6 +15,7 @@ import {
   isExternalLink,
   markdownLinkIsPage,
   markdownLinkTarget,
+  parseMarkdownDestination,
   resolvePageHref,
   resolvePageRoute,
   splitTarget,
@@ -125,4 +126,44 @@ Deno.test("link formatting has exactly two styles and refuses anything else", ()
     'expected standard or wikilink, got "obsidian"',
   );
   assertEquals(markdownLinkTarget("docs/Alpha"), "docs/Alpha.md");
+});
+
+Deno.test("any scheme:// and protocol-relative URL is external (#376)", () => {
+  for (
+    const target of [
+      "ftp://example.org/a",
+      "obsidian://open?vault=v",
+      "vscode://file/a",
+      "//cdn.example.org/a",
+    ]
+  ) {
+    assert(isExternalLink(target), `${target} should be external`);
+  }
+  // No `//`: a namespaced page name, not a URL.
+  assert(!isExternalLink("Talk:Page.md"));
+});
+
+Deno.test("a markdown destination splits around its target (#376)", () => {
+  assertEquals(parseMarkdownDestination("Page.md"), {
+    before: "",
+    target: "Page.md",
+    after: "",
+  });
+  assertEquals(parseMarkdownDestination('Page.md "A title"'), {
+    before: "",
+    target: "Page.md",
+    after: ' "A title"',
+  });
+  assertEquals(parseMarkdownDestination("<Page.md> 'T'"), {
+    before: "<",
+    target: "Page.md",
+    after: "> 'T'",
+  });
+  assertEquals(parseMarkdownDestination("A_(b).md"), {
+    before: "",
+    target: "A_(b).md",
+    after: "",
+  });
+  // Not one destination: returned whole, as before.
+  assertEquals(parseMarkdownDestination("a b.md").target, "a b.md");
 });
