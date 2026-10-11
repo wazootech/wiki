@@ -50,6 +50,7 @@ import {
   RDF_NIL,
   RDF_REST,
   RDF_TYPE,
+  RdfDataset,
   RdfGraph,
   termKey,
   XSD_BOOLEAN,
@@ -1603,4 +1604,36 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
   ]);
   assertEquals(prices("other").length, 1);
   assertEquals(prices("frac").length, 1);
+});
+
+Deno.test("inference works on a named graph and derives into it (#382)", async () => {
+  // A named graph's quads carry their graph term; handing them to the engine
+  // as-is serialized `{` into the N3 text and skipped reasoning entirely.
+  const { applyInference } = await import("../src/wiki/infer.ts");
+  const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
+  const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+  const dataset = new RdfDataset();
+  const graph = dataset.graph("https://wiki.example.org/graphs/source/a");
+  graph.add(
+    namedNode(`${WIKI}Person`),
+    namedNode(`${RDFS}subClassOf`),
+    namedNode(`${WIKI}Agent`),
+  );
+  graph.add(
+    namedNode(`${WIKI}ada`),
+    namedNode(RDF_TYPE),
+    namedNode(`${WIKI}Person`),
+  );
+  const before = graph.size;
+  applyInference(graph, new Config());
+  assert(graph.size > before, "inference derived no triples");
+  const derived = [
+    ...graph.match(
+      namedNode(`${WIKI}ada`),
+      namedNode(RDF_TYPE),
+      namedNode(`${WIKI}Agent`),
+    ),
+  ];
+  assertEquals(derived.length, 1);
+  assertEquals(derived[0]!.graph.value, graph.graphName!.value);
 });
