@@ -6,7 +6,7 @@ description: Describe one page as the engine sees it, with the content hash an e
 
 # `wiki show`
 
-Print one page the way the engine reads it: parsed frontmatter, the same frontmatter as compacted JSON-LD, the heading outline, the pages it links to, and the SHA-256 of the file's bytes. That hash is what a `wiki edit` op takes as `expect`, so reading a page with `show` and then editing it is safe against another agent changing it in between.
+Print one page the way the engine reads it: parsed frontmatter, the same frontmatter as compacted JSON-LD, the heading outline, the pages it links to, and the SHA-256 of the file's bytes. That hash is what a [wiki edit](wiki_edit.md) op takes as `expect`, so reading a page with `show` and then editing it is safe against another agent changing it in between.
 
 ## Usage
 
@@ -17,7 +17,7 @@ wiki show wiki/Alpha.md --field schema:headline
 wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 ```
 
-`PATH` is relative to the config root, not the working directory, exactly as in `wiki edit`, so a path from `show` pastes into an edit plan unchanged. Any wiki document resolves, including pages from installed sources, which are readable but never editable.
+`PATH` is relative to the config root, not the working directory, exactly as in [wiki edit](wiki_edit.md), so a path from `show` pastes into an edit plan unchanged. Any wiki document resolves, including pages from installed sources, which are readable but never editable.
 
 ## Options
 
@@ -65,5 +65,5 @@ wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 ## See also
 
 - [wiki refs](wiki_refs.md) — who links to a page
-- `wiki edit` — validated, atomic page edits (`wiki edit --help`)
+- [wiki edit](wiki_edit.md) — validated, atomic page edits
 - [wiki export](wiki_export.md) — whole-wiki RDF and JSON-LD

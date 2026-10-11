@@ -6,7 +6,7 @@ description: Append to, prepend to, or replace a heading's section, the body, or
 
 # `wiki patch`
 
-Append to, prepend to, or replace part of a page: the section under a heading, the whole body, or the frontmatter. The change is a `wiki edit` patch op, so it is validated before it is written, and written only with `--apply`.
+Append to, prepend to, or replace part of a page: the section under a heading, the whole body, or the frontmatter. The change is a [wiki edit](wiki_edit.md) patch op, so it is validated before it is written, and written only with `--apply`.
 
 ## Usage
 
@@ -39,7 +39,7 @@ Blocks are separated by one blank line, as `wiki fmt` leaves them. If the page w
 | `--expect HASH`                      | —       | Refuse unless the file's SHA-256 still matches; take it from [wiki show](wiki_show.md). |
 | `--apply`                            | off     | Write the change. Without it, validate and report only.                                 |
 | `--force`                            | off     | Write even if the change introduces errors (they are still reported).                   |
-| `-f`, `--format`                     | `text`  | `text` or `json` (the `wiki edit` report).                                              |
+| `-f`, `--format`                     | `text`  | `text` or `json` (the [wiki edit](wiki_edit.md) report).                                |
 | `--json`                             | —       | Shorthand for `--format json`.                                                          |
 
 ## Exit codes

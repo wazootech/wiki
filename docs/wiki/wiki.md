@@ -266,6 +266,7 @@ ORDER BY ?command
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | [wiki_build](wiki_build.md)     | Generate a static HTML site from the wiki.                                                                             |
 | [wiki_check](wiki_check.md)     | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter.                    |
+| [wiki_edit](wiki_edit.md)       | Change a wiki through validated, atomic edits instead of hand-written Markdown.                                        |
 | [wiki_export](wiki_export.md)   | Export document frontmatter as RDF or JSON-LD.                                                                         |
 | [wiki_fmt](wiki_fmt.md)         | Format Markdown wiki pages with native Deno/dprint formatter options.                                                  |
 | [wiki_graph](wiki_graph.md)     | List read-only RDF named graphs for root and installed source provenance.                                              |

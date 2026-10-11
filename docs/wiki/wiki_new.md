@@ -6,7 +6,7 @@ description: Create a page of a known type, with its required fields first, as a
 
 # `wiki new`
 
-Create a page of a known type. The type's required fields come first in the frontmatter, then the other fields you pass, then an H1 taken from `headline` or `name`. The page is built as a `wiki edit` create, so it is validated against the wiki's shapes before anything is written, and it is written only with `--apply`.
+Create a page of a known type. The type's required fields come first in the frontmatter, then the other fields you pass, then an H1 taken from `headline` or `name`. The page is built as a [wiki edit](wiki_edit.md) create, so it is validated against the wiki's shapes before anything is written, and it is written only with `--apply`.
 
 A required field you do not pass is left out, never filled with a placeholder. The edit is then rejected, and the report names the missing fields, so an agent learns exactly what to add.
 
@@ -19,7 +19,7 @@ wiki new wiki/ --type schema:Purchase --set "schema:name=Neon plan" --apply
 wiki new wiki/Ada_Lovelace.md --type schema:Person --set "schema:name=Ada Lovelace" --json
 ```
 
-`PATH` is relative to the config root, as in `wiki edit`. When `PATH` is a directory (or ends in `/`), the filename comes from the title, Wikipedia-style: `Neon plan` becomes `Neon_plan.md`. `wiki new` never overwrites: it expects the file to be absent and exits `3` if it exists.
+`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md). When `PATH` is a directory (or ends in `/`), the filename comes from the title, Wikipedia-style: `Neon plan` becomes `Neon_plan.md`. `wiki new` never overwrites: it expects the file to be absent and exits `3` if it exists.
 
 ## Required fields
 
@@ -46,7 +46,7 @@ Shapes written only in Turtle blocks or RDF files do not contribute to the scaff
 
 ## JSON output
 
-The `wiki edit` report (`status`, `files`, `conflicts`, `introduced`, `check`), plus:
+The [wiki edit](wiki_edit.md) report (`status`, `files`, `conflicts`, `introduced`, `check`), plus:
 
 - `required`: the type's required fields, in order.
 - `missing`: the required fields this run did not supply.

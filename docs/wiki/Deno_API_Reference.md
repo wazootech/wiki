@@ -52,6 +52,24 @@ console.log(result);
 
 `check` and `lint` return typed reports. `query` returns the selected result format as a string. Use `Wiki.withRuntime(...)` for per-session site URL overrides.
 
+## Edit pages
+
+```ts
+const page = await wiki.show("wiki/Budget_Ledger.md");
+const report = await wiki.edit({
+  ops: [{
+    op: "set",
+    path: "wiki/Budget_Ledger.md",
+    field: "schema:description",
+    value: "Every Wazoo spend, one page per purchase.",
+    expect: page.hash,
+  }],
+}, { apply: true });
+console.log(report.status); // "applied", "rejected", or "conflict"
+```
+
+`edit` validates before it writes and writes all files or none; `show` and `refs` read a page and its links. See [wiki edit](wiki_edit.md).
+
 ## Build and export
 
 ```ts
