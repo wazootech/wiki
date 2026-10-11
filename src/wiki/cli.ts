@@ -1527,8 +1527,8 @@ const EDIT_HELP = [
   "  Validate a batch of page edits and, with --apply, write them atomically.",
   "",
   '  The edit is JSON: {"ops": [...]}, each op one of create, replace, delete,',
-  "  set, or patch (wiki new, set, and patch build one for you). Paths are",
-  "  relative to the config root. Nothing is written without",
+  "  set, patch, or move (wiki new, set, patch, mv, and rm build one for you).",
+  "  Paths are relative to the config root. Nothing is written without",
   "  --apply, and nothing is written if the edit introduces check or lint errors",
   '  (unless --force) or an op\'s "expect" hash no longer matches the file.',
   "",
@@ -1638,7 +1638,7 @@ interface EditRunOptions {
 
 /**
  * Apply one edit and report it: the shared tail of `wiki edit` and the verbs
- * built on it (`new`, `set`, `patch`). `extra` adds verb-specific fields to the
+ * built on it (`new`, `set`, `patch`, `mv`, `rm`). `extra` adds verb-specific fields to the
  * JSON report, such as `new`'s missing required fields.
  */
 async function applyAndReport(
@@ -1783,7 +1783,7 @@ interface VerbArgs {
 }
 
 /**
- * The shared argument parser for `new`, `set`, and `patch`: the write options
+ * The shared argument parser for the write verbs: the write options
  * every verb takes, plus the verb's own `valueOptions` and `flagOptions`.
  */
 function parseVerbArgs(
@@ -2020,6 +2020,85 @@ async function runPatchCommand(
       target,
       mode: modes[0],
       content,
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
+}
+
+const MV_HELP = [
+  "Usage: wiki mv [OPTIONS] FROM TO",
+  "",
+  "  Move or rename a page, as a wiki edit (see wiki edit).",
+  "",
+  "  Every page that links to FROM is repointed at TO, in the link's own style",
+  "  (wikilink or markdown, extension, ./ prefix, #fragment kept); FROM's own",
+  "  relative links are re-derived when it changes directory; and wiki: CURIEs",
+  "  and the page's IRI in other pages' frontmatter follow it. TO must not",
+  "  exist (exit 3 if it does); --expect applies to FROM.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+const RM_HELP = [
+  "Usage: wiki rm [OPTIONS] PATH",
+  "",
+  "  Delete a page, as a wiki edit (see wiki edit).",
+  "",
+  "  Refuses (exit 1, naming each linking page) while other pages link to",
+  "  PATH, unless --prune-links turns those links into their plain label text.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --prune-links  Replace inbound links with their label text.",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+async function runMvCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, MV_HELP, {
+    valueOptions: [],
+    flagOptions: [],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 2) {
+    return usageError("Error: wiki mv takes FROM and TO.");
+  }
+  const [from, to] = parsed.positionals as [string, string];
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "move",
+      from,
+      to,
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
+}
+
+async function runRmCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, RM_HELP, {
+    valueOptions: [],
+    flagOptions: ["--prune-links"],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki rm takes exactly one PATH.");
+  }
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "delete",
+      path: parsed.positionals[0]!,
+      ...(parsed.flags.has("--prune-links") ? { pruneLinks: true } : {}),
       ...(parsed.expect ? { expect: parsed.expect } : {}),
     }],
   }, parsed.run);
@@ -2400,6 +2479,19 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
+    names: ["mv"],
+    description: "Move or rename a page and repoint its links (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(MV_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runMvCommand(wiki, args);
+    },
+  },
+  {
     names: ["new"],
     description: "Create a page of a known type (an edit; --apply to write).",
     run: async ({ args, configPath, wikiInputs }) => {
@@ -2468,6 +2560,19 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runRenderCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["rm"],
+    description: "Delete a page, refusing while pages link to it (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(RM_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRmCommand(wiki, args);
     },
   },
   {
