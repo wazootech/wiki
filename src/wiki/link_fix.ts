@@ -215,19 +215,23 @@ function targetSuffix(pagePart: string): string {
   return dot > 0 ? name.slice(dot) : "";
 }
 
+/** Parentheses balanced one level deep, as a link destination allows. */
+const BALANCED_PARENS = /^(?:[^()]|\([^()]*\))*$/;
+
 /**
- * Percent-encode what would end a markdown link destination early.
+ * Percent-encode only what a markdown link destination cannot hold raw.
  *
- * The engine's link scanner reads a destination up to the first `)`, so a
- * target written with a raw `(payment)` qualifier is read as `…_(payment` and
- * reported broken. Encoding parentheses and spaces keeps a rewritten link one
- * the engine itself resolves; other characters are left as written.
+ * Balanced parentheses stay raw (`./Jeff_Kazzee_(person).md`), the way such
+ * pages are hand-linked; CommonMark and the scanner both accept them. A space
+ * or an unbalanced parenthesis would end the destination early, so those are
+ * encoded. Route safety rejects spaces in page paths, so in practice this is
+ * the unbalanced-parenthesis case.
  */
 function encodeMarkdownDestination(path: string): string {
-  return path.replaceAll(" ", "%20").replaceAll("(", "%28").replaceAll(
-    ")",
-    "%29",
-  );
+  const spaced = path.replaceAll(" ", "%20");
+  return BALANCED_PARENS.test(spaced)
+    ? spaced
+    : spaced.replaceAll("(", "%28").replaceAll(")", "%29");
 }
 
 /**
@@ -256,7 +260,7 @@ function withTarget(match: PageLinkMatch, target: string): string {
     const display = parsed[2];
     return display === undefined ? `[[${target}]]` : `[[${target}|${display}]]`;
   }
-  const parsed = MARKDOWN_LINK_FULL_RE.exec(match.fullMatch);
+  const parsed = MARKDOWN_LINK_PARTS_REGEX.exec(match.fullMatch);
   if (parsed === null) return match.fullMatch;
   // A query string the scanner dropped (`Page.md?x`) belongs to the link, not
   // the route, so it survives the rewrite.
