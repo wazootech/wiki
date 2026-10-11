@@ -116,6 +116,10 @@ Shape documents (`type: sh:NodeShape`) use prefixed RDF metadata, for example `r
 
 Data-only records may use `.yaml`, `.yml`, or `.json` without a markdown body.
 
+### Cross-wiki identity
+
+A page's subject is derived from the root wiki's `graph.context.wiki` and the filename, even for pages that come from an installed source. Two pages with the same basename therefore share one subject (and `wiki check` reports an output collision); pages with different names are different subjects until you link them with `owl:sameAs`, which inference treats as identity. `schema:sameAs` is recorded but does not merge. An `@id` override sets the subject explicitly, at the cost of `wiki query` not rendering it as a page link. See [Cross-Wiki Identity](Cross_Wiki_Identity.md).
+
 ## SPARQL query conventions
 
 When writing `&lt;!-- sparql:start --&gt;` blocks or ad-hoc `wiki query` commands:

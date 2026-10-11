@@ -27,6 +27,10 @@ The graph URIs are stable handles:
 
 Git URLs, requested refs, resolved commits, cache paths, and dependency owners remain metadata. They do not change the graph URI every time a source updates.
 
+## Identity across sources
+
+When two wikis describe the same entity, subjects come from the root wiki's base IRI, so a same-basename page merges into one subject and fails `wiki check` as an output collision, while differently named pages stay separate until linked with `owl:sameAs`. See [Cross-Wiki Identity](Cross_Wiki_Identity.md).
+
 ## What this is not
 
 This slice does not implement writable source mutation.
