@@ -9,7 +9,12 @@
  */
 
 import { basename, extname, join } from "@std/path";
-import { pathExists, readText } from "../src/wiki/fspath.ts";
+import {
+  overlayKey,
+  pathExists,
+  readText,
+  withOverlay,
+} from "../src/wiki/fspath.ts";
 import {
   assertEquals,
   assertNotEquals,
@@ -103,7 +108,7 @@ Deno.test("the manifest describes each contributing file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const manifest = wikiManifest(config);
-    assertEquals(manifest.version, "0.2.3");
+    assertEquals(manifest.version, "0.3.0");
     assertEquals(manifest.files.length, 1);
     assertEquals(manifest.files[0]!.path, "wiki/page.md");
     assertEquals(manifest.files[0]!.size > 0, true);
@@ -403,7 +408,34 @@ Deno.test("the manifest orders paths by standard string order", async () => {
     // The manifest includes VERSION, so a version bump changes this hash.
     assertEquals(
       wikiFingerprint(config),
-      "7786df8293f382f0e8b470e78f738bd0ce70b4603ac43f52fa523d57eb8975e3",
+      "538bb27983a20a238b5b0921e90c865fab2ff82c834bd3416fb83675613a488d",
     );
+  });
+});
+
+Deno.test("an edit overlay gets its own fingerprint and sees staged files", async () => {
+  await withTempDir((root) => {
+    const { wikiDir, page, config } = wiki(root);
+    const onDisk = wikiFingerprint(config);
+    const created = join(wikiDir, "staged.md");
+    const overlay = {
+      id: "test-overlay",
+      files: new Map<string, string | null>([
+        [overlayKey(created), "---\ntype: Person\n---\n"],
+      ]),
+    };
+    // Before the fix this threw NotFound: the manifest stat'ed every listed
+    // file on disk, and a staged page has no file yet.
+    const staged = withOverlay(overlay, () => wikiFingerprint(config));
+    assertNotEquals(staged, onDisk);
+    // Same staged tree under a different overlay id must not share a key, or
+    // the in-process cache could serve one edit's graph to another.
+    const again = withOverlay(
+      { ...overlay, id: "other-overlay" },
+      () => wikiFingerprint(config),
+    );
+    assertNotEquals(again, staged);
+    assertEquals(wikiFingerprint(config), onDisk);
+    assertEquals(readText(page), "---\ntype: Person\ngivenName: Ada\n---\n");
   });
 });

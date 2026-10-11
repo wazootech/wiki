@@ -189,6 +189,30 @@ export {
   frontmatterKeysFor,
 } from "./check_report.ts";
 export {
+  applyEdit,
+  contentHash,
+  EDIT_REPORT_VERSION,
+  type EditConflict,
+  type EditFileChange,
+  type EditOp,
+  type EditOptions,
+  type EditReport,
+  type EditStatus,
+  type EditTarget,
+  EditUsageError,
+  type WikiEdit,
+} from "./edit.ts";
+export {
+  documentRefs,
+  type PageRef,
+  type RefsReport,
+  resolveDocumentPath,
+  SHOW_REPORT_VERSION,
+  showDocument,
+  type ShowHeading,
+  type ShowReport,
+} from "./show.ts";
+export {
   blankNode,
   canParse,
   canSerialize,

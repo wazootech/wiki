@@ -1,7 +1,7 @@
 ---
 type: schema:SoftwareApplication
 name: wiki
-softwareVersion: 0.2.3
+softwareVersion: 0.3.0
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 codeRepository: https://github.com/wazootech/wiki
 ---
@@ -243,6 +243,23 @@ Example:
 wiki --input ./wiki --input ./imported query "SELECT * WHERE { ?s ?p ?o } LIMIT 5"
 ```
 
+## Command families
+
+The commands fall into families by what they act on:
+
+| Family            | Commands                                                                                                                                                                                    | What they share                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Setup and tooling | [init](wiki_init.md), [upgrade](wiki_upgrade.md)                                                                                                                                            | Start a project, or update the CLI itself.                         |
+| Sources           | [install](wiki_install.md), [update](wiki_update.md), [remove](wiki_remove.md)                                                                                                              | Manage external data sources and `wiki.lock`.                      |
+| Audits            | [check](wiki_check.md), [lint](wiki_lint.md)                                                                                                                                                | Read-only verification of integrity and conventions.               |
+| Bulk fixers       | [fmt](wiki_fmt.md), [link](wiki_link.md), [render](wiki_render.md)                                                                                                                          | Rewrite files across the whole wiki.                               |
+| File edits        | [file new](wiki_file_new.md), [file set](wiki_file_set.md), [file patch](wiki_file_patch.md), [file mv](wiki_file_mv.md), [file rm](wiki_file_rm.md), with [edit](wiki_edit.md) for batches | Validated, link-aware edits to wiki documents; dry run by default. |
+| File reads        | [file show](wiki_file_show.md), [file refs](wiki_file_refs.md)                                                                                                                              | Inspect one wiki document file.                                    |
+| Graph             | [query](wiki_query.md), [graph](wiki_graph.md), [export](wiki_export.md)                                                                                                                    | The wiki as RDF: SPARQL, named graphs, and export.                 |
+| Publishing        | [build](wiki_build.md), [serve](wiki_serve.md), [mcp](wiki_mcp.md)                                                                                                                          | Output surfaces: static site, local server, MCP server.            |
+
+The per-file verbs are grouped under [wiki file](wiki_file.md).
+
 ## Command reference
 
 Each subcommand has a dedicated page:
@@ -262,24 +279,33 @@ ORDER BY ?command
 ```
 -->
 
-| command                         | description                                                                                         |
-| ------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [wiki_build](wiki_build.md)     | Generate a static HTML site from the wiki.                                                          |
-| [wiki_check](wiki_check.md)     | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter. |
-| [wiki_export](wiki_export.md)   | Export document frontmatter as RDF or JSON-LD.                                                      |
-| [wiki_fmt](wiki_fmt.md)         | Format Markdown wiki pages with native Deno/dprint formatter options.                               |
-| [wiki_graph](wiki_graph.md)     | List read-only RDF named graphs for root and installed source provenance.                           |
-| [wiki_init](wiki_init.md)       | Scaffold wiki.yml and an empty wiki/ folder for markdown pages.                                     |
-| [wiki_install](wiki_install.md) | Fetch and lock external data sources declared in wiki.yml.                                          |
-| [wiki_link](wiki_link.md)       | Suggest missing wikilinks and repair unambiguous broken internal links.                             |
-| [wiki_lint](wiki_lint.md)       | Convention audits for broken links, filename patterns, heading style, and internal link style.      |
-| [wiki_mcp](wiki_mcp.md)         | Run a read-only MCP server for querying the wiki graph.                                             |
-| [wiki_query](wiki_query.md)     | Run SPARQL SELECT or CONSTRUCT against the wiki graph.                                              |
-| [wiki_remove](wiki_remove.md)   | Remove a data source from wiki.yml, its cache, and wiki.lock.                                       |
-| [wiki_render](wiki_render.md)   | Update inline SPARQL result tables in markdown files.                                               |
-| [wiki_serve](wiki_serve.md)     | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                     |
-| [wiki_update](wiki_update.md)   | Check locked sources for newer commits and update wiki.lock.                                        |
-| [wiki_upgrade](wiki_upgrade.md) | Check for Wiki CLI updates and upgrade supported installations.                                     |
+| command                               | description                                                                                                            |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [wiki_build](wiki_build.md)           | Generate a static HTML site from the wiki.                                                                             |
+| [wiki_check](wiki_check.md)           | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter.                    |
+| [wiki_edit](wiki_edit.md)             | Change a wiki through validated, atomic edits instead of hand-written Markdown.                                        |
+| [wiki_export](wiki_export.md)         | Export document frontmatter as RDF or JSON-LD.                                                                         |
+| [wiki_file](wiki_file.md)             | Create, change, move, delete, or inspect one wiki document file through validated, link-aware edits.                   |
+| [wiki_file_mv](wiki_file_mv.md)       | Move or rename a page and repoint every link and metadata reference to it, as a validated edit.                        |
+| [wiki_file_new](wiki_file_new.md)     | Create a page of a known type, with its required fields first, as a validated edit.                                    |
+| [wiki_file_patch](wiki_file_patch.md) | Append to, prepend to, or replace a heading's section, the body, or the frontmatter, as a validated edit.              |
+| [wiki_file_refs](wiki_file_refs.md)   | List the pages that link to a page and the pages it links to.                                                          |
+| [wiki_file_rm](wiki_file_rm.md)       | Delete a page, refusing while other pages link to it unless their links are pruned to plain text, as a validated edit. |
+| [wiki_file_set](wiki_file_set.md)     | Set or remove one frontmatter field, keeping comments, key order, and value spelling, as a validated edit.             |
+| [wiki_file_show](wiki_file_show.md)   | Describe one page as the engine sees it, with the content hash an edit expects.                                        |
+| [wiki_fmt](wiki_fmt.md)               | Format Markdown wiki pages with native Deno/dprint formatter options.                                                  |
+| [wiki_graph](wiki_graph.md)           | List read-only RDF named graphs for root and installed source provenance.                                              |
+| [wiki_init](wiki_init.md)             | Scaffold wiki.yml and an empty wiki/ folder for markdown pages.                                                        |
+| [wiki_install](wiki_install.md)       | Fetch and lock external data sources declared in wiki.yml.                                                             |
+| [wiki_link](wiki_link.md)             | Suggest missing wikilinks and repair unambiguous broken internal links.                                                |
+| [wiki_lint](wiki_lint.md)             | Convention audits for broken links, filename patterns, heading style, and internal link style.                         |
+| [wiki_mcp](wiki_mcp.md)               | Run a read-only MCP server for querying the wiki graph.                                                                |
+| [wiki_query](wiki_query.md)           | Run SPARQL SELECT or CONSTRUCT against the wiki graph.                                                                 |
+| [wiki_remove](wiki_remove.md)         | Remove a data source from wiki.yml, its cache, and wiki.lock.                                                          |
+| [wiki_render](wiki_render.md)         | Update inline SPARQL result tables in markdown files.                                                                  |
+| [wiki_serve](wiki_serve.md)           | Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.                                        |
+| [wiki_update](wiki_update.md)         | Check locked sources for newer commits and update wiki.lock.                                                           |
+| [wiki_upgrade](wiki_upgrade.md)       | Check for Wiki CLI updates and upgrade supported installations.                                                        |
 
 <!-- sparql:end -->
 

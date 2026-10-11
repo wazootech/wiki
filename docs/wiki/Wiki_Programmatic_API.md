@@ -44,6 +44,27 @@ Pass a list of document paths as the first argument to scope an operation:
 const report = await wiki.check(["docs/wiki/Getting_Started.md"]);
 ```
 
+### Guarded edits
+
+`Wiki.edit()` validates a batch of page changes against the wiki's shapes, routes, and links and, with `apply`, writes every file or none. Conflicts and rejections come back in the report rather than as exceptions, so a caller can re-read, repair, and retry; a malformed edit throws `EditUsageError`. `Wiki.show()` returns one page as the engine reads it, including the `hash` an op passes as `expect`, and `Wiki.refs()` lists the pages linking to and from it. See [wiki edit](wiki_edit.md) for the edit format, validation scope, and report.
+
+```ts
+const page = await wiki.show("wiki/Budget_Ledger.md");
+const report = await wiki.edit({
+  ops: [{
+    op: "patch",
+    path: "wiki/Budget_Ledger.md",
+    expect: page.hash,
+    target: { heading: "Change log" },
+    mode: "append",
+    content: "- 2026-10-10 — Added the Neon plan.",
+  }],
+}, { apply: true });
+if (report.status === "conflict") {
+  // Someone changed the page since `show`: re-read and rebuild the edit.
+}
+```
+
 ### Query and graph access
 
 ```ts

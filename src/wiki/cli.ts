@@ -50,6 +50,13 @@ export const EXIT_USAGE = 2;
 /** Exit code for a failed command — matches Click's `ClickException`. */
 export const EXIT_FAILURE = 1;
 
+/**
+ * Exit code for an edit whose `expect` precondition failed: the file changed
+ * since the caller read it. Distinct from `1` so an agent knows to re-read and
+ * rebuild its plan rather than repair the content.
+ */
+export const EXIT_CONFLICT = 3;
+
 const USAGE_LINES = [
   `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...`,
   `Try '${PROG_NAME} --help' for help.`,
@@ -128,6 +135,18 @@ function graphUsageError(detail: string): number {
     [
       `Usage: ${PROG_NAME} graph [OPTIONS] COMMAND [ARGS]...`,
       `Try '${PROG_NAME} graph --help' for help.`,
+      "",
+      `Error: ${detail}`,
+    ].join("\n"),
+  );
+  return EXIT_USAGE;
+}
+
+function fileUsageError(detail: string): number {
+  console.error(
+    [
+      `Usage: ${PROG_NAME} file [OPTIONS] COMMAND [ARGS]...`,
+      `Try '${PROG_NAME} file --help' for help.`,
       "",
       `Error: ${detail}`,
     ].join("\n"),
@@ -1514,6 +1533,765 @@ async function runMcpCommand(
     return EXIT_FAILURE;
   }
 }
+const EDIT_HELP = [
+  "Usage: wiki edit [OPTIONS]",
+  "",
+  "  Validate a batch of file edits and, with --apply, write them atomically.",
+  "",
+  '  The edit is JSON: {"ops": [...]}, each op one of create, replace, delete,',
+  "  set, patch, or move (wiki file new, set, patch, mv, and rm build one for you).",
+  "  Paths are relative to the config root. Nothing is written without",
+  "  --apply, and nothing is written if the edit introduces check or lint errors",
+  '  (unless --force) or an op\'s "expect" hash no longer matches the file.',
+  "",
+  "  Exit codes: 0 valid (or applied), 1 rejected, 2 usage, 3 conflict.",
+  "",
+  "Options:",
+  "  --from FILE  Read the edit from FILE, or '-' for stdin (default: -).",
+  "  --apply      Write the edit. Without it, validate and report only.",
+  "  --force      Write even if the edit introduces errors.",
+  "  -f, --format [text|json]",
+  "               Output format (default: text). json writes the edit report",
+  "               to stdout.",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+interface ParsedEditCommand {
+  readonly from: string;
+  readonly apply: boolean;
+  readonly force: boolean;
+  readonly format: "text" | "json";
+}
+
+function parseEditCommandArgs(
+  args: readonly string[],
+): ParsedEditCommand | number {
+  let from = "-";
+  let apply = false;
+  let force = false;
+  let format: "text" | "json" = "text";
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(EDIT_HELP);
+      return EXIT_OK;
+    }
+    if (token === "--apply") {
+      apply = true;
+    } else if (token === "--force") {
+      force = true;
+    } else if (token === "--json") {
+      format = "json";
+    } else if (
+      token === "--from" || token === "-f" || token === "--format"
+    ) {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      if (token === "--from") {
+        from = value;
+      } else if (value === "text" || value === "json") {
+        format = value;
+      } else {
+        return usageError(
+          `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+        );
+      }
+    } else if (token.startsWith("--from=")) {
+      from = token.slice("--from=".length);
+    } else if (token.startsWith("--format=")) {
+      const value = token.slice("--format=".length);
+      if (value !== "text" && value !== "json") {
+        return usageError(
+          `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+        );
+      }
+      format = value;
+    } else if (token.startsWith("-")) {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      return usageError(`Error: Got unexpected extra argument (${token}).`);
+    }
+  }
+  return { from, apply, force, format };
+}
+
+async function runEditCommand(
+  wiki: Wiki,
+  parsed: ParsedEditCommand,
+): Promise<number> {
+  let text: string;
+  try {
+    text = parsed.from === "-"
+      ? await new Response(Deno.stdin.readable).text()
+      : await Deno.readTextFile(parsed.from);
+  } catch (error) {
+    return usageError(
+      `Error: Cannot read edit from '${parsed.from}': ${errorText(error)}`,
+    );
+  }
+  let edit: unknown;
+  try {
+    edit = JSON.parse(text);
+  } catch (error) {
+    return usageError(`Error: The edit is not valid JSON: ${errorText(error)}`);
+  }
+
+  return await applyAndReport(wiki, edit, parsed);
+}
+
+interface EditRunOptions {
+  readonly apply: boolean;
+  readonly force: boolean;
+  readonly format: "text" | "json";
+}
+
+/**
+ * Apply one edit and report it: the shared tail of `wiki edit` and the verbs
+ * built on it (`new`, `set`, `patch`, `mv`, `rm`). `extra` adds verb-specific fields to the
+ * JSON report, such as `new`'s missing required fields.
+ */
+async function applyAndReport(
+  wiki: Wiki,
+  edit: unknown,
+  options: EditRunOptions,
+  extra: Readonly<Record<string, unknown>> = {},
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let report;
+  try {
+    report = await wiki.edit(edit as Parameters<Wiki["edit"]>[0], {
+      apply: options.apply,
+      force: options.force,
+    });
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+
+  if (options.format === "json") {
+    console.log(JSON.stringify({ ...report, ...extra }, null, 2));
+  }
+  // The human summary always goes to stderr, as `check -f json` does, so a
+  // JSON consumer can read stdout and still see why the run failed.
+  for (const file of report.files) {
+    console.error(`${file.action} ${file.path}`);
+  }
+  for (const conflict of report.conflicts) {
+    console.error(
+      `conflict: ${conflict.path} expected ${conflict.expected}, found ${
+        conflict.actual ?? "no file"
+      }`,
+    );
+  }
+  for (const issue of report.introduced) {
+    console.error(`${issue.severity}: ${issue.message}`);
+  }
+  switch (report.status) {
+    case "conflict":
+      console.error(
+        "Edit not written: the files changed since they were read.",
+      );
+      return EXIT_CONFLICT;
+    case "rejected":
+      console.error("Edit not written: it introduces the errors above.");
+      return EXIT_FAILURE;
+    case "dry_run":
+      console.error("Edit is valid. Re-run with --apply to write it.");
+      return EXIT_OK;
+    case "applied":
+      console.error("Edit written.");
+      return EXIT_OK;
+  }
+}
+
+/** Options every write verb takes, listed once for the help texts. */
+const WRITE_VERB_OPTIONS = [
+  "  --expect HASH  Refuse unless the file's SHA-256 still matches (from wiki",
+  "                 show), so a stale read never clobbers a newer write.",
+  "  --apply        Write the edit. Without it, validate and report only.",
+  "  --force        Write even if the edit introduces errors.",
+  "  -f, --format [text|json]",
+  "                 Output format (default: text). json writes the edit",
+  "                 report to stdout.",
+  "  --json         Shorthand for --format json.",
+  "  --help         Show this message and exit.",
+];
+
+const WRITE_VERB_EXIT_CODES =
+  "  Exit codes: 0 valid (or applied), 1 rejected, 2 usage, 3 conflict.";
+
+const NEW_HELP = [
+  "Usage: wiki file new [OPTIONS] PATH",
+  "",
+  "  Create a file of a known type, as a wiki edit (see wiki edit).",
+  "",
+  "  The type's required fields (SHACL sh:minCount, JSON Schema required) come",
+  "  first in the frontmatter, then the other --set fields, then an H1 from",
+  "  headline or name. A required field you do not --set is left out, so the",
+  "  edit is rejected and the report names it. When PATH is a directory, the",
+  "  filename comes from the title (Opal Security -> Opal_Security.md).",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --type CLASS   The page's type, e.g. schema:Purchase.",
+  "  --set KEY=VALUE",
+  "                 A frontmatter field; VALUE is YAML (repeatable).",
+  "  --body TEXT    Markdown to put under the H1.",
+  ...WRITE_VERB_OPTIONS.filter((line) =>
+    !line.startsWith("  --expect") && !line.startsWith("                 show)")
+  ),
+].join("\n");
+
+const SET_HELP = [
+  "Usage: wiki file set [OPTIONS] PATH FIELD [VALUE]",
+  "",
+  "  Set one frontmatter field, as a wiki edit (see wiki edit).",
+  "",
+  "  VALUE is YAML and is written as given (12.00 stays 12.00). FIELD is taken",
+  "  literally (schema:price is one key). Comments and key order are kept.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --unset        Remove FIELD instead of setting it.",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+const PATCH_HELP = [
+  "Usage: wiki file patch [OPTIONS] PATH",
+  "",
+  "  Append to, prepend to, or replace a section of a page, as a wiki edit.",
+  "",
+  "  The target is the lines under a heading (up to the next heading at the",
+  "  same or a higher level), the body, or the frontmatter. Headings match on",
+  "  their text or anchor slug; a heading that matches twice is an error.",
+  "  Content comes from --content, or stdin.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --heading TEXT  Target the section under this heading.",
+  "  --body          Target the whole body.",
+  "  --frontmatter   Target the frontmatter YAML.",
+  "  --append | --prepend | --replace",
+  "                  Where the content goes (exactly one).",
+  "  --content TEXT  The content (default: read stdin).",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+interface VerbArgs {
+  readonly positionals: string[];
+  readonly values: Map<string, string[]>;
+  readonly flags: Set<string>;
+  readonly run: EditRunOptions;
+  readonly expect: string | undefined;
+}
+
+/**
+ * The shared argument parser for the write verbs: the write options
+ * every verb takes, plus the verb's own `valueOptions` and `flagOptions`.
+ */
+function parseVerbArgs(
+  args: readonly string[],
+  help: string,
+  spec: {
+    readonly valueOptions: readonly string[];
+    readonly flagOptions: readonly string[];
+    readonly expect: boolean;
+  },
+): VerbArgs | number {
+  const positionals: string[] = [];
+  const values = new Map<string, string[]>();
+  const flags = new Set<string>();
+  let apply = false;
+  let force = false;
+  let format: "text" | "json" = "text";
+  let expect: string | undefined;
+  const valueOptions = new Set([
+    ...spec.valueOptions,
+    "-f",
+    "--format",
+    ...(spec.expect ? ["--expect"] : []),
+  ]);
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(help);
+      return EXIT_OK;
+    }
+    let name = token;
+    let value: string | undefined;
+    if (token.startsWith("--") && token.includes("=")) {
+      name = token.slice(0, token.indexOf("="));
+      value = token.slice(token.indexOf("=") + 1);
+    }
+    if (valueOptions.has(name)) {
+      value ??= args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${name}' requires an argument.`);
+      }
+      if (name === "-f" || name === "--format") {
+        if (value !== "text" && value !== "json") {
+          return usageError(
+            `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+          );
+        }
+        format = value;
+      } else if (name === "--expect") {
+        expect = value;
+      } else {
+        values.set(name, [...(values.get(name) ?? []), value]);
+      }
+    } else if (token === "--apply") {
+      apply = true;
+    } else if (token === "--force") {
+      force = true;
+    } else if (token === "--json") {
+      format = "json";
+    } else if (spec.flagOptions.includes(token)) {
+      flags.add(token);
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      positionals.push(token);
+    }
+  }
+  return {
+    positionals,
+    values,
+    flags,
+    run: { apply, force, format },
+    expect,
+  };
+}
+
+async function runNewCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, NEW_HELP, {
+    valueOptions: ["--type", "--set", "--body"],
+    flagOptions: [],
+    expect: false,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki new takes exactly one PATH.");
+  }
+  const {
+    requiredFields,
+    scaffoldPage,
+    scaffoldTitle,
+    titleFilename,
+    typeKey,
+  } = await import("./edit_ops.ts");
+  const { EditOpError } = await import("./edit_ops.ts");
+  const { isDirectory } = await import("./fspath.ts");
+  const { join, resolve } = await import("@std/path");
+
+  const fields: Array<readonly [string, { yaml: string }]> = [];
+  for (const entry of parsed.values.get("--set") ?? []) {
+    const at = entry.indexOf("=");
+    if (at <= 0) {
+      return usageError(`Error: --set takes KEY=VALUE; got '${entry}'.`);
+    }
+    fields.push([entry.slice(0, at), { yaml: entry.slice(at + 1) }]);
+  }
+  const type = parsed.values.get("--type")?.at(-1) ?? null;
+
+  let path = parsed.positionals[0]!;
+  try {
+    if (
+      /[\\/]$/.test(path) ||
+      isDirectory(resolve(wiki.config.config_root, path))
+    ) {
+      const title = scaffoldTitle(fields);
+      if (title === null) {
+        return usageError(
+          "Error: PATH is a directory, so the filename comes from the title; --set headline=... or name=....",
+        );
+      }
+      path = join(path, titleFilename(title));
+    }
+    const required = type === null
+      ? []
+      : await requiredFields(wiki.config, type);
+    const content = scaffoldPage({
+      path,
+      typeKey: typeKey(wiki.config),
+      type,
+      required,
+      fields,
+      body: parsed.values.get("--body")?.at(-1) ?? null,
+    });
+    const supplied = new Set(fields.map(([key]) => key));
+    const missing = required.filter((key) => !supplied.has(key));
+    if (missing.length > 0) {
+      console.error(`missing required fields: ${missing.join(", ")}`);
+    }
+    return await applyAndReport(
+      wiki,
+      { ops: [{ op: "create", path, content, expect: "absent" }] },
+      parsed.run,
+      { required, missing },
+    );
+  } catch (error) {
+    if (error instanceof EditOpError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+async function runSetCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, SET_HELP, {
+    valueOptions: [],
+    flagOptions: ["--unset"],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  const unset = parsed.flags.has("--unset");
+  const wanted = unset ? 2 : 3;
+  if (parsed.positionals.length !== wanted) {
+    return usageError(
+      unset
+        ? "Error: wiki set --unset takes PATH and FIELD."
+        : "Error: wiki set takes PATH, FIELD, and VALUE (or --unset).",
+    );
+  }
+  const [path, field, value] = parsed.positionals as [string, string, string?];
+  const op = unset
+    ? { op: "set", path, field, value: null }
+    : { op: "set", path, field, yaml: value };
+  return await applyAndReport(
+    wiki,
+    { ops: [{ ...op, ...(parsed.expect ? { expect: parsed.expect } : {}) }] },
+    parsed.run,
+  );
+}
+
+async function runPatchCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, PATCH_HELP, {
+    valueOptions: ["--heading", "--content"],
+    flagOptions: [
+      "--body",
+      "--frontmatter",
+      "--append",
+      "--prepend",
+      "--replace",
+    ],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki patch takes exactly one PATH.");
+  }
+  const heading = parsed.values.get("--heading")?.at(-1);
+  const targets = [
+    heading !== undefined,
+    parsed.flags.has("--body"),
+    parsed.flags.has("--frontmatter"),
+  ].filter(Boolean).length;
+  if (targets !== 1) {
+    return usageError(
+      "Error: give exactly one target: --heading TEXT, --body, or --frontmatter.",
+    );
+  }
+  const modes = (["append", "prepend", "replace"] as const).filter((mode) =>
+    parsed.flags.has(`--${mode}`)
+  );
+  if (modes.length !== 1) {
+    return usageError(
+      "Error: give exactly one of --append, --prepend, or --replace.",
+    );
+  }
+  const content = parsed.values.get("--content")?.at(-1) ??
+    await new Response(Deno.stdin.readable).text();
+  const target = heading !== undefined
+    ? { heading }
+    : parsed.flags.has("--body")
+    ? { body: true }
+    : { frontmatter: true };
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "patch",
+      path: parsed.positionals[0]!,
+      target,
+      mode: modes[0],
+      content,
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
+}
+
+const MV_HELP = [
+  "Usage: wiki file mv [OPTIONS] FROM TO",
+  "",
+  "  Move or rename a file, as a wiki edit (see wiki edit).",
+  "",
+  "  Every page that links to FROM is repointed at TO, in the link's own style",
+  "  (wikilink or markdown, extension, ./ prefix, #fragment kept); FROM's own",
+  "  relative links are re-derived when it changes directory; and wiki: CURIEs",
+  "  and the page's IRI in other pages' frontmatter follow it. TO must not",
+  "  exist (exit 3 if it does); --expect applies to FROM.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+const RM_HELP = [
+  "Usage: wiki file rm [OPTIONS] PATH",
+  "",
+  "  Delete a file, as a wiki edit (see wiki edit).",
+  "",
+  "  Refuses (exit 1, naming each linking page) while other pages link to",
+  "  PATH, unless --prune-links turns those links into their plain label text.",
+  "",
+  WRITE_VERB_EXIT_CODES,
+  "",
+  "Options:",
+  "  --prune-links  Replace inbound links with their label text.",
+  ...WRITE_VERB_OPTIONS,
+].join("\n");
+
+async function runMvCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, MV_HELP, {
+    valueOptions: [],
+    flagOptions: [],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 2) {
+    return usageError("Error: wiki mv takes FROM and TO.");
+  }
+  const [from, to] = parsed.positionals as [string, string];
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "move",
+      from,
+      to,
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
+}
+
+async function runRmCommand(
+  wiki: Wiki,
+  args: readonly string[],
+): Promise<number> {
+  const parsed = parseVerbArgs(args, RM_HELP, {
+    valueOptions: [],
+    flagOptions: ["--prune-links"],
+    expect: true,
+  });
+  if (typeof parsed === "number") return parsed;
+  if (parsed.positionals.length !== 1) {
+    return usageError("Error: wiki rm takes exactly one PATH.");
+  }
+  return await applyAndReport(wiki, {
+    ops: [{
+      op: "delete",
+      path: parsed.positionals[0]!,
+      ...(parsed.flags.has("--prune-links") ? { pruneLinks: true } : {}),
+      ...(parsed.expect ? { expect: parsed.expect } : {}),
+    }],
+  }, parsed.run);
+}
+
+const SHOW_HELP = [
+  "Usage: wiki file show [OPTIONS] PATH",
+  "",
+  "  Describe one file as the engine sees it: frontmatter, compacted JSON-LD,",
+  "  heading outline, outbound links, and the content hash to pass as an edit",
+  '  op\'s "expect". PATH is relative to the config root, as in wiki edit.',
+  "",
+  "Options:",
+  "  --field KEY  Print only this frontmatter field (exit 1 when it is unset).",
+  "  -f, --format [text|json]",
+  "               Output format (default: text).",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+const REFS_HELP = [
+  "Usage: wiki file refs [OPTIONS] PATH",
+  "",
+  "  List the files that link to PATH and the files PATH links to.",
+  "  PATH is relative to the config root, as in wiki edit.",
+  "",
+  "Options:",
+  "  -f, --format [text|json]",
+  "               Output format (default: text).",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+interface ParsedReadCommand {
+  readonly path: string;
+  readonly field: string | null;
+  readonly format: "text" | "json";
+}
+
+/** Shared parser for `show` and `refs`: one PATH, a format, and `show`'s `--field`. */
+function parseReadCommandArgs(
+  command: "show" | "refs",
+  args: readonly string[],
+): ParsedReadCommand | number {
+  let path: string | null = null;
+  let field: string | null = null;
+  let format: "text" | "json" = "text";
+  const invalidFormat = (value: string) =>
+    usageError(
+      `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+    );
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(command === "show" ? SHOW_HELP : REFS_HELP);
+      return EXIT_OK;
+    }
+    if (token === "--json") {
+      format = "json";
+    } else if (token === "-f" || token === "--format") {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      if (value !== "text" && value !== "json") return invalidFormat(value);
+      format = value;
+    } else if (token.startsWith("--format=")) {
+      const value = token.slice("--format=".length);
+      if (value !== "text" && value !== "json") return invalidFormat(value);
+      format = value;
+    } else if (command === "show" && token === "--field") {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      field = value;
+    } else if (command === "show" && token.startsWith("--field=")) {
+      field = token.slice("--field=".length);
+    } else if (token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else if (path === null) {
+      path = token;
+    } else {
+      return usageError(`Error: Got unexpected extra argument (${token}).`);
+    }
+  }
+  if (path === null) return usageError("Error: Missing argument 'PATH'.");
+  return { path, field, format };
+}
+
+/** Render a frontmatter value on one line: strings bare, the rest as JSON. */
+function fieldText(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+async function runShowCommand(
+  wiki: Wiki,
+  parsed: ParsedReadCommand,
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let report;
+  try {
+    report = await wiki.show(parsed.path);
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+
+  if (parsed.field !== null) {
+    const frontmatter = report.frontmatter ?? {};
+    if (!Object.hasOwn(frontmatter, parsed.field)) {
+      console.error(`Error: ${report.path} has no field '${parsed.field}'.`);
+      return EXIT_FAILURE;
+    }
+    const value = frontmatter[parsed.field];
+    console.log(
+      parsed.format === "json"
+        ? JSON.stringify(value, null, 2)
+        : fieldText(value),
+    );
+    return EXIT_OK;
+  }
+
+  if (parsed.format === "json") {
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_OK;
+  }
+  const lines = [`${report.path} (${report.route})`, `hash: ${report.hash}`];
+  if (report.frontmatter !== null) {
+    lines.push("frontmatter:");
+    for (const [key, value] of Object.entries(report.frontmatter)) {
+      lines.push(`  ${key}: ${fieldText(value)}`);
+    }
+  }
+  if (report.headings.length > 0) {
+    lines.push("headings:");
+    for (const heading of report.headings) {
+      lines.push(
+        `  ${"#".repeat(heading.level)} ${heading.text} (line ${heading.line})`,
+      );
+    }
+  }
+  if (report.links.length > 0) {
+    lines.push("links:");
+    for (const link of report.links) lines.push(`  ${link.path ?? link.route}`);
+  }
+  console.log(lines.join("\n"));
+  return EXIT_OK;
+}
+
+async function runRefsCommand(
+  wiki: Wiki,
+  parsed: ParsedReadCommand,
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let report;
+  try {
+    report = wiki.refs(parsed.path);
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+  if (parsed.format === "json") {
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_OK;
+  }
+  const lines = [`${report.path} (${report.route})`];
+  lines.push(`inbound (${report.inbound.length}):`);
+  for (const ref of report.inbound) lines.push(`  ${ref.path ?? ref.route}`);
+  lines.push(`outbound (${report.outbound.length}):`);
+  for (const ref of report.outbound) lines.push(`  ${ref.path ?? ref.route}`);
+  console.log(lines.join("\n"));
+  return EXIT_OK;
+}
+
 interface CommandContext {
   readonly command: string;
   readonly args: readonly string[];
@@ -1551,6 +2329,17 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
+    names: ["edit"],
+    description: "Validate a batch of file edits and write them atomically.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseEditCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runEditCommand(wiki, parsed);
+    },
+  },
+  {
     names: ["export"],
     description: "Export document frontmatter as RDF or JSON-LD.",
     run: async ({ args, configPath, wikiInputs }) => {
@@ -1559,6 +2348,31 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runExportCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["file"],
+    description:
+      "Create, change, move, delete, or inspect one wiki document file.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const fileCommand = args[0];
+      if (fileCommand === "--help" || fileCommand === "-h") {
+        console.log(FILE_HELP_LINES.join("\n"));
+        return EXIT_OK;
+      }
+      if (fileCommand === undefined) {
+        return fileUsageError("Missing command.");
+      }
+      const definition = FILE_COMMAND_BY_NAME.get(fileCommand);
+      if (definition === undefined) {
+        return fileUsageError(`No such command '${fileCommand}'.`);
+      }
+      return await definition.run({
+        command: fileCommand,
+        args: args.slice(1),
+        configPath,
+        wikiInputs,
+      });
     },
   },
   {
@@ -1768,6 +2582,130 @@ const COMMANDS: readonly CommandDefinition[] = [
   },
 ];
 
+/**
+ * FILE_COMMANDS are the single-file verbs, grouped under `wiki file`. Each is
+ * sugar over one `wiki edit` (or a read), so the batch engine stays top-level.
+ */
+const FILE_COMMANDS: readonly CommandDefinition[] = [
+  {
+    names: ["mv"],
+    description: "Move or rename a file and repoint links to it (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(MV_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runMvCommand(wiki, args);
+    },
+  },
+  {
+    names: ["new"],
+    description: "Create a file of a known type (an edit; --apply to write).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(NEW_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runNewCommand(wiki, args);
+    },
+  },
+  {
+    names: ["patch"],
+    description: "Append to, prepend to, or replace a file section (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(PATCH_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runPatchCommand(wiki, args);
+    },
+  },
+  {
+    names: ["refs"],
+    description: "List the files linking to and from one file.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("refs", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRefsCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["rm"],
+    description: "Delete a file, refusing while others link to it (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(RM_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runRmCommand(wiki, args);
+    },
+  },
+  {
+    names: ["set"],
+    description: "Set or remove one frontmatter field (an edit).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      if (args.includes("--help") || args.includes("-h")) {
+        console.log(SET_HELP);
+        return EXIT_OK;
+      }
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runSetCommand(wiki, args);
+    },
+  },
+  {
+    names: ["show"],
+    description: "Describe one file: frontmatter, JSON-LD, outline, hash.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseReadCommandArgs("show", args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runShowCommand(wiki, parsed);
+    },
+  },
+];
+
+const FILE_COMMAND_BY_NAME = new Map<string, CommandDefinition>();
+for (const command of FILE_COMMANDS) {
+  for (const name of command.names) FILE_COMMAND_BY_NAME.set(name, command);
+}
+
+/** FILE_COMMAND_NAMES lists the `wiki file` subcommands. */
+export const FILE_COMMAND_NAMES: readonly string[] = FILE_COMMANDS.flatMap(
+  ({ names }) => names,
+);
+
+const FILE_HELP_WIDTH = Math.max(
+  ...FILE_COMMANDS.map(({ names }) => names.join(", ").length),
+);
+const FILE_HELP_LINES = [
+  `Usage: ${PROG_NAME} file [OPTIONS] COMMAND [ARGS]...`,
+  "",
+  "  Create, change, move, delete, or inspect one wiki document file",
+  "  (.md, .yaml, .yml, .json, .toml under wiki.input). These are validated,",
+  "  link-aware edits, not plain file operations: each builds one wiki edit",
+  "  (see wiki edit), and write verbs are dry runs unless --apply.",
+  "",
+  "Options:",
+  "  --help  Show this message and exit.",
+  "",
+  "Commands:",
+  ...FILE_COMMANDS.map(({ names, description }) =>
+    `  ${names.join(", ").padEnd(FILE_HELP_WIDTH)}  ${description}`
+  ),
+];
+
 export const COMMAND_NAMES: readonly string[] = COMMANDS.flatMap(({ names }) =>
   names
 );
@@ -1853,6 +2791,11 @@ export async function main(
 
   const definition = COMMAND_BY_NAME.get(command);
   if (definition === undefined) {
+    if (FILE_COMMAND_BY_NAME.has(command)) {
+      return usageError(
+        `Error: No such command '${command}'. Did you mean '${PROG_NAME} file ${command}'?`,
+      );
+    }
     return usageError(`Error: No such command '${command}'.`);
   }
 
