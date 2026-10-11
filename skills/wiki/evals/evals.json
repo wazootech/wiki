@@ -314,6 +314,21 @@
         "Does not use --force",
         "Does not copy a fresh hash into the old plan without re-checking the planned change still applies"
       ]
+    },
+    {
+      "id": 24,
+      "workflow": "edit",
+      "prompt": "The wiki MCP server is connected and its tools include wiki_edit_apply. Set the price on wiki/DeepSeek_(payment).md to 14.00 and move nothing else.",
+      "expected_output": "Uses the MCP tools rather than shelling out: wiki_page_show for the page and its hash, then wiki_edit_apply with a set op carrying that hash as expect (yaml \"14.00\" to keep the spelling), a dry run first, then the same call with dry_run false. Repairs and retries on a rejected or conflict result instead of forcing.",
+      "files": [],
+      "expectations": [
+        "Reads the page with wiki_page_show and takes its hash before editing",
+        "Calls wiki_edit_apply (or wiki_page_set_field) with expect set to that hash",
+        "Runs a dry run (the default) and reads status and introduced before applying",
+        "Applies only by repeating the call with dry_run false",
+        "Treats a rejected or conflict result as an isError result to repair, re-reading the page on conflict",
+        "Does not hand-edit the file or ask for a force option"
+      ]
     }
   ]
 }

@@ -5,6 +5,7 @@ import { detectQueryForm, normalizeQueryFormat } from "./format.ts";
 import { graphStats } from "./graph.ts";
 import { serializeRdf } from "./rdf.ts";
 import { VERSION } from "./version.ts";
+import { type EditOp, EditUsageError } from "./edit.ts";
 import type { Wiki } from "./wiki.ts";
 
 export const QUERY_FORMATS = [
@@ -72,6 +73,13 @@ export interface QuerySparqlOptions {
 
 export interface McpOptions {
   diskCache?: boolean;
+  /** Rebuild the in-memory graph before reading it. */
+  reload?: boolean;
+}
+
+export interface McpServerOptions extends McpOptions {
+  /** List and serve the write tools. Off by default: the server is read-only. */
+  allowWrite?: boolean;
 }
 
 export interface McpTransport {
@@ -79,7 +87,7 @@ export interface McpTransport {
   writable: WritableStream<Uint8Array>;
 }
 
-export interface RunMcpOptions extends McpOptions {
+export interface RunMcpOptions extends McpServerOptions {
   mode?: string;
   transport?: McpTransport;
 }
@@ -101,7 +109,7 @@ interface ToolDefinition {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  outputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
 }
 
 interface ResourceDefinition {
@@ -229,6 +237,203 @@ const tools: readonly ToolDefinition[] = [
   },
 ];
 
+const PATH_PROPERTY = {
+  type: "string",
+  description:
+    "Page path relative to the wiki config root, for example wiki/Ethan.md.",
+} as const;
+
+const EXPECT_PROPERTY = {
+  type: "string",
+  description:
+    "SHA-256 of the file as last read (the hash of wiki_page_show). The edit is refused with a conflict when the file has changed.",
+} as const;
+
+const DRY_RUN_PROPERTY = {
+  type: "boolean",
+  default: true,
+  description:
+    "Validate and report only. Pass false to write; applying is all-or-nothing.",
+} as const;
+
+const EDIT_OP_SCHEMA = {
+  type: "object",
+  description:
+    "One edit operation: create, replace, delete, set, patch, or move. Fields as in wiki edit.",
+  properties: {
+    op: {
+      type: "string",
+      enum: ["create", "replace", "delete", "set", "patch", "move"],
+    },
+  },
+  required: ["op"],
+  additionalProperties: true,
+} as const;
+
+const EDIT_REPORT_SCHEMA = {
+  type: "object",
+  description: "The wiki edit --json report.",
+  properties: {
+    version: { type: "integer" },
+    status: {
+      type: "string",
+      enum: ["dry_run", "applied", "rejected", "conflict"],
+    },
+    ok: { type: "boolean" },
+    files: { type: "array", items: { type: "object" } },
+    conflicts: { type: "array", items: { type: "object" } },
+    introduced: { type: "array", items: { type: "object" } },
+    check: { type: ["object", "null"] },
+  },
+  required: ["version", "status", "ok", "files", "conflicts", "introduced"],
+} as const;
+
+const readPageTools: readonly ToolDefinition[] = [
+  {
+    name: "wiki_page_show",
+    description:
+      "Show one page as the engine sees it: frontmatter, headings, outbound links, and the content hash to pass as expect in an edit.",
+    inputSchema: {
+      type: "object",
+      properties: { path: PATH_PROPERTY },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "wiki_page_refs",
+    description: "List the pages that link to, and are linked from, one page.",
+    inputSchema: {
+      type: "object",
+      properties: { path: PATH_PROPERTY },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+];
+
+const writeTools: readonly ToolDefinition[] = [
+  {
+    name: "wiki_edit_apply",
+    description:
+      "Validate a batch of page edits and, with dry_run=false, write them atomically. Defaults to a dry run. Rejections and conflicts come back as results with isError true; repair and retry. Prefer this over the single-op tools.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ops: { type: "array", minItems: 1, items: EDIT_OP_SCHEMA },
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["ops"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+  {
+    name: "wiki_page_create",
+    description:
+      "Create a page, from full content or from a typed scaffold (type, frontmatter, body). Defaults to a dry run.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: PATH_PROPERTY,
+        content: { type: "string" },
+        type: { type: "string", description: "Class such as schema:Purchase." },
+        frontmatter: { type: "object" },
+        body: { type: "string" },
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+  {
+    name: "wiki_page_set_field",
+    description:
+      "Set one frontmatter field, keeping comments and key order. value null removes it; yaml keeps a scalar's spelling. Defaults to a dry run.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: PATH_PROPERTY,
+        field: { type: "string" },
+        value: {},
+        yaml: { type: "string" },
+        expect: EXPECT_PROPERTY,
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["path", "field"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+  {
+    name: "wiki_page_patch",
+    description:
+      "Append, prepend, or replace the body, a heading's section, or the frontmatter of a page. Defaults to a dry run.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: PATH_PROPERTY,
+        target: {
+          type: "object",
+          description:
+            "One of {heading: string}, {frontmatter: true}, or {body: true}.",
+        },
+        mode: { type: "string", enum: ["append", "prepend", "replace"] },
+        content: { type: "string" },
+        expect: EXPECT_PROPERTY,
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["path", "target", "mode", "content"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+  {
+    name: "wiki_page_move",
+    description:
+      "Move a page and repoint every link to it. Defaults to a dry run.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: PATH_PROPERTY,
+        to: PATH_PROPERTY,
+        expect: EXPECT_PROPERTY,
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["from", "to"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+  {
+    name: "wiki_page_delete",
+    description:
+      "Delete a page. Refused while other pages link to it, unless prune_links turns those links into plain text. Defaults to a dry run.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: PATH_PROPERTY,
+        expect: EXPECT_PROPERTY,
+        prune_links: { type: "boolean", default: false },
+        dry_run: DRY_RUN_PROPERTY,
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+    outputSchema: EDIT_REPORT_SCHEMA,
+  },
+];
+
+/** Argument names each single-op write tool accepts, besides dry_run. */
+const SINGLE_OP_ARGS: Readonly<Record<string, readonly string[]>> = {
+  wiki_page_create: ["path", "content", "type", "frontmatter", "body"],
+  wiki_page_set_field: ["path", "field", "value", "yaml", "expect"],
+  wiki_page_patch: ["path", "target", "mode", "content", "expect"],
+  wiki_page_move: ["from", "to", "expect"],
+  wiki_page_delete: ["path", "expect", "prune_links"],
+};
+
 const resources: readonly ResourceDefinition[] = [
   {
     uri: "wiki://info",
@@ -321,7 +526,7 @@ export async function describeWiki(
 ): Promise<WikiDescription> {
   const graph = await wiki.graph({
     infer: true,
-    reload: false,
+    reload: options.reload ?? false,
     diskCache: options.diskCache ?? false,
   });
   const root = wiki.config.config_root;
@@ -406,7 +611,7 @@ export async function namespacesResource(
 ): Promise<string> {
   const graph = await wiki.graph({
     infer: true,
-    reload: false,
+    reload: options.reload ?? false,
     diskCache: options.diskCache ?? false,
   });
   return stableJson(namespaceMap(graph));
@@ -418,7 +623,7 @@ export async function graphTtlResource(
 ): Promise<string> {
   const graph = await wiki.graph({
     infer: true,
-    reload: false,
+    reload: options.reload ?? false,
     diskCache: options.diskCache ?? false,
   });
   return await serializeRdf([...graph], "turtle", { prefixes: graph.bindings });
@@ -482,13 +687,78 @@ function assertNoExtraFields(
   }
 }
 
+/** A tool result carrying a report as both text and structured content. */
+function structuredResult(
+  report: unknown,
+  isError: boolean,
+): Record<string, unknown> {
+  // Round-trip so the payload serializes as the CLI's --json does.
+  const structured = JSON.parse(JSON.stringify(report));
+  return {
+    content: [{ type: "text", text: JSON.stringify(structured) }],
+    structuredContent: structured,
+    isError,
+  };
+}
+
+/** Writes default to a dry run: applying takes an explicit dry_run: false. */
+function dryRun(args: Record<string, unknown>): boolean {
+  return args["dry_run"] === undefined
+    ? true
+    : assertBoolean(args["dry_run"], "dry_run");
+}
+
+/** The one EditOp a single-op convenience tool stands for. */
+function singleOp(name: string, args: Record<string, unknown>): EditOp {
+  const fields: Record<string, unknown> = {};
+  for (const key of SINGLE_OP_ARGS[name] ?? []) {
+    if (args[key] !== undefined) fields[key] = args[key];
+  }
+  switch (name) {
+    case "wiki_page_create":
+      return { op: "create", ...fields } as EditOp;
+    case "wiki_page_set_field":
+      return { op: "set", ...fields } as EditOp;
+    case "wiki_page_patch":
+      return { op: "patch", ...fields } as EditOp;
+    case "wiki_page_move":
+      return { op: "move", ...fields } as EditOp;
+    default: {
+      const { prune_links: pruneLinks, ...rest } = fields;
+      return {
+        op: "delete",
+        ...rest,
+        ...(pruneLinks === undefined
+          ? {}
+          : { pruneLinks: assertBoolean(pruneLinks, "prune_links") }),
+      } as EditOp;
+    }
+  }
+}
+
 export class WikiMcpServer {
   readonly #wiki: Wiki;
   readonly #diskCache: boolean;
+  readonly #allowWrite: boolean;
+  readonly #tools: readonly ToolDefinition[];
+  /** An applied edit makes the cached graph stale: rebuild it on next read. */
+  #reloadNext = false;
 
-  constructor(wiki: Wiki, options: McpOptions = {}) {
+  constructor(wiki: Wiki, options: McpServerOptions = {}) {
     this.#wiki = wiki;
     this.#diskCache = options.diskCache ?? false;
+    this.#allowWrite = options.allowWrite ?? false;
+    this.#tools = [
+      ...tools,
+      ...readPageTools,
+      ...(this.#allowWrite ? writeTools : []),
+    ];
+  }
+
+  #takeReload(requested = false): boolean {
+    const reload = requested || this.#reloadNext;
+    this.#reloadNext = false;
+    return reload;
   }
 
   async handleMessage(message: unknown): Promise<JsonRpcResponse | null> {
@@ -543,7 +813,7 @@ export class WikiMcpServer {
       case "ping":
         return {};
       case "tools/list":
-        return { tools };
+        return { tools: this.#tools };
       case "tools/call":
         return await this.#callTool(params);
       case "resources/list":
@@ -602,7 +872,7 @@ export class WikiMcpServer {
         const result = await querySparql(this.#wiki, query, {
           format,
           inference,
-          reload,
+          reload: this.#takeReload(reload),
           cache: this.#diskCache,
         });
         return {
@@ -615,6 +885,7 @@ export class WikiMcpServer {
         assertNoExtraFields(args, []);
         const result = await describeWiki(this.#wiki, {
           diskCache: this.#diskCache,
+          reload: this.#takeReload(),
         });
         return {
           content: [{ type: "text", text: JSON.stringify(result) }],
@@ -622,10 +893,56 @@ export class WikiMcpServer {
           isError: false,
         };
       }
+      if (name === "wiki_page_show" || name === "wiki_page_refs") {
+        assertNoExtraFields(args, ["path"]);
+        const path = assertString(args["path"], "path");
+        const report = name === "wiki_page_show"
+          ? await this.#wiki.show(path)
+          : this.#wiki.refs(path);
+        return structuredResult(report, false);
+      }
+      if (name === "wiki_edit_apply") {
+        this.#requireWrite(name);
+        assertNoExtraFields(args, ["ops", "dry_run"]);
+        const ops = args["ops"];
+        if (!Array.isArray(ops) || ops.length === 0) {
+          throw new TypeError("ops must be a non-empty array");
+        }
+        return await this.#applyOps(ops as EditOp[], dryRun(args));
+      }
+      if (Object.hasOwn(SINGLE_OP_ARGS, name)) {
+        this.#requireWrite(name);
+        assertNoExtraFields(args, [...SINGLE_OP_ARGS[name]!, "dry_run"]);
+        return await this.#applyOps([singleOp(name, args)], dryRun(args));
+      }
       return toolError(new Error(`Unknown tool: ${name}`));
     } catch (error) {
       return toolError(error);
     }
+  }
+
+  #requireWrite(name: string): void {
+    if (!this.#allowWrite) {
+      throw new Error(
+        `${name} is unavailable: start the server with --allow-write.`,
+      );
+    }
+  }
+
+  async #applyOps(
+    ops: readonly EditOp[],
+    dry: boolean,
+  ): Promise<Record<string, unknown>> {
+    let report;
+    try {
+      report = await this.#wiki.edit({ ops }, { apply: !dry });
+    } catch (error) {
+      // A malformed edit is the caller's to repair, not a protocol failure.
+      if (error instanceof EditUsageError) return toolError(error);
+      throw error;
+    }
+    if (report.status === "applied") this.#reloadNext = true;
+    return structuredResult(report, !report.ok);
   }
 
   async #readResource(params: Record<string, unknown>): Promise<unknown> {
@@ -634,18 +951,23 @@ export class WikiMcpServer {
     let mimeType: string;
     switch (uri) {
       case "wiki://info":
-        text = await infoResource(this.#wiki, { diskCache: this.#diskCache });
+        text = await infoResource(this.#wiki, {
+          diskCache: this.#diskCache,
+          reload: this.#takeReload(),
+        });
         mimeType = "application/json";
         break;
       case "wiki://namespaces":
         text = await namespacesResource(this.#wiki, {
           diskCache: this.#diskCache,
+          reload: this.#takeReload(),
         });
         mimeType = "application/json";
         break;
       case "wiki://graph.ttl":
         text = await graphTtlResource(this.#wiki, {
           diskCache: this.#diskCache,
+          reload: this.#takeReload(),
         });
         mimeType = "text/turtle";
         break;
@@ -667,7 +989,7 @@ class RpcRequestError extends Error {
 
 export function createMcpServer(
   wiki: Wiki,
-  options: McpOptions = {},
+  options: McpServerOptions = {},
 ): WikiMcpServer {
   return new WikiMcpServer(wiki, options);
 }
@@ -708,6 +1030,7 @@ export async function runMcpServer(
   };
   const server = createMcpServer(wiki, {
     diskCache: options.diskCache ?? false,
+    allowWrite: options.allowWrite ?? false,
   });
   const reader = transport.readable.getReader();
   const writer = transport.writable.getWriter();

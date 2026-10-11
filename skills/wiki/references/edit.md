@@ -131,6 +131,25 @@ Edits do not re-render SPARQL blocks. When the wiki has them (a ledger table, a
 register), run `wiki render` after applying, then `wiki fmt` (render writes
 unaligned tables), or `wiki render --check` / `wiki fmt --check` fail in CI.
 
+## Through MCP
+
+When the session's `wiki` MCP server was started with `wiki mcp --allow-write`,
+its tool list includes `wiki_edit_apply`: prefer it over shelling out. It takes
+the same `ops` as `wiki edit` and runs the same dry-run, apply, `expect`
+loop:
+
+1. `wiki_page_show` for each page you will change; keep its `hash`.
+2. `wiki_edit_apply` with `ops` (put each `hash` in that op's `expect`). It
+   defaults to a dry run; read `status` and `introduced`.
+3. Repair on `rejected` or `conflict` (both come back with `isError: true` and
+   the full report), re-read the page on `conflict`, and retry.
+4. Repeat the call with `dry_run: false` to write.
+
+The single-op tools (`wiki_page_create`, `wiki_page_set_field`,
+`wiki_page_patch`, `wiki_page_move`, `wiki_page_delete`) are shorthand for a
+one-op batch. If those tools are not listed, the server is read-only: use the
+CLI verbs above, or tell the user to restart it with `--allow-write`.
+
 ## Fallback: older CLI
 
 When `verify.sh` reports the write verbs unavailable, edit the Markdown
