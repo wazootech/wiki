@@ -88,7 +88,7 @@ Example shape:
 
 ```json
 {
-  "version": "0.2.3",
+  "version": "0.3.0",
   "config": "docs/wiki.yml",
   "inputs": ["docs/wiki"],
   "namespaces": {
