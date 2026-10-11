@@ -1,7 +1,7 @@
 ---
 type: schema:SoftwareApplication
 name: wiki
-softwareVersion: 0.3.0
+softwareVersion: 0.4.0
 description: Command-line interface for querying, validating, and publishing semantic markdown wikis.
 codeRepository: https://github.com/wazootech/wiki
 ---
