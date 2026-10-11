@@ -18,7 +18,7 @@ wiki mv wiki/Beta.md wiki/Gamma.md --json
 
 ## What follows the page
 
-- **Body links in other pages.** Each one keeps its own style: wikilink or Markdown link, with or without the `.md` extension, a leading `./`, and its `#fragment`. A Markdown link target that would contain `(`, `)`, or a space is percent-encoded, so `Jeff_Kazzee_(person)` is written as `Jeff_Kazzee_%28person%29.md`.
+- **Body links in other pages.** Each one keeps its own style: wikilink or Markdown link, with or without the `.md` extension, a leading `./`, and its `#fragment`. Balanced parentheses stay raw, so a link to `Jeff_Kazzee_(person)` is written `./Jeff_Kazzee_(person).md`; only an unbalanced parenthesis is percent-encoded.
 - **The page's own relative links.** When the page changes directory, its links are re-derived from the new directory. Same-page `#fragment` links are left alone.
 - **Metadata references.** `wiki:` CURIEs that name the page, and its IRI (the base IRI plus its route), are rewritten in other pages' frontmatter and in data documents. A page that sets its own `@id` keeps that IRI when it moves, so references to it are left alone.
 

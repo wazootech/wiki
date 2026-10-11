@@ -104,12 +104,21 @@ Deno.test("rewriteLinkTargets keeps each link's own style", () => {
   assertEquals(
     out,
     [
-      "See [Beta](people/Beta_%28person%29.md), " +
-      "[b](./people/Beta_%28person%29.md#Early_life), " +
+      "See [Beta](people/Beta_(person).md), " +
+      "[b](./people/Beta_(person).md#Early_life), " +
       "[[people/Beta_(person)]], [[people/Beta_(person)|the b]],",
       "[[people/Beta_(person)#Bio]], [self](#Top), [Gamma](Gamma.md), and `[code](Beta.md)`.",
     ].join("\n"),
   );
+});
+
+Deno.test("only an unbalanced parenthesis is percent-encoded", () => {
+  const out = rewriteLinkTargets(
+    "See [Beta](Beta.md) and [[Beta]].",
+    "Alpha",
+    new Map([["Beta", "Beta_(draft"]]),
+  );
+  assertEquals(out, "See [Beta](Beta_%28draft.md) and [[Beta_(draft]].");
 });
 
 Deno.test("a page moving directories re-derives its own relative links", () => {
