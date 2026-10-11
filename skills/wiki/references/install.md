@@ -10,7 +10,7 @@ Run `bash skills/wiki/scripts/verify.sh` first (`.agents/skills/wiki/scripts/ver
 
 Use the verifier rather than help output alone: the legacy Python CLI also supports `wiki --help` and `wiki fmt --help`.
 
-- Exit `0`: a Deno-backed CLI or verified Deno source checkout is ready.
+- Exit `0`: a Deno-backed CLI or verified Deno source checkout is ready. A second line says whether it has the write verbs (`wiki edit`, `new`, `set`, `patch`, `mv`, `rm`). `write verbs unavailable` is not a failure: the CLI works, it predates the verbs, and structural edits use the hand-edit fallback in [edit.md](edit.md). Upgrade only if the user wants the verbs.
 - Exit `2`: PATH contains a stale CLI and no usable Deno source checkout was found. Before the first tagged release, do not recommend `npm install -g wazootech-wiki@latest`; it still resolves to the legacy Python CLI. If working in the Wiki repository, use `deno run -A src/wiki/cli.ts`; otherwise explain that the Deno cutover package is not published yet.
 - Exit `1`: no supported Deno-backed CLI or source checkout was found. Follow the release-aware guidance below.
 
@@ -69,6 +69,7 @@ Always rerun the capability probe before saying the CLI is ready.
 | Issue | Response |
 | --- | --- |
 | `wiki --help` works but `fmt` is missing | Find the shadowed executable, update the installation, and rerun the capability probe. |
+| `verify.sh` reports write verbs unavailable | The CLI predates `wiki edit`. Edit by hand per [edit.md](edit.md#fallback-older-cli), or upgrade the installation with approval and rerun the probe. |
 | npm package is missing before the cutover release | Do not install npm `@latest` as the Deno CLI; use repository source if available or report that release is pending. |
 | Standalone binary is blocked | Verify the release checksum, then follow the operating system's unsigned-binary policy. |
 | Deno cannot resolve JSR | Check network access and confirm that the first tagged release has published `@wazoo/wiki`. |

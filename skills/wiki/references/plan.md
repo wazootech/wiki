@@ -10,6 +10,15 @@ Three properties make a plan executable by a weaker model:
 
 File naming: `plans/NNN-short-slug.md`, numbered in recommended execution order.
 
+## Edit plans
+
+When a plan's changes are structural (create a page, set a field, patch a section, move, delete) and the CLI has the write verbs, the plan carries them as a `WikiEdit` JSON file, `plans/NNN-short-slug.edit.json` (format in [edit.md](edit.md#wikiedit-json)). The JSON is the executable artifact; the Markdown plan explains it.
+
+- **Advisor:** take each `expect` from `wiki show <path> --json` at planning time, then dry-run `wiki edit --from plans/NNN-short-slug.edit.json --json`. The plan is ready only when the dry run exits `0`; record its `files[]` in "Current state".
+- **Executor:** apply with `--apply` and change nothing else in those files. Exit `3` means a file changed after the advisor read it; that is a STOP condition, not something to work around with fresh hashes or `--force`.
+
+Prose rewrites and anything the verbs do not cover stay as ordinary steps.
+
 ## Template
 
 ```markdown
@@ -60,6 +69,7 @@ The facts the executor needs, inlined:
 | Lint      | `wiki -c <config> lint`  | exit 0, no warnings |
 | Integrity | `wiki -c <config> check` | exit 0, no errors   |
 | Render    | `wiki -c <config> render`| exit 0              |
+| Apply edit| `wiki -c <config> edit --from plans/NNN-*.edit.json --apply --json` | exit 0, `"status": "applied"` |
 
 (Exact commands from this repository — using the resolved config file `-c docs/wiki.yml` or similar.)
 
@@ -106,6 +116,7 @@ Stop and report back (do not improvise) if:
 - The markdown or config at the locations in "Current state" doesn't match the excerpts.
 - A step's verification fails twice after a reasonable fix attempt.
 - The fix appears to require touching an out-of-scope file.
+- `wiki edit` exits `3` (a file changed after this plan was written) or `1` (the edit now introduces errors).
 
 ## Maintenance notes
 

@@ -270,6 +270,50 @@
         "Does not write site.theme_color or site.title to wiki config (removed invalid keys)",
         "Does not run wiki lint or wiki serve unsolicited"
       ]
+    },
+    {
+      "id": 21,
+      "workflow": "edit",
+      "prompt": "Add a budget ledger entry: 10.00 USD DeepSeek API top-up on 2026-10-10, bought by Ethan Davidson. The ledger is schema:Purchase pages in wiki/ validated by PurchaseShape.",
+      "expected_output": "Runs verify.sh; reads the shape and the ledger page with wiki show; creates the page with wiki new --type schema:Purchase (or a wiki edit plan) as a dry run first, then --apply; writes the price as YAML 10.00; logs the change with wiki patch or in the same edit; runs wiki render and wiki fmt; reports the result of wiki check.",
+      "files": [],
+      "expectations": [
+        "Runs or plans verify.sh before editing",
+        "Uses wiki new --type schema:Purchase or a wiki edit create op, not a hand-written Markdown file",
+        "Runs the edit as a dry run before --apply",
+        "Keeps the price a decimal (10.00 as YAML, not the JSON number 10)",
+        "Does not invent values for required fields the user did not give; asks or lets the edit's rejection name them",
+        "Runs wiki render then wiki fmt after applying, since the ledger table is a SPARQL block",
+        "Does not use --force"
+      ]
+    },
+    {
+      "id": 22,
+      "workflow": "edit",
+      "prompt": "Rename wiki/Jeff_Kazzee.md to wiki/Jeff_Kazzee_(person).md. Other pages link to it.",
+      "expected_output": "Checks inbound links with wiki refs; runs wiki mv as a dry run, reviews the files it will rewrite, then applies with --expect from wiki show; confirms wiki check and lint pass. Does not rename the file and search-and-replace links by hand.",
+      "files": [],
+      "expectations": [
+        "Uses wiki mv (or a wiki edit move op), not a shell mv or git mv",
+        "Does not rewrite inbound links with find-and-replace",
+        "Dry-runs first and reviews the list of rewritten files",
+        "Passes --expect with the hash from wiki show when applying",
+        "Runs or reports wiki check / wiki lint after the move"
+      ]
+    },
+    {
+      "id": 23,
+      "workflow": "edit",
+      "prompt": "Execute plans/004-fix-ledger-fields.md. Its edit JSON failed with exit code 3.",
+      "expected_output": "Explains that exit 3 is a conflict: a file changed after the plan's expect hashes were taken. Re-reads the affected files with wiki show, compares them with the plan's Current state, and re-plans (new edit JSON, new dry run) or stops and reports. Does not retry with --force or with hashes it did not read.",
+      "files": [],
+      "expectations": [
+        "Identifies exit 3 as an expect/hash conflict, not a validation failure",
+        "Re-reads the conflicting files with wiki show before any retry",
+        "Treats the plan as stale: rewrites and re-dry-runs the edit JSON, or stops and reports",
+        "Does not use --force",
+        "Does not copy a fresh hash into the old plan without re-checking the planned change still applies"
+      ]
     }
   ]
 }

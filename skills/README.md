@@ -8,7 +8,7 @@ Typical flow: **install** → **create** → **deploy** → **improve** (each op
 
 | Skill                 | Purpose                                                                  |
 | --------------------- | ------------------------------------------------------------------------ |
-| [wiki](wiki/SKILL.md) | Install, `wiki init`, audit (fmt/lint/check/render), GitHub Pages deploy, Git-anchored delta sync of code wikis with opt-in `detail_level` |
+| [wiki](wiki/SKILL.md) | Install, `wiki init`, audit (fmt/lint/check/render), validated page edits (`new`/`set`/`patch`/`mv`/`rm`/`edit`), GitHub Pages deploy, Git-anchored delta sync of code wikis with opt-in `detail_level` |
 
 ## Install
 
