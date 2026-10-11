@@ -23,6 +23,11 @@
   `wiki file mv` and `wiki file rm` rewrites no longer count or rewrite it.
   Inline code was already treated this way, and the link-style lint already
   skipped fences ([#362](https://github.com/wazootech/wiki/issues/362)).
+- `lint --strict` and `check --strict` no longer fail a fresh `wiki init`. A
+  configured asset directory that does not exist is no longer a finding (a link
+  into it is still reported per link), and the `init` template leaves `assets`
+  to its default, `["assets"]` when that directory exists
+  ([#376](https://github.com/wazootech/wiki/issues/376)).
 
 ## 0.3.0 — 2026-10-11
 

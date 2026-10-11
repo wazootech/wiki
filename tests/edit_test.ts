@@ -249,17 +249,18 @@ Deno.test("pre-existing errors elsewhere do not block an edit", async () => {
 Deno.test("a create does not introduce pre-existing wiki-wide lint findings", async () => {
   const root = writeWiki();
   try {
-    // A configured asset directory that does not exist: a path-less lint
+    // A configured asset path that is a file, not a directory: a path-less lint
     // warning that is there before the edit and after it.
+    Deno.writeTextFileSync(join(root, "not_a_dir"), "");
     Deno.writeTextFileSync(
       join(root, "wiki.yml"),
-      "wiki:\n  input: [wiki]\n  assets: [missing_assets]\n",
+      "wiki:\n  input: [wiki]\n  assets: [not_a_dir]\n",
     );
     const wiki = Wiki.load(root);
     const lint = await wiki.lint();
     assert(
       lint.warnings.some((issue) =>
-        issue.message.includes("Asset directory does not exist")
+        issue.message.includes("Asset directory is not a directory")
       ),
       JSON.stringify(lint.warnings),
     );

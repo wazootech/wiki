@@ -479,3 +479,29 @@ Deno.test("template fetching refuses path traversal and existing destinations be
     cleanup(root);
   }
 });
+
+Deno.test("a freshly scaffolded wiki passes lint --strict and check --strict (#376)", () => {
+  const root = tempRoot();
+  try {
+    const result = scaffoldWiki(root, {
+      graph_context_wiki: "https://example.org/",
+    });
+    assertEquals(result.ok, true);
+    assertEquals(isDirectory(join(root, "assets")), false);
+    const entry = new URL("../src/wiki/cli.ts", import.meta.url).pathname
+      .replace(/^\/([A-Za-z]:)/, "$1");
+    for (const command of ["lint", "check"]) {
+      const out = new Deno.Command(Deno.execPath(), {
+        args: ["run", "--quiet", "--allow-all", entry, command, "--strict"],
+        cwd: root,
+        stdout: "piped",
+        stderr: "piped",
+      }).outputSync();
+      const text = new TextDecoder().decode(out.stdout) +
+        new TextDecoder().decode(out.stderr);
+      assertEquals(out.code, 0, `${command} --strict:\n${text}`);
+    }
+  } finally {
+    cleanup(root);
+  }
+});
