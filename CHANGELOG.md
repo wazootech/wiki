@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - Inference no longer copies numeric literals between pages. The bundled OWL 2
@@ -46,6 +55,15 @@
   unknown keys inside a wiki block are rejected either way.
   ([#129](https://github.com/wazootech/wiki/issues/129))
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - Large TriG named graphs load in linear time. `@wazoo/sparql-engine` 0.4.3
@@ -72,6 +90,15 @@
   source and the shape (an IRI, or the triples that reach a blank node from
   one). Shapes from installed sources are still not linted.
   ([#342](https://github.com/wazootech/wiki/issues/342))
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -204,6 +231,15 @@ the moves are recorded here instead.
   Windows x64, and macOS ARM64; release assets are individual executables with
   `SHA256SUMS`.
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - `wiki fmt` no longer crashes with
@@ -271,6 +307,15 @@ the moves are recorded here instead.
 - Pre-commit hook runs prettier on staged files; LF line endings enforced via
   `.gitattributes`.
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - `wiki init` on non-interactive stdin no longer hangs on the namespace prompt;
@@ -284,6 +329,15 @@ the moves are recorded here instead.
 
 ## 0.1.21 — 2026-07-12
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - Preserve title-cased file-derived graph URIs so `wiki:` CURIE references match
@@ -294,6 +348,15 @@ the moves are recorded here instead.
   release workflow starts reliably.
 
 ## 0.1.19 — 2026-07-01
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -368,6 +431,15 @@ the moves are recorded here instead.
 
 ## 0.1.18 — 2026-06-28
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - `wiki upgrade` no longer fails when `wiki.yml` contains legacy
@@ -394,6 +466,15 @@ the moves are recorded here instead.
 - Typed **layout context** models (`LayoutContext`) validated at
   `build_layout_context` with expanded layout slot contract tests
   ([#106](https://github.com/wazootech/wiki/issues/106)).
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -485,6 +566,15 @@ link:
 
 ## 0.1.15 — 2026-06-14
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - Release workflow keeps canonical `release.yaml` filename for npm OIDC trusted
@@ -532,6 +622,15 @@ link:
 
 - `wiki-install` and `wiki-create` agent skills under `skills/` — install the
   CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -605,6 +704,15 @@ link:
   instructions instead of calling pip
 - `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs
   Obsidian wikilinks); `wiki init --link-style` and docs use the new names
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -810,6 +918,15 @@ See
 - Fail fast on invalid config files, unknown keys, removed aliases, and
   malformed nested config blocks
 
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
+
 ### Fixed
 
 - Surface config-load errors consistently through the CLI instead of silently
@@ -829,6 +946,15 @@ See
 
 - Simplified `wiki init` scaffolding and prompts
 - Refined site generation and HTML template extraction
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
@@ -853,6 +979,15 @@ See
 
 - Replaced on-disk graph cache (`.wiki/cache/`) and incremental render-state
   with runtime-only caching
+
+### Changed
+
+- A frontmatter field whose value is `0`, `0.0`, `false` or `""` now produces a
+  triple instead of being silently dropped from the graph. Only absence is
+  dropped: `null`, an empty list and an empty mapping. A wiki that wrote
+  `draft: false` or `price: 0` gains those triples, which can trip a closed
+  shape or change `render` output, and `sh:minCount 1` on such a field now
+  passes ([#374](https://github.com/wazootech/wiki/issues/374)).
 
 ### Fixed
 
