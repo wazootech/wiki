@@ -30,6 +30,8 @@
  */
 
 import {
+  activeOverlay,
+  fileStat,
   isFile,
   pathExists,
   readText,
@@ -126,11 +128,13 @@ export function iterWikiFiles(config: Config): string[] {
 export function wikiManifest(config: Config): WikiManifest {
   const files: WikiManifestEntry[] = [];
   for (const filePath of iterWikiFiles(config)) {
-    const stat = Deno.statSync(filePath);
+    // Through `fileStat`, not `Deno.statSync`: under an edit overlay a staged
+    // page has no file on disk yet, or a stale one.
+    const stat = fileStat(filePath);
     files.push({
       path: config.relativeToRoot(filePath),
       size: stat.size,
-      mtime_ns: stat.mtime === null ? 0 : stat.mtime.getTime() * 1_000_000,
+      mtime_ns: stat.mtimeMs * 1_000_000,
     });
   }
   return { version: VERSION, config: configFingerprint(config), files };
@@ -215,7 +219,11 @@ function encodeJsonString(value: string): string {
 
 /** SHA-256 hex digest of the wiki manifest. */
 export function wikiFingerprint(config: Config): string {
-  return sha256Hex(canonicalJson(wikiManifest(config)));
+  const digest = sha256Hex(canonicalJson(wikiManifest(config)));
+  // A staged tree is a different wiki: key it apart so neither the in-process
+  // nor the disk cache can hand the pre-edit graph to an edit's validation.
+  const overlay = activeOverlay();
+  return overlay === undefined ? digest : sha256Hex(`${digest}|${overlay.id}`);
 }
 
 /** The prefix shared by every cache file for one graph kind and infer mode. */

@@ -50,6 +50,13 @@ export const EXIT_USAGE = 2;
 /** Exit code for a failed command — matches Click's `ClickException`. */
 export const EXIT_FAILURE = 1;
 
+/**
+ * Exit code for an edit whose `expect` precondition failed: the file changed
+ * since the caller read it. Distinct from `1` so an agent knows to re-read and
+ * rebuild its plan rather than repair the content.
+ */
+export const EXIT_CONFLICT = 3;
+
 const USAGE_LINES = [
   `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...`,
   `Try '${PROG_NAME} --help' for help.`,
@@ -1514,6 +1521,162 @@ async function runMcpCommand(
     return EXIT_FAILURE;
   }
 }
+const EDIT_HELP = [
+  "Usage: wiki edit [OPTIONS]",
+  "",
+  "  Validate a batch of page edits and, with --apply, write them atomically.",
+  "",
+  '  The edit is JSON: {"ops": [...]}, each op one of create, replace, or',
+  "  delete. Paths are relative to the config root. Nothing is written without",
+  "  --apply, and nothing is written if the edit introduces check or lint errors",
+  '  (unless --force) or an op\'s "expect" hash no longer matches the file.',
+  "",
+  "  Exit codes: 0 valid (or applied), 1 rejected, 2 usage, 3 conflict.",
+  "",
+  "Options:",
+  "  --from FILE  Read the edit from FILE, or '-' for stdin (default: -).",
+  "  --apply      Write the edit. Without it, validate and report only.",
+  "  --force      Write even if the edit introduces errors.",
+  "  -f, --format [text|json]",
+  "               Output format (default: text). json writes the edit report",
+  "               to stdout.",
+  "  --json       Shorthand for --format json.",
+  "  --help       Show this message and exit.",
+].join("\n");
+
+interface ParsedEditCommand {
+  readonly from: string;
+  readonly apply: boolean;
+  readonly force: boolean;
+  readonly format: "text" | "json";
+}
+
+function parseEditCommandArgs(
+  args: readonly string[],
+): ParsedEditCommand | number {
+  let from = "-";
+  let apply = false;
+  let force = false;
+  let format: "text" | "json" = "text";
+  for (let i = 0; i < args.length; i++) {
+    const token = args[i]!;
+    if (token === "--help" || token === "-h") {
+      console.log(EDIT_HELP);
+      return EXIT_OK;
+    }
+    if (token === "--apply") {
+      apply = true;
+    } else if (token === "--force") {
+      force = true;
+    } else if (token === "--json") {
+      format = "json";
+    } else if (
+      token === "--from" || token === "-f" || token === "--format"
+    ) {
+      const value = args[++i];
+      if (value === undefined) {
+        return usageError(`Error: Option '${token}' requires an argument.`);
+      }
+      if (token === "--from") {
+        from = value;
+      } else if (value === "text" || value === "json") {
+        format = value;
+      } else {
+        return usageError(
+          `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+        );
+      }
+    } else if (token.startsWith("--from=")) {
+      from = token.slice("--from=".length);
+    } else if (token.startsWith("--format=")) {
+      const value = token.slice("--format=".length);
+      if (value !== "text" && value !== "json") {
+        return usageError(
+          `Error: Invalid value for '-f' / '--format': '${value}' is not one of 'text', 'json'.`,
+        );
+      }
+      format = value;
+    } else if (token.startsWith("-")) {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      return usageError(`Error: Got unexpected extra argument (${token}).`);
+    }
+  }
+  return { from, apply, force, format };
+}
+
+async function runEditCommand(
+  wiki: Wiki,
+  parsed: ParsedEditCommand,
+): Promise<number> {
+  const { EditUsageError } = await import("./edit.ts");
+  let text: string;
+  try {
+    text = parsed.from === "-"
+      ? await new Response(Deno.stdin.readable).text()
+      : await Deno.readTextFile(parsed.from);
+  } catch (error) {
+    return usageError(
+      `Error: Cannot read edit from '${parsed.from}': ${errorText(error)}`,
+    );
+  }
+  let edit: unknown;
+  try {
+    edit = JSON.parse(text);
+  } catch (error) {
+    return usageError(`Error: The edit is not valid JSON: ${errorText(error)}`);
+  }
+
+  let report;
+  try {
+    report = await wiki.edit(edit as Parameters<Wiki["edit"]>[0], {
+      apply: parsed.apply,
+      force: parsed.force,
+    });
+  } catch (error) {
+    if (error instanceof EditUsageError) {
+      return usageError(`Error: ${error.message}`);
+    }
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+
+  if (parsed.format === "json") {
+    console.log(JSON.stringify(report, null, 2));
+  }
+  // The human summary always goes to stderr, as `check -f json` does, so a
+  // JSON consumer can read stdout and still see why the run failed.
+  for (const file of report.files) {
+    console.error(`${file.action} ${file.path}`);
+  }
+  for (const conflict of report.conflicts) {
+    console.error(
+      `conflict: ${conflict.path} expected ${conflict.expected}, found ${
+        conflict.actual ?? "no file"
+      }`,
+    );
+  }
+  for (const issue of report.introduced) {
+    console.error(`${issue.severity}: ${issue.message}`);
+  }
+  switch (report.status) {
+    case "conflict":
+      console.error(
+        "Edit not written: the files changed since they were read.",
+      );
+      return EXIT_CONFLICT;
+    case "rejected":
+      console.error("Edit not written: it introduces the errors above.");
+      return EXIT_FAILURE;
+    case "dry_run":
+      console.error("Edit is valid. Re-run with --apply to write it.");
+      return EXIT_OK;
+    case "applied":
+      console.error("Edit written.");
+      return EXIT_OK;
+  }
+}
+
 interface CommandContext {
   readonly command: string;
   readonly args: readonly string[];
@@ -1548,6 +1711,17 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runAuditCommand(wiki, "check", parsed.files, parsed);
+    },
+  },
+  {
+    names: ["edit"],
+    description: "Validate page edits and write them atomically (--apply).",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseEditCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runEditCommand(wiki, parsed);
     },
   },
   {

@@ -98,6 +98,9 @@ Deno.test("the entrypoint still exports the documented domain API", () => {
       "parseRdf",
       "serializeRdf",
       "formatMarkdown",
+      "applyEdit",
+      "contentHash",
+      "EditUsageError",
     ]
   ) {
     assert(

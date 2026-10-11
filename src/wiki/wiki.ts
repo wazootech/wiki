@@ -27,6 +27,12 @@ import { errorText } from "./errors.ts";
 import { isFile, pathExists, walkTree } from "./fspath.ts";
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
+import {
+  applyEdit,
+  type EditOptions,
+  type EditReport,
+  type WikiEdit,
+} from "./edit.ts";
 import { buildStaticSite } from "./site/publish.ts";
 import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
@@ -341,6 +347,17 @@ export class Wiki {
       : await runCheck(this.config, { fileFilter });
     if (options.strict ?? false) report = report.applyStrict();
     return report;
+  }
+
+  /**
+   * Validate an edit against this wiki and, with `apply`, write it atomically.
+   *
+   * Conflicts and rejections come back in the report, not as exceptions, so an
+   * agent can re-read, repair, and retry; a malformed edit throws
+   * `EditUsageError`. See `edit.ts` for the pipeline.
+   */
+  edit(edit: WikiEdit, options: EditOptions = {}): Promise<EditReport> {
+    return applyEdit(this.config, edit, options);
   }
 
   /** Run the convention audits: links, filenames, headings, and link style. */
