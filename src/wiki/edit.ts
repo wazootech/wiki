@@ -720,7 +720,7 @@ function targetPath(config: Config, raw: string): string {
   const extension = extname(path).toLowerCase();
   if (!DOCUMENT_EXTENSIONS.has(extension)) {
     throw new EditUsageError(
-      `${raw}: only wiki documents (${
+      `${raw}: only wiki document files (${
         [...DOCUMENT_EXTENSIONS].sort().join(", ")
       }) can be edited.`,
     );

@@ -10,13 +10,17 @@
   [#355](https://github.com/wazootech/wiki/issues/355)). `wiki edit` takes a
   batch of ops as JSON (`create`, `replace`, `set`, `patch`, `move`, `delete`),
   runs `check` and `lint` on the proposed tree before anything is written,
-  rejects only findings the edit introduces, and writes every file or none.
-  `wiki new`, `wiki set`, `wiki patch`, `wiki mv`, and `wiki rm` build one-op
-  edits; `wiki show` and `wiki refs` are the read side. Nothing is written
-  without `--apply`. In process, the same operations are `Wiki.edit()`,
-  `Wiki.show()`, and `Wiki.refs()`.
-- Exit code `3` means a conflict: an op's `expect` hash (from `wiki show`) no
-  longer matches the file, so another writer changed it and nothing was written.
+  rejects only findings the edit introduces, and writes every file or none
+  (rollback is in-process, so a hard kill mid-write can leave a partial edit).
+  The single-file verbs are grouped under `wiki file`: `wiki file new`,
+  `wiki file set`, `wiki file patch`, `wiki file mv`, and `wiki file rm` build
+  one-op edits, and `wiki file show` and `wiki file refs` are the read side.
+  They act on wiki document files only (`.md`, `.yaml`, `.yml`, `.json`,
+  `.toml`). Nothing is written without `--apply`. In process, the same
+  operations are `Wiki.edit()`, `Wiki.show()`, and `Wiki.refs()`.
+- Exit code `3` means a conflict: an op's `expect` hash (from
+  `wiki file show`) no longer matches the file, so another writer changed it
+  and nothing was written.
   `0`, `1`, and `2` keep their meanings.
 
 ## 0.2.3 — 2026-10-10

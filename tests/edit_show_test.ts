@@ -182,23 +182,29 @@ async function runCli(
 }
 
 Deno.test(
-  "wiki show and wiki refs: output formats and exit codes",
+  "wiki file show and wiki file refs: output formats and exit codes",
   { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {
-      const json = await runCli(root, ["show", "wiki/Alpha.md", "--json"]);
+      const json = await runCli(root, [
+        "file",
+        "show",
+        "wiki/Alpha.md",
+        "--json",
+      ]);
       assertEquals(json.code, EXIT_OK, json.stderr);
       const parsed = JSON.parse(json.stdout);
       assertEquals(parsed.version, 1);
       assertEquals(parsed.route, "Alpha");
 
-      const text = await runCli(root, ["show", "wiki/Alpha.md"]);
+      const text = await runCli(root, ["file", "show", "wiki/Alpha.md"]);
       assertEquals(text.code, EXIT_OK, text.stderr);
       assert(text.stdout.includes("hash: "));
       assert(text.stdout.includes("## Details (line 13)"));
 
       const field = await runCli(root, [
+        "file",
         "show",
         "wiki/Alpha.md",
         "--field",
@@ -208,6 +214,7 @@ Deno.test(
       assertEquals(field.stdout.trim(), "Alpha");
 
       const listField = await runCli(root, [
+        "file",
         "show",
         "wiki/Alpha.md",
         "--field=schema:keywords",
@@ -216,6 +223,7 @@ Deno.test(
       assertEquals(JSON.parse(listField.stdout), ["one", "two"]);
 
       const unset = await runCli(root, [
+        "file",
         "show",
         "wiki/Alpha.md",
         "--field",
@@ -223,25 +231,31 @@ Deno.test(
       ]);
       assertEquals(unset.code, EXIT_FAILURE);
 
-      const refs = await runCli(root, ["refs", "wiki/Gamma.md", "--json"]);
+      const refs = await runCli(root, [
+        "file",
+        "refs",
+        "wiki/Gamma.md",
+        "--json",
+      ]);
       assertEquals(refs.code, EXIT_OK, refs.stderr);
       assertEquals(JSON.parse(refs.stdout).inbound, [
         { route: "Alpha", path: "wiki/Alpha.md" },
       ]);
 
-      assertEquals((await runCli(root, ["show"])).code, EXIT_USAGE);
+      assertEquals((await runCli(root, ["file", "show"])).code, EXIT_USAGE);
       assertEquals(
-        (await runCli(root, ["show", "wiki/Missing.md"])).code,
+        (await runCli(root, ["file", "show", "wiki/Missing.md"])).code,
         EXIT_USAGE,
       );
       assertEquals(
-        (await runCli(root, ["refs", "wiki/Gamma.md", "--field", "x"])).code,
+        (await runCli(root, ["file", "refs", "wiki/Gamma.md", "--field", "x"]))
+          .code,
         EXIT_USAGE,
         "--field belongs to show only",
       );
-      const help = await runCli(root, ["show", "--help"]);
+      const help = await runCli(root, ["file", "show", "--help"]);
       assertEquals(help.code, EXIT_OK);
-      assert(help.stdout.includes("Usage: wiki show"));
+      assert(help.stdout.includes("Usage: wiki file show"));
     } finally {
       Deno.removeSync(root, { recursive: true });
     }

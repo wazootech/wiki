@@ -14,17 +14,17 @@ Run `bash skills/wiki/scripts/verify.sh` first. When it prints
 
 | Change                              | Verb                                                         | Notes                                                                 |
 | ----------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| Read a page, get its hash           | `wiki show PATH [--field KEY]`                               | Frontmatter, JSON-LD, heading outline, links, and `hash`              |
-| What links here, and where it links | `wiki refs PATH`                                             | Inbound and outbound pages                                            |
-| New page of a known type            | `wiki new PATH --type CLASS --set KEY=VALUE…`                | Required fields come from the type's shape; missing ones are rejected |
-| One frontmatter field               | `wiki set PATH FIELD VALUE` / `--unset`                      | VALUE is YAML, written as given; comments and key order kept          |
-| Body text under a heading           | `wiki patch PATH --heading H --append\|--prepend\|--replace` | `--content TEXT` or stdin; also `--body`, `--frontmatter`             |
-| Rename or move a page               | `wiki mv FROM TO`                                            | Rewrites every inbound link                                           |
-| Delete a page                       | `wiki rm PATH [--prune-links]`                               | Refuses while pages link to it, unless links are pruned to plain text |
+| Read a page, get its hash           | `wiki file show PATH [--field KEY]`                               | Frontmatter, JSON-LD, heading outline, links, and `hash`              |
+| What links here, and where it links | `wiki file refs PATH`                                             | Inbound and outbound pages                                            |
+| New page of a known type            | `wiki file new PATH --type CLASS --set KEY=VALUE…`                | Required fields come from the type's shape; missing ones are rejected |
+| One frontmatter field               | `wiki file set PATH FIELD VALUE` / `--unset`                      | VALUE is YAML, written as given; comments and key order kept          |
+| Body text under a heading           | `wiki file patch PATH --heading H --append\|--prepend\|--replace` | `--content TEXT` or stdin; also `--body`, `--frontmatter`             |
+| Rename or move a page               | `wiki file mv FROM TO`                                            | Rewrites every inbound link                                           |
+| Delete a page                       | `wiki file rm PATH [--prune-links]`                               | Refuses while pages link to it, unless links are pruned to plain text |
 | Several changes as one unit         | `wiki edit --from FILE\|-`                                   | A `WikiEdit` JSON plan; see [below](#wikiedit-json)                   |
 
 Paths are relative to the **config root** (the directory holding `wiki.yml`),
-never the working directory, so a path from `wiki show` pastes into any other
+never the working directory, so a path from `wiki file show` pastes into any other
 verb unchanged. Installed sources under `.wiki/` can be read, never edited.
 
 Do not use the verbs for prose rewrites a human would review line by line; a
@@ -33,8 +33,8 @@ editing followed by `wiki fmt` and `wiki check`.
 
 ## The loop
 
-1. **Read.** `wiki show PATH --json` → note `hash`. For a rename or delete, also
-   `wiki refs PATH`.
+1. **Read.** `wiki file show PATH --json` → note `hash`. For a rename or delete, also
+   `wiki file refs PATH`.
 1. **Dry run.** Run the verb without `--apply`. Nothing is written; the report
    says what would change and lists any check or lint finding the change
    **introduces** (findings the wiki already had do not count against it).
@@ -115,7 +115,7 @@ target a page created earlier in the same edit.
       "target": { "heading": "Change log" },
       "mode": "append",
       "content": "- 2026-10-10 — Added the [DeepSeek top-up](./DeepSeek_top-up_(payment).md).",
-      "expect": "<hash from wiki show wiki/Budget_Ledger.md --json>"
+      "expect": "<hash from wiki file show wiki/Budget_Ledger.md --json>"
     }
   ]
 }

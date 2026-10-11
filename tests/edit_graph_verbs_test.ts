@@ -242,6 +242,7 @@ Deno.test("a move onto an existing page is a conflict that writes nothing", asyn
   });
   try {
     const cli = await runCli(root, [
+      "file",
       "mv",
       "wiki/Beta.md",
       "wiki/Alpha.md",
@@ -251,6 +252,7 @@ Deno.test("a move onto an existing page is a conflict that writes nothing", asyn
     assertEquals(read(root, "wiki/Beta.md"), article("Beta"));
 
     const stale = await runCli(root, [
+      "file",
       "mv",
       "wiki/Beta.md",
       "wiki/Gamma.md",
@@ -272,18 +274,24 @@ Deno.test("rm refuses while pages link in, then prunes on request", async () => 
     "Beta.md": article("Beta"),
   });
   try {
-    const refused = await runCli(root, ["rm", "wiki/Beta.md", "--apply"]);
+    const refused = await runCli(root, [
+      "file",
+      "rm",
+      "wiki/Beta.md",
+      "--apply",
+    ]);
     assertEquals(refused.code, EXIT_FAILURE, refused.stderr);
     assert(refused.stderr.includes("Alpha links to Beta"), refused.stderr);
     assert(exists(root, "wiki/Beta.md"));
 
-    const json = await runCli(root, ["rm", "wiki/Beta.md", "--json"]);
+    const json = await runCli(root, ["file", "rm", "wiki/Beta.md", "--json"]);
     const report = JSON.parse(json.stdout);
     assertEquals(report.status, "rejected");
     assertEquals(report.introduced[0].code, "dangling_links");
     assertEquals(report.introduced[0].path, "wiki/Alpha.md");
 
     const pruned = await runCli(root, [
+      "file",
       "rm",
       "wiki/Beta.md",
       "--prune-links",
@@ -306,7 +314,7 @@ Deno.test("rm of an unlinked page needs no flag", async () => {
     "Beta.md": article("Beta", "To [Alpha](Alpha.md)."),
   });
   try {
-    const cli = await runCli(root, ["rm", "wiki/Beta.md", "--apply"]);
+    const cli = await runCli(root, ["file", "rm", "wiki/Beta.md", "--apply"]);
     assertEquals(cli.code, EXIT_OK, cli.stderr);
     assert(!exists(root, "wiki/Beta.md"));
   } finally {

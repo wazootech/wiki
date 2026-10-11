@@ -1,21 +1,21 @@
 ---
 type: TechArticle
-headline: wiki refs
+headline: wiki file refs
 description: List the pages that link to a page and the pages it links to.
 ---
 
-# `wiki refs`
+# `wiki file refs`
 
 List a page's place in the link graph: the pages that link to it (inbound) and the pages it links to (outbound). Check `refs` before moving or deleting a page to see which pages an edit would touch.
 
 ## Usage
 
 ```bash
-wiki refs wiki/Alpha.md
-wiki refs wiki/Alpha.md --json
+wiki file refs wiki/Alpha.md
+wiki file refs wiki/Alpha.md --json
 ```
 
-`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md) and [wiki show](wiki_show.md).
+`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md) and [wiki file show](wiki_file_show.md).
 
 ## Options
 
@@ -47,5 +47,5 @@ Inbound pages come in document order and outbound pages in first-link order, eac
 
 ## See also
 
-- [wiki show](wiki_show.md) — one page's frontmatter, outline, and hash
+- [wiki file show](wiki_file_show.md) — one page's frontmatter, outline, and hash
 - [wiki link](wiki_link.md) — suggest and repair links

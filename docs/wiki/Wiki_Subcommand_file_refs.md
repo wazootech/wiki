@@ -3,5 +3,5 @@ type: TechArticle
 headline: Redirecting...
 description: Redirect page
 wazoo:layout: layouts/redirect.html
-redirect_to: wiki_show
+redirect_to: wiki_file_refs
 ---

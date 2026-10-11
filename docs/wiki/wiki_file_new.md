@@ -1,10 +1,10 @@
 ---
 type: TechArticle
-headline: wiki new
+headline: wiki file new
 description: Create a page of a known type, with its required fields first, as a validated edit.
 ---
 
-# `wiki new`
+# `wiki file new`
 
 Create a page of a known type. The type's required fields come first in the frontmatter, then the other fields you pass, then an H1 taken from `headline` or `name`. The page is built as a [wiki edit](wiki_edit.md) create, so it is validated against the wiki's shapes before anything is written, and it is written only with `--apply`.
 
@@ -13,13 +13,13 @@ A required field you do not pass is left out, never filled with a placeholder. T
 ## Usage
 
 ```bash
-wiki new "wiki/Neon_(payment).md" --type schema:Purchase \
+wiki file new "wiki/Neon_(payment).md" --type schema:Purchase \
   --set "schema:name=Neon plan" --set schema:price=5.00 --set schema:priceCurrency=USD
-wiki new wiki/ --type schema:Purchase --set "schema:name=Neon plan" --apply
-wiki new wiki/Ada_Lovelace.md --type schema:Person --set "schema:name=Ada Lovelace" --json
+wiki file new wiki/ --type schema:Purchase --set "schema:name=Neon plan" --apply
+wiki file new wiki/Ada_Lovelace.md --type schema:Person --set "schema:name=Ada Lovelace" --json
 ```
 
-`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md). When `PATH` is a directory (or ends in `/`), the filename comes from the title, Wikipedia-style: `Neon plan` becomes `Neon_plan.md`. `wiki new` never overwrites: it expects the file to be absent and exits `3` if it exists.
+`PATH` is relative to the config root, as in [wiki edit](wiki_edit.md). When `PATH` is a directory (or ends in `/`), the filename comes from the title, Wikipedia-style: `Neon plan` becomes `Neon_plan.md`. `wiki file new` never overwrites: it expects the file to be absent and exits `3` if it exists.
 
 ## Required fields
 
@@ -62,6 +62,6 @@ The [wiki edit](wiki_edit.md) report (`status`, `files`, `conflicts`, `introduce
 
 ## See also
 
-- [wiki set](wiki_set.md) and [wiki patch](wiki_patch.md) — change a page after it exists
-- [wiki show](wiki_show.md) — read a page and its content hash
+- [wiki file set](wiki_file_set.md) and [wiki file patch](wiki_file_patch.md) — change a page after it exists
+- [wiki file show](wiki_file_show.md) — read a page and its content hash
 - [SHACL](SHACL.md) — writing shape pages
