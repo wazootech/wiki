@@ -322,3 +322,14 @@ Deno.test("a titled link that is broken is still reported by its target (#376)",
     cleanup(root);
   }
 });
+
+Deno.test("#top needs no heading, any other missing fragment still does (#376)", () => {
+  const root = tempRoot();
+  try {
+    write(root, "wiki/Page.md", "# Page\n\n[a](#top) [b](#nope)\n");
+    const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
+    assertEquals(issues.map((issue) => issue.raw_target), ["#nope"]);
+  } finally {
+    cleanup(root);
+  }
+});

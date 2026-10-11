@@ -475,7 +475,11 @@ function pageTargetIssue(
   if (fragment) {
     const targetFragment = fragmentId(fragment);
     const ids = headingIdsByRoute.get(route) ?? new Set<string>();
-    if (!ids.has(targetFragment)) return "missing_heading";
+    // `#top` is the HTML spec's own "scroll to the top of the document", so it
+    // needs no heading to land on.
+    if (!ids.has(targetFragment) && fragment.toLowerCase() !== "top") {
+      return "missing_heading";
+    }
   }
   return null;
 }
