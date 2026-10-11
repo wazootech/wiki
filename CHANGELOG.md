@@ -14,6 +14,12 @@
   longer writes an explicit `assets: [assets]` into the config it scaffolds
   ([#376](https://github.com/wazootech/wiki/issues/376)).
 
+- A site-root-relative link (`[a](/wiki/Guides/Setup/)`) is checked against the
+  page that `site.base_url` and `site.url_style` map it to, instead of being
+  reported as a non-existent document. A link whose route is missing, or that
+  names a missing heading, is still reported
+  ([#376](https://github.com/wazootech/wiki/issues/376)).
+
 ## 0.4.0 — 2026-10-11
 
 ### Added

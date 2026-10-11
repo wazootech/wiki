@@ -18,6 +18,7 @@ import {
   parseMarkdownDestination,
   resolvePageHref,
   resolvePageRoute,
+  routeFromSiteUrl,
   splitTarget,
 } from "../src/wiki/links.ts";
 
@@ -166,4 +167,25 @@ Deno.test("a markdown destination splits around its target (#376)", () => {
   });
   // Not one destination: returned whole, as before.
   assertEquals(parseMarkdownDestination("a b.md").target, "a b.md");
+});
+
+Deno.test("a site-root-relative URL maps back to its route (#376)", () => {
+  const dir = (target: string) => routeFromSiteUrl(target, "/wiki", "dir");
+  assertEquals(dir("/wiki/Guides/Setup/"), "Guides/Setup");
+  assertEquals(dir("/wiki/Guides/Setup/#Install"), "Guides/Setup");
+  assertEquals(dir("/wiki/"), "");
+  assertEquals(dir("/wiki"), "");
+  assertEquals(dir("/wiki/Guides/Setup/index.html"), "Guides/Setup");
+  // Outside the base, protocol-relative, a file, or no trailing slash.
+  assertEquals(dir("/other/Page/"), null);
+  assertEquals(dir("/wikipedia/Page/"), null);
+  assertEquals(dir("//cdn.example.org/wiki/Page/"), null);
+  assertEquals(dir("/wiki/assets/logo.png"), null);
+  assertEquals(dir("/wiki/Page"), null);
+  assertEquals(dir("Page.md"), null);
+
+  const file = (target: string) => routeFromSiteUrl(target, "/wiki", "file");
+  assertEquals(file("/wiki/Guides/Setup.html"), "Guides/Setup");
+  assertEquals(file("/wiki/index.html"), "");
+  assertEquals(file("/wiki/Guides/Setup/"), null);
 });

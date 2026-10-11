@@ -333,3 +333,27 @@ Deno.test("#top needs no heading, any other missing fragment still does (#376)",
     cleanup(root);
   }
 });
+
+Deno.test("a site-root-relative link is checked against its route (#376)", () => {
+  const root = tempRoot();
+  try {
+    write(root, "wiki/Home.md", "# Home\n\n## Bio\n");
+    write(root, "wiki/index.md", "# Index\n");
+    write(
+      root,
+      "wiki/Page.md",
+      "# Page\n\n[a](/wiki/Home/) [b](/wiki/Home/#bio) [c](/wiki/) " +
+        "[d](/wiki/Nope/) [e](/wiki/Home/#nope)\n",
+    );
+    const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
+    assertEquals(
+      issues.map((issue) => [issue.raw_target, issue.issue_kind]),
+      [["/wiki/Nope/", "missing_document"], [
+        "/wiki/Home/#nope",
+        "missing_heading",
+      ]],
+    );
+  } finally {
+    cleanup(root);
+  }
+});

@@ -45,6 +45,7 @@ import {
   markdownLinkIsPage,
   parseMarkdownDestination,
   resolvePageRoute,
+  routeFromSiteUrl,
   splitTarget,
   unquote,
 } from "./links.ts";
@@ -208,12 +209,20 @@ export class LinkIndex {
               )[0] as string,
             );
             if (isExternalLink(target)) continue;
-            if (markdownLinkIsPage(target)) {
+            // A site-root-relative link (`/wiki/Page/`) is checked against the
+            // route the configured `base_url` and `url_style` map it to.
+            const siteRoute = routeFromSiteUrl(
+              target,
+              this.#config.site.base_url,
+              this.#config.site.url_style,
+            );
+            if (siteRoute !== null || markdownLinkIsPage(target)) {
               const issue = pageTargetIssue(
                 this.#existingRoutes,
                 this.#headingIdsByRoute,
                 fileSlug,
                 target,
+                siteRoute,
               );
               if (issue !== null) {
                 issues.push(
@@ -466,9 +475,12 @@ function pageTargetIssue(
   headingIdsByRoute: ReadonlyMap<string, ReadonlySet<string>>,
   currentRoute: string,
   target: string,
+  siteRoute: string | null = null,
 ): string | null {
   const [pagePart, fragment] = splitTarget(target);
-  const route = pagePart === ""
+  const route = siteRoute !== null
+    ? siteRoute
+    : pagePart === ""
     ? currentRoute
     : resolvePageRoute(currentRoute, target);
   if (route === null || !existingFiles.has(route)) return "missing_document";
