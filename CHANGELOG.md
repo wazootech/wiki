@@ -9,6 +9,11 @@
   same value, so each page holding one also gained the other, and a page with
   `price: 1.00` failed `sh:maxCount 1` in a whole-wiki `check`. The rule is no
   longer loaded ([#367](https://github.com/wazootech/wiki/issues/367)).
+- A link inside a fenced code block is code, not a link: `lint` no longer
+  reports it as broken, and the backlink index, `wiki file refs`, and the
+  `wiki file mv` and `wiki file rm` rewrites no longer count or rewrite it.
+  Inline code was already treated this way, and the link-style lint already
+  skipped fences ([#362](https://github.com/wazootech/wiki/issues/362)).
 
 ## 0.3.0 — 2026-10-11
 
