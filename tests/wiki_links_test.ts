@@ -7,13 +7,12 @@
  *
  * The exact-message test at the end was produced by a differential run against
  * the pinned oracle over the fixture it builds: same records, same order, same
- * `match_start` offsets, byte for byte. Two oracle behaviours it pins that are
- * easy to "fix" by accident:
- *
- * - a wikilink inside a fenced code block *is* reported (only inline spans are
- *   protected), and
- * - a markdown link that climbs out of the wiki is a `missing_document`, not an
- *   error about escaping — routing, not sanity-checking, decides.
+ * `match_start` offsets, byte for byte, with one deliberate departure: a link
+ * inside a fenced code block is code, not a link, so it is no longer reported
+ * (the oracle protected inline spans only; wiki#362). One oracle behaviour it
+ * still pins that is easy to "fix" by accident: a markdown link that climbs
+ * out of the wiki is a `missing_document`, not an error about escaping —
+ * routing, not sanity-checking, decides.
  */
 
 import { dirname, join } from "@std/path";
@@ -21,7 +20,7 @@ import { pathExists } from "../src/wiki/fspath.ts";
 import { assert, assertEquals } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
 
-import { LinkIndex } from "../src/wiki/wiki_links.ts";
+import { LinkIndex, pageLinkMatches } from "../src/wiki/wiki_links.ts";
 
 function tempRoot(): string {
   return Deno.makeTempDirSync({ prefix: "wiki-links-" });
@@ -203,14 +202,6 @@ Deno.test("the link audit matches the oracle, record for record", () => {
         ],
         [
           "Alpha",
-          "WikiLink",
-          "AlsoNotALink",
-          "missing_document",
-          154,
-          "[[AlsoNotALink]]",
-        ],
-        [
-          "Alpha",
           "Asset link",
           "../assets/nope.png",
           "missing_asset",
@@ -246,7 +237,6 @@ Deno.test("the link audit matches the oracle, record for record", () => {
     assertEquals(issues.map((issue) => issue.message), [
       "In Alpha: Broken WikiLink [Missing] points to non-existent document.",
       "In Alpha: Broken WikiLink [Beta#Nowhere] points to missing heading '#nowhere'.",
-      "In Alpha: Broken WikiLink [AlsoNotALink] points to non-existent document.",
       "In Alpha.md: Broken asset link [../assets/nope.png] points to missing asset: ../assets/nope.png.",
       "In Alpha: Broken Markdown link [../../elsewhere.md] points to non-existent document.",
       "In Meta: Broken Metadata reference [wiki:Absent] points to non-existent wiki document.",
@@ -271,4 +261,19 @@ Deno.test("the file filter scopes which pages are audited", () => {
   } finally {
     cleanup(root);
   }
+});
+
+Deno.test("pageLinkMatches skips links inside inline and fenced code (#362)", () => {
+  // The backlink index, `wiki file refs`, and the `mv`/`rm` rewrites all read
+  // this list, so a fenced example must neither count as a backlink nor be
+  // rewritten when its target moves.
+  const content = "---\ntype: TechArticle\n---\n# A\n\n" +
+    "[Beta](Beta.md) and [[Beta]]\n\n" +
+    "`[x](Beta.md)`\n\n" +
+    '```bash\necho "[x](Beta.md)"\n[[Beta]]\n```\n';
+  const matches = pageLinkMatches("A", content);
+  assertEquals(matches.map(({ fullMatch }) => fullMatch).sort(), [
+    "[Beta](Beta.md)",
+    "[[Beta]]",
+  ]);
 });

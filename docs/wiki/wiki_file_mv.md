@@ -22,7 +22,7 @@ wiki file mv wiki/Beta.md wiki/Gamma.md --json
 - **The page's own relative links.** When the page changes directory, its links are re-derived from the new directory. Same-page `#fragment` links are left alone.
 - **Metadata references.** `wiki:` CURIEs that name the page, and its IRI (the base IRI plus its route), are rewritten in other pages' frontmatter and in data documents. A page that sets its own `@id` keeps that IRI when it moves, so references to it are left alone.
 
-The links rewritten are exactly the ones `wiki lint` and `wiki file refs` count, including links written inside fenced code blocks ([wiki#362](https://github.com/wazootech/wiki/issues/362)). Prose that merely mentions the old path, such as a URL in inline code, is not rewritten.
+The links rewritten are exactly the ones `wiki lint` and `wiki file refs` count. A link written inside inline or fenced code is an example, not a link, so it is not rewritten ([wiki#362](https://github.com/wazootech/wiki/issues/362)).
 
 A finding the page already had before the move, such as a missing field or a broken link of its own, is not blamed on the move.
 

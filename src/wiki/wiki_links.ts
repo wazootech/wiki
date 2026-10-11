@@ -12,8 +12,9 @@
  * The three rules worth knowing before reading:
  *
  * - **Protected spans are skipped.** A `[[Beta]]` inside inline code or a fence
- *   is an example of a link, not a link; `protected_inline_code_spans` marks
- *   those ranges and every scan consults it.
+ *   is an example of a link, not a link; `bodyCodeSpans` marks those ranges
+ *   and every scan consults it (wiki#362; the oracle protected inline code
+ *   only).
  * - **Page targets and asset targets are different questions.** A markdown link
  *   is a page link or an asset link depending on its extension
  *   (`markdown_link_is_page`), and the two have different failure vocabularies
@@ -31,8 +32,8 @@ import { basename, extname } from "@std/path";
 import type { Config } from "./config.ts";
 import { assetReferenceIssue, auditAssets } from "./assets.ts";
 import {
+  bodyCodeSpans,
   MARKDOWN_LINK_FULL_REGEX,
-  protectedInlineCodeSpans,
   spanOverlaps,
   splitFrontmatterText,
   WIKILINK_FULL_REGEX,
@@ -161,7 +162,7 @@ export class LinkIndex {
           const split = splitFrontmatterText(content);
           const body = split.body;
           const bodyOffset = split.prefix.length;
-          const protectedSpans = protectedInlineCodeSpans(body);
+          const protectedSpans = bodyCodeSpans(body);
 
           for (const match of body.matchAll(WIKILINK_FULL_REGEX)) {
             const start = match.index ?? 0;
@@ -373,8 +374,8 @@ export interface PageLinkMatch {
  *
  * This is the one definition of "a link" that the backlink index, `wiki refs`,
  * and the `mv`/`rm` rewrites share, so a move rewrites exactly the links the
- * index (and `lint`) count. Links inside fenced code currently count, because
- * only inline code spans are protected here (wiki#362).
+ * index (and `lint`) count. Links inside inline or fenced code are code, not
+ * links, so none of them count (wiki#362).
  */
 export function pageLinkMatches(
   sourceRoute: string,
@@ -383,7 +384,7 @@ export function pageLinkMatches(
   const split = splitFrontmatterText(content);
   const body = split.body;
   const offset = split.prefix.length;
-  const protectedSpans = protectedInlineCodeSpans(body);
+  const protectedSpans = bodyCodeSpans(body);
   const matches: PageLinkMatch[] = [];
 
   for (const match of body.matchAll(WIKILINK_FULL_REGEX)) {

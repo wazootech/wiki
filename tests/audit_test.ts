@@ -425,31 +425,28 @@ Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
     );
   }));
 
-Deno.test("fenced wikilinks are broken links but not style violations", () =>
+Deno.test("links inside fenced code are neither broken links nor style violations (#362)", () =>
   withRoot((root) => {
-    // Verified against the oracle on the differential fixture, and the finding
-    // is an asymmetry between two rules rather than a bug in either: the link
-    // audit protects *inline* code only, so a `[[Missing]]` inside a fence is a
-    // broken link; the style lint protects fences too, so the same occurrence is
-    // not also a style violation. A wiki that puts examples in fences gets one
-    // finding per example, not two.
+    // A fence holds examples, so a link inside one is code, not a link: the
+    // link audit and the style lint agree on that, as they already did for
+    // inline code. The oracle protected inline code only and reported fenced
+    // examples as broken; that parity was dropped on purpose (#362).
     write(
       root,
       "Guide.md",
       "---\ntype: TechArticle\nimage: ../assets/nope.png\n---\n" +
-        "# Guide\n\nLiteral `[[Missing]]` inline and:\n\n```md\n[[Missing]]\n```\n",
+        "# Guide\n\nLiteral `[[Missing]]` inline and:\n\n```md\n[[Missing]]\n```\n\n" +
+        '```bash\necho "[x](Missing_Page.md)"\n```\n',
     );
     const config = new Config({ wiki: { input: [root] } });
 
     const broken = lintBrokenLinks(config);
-    // The message names the route (`Guide`) while the asset one names the file
-    // (`Guide.md`) — the oracle does both, so the port does too.
-    assert(
-      broken.includes(
-        "In Guide: Broken WikiLink [Missing] points to non-existent document.",
-      ),
+    assertEquals(
+      broken.filter((warning) => warning.startsWith("In Guide:")),
+      [],
       broken.join(" | "),
     );
+    // Real findings outside code are still reported.
     assert(
       broken.some((warning) =>
         warning.startsWith("In Guide.md: Broken frontmatter asset")
