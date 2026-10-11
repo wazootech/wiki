@@ -38,6 +38,7 @@ import {
   usesNamedGraphs,
 } from "../src/wiki/graph.ts";
 import { clearAllProcessGraphs } from "../src/wiki/graph_cache.ts";
+import { applyInference } from "../src/wiki/infer.ts";
 import { type LogRecord, setLogSink } from "../src/wiki/logging.ts";
 import { parseFrontmatter } from "../src/wiki/parser.ts";
 import {
@@ -1393,7 +1394,6 @@ givenName: Gregory
       asserted.has(gregory, namedNode(RDF_TYPE), namedNode(SCHEMA + "Agent")),
     );
 
-    const { applyInference } = await import("../src/wiki/infer.ts");
     const expanded = applyInference(asserted, config);
 
     assert(
@@ -1568,7 +1568,6 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
   // `1`^^xsd:integer and `1.0`^^xsd:double are value-equal to the bundled
   // dt-eq rule, and eq-rep-o used to copy each onto the other's subject, so a
   // `price: 1.00` page failed `sh:maxCount 1`.
-  const { applyInference } = await import("../src/wiki/infer.ts");
   const config = new Config();
   const values: Record<string, string> = {
     int: "1",
@@ -1609,7 +1608,6 @@ Deno.test("inference keeps one literal per numeric value (#367)", async () => {
 Deno.test("inference works on a named graph and derives into it (#382)", async () => {
   // A named graph's quads carry their graph term; handing them to the engine
   // as-is serialized `{` into the N3 text and skipped reasoning entirely.
-  const { applyInference } = await import("../src/wiki/infer.ts");
   const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
   const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
   const dataset = new RdfDataset();
