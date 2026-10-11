@@ -6,7 +6,7 @@ description: Set or remove one frontmatter field, keeping comments, key order, a
 
 # `wiki set`
 
-Set one frontmatter field, or remove it with `--unset`. Everything else in the frontmatter stays exactly as it was: comments, key order, and how each value is spelled. The change is a `wiki edit` set op, so it is validated against the wiki's shapes before it is written, and written only with `--apply`.
+Set one frontmatter field, or remove it with `--unset`. Everything else in the frontmatter stays exactly as it was: comments, key order, and how each value is spelled. The change is a [wiki edit](wiki_edit.md) set op, so it is validated against the wiki's shapes before it is written, and written only with `--apply`.
 
 ## Usage
 
@@ -29,7 +29,7 @@ If the page was already formatted the way `wiki fmt` leaves it, the result is fo
 | `--expect HASH`  | —       | Refuse unless the file's SHA-256 still matches; take it from [wiki show](wiki_show.md). |
 | `--apply`        | off     | Write the change. Without it, validate and report only.                                 |
 | `--force`        | off     | Write even if the change introduces errors (they are still reported).                   |
-| `-f`, `--format` | `text`  | `text` or `json` (the `wiki edit` report).                                              |
+| `-f`, `--format` | `text`  | `text` or `json` (the [wiki edit](wiki_edit.md) report).                                |
 | `--json`         | —       | Shorthand for `--format json`.                                                          |
 
 Removing a field a shape requires is rejected like any other change that breaks the page.

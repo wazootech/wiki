@@ -1,89 +1,223 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- A semantics-aware write interface, so agents change a wiki through validated
+  edits instead of hand-written Markdown
+  ([#353](https://github.com/wazootech/wiki/issues/353),
+  [#355](https://github.com/wazootech/wiki/issues/355)). `wiki edit` takes a
+  batch of ops as JSON (`create`, `replace`, `set`, `patch`, `move`, `delete`),
+  runs `check` and `lint` on the proposed tree before anything is written,
+  rejects only findings the edit introduces, and writes every file or none.
+  `wiki new`, `wiki set`, `wiki patch`, `wiki mv`, and `wiki rm` build one-op
+  edits; `wiki show` and `wiki refs` are the read side. Nothing is written
+  without `--apply`. In process, the same operations are `Wiki.edit()`,
+  `Wiki.show()`, and `Wiki.refs()`.
+- Exit code `3` means a conflict: an op's `expect` hash (from `wiki show`) no
+  longer matches the file, so another writer changed it and nothing was written.
+  `0`, `1`, and `2` keep their meanings.
+
 ## 0.2.3 — 2026-10-10
 
 ### Added
 
-- `wiki.allow_unknown_keys: true` accepts unknown top-level config keys instead of failing at load. It defaults to `false`, so typos are still caught, and unknown keys inside a wiki block are rejected either way. ([#129](https://github.com/wazootech/wiki/issues/129))
+- `wiki.allow_unknown_keys: true` accepts unknown top-level config keys instead
+  of failing at load. It defaults to `false`, so typos are still caught, and
+  unknown keys inside a wiki block are rejected either way.
+  ([#129](https://github.com/wazootech/wiki/issues/129))
 
 ### Fixed
 
-- Large TriG named graphs load in linear time. `@wazoo/sparql-engine` 0.4.3 parsed a `<g> { ... }` block in quadratic time (8,000 quads took ~19 s), so RDF data files with big named graphs were slow to index. The pin moves to 0.4.4. ([sparql-engine#175](https://github.com/wazootech/sparql-engine/issues/175))
-- The PyPI release uploads the platform wheels before the binary-less `py3-none-any` fallback. Uploaded fallback-first, an install in the seconds while an upload was in flight could see only the fallback, take it on a platform that has a wheel, and get a `wiki` that fails with "no Wiki binary for this platform". A re-run of the job now finishes an upload that stopped partway instead of skipping the version, and the job checks that all 7 wheels are listed.
+- Large TriG named graphs load in linear time. `@wazoo/sparql-engine` 0.4.3
+  parsed a `<g> { ... }` block in quadratic time (8,000 quads took ~19 s), so
+  RDF data files with big named graphs were slow to index. The pin moves to
+  0.4.4.
+  ([sparql-engine#175](https://github.com/wazootech/sparql-engine/issues/175))
+- The PyPI release uploads the platform wheels before the binary-less
+  `py3-none-any` fallback. Uploaded fallback-first, an install in the seconds
+  while an upload was in flight could see only the fallback, take it on a
+  platform that has a wheel, and get a `wiki` that fails with "no Wiki binary
+  for this platform". A re-run of the job now finishes an upload that stopped
+  partway instead of skipping the version, and the job checks that all 7 wheels
+  are listed.
 
 ## 0.2.2 — 2026-10-09
 
 ### Added
 
-- `check.shape_definition` and `check.shape_unused` also lint shapes written in RDF: fenced `turtle` blocks and RDF data files under `wiki.input` (`.ttl`, `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld`). The rules are the same as for frontmatter shape pages, applied to the triples; a finding names the source and the shape (an IRI, or the triples that reach a blank node from one). Shapes from installed sources are still not linted. ([#342](https://github.com/wazootech/wiki/issues/342))
+- `check.shape_definition` and `check.shape_unused` also lint shapes written in
+  RDF: fenced `turtle` blocks and RDF data files under `wiki.input` (`.ttl`,
+  `.trig`, `.nt`, `.nq`, `.rdf`, `.xml`, `.jsonld`). The rules are the same as
+  for frontmatter shape pages, applied to the triples; a finding names the
+  source and the shape (an IRI, or the triples that reach a blank node from
+  one). Shapes from installed sources are still not linted.
+  ([#342](https://github.com/wazootech/wiki/issues/342))
 
 ### Fixed
 
-- A fenced `turtle` block with a nested blank-node property list, such as `sh:property [ sh:path [ sh:inversePath ex:knows ] ; sh:minCount 1 ]`, now links the outer node. `@wazoo/sparql-engine` 0.4.2 linked the inner one, so the property shape lost its path and the constraint silently stopped applying. The pin moves to 0.4.3. ([sparql-engine#210](https://github.com/wazootech/sparql-engine/issues/210))
+- A fenced `turtle` block with a nested blank-node property list, such as
+  `sh:property [ sh:path [ sh:inversePath ex:knows ] ; sh:minCount 1 ]`, now
+  links the outer node. `@wazoo/sparql-engine` 0.4.2 linked the inner one, so
+  the property shape lost its path and the constraint silently stopped applying.
+  The pin moves to 0.4.3.
+  ([sparql-engine#210](https://github.com/wazootech/sparql-engine/issues/210))
 
 ## 0.2.1 — 2026-10-09
 
-Published to JSR. 0.2.0 was published to JSR only, from `main`, and had the `wiki fmt` JSR crash fixed below. npm, PyPI and the standalone binaries go straight from 0.1.23 to the first tagged 0.2.x release.
+Published to JSR. 0.2.0 was published to JSR only, from `main`, and had the
+`wiki fmt` JSR crash fixed below. npm, PyPI and the standalone binaries go
+straight from 0.1.23 to the first tagged 0.2.x release.
 
 ### Breaking
 
-- The Python engine and its Python-only tests/build/release tooling are retired. The `wazootech-wiki` npm package keeps its name and `wiki` command, but runs the Deno/TypeScript engine without requiring Python or a system Deno installation.
-- **Breaking:** `wazootech-wiki` on PyPI changes from a Python engine to the native Wiki CLI at 0.2.0, shipped the way ruff and uv ship: one wheel per platform (Linux glibc 2.27+, macOS 12+, and Windows, each on x64 and ARM64) embeds the `deno compile` standalone binary and installs it as `wiki`, with no Deno, Node.js, or download step. A binary-less `py3-none-any` fallback wheel, for musl Linux and other platforms without a binary, runs a standalone `wazootech-wiki` from `PATH`. A small typed Python API (`wiki.run`) runs the binary, and `wiki upgrade` on a pip-installed binary points at `pip install -U wazootech-wiki`. The 0.1.x Python library API is removed. ([#324](https://github.com/wazootech/wiki/issues/324), [#325](https://github.com/wazootech/wiki/issues/325))
-- **Breaking:** the npm package's class-based Node.js SDK is removed. Its entrypoint is now the runtime/bootstrap API (`src/runtime.ts`: `createWikiCommand`, `getDenoExecutable`, `WikiSetupError`), which locates the bundled Deno runtime and builds the CLI invocation. TypeScript callers embed `@wazoo/wiki` instead of constructing a `Wiki` object through npm.
-- The `fmt:` configuration now uses native Deno/dprint options (`textWrap`, `lineWidth`, `newLineKind`). The old `wrap`, `end_of_line`, and `extensions` keys, TOML pointers, and `.mdformat.toml` discovery are not supported. An unknown `fmt:` key is rejected with the accepted surface named; the engine does not guess a replacement for a key it no longer accepts.
-- RDF/XML input remains supported; RDF/XML serialization is deferred. `export` and metadata negotiation return a clear unsupported-format result instead of substituting another RDF format.
+- The Python engine and its Python-only tests/build/release tooling are retired.
+  The `wazootech-wiki` npm package keeps its name and `wiki` command, but runs
+  the Deno/TypeScript engine without requiring Python or a system Deno
+  installation.
+- **Breaking:** `wazootech-wiki` on PyPI changes from a Python engine to the
+  native Wiki CLI at 0.2.0, shipped the way ruff and uv ship: one wheel per
+  platform (Linux glibc 2.27+, macOS 12+, and Windows, each on x64 and ARM64)
+  embeds the `deno compile` standalone binary and installs it as `wiki`, with no
+  Deno, Node.js, or download step. A binary-less `py3-none-any` fallback wheel,
+  for musl Linux and other platforms without a binary, runs a standalone
+  `wazootech-wiki` from `PATH`. A small typed Python API (`wiki.run`) runs the
+  binary, and `wiki upgrade` on a pip-installed binary points at
+  `pip install -U wazootech-wiki`. The 0.1.x Python library API is removed.
+  ([#324](https://github.com/wazootech/wiki/issues/324),
+  [#325](https://github.com/wazootech/wiki/issues/325))
+- **Breaking:** the npm package's class-based Node.js SDK is removed. Its
+  entrypoint is now the runtime/bootstrap API (`src/runtime.ts`:
+  `createWikiCommand`, `getDenoExecutable`, `WikiSetupError`), which locates the
+  bundled Deno runtime and builds the CLI invocation. TypeScript callers embed
+  `@wazoo/wiki` instead of constructing a `Wiki` object through npm.
+- The `fmt:` configuration now uses native Deno/dprint options (`textWrap`,
+  `lineWidth`, `newLineKind`). The old `wrap`, `end_of_line`, and `extensions`
+  keys, TOML pointers, and `.mdformat.toml` discovery are not supported. An
+  unknown `fmt:` key is rejected with the accepted surface named; the engine
+  does not guess a replacement for a key it no longer accepts.
+- RDF/XML input remains supported; RDF/XML serialization is deferred. `export`
+  and metadata negotiation return a clear unsupported-format result instead of
+  substituting another RDF format.
 
 ### Migration
 
-The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberately does **not** print a per-key rename hint when it rejects an unknown key — such tables drift from the schema and often suggest the wrong target — so the moves are recorded here instead.
+The `fmt:` key moves and the npm SDK removal are breaking. The engine
+deliberately does **not** print a per-key rename hint when it rejects an unknown
+key — such tables drift from the schema and often suggest the wrong target — so
+the moves are recorded here instead.
 
-- In `fmt:`, replace `wrap` with `textWrap` (`always` | `maintain` | `never`), `end_of_line` with `newLineKind` (`auto` | `crlf` | `lf`), and `number` with `lineWidth` (a positive integer).
-- Delete the `fmt:` key `extensions`. dprint applies formatting to the whole tree, so restricting formatting to a file list has no equivalent.
-- Delete `fmt.mdformat`, `.mdformat.toml` discovery, and the TOML pointer forms of these settings; `wiki.yaml` is the only source.
-- PyPI consumers: `pip install wazootech-wiki` (0.2.0+) still installs a `wiki` command, now the native binary built from the Deno engine. On musl Linux (Alpine) no wheel carries a binary; put a standalone `wazootech-wiki` on `PATH` there. Python code that imported the 0.1.x engine (`from wiki import Wiki`, `wiki.audit`, and so on) has no 0.2.0 equivalent; call the CLI through `wiki.run([...])`, which returns a typed `WikiResult`, or pin `wazootech-wiki<0.2` to stay on the frozen Python engine. Version 0.1.23 receives no further fixes. See the Python API Reference.
-- npm consumers that constructed a `Wiki` object replace it with a `createWikiCommand(...)` / `getDenoExecutable()` call, or embed `@wazoo/wiki` directly.
+- In `fmt:`, replace `wrap` with `textWrap` (`always` | `maintain` | `never`),
+  `end_of_line` with `newLineKind` (`auto` | `crlf` | `lf`), and `number` with
+  `lineWidth` (a positive integer).
+- Delete the `fmt:` key `extensions`. dprint applies formatting to the whole
+  tree, so restricting formatting to a file list has no equivalent.
+- Delete `fmt.mdformat`, `.mdformat.toml` discovery, and the TOML pointer forms
+  of these settings; `wiki.yaml` is the only source.
+- PyPI consumers: `pip install wazootech-wiki` (0.2.0+) still installs a `wiki`
+  command, now the native binary built from the Deno engine. On musl Linux
+  (Alpine) no wheel carries a binary; put a standalone `wazootech-wiki` on
+  `PATH` there. Python code that imported the 0.1.x engine
+  (`from wiki import Wiki`, `wiki.audit`, and so on) has no 0.2.0 equivalent;
+  call the CLI through `wiki.run([...])`, which returns a typed `WikiResult`, or
+  pin `wazootech-wiki<0.2` to stay on the frozen Python engine. Version 0.1.23
+  receives no further fixes. See the Python API Reference.
+- npm consumers that constructed a `Wiki` object replace it with a
+  `createWikiCommand(...)` / `getDenoExecutable()` call, or embed `@wazoo/wiki`
+  directly.
 
 ### Added
 
-- `wiki check` lints SHACL shape pages before validating with them (`check.shape_definition`, default `error`). A misspelled `sh:` key, type, or value, a property shape without `sh:path` (or a node shape with one), a malformed property path (including a one-path `sh:alternativePath` and a path CURIE with an undeclared prefix), a non-IRI value for an IRI-valued parameter, and an invalid `sh:nodeKind` each fail the check, naming the route and the key path, and SHACL validation is skipped (with a `shacl_skipped` warning) until they are fixed. The vocabulary is generated from the SHACL namespace document. Findings appear in `wiki check -f json` under the code `shape_definition`. A node shape page that has no target and no referrer is reported separately under `check.shape_unused`, default `warning`. **Upgrade note:** because `shape_definition` defaults to `error`, an existing wiki whose shape pages contain a typo that previously passed silently now fails `wiki check`; fix the reported key, or set `check.shape_definition: warning` while you do. ([#306](https://github.com/wazootech/wiki/issues/306))
-- `wiki check -f json` (alias `--json`) writes a structured report to stdout, versioned by a top-level `version` field (currently `1`). For each failing document it gives the field (`resultPath` plus `frontmatterKeys`), the constraint component, the named source shape, and the message. JSON Schema failures carry their schema and instance path. The text report and exit codes are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
+- `wiki check` lints SHACL shape pages before validating with them
+  (`check.shape_definition`, default `error`). A misspelled `sh:` key, type, or
+  value, a property shape without `sh:path` (or a node shape with one), a
+  malformed property path (including a one-path `sh:alternativePath` and a path
+  CURIE with an undeclared prefix), a non-IRI value for an IRI-valued parameter,
+  and an invalid `sh:nodeKind` each fail the check, naming the route and the key
+  path, and SHACL validation is skipped (with a `shacl_skipped` warning) until
+  they are fixed. The vocabulary is generated from the SHACL namespace document.
+  Findings appear in `wiki check -f json` under the code `shape_definition`. A
+  node shape page that has no target and no referrer is reported separately
+  under `check.shape_unused`, default `warning`. **Upgrade note:** because
+  `shape_definition` defaults to `error`, an existing wiki whose shape pages
+  contain a typo that previously passed silently now fails `wiki check`; fix the
+  reported key, or set `check.shape_definition: warning` while you do.
+  ([#306](https://github.com/wazootech/wiki/issues/306))
+- `wiki check -f json` (alias `--json`) writes a structured report to stdout,
+  versioned by a top-level `version` field (currently `1`). For each failing
+  document it gives the field (`resultPath` plus `frontmatterKeys`), the
+  constraint component, the named source shape, and the message. JSON Schema
+  failures carry their schema and instance path. The text report and exit codes
+  are unchanged. ([#310](https://github.com/wazootech/wiki/issues/310))
 
 ### Changed
 
-- Wiki path traversal and manifest ordering use native TypeScript string ordering rather than Python `pathlib` component ordering. A file and directory sharing a name prefix can reorder the cache manifest without changing graph content.
-- The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR. It publishes whenever a new version reaches `main`, gated on the `JSR_PUBLISH_ENABLED` repository variable; a tag is not required.
-- Python's string emulation is gone. The `pyRepr` / `pyStr` / `pyTypeName` / `pyStrip` / `pyCasefold` / `pyIsUpper` / `pyIsLower` / `pyIsDigit` / `pySplitWhitespace` / `pyStripChars` / `pySortStrings` / `pyTruthy` helpers and their `pystr.ts` / `pyrepr.ts` modules are replaced by native TypeScript: diagnostics render values with `JSON.stringify`, whitespace handling uses JavaScript's own whitespace class and line terminators, and the case/digit predicates use Unicode property escapes. This changes the wording of some diagnostics — `got 'maybe'` is now `got "maybe"`, and `[1, 2]` is now `[1,2]` — and the JSON Schema oracle replay now compares the verdict and instance paths rather than byte-identical message text. ([#330](https://github.com/wazootech/wiki/issues/330))
-- Config validation failures report natively (`1 problem in SiteConfig`, `wiki.links.severity: expected error, warning, or off`) instead of reproducing pydantic's envelope: the per-error `[type=..., input_value=..., input_type=...]` suffix, the `errors.pydantic.dev` link, and pydantic's vocabulary (`Field required`, `Extra inputs are not permitted`). The verdict, field paths, and exit codes are unchanged.
-- The Deno-rewrite ADR is retired in favour of the decision record in `CONTEXT.md`, which already carried the same architecture, dependency choices, deferred RDF/XML output, and transition gates. The ADR was a second copy of that record and had drifted from the code.
-- The release workflow builds standalone `deno compile` binaries for Linux x64, Windows x64, and macOS ARM64; release assets are individual executables with `SHA256SUMS`.
+- Wiki path traversal and manifest ordering use native TypeScript string
+  ordering rather than Python `pathlib` component ordering. A file and directory
+  sharing a name prefix can reorder the cache manifest without changing graph
+  content.
+- The engine is a Deno/TypeScript package configured as `@wazoo/wiki` for JSR.
+  It publishes whenever a new version reaches `main`, gated on the
+  `JSR_PUBLISH_ENABLED` repository variable; a tag is not required.
+- Python's string emulation is gone. The `pyRepr` / `pyStr` / `pyTypeName` /
+  `pyStrip` / `pyCasefold` / `pyIsUpper` / `pyIsLower` / `pyIsDigit` /
+  `pySplitWhitespace` / `pyStripChars` / `pySortStrings` / `pyTruthy` helpers
+  and their `pystr.ts` / `pyrepr.ts` modules are replaced by native TypeScript:
+  diagnostics render values with `JSON.stringify`, whitespace handling uses
+  JavaScript's own whitespace class and line terminators, and the case/digit
+  predicates use Unicode property escapes. This changes the wording of some
+  diagnostics — `got 'maybe'` is now `got "maybe"`, and `[1, 2]` is now `[1,2]`
+  — and the JSON Schema oracle replay now compares the verdict and instance
+  paths rather than byte-identical message text.
+  ([#330](https://github.com/wazootech/wiki/issues/330))
+- Config validation failures report natively (`1 problem in SiteConfig`,
+  `wiki.links.severity: expected error, warning, or off`) instead of reproducing
+  pydantic's envelope: the per-error
+  `[type=..., input_value=..., input_type=...]` suffix, the
+  `errors.pydantic.dev` link, and pydantic's vocabulary (`Field required`,
+  `Extra inputs are not permitted`). The verdict, field paths, and exit codes
+  are unchanged.
+- The Deno-rewrite ADR is retired in favour of the decision record in
+  `CONTEXT.md`, which already carried the same architecture, dependency choices,
+  deferred RDF/XML output, and transition gates. The ADR was a second copy of
+  that record and had drifted from the code.
+- The release workflow builds standalone `deno compile` binaries for Linux x64,
+  Windows x64, and macOS ARM64; release assets are individual executables with
+  `SHA256SUMS`.
 
 ### Fixed
 
-- `wiki fmt` no longer crashes with `Import "dprint-plugin-yaml/package.json" not a dependency` when the CLI runs from JSR (`deno run jsr:@wazoo/wiki/cli`). JSR rewrites bare specifiers in import statements on publish but not in `import.meta.resolve` arguments, so the YAML plugin is now resolved by its full `npm:` specifier, pinned to `deno.json` by a test.
-- Lists nested in frontmatter compile per the SHACL and RDF specs instead of
-  one stringified literal. `sh:in`, `sh:languageIn`, `sh:ignoredProperties`,
+- `wiki fmt` no longer crashes with
+  `Import "dprint-plugin-yaml/package.json" not a dependency` when the CLI runs
+  from JSR (`deno run jsr:@wazoo/wiki/cli`). JSR rewrites bare specifiers in
+  import statements on publish but not in `import.meta.resolve` arguments, so
+  the YAML plugin is now resolved by its full `npm:` specifier, pinned to
+  `deno.json` by a test.
+- Lists nested in frontmatter compile per the SHACL and RDF specs instead of one
+  stringified literal. `sh:in`, `sh:languageIn`, `sh:ignoredProperties`,
   `sh:and`, `sh:or`, `sh:xone`, and `sh:alternativePath` become SHACL lists; a
   list under `sh:path` or another path parameter is a sequence path, and a
   one-member list stays a predicate path; any other nested list repeats the
   predicate. Shape extraction keeps every cell of a list nested in a list.
   ([#305](https://github.com/wazootech/wiki/issues/305))
-- `wiki update` now works for unpinned git sources: the cache clone is
-  detached before fetching so git no longer refuses to update its own
-  checked-out branch, and the working tree is re-checked-out afterward.
+- `wiki update` now works for unpinned git sources: the cache clone is detached
+  before fetching so git no longer refuses to update its own checked-out branch,
+  and the working tree is re-checked-out afterward.
   ([#298](https://github.com/wazootech/wiki/issues/298))
-- `wiki remove` no longer crashes on Windows when read-only git object
-  files block cache deletion, and it removes the cache first so a failure
-  leaves `wiki.yml` and `wiki.lock` consistent.
+- `wiki remove` no longer crashes on Windows when read-only git object files
+  block cache deletion, and it removes the cache first so a failure leaves
+  `wiki.yml` and `wiki.lock` consistent.
   ([#299](https://github.com/wazootech/wiki/issues/299))
 
 ## 0.1.23 — 2026-09-04
 
 ### Changed
 
-- Renamed the `--wiki-inputs` CLI flag to `--input` and the `wiki.inputs`
-  config key to `wiki.input` (the TypeScript SDK option is now `input`).
-  **Migration:** rename `wiki.inputs` to `wiki.input` in existing
-  `wiki.yml` files and update `--wiki-inputs` / `wikiInputs` usages.
+- Renamed the `--wiki-inputs` CLI flag to `--input` and the `wiki.inputs` config
+  key to `wiki.input` (the TypeScript SDK option is now `input`). **Migration:**
+  rename `wiki.inputs` to `wiki.input` in existing `wiki.yml` files and update
+  `--wiki-inputs` / `wikiInputs` usages.
   ([#227](https://github.com/wazootech/wiki/issues/227))
 
 ## 0.1.22 — 2026-09-04
@@ -95,7 +229,8 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
   ([#233](https://github.com/wazootech/wiki/issues/233))
 - `i` alias for the `wiki install` subcommand.
   ([#265](https://github.com/wazootech/wiki/pull/265))
-- Query-first wiki MCP server (`wiki mcp`), documented in `docs/wiki/wiki_mcp.md`.
+- Query-first wiki MCP server (`wiki mcp`), documented in
+  `docs/wiki/wiki_mcp.md`.
   ([#209](https://github.com/wazootech/wiki/issues/209))
 - TypeScript SDK methods for `install`, `update`, `remove`, `mcp`, and
   `graphList`, with CLI option types generated from the Pydantic
@@ -112,152 +247,278 @@ The `fmt:` key moves and the npm SDK removal are breaking. The engine deliberate
 - Memory orchestration moved to a GitHub Actions cron.
   ([#263](https://github.com/wazootech/wiki/pull/263))
 - Docs reorganized: `Wiki_CLI`/`Wiki_Subcommand_*` pages renamed to
-  `wiki`/`wiki_*`, and template references point at the wiki-templates
-  monorepo. ([#223](https://github.com/wazootech/wiki/issues/223),
+  `wiki`/`wiki_*`, and template references point at the wiki-templates monorepo.
+  ([#223](https://github.com/wazootech/wiki/issues/223),
   [#242](https://github.com/wazootech/wiki/issues/242))
 - Pre-commit hook runs prettier on staged files; LF line endings enforced via
   `.gitattributes`.
 
 ### Fixed
 
-- `wiki init` on non-interactive stdin no longer hangs on the namespace
-  prompt; it scaffolds an empty wiki instead.
+- `wiki init` on non-interactive stdin no longer hangs on the namespace prompt;
+  it scaffolds an empty wiki instead.
   ([#289](https://github.com/wazootech/wiki/pull/289))
 - Sphinx docs fail the build on any warning; typedoc fails on undocumented
   public API. ([#285](https://github.com/wazootech/wiki/pull/285),
   [#284](https://github.com/wazootech/wiki/pull/284))
 - Markdown formatting fixes applied with `wiki fmt`.
   ([#230](https://github.com/wazootech/wiki/pull/230))
+
 ## 0.1.21 — 2026-07-12
 
 ### Fixed
 
-- Preserve title-cased file-derived graph URIs so `wiki:` CURIE references match Wikipedia-style filenames, and keep nested frontmatter blank nodes collision-safe with RDFLib `BNode` instances. ([#215](https://github.com/wazootech/wiki/issues/215))
-- Use the standard `macos-13` Intel runner for standalone release builds so the release workflow starts reliably.
+- Preserve title-cased file-derived graph URIs so `wiki:` CURIE references match
+  Wikipedia-style filenames, and keep nested frontmatter blank nodes
+  collision-safe with RDFLib `BNode` instances.
+  ([#215](https://github.com/wazootech/wiki/issues/215))
+- Use the standard `macos-13` Intel runner for standalone release builds so the
+  release workflow starts reliably.
 
 ## 0.1.19 — 2026-07-01
 
 ### Fixed
 
-- `datetime.datetime` values are now correctly serialized as `xsd:dateTime` instead of `xsd:date`. ([#172](https://github.com/wazootech/wiki/issues/172), [#176](https://github.com/wazootech/wiki/pull/176))
-- Removed redundant `"markdown"` / `"obsidian"` values from `_LINK_STYLES` (legacy aliases remain supported via `_LEGACY_LINK_STYLE_MAP`). ([#174](https://github.com/wazootech/wiki/issues/174), [#178](https://github.com/wazootech/wiki/pull/178))
-- Deduplicated `_LINK_STYLES` and `_LEGACY_LINK_STYLE_MAP` constants between `wiki_config.py` and `init.py` — the latter now imports from the former. ([#171](https://github.com/wazootech/wiki/issues/171), [#178](https://github.com/wazootech/wiki/pull/178))
-- Silently swallowed exceptions in `parser.py` (`document_data_from_path`, `frontmatter_from_path`, `split_document_body`) now log at debug level. ([#173](https://github.com/wazootech/wiki/issues/173), [#179](https://github.com/wazootech/wiki/pull/179))
-- `InitOptions.graph_implicit_types_policy` now validates against `{"fallback", "append"}` instead of accepting any string. ([#175](https://github.com/wazootech/wiki/issues/175), [#180](https://github.com/wazootech/wiki/pull/180))
+- `datetime.datetime` values are now correctly serialized as `xsd:dateTime`
+  instead of `xsd:date`. ([#172](https://github.com/wazootech/wiki/issues/172),
+  [#176](https://github.com/wazootech/wiki/pull/176))
+- Removed redundant `"markdown"` / `"obsidian"` values from `_LINK_STYLES`
+  (legacy aliases remain supported via `_LEGACY_LINK_STYLE_MAP`).
+  ([#174](https://github.com/wazootech/wiki/issues/174),
+  [#178](https://github.com/wazootech/wiki/pull/178))
+- Deduplicated `_LINK_STYLES` and `_LEGACY_LINK_STYLE_MAP` constants between
+  `wiki_config.py` and `init.py` — the latter now imports from the former.
+  ([#171](https://github.com/wazootech/wiki/issues/171),
+  [#178](https://github.com/wazootech/wiki/pull/178))
+- Silently swallowed exceptions in `parser.py` (`document_data_from_path`,
+  `frontmatter_from_path`, `split_document_body`) now log at debug level.
+  ([#173](https://github.com/wazootech/wiki/issues/173),
+  [#179](https://github.com/wazootech/wiki/pull/179))
+- `InitOptions.graph_implicit_types_policy` now validates against
+  `{"fallback", "append"}` instead of accepting any string.
+  ([#175](https://github.com/wazootech/wiki/issues/175),
+  [#180](https://github.com/wazootech/wiki/pull/180))
 
 ### Added
 
-- `wiki install` command — fetch and lock external git sources declared in `sources:` block of `wiki.yml`. With a URL argument, adds the source to wiki.yml first. Supports `#ref` pinning. ([#148](https://github.com/wazootech/wiki/issues/148), [#164](https://github.com/wazootech/wiki/pull/164))
-- `wiki remove` command — remove a source from wiki.yml, its `.wiki/sources/` cache, and wiki.lock. ([#164](https://github.com/wazootech/wiki/pull/164))
-- `wiki update` command — check locked sources for newer commits and update wiki.lock. Supports `--dry-run` and per-source filtering. ([#164](https://github.com/wazootech/wiki/pull/164))
-- `sources:` config block in wiki.yml — declare external git repos with optional `ref` (branch/tag/commit) and `path` (subdirectory). Validated with `extra=forbid` like all other blocks. ([#148](https://github.com/wazootech/wiki/issues/148))
-- `wiki.lock` lockfile — machine-authored JSON recording resolved commit SHAs for reproducible builds. ([#148](https://github.com/wazootech/wiki/issues/148))
-- Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so graph, check, and build pipelines pick them up transparently.
-- `wiki install` now accepts GitHub `owner/repo` shorthand — `wiki install EthanThatOneKid/solar-system-wiki` expands to the full `https://github.com/EthanThatOneKid/solar-system-wiki.git` URL automatically.
-- `wiki init` now scaffolds a `.gitignore` that excludes `.wiki/` (source cache) and `_site/` (build output).
-- **Recursive (transitive) dependency resolution** — `wiki install` reads each cloned source's `wiki.yml` to discover its own `sources:` block, recursively fetching and locking transitive dependencies. Circular dependency chains are detected and raise an error. Name-and-ref conflicts are detected and raise an error.
-- **Lockfile v2** — `LockedSource` now tracks `required_by: list[str]` recording which sources depend on each entry (empty for top-level sources declared in the root `wiki.yml`). Backward-compatible: v1 lockfiles load with `required_by` defaulting to `[]`.
-- **Orphan cleanup on `wiki remove`** — when a source is removed, transitive sources that are no longer required by any remaining top-level source are automatically cleaned up (cache and lockfile entry removed), cascading through the dependency tree.
-- **Transitive re-sync on `wiki update`** — after fetching new commits, `wiki update` re-discovers each source's declared transitive dependencies. Newly declared sources are installed and locked; orphaned sources are reported as warnings (not auto-removed).
+- `wiki install` command — fetch and lock external git sources declared in
+  `sources:` block of `wiki.yml`. With a URL argument, adds the source to
+  wiki.yml first. Supports `#ref` pinning.
+  ([#148](https://github.com/wazootech/wiki/issues/148),
+  [#164](https://github.com/wazootech/wiki/pull/164))
+- `wiki remove` command — remove a source from wiki.yml, its `.wiki/sources/`
+  cache, and wiki.lock. ([#164](https://github.com/wazootech/wiki/pull/164))
+- `wiki update` command — check locked sources for newer commits and update
+  wiki.lock. Supports `--dry-run` and per-source filtering.
+  ([#164](https://github.com/wazootech/wiki/pull/164))
+- `sources:` config block in wiki.yml — declare external git repos with optional
+  `ref` (branch/tag/commit) and `path` (subdirectory). Validated with
+  `extra=forbid` like all other blocks.
+  ([#148](https://github.com/wazootech/wiki/issues/148))
+- `wiki.lock` lockfile — machine-authored JSON recording resolved commit SHAs
+  for reproducible builds.
+  ([#148](https://github.com/wazootech/wiki/issues/148))
+- Resolved source paths auto-appended to `wiki.inputs` in `Wiki.load()` so
+  graph, check, and build pipelines pick them up transparently.
+- `wiki install` now accepts GitHub `owner/repo` shorthand —
+  `wiki install EthanThatOneKid/solar-system-wiki` expands to the full
+  `https://github.com/EthanThatOneKid/solar-system-wiki.git` URL automatically.
+- `wiki init` now scaffolds a `.gitignore` that excludes `.wiki/` (source cache)
+  and `_site/` (build output).
+- **Recursive (transitive) dependency resolution** — `wiki install` reads each
+  cloned source's `wiki.yml` to discover its own `sources:` block, recursively
+  fetching and locking transitive dependencies. Circular dependency chains are
+  detected and raise an error. Name-and-ref conflicts are detected and raise an
+  error.
+- **Lockfile v2** — `LockedSource` now tracks `required_by: list[str]` recording
+  which sources depend on each entry (empty for top-level sources declared in
+  the root `wiki.yml`). Backward-compatible: v1 lockfiles load with
+  `required_by` defaulting to `[]`.
+- **Orphan cleanup on `wiki remove`** — when a source is removed, transitive
+  sources that are no longer required by any remaining top-level source are
+  automatically cleaned up (cache and lockfile entry removed), cascading through
+  the dependency tree.
+- **Transitive re-sync on `wiki update`** — after fetching new commits,
+  `wiki update` re-discovers each source's declared transitive dependencies.
+  Newly declared sources are installed and locked; orphaned sources are reported
+  as warnings (not auto-removed).
 
 ### Dependency
 
-- Added `ruamel.yaml` for comment-preserving YAML writes when `wiki install`/`wiki remove` edits wiki.yml.
+- Added `ruamel.yaml` for comment-preserving YAML writes when
+  `wiki install`/`wiki remove` edits wiki.yml.
 
 ## 0.1.18 — 2026-06-28
 
 ### Fixed
 
-- `wiki upgrade` no longer fails when `wiki.yml` contains legacy `link.style: markdown` or `link.style: obsidian`. Old values are now accepted and automatically mapped to `standard` and `wikilink` respectively, with a deprecation warning. ([#134](https://github.com/wazootech/wiki/issues/134))
+- `wiki upgrade` no longer fails when `wiki.yml` contains legacy
+  `link.style: markdown` or `link.style: obsidian`. Old values are now accepted
+  and automatically mapped to `standard` and `wikilink` respectively, with a
+  deprecation warning. ([#134](https://github.com/wazootech/wiki/issues/134))
 
 ## 0.1.17 — 2026-06-28
 
 ### Added
 
-- `wiki --version` flag prints the installed version ([#132](https://github.com/wazootech/wiki/issues/132)).
-- `wiki init --site-layout` CLI flag for setting a custom page layout file ([#138](https://github.com/wazootech/wiki/pull/138)).
-- Wikipedia-themed build files for the docs wiki: `docs/build.py`, `docs/layouts/wikipedia.html`, `docs/assets/wikipedia.js`.
-- **Library-first Python API** ([#112](https://github.com/wazootech/wiki/issues/112)) — `Wiki` session, typed `AuditReport` / `Issue` and operation result models, direct `Wiki.build`, `Wiki.init`, `Wiki.link`, `Wiki.render`, `Wiki.export`, and `Wiki.format` methods, curated `wiki.__all__`, and `py.typed`. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
-- Typed **layout context** models (`LayoutContext`) validated at `build_layout_context` with expanded layout slot contract tests ([#106](https://github.com/wazootech/wiki/issues/106)).
+- `wiki --version` flag prints the installed version
+  ([#132](https://github.com/wazootech/wiki/issues/132)).
+- `wiki init --site-layout` CLI flag for setting a custom page layout file
+  ([#138](https://github.com/wazootech/wiki/pull/138)).
+- Wikipedia-themed build files for the docs wiki: `docs/build.py`,
+  `docs/layouts/wikipedia.html`, `docs/assets/wikipedia.js`.
+- **Library-first Python API**
+  ([#112](https://github.com/wazootech/wiki/issues/112)) — `Wiki` session, typed
+  `AuditReport` / `Issue` and operation result models, direct `Wiki.build`,
+  `Wiki.init`, `Wiki.link`, `Wiki.render`, `Wiki.export`, and `Wiki.format`
+  methods, curated `wiki.__all__`, and `py.typed`. See
+  [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+- Typed **layout context** models (`LayoutContext`) validated at
+  `build_layout_context` with expanded layout slot contract tests
+  ([#106](https://github.com/wazootech/wiki/issues/106)).
 
 ### Fixed
 
-- Escape all raw HTML in wiki markdown rendering uniformly, including TOC/sidebar outline labels; strip SPARQL comment wrappers before site HTML rendering instead of passthrough ([#91](https://github.com/wazootech/wiki/issues/91), PR [#102](https://github.com/wazootech/wiki/pull/102))
+- Escape all raw HTML in wiki markdown rendering uniformly, including
+  TOC/sidebar outline labels; strip SPARQL comment wrappers before site HTML
+  rendering instead of passthrough
+  ([#91](https://github.com/wazootech/wiki/issues/91), PR
+  [#102](https://github.com/wazootech/wiki/pull/102))
 
 ### Changed
 
-- Init/branding docs: Getting Started branding subsection; clarify tweak-comment workflow ([#107](https://github.com/wazootech/wiki/issues/107)).
-- Page layouts use **`%wiki.*%` layout slots** instead of Jinja. Packaged layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `index.html` (minimal full page when `site.layout` is unset). Bundled styles ship as linked `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime `site.inline_css` removed.
-- Document npm/npx install parity with `wiki` subcommands (README, Getting Started, Wiki CLI, wiki agent skill).
-- Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with workflow references and `verify-cli.sh` / `audit.sh` scripts.
-- Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink` (`wiki init --link-style`, validators, docs). Old values fail at load (no aliases).
-- Rename release workflow to [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm and PyPI trusted publisher workflow filenames to match).
-- Rename Pages deploy workflow to [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-- `wiki init` removes `--force`, `--site-name`, and `--site-theme-color`. Init requires a clean directory; re-scaffold in a new directory or remove existing scaffold files manually. Branding uses `<!-- wiki tweak: … -->` comments in scaffolded `assets/logo.svg` and `layouts/wikipedia.html`.
+- Init/branding docs: Getting Started branding subsection; clarify tweak-comment
+  workflow ([#107](https://github.com/wazootech/wiki/issues/107)).
+- Page layouts use **`%wiki.*%` layout slots** instead of Jinja. Packaged
+  layouts: `layouts/wikipedia.html` (Vector UI, copied on init), `index.html`
+  (minimal full page when `site.layout` is unset). Bundled styles ship as linked
+  `assets/wikipedia.css` (layout + metadata-format + Pygments merged); runtime
+  `site.inline_css` removed.
+- Document npm/npx install parity with `wiki` subcommands (README, Getting
+  Started, Wiki CLI, wiki agent skill).
+- Consolidate agent skills — `wiki-install`, `wiki-create`, `wiki-improve`, and
+  `wiki-deploy` merge into single **`wiki`** skill under `skills/wiki/` with
+  workflow references and `verify-cli.sh` / `audit.sh` scripts.
+- Rename `link.style` values: `markdown` → `standard`, `obsidian` → `wikilink`
+  (`wiki init --link-style`, validators, docs). Old values fail at load (no
+  aliases).
+- Rename release workflow to
+  [`.github/workflows/release.yml`](.github/workflows/release.yml) (update npm
+  and PyPI trusted publisher workflow filenames to match).
+- Rename Pages deploy workflow to
+  [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+- `wiki init` removes `--force`, `--site-name`, and `--site-theme-color`. Init
+  requires a clean directory; re-scaffold in a new directory or remove existing
+  scaffold files manually. Branding uses `<!-- wiki tweak: … -->` comments in
+  scaffolded `assets/logo.svg` and `layouts/wikipedia.html`.
 
 ### Migration
 
-- **Library API:** If you imported audit dict helpers or relied on `run_check` / `run_lint` returning `dict[str, Any]`, switch to `AuditReport` and `Issue` (`report.ok`, `report.errors`, `issue.code`). Prefer `from wiki import Wiki, AuditReport` for new integrations.
+- **Library API:** If you imported audit dict helpers or relied on `run_check` /
+  `run_lint` returning `dict[str, Any]`, switch to `AuditReport` and `Issue`
+  (`report.ok`, `report.errors`, `issue.code`). Prefer
+  `from wiki import Wiki, AuditReport` for new integrations.
 
-- Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI. To customize logo letter or theme after init, edit tweak comments in `assets/logo.svg` and `layouts/wikipedia.html` instead.
+- Remove `--force`, `--site-name`, and `--site-theme-color` from scripts and CI.
+  To customize logo letter or theme after init, edit tweak comments in
+  `assets/logo.svg` and `layouts/wikipedia.html` instead.
 
-- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with `%wiki.*%` slots (see [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots)). Remove `<style>{{ site.inline_css }}</style>`; link `%wiki.base_url%/assets/wikipedia.css` instead.
+- Replace Jinja `{{ page.* }}` / `{{ site.* }}` in custom layouts with
+  `%wiki.*%` slots (see
+  [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots)). Remove
+  `<style>{{ site.inline_css }}</style>`; link
+  `%wiki.base_url%/assets/wikipedia.css` instead.
 
-- Fresh `wiki init` writes **`wiki.yml`** (scaffold source: `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`, `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by default. Existing **`wiki.yaml`** configs still load; rename manually to `wiki.yml` or remove before re-init. `--site-layout minimal` omits `site.layout` (packaged `index.html` fallback).
+- Fresh `wiki init` writes **`wiki.yml`** (scaffold source:
+  `src/wiki/templates/wiki.yml`), `layouts/wikipedia.html`,
+  `assets/wikipedia.css`, and sets `site.layout: layouts/wikipedia.html` by
+  default. Existing **`wiki.yaml`** configs still load; rename manually to
+  `wiki.yml` or remove before re-init. `--site-layout minimal` omits
+  `site.layout` (packaged `index.html` fallback).
 
-- Projects that copied `layouts/shell.html` from an earlier unreleased build should replace it with `layouts/wikipedia.html` and update `site.layout` accordingly. Use monolithic page layouts with `%wiki.body%` for rendered page content.
+- Projects that copied `layouts/shell.html` from an earlier unreleased build
+  should replace it with `layouts/wikipedia.html` and update `site.layout`
+  accordingly. Use monolithic page layouts with `%wiki.body%` for rendered page
+  content.
 
-- Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if you have not already.
+- Rename `site.layout` and `wazoo:layout` paths from `*.html.j2` to `*.html` if
+  you have not already.
 
 - Reinstall the consolidated skill: `npx skills add wazootech/wiki@wiki -g -y`
 
-- Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`: `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
+- Remove stale copies from `~/.agents/skills/` or project `.agents/skills/`:
+  `wiki-install`, `wiki-create`, `wiki-improve`, `wiki-deploy`
 
-- Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill pages removed
+- Wiki doc pages merged into [Wiki Skill](docs/wiki/Wiki_Skill.md); per-skill
+  pages removed
 
-- In `link:` rename `style: markdown` → `style: standard` and `style: obsidian` → `style: wikilink`:
+- In `link:` rename `style: markdown` → `style: standard` and `style: obsidian`
+  → `style: wikilink`:
 
 ```yaml
 # Before
 link:
-  style: markdown   # or obsidian
+  style: markdown # or obsidian
 
 # After
 link:
-  style: standard   # or wikilink
+  style: standard # or wikilink
 ```
 
 ## 0.1.15 — 2026-06-14
 
 ### Fixed
 
-- Release workflow keeps canonical `release.yaml` filename for npm OIDC trusted publishing; npm publish skips existing versions and verify step retries registry propagation.
+- Release workflow keeps canonical `release.yaml` filename for npm OIDC trusted
+  publishing; npm publish skips existing versions and verify step retries
+  registry propagation.
 
 ## 0.1.14 — 2026-06-14
 
 ### Changed
 
-- Consolidate [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates) registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template` integration slugs, planned `wiki-astro-template` ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and downstream wiki pages to point at the canonical section; retire stale slugs (`sparql-service-template`, bare `nextjs-template`, `obsidian-quartz-template`, etc.).
-- Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:` keeps `layout`, `base_url`, and `url_style`. A brief 0.1.14 release added `--site-name` and `--site-theme-color` for logo SVG only; those init flags were removed before the next release — see Unreleased migration for the tweak-comment workflow.
-- `wiki init` omits `lint:` keys that default to `off` (`headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`).
-- Docs and agent skills use title-case H1 headings and sentence-case H2+ without numbered headings.
+- Consolidate [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates)
+  registry in Wiki_CLI: single shipped/planned table, SPARQL single-repo
+  (`wiki-yasgui-template` absorbs Virtuoso scope), `wiki-{stack}-template`
+  integration slugs, planned `wiki-astro-template`
+  ([#96](https://github.com/wazootech/wiki/issues/96)). Slim README and
+  downstream wiki pages to point at the canonical section; retire stale slugs
+  (`sparql-service-template`, bare `nextjs-template`,
+  `obsidian-quartz-template`, etc.).
+- Remove `site.manifest` and `manifest.webmanifest`. Branding (site name, theme
+  color, favicon, sidebar logo) lives in `site.layout` only; `wiki.yaml` `site:`
+  keeps `layout`, `base_url`, and `url_style`. A brief 0.1.14 release added
+  `--site-name` and `--site-theme-color` for logo SVG only; those init flags
+  were removed before the next release — see Unreleased migration for the
+  tweak-comment workflow.
+- `wiki init` omits `lint:` keys that default to `off` (`headings`,
+  `heading_levels`, `duplicate_headings`, `thematic_breaks`).
+- Docs and agent skills use title-case H1 headings and sentence-case H2+ without
+  numbered headings.
 
 ### Migration
 
 - Delete the entire `site.manifest` block from `wiki.yaml`.
-- Move branding into your `site.layout` file (for example `layouts/wikipedia.html`): edit sidebar label, `theme-color` meta tags, and asset URLs such as `%wiki.base_url%/assets/logo.svg`. Use `%wiki.*%` layout slots, not Jinja (see Unreleased migration).
-- Replace legacy manifest placeholders and Jinja `{{ site.manifest.* }}` paths with literals or `%wiki.base_url%/assets/…` in custom layouts.
-- Remove `<link rel="manifest">` and any dependency on built/served `manifest.webmanifest`.
+- Move branding into your `site.layout` file (for example
+  `layouts/wikipedia.html`): edit sidebar label, `theme-color` meta tags, and
+  asset URLs such as `%wiki.base_url%/assets/logo.svg`. Use `%wiki.*%` layout
+  slots, not Jinja (see Unreleased migration).
+- Replace legacy manifest placeholders and Jinja `{{ site.manifest.* }}` paths
+  with literals or `%wiki.base_url%/assets/…` in custom layouts.
+- Remove `<link rel="manifest">` and any dependency on built/served
+  `manifest.webmanifest`.
 
 ## 0.1.13 — 2026-06-10
 
 ### Added
 
-- `wiki-install` and `wiki-create` agent skills under `skills/` — install the CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
+- `wiki-install` and `wiki-create` agent skills under `skills/` — install the
+  CLI and scaffold a workspace with `wiki init` plus a light preferences wizard
 
 ### Fixed
 
-- setuptools package discovery includes `wiki.schemas`, `wiki.site`, and `wiki.mdit_py_plugins` subpackages
+- setuptools package discovery includes `wiki.schemas`, `wiki.site`, and
+  `wiki.mdit_py_plugins` subpackages
 - Default page layout spacing and copy-button click dead band
 - Compacted JSON-LD output prunes `@context` to prefixes used in the document
 
@@ -269,82 +530,155 @@ link:
 
 ### Added
 
-- `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`, `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives layout chrome, `{{ site.manifest.json }}` / `{{ site.manifest.url }}` placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
-- `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` | `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type` / `@type`, or merged with explicit types when policy is `append` (SHACL shape documents skip append)
+- `site.manifest` — Web App Manifest-shaped block (`name`, `short_name`,
+  `theme_color`, `background_color`, `start_url`, `display`, `icons`) drives
+  layout chrome, `{{ site.manifest.json }}` / `{{ site.manifest.url }}`
+  placeholders, and `manifest.webmanifest` on `wiki build` / `wiki serve`
+- `graph.implicit_types` and `graph.implicit_types_policy` (`fallback` |
+  `append`) — vault-wide default `rdf:type` CURIEs for documents missing `type`
+  / `@type`, or merged with explicit types when policy is `append` (SHACL shape
+  documents skip append)
 
 ## 0.2.3 — 2026-10-10
 
 ### Added
 
-- Hidden SPARQL queries in inline render blocks — wrap the fenced query in an HTML comment (`<!-- sparql:start` … `-->`) so built pages show only the results table; visible-query syntax is unchanged ([#73](https://github.com/wazootech/wiki/issues/73))
-- JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page schemas; configurable via `check.frontmatter_schema` and `check.missing_schema_ref` ([#71](https://github.com/wazootech/wiki/issues/71))
-- Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller — published to GitHub Releases with `SHA256SUMS` on each `v*` tag ([#77](https://github.com/wazootech/wiki/issues/77))
-- Unified [`.github/workflows/release.yml`](.github/workflows/release.yml): PyPI, npm, and GitHub Release binaries in one workflow (replaces separate release workflows)
-- `wiki-deploy` agent skill — GitHub Pages setup aligned with [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml); pip and uv workflow templates, deploy anti-patterns, and Pages `build_type` verification
+- Hidden SPARQL queries in inline render blocks — wrap the fenced query in an
+  HTML comment (`<!-- sparql:start` … `-->`) so built pages show only the
+  results table; visible-query syntax is unchanged
+  ([#73](https://github.com/wazootech/wiki/issues/73))
+- JSON Schema frontmatter validation in `wiki check` — bind schemas on SHACL
+  shape documents with `wazoo:jsonSchema` + `sh:targetClass`, or append per-page
+  schemas; configurable via `check.frontmatter_schema` and
+  `check.missing_schema_ref`
+  ([#71](https://github.com/wazootech/wiki/issues/71))
+- Standalone `wiki` executables for Linux, macOS, and Windows via PyInstaller —
+  published to GitHub Releases with `SHA256SUMS` on each `v*` tag
+  ([#77](https://github.com/wazootech/wiki/issues/77))
+- Unified [`.github/workflows/release.yml`](.github/workflows/release.yml):
+  PyPI, npm, and GitHub Release binaries in one workflow (replaces separate
+  release workflows)
+- `wiki-deploy` agent skill — GitHub Pages setup aligned with
+  [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml); pip and uv
+  workflow templates, deploy anti-patterns, and Pages `build_type` verification
 
 ### Changed
 
-- `wiki init` no longer scaffolds starter JSON Schema files — SHACL-only `Person_Shape.md` is the default; add `wazoo:jsonSchema` bindings when you want JSON Schema validation
-- Agent skills — restore `wiki-improve/scripts/audit.sh` (was empty in rename commit); `wiki-install` capability probe (`wiki fmt --help`) catches stale PATH installs; `wiki-create` default-on post-init `check --strict` with opt-out; stale-CLI handling aligned across create/deploy/improve; eval updates
-- `wiki-create` skill — init flag reference is `wiki init --help` (removed duplicated `init-options.md`); README preflight and post-init `.gitignore` guidance; infer `--repo` from git/attachment; batch optional prefs; wiki-deploy handoff at clean exit
-- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks; IDE pip tool vs terminal install on macOS
-- `wiki-deploy` skill — forbid `uv pip install` without venv on standalone repos; eval for CI “No virtual environment found” footgun; embed uv/pip workflow templates wholesale (no install hybridization)
-- [Getting Started](docs/wiki/Getting_Started.md) and [Wiki Skills](docs/wiki/Wiki_Skills.md) — refresh agent skills after Wiki CLI upgrades; avoid committing stale `.agents/skills/`
-- `wiki upgrade` on standalone binaries prints GitHub Releases re-download instructions instead of calling pip
-- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs Obsidian wikilinks); `wiki init --link-style` and docs use the new names
+- `wiki init` no longer scaffolds starter JSON Schema files — SHACL-only
+  `Person_Shape.md` is the default; add `wazoo:jsonSchema` bindings when you
+  want JSON Schema validation
+- Agent skills — restore `wiki-improve/scripts/audit.sh` (was empty in rename
+  commit); `wiki-install` capability probe (`wiki fmt --help`) catches stale
+  PATH installs; `wiki-create` default-on post-init `check --strict` with
+  opt-out; stale-CLI handling aligned across create/deploy/improve; eval updates
+- `wiki-create` skill — init flag reference is `wiki init --help` (removed
+  duplicated `init-options.md`); README preflight and post-init `.gitignore`
+  guidance; infer `--repo` from git/attachment; batch optional prefs;
+  wiki-deploy handoff at clean exit
+- `wiki-install` skill — `python3 -m pip` and pipx troubleshooting fallbacks;
+  IDE pip tool vs terminal install on macOS
+- `wiki-deploy` skill — forbid `uv pip install` without venv on standalone
+  repos; eval for CI “No virtual environment found” footgun; embed uv/pip
+  workflow templates wholesale (no install hybridization)
+- [Getting Started](docs/wiki/Getting_Started.md) and
+  [Wiki Skills](docs/wiki/Wiki_Skills.md) — refresh agent skills after Wiki CLI
+  upgrades; avoid committing stale `.agents/skills/`
+- `wiki upgrade` on standalone binaries prints GitHub Releases re-download
+  instructions instead of calling pip
+- `link.style` value `wikilink` renamed to `obsidian` (standard Markdown vs
+  Obsidian wikilinks); `wiki init --link-style` and docs use the new names
 
 ### Fixed
 
-- `wiki init --graph-implicit-types-policy` accepts `fallback` or `append` (was incorrectly `override`) ([#72](https://github.com/wazootech/wiki/issues/72))
+- `wiki init --graph-implicit-types-policy` accepts `fallback` or `append` (was
+  incorrectly `override`) ([#72](https://github.com/wazootech/wiki/issues/72))
 
 ### Changed (breaking)
 
-- Layout template context uses nested namespaces (`site.*`, `page.*`, `wiki.*`) instead of flat keys (`page_title`, `site_manifest_name`, …); update custom `.html.j2` layouts (see Migration)
+- Layout template context uses nested namespaces (`site.*`, `page.*`, `wiki.*`)
+  instead of flat keys (`page_title`, `site_manifest_name`, …); update custom
+  `.html.j2` layouts (see Migration)
 
-- `wiki-best-practices` agent skill renamed to `wiki-improve` — reinstall with `npx skills add wazootech/wiki@wiki-improve -g -y`; improve-style advisor framing and prioritized findings report; `audit.sh` pipeline unchanged
+- `wiki-best-practices` agent skill renamed to `wiki-improve` — reinstall with
+  `npx skills add wazootech/wiki@wiki-improve -g -y`; improve-style advisor
+  framing and prioritized findings report; `audit.sh` pipeline unchanged
 
-- Remove `site.title` and `site.theme_color`; use `site.manifest.name` and `site.manifest.theme_color` instead
+- Remove `site.title` and `site.theme_color`; use `site.manifest.name` and
+  `site.manifest.theme_color` instead
 
-- Remove `graph.wiki_base`; auto-generated document IRIs default from `graph.context.wiki` with optional `graph.base_iri` override
+- Remove `graph.wiki_base`; auto-generated document IRIs default from
+  `graph.context.wiki` with optional `graph.base_iri` override
 
-- Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets `graph.context.wiki` in the scaffold)
+- Rename init flag `--graph-wiki-base` → `--graph-context-wiki` (sets
+  `graph.context.wiki` in the scaffold)
 
-- Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types` → `graph.implicit_types`, and `graph.default_types_policy` → `graph.implicit_types_policy`
+- Rename `graph.uri_ext` → `graph.include_file_extension`, `graph.default_types`
+  → `graph.implicit_types`, and `graph.default_types_policy` →
+  `graph.implicit_types_policy`
 
-- **CLI flags** align with `wiki.yaml` block paths: `--wiki-inputs` (was `--vault-inputs`, was `--input-dir`), `--site-base-url` (was `--base-url`), `--site-url-style` (was `--url-style` / serve `--style`), `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`), `--graph-content-predicate` (was `--content-predicate`); `--link-style` unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays fixed in the init scaffold like other built-in prefixes.
+- **CLI flags** align with `wiki.yaml` block paths: `--wiki-inputs` (was
+  `--vault-inputs`, was `--input-dir`), `--site-base-url` (was `--base-url`),
+  `--site-url-style` (was `--url-style` / serve `--style`),
+  `--graph-context-wiki` (was `--wiki-base` / `--graph-wiki-base`),
+  `--graph-content-predicate` (was `--content-predicate`); `--link-style`
+  unchanged. Remove `--wazoo` / `--graph-wazoo`; `graph.context.wazoo` stays
+  fixed in the init scaffold like other built-in prefixes.
 
-- Rename `wiki.input_dirs` → `wiki.inputs` and `wiki.asset_dirs` → `wiki.assets` (was `vault.xxx` before the top-level block rename)
+- Rename `wiki.input_dirs` → `wiki.inputs` and `wiki.asset_dirs` → `wiki.assets`
+  (was `vault.xxx` before the top-level block rename)
 
-- Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation (`extra='forbid'` on every block)
+- Load `wiki.yaml` / `wiki.json` through strict Pydantic schema validation
+  (`extra='forbid'` on every block)
 
-- **Unified Config:** remove the flat runtime `Config` and `WikiFileConfig` / `from_file_config()` bridge; the loaded model matches yaml blocks (`config.wiki.inputs`, `config.site.base_url`, etc.). Programmatic callers must use nested construction or `Config.for_root()`.
+- **Unified Config:** remove the flat runtime `Config` and `WikiFileConfig` /
+  `from_file_config()` bridge; the loaded model matches yaml blocks
+  (`config.wiki.inputs`, `config.site.base_url`, etc.). Programmatic callers
+  must use nested construction or `Config.for_root()`.
 
-- Rename root loader type `WikiConfig` → `Config` (`from wiki.config import Config`); **`WikiConfig`** reserved for a future `wiki:` yaml section
+- Rename root loader type `WikiConfig` → `Config`
+  (`from wiki.config import Config`); **`WikiConfig`** reserved for a future
+  `wiki:` yaml section
 
-- Rename exported section types: `VaultBlock` → `VaultConfig` → `WikiConfig`, …; add `FmtConfig` for `Config.fmt` (`.options` / `.toml`)
+- Rename exported section types: `VaultBlock` → `VaultConfig` → `WikiConfig`, …;
+  add `FmtConfig` for `Config.fmt` (`.options` / `.toml`)
 
-- Rename `DEFAULT_CHECK_RULES` / `DEFAULT_LINT_RULES` → `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG`
+- Rename `DEFAULT_CHECK_RULES` / `DEFAULT_LINT_RULES` → `DEFAULT_CHECK_CONFIG` /
+  `DEFAULT_LINT_CONFIG`
 
 ### Changed
 
-- Page layouts render through Jinja2 (`.html.j2`) instead of `{placeholder}` string substitution; `wiki init` copies `layouts/default.html.j2` from the packaged template
+- Page layouts render through Jinja2 (`.html.j2`) instead of `{placeholder}`
+  string substitution; `wiki init` copies `layouts/default.html.j2` from the
+  packaged template
 - Packaged default CSS is `layout_default.css` (plain CSS, not a Jinja template)
 
 ### Changed (breaking)
 
 - Rename `site.layout` and `wazoo:layout` targets from `*.html` to `*.html.j2`
-- Replace `{key}` layout tokens with Jinja `{{ key }}`; CLI-injected HTML/JSON slots use safe markup (or explicit `| safe` for hand-authored template HTML)
+- Replace `{key}` layout tokens with Jinja `{{ key }}`; CLI-injected HTML/JSON
+  slots use safe markup (or explicit `| safe` for hand-authored template HTML)
 
 ### Changed
 
-- Packaged init templates renamed to `layout_default.html.j2` and `layout_default.css`; default page CSS moved out of `site.py` into the template bundle
-- Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`, `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models; `Config.check` and `Config.lint` are `CheckConfig` / `LintConfig` instances (not plain dicts)
-- `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a computed property from `graph.context`
+- Packaged init templates renamed to `layout_default.html.j2` and
+  `layout_default.css`; default page CSS moved out of `site.py` into the
+  template bundle
+- Internal domain types (`PageRoute`, `BrokenLink`, `VirtualPage`,
+  `InitOptions`, etc.) live under `wiki.schemas` as Pydantic models;
+  `Config.check` and `Config.lint` are `CheckConfig` / `LintConfig` instances
+  (not plain dicts)
+- `Context` (RDF prefix bindings) lives in `wiki.context`; `Config.context` is a
+  computed property from `graph.context`
 
 ### Migration
 
-- Agent skill `wiki-best-practices` → `wiki-improve`: `npx skills add wazootech/wiki@wiki-improve -g -y` (remove stale `wiki-best-practices` from `~/.agents/skills/` or project `.agents/skills/` if present). Wiki doc page renamed to [Wiki Skill improve](docs/wiki/Wiki_Skill_improve.md).
-- **Layout template variables (breaking):** flat keys removed; use nested paths in custom `.html.j2` files:
+- Agent skill `wiki-best-practices` → `wiki-improve`:
+  `npx skills add wazootech/wiki@wiki-improve -g -y` (remove stale
+  `wiki-best-practices` from `~/.agents/skills/` or project `.agents/skills/` if
+  present). Wiki doc page renamed to
+  [Wiki Skill improve](docs/wiki/Wiki_Skill_improve.md).
+- **Layout template variables (breaking):** flat keys removed; use nested paths
+  in custom `.html.j2` files:
 
 | Flat (remove)                   | Nested (use)                                   |
 | ------------------------------- | ---------------------------------------------- |
@@ -368,7 +702,8 @@ link:
 | `all_pages_json`                | `wiki.pages_json`                              |
 | `current_slug_json`             | `page.slug_json` (plus new `page.slug` string) |
 
-See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#template-variables).
+See
+[Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#template-variables).
 
 1. In `wiki:` rename path keys:
    - `input_dirs` → `inputs`
@@ -377,49 +712,73 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
    - `uri_ext` → `include_file_extension`
    - `default_types` → `implicit_types`
    - `default_types_policy` → `implicit_types_policy`
-   - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when document IRIs must differ from the `wiki:` namespace)
-1. Programmatic imports: root loader is `Config` from `wiki.config` (was `WikiConfig`); section types from `wiki.schemas` (`WikiConfig` (was `VaultConfig`), `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` / `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None` with `.options` / `.toml`
+   - `wiki_base` → remove; set `context.wiki` instead (optional `base_iri` when
+     document IRIs must differ from the `wiki:` namespace)
+1. Programmatic imports: root loader is `Config` from `wiki.config` (was
+   `WikiConfig`); section types from `wiki.schemas` (`WikiConfig` (was
+   `VaultConfig`), `CheckConfig`, `FmtConfig`, etc.); `DEFAULT_CHECK_CONFIG` /
+   `DEFAULT_LINT_CONFIG` from `wiki.config`; `Config.fmt` is `FmtConfig | None`
+   with `.options` / `.toml`
 1. In `site:` move branding into `manifest:`:
    - `title` → `manifest.name`
    - `theme_color` → `manifest.theme_color`
-1. In `link:` rename `style: wikilink` → `style: obsidian` (default remains `markdown`)
+1. In `link:` rename `style: wikilink` → `style: obsidian` (default remains
+   `markdown`)
 1. Page layouts:
    - Rename `site.layout` and `wazoo:layout` paths from `*.html` to `*.html.j2`
-   - Replace flat template keys with nested Jinja paths (`{{ page.title }}`, `{{ site.manifest.name }}`, …; see [Template variables](docs/wiki/Wiki_Configuration.md#template-variables))
+   - Replace flat template keys with nested Jinja paths (`{{ page.title }}`,
+     `{{ site.manifest.name }}`, …; see
+     [Template variables](docs/wiki/Wiki_Configuration.md#template-variables))
 
 ## 0.1.9 — 2026-06-08
 
 ### Added
 
-- `link.style` (`markdown` default, or `wikilink`) controls `wiki link --apply` output format
-- `lint.link_style` convention audit flags wikilinks in body prose when `link.style` is `markdown`
-- `site.title` drives layout chrome (`{site_title}`) and the logo glyph on build/serve
+- `link.style` (`markdown` default, or `wikilink`) controls `wiki link --apply`
+  output format
+- `lint.link_style` convention audit flags wikilinks in body prose when
+  `link.style` is `markdown`
+- `site.title` drives layout chrome (`{site_title}`) and the logo glyph on
+  build/serve
 
 ### Changed (breaking)
 
-- **Nested config blocks only:** settings live under `vault:`, `graph:`, `site:`, and `link:`; unknown top-level keys fail at load (no `wiki config migrate`)
-- Remove `check.forbidden_layout_keys`; `template` / `wiki:template` frontmatter are ordinary properties (layout selection uses `wazoo:layout` only)
-- Move `check.broken_links` to `lint.broken_links` in `wiki.yaml` (unknown `check` keys fail at load)
+- **Nested config blocks only:** settings live under `vault:`, `graph:`,
+  `site:`, and `link:`; unknown top-level keys fail at load (no
+  `wiki config migrate`)
+- Remove `check.forbidden_layout_keys`; `template` / `wiki:template` frontmatter
+  are ordinary properties (layout selection uses `wazoo:layout` only)
+- Move `check.broken_links` to `lint.broken_links` in `wiki.yaml` (unknown
+  `check` keys fail at load)
 - **`wiki build`** preflight runs `lint` then `check` (unless `--no-check`)
-- Split audit lanes: **`wiki check`** = integrity (SHACL, routes, collisions, layout); **`wiki lint`** = conventions including `lint.broken_links`
-- Move `filename_pattern` and `headings` severities from `check:` to `lint:` in `wiki.yaml` (old keys fail at load)
+- Split audit lanes: **`wiki check`** = integrity (SHACL, routes, collisions,
+  layout); **`wiki lint`** = conventions including `lint.broken_links`
+- Move `filename_pattern` and `headings` severities from `check:` to `lint:` in
+  `wiki.yaml` (old keys fail at load)
 
 ### Changed
 
-- `lint.headings` applies sentence-case checks to H2+ only; H1 title case is conventional
-- `lint.headings` flags Setext underlined headings; vaults should use ATX `#` headings only
-- Heading auditor skips thematic `---` inside fenced code and ignores capitalized link text in headings
+- `lint.headings` applies sentence-case checks to H2+ only; H1 title case is
+  conventional
+- `lint.headings` flags Setext underlined headings; vaults should use ATX `#`
+  headings only
+- Heading auditor skips thematic `---` inside fenced code and ignores
+  capitalized link text in headings
 
 ### Migration
 
-1. Group former top-level keys under blocks (unknown top-level keys fail at load):
+1. Group former top-level keys under blocks (unknown top-level keys fail at
+   load):
    - `input_dirs`, `asset_dirs`, `exclude`, `filename_pattern` → `vault:`
-   - `wiki_base`, `content_predicate`, `context` / `@context`, `uri_ext` → `graph:`
-   - `site_title`, `wiki_page_layout` / `page_layout`, `base_url`, `url_style` → `site:` (`title`, `layout`, `base_url`, `url_style`)
+   - `wiki_base`, `content_predicate`, `context` / `@context`, `uri_ext` →
+     `graph:`
+   - `site_title`, `wiki_page_layout` / `page_layout`, `base_url`, `url_style` →
+     `site:` (`title`, `layout`, `base_url`, `url_style`)
    - `link_renames`, `link_style` → `link:` (`renames`, `style`)
    - `serve_api` → `sparql_service`
 1. Move `check.broken_links` to `lint.broken_links`
-1. Move `check.filename_pattern` and `check.headings` to `lint:` if still present
+1. Move `check.filename_pattern` and `check.headings` to `lint:` if still
+   present
 1. Add `\.md` to your `vault.filename_pattern` regex
 1. Run `wiki lint` then `wiki check` in CI
 
@@ -428,12 +787,15 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
 ### Changed
 
 - Require `snake_case` config keys only for top-level `wiki.yaml` settings
-- Require `snake_case` nested `check` rule keys: `filename_pattern`, `broken_links`, and `headings`
-- Fail fast on invalid config files, unknown keys, removed aliases, and malformed nested config blocks
+- Require `snake_case` nested `check` rule keys: `filename_pattern`,
+  `broken_links`, and `headings`
+- Fail fast on invalid config files, unknown keys, removed aliases, and
+  malformed nested config blocks
 
 ### Fixed
 
-- Surface config-load errors consistently through the CLI instead of silently falling back to defaults
+- Surface config-load errors consistently through the CLI instead of silently
+  falling back to defaults
 
 ## 0.1.7 — 2026-06-05
 
@@ -464,12 +826,15 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
 - YAML, YML, and JSON document support alongside Markdown
 - CURIE expansion for HTML microdata attributes
 - Typed HTML rendering with infoboxes and `wiki:template` support
-- In-process RDF graph cache so multiple SPARQL operations in one run share a single graph build; `--reload` on `query`, `render`, and `build --render`
-- `wiki serve --watch` rebuilds the in-memory graph and SPARQL blocks when vault files change
+- In-process RDF graph cache so multiple SPARQL operations in one run share a
+  single graph build; `--reload` on `query`, `render`, and `build --render`
+- `wiki serve --watch` rebuilds the in-memory graph and SPARQL blocks when vault
+  files change
 
 ### Changed
 
-- Replaced on-disk graph cache (`.wiki/cache/`) and incremental render-state with runtime-only caching
+- Replaced on-disk graph cache (`.wiki/cache/`) and incremental render-state
+  with runtime-only caching
 
 ### Fixed
 
@@ -478,5 +843,6 @@ See [Wiki Configuration — Template variables](docs/wiki/Wiki_Configuration.md#
 
 ### Removed
 
-- Loose blank node resolution keyed on name/givenName+familyName (`build_person_name_map`, `resolve_blank_nodes`)
+- Loose blank node resolution keyed on name/givenName+familyName
+  (`build_person_name_map`, `resolve_blank_nodes`)
 - `--all`, `--rebuild-cache`, and `--no-cache` flags

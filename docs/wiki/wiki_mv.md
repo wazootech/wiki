@@ -6,7 +6,7 @@ description: Move or rename a page and repoint every link and metadata reference
 
 # `wiki mv`
 
-Move or rename a page. Every page that links to it is repointed at the new path, so nothing is left broken. The change is a `wiki edit` move op, so it is validated before it is written, and written only with `--apply`.
+Move or rename a page. Every page that links to it is repointed at the new path, so nothing is left broken. The change is a [wiki edit](wiki_edit.md) move op, so it is validated before it is written, and written only with `--apply`.
 
 ## Usage
 
@@ -28,13 +28,13 @@ A finding the page already had before the move, such as a missing field or a bro
 
 ## Options
 
-| Flag             | Default | Description                                                                                            |
-| ---------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `--expect HASH`  | —       | Refuse unless `FROM`'s SHA-256 still matches; take it from [wiki show](wiki_show.md).                  |
-| `--apply`        | off     | Write the move. Without it, validate and report only.                                                  |
-| `--force`        | off     | Write even if the move introduces errors (they are still reported).                                    |
-| `-f`, `--format` | `text`  | `text` or `json` (the `wiki edit` report, listing every file the move creates, modifies, and deletes). |
-| `--json`         | —       | Shorthand for `--format json`.                                                                         |
+| Flag             | Default | Description                                                                                                          |
+| ---------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| `--expect HASH`  | —       | Refuse unless `FROM`'s SHA-256 still matches; take it from [wiki show](wiki_show.md).                                |
+| `--apply`        | off     | Write the move. Without it, validate and report only.                                                                |
+| `--force`        | off     | Write even if the move introduces errors (they are still reported).                                                  |
+| `-f`, `--format` | `text`  | `text` or `json` (the [wiki edit](wiki_edit.md) report, listing every file the move creates, modifies, and deletes). |
+| `--json`         | —       | Shorthand for `--format json`.                                                                                       |
 
 `TO` must not exist, and a move keeps the document's extension.
 
