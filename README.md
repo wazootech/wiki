@@ -31,7 +31,7 @@ Adoption path: [Wiki CLI](docs/wiki/wiki.md) in the docs wiki.
 
 ## Key features
 
-Five capabilities, one toolchain:
+Everything you need for knowledge management, one toolchain:
 
 | Capability       | Commands                                                                                                                                   | What you get                                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
