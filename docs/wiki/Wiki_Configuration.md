@@ -81,7 +81,7 @@ These apply regardless of yaml severities:
 ```yaml
 wiki: # optional block
   input: [wiki] # default [wiki]; init writes
-  assets: [assets] # default [assets] if assets/ exists, else []; init writes
+  assets: [assets] # default [assets] if assets/ exists, else []; init omits
   exclude: [] # default []; init omits
   filename_pattern: "[A-Za-z0-9_()-]+\\.md" # no default; recommended; init writes
   allow_unknown_keys: false # default false; init omits
@@ -90,7 +90,7 @@ wiki: # optional block
 | Key                  | Required               | Default                                     | Init   | Audited by                                 |
 | -------------------- | ---------------------- | ------------------------------------------- | ------ | ------------------------------------------ |
 | `input`              | optional               | `[wiki]`                                    | writes | indexing (`build`, `check`, `lint`, `fmt`) |
-| `assets`             | optional               | `[assets]` when `assets/` exists, else `[]` | writes | `wiki build` (static copy)                 |
+| `assets`             | optional               | `[assets]` when `assets/` exists, else `[]` | omits  | `wiki build` (static copy)                 |
 | `exclude`            | optional               | `[]`                                        | omits  | indexing (skipped paths)                   |
 | `filename_pattern`   | optional (recommended) | unset — no regex check until set            | writes | `wiki lint` (`lint.filename_pattern`)      |
 | `allow_unknown_keys` | optional               | `false`                                     | omits  | config load                                |
@@ -551,6 +551,16 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
 | `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
 | `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                  |
+
+### What `broken_links` accepts
+
+`broken_links` reports a link only when its target is missing. It accepts everything CommonMark allows:
+
+- **Titled and angle-bracket destinations** — `[a](Page.md "Title")` and `[a](<Page.md>)` resolve like `[a](Page.md)`; `wiki file mv` keeps the title when it rewrites them.
+- **URLs with a scheme** — `https://`, `ftp://`, `obsidian://`, and `//host` are external and never checked.
+- **Site-root-relative links** — `[a](/wiki/Guides/Setup/)` is resolved against `site.base_url` and `site.url_style` and checked against the page that route maps to. A missing route or heading is still reported; a link outside `site.base_url`, or to a non-page file, is checked as before.
+- **`#top`** — scrolls to the top of the page and needs no matching heading.
+- **Fenced and commented-out links** — links inside backtick or `~~~` fences and HTML comments are skipped.
 
 ## This repository
 

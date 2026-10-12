@@ -10,9 +10,7 @@ codeRepository: https://github.com/wazootech/wiki
 
 This page is the **documentation home** for **Wiki CLI** (`wiki`, distributed on npm as [**`wazootech-wiki`**](https://www.npmjs.com/package/wazootech-wiki)): the semantic knowledge **toolchain** for Markdown wikis — validate with [SHACL](SHACL.md) and JSON Schema, infer and query with [SPARQL](SPARQL.md), and publish static HTML. It compiles wikis into RDF and sits **beneath** note apps and LLM-assisted workflows — progressive enhancement, not a migration.
 
-The Deno-backed npm package, JSR module, and standalone binaries are not published yet. The currently published npm package still runs the Python CLI; the new distributions become available with the first tagged Deno release. See [Getting Started](Getting_Started.md#install) for source use now and install instructions after release.
-
-After that release, install with npm or use a standalone executable:
+Wiki CLI is published on npm, PyPI, JSR, and GitHub Releases (standalone binaries). See [Getting Started](Getting_Started.md#install) for every channel. Install with npm or use a standalone executable:
 
 ```bash
 npm install -g wazootech-wiki
@@ -21,7 +19,7 @@ wiki --help
 
 ## Quickstart
 
-After the first tagged Deno release, install Wiki CLI and scaffold a wiki:
+Install Wiki CLI and scaffold a wiki:
 
 ```bash
 npm install -g wazootech-wiki
@@ -32,7 +30,7 @@ wiki lint
 wiki serve
 ```
 
-Until then, run the Deno CLI from a repository checkout with `deno run -A src/wiki/cli.ts`. See [Getting Started](Getting_Started.md) for a full walkthrough.
+See [Getting Started](Getting_Started.md) for a full walkthrough.
 
 ## What wiki is
 
@@ -157,7 +155,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/ya
 - **Update** — check locked sources for newer commits ([wiki update](wiki_update.md))
 - **Remove** — delete a source from wiki.yml, cache, and lockfile ([wiki remove](wiki_remove.md))
 - **Init** — scaffold `wiki.yml` ([wiki init](wiki_init.md))
-- **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md)); deferred until the first JSR release, when it reports that it is waiting and exits 0
+- **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md)); steps aside with exit 0 when JSR cannot answer
 
 ## Supported file formats
 

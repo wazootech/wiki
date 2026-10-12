@@ -12,7 +12,7 @@ See [Design Philosophies](Design_Philosophies.md) for the CLI/library boundary. 
 
 ## Native Deno library
 
-The Deno library is configured as [`@wazoo/wiki` on JSR](https://jsr.io/@wazoo/wiki), with `src/wiki/mod.ts` as its public entrypoint. The initial JSR package has not been published yet; the first tagged release will publish it after the package is linked to this repository in JSR settings.
+The Deno library is published as [`@wazoo/wiki` on JSR](https://jsr.io/@wazoo/wiki), with `src/wiki/mod.ts` as its public entrypoint.
 
 ```ts
 import { Wiki } from "jsr:@wazoo/wiki";
@@ -94,11 +94,11 @@ if (!exported.ok) {
 }
 ```
 
-The library also exposes formatting, inline SPARQL rendering, link analysis and repair, source management, local serving, and project scaffolding. Its generated TSDoc reference will be available on [JSR](https://jsr.io/@wazoo/wiki) after the first release.
+The library also exposes formatting, inline SPARQL rendering, link analysis and repair, source management, local serving, and project scaffolding. Its generated TSDoc reference is on [JSR](https://jsr.io/@wazoo/wiki).
 
 ## The `wazootech-wiki` npm package: command only
 
-The npm package publishes the `wiki` command and nothing else. It bundles the Deno runtime, so npm users need neither system Python nor a separate Deno installation; Node.js 18 or newer is the only requirement. Until the first tagged Deno release, the currently published npm package still runs the Python CLI.
+The npm package publishes the `wiki` command and nothing else. It bundles the Deno runtime, so npm users need neither system Python nor a separate Deno installation; Node.js 18 or newer is the only requirement.
 
 ```bash
 npm install -g wazootech-wiki

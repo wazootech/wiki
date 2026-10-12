@@ -6,13 +6,11 @@ description: Check for Wiki CLI updates and upgrade supported installations.
 
 # `wiki upgrade`
 
-The Deno-backed `wiki upgrade` command becomes available with the first tagged Deno release. Before then, the published npm package is still the Python CLI and no Deno standalone binary is available. After release, compare the installed CLI version with the latest JSR release. A global Deno installation can be upgraded in place; npm installations are updated with npm, and standalone binaries are replaced from GitHub Releases.
+`wiki upgrade` compares the installed CLI version with the latest `@wazoo/wiki` release on JSR. A global Deno installation can be upgraded in place; npm and pip installations are updated with their own package manager, and standalone binaries are replaced from GitHub Releases.
 
-## Deferred until the JSR release
+## When JSR cannot answer
 
-The command compares against the published `@wazoo/wiki` on JSR, and JSR publication follows the first tagged Deno release. Until it is published there is no version to compare against, so `wiki upgrade` **steps aside rather than failing**: it explains that it is waiting and exits **0**, having installed nothing. The same applies when JSR cannot be reached.
-
-This is a no-op, not a success report — the message says which happened, so "waiting for the first JSR release" is never mistaken for "you are up to date". Once the package is published, the command behaves as described below with no further change.
+When JSR cannot be reached, or holds no published version to compare against, `wiki upgrade` **steps aside rather than failing**: it explains why and exits **0**, having installed nothing. This is a no-op, not a success report — the message says which happened, so "could not check" is never mistaken for "you are up to date".
 
 ## Usage
 
@@ -33,13 +31,13 @@ wiki upgrade -y -v       # show Deno install output
 
 ## Updating npm and standalone installations
 
-`wiki upgrade` cannot replace a command installed by npm. After the first tagged Deno release, update a global npm install with:
+`wiki upgrade` cannot replace a command installed by npm. Update a global npm install with:
 
 ```bash
 npm update -g wazootech-wiki
 ```
 
-For a local npm project, run `npm update wazootech-wiki`. After release, replace a standalone executable with the current binary from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify it against `SHA256SUMS`, and replace the installed file. The command can update a global Deno installation directly.
+For a local npm project, run `npm update wazootech-wiki`. Replace a standalone executable with the current binary from [GitHub Releases](https://github.com/wazootech/wiki/releases), verify it against `SHA256SUMS`, and replace the installed file. The command can update a global Deno installation directly.
 
 ## Related
 
