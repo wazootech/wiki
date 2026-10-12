@@ -9,6 +9,12 @@ import {
 } from "./paths.ts";
 import type { Config } from "./config.ts";
 import { frontmatterToGraph } from "./graph.ts";
+import {
+  derivedAdditions,
+  type DerivedMetadata,
+  deriveMetadata,
+  deriveMetadataAll,
+} from "./derived.ts";
 
 import {
   normalizeFormat,
@@ -114,16 +120,32 @@ function compactedJsonLdContext(config: Config): Record<string, string> {
   return Object.fromEntries(config.context.namespaces);
 }
 
+/**
+ * One document, serialized with the metadata the graph derives (wiki#318).
+ *
+ * The RDF formats compile through {@link frontmatterToGraph} with the derived
+ * values, so they match the wiki graph. `dict` is the data dict with each
+ * derived value the graph would add appended under its `schema:` key; a key
+ * the frontmatter already sets is left exactly as written.
+ */
 async function serializeDocument(
   data: Record<string, unknown>,
   filePath: string,
   config: Config,
   format: ExportFormat,
   mode: ExportMode,
+  derived: DerivedMetadata,
 ): Promise<unknown> {
-  if (format === "dict") return data;
+  if (format === "dict") {
+    const record: Record<string, unknown> = { ...data };
+    for (const addition of derivedAdditions(data, derived, config)) {
+      record[addition.key] = addition.value;
+    }
+    return record;
+  }
   const graph = frontmatterToGraph(data, config, {
     fileId: routeForDocumentFile(config, filePath),
+    derived,
   });
   const quads = graph.toArray();
   if (format === "json-ld") {
@@ -152,6 +174,7 @@ export async function documentJsonLd(
   config: Config,
   filePath: string,
   data: Record<string, unknown>,
+  derived?: DerivedMetadata,
 ): Promise<unknown> {
   return await serializeDocument(
     data,
@@ -159,6 +182,7 @@ export async function documentJsonLd(
     config,
     "json-ld",
     "compacted",
+    derived ?? await deriveMetadata(filePath),
   );
 }
 
@@ -182,6 +206,8 @@ export async function exportFrontmatter(
     };
   }
 
+  // Derived up front so the per-document `git log` calls run concurrently.
+  const derived = await deriveMetadataAll(selected);
   const converted: { name: string; rdf: unknown }[] = [];
   for (const filePath of selected) {
     const data = documentDataFromPath(
@@ -203,7 +229,14 @@ export async function exportFrontmatter(
     try {
       converted.push({
         name: basename(filePath),
-        rdf: await serializeDocument(data, filePath, config, format, mode),
+        rdf: await serializeDocument(
+          data,
+          filePath,
+          config,
+          format,
+          mode,
+          derived.get(filePath)!,
+        ),
       });
     } catch (error) {
       if (error instanceof Error) {

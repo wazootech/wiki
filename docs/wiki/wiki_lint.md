@@ -36,17 +36,20 @@ wiki lint --strict
 
 ### Configurable (`lint.*` in `wiki.yaml`)
 
-| Rule key             | What it audits                                                                                                          |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `broken_links`       | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                           |
-| `filename_pattern`   | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                                       |
-| `headings`           | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**)                        |
-| `heading_levels`     | Heading depth must increase by one level at a time (`@eslint/markdown`'s `markdown/heading-increment`)                  |
-| `duplicate_headings` | Duplicate H2+ heading text in the same document (`@eslint/markdown`'s `markdown/no-duplicate-headings`, MD024-inspired) |
-| `thematic_breaks`    | Horizontal rules (`---`, `***`, `___`) in body prose                                                                    |
-| `link_style`         | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                           |
+| Rule key                | What it audits                                                                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `broken_links`          | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                                                              |
+| `filename_pattern`      | Full filename vs `wiki.filename_pattern` regex (`.md` files only)                                                                                          |
+| `headings`              | Sentence-case H2+ (H1 title case conventional), numbered headings (ATX syntax is **`wiki fmt`**)                                                           |
+| `heading_levels`        | Heading depth must increase by one level at a time (`@eslint/markdown`'s `markdown/heading-increment`)                                                     |
+| `duplicate_headings`    | Duplicate H2+ heading text in the same document (`@eslint/markdown`'s `markdown/no-duplicate-headings`, MD024-inspired)                                    |
+| `thematic_breaks`       | Horizontal rules (`---`, `***`, `___`) in body prose                                                                                                       |
+| `link_style`            | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                                                              |
+| `redundant_frontmatter` | A `headline`, `dateCreated`, or `dateModified` that exactly repeats the value the graph derives from the first H1 or Git history ([wiki fix](wiki_fix.md)) |
 
-Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, and `thematic_breaks` are `off`.
+Each rule is `error`, `warning`, or `off`. Defaults: `broken_links`, `filename_pattern`, and `link_style` are `warning`; `headings`, `heading_levels`, `duplicate_headings`, `thematic_breaks`, and `redundant_frontmatter` are `off`.
+
+`redundant_frontmatter` reports only exact repeats; a differing value is an intentional override and is never reported. It is off by default because a wiki that follows the common convention of repeating the H1 as `headline` would otherwise warn on nearly every page, and fail `--strict`. Remove the repeats with [wiki fix](wiki_fix.md) `--apply`, then enable the rule to keep them out.
 
 `wiki lint` reports broken links only — it does not repair them. Use [wiki link](wiki_link.md) `--fix-broken` for unambiguous repairs (rename map, unique fuzzy slug, or heading match).
 

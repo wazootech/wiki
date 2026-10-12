@@ -19,4 +19,4 @@ sh:property:
 
 This document defines **SHACL validation rules** enforced on any `type: TechArticle` document in this wiki.
 
-It ensures that all technical articles have at least a `headline` and `description` in their YAML frontmatter.
+It ensures that all technical articles have a `headline` and a `description`. The `description` must be in the YAML frontmatter; the headline can be too, or come from the page's first `# H1`, which the graph derives as `schema:headline` ([wiki fix](wiki_fix.md#derived-metadata)).

@@ -65,13 +65,22 @@ schema:headline: Other
 # Other
 `;
 
-/** Already broken before any edit: no headline. */
+/**
+ * Already broken before any edit: no headline. It has no H1 either, because an
+ * H1 supplies a derived `schema:headline` that satisfies the shape (wiki#318).
+ */
 const BROKEN = `---
 '@type': schema:Article
 ---
 
-# Broken
+No title here.
 `;
+
+/** GOOD with no headline at all: neither the frontmatter key nor the H1. */
+const HEADLESS = GOOD.replace("schema:headline: Good\n", "").replace(
+  "# Good\n\n",
+  "",
+);
 
 function writeWiki(): string {
   const root = Deno.makeTempDirSync({ prefix: "wiki-edit-" });
@@ -195,12 +204,11 @@ Deno.test("an edit that introduces an error is rejected unless forced", async ()
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const headless = GOOD.replace("schema:headline: Good\n", "");
     const edit = {
       ops: [{
         op: "replace" as const,
         path: "wiki/Good.md",
-        content: headless,
+        content: HEADLESS,
       }],
     };
 
@@ -221,7 +229,24 @@ Deno.test("an edit that introduces an error is rejected unless forced", async ()
 
     const forced = await wiki.edit(edit, { apply: true, force: true });
     assertEquals(forced.status, "applied");
-    assertEquals(read(root, "wiki/Good.md"), headless);
+    assertEquals(read(root, "wiki/Good.md"), HEADLESS);
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("an H1 satisfies a shape that requires schema:headline", async () => {
+  const root = writeWiki();
+  try {
+    const wiki = Wiki.load(root);
+    // The frontmatter key goes, the `# Good` H1 stays: the graph derives the
+    // headline from it (wiki#318), so the shape is still met.
+    const content = GOOD.replace("schema:headline: Good\n", "");
+    const report = await wiki.edit({
+      ops: [{ op: "replace", path: "wiki/Good.md", content }],
+    }, { apply: true });
+    assertEquals(report.status, "applied", JSON.stringify(report.introduced));
+    assertEquals(read(root, "wiki/Good.md"), content);
   } finally {
     cleanup(root);
   }
@@ -496,7 +521,7 @@ Deno.test(
         ops: [{
           op: "replace",
           path: "wiki/Good.md",
-          content: GOOD.replace("schema:headline: Good\n", ""),
+          content: HEADLESS,
         }],
       });
       assertEquals(

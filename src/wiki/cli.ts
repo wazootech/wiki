@@ -367,6 +367,127 @@ async function runFmtCommand(
   }
 }
 
+interface ParsedFixCommand {
+  readonly files: readonly string[];
+  readonly apply: boolean;
+  readonly verbose: boolean;
+}
+
+const FIX_HELP = `Usage: wiki fix [OPTIONS] [FILES]...
+
+  Remove frontmatter that repeats a value the graph derives: a headline equal
+  to the page's first H1, or a dateCreated/dateModified equal to its Git
+  dates. Previews by default; only exact repeats are removed, and every other
+  byte of the page is kept.
+
+Options:
+  --apply        Write the changes (validated, all files or none).
+  -n, --dry-run  Preview without writing files (the default).
+  -v, --verbose  Name each removed field and the value it repeats.
+  --help         Show this message and exit.`;
+
+function parseFixCommandArgs(
+  args: readonly string[],
+): ParsedFixCommand | number {
+  const files: string[] = [];
+  let apply = false;
+  let dryRun = false;
+  let verbose = false;
+  let optionsEnded = false;
+  for (const token of args) {
+    if (!optionsEnded && (token === "--help" || token === "-h")) {
+      console.log(FIX_HELP);
+      return EXIT_OK;
+    } else if (!optionsEnded && token === "--") {
+      optionsEnded = true;
+    } else if (!optionsEnded && token === "--apply") {
+      apply = true;
+    } else if (!optionsEnded && (token === "-n" || token === "--dry-run")) {
+      dryRun = true;
+    } else if (!optionsEnded && (token === "-v" || token === "--verbose")) {
+      verbose = true;
+    } else if (!optionsEnded && token.startsWith("-") && token !== "-") {
+      return usageError(`Error: No such option: ${token}`);
+    } else {
+      if (!pathExists(token)) {
+        return usageError(
+          `Error: Invalid value for '[FILES]...': Path '${token}' does not exist.`,
+        );
+      }
+      files.push(token);
+    }
+  }
+  if (apply && dryRun) {
+    return usageError("Error: --apply and --dry-run cannot be used together.");
+  }
+  return { files, apply, verbose };
+}
+
+/** Run `fix`: preview or remove redundant derived frontmatter (wiki#319). */
+async function runFixCommand(
+  wiki: Wiki,
+  parsed: ParsedFixCommand,
+): Promise<number> {
+  let report;
+  try {
+    report = await wiki.fix(parsed.files.length > 0 ? parsed.files : null, {
+      apply: parsed.apply,
+    });
+  } catch (error) {
+    console.error(`Error: ${errorText(error)}`);
+    return EXIT_FAILURE;
+  }
+
+  let fields = 0;
+  let files = 0;
+  for (const file of report.files) {
+    for (const skipped of file.skipped) {
+      console.error(
+        `warning: ${file.path}: kept '${skipped.key}': ${skipped.reason}.`,
+      );
+    }
+    if (file.removed.length === 0) continue;
+    files += 1;
+    fields += file.removed.length;
+    if (parsed.verbose) {
+      for (const field of file.removed) {
+        console.log(
+          `${file.path}: ${field.key} (schema:${field.property} = ${
+            JSON.stringify(field.value)
+          })`,
+        );
+      }
+    } else {
+      console.log(file.path);
+    }
+  }
+  const counted = `${fields} redundant field${fields === 1 ? "" : "s"} ` +
+    `from ${files} file${files === 1 ? "" : "s"}`;
+
+  switch (report.status) {
+    case "clean":
+      if (fields === 0) console.log("No redundant frontmatter.");
+      return EXIT_OK;
+    case "dry_run":
+      console.log(`Would remove ${counted}. Re-run with --apply to write.`);
+      return EXIT_OK;
+    case "applied":
+      console.log(`Removed ${counted}.`);
+      return EXIT_OK;
+    case "conflict":
+      console.error("Not written: the files changed while fix was running.");
+      return EXIT_CONFLICT;
+    case "rejected":
+      for (const issue of report.edit?.introduced ?? []) {
+        console.error(`${issue.severity}: ${issue.message}`);
+      }
+      console.error(
+        "Not written: removing these fields introduces the errors above.",
+      );
+      return EXIT_FAILURE;
+  }
+}
+
 interface ParsedQueryCommand {
   readonly queryArgs: readonly string[];
   readonly format: import("./format.ts").QueryFormat;
@@ -621,7 +742,8 @@ async function parseExportCommandArgs(
     } else if (token === "--help" || token === "-h") {
       console.log(
         "Usage: wiki export [OPTIONS] [FILES]...\n\n" +
-          "Export document frontmatter as RDF or JSON-LD.\n\n" +
+          "Export document frontmatter, with the values the graph derives,\n" +
+          "as RDF or JSON-LD.\n\n" +
           "Options:\n" +
           "  -o, --output PATH   File to write serialized RDF output\n" +
           "  -f, --format FORMAT dict, json-ld, turtle, xml (deferred), n3, nt, trig, nquads\n" +
@@ -2129,12 +2251,14 @@ async function runRmCommand(
 const SHOW_HELP = [
   "Usage: wiki file show [OPTIONS] PATH",
   "",
-  "  Describe one file as the engine sees it: frontmatter, compacted JSON-LD,",
-  "  heading outline, outbound links, and the content hash to pass as an edit",
-  '  op\'s "expect". PATH is relative to the config root, as in wiki edit.',
+  "  Describe one file as the engine sees it: frontmatter, the values the graph",
+  "  derives (headline from the H1, dates from Git), compacted JSON-LD, heading",
+  "  outline, outbound links, and the content hash to pass as an edit op's",
+  '  "expect". PATH is relative to the config root, as in wiki edit.',
   "",
   "Options:",
-  "  --field KEY  Print only this frontmatter field (exit 1 when it is unset).",
+  "  --field KEY  Print only this field: frontmatter first, then a derived",
+  "               schema:headline/dateCreated/dateModified (exit 1 when unset).",
   "  -f, --format [text|json]",
   "               Output format (default: text).",
   "  --json       Shorthand for --format json.",
@@ -2233,12 +2357,17 @@ async function runShowCommand(
   }
 
   if (parsed.field !== null) {
-    const frontmatter = report.frontmatter ?? {};
-    if (!Object.hasOwn(frontmatter, parsed.field)) {
+    // A field the frontmatter sets wins; otherwise a derived value
+    // (`schema:headline`, ...) answers, as it does in the graph.
+    const fields: Record<string, unknown> = {
+      ...report.derived,
+      ...(report.frontmatter ?? {}),
+    };
+    if (!Object.hasOwn(fields, parsed.field)) {
       console.error(`Error: ${report.path} has no field '${parsed.field}'.`);
       return EXIT_FAILURE;
     }
-    const value = frontmatter[parsed.field];
+    const value = fields[parsed.field];
     console.log(
       parsed.format === "json"
         ? JSON.stringify(value, null, 2)
@@ -2256,6 +2385,14 @@ async function runShowCommand(
     lines.push("frontmatter:");
     for (const [key, value] of Object.entries(report.frontmatter)) {
       lines.push(`  ${key}: ${fieldText(value)}`);
+    }
+  }
+  const derived = Object.entries(report.derived);
+  if (derived.length > 0) {
+    lines.push("derived:");
+    for (const [key, value] of derived) {
+      const from = key.endsWith("headline") ? "H1" : report.dateSource;
+      lines.push(`  ${key}: ${value} (from ${from})`);
     }
   }
   if (report.headings.length > 0) {
@@ -2383,6 +2520,17 @@ const COMMANDS: readonly CommandDefinition[] = [
         configPath,
         wikiInputs,
       });
+    },
+  },
+  {
+    names: ["fix"],
+    description: "Remove frontmatter that repeats a derived value.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const parsed = parseFixCommandArgs(args);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      return await runFixCommand(wiki, parsed);
     },
   },
   {

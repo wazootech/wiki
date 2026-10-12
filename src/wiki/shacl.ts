@@ -40,6 +40,7 @@ import type { DatasetCore, Quad, Term } from "@rdfjs/types";
 import { RDFS, SH } from "./context.ts";
 import type { Config } from "./config.ts";
 import { frontmatterToGraph, loadGraph } from "./graph.ts";
+import { deriveMetadata } from "./derived.ts";
 
 import { documentDataFromPath } from "./parser.ts";
 import { routeForDocumentFile } from "./paths.ts";
@@ -357,6 +358,7 @@ export async function checkShaclFile(
   const shapesGraph = loadShapes(sourceGraph);
   const dataGraph = frontmatterToGraph(data, config, {
     fileId: routeForDocumentFile(config, filePath),
+    derived: await deriveMetadata(filePath),
   });
 
   return await validateShacl(dataGraph, shapesGraph);

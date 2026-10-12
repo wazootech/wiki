@@ -49,6 +49,7 @@ import {
 
 import { collectFrontmatterSchemaFindings } from "./frontmatter_schema.ts";
 import { lintShapeDefinitions } from "./shape_lint.ts";
+import { findRedundantFrontmatter } from "./fix.ts";
 import { headingPlainText, parseHeadings } from "./headings.ts";
 import {
   LAYOUT_FRONTMATTER_KEY,
@@ -708,8 +709,46 @@ export async function runLint(
     lintLinkStyle(config, fileFilter),
     config.lint,
   );
+  // Skipped outright when off: it costs a `git log` per page.
+  if (config.lint.redundant_frontmatter !== "off") {
+    report = applyIssues(
+      report,
+      "redundant_frontmatter",
+      await lintRedundantFrontmatter(config, fileFilter),
+      config.lint,
+    );
+  }
 
   return report;
+}
+
+/**
+ * Frontmatter entries that repeat the value the graph derives (wiki#319).
+ *
+ * Only an exact repeat is reported; a differing value is an intentional
+ * override. `wiki fix` removes what this reports.
+ */
+export async function lintRedundantFrontmatter(
+  config: Config,
+  fileFilter: ReadonlySet<string> | null = null,
+): Promise<IssueDetail[]> {
+  const paths = iterMarkdownFiles(config).filter((filePath) =>
+    fileFilter === null ||
+    fileFilter.has(routeForDocumentFile(config, filePath))
+  );
+  const issues: IssueDetail[] = [];
+  for (const document of await findRedundantFrontmatter(config, paths)) {
+    for (const field of document.fields) {
+      issues.push({
+        message: `In ${basename(document.path)}: frontmatter '${field.key}' ` +
+          `repeats the derived schema:${field.property} ` +
+          `(${JSON.stringify(field.value)}); remove it with \`wiki fix\`.`,
+        path: document.path,
+        route: document.route,
+      });
+    }
+  }
+  return issues;
 }
 
 /** Combine the check and lint passes into the one report `audit` returns. */

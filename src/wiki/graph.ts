@@ -79,6 +79,13 @@ import {
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
 import { describeText, describeValue } from "./describe.ts";
 import {
+  DERIVED_PROPERTIES,
+  type DerivedMetadata,
+  derivedPredicate,
+  deriveMetadataAll,
+  isDateProperty,
+} from "./derived.ts";
+import {
   type GraphDescriptor,
   loadLockfile,
   type SourceConfig,
@@ -670,6 +677,12 @@ export interface FrontmatterGraphOptions {
   /** The document's extension, used when `includeFileExtension` is set. */
   readonly fileExt?: string;
   readonly contentPredicate?: string | null;
+  /**
+   * Metadata derived from the document (wiki#318): its H1 and Git dates. Each
+   * value is added only when no frontmatter key already gives the subject that
+   * predicate, so an explicit value always wins.
+   */
+  readonly derived?: DerivedMetadata | null;
 }
 
 /** Convert a parsed frontmatter mapping into an RDF graph. */
@@ -724,11 +737,43 @@ export function frontmatterToGraph(
     if (isPresent(value)) resolveObject(key, value, graph, subject, rdfContext);
   }
 
+  if (options.derived) {
+    addDerived(graph, subject, options.derived, rdfContext);
+  }
+
   if (isTruthy(body) && isTruthy(contentPredicate)) {
     resolveObject(contentPredicate!, body, graph, subject, rdfContext);
   }
 
   return graph;
+}
+
+/**
+ * Fill the subject's derived properties that frontmatter left unset.
+ *
+ * "Unset" is decided on the graph, after every frontmatter key has resolved,
+ * so any key that names the same predicate IRI counts as explicit: `headline`
+ * under a schema.org `@vocab` and `schema:headline` both win.
+ */
+function addDerived(
+  graph: RdfGraph,
+  subject: NamedNode,
+  derived: DerivedMetadata,
+  context: Context,
+): void {
+  for (const property of DERIVED_PROPERTIES) {
+    const value = derived[property];
+    if (value === null) continue;
+    const pred = namedNode(derivedPredicate(property, context));
+    if (!graph.match(subject, pred, null).next().done) continue;
+    graph.add(
+      subject,
+      pred,
+      isDateProperty(property)
+        ? literal(value, { datatype: XSD_DATETIME })
+        : literal(value),
+    );
+  }
 }
 
 /**
@@ -793,6 +838,7 @@ function processDocumentFile(
   graph: RdfGraph,
   filePath: string,
   config: Config,
+  derived: DerivedMetadata | null,
 ): void {
   const data = documentDataFromPath(filePath);
   if (data !== null) {
@@ -815,6 +861,7 @@ function processDocumentFile(
         body,
         includeFileExtension: config.graph.include_file_extension,
         fileExt: extname(filePath).toLowerCase(),
+        derived,
       }),
     );
   }
@@ -852,19 +899,34 @@ const EXT_FORMAT_MAP: ReadonlyMap<string, string> = new Map([
   [".jsonld", "json-ld"],
 ]);
 
+/**
+ * Every document file, keyed by {@link pathKey}, with its derived metadata.
+ *
+ * Derived up front, not per file inside the walk, so the Git calls run
+ * concurrently rather than one after another.
+ */
+async function documentMetadata(
+  config: Config,
+): Promise<Map<string, DerivedMetadata>> {
+  const files = iterDocumentFiles(config);
+  const derived = await deriveMetadataAll(files);
+  return new Map(files.map((file) => [pathKey(file), derived.get(file)!]));
+}
+
 /** Load every document and RDF file under one input directory. */
 async function processInputDir(
   graph: RdfGraph,
   config: Config,
   inputDir: string,
-  documentFiles: ReadonlySet<string>,
+  documentFiles: ReadonlyMap<string, DerivedMetadata>,
 ): Promise<void> {
   if (!pathExists(inputDir)) return;
   for (const filePath of sortedTreePaths(inputDir)) {
     if (!isFile(filePath) || config.isExcluded(filePath)) continue;
     try {
-      if (documentFiles.has(pathKey(filePath))) {
-        processDocumentFile(graph, filePath, config);
+      const derived = documentFiles.get(pathKey(filePath));
+      if (derived !== undefined) {
+        processDocumentFile(graph, filePath, config, derived);
       } else {
         const format = EXT_FORMAT_MAP.get(extname(filePath).toLowerCase());
         if (format !== undefined) {
@@ -954,7 +1016,7 @@ async function buildGraphFromWiki(config: Config): Promise<RdfGraph> {
   config.bindNamespaces(graph);
   graph.vocab = config.context.vocab;
 
-  const documentFiles = new Set(iterDocumentFiles(config).map(pathKey));
+  const documentFiles = await documentMetadata(config);
   for (const inputDir of config.wiki.input) {
     await processInputDir(graph, config, inputDir, documentFiles);
   }
@@ -1019,7 +1081,7 @@ export async function loadDataset(
   const dataset = new RdfDataset({ defaultUnion: true });
   config.bindNamespaces(dataset);
   dataset.vocab = config.context.vocab;
-  const documentFiles = new Set(iterDocumentFiles(config).map(pathKey));
+  const documentFiles = await documentMetadata(config);
   const descriptors = graphDescriptors(config);
   const sourceByPath = new Map<string, GraphDescriptor>();
   for (const descriptor of descriptors) {
