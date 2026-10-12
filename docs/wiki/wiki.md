@@ -112,20 +112,20 @@ Starter templates sit at the edges of the toolchain — publish surfaces, query 
 wiki init --template llm-wiki
 ```
 
-| Template                                                                             | Description                                                                                   |
-| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| [generic](https://github.com/wazootech/wiki-templates/tree/main/generic)             | Generic Wiki CLI project (`wiki init` parity plus deploy)                                     |
-| [yasgui](https://github.com/wazootech/wiki-templates/tree/main/yasgui)               | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL                       |
-| [llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/llm-wiki)           | [LLM Wiki](LLM_Wiki.md) starter vault with agent-oriented pages and gardening hooks           |
-| [nextjs](https://github.com/wazootech/wiki-templates/tree/main/nextjs)               | Next.js SSG consumer of `wiki export` JSON-LD                                                 |
-| [quartz](https://github.com/wazootech/wiki-templates/tree/main/quartz)               | Quartz static site from a compatible vault plus `wiki check` CI                               |
-| [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/cocoindex)         | CocoIndex incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes |
-| [mintlify](https://github.com/wazootech/wiki-templates/tree/main/mintlify)           | Mintlify or Holocron docs site from a compatible vault                                        |
-| [holocron](https://github.com/wazootech/wiki-templates/tree/main/holocron)           | Holocron docs site from a Wiki CLI-compatible vault                                           |
-| [astro](https://github.com/wazootech/wiki-templates/tree/main/astro)                 | Astro SSG consumer of `wiki export` JSON-LD                                                   |
-| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/wikipedia)         | Wikipedia-themed layout for Wiki CLI-generated sites                                          |
-| [camunda](https://github.com/wazootech/wiki-templates/tree/main/camunda)             | Camunda BPMN/DMN governance knowledge base with SHACL shapes                                  |
-| [workspace-cli](https://github.com/wazootech/wiki-templates/tree/main/workspace-cli) | Composed workspace of independently owned sub-wiki repos with named-graph provenance          |
+| Template                                                                                       | Description                                                                                   |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [generic](https://github.com/wazootech/wiki-templates/tree/main/templates/generic)             | Generic Wiki CLI project (`wiki init` parity plus deploy)                                     |
+| [yasgui](https://github.com/wazootech/wiki-templates/tree/main/templates/yasgui)               | SPARQL query editor UI (YASGUI); `wiki serve` `/api/sparql`, export TTL                       |
+| [llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/templates/llm-wiki)           | [LLM Wiki](LLM_Wiki.md) starter vault with agent-oriented pages and gardening hooks           |
+| [nextjs](https://github.com/wazootech/wiki-templates/tree/main/templates/nextjs)               | Next.js SSG consumer of `wiki export` JSON-LD                                                 |
+| [quartz](https://github.com/wazootech/wiki-templates/tree/main/templates/quartz)               | Quartz static site from a compatible vault plus `wiki check` CI                               |
+| [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/templates/cocoindex)         | CocoIndex incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes |
+| [mintlify](https://github.com/wazootech/wiki-templates/tree/main/templates/mintlify)           | Mintlify or Holocron docs site from a compatible vault                                        |
+| [holocron](https://github.com/wazootech/wiki-templates/tree/main/templates/holocron)           | Holocron docs site from a Wiki CLI-compatible vault                                           |
+| [astro](https://github.com/wazootech/wiki-templates/tree/main/templates/astro)                 | Astro SSG consumer of `wiki export` JSON-LD                                                   |
+| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/templates/wikipedia)         | Wikipedia-themed layout for Wiki CLI-generated sites                                          |
+| [camunda](https://github.com/wazootech/wiki-templates/tree/main/templates/camunda)             | Camunda BPMN/DMN governance knowledge base with SHACL shapes                                  |
+| [workspace-cli](https://github.com/wazootech/wiki-templates/tree/main/templates/workspace-cli) | Composed workspace of independently owned sub-wiki repos with named-graph provenance          |
 
 To propose a template or integration, [open an issue](https://github.com/wazootech/wiki-templates/issues/new) in wiki-templates describing the tool it connects and the Wiki CLI outputs it consumes; to build one, follow its [contributing guide](https://github.com/wazootech/wiki-templates/blob/main/CONTRIBUTING.md) and open a PR that adds a subdirectory and a catalog row.
 
@@ -139,7 +139,7 @@ External templates consume Wiki CLI outputs — they do not replace the compiler
 
 ### Retired slugs
 
-Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/yasgui`); `wiki-virtuoso-template` (→ folded into `wiki-templates/yasgui`); `wiki-obsidian-quartz-template`, `obsidian-quartz-template` (→ `wiki-templates/quartz`); bare `nextjs-template`, `mintlify-template`, `astro-template` (→ `wiki-templates/*`); `wiki-template`, `llm-wiki-template`, `wiki-yasgui-template`, `wiki-nextjs-template`, `wiki-quartz-template`, `wiki-cocoindex-template`, `wiki-mintlify-template`, `wiki-astro-template` (all retired — use `wiki-templates/<subdir>` instead).
+Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/templates/yasgui`); `wiki-virtuoso-template` (→ folded into `wiki-templates/templates/yasgui`); `wiki-obsidian-quartz-template`, `obsidian-quartz-template` (→ `wiki-templates/templates/quartz`); bare `nextjs-template`, `mintlify-template`, `astro-template` (→ `wiki-templates/templates/*`); `wiki-template`, `llm-wiki-template`, `wiki-yasgui-template`, `wiki-nextjs-template`, `wiki-quartz-template`, `wiki-cocoindex-template`, `wiki-mintlify-template`, `wiki-astro-template` (all retired — use `wiki-templates/templates/<subdir>` instead).
 
 ## Features
 

@@ -690,6 +690,7 @@ interface TemplateEntry {
 }
 
 const WIKI_TEMPLATES_REPO = "https://github.com/wazootech/wiki-templates.git";
+const WIKI_TEMPLATES_DIR = "templates";
 const TEMPLATE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function cloneTemplateRepository(destination: string): TemplateCloneResult {
@@ -811,6 +812,33 @@ function templateFailure(
   };
 }
 
+function resolveTemplateDir(
+  cloneDir: string,
+  templateName: string,
+): string | null {
+  for (
+    const candidate of [
+      join(cloneDir, WIKI_TEMPLATES_DIR, templateName),
+      join(cloneDir, templateName),
+    ]
+  ) {
+    if (isDirectory(candidate) && !isSymlink(candidate)) return candidate;
+  }
+  return null;
+}
+
+function availableTemplateNames(cloneDir: string): string[] {
+  const templatesDir = join(cloneDir, WIKI_TEMPLATES_DIR);
+  const listingDir = isDirectory(templatesDir) && !isSymlink(templatesDir)
+    ? templatesDir
+    : cloneDir;
+  return [...Deno.readDirSync(listingDir)]
+    .filter((entry) => entry.isDirectory && !entry.name.startsWith("."))
+    .map((entry) => entry.name)
+    .filter((name) => name !== WIKI_TEMPLATES_DIR)
+    .sort();
+}
+
 export function fetchTemplate(
   targetDirectory: string,
   templateName: string,
@@ -842,12 +870,9 @@ export function fetchTemplate(
           : `Failed to clone ${WIKI_TEMPLATES_REPO}.`,
       );
     }
-    const templateDir = join(cloneDir, templateName);
-    if (!isDirectory(templateDir) || isSymlink(templateDir)) {
-      const available = [...Deno.readDirSync(cloneDir)]
-        .filter((entry) => entry.isDirectory && !entry.name.startsWith("."))
-        .map((entry) => entry.name)
-        .sort();
+    const templateDir = resolveTemplateDir(cloneDir, templateName);
+    if (templateDir === null) {
+      const available = availableTemplateNames(cloneDir);
       return templateFailure(
         `Template '${templateName}' not found in wiki-templates. Available: ${
           available.join(", ")
