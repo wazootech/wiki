@@ -18,6 +18,14 @@
 
 ## 0.4.1 — 2026-10-11
 
+### Changed
+
+- `wiki init --template <name>` resolves starter templates under `templates/`
+  in the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo,
+  falling back to the legacy root layout while the transition is in flight. The
+  relocation of the templates themselves is tracked in
+  [wazootech/wiki-templates#57](https://github.com/wazootech/wiki-templates/issues/57).
+
 ### Fixed
 
 - The link audit no longer reports valid CommonMark as broken, which `--strict`

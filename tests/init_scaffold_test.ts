@@ -394,7 +394,7 @@ Deno.test("template fetching copies visible files without copying Git metadata",
   try {
     const result = fetchTemplate(root, "generic", {
       cloneRepository: (destination) => {
-        const template = join(destination, "generic");
+        const template = join(destination, "templates", "generic");
         Deno.mkdirSync(template, { recursive: true });
         Deno.writeTextFileSync(
           join(template, "README.md"),
@@ -430,6 +430,49 @@ Deno.test("template fetching copies visible files without copying Git metadata",
     assertEquals(readText(join(root, "nested", "page.md")), "# Nested\n");
     assertEquals(pathExists(join(root, ".hidden")), false);
     assertEquals(pathExists(join(root, ".git")), false);
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("template fetching falls back to a legacy root template when templates/ is absent", () => {
+  const root = tempRoot();
+  try {
+    const result = fetchTemplate(root, "generic", {
+      cloneRepository: (destination) => {
+        const template = join(destination, "generic");
+        Deno.mkdirSync(template, { recursive: true });
+        Deno.writeTextFileSync(join(template, "README.md"), "# Legacy\n");
+        return { code: 0, stderr: "" };
+      },
+    });
+    assertEquals(result.ok, true);
+    assertStringIncludes(
+      result.message,
+      "Initialized wiki from template 'generic'",
+    );
+    assertEquals(readText(join(root, "README.md")), "# Legacy\n");
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("template fetching prefers templates/ over a legacy root template", () => {
+  const root = tempRoot();
+  try {
+    const result = fetchTemplate(root, "generic", {
+      cloneRepository: (destination) => {
+        const legacy = join(destination, "generic");
+        Deno.mkdirSync(legacy, { recursive: true });
+        Deno.writeTextFileSync(join(legacy, "README.md"), "root\n");
+        const preferred = join(destination, "templates", "generic");
+        Deno.mkdirSync(preferred, { recursive: true });
+        Deno.writeTextFileSync(join(preferred, "README.md"), "templates\n");
+        return { code: 0, stderr: "" };
+      },
+    });
+    assertEquals(result.ok, true);
+    assertEquals(readText(join(root, "README.md")), "templates\n");
   } finally {
     cleanup(root);
   }
