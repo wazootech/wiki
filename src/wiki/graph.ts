@@ -833,9 +833,18 @@ function turtleBlocks(content: string): string[] {
   );
 }
 
-/** Parse a supported wiki document into the graph. */
+/** Add quads to every target graph. */
+function addQuadsTo(targets: readonly RdfGraph[], quads: Iterable<Quad>): void {
+  const items = [...quads];
+  for (const target of targets) addQuads(target, items);
+}
+
+/**
+ * Parse a supported wiki document into the target graphs: its owner graph,
+ * and in a dataset its own document graph too (wiki#320).
+ */
 function processDocumentFile(
-  graph: RdfGraph,
+  targets: readonly RdfGraph[],
   filePath: string,
   config: Config,
   derived: DerivedMetadata | null,
@@ -854,8 +863,8 @@ function processDocumentFile(
         if (!(error instanceof LinkedMarkdownError)) throw error;
       }
     }
-    addQuads(
-      graph,
+    addQuadsTo(
+      targets,
       frontmatterToGraph(data, config, {
         fileId: routeForDocumentFile(config, filePath),
         body,
@@ -874,8 +883,8 @@ function processDocumentFile(
   // page, so a malformed one must not take the whole graph down with it.
   for (const [currentBlockIndex, text] of turtleBlocks(content).entries()) {
     try {
-      addQuads(
-        graph,
+      addQuadsTo(
+        targets,
         scopeTurtleBlock(parseTurtle(text), filePath, currentBlockIndex),
       );
     } catch (error) {
@@ -913,12 +922,18 @@ async function documentMetadata(
   return new Map(files.map((file) => [pathKey(file), derived.get(file)!]));
 }
 
-/** Load every document and RDF file under one input directory. */
+/**
+ * Load every document and RDF file under one input directory.
+ *
+ * `documentGraph`, when given, names the extra graph each file's statements
+ * also land in: the dataset's per-document provenance graphs (wiki#320).
+ */
 async function processInputDir(
   graph: RdfGraph,
   config: Config,
   inputDir: string,
   documentFiles: ReadonlyMap<string, DerivedMetadata>,
+  documentGraph?: (filePath: string, isDocument: boolean) => RdfGraph,
 ): Promise<void> {
   if (!pathExists(inputDir)) return;
   for (const filePath of sortedTreePaths(inputDir)) {
@@ -926,13 +941,19 @@ async function processInputDir(
     try {
       const derived = documentFiles.get(pathKey(filePath));
       if (derived !== undefined) {
-        processDocumentFile(graph, filePath, config, derived);
+        const targets = documentGraph === undefined
+          ? [graph]
+          : [graph, documentGraph(filePath, true)];
+        processDocumentFile(targets, filePath, config, derived);
       } else {
         const format = EXT_FORMAT_MAP.get(extname(filePath).toLowerCase());
         if (format !== undefined) {
-          addQuads(
-            graph,
-            await parseRdf(readTextTolerant(filePath), format),
+          const quads = await parseRdf(readTextTolerant(filePath), format);
+          addQuadsTo(
+            documentGraph === undefined
+              ? [graph]
+              : [graph, documentGraph(filePath, false)],
+            quads,
           );
         }
       }
