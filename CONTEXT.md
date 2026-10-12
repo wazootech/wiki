@@ -21,7 +21,15 @@ Kept for the reasoning trail. #44 decided to keep the **Python CLI as the source
 
 ## Architecture decision: Library-first API
 
-Superseded by the Deno/TypeScript cutover. The former Python library-first API (`Wiki`, Pydantic `AuditReport`, and symbols in `wiki.__all__`) no longer defines the public runtime contract. The current Deno API is exported from `src/wiki/mod.ts` as `@wazoo/wiki`, and it is the only library API; the npm package ships the `wiki` command and no `Wiki` class. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+Superseded by the Deno/TypeScript cutover. The former Python library-first API (`Wiki`, Pydantic `AuditReport`, and symbols in `wiki.__all__`) no longer defines the public runtime contract. The current Deno API is exported from `src/wiki/mod.ts` as `@wazoo/wiki`; the npm package ships the `wiki` command and no `Wiki` class. See [Wiki Programmatic API](docs/wiki/Wiki_Programmatic_API.md).
+
+## Architecture decision: Theme entrypoint (`@wazoo/wiki/theme`)
+
+The static-site build layer is a second public entrypoint, `@wazoo/wiki/theme` (`src/wiki/theme.ts`). It exists because the retired Python library exposed the site-build primitives (`wiki.site.*`, `wiki.assets`, `wiki.paths`, …) that downstream themes embedded, and because a compiled CLI cannot be re-composed: a theme must be a TypeScript program that imports the build surface, not a config knob or a subprocess.
+
+- **Contract stays in the CLI.** `wiki build` and `wiki serve` are the supported default frontends; the entrypoint exports the same surface they use, so a theme and the default build cannot silently diverge.
+- **Not a `Wiki` wrapper.** `./theme` re-exports engine symbols only; `Wiki` and `Config` loading stay in `@wazoo/wiki`. The npm package still ships no library API.
+- **First consumer is in-repo.** `docs/build.ts` (this repository's docs site) imports only `@wazoo/wiki/theme`, so the entrypoint is dogfooded on every docs build. The `wiki-templates` wikipedia theme is the follow-on consumer.
 
 ## Language
 

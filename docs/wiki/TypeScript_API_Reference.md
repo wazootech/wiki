@@ -25,6 +25,10 @@ This is a deliberate change, not an omission. The package previously exported a 
 
 Embedding is the supported path for TypeScript and JavaScript. The command is the supported path for shells, CI, and languages that cannot embed JavaScript; generating typed clients for those languages from the JSON Schema the command already emits is planned work.
 
+## Custom themes
+
+Embedding `jsr:@wazoo/wiki` is the path for programmatic use of the engine. For a published site with a frontend other than the built-in `wiki build` output, embed the theme entrypoint `jsr:@wazoo/wiki/theme`, which exports the static-site build surface (`buildSite`, `buildStaticSite`, the Markdown and layout renderers, and the asset and path helpers). See the [Deno API Reference](Deno_API_Reference.md).
+
 ## Related
 
 - [Wiki Programmatic API](Wiki_Programmatic_API.md) — usage guide and design rationale
