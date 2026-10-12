@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: LLM Wiki
 description: A persistent knowledge codebase for AI-assisted knowledge management.
 ---
 

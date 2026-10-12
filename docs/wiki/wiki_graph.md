@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki graph
 description: List read-only RDF named graphs for root and installed source provenance.
 ---
 

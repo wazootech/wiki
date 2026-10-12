@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file rm
 description: Delete a page, refusing while other pages link to it unless their links are pruned to plain text, as a validated edit.
 ---
 

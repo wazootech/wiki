@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: SPARQL
 description: Standard query language and protocol for RDF.
 ---
 

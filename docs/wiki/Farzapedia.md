@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Farzapedia
 description: An interlinked digital garden serving as an example for the LLM Wiki pattern.
 about: wiki:wiki
 ---

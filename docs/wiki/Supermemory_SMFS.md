@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Supermemory SMFS
 description: Agent memory exposed as a mountable filesystem backed by Supermemory's semantic graph and vector index.
 codeRepository: https://github.com/supermemoryai/smfs
 ---

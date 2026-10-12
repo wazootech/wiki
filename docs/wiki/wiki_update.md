@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki update
 description: Check locked sources for newer commits and update wiki.lock.
 ---
 

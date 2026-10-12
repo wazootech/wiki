@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Wiki CLI Agent Skills
 description: Procedural knowledge for coding agents — install, scaffold, edit, improve, and deploy wikis.
 ---
 

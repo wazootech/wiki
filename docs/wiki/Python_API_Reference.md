@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Python API Reference
 description: The wazootech-wiki PyPI package, which installs the Wiki CLI as a native binary and adds a typed Python API for running it.
 ---
 

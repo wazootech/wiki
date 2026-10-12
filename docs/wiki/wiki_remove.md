@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki remove
 description: Remove a data source from wiki.yml, its cache, and wiki.lock.
 ---
 

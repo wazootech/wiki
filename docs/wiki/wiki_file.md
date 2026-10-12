@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file
 description: Create, change, move, delete, or inspect one wiki document file through validated, link-aware edits.
 ---
 

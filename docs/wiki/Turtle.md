@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Turtle
 description: Terse RDF Triple Language syntax.
 ---
 

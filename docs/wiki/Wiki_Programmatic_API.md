@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Wiki Programmatic API
 description: Stable Deno/TypeScript and npm entry points for validating, building, and querying a wiki.
 ---
 

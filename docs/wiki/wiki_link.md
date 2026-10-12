@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki link
 description: Suggest missing wikilinks and repair unambiguous broken internal links.
 ---
 

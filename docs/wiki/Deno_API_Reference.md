@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Deno API Reference
 description: Public Deno and TypeScript API for the Wiki engine.
 ---
 

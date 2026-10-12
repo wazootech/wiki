@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: CSS
 description: Cascading Style Sheets for describing document presentation.
 ---
 

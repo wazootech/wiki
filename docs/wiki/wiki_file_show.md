@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file show
 description: Describe one page as the engine sees it, with the content hash an edit expects.
 ---
 

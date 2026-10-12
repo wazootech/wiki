@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Semantic Web
 description: An extension of the Web through standards by the W3C.
 ---
 

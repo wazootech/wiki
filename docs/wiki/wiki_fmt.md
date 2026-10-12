@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki fmt
 description: Format Markdown wiki pages with native Deno/dprint formatter options.
 ---
 

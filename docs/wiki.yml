@@ -81,6 +81,8 @@ lint:
   filename_pattern: warning
   # Wikilinks in body when link.style is standard.
   link_style: warning
+  # Frontmatter that repeats the H1-derived headline or Git dates (wiki fix).
+  redundant_frontmatter: warning
 
 # Optional SPARQL HTTP endpoint on wiki serve (opt-in).
 # sparql_service:

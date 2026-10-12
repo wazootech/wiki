@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Learning Systems
 description: Continual learning versus recursive learning — how agent-managed wikis accumulate knowledge over time and refine themselves through iterative loops.
 ---
 

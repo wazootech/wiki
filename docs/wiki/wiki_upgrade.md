@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki upgrade
 description: Check for Wiki CLI updates and upgrade supported installations.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki mcp
 description: Run an MCP server for querying the wiki graph, with opt-in page-edit tools.
 ---
 

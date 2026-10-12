@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki export
 description: Export document frontmatter as RDF or JSON-LD.
 ---
 

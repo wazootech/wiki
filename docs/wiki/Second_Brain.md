@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Second Brain
 description: External system for capturing and organizing personal knowledge outside your head.
 ---
 

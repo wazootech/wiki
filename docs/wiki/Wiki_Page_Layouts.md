@@ -1,8 +1,6 @@
 ---
 type: TechArticle
 
-headline: Wiki Page Layouts
-
 description: Wiki page layout files for build and serve output.
 ---
 

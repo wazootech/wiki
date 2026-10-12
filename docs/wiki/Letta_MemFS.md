@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Letta MemFS
 description: Git-backed markdown memory for Letta Code agents with a special system directory always loaded into context.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: RDF XML
 description: XML-based W3C syntax for RDF input; Wiki output support is deferred.
 ---
 

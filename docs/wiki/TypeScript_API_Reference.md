@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: TypeScript API Reference
 description: How TypeScript callers reach the Wiki engine, and why the npm package no longer exports a Wiki class.
 ---
 

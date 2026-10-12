@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: CSV
 description: Comma-Separated Values, a lightweight tabular format.
 ---
 

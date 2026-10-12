@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Personal Knowledge
 description: Individual strategy and collection of knowledge.
 ---
 

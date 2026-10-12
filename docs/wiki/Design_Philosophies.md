@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Design Philosophies
 description: Unix-style CLI design for the Wiki CLI tool.
 ---
 

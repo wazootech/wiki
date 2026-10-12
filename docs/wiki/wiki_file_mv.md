@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file mv
 description: Move or rename a page and repoint every link and metadata reference to it, as a validated edit.
 ---
 

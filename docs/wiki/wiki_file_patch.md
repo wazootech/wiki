@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file patch
 description: Append to, prepend to, or replace a heading's section, the body, or the frontmatter, as a validated edit.
 ---
 

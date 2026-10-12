@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: HTML
 description: HyperText Markup Language for structuring web documents.
 ---
 
