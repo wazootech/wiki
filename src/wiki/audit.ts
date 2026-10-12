@@ -49,6 +49,7 @@ import {
 
 import { collectFrontmatterSchemaFindings } from "./frontmatter_schema.ts";
 import { lintShapeDefinitions } from "./shape_lint.ts";
+import { redundantForFile } from "./redundant.ts";
 import { headingPlainText, parseHeadings } from "./headings.ts";
 import {
   LAYOUT_FRONTMATTER_KEY,
@@ -353,6 +354,26 @@ export function lintLinkStyle(
           quoteString(match[0])
         }; ` +
           "use standard links ([display](Page.md)) per link.style.",
+      );
+    }
+  }
+  return warnings;
+}
+
+/** Flag frontmatter that only repeats a value derived from the body or Git (#318). */
+export function lintRedundantFrontmatter(
+  config: Config,
+  fileFilter: ReadonlySet<string> | null = null,
+): string[] {
+  const warnings: string[] = [];
+  for (const filePath of iterMarkdownFiles(config)) {
+    const route = routeForDocumentFile(config, filePath);
+    if (fileFilter !== null && !fileFilter.has(route)) continue;
+    for (const entry of redundantForFile(config, filePath)) {
+      warnings.push(
+        `In ${basename(filePath)}: frontmatter ${quoteString(entry.key)} ` +
+          `repeats the derived ${entry.field} (${quoteString(entry.value)}); ` +
+          "remove it or run `wiki fix`.",
       );
     }
   }
@@ -706,6 +727,14 @@ export async function runLint(
     report,
     "link_style",
     lintLinkStyle(config, fileFilter),
+    config.lint,
+  );
+  report = applyIssues(
+    report,
+    "redundant_frontmatter",
+    config.lint.redundant_frontmatter === "off"
+      ? []
+      : lintRedundantFrontmatter(config, fileFilter),
     config.lint,
   );
 

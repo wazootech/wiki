@@ -51,6 +51,7 @@ export interface LintConfig {
   readonly duplicate_headings: Severity;
   readonly thematic_breaks: Severity;
   readonly link_style: Severity;
+  readonly redundant_frontmatter: Severity;
 }
 
 /** Coerce a `remote_schema_refs` value, defaulting an absent one to `allow`. */
@@ -137,6 +138,10 @@ export const lintConfigSpec: ModelSpec = {
     ["duplicate_headings", { defaultValue: "off", before: coerceSeverity }],
     ["thematic_breaks", { defaultValue: "off", before: coerceSeverity }],
     ["link_style", { defaultValue: "warning", before: coerceSeverity }],
+    [
+      "redundant_frontmatter",
+      { defaultValue: "off", before: coerceSeverity },
+    ],
   ],
 };
 

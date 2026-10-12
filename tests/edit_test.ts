@@ -39,9 +39,9 @@ const ARTICLE_SHAPE = `---
 rdfs:label: Article Shape
 sh:targetClass: schema:Article
 sh:property:
-  - sh:path: schema:headline
+  - sh:path: schema:description
     sh:minCount: 1
-    sh:message: Article must have a headline.
+    sh:message: Article must have a description.
 ---
 
 # Article Shape
@@ -49,7 +49,7 @@ sh:property:
 
 const GOOD = `---
 '@type': schema:Article
-schema:headline: Good
+schema:description: Good
 ---
 
 # Good
@@ -59,13 +59,13 @@ Links to [Other](Other.md).
 
 const OTHER = `---
 '@type': schema:Article
-schema:headline: Other
+schema:description: Other
 ---
 
 # Other
 `;
 
-/** Already broken before any edit: no headline. */
+/** Already broken before any edit: no description. */
 const BROKEN = `---
 '@type': schema:Article
 ---
@@ -195,12 +195,12 @@ Deno.test("an edit that introduces an error is rejected unless forced", async ()
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const headless = GOOD.replace("schema:headline: Good\n", "");
+    const descriptionless = GOOD.replace("schema:description: Good\n", "");
     const edit = {
       ops: [{
         op: "replace" as const,
         path: "wiki/Good.md",
-        content: headless,
+        content: descriptionless,
       }],
     };
 
@@ -221,7 +221,7 @@ Deno.test("an edit that introduces an error is rejected unless forced", async ()
 
     const forced = await wiki.edit(edit, { apply: true, force: true });
     assertEquals(forced.status, "applied");
-    assertEquals(read(root, "wiki/Good.md"), headless);
+    assertEquals(read(root, "wiki/Good.md"), descriptionless);
   } finally {
     cleanup(root);
   }
@@ -286,7 +286,7 @@ Deno.test("editing an already-broken page is not blocked by its old error", asyn
       ops: [{
         op: "replace",
         path: "wiki/Broken.md",
-        content: BROKEN + "\nStill no headline.\n",
+        content: BROKEN + "\nStill no description.\n",
       }],
     });
     assertEquals(report.status, "dry_run");
@@ -496,7 +496,7 @@ Deno.test(
         ops: [{
           op: "replace",
           path: "wiki/Good.md",
-          content: GOOD.replace("schema:headline: Good\n", ""),
+          content: GOOD.replace("schema:description: Good\n", ""),
         }],
       });
       assertEquals(

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Graph construction derives `schema:headline` from a page's first H1 and
+  `schema:dateCreated` / `schema:dateModified` from its Git history (committer
+  time, UTC, `--follow`; file modification time when there is none), filling
+  only what frontmatter leaves unstated and never writing to the page. The new
+  `lint.redundant_frontmatter` rule (default `off`) and `wiki fix` find and
+  remove frontmatter that only repeats a derived value; `wiki fix` previews
+  unless given `--apply` ([#318](https://github.com/wazootech/wiki/issues/318),
+  [#319](https://github.com/wazootech/wiki/issues/319)). Derived values are in
+  the graph SHACL validates, so a shape requiring `schema:headline` is now
+  satisfied by a page's H1.
+
 ### Fixed
 
 - The install docs, README, and skill no longer say npm, JSR, PyPI, or the
@@ -20,8 +33,8 @@
 
 ### Changed
 
-- `wiki init --template <name>` resolves starter templates under `templates/`
-  in the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo,
+- `wiki init --template <name>` resolves starter templates under `templates/` in
+  the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo,
   falling back to the legacy root layout while the transition is in flight. The
   relocation of the templates themselves is tracked in
   [wazootech/wiki-templates#57](https://github.com/wazootech/wiki-templates/issues/57).

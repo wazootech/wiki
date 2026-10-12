@@ -84,6 +84,7 @@ const FILE_COMMAND_FLAGS: Readonly<Record<string, readonly string[]>> = {
   check: ["-v", "--verbose", "--strict", "-f", "--format", "--json"],
   lint: ["-v", "--verbose", "--strict"],
   fmt: ["-v", "--verbose", "--check"],
+  fix: ["-v", "--verbose"],
 };
 
 const FILE_COMMAND_HELP: Readonly<Record<string, string>> = {
@@ -120,6 +121,18 @@ const FILE_COMMAND_HELP: Readonly<Record<string, string>> = {
     "Options:",
     "  --check        Check formatting without writing files back. Exits with code 1 if any files would change.",
     "  -v, --verbose  Print fmt config source and formatted file names.",
+    "  --help         Show this message and exit.",
+  ].join("\n"),
+  fix: [
+    "Usage: wiki fix [OPTIONS] [FILES]...",
+    "",
+    "  Remove frontmatter that only repeats a value derived from the page's H1 or",
+    "  Git history. Previews by default.",
+    "",
+    "Options:",
+    "  --apply        Write the changes. Without it, files are left untouched.",
+    "  --dry-run      Preview only (the default); the explicit spelling of no --apply.",
+    "  -v, --verbose  Name each removed field.",
     "  --help         Show this message and exit.",
   ].join("\n"),
 };
@@ -2394,6 +2407,51 @@ const COMMANDS: readonly CommandDefinition[] = [
       const wiki = await loadWiki(configPath, wikiInputs);
       if (typeof wiki === "number") return wiki;
       return await runFmtCommand(wiki, parsed);
+    },
+  },
+  {
+    names: ["fix"],
+    description: "Remove frontmatter that repeats a derived value.",
+    run: async ({ command, args, configPath, wikiInputs }) => {
+      const apply = args.includes("--apply");
+      if (apply && args.includes("--dry-run")) {
+        return usageError(
+          "Error: --apply and --dry-run cannot be used together.",
+        );
+      }
+      const rest = args.filter((a) => a !== "--apply" && a !== "--dry-run");
+      const parsed = parseFileCommandArgs(command, rest);
+      if (typeof parsed === "number") return parsed;
+      const wiki = await loadWiki(configPath, wikiInputs);
+      if (typeof wiki === "number") return wiki;
+      try {
+        const report = wiki.fix(
+          parsed.files.length > 0 ? parsed.files : null,
+          { apply },
+        );
+        for (const file of report.files) {
+          console.log(
+            `${report.applied ? "Fixed" : "Would fix"} ${basename(file.path)}` +
+              (parsed.verbose
+                ? `: ${file.removed.map((r) => r.key).join(", ")}`
+                : ""),
+          );
+        }
+        if (report.files.length === 0) {
+          console.log("No redundant frontmatter.");
+        } else if (!report.applied) {
+          console.log(
+            `Preview: ${report.files.length} file(s) would change. Re-run with --apply to write.`,
+          );
+        }
+        return EXIT_OK;
+      } catch (error) {
+        if (error instanceof ValueError) {
+          console.error(`Error: ${error.message}`);
+          return EXIT_FAILURE;
+        }
+        throw error;
+      }
     },
   },
   {

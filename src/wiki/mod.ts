@@ -395,3 +395,10 @@ export {
   createSparqlServiceHandler,
   validateSparqlServicePath,
 } from "./sparql_service.ts";
+
+export {
+  type FixedFile,
+  fixRedundantFrontmatter,
+  type FixReport,
+} from "./redundant.ts";
+export { DERIVED_FIELDS, deriveMetadata, firstH1 } from "./derived.ts";

@@ -222,17 +222,19 @@ lint: # optional block
   duplicate_headings: off # default off; init omits
   thematic_breaks: off # default off; init omits
   link_style: warning # default warning; init writes
+  redundant_frontmatter: off # default off; init omits
 ```
 
-| Key                  | Required | Default   | Init   | Audited by                                                   |
-| -------------------- | -------- | --------- | ------ | ------------------------------------------------------------ |
-| `broken_links`       | optional | `warning` | writes | wikilinks, markdown links, fragments, assets, `wiki:` CURIEs |
-| `filename_pattern`   | optional | `warning` | writes | full filename vs `wiki.filename_pattern`                     |
-| `headings`           | optional | `off`     | omits  | ATX syntax, sentence-case H2+, numbered headings             |
-| `heading_levels`     | optional | `off`     | omits  | heading level gaps (for example H1 then H3)                  |
-| `duplicate_headings` | optional | `off`     | omits  | duplicate heading text on one page                           |
-| `thematic_breaks`    | optional | `off`     | omits  | horizontal rules in body prose                               |
-| `link_style`         | optional | `warning` | writes | Obsidian `[[wikilinks]]` when `link.style` is `standard`     |
+| Key                     | Required | Default   | Init   | Audited by                                                   |
+| ----------------------- | -------- | --------- | ------ | ------------------------------------------------------------ |
+| `broken_links`          | optional | `warning` | writes | wikilinks, markdown links, fragments, assets, `wiki:` CURIEs |
+| `filename_pattern`      | optional | `warning` | writes | full filename vs `wiki.filename_pattern`                     |
+| `headings`              | optional | `off`     | omits  | ATX syntax, sentence-case H2+, numbered headings             |
+| `heading_levels`        | optional | `off`     | omits  | heading level gaps (for example H1 then H3)                  |
+| `duplicate_headings`    | optional | `off`     | omits  | duplicate heading text on one page                           |
+| `thematic_breaks`       | optional | `off`     | omits  | horizontal rules in body prose                               |
+| `link_style`            | optional | `warning` | writes | Obsidian `[[wikilinks]]` when `link.style` is `standard`     |
+| `redundant_frontmatter` | optional | `off`     | omits  | frontmatter repeating a derived H1 or Git date (`wiki fix`)  |
 
 ATX heading syntax is also enforced by **`wiki fmt`**, the Deno Markdown formatter; Setext underlines are converted on format.
 
@@ -544,13 +546,14 @@ Shape binding documents are not validated as instances — only their schema ref
 
 Under `lint`, each rule is `error`, `warning`, or `off`:
 
-| Rule key           | Default   | What it audits                                                                                                 |
-| ------------------ | --------- | -------------------------------------------------------------------------------------------------------------- |
-| `broken_links`     | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
-| `filename_pattern` | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
-| `headings`         | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
-| `thematic_breaks`  | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
-| `link_style`       | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                  |
+| Rule key                | Default   | What it audits                                                                                                 |
+| ----------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `broken_links`          | `warning` | Wikilinks, internal markdown links, heading fragments, assets, `wiki:` CURIEs                                  |
+| `filename_pattern`      | `warning` | Full filename vs `wiki.filename_pattern` regex                                                                 |
+| `headings`              | `off`     | ATX `#` headings only (no Setext underlines), sentence-case H2+, H1 title case conventional, numbered headings |
+| `thematic_breaks`       | `off`     | Horizontal rules (`---`, `***`, `___`) in body prose                                                           |
+| `link_style`            | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                  |
+| `redundant_frontmatter` | `off`     | Frontmatter that only repeats the H1 title or a Git-derived date; see [wiki fix](wiki_fix.md)                  |
 
 ### What `broken_links` accepts
 

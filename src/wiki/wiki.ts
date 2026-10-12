@@ -27,6 +27,7 @@ import { errorText } from "./errors.ts";
 import { isFile, pathExists, walkTree } from "./fspath.ts";
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
+import { fixRedundantFrontmatter, type FixReport } from "./redundant.ts";
 import {
   applyEdit,
   type EditOptions,
@@ -403,6 +404,19 @@ export class Wiki {
     options: { readonly check?: boolean; readonly verbose?: boolean } = {},
   ): FmtReport {
     return new DocumentBatch(this.config, files ?? null).format(options);
+  }
+
+  /**
+   * Remove frontmatter that only repeats a value derived from the page's H1 or
+   * Git history (#318). A preview unless `apply` is set.
+   */
+  fix(
+    files?: readonly string[] | null,
+    options: { readonly apply?: boolean } = {},
+  ): FixReport {
+    return fixRedundantFrontmatter(this.config, files ?? null, {
+      apply: options.apply ?? false,
+    });
   }
 
   async query(

@@ -77,6 +77,14 @@ import {
   readTextTolerant,
 } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
+import {
+  DERIVED_FIELDS,
+  type DerivedMetadata,
+  deriveMetadata,
+  keysForProperty,
+  markdownBody,
+  SCHEMA_NAMESPACE,
+} from "./derived.ts";
 import { describeText, describeValue } from "./describe.ts";
 import {
   type GraphDescriptor,
@@ -670,6 +678,48 @@ export interface FrontmatterGraphOptions {
   /** The document's extension, used when `includeFileExtension` is set. */
   readonly fileExt?: string;
   readonly contentPredicate?: string | null;
+  /**
+   * Values derived from the body and Git history (#318). Each fills a
+   * `schema:` property only when frontmatter does not already state it.
+   */
+  readonly derived?: DerivedMetadata;
+}
+
+/** The `schema:` namespace a context binds, or schema.org's own. */
+export function schemaNamespace(context: Context): string {
+  return context.namespaces.get("schema") ?? SCHEMA_NAMESPACE;
+}
+
+/** Add derived metadata for every property frontmatter leaves unstated. */
+function addDerived(
+  graph: RdfGraph,
+  subject: NamedNode,
+  record: DataRecord,
+  context: Context,
+  derived: DerivedMetadata,
+): void {
+  const namespace = schemaNamespace(context);
+  const stated = keysForProperty(
+    record,
+    (key) => resolvePredicate(key, context)?.value ?? null,
+    namespace,
+  );
+  for (const field of DERIVED_FIELDS) {
+    const value = derived[field.key];
+    if (value === undefined) continue;
+    const explicit = (stated.get(field.key) ?? []).some((key) =>
+      isPresent(record[key])
+    );
+    if (explicit) continue;
+    const predicate = namedNode(`${namespace}${field.property}`);
+    graph.add(
+      subject,
+      predicate,
+      field.key === "headline"
+        ? literal(value)
+        : literal(value, { datatype: XSD_DATETIME }),
+    );
+  }
 }
 
 /** Convert a parsed frontmatter mapping into an RDF graph. */
@@ -726,6 +776,10 @@ export function frontmatterToGraph(
 
   if (isTruthy(body) && isTruthy(contentPredicate)) {
     resolveObject(contentPredicate!, body, graph, subject, rdfContext);
+  }
+
+  if (options.derived !== undefined) {
+    addDerived(graph, subject, record, rdfContext, options.derived);
   }
 
   return graph;
@@ -797,16 +851,17 @@ function processDocumentFile(
   const data = documentDataFromPath(filePath);
   if (data !== null) {
     let body: string | null = null;
-    if (
-      extname(filePath).toLowerCase() === ".md" &&
-      isTruthy(config.graph.content_predicate)
-    ) {
+    let derived: DerivedMetadata | undefined;
+    if (extname(filePath).toLowerCase() === ".md") {
       const content = readTextTolerant(filePath);
-      try {
-        body = extract<DataRecord>(content).body.trim();
-      } catch (error) {
-        if (!(error instanceof LinkedMarkdownError)) throw error;
+      if (isTruthy(config.graph.content_predicate)) {
+        try {
+          body = extract<DataRecord>(content).body.trim();
+        } catch (error) {
+          if (!(error instanceof LinkedMarkdownError)) throw error;
+        }
       }
+      derived = deriveMetadata(filePath, markdownBody(content));
     }
     addQuads(
       graph,
@@ -815,6 +870,7 @@ function processDocumentFile(
         body,
         includeFileExtension: config.graph.include_file_extension,
         fileExt: extname(filePath).toLowerCase(),
+        ...(derived !== undefined ? { derived } : {}),
       }),
     );
   }
