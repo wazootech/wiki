@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: JSON
 description: JavaScript Object Notation, a standard data interchange format.
 ---
 

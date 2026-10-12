@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki serve
 description: Local HTTP server for live HTML preview and optional read-only SPARQL endpoint.
 ---
 

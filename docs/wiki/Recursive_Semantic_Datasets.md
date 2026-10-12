@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Recursive Semantic Datasets
 description: How Wiki composes installed Git-backed Wiki/RDF sources into one read-only query workspace with named graph provenance.
 ---
 

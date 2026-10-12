@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Getting Started
 description: Install the Deno-based wiki CLI and scaffold a new wiki.
 ---
 

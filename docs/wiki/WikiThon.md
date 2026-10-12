@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: WikiThon
 description: A 48-hour online hackathon to build personal Wikipedia-style knowledge bases with HydraDB, themed on the LLM Wiki trend.
 ---
 

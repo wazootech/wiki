@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Dataview Integration
 description: Query and visualize your semantic markdown files in Obsidian using Dataview DQL and DataviewJS.
 ---
 

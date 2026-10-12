@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Content Negotiation
 description: Managing resource representations through HTTP request headers.
 ---
 

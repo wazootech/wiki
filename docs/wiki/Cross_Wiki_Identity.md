@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Cross-Wiki Identity
 description: How one real-world entity that appears in two composed wikis is, and is not, merged — same-basename collisions, owl:sameAs versus schema:sameAs, and the @id alternative.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki init
 description: Scaffold wiki.yml and an empty wiki/ folder for markdown pages.
 ---
 

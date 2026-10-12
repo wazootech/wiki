@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Graph Cache
 description: In-process RDF graph reuse plus optional on-disk warm-start across repeated CLI runs.
 ---
 

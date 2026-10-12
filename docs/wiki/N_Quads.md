@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: N-Quads
 description: Line-oriented RDF serialization with an optional graph term per line.
 ---
 

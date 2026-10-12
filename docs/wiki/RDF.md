@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: RDF
 description: Resource Description Framework, a standard for data interchange on the web.
 ---
 

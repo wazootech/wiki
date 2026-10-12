@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki render
 description: Update inline SPARQL result tables in markdown files.
 ---
 

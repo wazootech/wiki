@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file new
 description: Create a page of a known type, with its required fields first, as a validated edit.
 ---
 

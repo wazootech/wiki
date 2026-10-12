@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki build
 description: Generate a static HTML site from the wiki.
 ---
 

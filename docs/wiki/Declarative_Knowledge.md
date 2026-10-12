@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Declarative Knowledge
 description: Knowing what — facts, types, and relationships expressed as structured data.
 ---
 

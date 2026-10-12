@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: JSON-LD
 description: JavaScript Object Notation for Linked Data.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki lint
 description: Convention audits for broken links, filename patterns, heading style, and internal link style.
 ---
 

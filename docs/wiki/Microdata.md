@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Microdata
 description: HTML5 specification for nesting semantics within content on web pages.
 ---
 

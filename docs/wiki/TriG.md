@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: TriG
 description: Turtle syntax extended with named graph blocks.
 ---
 

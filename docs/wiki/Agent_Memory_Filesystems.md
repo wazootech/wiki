@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Agent Memory Filesystems
 description: Comparison of filesystem-metaphor approaches for long-term LLM agent memory, including Wiki CLI, SMFS, and MemFS.
 ---
 

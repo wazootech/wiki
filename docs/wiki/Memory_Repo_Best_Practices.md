@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Memory Repo Best Practices
 description: The memory-first convention for per-owner wiki repositories — structure, naming, and continuity rules for durable, append-only second-brain repos managed with the wiki toolchain.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki check
 description: Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter.
 ---
 

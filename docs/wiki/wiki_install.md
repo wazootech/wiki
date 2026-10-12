@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki install
 description: Fetch and lock external data sources declared in wiki.yml.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Deploying to GitHub Pages
 description: Deno workflow to check, build, and publish the docs wiki.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: N-Triples
 description: Line-oriented RDF serialization with one triple per line.
 ---
 

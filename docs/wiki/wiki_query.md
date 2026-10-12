@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki query
 description: Run SPARQL SELECT or CONSTRUCT against the wiki graph.
 ---
 

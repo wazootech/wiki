@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Wiki Configuration
 description: Reference for wiki.yaml, wiki.yml, and wiki.json (Config).
 ---
 
@@ -555,7 +554,7 @@ Under `lint`, each rule is `error`, `warning`, or `off`:
 | `link_style`            | `warning` | Obsidian wikilinks (`[[Page]]`) in body prose when `link.style` is `standard`                                                                           |
 | `redundant_frontmatter` | `off`     | A `headline`, `dateCreated`, or `dateModified` that repeats the value the graph derives from the H1 or Git history; remove with [wiki fix](wiki_fix.md) |
 
-`redundant_frontmatter` is `off` by default because many wikis, this one included, follow the convention of repeating the H1 as `headline`: as a default warning it would fail every such page under `lint --strict`. Turn it on once the redundant keys are removed.
+`redundant_frontmatter` is `off` by default because many wikis follow the convention of repeating the H1 as `headline`: as a default warning it would fail every such page under `lint --strict`. Turn it on once the redundant keys are removed with `wiki fix --apply`, as this wiki does in `docs/wiki.yml`.
 
 ### What `broken_links` accepts
 

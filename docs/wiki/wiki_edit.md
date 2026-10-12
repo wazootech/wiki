@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki edit
 description: Change a wiki through validated, atomic edits instead of hand-written Markdown.
 ---
 

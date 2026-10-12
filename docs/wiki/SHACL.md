@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: SHACL
 description: Shapes Constraint Language for validating RDF graphs.
 ---
 

@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: Procedural Knowledge
 description: Knowing how — workflows, rules, and executable processes rather than static facts.
 ---
 

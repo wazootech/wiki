@@ -1,6 +1,5 @@
 ---
 type: TechArticle
-headline: wiki file refs
 description: List the pages that link to a page and the pages it links to.
 ---
 
