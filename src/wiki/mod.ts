@@ -145,6 +145,8 @@ export {
 export {
   type DateSource,
   DERIVED_PROPERTIES,
+  type DerivedAddition,
+  derivedAdditions,
   type DerivedMetadata,
   derivedPredicate,
   type DerivedProperty,

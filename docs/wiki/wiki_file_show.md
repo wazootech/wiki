@@ -27,7 +27,7 @@ wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 | `-f`, `--format` | `text`  | `text` or `json`. With `--field`, `json` prints the value as JSON.      |
 | `--json`         | —       | Shorthand for `--format json`.                                          |
 
-`KEY` is the literal frontmatter key, CURIE included (`schema:headline`), not an expanded IRI.
+`KEY` is the literal frontmatter key, CURIE included (`schema:headline`), not an expanded IRI. When the frontmatter does not set it, a derived `schema:headline`, `schema:dateCreated`, or `schema:dateModified` answers instead.
 
 ## JSON output
 
@@ -41,6 +41,11 @@ wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
   "hash": "3f0c…",
   "frontmatter": { "@type": "schema:Article", "schema:headline": "Alpha" },
   "jsonld": { "@context": { "…": "…" }, "@graph": ["…"] },
+  "derived": {
+    "schema:dateCreated": "2026-02-03T04:05:06Z",
+    "schema:dateModified": "2026-03-01T10:00:00Z"
+  },
+  "dateSource": "git",
   "headings": [
     { "level": 1, "text": "Alpha", "slug": "alpha", "line": 6 }
   ],
@@ -50,7 +55,9 @@ wiki -c docs/wiki.yml show docs/wiki/SPARQL.md --json
 }
 ```
 
-- `jsonld` is what [wiki export](wiki_export.md) writes with `-f json-ld -m compacted` for this one file.
+- `frontmatter` is exactly what the file says; it never gains derived keys, so it stays safe to edit from.
+- `derived` holds the values the graph derives and adds because the frontmatter does not set them ([wiki fix](wiki_fix.md#derived-metadata)): here the headline is absent because `schema:headline` is set explicitly. `dateSource` is `git`, `mtime`, or `null`. The text form lists them under `derived:` with their source.
+- `jsonld` is what [wiki export](wiki_export.md) writes with `-f json-ld -m compacted` for this one file, derived values included.
 - `headings[].line` counts from the top of the file, frontmatter included; `slug` is the anchor a `#fragment` link uses. Headings inside fenced code are not headings.
 - `links` lists each linked page once, in first-link order, by the same rules [wiki lint](wiki_lint.md) uses for backlinks. `path` is `null` when no document has the route.
 

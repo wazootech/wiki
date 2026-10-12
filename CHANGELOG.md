@@ -20,6 +20,11 @@
   writes only with `--apply`, through the validated, atomic `Wiki.edit()` path.
   It cuts only the removed entries' lines, keeping comments, key order,
   quoting, line endings, and the body byte for byte. Library: `Wiki.fix()`.
+- `wiki export` includes the derived values: the RDF and JSON-LD formats carry
+  them as the graph does, and `dict` adds each one the frontmatter does not set
+  under its `schema:` key. `wiki file show` reports them in new `derived` and
+  `dateSource` fields (and a `derived:` text section) while `frontmatter` stays
+  exactly as written; `--field schema:headline` falls back to the derived value.
 - Lint rule `lint.redundant_frontmatter` reports the same exact repeats. It
   is `off` by default: a wiki that repeats its H1 as `headline` (as this one
   does) would otherwise fail `lint --strict` on most pages.

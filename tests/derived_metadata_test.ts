@@ -687,3 +687,100 @@ Deno.test("wiki fix is rejected when a JSON Schema still requires the field", as
     cleanup(root);
   }
 });
+
+// ---------------------------------------------------------------------------
+// `wiki export` and `wiki file show`
+// ---------------------------------------------------------------------------
+
+/** One derived page and one whose frontmatter overrides the headline. */
+function exportWiki(): string {
+  const root = gitWiki();
+  write(root, "wiki/Page.md", "---\ntype: Article\n---\n\n# Page Title\n");
+  write(
+    root,
+    "wiki/Chosen.md",
+    "---\ntype: Article\nheadline: Chosen\n---\n\n# Derived\n",
+  );
+  commit(root, "create", "2026-02-03T04:05:06Z");
+  return root;
+}
+
+Deno.test("wiki export includes derived values; explicit keys stay as written", async () => {
+  const root = exportWiki();
+  try {
+    const dict = await runCli(root, ["export", "wiki/Page.md"]);
+    assertEquals(dict.code, 0, dict.stderr);
+    const page = JSON.parse(dict.stdout).rdf;
+    assertEquals(page["schema:headline"], "Page Title");
+    assertEquals(page["schema:dateCreated"], "2026-02-03T04:05:06Z");
+    assertEquals(page["schema:dateModified"], "2026-02-03T04:05:06Z");
+
+    const chosen = JSON.parse(
+      (await runCli(root, ["export", "wiki/Chosen.md"])).stdout,
+    ).rdf;
+    assertEquals(chosen.headline, "Chosen");
+    assertFalse("schema:headline" in chosen);
+    assertEquals(chosen["schema:dateCreated"], "2026-02-03T04:05:06Z");
+
+    const turtle = await runCli(root, ["export", "-f", "nt", "wiki/Page.md"]);
+    assertEquals(turtle.code, 0, turtle.stderr);
+    assertStringIncludes(
+      turtle.stdout,
+      '<https://schema.org/headline> "Page Title"',
+    );
+    assertStringIncludes(
+      turtle.stdout,
+      '<https://schema.org/dateModified> "2026-02-03T04:05:06Z"^^' +
+        `<${XSD_DATETIME}>`,
+    );
+
+    const all = JSON.parse((await runCli(root, ["export"])).stdout) as Array<
+      { name: string; rdf: Record<string, unknown> }
+    >;
+    assertEquals(
+      all.map((item) => [item.name, item.rdf["schema:headline"] ?? null]),
+      [["Chosen.md", null], ["Page.md", "Page Title"]],
+    );
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("wiki file show reports derived values beside the frontmatter", async () => {
+  const root = exportWiki();
+  try {
+    const report = await Wiki.load(root).show("wiki/Page.md");
+    assertEquals(report.frontmatter?.["schema:headline"], undefined);
+    assertEquals(report.derived, {
+      "schema:headline": "Page Title",
+      "schema:dateCreated": "2026-02-03T04:05:06Z",
+      "schema:dateModified": "2026-02-03T04:05:06Z",
+    });
+    assertEquals(report.dateSource, "git");
+    const jsonld = JSON.stringify(report.jsonld);
+    assertStringIncludes(jsonld, "Page Title");
+    assertStringIncludes(jsonld, "2026-02-03T04:05:06Z");
+
+    const chosen = await Wiki.load(root).show("wiki/Chosen.md");
+    assertFalse("schema:headline" in chosen.derived);
+
+    const text = await runCli(root, ["file", "show", "wiki/Page.md"]);
+    assertEquals(text.code, 0, text.stderr);
+    assertStringIncludes(
+      text.stdout,
+      "derived:\n  schema:headline: Page Title (from H1)\n" +
+        "  schema:dateCreated: 2026-02-03T04:05:06Z (from git)\n",
+    );
+    const field = await runCli(root, [
+      "file",
+      "show",
+      "wiki/Page.md",
+      "--field",
+      "schema:headline",
+    ]);
+    assertEquals(field.code, 0, field.stderr);
+    assertEquals(field.stdout.trim(), "Page Title");
+  } finally {
+    cleanup(root);
+  }
+});

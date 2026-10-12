@@ -296,6 +296,71 @@ export function derivedValue(
   return derived[property];
 }
 
+/**
+ * Whether a frontmatter value reaches the graph. Mirrors `isPresent` in
+ * `graph.ts`: only `null`, an empty list, and an empty mapping say nothing.
+ */
+function isPresentValue(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (
+    typeof value === "object" && !(value instanceof Date) &&
+    !(value instanceof Number) && Object.keys(value).length === 0
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/** The frontmatter keys that put a value on `predicate`, as the graph resolves them. */
+function explicitKeys(
+  data: DataRecord,
+  predicate: string,
+  context: Context,
+): string[] {
+  return Object.keys(data).filter((key) =>
+    !key.startsWith("@") && key !== "id" && key !== "type" &&
+    isPresentValue(data[key]) &&
+    resolvePredicate(key, context)?.value === predicate
+  );
+}
+
+/** A derived value the graph adds because no frontmatter key sets it. */
+export interface DerivedAddition {
+  readonly property: DerivedProperty;
+  /** `schema:<property>` under the wiki's `schema` prefix, else the full IRI. */
+  readonly key: string;
+  readonly predicate: string;
+  readonly value: string;
+}
+
+/**
+ * The derived values that land on a document's subject: every derived value
+ * with no explicit frontmatter key for its predicate, and none at all for a
+ * document the graph gives no subject (no type). This is what `wiki export`
+ * and `wiki file show` report next to the frontmatter as written.
+ */
+export function derivedAdditions(
+  data: DataRecord,
+  derived: DerivedMetadata,
+  config: Config,
+): DerivedAddition[] {
+  if (effectiveTypes(data, config).length === 0) return [];
+  const context = config.context;
+  const additions: DerivedAddition[] = [];
+  for (const property of DERIVED_PROPERTIES) {
+    const value = derivedValue(derived, property);
+    if (value === null) continue;
+    const predicate = derivedPredicate(property, context);
+    if (explicitKeys(data, predicate, context).length > 0) continue;
+    const key = context.namespaces.has("schema")
+      ? `schema:${property}`
+      : predicate;
+    additions.push({ property, key, predicate, value });
+  }
+  return additions;
+}
+
 /** One frontmatter entry that repeats a derived value exactly. */
 export interface RedundantField {
   /** The frontmatter key as written (`headline`, `schema:dateModified`, ...). */
@@ -348,11 +413,7 @@ export function redundantFields(
     const value = derivedValue(derived, property);
     if (value === null) continue;
     const predicate = derivedPredicate(property, context);
-    const keys = Object.keys(data).filter((key) =>
-      !key.startsWith("@") && key !== "id" && key !== "type" &&
-      data[key] !== null && data[key] !== undefined &&
-      resolvePredicate(key, context)?.value === predicate
-    );
+    const keys = explicitKeys(data, predicate, context);
     if (keys.length === 0) continue;
     if (!keys.every((key) => repeatsDerived(data[key], property, value))) {
       continue;

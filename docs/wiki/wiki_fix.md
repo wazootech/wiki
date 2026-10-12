@@ -46,7 +46,7 @@ Every typed document in the graph gets three [schema.org](https://schema.org/) v
 - **An explicit frontmatter value always wins.** A key counts as the same property when it resolves to the same predicate IRI, so `headline` (under a schema.org `@vocab`) and `schema:headline` both override the H1. A differing value is never rewritten or reported.
 - **Derived values are optional.** A document with no H1 still validates unless one of your own shapes requires `schema:headline`. Conversely, such a shape is now satisfied by an H1 alone.
 
-Deriving happens while the graph is built (`query`, `check`, `render`, `build`, `serve`, `mcp`) and never writes to a source file. It costs one `git log` per document, run in parallel and remembered for the rest of the process until `HEAD` moves; the [Graph Cache](Graph_Cache.md) disk cache is keyed on `HEAD` too. `wiki export` and `wiki file show` report frontmatter as written and do not add derived values.
+Deriving happens while the graph is built (`query`, `check`, `render`, `build`, `serve`, `mcp`) and never writes to a source file. It costs one `git log` per document, run in parallel and remembered for the rest of the process until `HEAD` moves; the [Graph Cache](Graph_Cache.md) disk cache is keyed on `HEAD` too. [wiki export](wiki_export.md) includes the derived values in every format, and [wiki file show](wiki_file_show.md) reports them beside the frontmatter as written.
 
 ## What counts as redundant
 

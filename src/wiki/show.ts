@@ -18,6 +18,11 @@ import type { Config } from "./config.ts";
 import { splitFrontmatterText } from "./document.ts";
 import { contentHash, EditUsageError } from "./edit.ts";
 import { documentJsonLd } from "./export.ts";
+import {
+  type DateSource,
+  derivedAdditions,
+  deriveMetadata,
+} from "./derived.ts";
 import { overlayKey, readText } from "./fspath.ts";
 import { parseHeadings } from "./headings.ts";
 import { type DataRecord, documentDataFromPath } from "./parser.ts";
@@ -54,8 +59,19 @@ export interface ShowReport {
   readonly hash: string;
   /** Parsed frontmatter (or data-document body), or `null` when there is none. */
   readonly frontmatter: DataRecord | null;
-  /** The frontmatter as compacted JSON-LD, as `wiki export -f json-ld -m compacted` writes it. */
+  /**
+   * The page's graph view as compacted JSON-LD, as `wiki export -f json-ld -m
+   * compacted` writes it: the frontmatter plus the derived values below.
+   */
   readonly jsonld: unknown;
+  /**
+   * The values the graph derives for this page and adds because the
+   * frontmatter does not set them (wiki#318), keyed `schema:headline`,
+   * `schema:dateCreated`, `schema:dateModified`. `frontmatter` stays as written.
+   */
+  readonly derived: Readonly<Record<string, string>>;
+  /** Where the derived dates came from: Git history, the file mtime, or neither. */
+  readonly dateSource: DateSource | null;
   readonly headings: readonly ShowHeading[];
   /** Pages this one links to, in first-link order. */
   readonly links: readonly PageRef[];
@@ -100,9 +116,16 @@ export async function showDocument(
     path,
     config.graph.content_predicate ?? undefined,
   );
+  const metadata = await deriveMetadata(path);
   const jsonld = frontmatter === null
     ? null
-    : await documentJsonLd(config, path, frontmatter);
+    : await documentJsonLd(config, path, frontmatter, metadata);
+  const derived = frontmatter === null ? {} : Object.fromEntries(
+    derivedAdditions(frontmatter, metadata, config).map((addition) => [
+      addition.key,
+      addition.value,
+    ]),
+  );
 
   let headings: ShowHeading[] = [];
   let links: PageRef[] = [];
@@ -128,6 +151,8 @@ export async function showDocument(
     hash: contentHash(Deno.readFileSync(path)),
     frontmatter,
     jsonld,
+    derived,
+    dateSource: metadata.dateSource,
     headings,
     links,
   };

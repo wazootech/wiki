@@ -742,7 +742,8 @@ async function parseExportCommandArgs(
     } else if (token === "--help" || token === "-h") {
       console.log(
         "Usage: wiki export [OPTIONS] [FILES]...\n\n" +
-          "Export document frontmatter as RDF or JSON-LD.\n\n" +
+          "Export document frontmatter, with the values the graph derives,\n" +
+          "as RDF or JSON-LD.\n\n" +
           "Options:\n" +
           "  -o, --output PATH   File to write serialized RDF output\n" +
           "  -f, --format FORMAT dict, json-ld, turtle, xml (deferred), n3, nt, trig, nquads\n" +
@@ -2250,12 +2251,14 @@ async function runRmCommand(
 const SHOW_HELP = [
   "Usage: wiki file show [OPTIONS] PATH",
   "",
-  "  Describe one file as the engine sees it: frontmatter, compacted JSON-LD,",
-  "  heading outline, outbound links, and the content hash to pass as an edit",
-  '  op\'s "expect". PATH is relative to the config root, as in wiki edit.',
+  "  Describe one file as the engine sees it: frontmatter, the values the graph",
+  "  derives (headline from the H1, dates from Git), compacted JSON-LD, heading",
+  "  outline, outbound links, and the content hash to pass as an edit op's",
+  '  "expect". PATH is relative to the config root, as in wiki edit.',
   "",
   "Options:",
-  "  --field KEY  Print only this frontmatter field (exit 1 when it is unset).",
+  "  --field KEY  Print only this field: frontmatter first, then a derived",
+  "               schema:headline/dateCreated/dateModified (exit 1 when unset).",
   "  -f, --format [text|json]",
   "               Output format (default: text).",
   "  --json       Shorthand for --format json.",
@@ -2354,12 +2357,17 @@ async function runShowCommand(
   }
 
   if (parsed.field !== null) {
-    const frontmatter = report.frontmatter ?? {};
-    if (!Object.hasOwn(frontmatter, parsed.field)) {
+    // A field the frontmatter sets wins; otherwise a derived value
+    // (`schema:headline`, ...) answers, as it does in the graph.
+    const fields: Record<string, unknown> = {
+      ...report.derived,
+      ...(report.frontmatter ?? {}),
+    };
+    if (!Object.hasOwn(fields, parsed.field)) {
       console.error(`Error: ${report.path} has no field '${parsed.field}'.`);
       return EXIT_FAILURE;
     }
-    const value = frontmatter[parsed.field];
+    const value = fields[parsed.field];
     console.log(
       parsed.format === "json"
         ? JSON.stringify(value, null, 2)
@@ -2377,6 +2385,14 @@ async function runShowCommand(
     lines.push("frontmatter:");
     for (const [key, value] of Object.entries(report.frontmatter)) {
       lines.push(`  ${key}: ${fieldText(value)}`);
+    }
+  }
+  const derived = Object.entries(report.derived);
+  if (derived.length > 0) {
+    lines.push("derived:");
+    for (const [key, value] of derived) {
+      const from = key.endsWith("headline") ? "H1" : report.dateSource;
+      lines.push(`  ${key}: ${value} (from ${from})`);
     }
   }
   if (report.headings.length > 0) {
