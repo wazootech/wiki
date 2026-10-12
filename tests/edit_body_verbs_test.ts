@@ -560,3 +560,97 @@ Deno.test("patch separates blocks that are not items of the same list", async ()
     ),
   );
 });
+
+const ARTICLE_SHAPE = `---
+'@type': sh:NodeShape
+rdfs:label: Article Shape
+sh:targetClass: schema:Article
+sh:property:
+  - sh:path: schema:headline
+    sh:minCount: 1
+    sh:message: Article must have a headline.
+---
+
+# Article Shape
+`;
+
+Deno.test(
+  "file new leaves a headline out of the frontmatter when the H1 supplies it (#402)",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeWiki({ "ArticleShape.md": ARTICLE_SHAPE });
+    try {
+      for (
+        const key of ["headline", "schema:headline"]
+      ) {
+        const created = await runCli(root, [
+          "file",
+          "new",
+          "wiki/",
+          "--type",
+          "schema:Article",
+          "--set",
+          `${key}=Scaffold Probe`,
+          "--set",
+          "description=probe",
+          "--apply",
+        ]);
+        assertEquals(created.code, EXIT_OK, created.stderr);
+        const page = read(root, "wiki/Scaffold_Probe.md");
+        assert(page.includes("\n# Scaffold Probe\n"), page);
+        assert(!page.includes("headline:"), page);
+        assert(page.includes("description: probe\n"), page);
+        // The fixture's ledger page already fails its shape; only the
+        // scaffolded page is under test.
+        const check = await Wiki.load(root).check();
+        const probe = JSON.stringify(check.errors).includes("Scaffold_Probe");
+        assert(!probe, JSON.stringify(check.errors));
+        const lint = await runCli(root, ["lint", "--strict"]);
+        assert(!lint.stderr.includes("repeats the derived"), lint.stderr);
+        Deno.removeSync(join(root, "wiki", "Scaffold_Probe.md"));
+      }
+    } finally {
+      cleanup(root);
+    }
+  },
+);
+
+Deno.test(
+  "file new keeps name, and a headline that differs from the H1 (#402)",
+  { permissions: { run: true, read: true, write: true } },
+  async () => {
+    const root = writeWiki();
+    try {
+      const named = await runCli(root, [
+        "file",
+        "new",
+        "wiki/",
+        "--set",
+        "name=Plain Name",
+        "--apply",
+      ]);
+      assertEquals(named.code, EXIT_OK, named.stderr);
+      assert(read(root, "wiki/Plain_Name.md").includes("name: Plain Name\n"));
+
+      // `name` outranks nothing here: headline is the first title key, so a
+      // second headline-spelled key that differs from it is a real statement.
+      const differs = await runCli(root, [
+        "file",
+        "new",
+        "wiki/",
+        "--set",
+        "headline=First",
+        "--set",
+        "schema:headline=Second",
+        "--apply",
+      ]);
+      assertEquals(differs.code, EXIT_OK, differs.stderr);
+      const page = read(root, "wiki/First.md");
+      assert(page.includes("\n# First\n"), page);
+      assert(page.includes("schema:headline: Second\n"), page);
+      assert(!page.includes("\nheadline:"), page);
+    } finally {
+      cleanup(root);
+    }
+  },
+);

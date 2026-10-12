@@ -2062,6 +2062,7 @@ async function runNewCommand(
       required,
       fields,
       body: parsed.values.get("--body")?.at(-1) ?? null,
+      context: wiki.config.context,
     });
     const supplied = new Set(fields.map(([key]) => key));
     const missing = required.filter((key) => !supplied.has(key));
