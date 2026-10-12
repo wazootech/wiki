@@ -108,7 +108,7 @@ Deno.test("the manifest describes each contributing file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const manifest = wikiManifest(config);
-    assertEquals(manifest.version, "0.4.1");
+    assertEquals(manifest.version, "0.5.0");
     assertEquals(manifest.files.length, 1);
     assertEquals(manifest.files[0]!.path, "wiki/page.md");
     assertEquals(manifest.files[0]!.size > 0, true);
@@ -408,7 +408,7 @@ Deno.test("the manifest orders paths by standard string order", async () => {
     // The manifest includes VERSION, so a version bump changes this hash.
     assertEquals(
       wikiFingerprint(config),
-      "6ad9d8fcb36dafa854f538d43f0920a5048dc13e984e41a6ef3388be93a9adef",
+      "f88eafe7ce4b5f886b632d7911d711399cbfe003fd993b810abdc50000db7422",
     );
   });
 });
