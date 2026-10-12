@@ -6,7 +6,8 @@
   "license": "MIT",
   "exports": {
     ".": "./src/wiki/mod.ts",
-    "./cli": "./src/wiki/cli.ts"
+    "./cli": "./src/wiki/cli.ts",
+    "./theme": "./src/wiki/theme.ts"
   },
   "publish": {
     "include": [

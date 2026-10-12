@@ -28,6 +28,13 @@
 - Lint rule `lint.redundant_frontmatter` reports the same exact repeats. It
   is `off` by default: a wiki that repeats its H1 as `headline` (as this one
   does) would otherwise fail `lint --strict` on most pages.
+- `@wazoo/wiki/theme` (`src/wiki/theme.ts`) is a public entrypoint for building
+  custom static sites: `buildSite`, `buildStaticSite`, the Markdown and layout
+  renderers, and the asset, path, and link helpers, re-exported from the engine.
+  It restores the site-build surface the retired Python library exposed, so a
+  theme is a TypeScript program instead of a deep import into engine internals.
+  The repository's own docs theme, `docs/build.ts`, now imports only this
+  surface ([#398](https://github.com/wazootech/wiki/issues/398)).
 
 ### Changed
 

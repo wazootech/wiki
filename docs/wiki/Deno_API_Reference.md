@@ -82,6 +82,30 @@ if (!exported.ok) throw new Error(exported.error_message ?? "Export failed");
 
 The library also exposes graph and dataset loading, Markdown formatting and rendering, link analysis and repair, source management, local serving, and wiki scaffolding. The generated package reference will be available on [JSR](https://jsr.io/@wazoo/wiki) after the first release.
 
+## Custom themes
+
+The built-in `wiki build` produces the default HTML. When a published site needs a different frontend, build it in TypeScript against the `@wazoo/wiki/theme` entrypoint instead of deep-importing engine internals:
+
+```ts
+import { Wiki } from "jsr:@wazoo/wiki";
+import { buildSite, buildStaticSite } from "jsr:@wazoo/wiki/theme";
+
+const wiki = Wiki.load("wiki.yml");
+
+// Drive the whole build: writes pages, assets, and an index to a directory.
+const result = await buildStaticSite(wiki, { output_dir: "_site" });
+
+// Or assemble the site and render each page yourself.
+const site = buildSite(wiki.config);
+for (const page of site.pages) {
+  console.log(page.title, page.file_slug, page.html);
+}
+```
+
+`buildSite` returns the pages (title, rendered `html`, `outline`, `backlink_slugs`, resolved `wiki_ids`) with route and wiki-id indexes. `renderWikiMarkdown`, `renderOutlineTitle`, `renderLayout`, `renderPageLayout`, `buildPageHtml`, and `buildIndexHtml` render individual pieces; `buildAssetManifest` and `iterAssetFiles` cover assets. `Config`, path and link helpers, and `exportFrontmatter` are re-exported alongside for convenience. This repository's own docs theme, `docs/build.ts`, is built on this entrypoint.
+
+The CLI still owns the artifact contract — `wiki build` and `wiki serve` are the supported default frontends, and a theme is a downstream program.
+
 ## RDF/XML output
 
 RDF/XML parsing remains supported for `.rdf` and `.xml` wiki inputs. RDF/XML serialization is deferred: export requests for XML fail clearly, and the SPARQL service returns `406 Not Acceptable` for an RDF/XML `Accept` header. Other RDF output formats remain available.

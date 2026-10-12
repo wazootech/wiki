@@ -1,17 +1,22 @@
 import { dirname, fromFileUrl, join, resolve } from "@std/path";
-import { buildAssetManifest } from "../src/wiki/assets.ts";
-import { Config } from "../src/wiki/config.ts";
-import { isFile, pathExists, relativeWithin } from "../src/wiki/fspath.ts";
-import { isExternalLink, resolvePageRoute } from "../src/wiki/links.ts";
-import { pageOutputPath, pageUrl } from "../src/wiki/paths.ts";
-import { exportFrontmatter } from "../src/wiki/export.ts";
 import {
+  buildAssetManifest,
+  buildSite,
+  Config,
+  exportFrontmatter,
+  isExternalLink,
+  isFile,
   METADATA_VIEWS,
   type MetadataView,
-} from "../src/wiki/schemas/metadata.ts";
-import { buildSite } from "../src/wiki/site/build.ts";
-import { renderOutlineTitle } from "../src/wiki/site/markdown.ts";
-import type { VirtualPage, WikiSite } from "../src/wiki/site/types.ts";
+  pageOutputPath,
+  pageUrl,
+  pathExists,
+  relativeWithin,
+  renderOutlineTitle,
+  resolvePageRoute,
+  type VirtualPage,
+  type WikiSite,
+} from "../src/wiki/theme.ts";
 
 const DOCS_DIR = dirname(fromFileUrl(import.meta.url));
 const REPO_ROOT = dirname(DOCS_DIR);
