@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The install docs, README, and skill no longer say npm, JSR, PyPI, or the
+  standalone binaries are "not published yet"; the README names all six release
+  targets and drops the stale `wiki upgrade` deferral section
+  ([#390](https://github.com/wazootech/wiki/issues/390)).
+- The documented `Wiki` method list matches the class (`format`, not `fmt`;
+  `mcp` and `upgrade` are CLI commands; `edit`, `show`, `refs` added), and a
+  test fails when a documented name stops existing
+  ([#391](https://github.com/wazootech/wiki/issues/391)).
+- `Wiki_Configuration` says `wiki init` omits `assets`, and describes which link
+  forms `broken_links` accepts
+  ([#392](https://github.com/wazootech/wiki/issues/392)).
+
 ## 0.4.1 — 2026-10-11
 
 ### Fixed

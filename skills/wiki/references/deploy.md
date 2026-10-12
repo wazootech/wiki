@@ -2,7 +2,7 @@
 
 Publish a Wiki CLI project with GitHub Actions and GitHub Pages. It needs a supported `wiki` CLI and a wiki config (`wiki.yml`, or legacy `wiki.yaml`) in the repository.
 
-The Deno workflow template uses `@wazoo/wiki` from JSR. That package is configured but not published yet; do not copy the template until its first tagged release makes the package available.
+The Deno workflow template uses `@wazoo/wiki` from JSR. The package is published on JSR, so the template can be copied as is.
 
 This workflow only sets up deployment. When done, summarize the workflow path, artifact path, expected URL, and Pages setting; stop. Do not edit repository settings, commit, or publish without the user's approval.
 

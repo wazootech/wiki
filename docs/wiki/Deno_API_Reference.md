@@ -6,20 +6,20 @@ description: Public Deno and TypeScript API for the Wiki engine.
 
 # Deno API Reference
 
-The native Wiki engine is a Deno/TypeScript library whose package metadata is configured as [`@wazoo/wiki` on JSR](https://jsr.io/@wazoo/wiki). The initial package has not been published yet; the first tagged release will publish it after the JSR package is linked to this repository. Its source entrypoint is `src/wiki/mod.ts`.
+The native Wiki engine is a Deno/TypeScript library published as [`@wazoo/wiki` on JSR](https://jsr.io/@wazoo/wiki). Its source entrypoint is `src/wiki/mod.ts`.
 
 ## Install
 
-After the first JSR release, import the package directly in a Deno project:
+Import the package directly in a Deno project:
 
 ```ts
 import { Wiki } from "jsr:@wazoo/wiki";
 ```
 
-After that release, install the `wiki` command globally from JSR:
+Install the `wiki` command globally from JSR (`--min-dep-age 0` bypasses Deno's 24-hour dependency age policy, which otherwise resolves a just-published version to the previous one):
 
 ```bash
-deno install --global --allow-all --name wiki jsr:@wazoo/wiki/cli
+deno install --global --allow-all --name wiki --min-dep-age 0 jsr:@wazoo/wiki/cli
 ```
 
 The `wazootech-wiki` npm package ships the `wiki` command for npm consumers, bundling the Deno runtime; it exports no library API. See [TypeScript API Reference](TypeScript_API_Reference.md).

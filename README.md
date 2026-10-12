@@ -7,7 +7,7 @@
 
 **Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in Obsidian, VS Code, or any editor — the CLI validates your documents, runs queries against them, and builds static sites. Drop a `wiki.yaml` in your folder and you're set.
 
-Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. After the first tagged Deno release, install via [npm](https://www.npmjs.com/package/wazootech-wiki) or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases). Before then, use the Deno source checkout.
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [npm](https://www.npmjs.com/package/wazootech-wiki), [PyPI](https://pypi.org/project/wazootech-wiki/), or [JSR](https://jsr.io/@wazoo/wiki), or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases).
 
 Starter templates: [wiki-templates](https://github.com/wazootech/wiki-templates) (monorepo with all starter templates). See [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
@@ -94,16 +94,14 @@ Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ### From npm
 
-The Deno-backed `wazootech-wiki` package is not published yet. The currently published npm package still runs the Python CLI. The cutover npm package and the standalone executables become available with the first tagged Deno release. The JSR module ships independently: `@wazoo/wiki` publishes whenever a new version reaches `main`, so it does not gate the npm release.
-
-After that release, install the npm package with Node.js 18 or newer:
+Install the npm package with Node.js 18 or newer:
 
 ```bash
 npm install -g wazootech-wiki
 wiki --help
 ```
 
-The package will include the platform-matched Deno runtime and engine source; system Python and a separate Deno installation will not be required. `npx wazootech-wiki` will accept the same commands and flags:
+The package includes the platform-matched Deno runtime and engine source; system Python and a separate Deno installation are not required. `npx wazootech-wiki` accepts the same commands and flags:
 
 ```bash
 npx wazootech-wiki --help
@@ -117,18 +115,18 @@ The first run needs network access: the package ships no vendored dependencies, 
 
 ### From PyPI
 
-From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. Once 0.4.1 is published, it needs Python 3.10 or newer:
+From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. It needs Python 3.10 or newer:
 
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
 
-There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and ARM64, so no Deno or Node.js install is needed. Version 0.1.23, the last Python engine release, is what `pip` installs until then. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
+There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and ARM64, so no Deno or Node.js install is needed. Version 0.1.23 was the last Python engine release; `pip install wazootech-wiki` installs the current native-binary release. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
 
 ### Standalone executable
 
-After the first tagged Deno release, GitHub Releases will publish self-contained binaries for Linux x64, Windows x64, and macOS ARM64 with `SHA256SUMS`. Those are the three targets currently built by the release workflow. They are not published yet and will not require Node.js, Python, or Deno.
+Each [GitHub Release](https://github.com/wazootech/wiki/releases) publishes self-contained binaries for six targets (Linux, macOS, and Windows, each on x64 and ARM64) with a `SHA256SUMS` file. They require neither Node.js, Python, nor Deno.
 
 ### From source
 
@@ -148,9 +146,12 @@ const wiki = Wiki.load("docs/wiki.yml");
 const report = await wiki.check({ strict: true });
 ```
 
-Methods cover the whole surface: `check`, `lint`, `fmt`, `render`, `build`,
-`export`, `link`, `query`, `graph`, `serve`, `mcp`, `init`, `install`, `update`,
-`remove`, and `upgrade`. JSR publication follows the first tagged release.
+Methods cover the library surface: `check`, `lint`, `format`, `render`, `build`,
+`export`, `link`, `query`, `graph`, `dataset`, `graphs`, `serve`, `edit`, `show`,
+`refs`, `install`, `update`, and `remove`, plus the static `Wiki.init` and
+`Wiki.load`. `mcp` and `upgrade` are CLI commands, not methods; the upgrade
+failure type `UpgradeError` is exported separately. The package is published on
+[JSR](https://jsr.io/@wazoo/wiki).
 
 ### The `wazootech-wiki` npm package
 
@@ -484,7 +485,7 @@ The repository's themed static docs build provides a **Metadata** tab with compa
 
 #### GitHub Pages deployment
 
-After the first tagged release publishes `@wazoo/wiki`, create `.github/workflows/deploy.yml` in your wiki repository. For the native Deno CLI, install Deno and run the JSR module. Until then, use `deno run -A src/wiki/cli.ts` from a Wiki repository checkout.
+Create `.github/workflows/deploy.yml` in your wiki repository. For the native Deno CLI, install Deno and run the JSR module.
 
 ```yaml
 name: Deploy Wiki to Pages
