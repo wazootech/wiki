@@ -825,6 +825,7 @@ async function stage(
         required: type === null ? [] : await requiredFields(config, type),
         fields,
         body: op.body ?? null,
+        context: config.context,
       });
       plan.after = formatIfMarkdown(config, plan.path, page);
       return;
