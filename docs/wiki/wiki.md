@@ -145,6 +145,7 @@ Do not use these in new prose: `sparql-service-template` (→ `wiki-templates/te
 - **Lint** — broken links, filename pattern, and heading conventions ([wiki lint](wiki_lint.md))
 - **Link** — repair broken internal links and optionally insert suggested links as wiki-gardening ([wiki link](wiki_link.md))
 - **Fmt** — Deno Markdown formatter for markdown ([wiki fmt](wiki_fmt.md))
+- **Fix** — remove frontmatter that repeats the headline or Git dates the graph derives ([wiki fix](wiki_fix.md))
 - **Query** — SPARQL with OWL-RL and optional `--pretty` Rich tables ([wiki query](wiki_query.md), [Graph Cache](Graph_Cache.md))
 - **Graph list** — inspect root and source named graphs for SPARQL `GRAPH` provenance ([wiki graph](wiki_graph.md))
 - **MCP** — read-only query-first MCP server for local agents ([wiki mcp](wiki_mcp.md))
@@ -173,6 +174,8 @@ Wiki CLI processes files through two distinct pipelines. Files in `wiki.input` a
 ### Document pipeline
 
 Markdown files are parsed via the [Linked Markdown](Linked_Markdown.md) protocol: the YAML/JSON frontmatter between `---` delimiters is extracted as the data dict, and the body text is optionally added to the graph via `content_predicate`. Data-only documents (`.yaml`, `.yml`, `.json`, `.toml`) skip the body split — the entire file is the data.
+
+Each typed document also gets `schema:headline` from its first `# H1` and `schema:dateCreated` / `schema:dateModified` from its Git history (or its modification time), unless its frontmatter sets them. These are derived in memory and never written back; see [wiki fix](wiki_fix.md#derived-metadata).
 
 All document formats have their `@context` auto-populated with `wiki:` and `foaf:` default prefixes if none is present. An explicit `@id` or `id` key in frontmatter overrides the file-path-based IRI ([Linked Markdown](Linked_Markdown.md#subject-uri-resolution)).
 
@@ -250,7 +253,7 @@ The commands fall into families by what they act on:
 | Setup and tooling | [init](wiki_init.md), [upgrade](wiki_upgrade.md)                                                                                                                                            | Start a project, or update the CLI itself.                         |
 | Sources           | [install](wiki_install.md), [update](wiki_update.md), [remove](wiki_remove.md)                                                                                                              | Manage external data sources and `wiki.lock`.                      |
 | Audits            | [check](wiki_check.md), [lint](wiki_lint.md)                                                                                                                                                | Read-only verification of integrity and conventions.               |
-| Bulk fixers       | [fmt](wiki_fmt.md), [link](wiki_link.md), [render](wiki_render.md)                                                                                                                          | Rewrite files across the whole wiki.                               |
+| Bulk fixers       | [fmt](wiki_fmt.md), [fix](wiki_fix.md), [link](wiki_link.md), [render](wiki_render.md)                                                                                                      | Rewrite files across the whole wiki.                               |
 | File edits        | [file new](wiki_file_new.md), [file set](wiki_file_set.md), [file patch](wiki_file_patch.md), [file mv](wiki_file_mv.md), [file rm](wiki_file_rm.md), with [edit](wiki_edit.md) for batches | Validated, link-aware edits to wiki documents; dry run by default. |
 | File reads        | [file show](wiki_file_show.md), [file refs](wiki_file_refs.md)                                                                                                                              | Inspect one wiki document file.                                    |
 | Graph             | [query](wiki_query.md), [graph](wiki_graph.md), [export](wiki_export.md)                                                                                                                    | The wiki as RDF: SPARQL, named graphs, and export.                 |
@@ -291,6 +294,7 @@ ORDER BY ?command
 | [wiki_file_rm](wiki_file_rm.md)       | Delete a page, refusing while other pages link to it unless their links are pruned to plain text, as a validated edit. |
 | [wiki_file_set](wiki_file_set.md)     | Set or remove one frontmatter field, keeping comments, key order, and value spelling, as a validated edit.             |
 | [wiki_file_show](wiki_file_show.md)   | Describe one page as the engine sees it, with the content hash an edit expects.                                        |
+| [wiki_fix](wiki_fix.md)               | Remove frontmatter that repeats a value the graph derives from the page's H1 or Git history.                           |
 | [wiki_fmt](wiki_fmt.md)               | Format Markdown wiki pages with native Deno/dprint formatter options.                                                  |
 | [wiki_graph](wiki_graph.md)           | List read-only RDF named graphs for root and installed source provenance.                                              |
 | [wiki_init](wiki_init.md)             | Scaffold wiki.yml and an empty wiki/ folder for markdown pages.                                                        |

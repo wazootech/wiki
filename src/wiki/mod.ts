@@ -135,12 +135,37 @@ export {
 } from "./paths.ts";
 export { quote as quoteUrl } from "./urlquote.ts";
 export {
+  firstAtxH1,
   GitHubHeadingSlugger,
   type Heading,
   headingIds,
   headingSlug,
   parseHeadings,
 } from "./headings.ts";
+export {
+  type DateSource,
+  DERIVED_PROPERTIES,
+  type DerivedMetadata,
+  derivedPredicate,
+  type DerivedProperty,
+  deriveMetadata,
+  deriveMetadataAll,
+  gitDates,
+  type RedundantField,
+  redundantFields,
+} from "./derived.ts";
+export {
+  findRedundantFrontmatter,
+  type FixFile,
+  type FixOptions,
+  fixRedundantFrontmatter,
+  type FixReport,
+  type FixStatus,
+  type KeyRemoval,
+  type RedundantDocument,
+  removeFrontmatterKeys,
+  type SkippedKey,
+} from "./fix.ts";
 export {
   EXTERNAL_SCHEMES,
   formatInternalLink,
@@ -310,6 +335,7 @@ export {
   lintHeadingLevels,
   lintHeadings,
   lintLinkStyle,
+  lintRedundantFrontmatter,
   lintThematicBreaks,
   mergeResults,
   runCheck,

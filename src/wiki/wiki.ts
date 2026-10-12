@@ -28,6 +28,11 @@ import { isFile, pathExists, walkTree } from "./fspath.ts";
 import { mergeResults, runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
 import {
+  type FixOptions,
+  fixRedundantFrontmatter,
+  type FixReport,
+} from "./fix.ts";
+import {
   applyEdit,
   type EditOptions,
   type EditReport,
@@ -389,6 +394,20 @@ export class Wiki {
     let report = await runLint(this.config, batch.routeFilter());
     if (options.strict ?? false) report = report.applyStrict();
     return report;
+  }
+
+  /**
+   * Remove frontmatter that repeats a value the graph derives (wiki#319).
+   *
+   * Previews by default and leaves every file byte-identical; `apply` writes
+   * through {@link edit}, so the change is validated and atomic.
+   */
+  fix(
+    files?: readonly string[] | null,
+    options: FixOptions = {},
+  ): Promise<FixReport> {
+    const batch = new DocumentBatch(this.config, files ?? null);
+    return fixRedundantFrontmatter(this.config, batch.markdownPaths(), options);
   }
 
   /**

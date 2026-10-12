@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- The graph derives document metadata instead of requiring authors to repeat
+  it ([#318](https://github.com/wazootech/wiki/issues/318)): every typed
+  document gets `schema:headline` from the plain text of its first ATX `# H1`
+  (outside fenced code), and `schema:dateCreated` / `schema:dateModified` from
+  the oldest and newest committer times `git log --follow` reaches, as UTC
+  `xsd:dateTime` to the second. Renames are followed; nothing is fetched. With
+  no usable history (no Git, untracked, no commit) both dates are the file's
+  modification time. An explicit frontmatter value for the same predicate IRI
+  always wins, derived values are never written to source files, and no shape
+  requires them.
+- `wiki fix [FILES...]` removes frontmatter that exactly repeats a derived
+  value ([#319](https://github.com/wazootech/wiki/issues/319)). It previews by
+  default (`--dry-run` is the explicit spelling, `-v` names each field) and
+  writes only with `--apply`, through the validated, atomic `Wiki.edit()` path.
+  It cuts only the removed entries' lines, keeping comments, key order,
+  quoting, line endings, and the body byte for byte. Library: `Wiki.fix()`.
+- Lint rule `lint.redundant_frontmatter` reports the same exact repeats. It
+  is `off` by default: a wiki that repeats its H1 as `headline` (as this one
+  does) would otherwise fail `lint --strict` on most pages.
+
+### Changed
+
+- A SHACL shape that requires `schema:headline` is now satisfied by a page's
+  H1 alone, and a page without `schema:dateCreated`/`dateModified` now has
+  them. Shapes that previously failed on a missing headline may now pass; a
+  `sh:closed` shape that does not allow these properties will now report them.
+- The disk graph cache (`--cache`) is keyed on the Git `HEAD` as well as the
+  file manifest, so a new commit invalidates derived dates.
+
 ## 0.5.0 — 2026-10-11
 
 ### Changed

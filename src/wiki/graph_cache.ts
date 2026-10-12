@@ -226,6 +226,39 @@ export function wikiFingerprint(config: Config): string {
   return overlay === undefined ? digest : sha256Hex(`${digest}|${overlay.id}`);
 }
 
+/**
+ * The commit `HEAD` names in the config root's repository, or `""` outside one.
+ *
+ * Derived `schema:dateCreated`/`dateModified` values come from Git history
+ * (wiki#318), and a commit changes them without touching any file's size or
+ * mtime. The disk cache outlives the process, so its key includes `HEAD`; the
+ * in-process key does not, because it is computed on every lookup and a
+ * process does not see commits land mid-run in any way it could act on.
+ */
+function gitHead(config: Config): string {
+  try {
+    const result = new Deno.Command("git", {
+      args: ["rev-parse", "--verify", "--quiet", "HEAD"],
+      cwd: config.config_root,
+      stdin: "null",
+      stdout: "piped",
+      stderr: "null",
+    }).outputSync();
+    return result.code === 0
+      ? new TextDecoder().decode(result.stdout).trim()
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+/** {@link wikiFingerprint}, plus the Git `HEAD` when there is one. */
+function diskFingerprint(config: Config): string {
+  const digest = wikiFingerprint(config);
+  const head = gitHead(config);
+  return head === "" ? digest : sha256Hex(`${digest}|git:${head}`);
+}
+
 /** The prefix shared by every cache file for one graph kind and infer mode. */
 function diskCachePrefix(
   infer: boolean,
@@ -239,7 +272,7 @@ function diskCachePrefix(
 export function diskCachePath(config: Config, infer: boolean): string {
   return join(
     cacheDir(config),
-    `${diskCachePrefix(infer)}-${wikiFingerprint(config)}.nt`,
+    `${diskCachePrefix(infer)}-${diskFingerprint(config)}.nt`,
   );
 }
 
@@ -247,7 +280,7 @@ export function diskCachePath(config: Config, infer: boolean): string {
 export function datasetCachePath(config: Config, infer: boolean): string {
   return join(
     cacheDir(config),
-    `${diskCachePrefix(infer, "dataset")}-${wikiFingerprint(config)}.nq`,
+    `${diskCachePrefix(infer, "dataset")}-${diskFingerprint(config)}.nq`,
   );
 }
 

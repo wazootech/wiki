@@ -146,10 +146,10 @@ const wiki = Wiki.load("docs/wiki.yml");
 const report = await wiki.check({ strict: true });
 ```
 
-Methods cover the library surface: `check`, `lint`, `format`, `render`, `build`,
-`export`, `link`, `query`, `graph`, `dataset`, `graphs`, `serve`, `edit`, `show`,
-`refs`, `install`, `update`, and `remove`, plus the static `Wiki.init` and
-`Wiki.load`. `mcp` and `upgrade` are CLI commands, not methods; the upgrade
+Methods cover the library surface: `check`, `lint`, `format`, `fix`, `render`,
+`build`, `export`, `link`, `query`, `graph`, `dataset`, `graphs`, `serve`,
+`edit`, `show`, `refs`, `install`, `update`, and `remove`, plus the static
+`Wiki.init` and `Wiki.load`. `mcp` and `upgrade` are CLI commands, not methods; the upgrade
 failure type `UpgradeError` is exported separately. The package is published on
 [JSR](https://jsr.io/@wazoo/wiki).
 

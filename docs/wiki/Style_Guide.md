@@ -63,7 +63,7 @@ Enforce the expectations with a [SHACL](SHACL.md) shape, for example `sh:minCoun
 ## Prose and headings
 
 - Use **ATX `#` headings only**; do not use underlined Setext headings (`===` / `---`). Wiki tooling indexes ATX for titles, TOC, and fragment links.
-- Use **title-case H1** headings (the page title; align with `headline` frontmatter).
+- Use **title-case H1** headings (the page title; align with `headline` frontmatter). The graph derives `schema:headline` from the first H1 when frontmatter sets none, so a `headline` that only repeats it is optional ([wiki fix](wiki_fix.md)).
 - Use **sentence-case H2+** headings (capitalize only the first word and proper nouns). Only H2 and deeper are machine-checked.
 - Avoid numbered headings; keep headings concise.
 - Do not use horizontal rules (`---`) for thematic breaks inside page bodies (reserve `---` for YAML frontmatter delimiters only).

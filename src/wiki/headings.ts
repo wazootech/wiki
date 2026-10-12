@@ -113,6 +113,47 @@ export function parseHeadings(markdown: string): Heading[] {
   return headings;
 }
 
+/** Inline tokens whose `content` is the text a reader sees. */
+const PLAIN_INLINE_TYPES: ReadonlySet<string> = new Set([
+  "text",
+  "text_special",
+  "code_inline",
+  "image",
+]);
+
+/**
+ * The plain text of a document's first ATX (`#`) H1, or `null` without one.
+ *
+ * This is the `schema:headline` the graph derives (wiki#318). It walks the
+ * same `markdown-it` tokens as {@link parseHeadings}, so a `#` line inside a
+ * fenced block is never a heading. A Setext H1 is skipped (`wiki fmt` rewrites
+ * those to ATX), and inline markup is reduced to its text: `` # The `wiki` CLI ``
+ * yields `The wiki CLI`, a link yields its label, and raw HTML is dropped.
+ */
+export function firstAtxH1(markdown: string): string | null {
+  const tokens = headingParser().parse(markdown, {});
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index] as Token;
+    if (
+      token.type !== "heading_open" || token.tag !== "h1" ||
+      token.markup !== "#"
+    ) {
+      continue;
+    }
+    const inline = tokens[index + 1];
+    const parts: string[] = [];
+    for (const child of inline?.children ?? []) {
+      if (PLAIN_INLINE_TYPES.has(child.type)) parts.push(child.content);
+      else if (child.type === "softbreak" || child.type === "hardbreak") {
+        parts.push(" ");
+      }
+    }
+    const text = splitWhitespace(parts.join("")).join(" ");
+    return text === "" ? null : text;
+  }
+  return null;
+}
+
 /** The anchor ids of a markdown document, as the link index needs them. */
 export function headingIds(markdown: string): Set<string> {
   const ids = new Set<string>();
