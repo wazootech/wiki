@@ -155,11 +155,16 @@ wiki serve
 
 By default, this serves the built site at [http://localhost:8000](http://localhost:8000). You can specify a different port with `--port`.
 
+## Automate updates
+
+You can keep your wiki up to date on a schedule by running a custom ingestion script in GitHub Actions. This lets you pull from any source (APIs, feeds, databases) or generate content with your own AI workflow. See [Automation](Automation.md) for a daily workflow example and setup instructions.
+
 ## Next steps
 
 - Read the [Style Guide](Style_Guide.md) for authoring conventions.
 - Explore [Wiki Configuration](Wiki_Configuration.md) to customize validation, linting, and routes.
 - Learn about [Query](wiki_query.md) and [Render](wiki_render.md) to work with the wiki graph.
 - See the [CLI reference](wiki.md) for the full command list.
+- Set up [Automation](Automation.md) to keep your wiki fresh automatically.
 
 You're ready to build your semantic Markdown wiki!
