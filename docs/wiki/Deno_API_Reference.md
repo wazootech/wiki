@@ -103,6 +103,29 @@ for (const page of site.pages) {
 
 `buildSite` returns the pages (title, rendered `html`, `outline`, `backlink_slugs`, resolved `wiki_ids`) with route and wiki-id indexes. `renderWikiMarkdown`, `renderOutlineTitle`, `renderLayout`, `renderPageLayout`, `buildPageHtml`, and `buildIndexHtml` render individual pieces; `buildAssetManifest` and `iterAssetFiles` cover assets. `Config`, path and link helpers, and `exportFrontmatter` are re-exported alongside for convenience. This repository's own docs theme, `docs/build.ts`, is built on this entrypoint.
 
+### Custom layout tokens
+
+A layout file may use more `%wiki.*%` slots than the engine fills. `renderLayout` and `renderPageLayout` accept an optional `extraTokens` map for the rest, so a theme renders its own layout without reimplementing the substitution loop:
+
+```ts
+import { renderLayout } from "jsr:@wazoo/wiki/theme";
+
+const html = renderLayout(
+  page.title,
+  "/wiki",
+  page.html,
+  "layouts/article.html",
+  new Map([
+    ["%wiki.toc%", tocHtml],
+    ["%wiki.infobox%", infoboxHtml],
+  ]),
+);
+```
+
+The three built-in slots — `%wiki.base_url%`, `%wiki.head%`, and `%wiki.body%` — are always filled, so omitting `extraTokens` keeps the previous behavior and output. Keys are the exact slot spellings, for example `%wiki.toc%`. A key that collides with a built-in slot overrides it. Values are inserted verbatim and are not HTML-escaped, so escape untrusted text before putting it in the map. A `%wiki.*%` spelling absent from both the built-in set and `extraTokens` is left in the output unchanged, as `wiki build` has always done.
+
+`renderPageLayout` forwards `extraTokens` to `renderLayout` for every page it renders, after choosing the page's `wazoo:layout` override or the default layout.
+
 The CLI still owns the artifact contract — `wiki build` and `wiki serve` are the supported default frontends, and a theme is a downstream program.
 
 ## RDF/XML output

@@ -45,6 +45,8 @@ When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files must e
 
 Layout files use `%wiki.*%` slot substitution (not Jinja). The **canonical reference** is [Layout slots](Wiki_Configuration.md#layout-slots) in Wiki Configuration.
 
+The CLI fills the three built-in slots. A theme built on `@wazoo/wiki/theme` can pass a map of its own slots to `renderLayout`/`renderPageLayout`; see [Custom layout tokens](Deno_API_Reference.md#custom-layout-tokens).
+
 Custom logos and favicons are layout markup plus `wiki.assets` overrides; see [Custom logos and icons](Wiki_Configuration.md#custom-logos-and-icons) in Wiki_Configuration.
 
 ## Related

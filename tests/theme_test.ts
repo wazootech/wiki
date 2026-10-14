@@ -110,6 +110,94 @@ Deno.test("theme entrypoint renders markdown, titles, and layouts", () => {
   }
 });
 
+Deno.test("theme entrypoint lets a theme supply its own layout tokens", () => {
+  const root = tempRoot();
+  try {
+    const template = write(
+      root,
+      "layouts/tokens.html",
+      "<html><head>%wiki.head%</head>\n" +
+        '<body data-base="%wiki.base_url%" data-slug="%wiki.slug%">' +
+        "%wiki.toc%%wiki.body%</body></html>",
+    );
+
+    // Defaults: the three built-in slots render exactly as before and an
+    // unknown slot is left verbatim. An empty map changes nothing.
+    const defaults = renderLayout("T", "/manual", "<p>body</p>", template);
+    assertStringIncludes(defaults, "<title>T - Wiki CLI</title>");
+    assertStringIncludes(defaults, 'data-base="/manual"');
+    assertStringIncludes(defaults, "<p>body</p>");
+    assertStringIncludes(
+      defaults,
+      '<body data-base="/manual" data-slug="%wiki.slug%">%wiki.toc%',
+    );
+    assertEquals(
+      defaults,
+      renderLayout("T", "/manual", "<p>body</p>", template, new Map()),
+    );
+
+    // Extra tokens fill the theme's own slots.
+    const withExtra = renderLayout(
+      "T",
+      "/manual",
+      "<p>body</p>",
+      template,
+      new Map([
+        ["%wiki.slug%", "Home"],
+        ["%wiki.toc%", "<nav>toc</nav>"],
+      ]),
+    );
+    assertStringIncludes(withExtra, 'data-slug="Home"');
+    assertStringIncludes(withExtra, "<nav>toc</nav>");
+    assert(!withExtra.includes("%wiki."));
+
+    // An extra token wins over a built-in one on collision.
+    const overridden = renderLayout(
+      "T",
+      "/manual",
+      "<p>body</p>",
+      template,
+      new Map([["%wiki.base_url%", "/elsewhere"]]),
+    );
+    assertStringIncludes(overridden, 'data-base="/elsewhere"');
+    assert(!overridden.includes('data-base="/manual"'));
+    assertStringIncludes(overridden, "<title>T - Wiki CLI</title>");
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("theme entrypoint forwards extra layout tokens to pages", () => {
+  const root = tempRoot();
+  try {
+    const config = fixtureConfig(root);
+    const site = buildSite(config);
+    const home = site.pages_by_route.get("Home")!;
+    const template = write(
+      root,
+      "layouts/page.html",
+      '<article data-slug="%wiki.slug%">%wiki.body%</article>',
+    );
+
+    const rendered = renderPageLayout(
+      home,
+      "/manual",
+      template,
+      new Map([["%wiki.slug%", home.file_slug]]),
+    );
+    assertStringIncludes(rendered, '<article data-slug="Home">');
+    assertStringIncludes(rendered, 'href="/manual/Other.html"');
+
+    // Without the map the theme's slot stays literal, as before.
+    assertStringIncludes(
+      renderPageLayout(home, "/manual", template),
+      'data-slug="%wiki.slug%"',
+    );
+  } finally {
+    cleanup(root);
+  }
+});
+
 Deno.test("theme entrypoint exposes paths, assets, and link helpers", () => {
   const root = tempRoot();
   try {
