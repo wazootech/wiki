@@ -101,7 +101,35 @@ for (const page of site.pages) {
 }
 ```
 
-`buildSite` returns the pages (title, rendered `html`, `outline`, `backlink_slugs`, resolved `wiki_ids`) with route and wiki-id indexes. `renderWikiMarkdown`, `renderOutlineTitle`, `renderLayout`, `renderPageLayout`, `buildPageHtml`, and `buildIndexHtml` render individual pieces; `buildAssetManifest` and `iterAssetFiles` cover assets. `Config`, path and link helpers, and `exportFrontmatter` are re-exported alongside for convenience. This repository's own docs theme, `docs/build.ts`, is built on this entrypoint.
+`buildSite` returns the pages (title, rendered `html`, `outline`, `backlink_slugs`, resolved `wiki_ids`) with route and wiki-id indexes. `renderWikiMarkdown`, `renderOutlineTitle`, `renderLayout`, `renderPageLayout`, `buildPageHtml`, and `buildIndexHtml` render individual pieces; `buildAssetManifest` and `iterAssetFiles` cover assets. `Config`, path and link helpers, and `exportFrontmatter` are re-exported alongside for convenience. This repository's own docs theme, `docs/build.ts`, is a thin theme over `buildThemedSite`.
+
+### Publishing with a custom theme
+
+`buildStaticSite` renders the built-in layout. A theme that ships its own layouts drives the same flow with `buildThemedSite`, which owns page walking, the page shell (table of contents, infobox, backlinks, categories, metadata panels), `%wiki.*%` substitution, the output tree, and asset copying. The theme supplies its layouts, its assets, and the values specific to its design:
+
+```ts
+import { buildThemedSite, METADATA_VIEWS } from "jsr:@wazoo/wiki/theme";
+
+await buildThemedSite(wiki.config, "_site", {
+  dir: "theme", // where layouts/ and assets/ live
+  layout: "layouts/article.html", // default: layouts/wikipedia.html
+  redirect_layout: "layouts/redirect.html", // used by redirect_to pages
+  title_suffix: " - My Wiki", // default: " - Wiki"
+  tokens: (context) =>
+    // extra or overriding %wiki.*% values
+    new Map([["%wiki.edit_link%", editLink(context.page)]]),
+  metadata: {
+    views: METADATA_VIEWS, // default: every view except xml
+    selected_view: "turtle", // default: json-ld-compacted
+    note: false, // default: true
+    highlight: (text, view) => highlightRdf(text, view.lexer),
+  },
+});
+```
+
+The engine fills the shell slots a theme layout commonly uses: `%wiki.base_url%`, `%wiki.url_style%`, `%wiki.pages%`, `%wiki.title%`, `%wiki.slug%`, `%wiki.source%`, `%wiki.layout_stem%`, `%wiki.page_kind%`, `%wiki.body%`, `%wiki.toc%`, `%wiki.backlinks%`, `%wiki.infobox%`, `%wiki.categories%`, `%wiki.metadata_pane%`, `%wiki.metadata_tool%`, `%wiki.metadata_tab%`, `%wiki.type_label%`, `%wiki.layout_label%`, and `%wiki.head%`. `tokens` is called for every page and once for the index (`context.page` is `null`); its result is merged over those values, so returning a shell key overrides it. A slot neither the engine nor `tokens` fills is left verbatim, so a built page can be scanned for `%wiki.` residue. This is the whole-site cousin of the `renderLayout` slot rules below, which fill only three.
+
+A page's `wazoo:layout` frontmatter still wins when the file exists, and a page whose frontmatter sets `redirect_to` uses `redirect_layout` when the theme supplies one. `metadata.highlight` returns HTML — escape the text yourself when the grammar highlights nothing; the default escapes the whole body. The `xml` view is excluded by default because RDF/XML serialization is deferred ([RDF/XML output](#rdfxml-output)).
 
 ### Custom layout tokens
 

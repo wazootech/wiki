@@ -26,7 +26,7 @@ Embedding is the supported path for TypeScript and JavaScript. The command is th
 
 ## Custom themes
 
-Embedding `jsr:@wazoo/wiki` is the path for programmatic use of the engine. For a published site with a frontend other than the built-in `wiki build` output, embed the theme entrypoint `jsr:@wazoo/wiki/theme`, which exports the static-site build surface (`buildSite`, `buildStaticSite`, the Markdown and layout renderers, and the asset and path helpers). See the [Deno API Reference](Deno_API_Reference.md).
+Embedding `jsr:@wazoo/wiki` is the path for programmatic use of the engine. For a published site with a frontend other than the built-in `wiki build` output, embed the theme entrypoint `jsr:@wazoo/wiki/theme`, which exports the static-site build surface (`buildSite`, `buildStaticSite`, `buildThemedSite`, the Markdown and layout renderers, and the asset and path helpers). See the [Deno API Reference](Deno_API_Reference.md).
 
 ## Related
 

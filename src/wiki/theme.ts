@@ -38,6 +38,18 @@ export { buildIndexHtml, buildPageHtml } from "./site/html.ts";
 // Whole-site driver: writes pages and assets to an output directory.
 export { buildStaticSite } from "./site/publish.ts";
 
+// Whole-site driver for a custom theme: the same flow as `buildStaticSite`,
+// with the layout and token vocabulary owned by the caller (#409).
+export {
+  buildThemedSite,
+  escapeHtml,
+  safeJson,
+  substitute,
+  type ThemeMetadataOptions,
+  type ThemePageContext,
+  type ThemeSiteOptions,
+} from "./site/theme_build.ts";
+
 // Asset discovery and output manifest.
 export {
   buildAssetManifest,

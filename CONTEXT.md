@@ -29,7 +29,7 @@ The static-site build layer is a second public entrypoint, `@wazoo/wiki/theme` (
 
 - **Contract stays in the CLI.** `wiki build` and `wiki serve` are the supported default frontends; the entrypoint exports the same surface they use, so a theme and the default build cannot silently diverge.
 - **Not a `Wiki` wrapper.** `./theme` re-exports engine symbols only; `Wiki` and `Config` loading stay in `@wazoo/wiki`. The npm package still ships no library API.
-- **First consumer is in-repo.** `docs/build.ts` (this repository's docs site) imports only `@wazoo/wiki/theme`, so the entrypoint is dogfooded on every docs build. The `wiki-templates` wikipedia theme is the follow-on consumer.
+- **First consumer is in-repo.** `docs/build.ts` (this repository's docs site) imports only `@wazoo/wiki/theme`, so the entrypoint is dogfooded on every docs build. It is a thin theme: the page loop lives in `buildThemedSite`, and the `wiki-templates` wikipedia theme (the follow-on consumer) shares that flow instead of copying it ([#409](https://github.com/wazootech/wiki/issues/409)).
 
 ## Language
 
