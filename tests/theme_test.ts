@@ -11,7 +11,9 @@ import {
   buildPageHtml,
   buildSite,
   buildStaticSite,
+  buildThemedSite,
   Config,
+  escapeHtml,
   exportFrontmatter,
   isExternalLink,
   isFile,
@@ -26,6 +28,7 @@ import {
   renderPageLayout,
   renderWikiMarkdown,
   resolvePageRoute,
+  substitute,
   type TocItem,
   type VirtualPage,
   type WikiSite,
@@ -277,6 +280,114 @@ Deno.test("theme entrypoint exports frontmatter", async () => {
     const config = fixtureConfig(root);
     const result = await exportFrontmatter(config);
     assert(result.ok);
+  } finally {
+    cleanup(root);
+  }
+});
+
+Deno.test("buildThemedSite owns the flow while the theme owns the vocabulary", async () => {
+  const root = tempRoot();
+  try {
+    write(
+      root,
+      "theme/layouts/theme.html",
+      "<html><head>%wiki.head%</head>" +
+        '<body data-kind="%wiki.page_kind%" data-extra="%wiki.extra%">' +
+        "%wiki.toc%%wiki.body%%wiki.metadata_pane%</body></html>",
+    );
+    write(
+      root,
+      "theme/layouts/redirect.html",
+      '<html><head><meta http-equiv="refresh" content="0; url=' +
+        '%wiki.redirect_url%"></head><body>moved</body></html>',
+    );
+    write(
+      root,
+      "wiki/Home.md",
+      "---\nid: wiki:Home\ntype: schema:TechArticle\n---\n\n" +
+        "# Home\n\n## Section\n\nSee [Other](Other.md).\n",
+    );
+    write(root, "wiki/Other.md", "# Other\n");
+    write(
+      root,
+      "wiki/Legacy.md",
+      "---\nredirect_to: Home\n---\n\n# Legacy\n",
+    );
+    write(root, "assets/site.css", "body { color: navy; }\n");
+    const config = Config.forRoot(root, {
+      wiki: { input: [join(root, "wiki")], assets: [join(root, "assets")] },
+      site: { base_url: "/manual", url_style: "dir" },
+    });
+    const output = join(root, "_site");
+
+    const written = await buildThemedSite(config, output, {
+      dir: join(root, "theme"),
+      layout: "layouts/theme.html",
+      redirect_layout: "layouts/redirect.html",
+      title_suffix: " - Custom",
+      tokens: (context) => {
+        const redirectTo = context.page === null
+          ? ""
+          : String(context.page.frontmatter.redirect_to ?? "");
+        return new Map([
+          [
+            "%wiki.extra%",
+            context.page === null ? "index" : context.page.file_slug,
+          ],
+          [
+            "%wiki.redirect_url%",
+            redirectTo === ""
+              ? ""
+              : pageUrl(context.baseUrl, redirectTo, context.urlStyle),
+          ],
+        ]);
+      },
+      metadata: {
+        highlight: (text, view) =>
+          `<mark data-view="${view.id}">${escapeHtml(text)}</mark>`,
+        note: false,
+      },
+    });
+
+    assertEquals(written, 4);
+    const indexHtml = Deno.readTextFileSync(
+      join(output, "manual", "index.html"),
+    );
+    assertStringIncludes(indexHtml, 'data-kind="index"');
+    assertStringIncludes(indexHtml, 'data-extra="index"');
+    assertStringIncludes(indexHtml, "<title>All Pages - Custom</title>");
+    assert(!indexHtml.includes('href="/manual/Legacy/"'));
+
+    const homeHtml = Deno.readTextFileSync(
+      join(output, "manual", "Home", "index.html"),
+    );
+    assertStringIncludes(homeHtml, 'data-kind="article"');
+    assertStringIncludes(homeHtml, 'data-extra="Home"');
+    assertStringIncludes(homeHtml, "<title>Home - Custom</title>");
+    assertStringIncludes(homeHtml, 'class="toc"');
+    assertStringIncludes(homeHtml, 'href="/manual/Other/"');
+    // The theme's highlighter replaces the default escaping, and the deferred
+    // xml view is not offered.
+    assertStringIncludes(homeHtml, '<mark data-view="json-ld-compacted">');
+    assert(!homeHtml.includes("RDF/XML serialization is deferred."));
+    assert(!homeHtml.includes('value="xml"'));
+    // Every shell token the layout names is filled.
+    assert(!homeHtml.includes("%wiki."));
+
+    const legacyHtml = Deno.readTextFileSync(
+      join(output, "manual", "Legacy", "index.html"),
+    );
+    assertStringIncludes(legacyHtml, "url=/manual/Home/");
+    assertEquals(
+      Deno.readTextFileSync(join(output, "manual", "assets", "site.css")),
+      "body { color: navy; }\n",
+    );
+
+    // Substitution leaves a token the theme never filled verbatim.
+    assertEquals(
+      substitute("<p>%wiki.unfilled%</p>", new Map()),
+      "<p>%wiki.unfilled%</p>",
+    );
   } finally {
     cleanup(root);
   }
