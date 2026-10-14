@@ -119,6 +119,17 @@ When changing `wiki.yaml` schema or rejecting invalid keys:
 
 Upgrade narrative belongs in docs and release notes, not in runtime error strings. **After editing `Wiki_Configuration.md`, run `wiki -c docs/wiki.yml fmt` on that file** (tables and long sections drift easily).
 
+### Downstream templates
+
+Starter templates live in the separate [wazootech/wiki-templates](https://github.com/wazootech/wiki-templates) repo and consume this repo's artifact contract: the `wiki` command, the `@wazoo/wiki` Deno API, and `@wazoo/wiki/theme`. This repo's CI never builds them, so a change that reaches them is unverified until the templates are updated and built.
+
+When a change alters that contract — the config schema, CLI subcommands or flags, the exported API surface, the layout token set, or the build/export output layout:
+
+- **Update the affected templates in the same effort.** A major change is not done while a template it breaks is left stale; open the `wiki-templates` change alongside this one.
+- **Refresh the template registry here** when templates are added, removed, or renamed: [README.md](README.md) and [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
+- **Bump pinned versions only after publishing.** Templates pin `wazootech-wiki==<VERSION>` and `jsr:@wazoo/wiki@<VERSION>`; a merged change is invisible downstream until then, and a downstream typecheck against a stale published version is not evidence the template is fine.
+- **Treat layout tokens as the sharpest edge.** `renderLayout` fills a fixed token map (`src/wiki/site/layout.ts`); a template that ships its own layout substitutes the rest itself, so adding, renaming, or dropping a token changes those templates.
+
 ### Architecture
 
 See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).
