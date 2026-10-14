@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.7.0 — 2026-10-14
+
+### Added
+
+- `@wazoo/wiki/theme` exports `buildThemedSite`, a whole-site build driver that
+  owns the page walk, the page shell (table of contents, infobox, backlinks,
+  categories, metadata panels), `%wiki.*%` substitution, the output tree, and
+  asset copying, so a theme supplies only its layouts, its token values, and its
+  highlighter ([#409](https://github.com/wazootech/wiki/issues/409)).
+  `escapeHtml`, `safeJson`, and `substitute` are exported alongside it to compose
+  token values. This repository's own `docs/build.ts` is now a 93-line theme over
+  the driver, down from 791 lines, and builds byte-identical output.
+- `renderLayout` and `renderPageLayout` accept an `extraTokens` map for a theme
+  that computes layout slots itself, instead of reimplementing the substitution
+  loop ([#407](https://github.com/wazootech/wiki/issues/407)). The three
+  built-in slots remain the default; a key that collides with a built-in slot
+  wins, values are inserted verbatim, and an unknown `%wiki.*%` spelling is left
+  in place.
+
+### Changed
+
+- Documentation: the H1 is the page headline — repeating it as `headline`
+  frontmatter is redundant — and this repository's docs wiki enables
+  `lint.redundant_frontmatter` after removing the 74 repeated keys
+  ([#401](https://github.com/wazootech/wiki/issues/401)).
+- Documentation: the template registry names the single `wikipedia` template;
+  the eleven retired template paths no longer resolve
+  ([#411](https://github.com/wazootech/wiki/issues/411)).
+
+### Fixed
+
+- `wiki file new` no longer writes a `headline` frontmatter key that only
+  repeats the H1 it just wrote and would then be flagged by
+  `lint.redundant_frontmatter` ([#402](https://github.com/wazootech/wiki/issues/402)).
+  `name`, `schema:name`, and a headline that differs from the H1 are kept.
+
 ## 0.6.0 — 2026-10-11
 
 ### Added
