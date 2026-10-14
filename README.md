@@ -60,7 +60,8 @@ best practices that apply to any wiki or docs repo:
 
 Integration and template proposals are not handled by a skill: they follow the
 contributing guide in the [wiki-templates](https://github.com/wazootech/wiki-templates)
-repository, where proposals are filed.
+repository. No new templates are added there, so proposals belong in this
+repository's issue tracker.
 
 ```bash
 npx skills add wazootech/wiki@wiki -g -y
@@ -72,23 +73,17 @@ only for decisions that require judgment.
 
 ## Templates
 
-All templates live in the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo. Template specs, epics, and roadmap are tracked in the [wiki-templates issue tracker](https://github.com/wazootech/wiki-templates/issues) (see the [template program umbrella](https://github.com/wazootech/wiki-templates/issues/4)). Clone the one that matches your stack:
+[wiki-templates](https://github.com/wazootech/wiki-templates) holds exactly one template. Scaffold it into an empty directory:
+
+```bash
+wiki init --template wikipedia
+```
 
 | Template                                                              | Description                                                                                                                                                       |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [generic](https://github.com/wazootech/wiki-templates/tree/main/templates/generic)               | **Generic starter** — `wiki init` parity, deploy config, CI checks, best practices                                                                                |
-| [llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/templates/llm-wiki)             | **LLM Wiki** — agent gardening vault with SHACL shapes and SPARQL indexes                                                                                         |
-| [mintlify](https://github.com/wazootech/wiki-templates/tree/main/templates/mintlify)              | **Mintlify/Holocron** — MDX docs site powered by Wiki CLI vault                                                                                                   |
-| [holocron](https://github.com/wazootech/wiki-templates/tree/main/templates/holocron)              | **Holocron** — Holocron docs site from a Wiki CLI-compatible vault                                                                                                |
-| [astro](https://github.com/wazootech/wiki-templates/tree/main/templates/astro)                   | **Astro SSG** — consuming wiki export JSON-LD                                                                                                                     |
-| [nextjs](https://github.com/wazootech/wiki-templates/tree/main/templates/nextjs)                 | **Next.js SSG** — consuming wiki export JSON-LD                                                                                                                   |
-| [quartz](https://github.com/wazootech/wiki-templates/tree/main/templates/quartz)                 | **Quartz publish** — digital garden with Wiki CLI CI checks                                                                                                       |
-| [cocoindex](https://github.com/wazootech/wiki-templates/tree/main/templates/cocoindex)           | **CocoIndex sidecar** — incremental sidecar for Wiki-derived memory, RAG, and provenance-preserving indexes ([#201](https://github.com/wazootech/wiki/issues/201)) |
-| [yasgui](https://github.com/wazootech/wiki-templates/tree/main/templates/yasgui)                 | **YASGUI SPARQL** — query UI explorer                                                                                                                             |
 | [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/templates/wikipedia)           | **Wikipedia theme** — Wikipedia-inspired static layout using the Wiki Deno/TypeScript engine                                                                 |
-| [camunda](https://github.com/wazootech/wiki-templates/tree/main/templates/camunda)               | **Camunda governance** — BPMN/DMN knowledge base starter with SHACL shapes and JSON Schemas                                                                      |
 
-Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
+The other eleven templates were retired on 2026-10-14; their names live only in the [retired slugs](docs/wiki/wiki.md#retired-slugs) list. Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ## Installation
 

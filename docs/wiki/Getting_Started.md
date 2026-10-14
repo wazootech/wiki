@@ -68,7 +68,7 @@ wiki init --git
 
 Styling and branding (such as site name, theme color, logo, and favicon) are configured through a custom layout template and assets under `wiki.assets`; set `site.layout` in `wiki.yml`. See [Wiki Configuration — Custom CSS](Wiki_Configuration.md#custom-css) and [wiki init](wiki_init.md).
 
-Alternatively, start from a GitHub template: [wiki-templates/templates/generic](https://github.com/wazootech/wiki-templates/tree/main/templates/generic) (generic wiki project) or the [LLM Wiki](LLM_Wiki.md) starter [wiki-templates/templates/llm-wiki](https://github.com/wazootech/wiki-templates/tree/main/templates/llm-wiki). See [Wiki CLI templates](wiki.md#ecosystem-templates).
+Alternatively, scaffold from a template: [`wiki init --template wikipedia`](wiki_init.md) builds the [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/templates/wikipedia) starter from [wiki-templates](https://github.com/wazootech/wiki-templates). See [Wiki CLI templates](wiki.md#ecosystem-templates).
 
 ## Daily workflow
 
