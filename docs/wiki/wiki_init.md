@@ -41,7 +41,7 @@ wiki init --graph-context-wiki https://example.org/mywiki/ --site-base-url /mywi
 | `--graph-implicit-types`         | Override `graph.implicit_types` (can be specified multiple times)                              | `graph.implicit_types`                           |
 | `--graph-implicit-types-policy`  | Override `graph.implicit_types_policy`: `fallback` or `append`                                 | `graph.implicit_types_policy`                    |
 | `--graph-include-file-extension` | Override `graph.include_file_extension` flag (defaults to `--no-graph-include-file-extension`) | `graph.include_file_extension`                   |
-| `--template`                     | Use a starter template from wazootech/wiki-templates (e.g. generic, llm-wiki, astro)           | —                                                |
+| `--template`                     | Use a starter template from wazootech/wiki-templates (e.g. wikipedia)                          | —                                                |
 
 ## URL resolution
 
