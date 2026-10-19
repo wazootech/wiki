@@ -82,7 +82,7 @@ import {
   severityIssues,
 } from "./schemas/reports.ts";
 import type { CheckConfig, LintConfig } from "./schemas/rules.ts";
-import { checkShaclAll, checkShaclFile } from "./shacl.ts";
+import { checkShaclAll, checkShaclFile, loadWikiShapes } from "./shacl.ts";
 import { LinkIndex } from "./wiki_links.ts";
 import {
   lintDuplicateHeadingsWithEslint,
@@ -523,8 +523,13 @@ export async function runCheck(
   }
 
   if (filePaths !== null) {
+    // One shapes graph for every file: extracting it scans the whole corpus,
+    // and per file that made a scoped check O(files × corpus) (#414).
+    const shapesGraph = filePaths.length > 0
+      ? await loadWikiShapes(config)
+      : undefined;
     for (const filePath of filePaths) {
-      const result = await checkShaclFile(filePath, config);
+      const result = await checkShaclFile(filePath, config, shapesGraph);
       if (result === null) {
         report = addErrors(report, [{
           code: "missing_metadata",

@@ -320,6 +320,7 @@ export {
   checkShaclFile,
   formatReport,
   loadShapes,
+  loadWikiShapes,
   namedSourceShapes,
   type ShaclOutcome,
   structuredResult,

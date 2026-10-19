@@ -48,6 +48,7 @@ import {
   checkShaclAll,
   checkShaclFile,
   loadShapes,
+  loadWikiShapes,
 } from "../src/wiki/shacl.ts";
 
 function tempRoot(): string {
@@ -600,6 +601,23 @@ schema:PersonShape
       config,
     );
     assert(invalid !== null && !invalid.conforms);
+
+    // A caller-supplied shapes graph is used as given: the wiki's own shapes
+    // decide as the default does, and an empty one has nothing to violate.
+    const shapes = await loadWikiShapes(config);
+    assert(shapes.size > 0);
+    const reused = await checkShaclFile(
+      join(wiki, "invalid-person.md"),
+      config,
+      shapes,
+    );
+    assertEquals(reused, invalid);
+    const unshaped = await checkShaclFile(
+      join(wiki, "invalid-person.md"),
+      config,
+      new RdfGraph(),
+    );
+    assert(unshaped !== null && unshaped.conforms);
 
     // The whole-corpus pass sees the invalid page too.
     assertFalse((await checkShaclAll(config)).conforms);
