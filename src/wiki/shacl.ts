@@ -342,26 +342,39 @@ function termText(term: Term | undefined): string {
 }
 
 /**
+ * The shapes the per-file pass validates against: those the wiki declares,
+ * read from the uninferred graph.
+ *
+ * Extracting them scans every quad in the corpus, so a caller validating
+ * several files builds this once and passes it to {@link checkShaclFile}.
+ */
+export async function loadWikiShapes(config: Config): Promise<RdfGraph> {
+  return loadShapes(await loadGraph(config, { infer: false }));
+}
+
+/**
  * Validate one document's metadata against the shapes the wiki declares.
  *
  * `null` means the document carries no metadata at all — a distinct outcome from
  * "conforms", and the reason `audit` reports `missing_metadata` for it.
+ * `shapesGraph` defaults to {@link loadWikiShapes}; pass it when checking more
+ * than one file, or each call rescans the whole corpus for the same shapes.
  */
 export async function checkShaclFile(
   filePath: string,
   config: Config,
+  shapesGraph?: RdfGraph,
 ): Promise<ShaclOutcome | null> {
   const data = documentDataFromPath(filePath);
   if (data === null || Object.keys(data).length === 0) return null;
 
-  const sourceGraph = await loadGraph(config, { infer: false });
-  const shapesGraph = loadShapes(sourceGraph);
+  const shapes = shapesGraph ?? await loadWikiShapes(config);
   const dataGraph = frontmatterToGraph(data, config, {
     fileId: routeForDocumentFile(config, filePath),
     derived: await deriveMetadata(filePath),
   });
 
-  return await validateShacl(dataGraph, shapesGraph);
+  return await validateShacl(dataGraph, shapes);
 }
 
 /**
