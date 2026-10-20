@@ -20,8 +20,9 @@
     ]
   },
   "tasks": {
-    "check": "deno check src/wiki tests docs/build.ts scripts/bake_owl2rl_rules.ts",
+    "check": "deno check src/wiki tests bench docs/build.ts scripts/bake_owl2rl_rules.ts",
     "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-net=127.0.0.1,localhost tests/",
+    "bench:shacl": "deno run --allow-read --allow-write --allow-run --allow-env bench/shacl/run.ts",
 
     "bake:rules": "deno run --allow-read --allow-write scripts/bake_owl2rl_rules.ts",
     "fmt": "deno fmt",
@@ -61,6 +62,7 @@
       "src/wiki/**/*.ts",
       "tests/**/*.ts",
       "scripts/**/*.ts",
+      "bench/**/*.ts",
       "docs/build.ts",
       "deno.json"
     ],
@@ -71,6 +73,7 @@
       "src/wiki/**/*.ts",
       "tests/**/*.ts",
       "scripts/**/*.ts",
+      "bench/**/*.ts",
       "docs/build.ts"
     ],
     "exclude": ["docs/**/*.md"]
