@@ -130,13 +130,23 @@ async function runOne(
 ): Promise<CaseResult | CaseFailure> {
   const start = performance.now();
   const elapsed = () => Math.round(performance.now() - start);
+  const signal = AbortSignal.timeout(timeoutSeconds * 1000);
+  const timeout = (): CaseFailure => ({
+    case: name,
+    ok: false,
+    reason: `timeout after ${timeoutSeconds} s`,
+    totalMs: elapsed(),
+  });
   try {
     const output = await new Deno.Command(Deno.execPath(), {
       args: ["run", "-A", CASE_SCRIPT, name, dir],
       stdout: "piped",
       stderr: "piped",
-      signal: AbortSignal.timeout(timeoutSeconds * 1000),
+      signal,
     }).output();
+    // On Windows the killed child resolves as a plain exit 1 with no output
+    // instead of rejecting, so the signal, not the exit code, says it timed out.
+    if (signal.aborted) return timeout();
     const stdout = new TextDecoder().decode(output.stdout).trim();
     if (!output.success) {
       const stderr = new TextDecoder().decode(output.stderr);
@@ -152,14 +162,8 @@ async function runOne(
     }
     return JSON.parse(stdout.split("\n").at(-1) ?? "") as CaseResult;
   } catch (error) {
-    const timedOut = error instanceof DOMException &&
-      error.name === "TimeoutError";
-    return {
-      case: name,
-      ok: false,
-      reason: timedOut ? `timeout after ${timeoutSeconds} s` : String(error),
-      totalMs: elapsed(),
-    };
+    if (signal.aborted) return timeout();
+    return { case: name, ok: false, reason: String(error), totalMs: elapsed() };
   }
 }
 
