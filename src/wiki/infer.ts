@@ -102,6 +102,47 @@ function withoutRule(rules: string, rule: string): string {
 
 const OWL2RL_RULES = withoutRule(OWL2RL_N3, DT_EQ_RULE);
 
+/** One forward rule: a premise formula, `=>`, a conclusion formula, then `.`. */
+const RULE_PATTERN = new RegExp(
+  String.raw`\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*=>\s*` +
+    String.raw`\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}\s*\.`,
+  "g",
+);
+
+/**
+ * The rules whose premise reads `owl:sameAs`: eq-sym, eq-trans, eq-rep-s/p/o,
+ * eq-diff1/2/3, and the `sameAs`-scoped string-difference check.
+ */
+const EQUALITY_RULE_COUNT = 9;
+
+/**
+ * The ruleset without the rules that consume `owl:sameAs`.
+ *
+ * Eyeling evaluates `owl:sameAs` as a builtin that scans every fact, and the
+ * eq-rep rules call it once per triple, so these rules alone make inference
+ * quadratic in the graph even when no `sameAs` exists (#414). The rules are
+ * found by shape rather than by exact text, and the count is checked so a
+ * re-bake that adds or drops one fails here at load.
+ */
+function withoutEqualityRules(rules: string): string {
+  let removed = 0;
+  const kept = rules.replace(RULE_PATTERN, (rule) => {
+    if (!(rule.split("=>")[0] ?? "").includes("owl:sameAs")) return rule;
+    removed++;
+    return "";
+  });
+  if (removed !== EQUALITY_RULE_COUNT) {
+    throw new Error(
+      `Expected ${EQUALITY_RULE_COUNT} owl:sameAs rules in the OWL 2 RL ` +
+        `ruleset; found ${removed}. Re-check src/wiki/infer.ts after ` +
+        "re-baking the rules.",
+    );
+  }
+  return kept;
+}
+
+const OWL2RL_RULES_WITHOUT_EQUALITY = withoutEqualityRules(OWL2RL_RULES);
+
 /** A stable key for a quad, excluding the graph (the caller is one graph). */
 function tripleKey(quad: Quad): string {
   return `${termKey(quad.subject)}|${termKey(quad.predicate)}|${
@@ -109,13 +150,88 @@ function tripleKey(quad: Quad): string {
   }`;
 }
 
+const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
+const OWL = "http://www.w3.org/2002/07/owl#";
+
+/** `rdfs:` predicates that annotate rather than axiomatize. */
+const RDFS_ANNOTATIONS = new Set([
+  `${RDFS}label`,
+  `${RDFS}comment`,
+  `${RDFS}seeAlso`,
+  `${RDFS}isDefinedBy`,
+]);
+
+/** `owl:` predicates that state facts about individuals. */
+const OWL_INDIVIDUAL_PREDICATES = new Set([
+  `${OWL}sameAs`,
+  `${OWL}differentFrom`,
+]);
+
+/**
+ * `true` for a triple that belongs to the ontology: an RDFS or OWL axiom, a
+ * class or property declaration, or a list cell (property chains, keys, and
+ * class expressions are RDF lists).
+ */
+export function isOntologyTriple(quad: Quad): boolean {
+  const predicate = quad.predicate.value;
+  if (predicate === `${RDF}type`) {
+    const type = quad.object.value;
+    return type.startsWith(OWL) || type.startsWith(RDFS) ||
+      type === `${RDF}Property`;
+  }
+  if (predicate === `${RDF}first` || predicate === `${RDF}rest`) return true;
+  if (predicate.startsWith(RDFS)) return !RDFS_ANNOTATIONS.has(predicate);
+  if (predicate.startsWith(OWL)) {
+    return !OWL_INDIVIDUAL_PREDICATES.has(predicate);
+  }
+  return false;
+}
+
+/**
+ * Terms without which no `owl:sameAs` can enter the closure.
+ *
+ * Every rule that concludes `owl:sameAs` needs one of them in its premise:
+ * eq-sym and eq-trans need a `sameAs`; prp-fp and prp-ifp a functional or
+ * inverse-functional property; prp-key `owl:hasKey`; cls-maxc2 and the
+ * cls-maxqc rules a max (qualified) cardinality; prp-rp a `NamedIndividual`,
+ * because the ruleset declares `owl:sameAs` reflexive. `owl:Nothing` is listed
+ * because the closure makes it a subclass of `NamedIndividual`. No rule
+ * concludes any of these terms, so a graph that never mentions them cannot
+ * derive one, and dt-eq, the one rule that could, is already removed.
+ */
+const SAME_AS_SOURCES = new Set([
+  `${OWL}sameAs`,
+  `${OWL}NamedIndividual`,
+  `${OWL}Nothing`,
+  `${OWL}FunctionalProperty`,
+  `${OWL}InverseFunctionalProperty`,
+  `${OWL}hasKey`,
+  `${OWL}maxCardinality`,
+  `${OWL}maxQualifiedCardinality`,
+]);
+
+/** `true` when some rule could derive an `owl:sameAs` from `asserted`. */
+export function mayDeriveSameAs(asserted: readonly Quad[]): boolean {
+  return asserted.some((quad) =>
+    SAME_AS_SOURCES.has(quad.subject.value) ||
+    SAME_AS_SOURCES.has(quad.predicate.value) ||
+    SAME_AS_SOURCES.has(quad.object.value)
+  );
+}
+
 /**
  * Apply OWL 2 RL deductive closure directly to the provided graph.
  *
- * The whole graph is used as the vocabulary, which is what makes a wiki's own
- * `.ttl` axiom files drive the expansion: `Person rdfs:subClassOf Agent` in a
- * page therefore types every `Person` in the corpus as an `Agent`, exactly as
- * the in-place owlrl expansion did.
+ * The engine's `load` is a preprocessing pass: it closes the rules over the
+ * vocabulary it is given and compiles a runtime from that. It is handed only
+ * the graph's ontology triples ({@link isOntologyTriple}), and the asserted
+ * graph goes through `infer` once. Handing it the whole graph (as the first
+ * port did) closed the instance data in `load` and again in `infer`, which made
+ * a 10⁴-quad wiki with no axioms take over 40 s (#414). A wiki's own axiom
+ * files still drive the expansion: `Person rdfs:subClassOf Agent` in a page is
+ * an ontology triple, so every `Person` in the corpus is typed as an `Agent`,
+ * as the in-place owlrl expansion did.
  *
  * Load, infer, and closure are all synchronous inside the engine, exactly as
  * owlrl's expansion was, so this stays synchronous: the only async work in the
@@ -135,10 +251,15 @@ export function applyInference(
     const asserted = graph.toArray().map((item) =>
       triple(item.subject, item.predicate as NamedNode, item.object)
     );
+    // A graph that can never hold an owl:sameAs gets the same closure without
+    // the equality rules, and skips their quadratic cost.
+    const rules = mayDeriveSameAs(asserted)
+      ? OWL2RL_RULES
+      : OWL2RL_RULES_WITHOUT_EQUALITY;
     const engine = new InferenceEngine();
     engine.load(
-      [{ n3: OWL2RL_RULES, label: "rules/owl2rl" }],
-      asserted,
+      [{ n3: rules, label: "rules/owl2rl" }],
+      asserted.filter(isOntologyTriple),
       { selectRuntimeRules: false },
     );
 
