@@ -1,5 +1,10 @@
 # Reasoning engine spike — decision memo
 
+> **Superseded.** The engine recommended below, `rdfjs-inference-engine`, was
+> replaced by [`@wazoo/reasoner`](https://github.com/wazootech/reasoner) in
+> [wazootech/wiki#418](https://github.com/wazootech/wiki/pull/418). The memo is
+> kept unchanged as a historical record.
+
 Date: 2026-09-23
 Branch: `refactor/deno-rewrite` (worktree `worktrees/wiki/deno-rewrite`)
 Corpus: micro OWL2RL fixture suite + the docs wiki (402 asserted triples)
