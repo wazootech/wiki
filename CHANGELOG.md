@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- OWL 2 RL inference now runs on
+  [`@wazoo/reasoner`](https://github.com/wazootech/reasoner) 0.1.0 instead of
+  `rdfjs-inference-engine`, wired in `src/wiki/infer.ts`
+  ([#418](https://github.com/wazootech/wiki/pull/418)). Inferred triples are
+  identical to the old engine on the bench-1e3, docs, micro, and owl-nosame
+  corpora; the `owl` corpus yields 2 extra triples (eq-rep on an ontology
+  triple). The W3C OWL 2 RL suite passes 81 of 90, and the 4 genuine "conclusion
+  not entailed" failures also fail on the old engine.
+- Measured effect (`bench:shacl`, main vs branch): `loadGraph` is 1.6x faster at
+  100k and 1M quads with 18-40% less peak RSS. On sameAs-heavy synthetic graphs
+  the old engine was quadratic (18 s at 1k triples, 71 s at 2k); the new one
+  takes 97 ms and 264 ms, though it is still superlinear
+  ([wazootech/reasoner#5](https://github.com/wazootech/reasoner/issues/5)).
+
+### Removed
+
+- The baked rule profile `src/wiki/owl2rl_rules.ts`, its generator
+  `scripts/bake_owl2rl_rules.ts` and test `tests/bake_owl2rl_rules_test.ts`, the
+  `bake:rules` task, and the internal helpers `isOntologyTriple` and
+  `mayDeriveSameAs`. None were exported from `mod.ts`.
+
 ## 0.7.0 — 2026-10-14
 
 ### Added
