@@ -12,6 +12,12 @@
   corpora; the `owl` corpus yields 2 extra triples (eq-rep on an ontology
   triple). The W3C OWL 2 RL suite passes 81 of 90, and the 4 genuine "conclusion
   not entailed" failures also fail on the old engine.
+- `@wazoo/reasoner` bumped from 0.1.0 to 0.3.0. `src/wiki/infer.ts` uses only
+  `add`, `run` and `closure("application")`; 0.3.0 no longer derives
+  `owl:differentFrom` between distinct literals, which nothing in the Wiki
+  reads. The W3C OWL 2 RL suite now passes 88 of 90. `bench:shacl` at 1M quads
+  shows no measurable difference (0.1.0: 98.7 s and 95.6 s; 0.3.0: 101.7 s and
+  85.0 s).
 - Measured effect (`bench:shacl`, main vs branch): `loadGraph` is 1.6x faster at
   100k and 1M quads with 18-40% less peak RSS. On sameAs-heavy synthetic graphs
   the old engine was quadratic (18 s at 1k triples, 71 s at 2k); the new one
