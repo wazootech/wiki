@@ -55,6 +55,9 @@
     "yaml": "npm:yaml@2.9.1",
     "eslint": "npm:eslint@9.39.5"
   },
+  "lock": {
+    "frozen": true
+  },
   "fmt": {
     "include": [
       "src/wiki/**/*.ts",
