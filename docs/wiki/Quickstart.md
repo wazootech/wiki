@@ -58,22 +58,13 @@ mkdir my-wiki && cd my-wiki
 wiki init
 ```
 
-This creates a minimal `wiki.yml` configuration and a starter page (typically `Home.md` or `index.md` depending on your setup).
+This creates a minimal `wiki.yml` configuration, a `README.md`, and an empty `wiki/` directory for your pages.
 
 ## Configure your wiki
 
-The generated `wiki.yml` is the single source of truth for your wiki. At minimum, it defines input directories, output paths, and validation settings.
+The generated `wiki.yml` is the single source of truth for your wiki. At minimum, it defines which directories to index and which validation rules apply.
 
-For this quickstart, a minimal config looks like:
-
-```yaml
-wiki:
-  name: "My Wiki"
-  input_dirs:
-    - .
-  output_dir: "_site"
-  static_dir: "static"
-```
+The scaffold's config already lists `wiki/` as the input directory, so this quickstart needs no edits. `wiki build` writes output to the `--output-dir` you pass (default `_site`).
 
 See [Wiki Configuration](Wiki_Configuration.md) for all available options.
 
@@ -82,7 +73,7 @@ See [Wiki Configuration](Wiki_Configuration.md) for all available options.
 Create a new page using Markdown:
 
 ```bash
-cat > Getting_Started.md << 'EOF'
+cat > wiki/Getting_Started.md << 'EOF'
 # Getting Started
 
 Welcome to your new wiki!
@@ -105,7 +96,7 @@ Use standard Markdown links to connect pages:
 [Quickstart](Quickstart.md) [Configuration](Wiki_Configuration.md)
 ```
 
-Internal links are validated by `wiki check`. See [Internal Links](Style_Guide.md#internal-links) in the Style Guide for details.
+Internal links are validated by `wiki lint`. See [Internal Links](Style_Guide.md#internal-links) in the Style Guide for details.
 
 ## Format, lint, and check
 
@@ -118,7 +109,7 @@ wiki fmt
 # Check conventions and style
 wiki lint
 
-# Validate integrity (links, schema, routes)
+# Validate integrity (SHACL, JSON Schema, routes)
 wiki check
 ```
 
@@ -145,7 +136,7 @@ Build a static site from your wiki:
 wiki build
 ```
 
-This writes HTML to the `output_dir` defined in `wiki.yml` (default `_site`).
+This writes HTML to `_site` (override with `--output-dir`).
 
 Preview it locally:
 
@@ -153,7 +144,7 @@ Preview it locally:
 wiki serve
 ```
 
-By default, this serves the built site at [http://localhost:8000](http://localhost:8000). You can specify a different port with `--port`.
+By default, this serves the built site at [http://localhost:8080](http://localhost:8080). You can specify a different port with `--port`.
 
 ## Automate updates
 
