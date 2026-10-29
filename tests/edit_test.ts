@@ -380,6 +380,9 @@ Deno.test("edits are confined to wiki documents under wiki.input", async () => {
   }
 });
 
+/** One element of `Wiki.edit`'s `ops`, for deliberately malformed input. */
+type EditOpInput = Parameters<Wiki["edit"]>[0]["ops"][number];
+
 Deno.test("malformed ops are a clear usage error", async () => {
   const root = writeWiki();
   try {
@@ -387,15 +390,14 @@ Deno.test("malformed ops are a clear usage error", async () => {
     const error = await assertRejects(
       () =>
         wiki.edit({
-          // deno-lint-ignore no-explicit-any
-          ops: [{ op: "move", from: "wiki/Good.md" } as any],
+          ops: [{ op: "move", from: "wiki/Good.md" } as unknown as EditOpInput],
         }),
       EditUsageError,
     );
     assert(error.message.includes("ops[0].to"), error.message);
     await assertRejects(
-      // deno-lint-ignore no-explicit-any
-      () => wiki.edit({ ops: [{ op: "frobnicate" } as any] }),
+      () =>
+        wiki.edit({ ops: [{ op: "frobnicate" } as unknown as EditOpInput] }),
       EditUsageError,
     );
     await assertRejects(() => wiki.edit({ ops: [] }), EditUsageError);

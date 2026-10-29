@@ -29,7 +29,7 @@
     "prepack": "npm run build",
     "format": "prettier \"src/*.ts\" --write",
     "format:check": "prettier \"src/*.ts\" --check",
-    "lint": "eslint src/*.ts",
+    "lint": "eslint --max-warnings 0 src/*.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:npm": "npm run typecheck && npm run build && node tests/npm/test-runtime.js"
   },

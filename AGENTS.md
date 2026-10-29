@@ -133,3 +133,14 @@ When a change alters that contract — the config schema, CLI subcommands or fla
 ### Architecture
 
 See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/wiki/Wiki_Configuration.md) for config semantics (`check` vs `lint` vs `fmt`).
+
+## Code health
+
+Family-wide rules live in the [wazootech workspace constitution](https://github.com/wazootech/workspace/blob/main/AGENTS.md#code-health-standards); this repo's specifics:
+
+- **Before pushing**, run what CI runs: `deno task fmt:check && deno task lint && deno task check && deno task test`, then `npm run format:check && npm run lint && npm run typecheck`.
+- `@typescript-eslint/no-explicit-any` is an error and eslint runs with `--max-warnings 0`; type casts instead of using `any` or lint-ignore comments.
+- CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.
+- Third-party actions are pinned to full commit SHAs with a version comment; `deno.json` sets `lock.frozen`, so commit `deno.lock` changes deliberately.
+- `secret-scan.yml` (gitleaks) runs on every PR and push to main; never suppress a finding.
+- `code-health.yml` is warn-only (file length, TODO/FIXME without an issue link). `.github/CODEOWNERS` assigns review.
