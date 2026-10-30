@@ -1,4 +1,4 @@
-import { dirname, join } from "@std/path";
+import { join } from "@std/path";
 import { pathExists, readText } from "../src/wiki/fspath.ts";
 import { gitSymlinksUnavailable } from "./support/symlink_support.ts";
 import {
@@ -8,91 +8,15 @@ import {
   assertThrows,
 } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
-
 import { loadLockfile } from "../src/wiki/schemas/sources.ts";
 import { install, remove, update } from "../src/wiki/sources.ts";
-
-function withTempDir(body: (root: string) => void): void {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-sources-" });
-  try {
-    body(root);
-  } finally {
-    Deno.removeSync(root, { recursive: true });
-  }
-}
-
-function git(args: string[], cwd: string): string {
-  const result = new Deno.Command("git", {
-    args,
-    cwd: cwd,
-    stdout: "piped",
-    stderr: "piped",
-  }).outputSync();
-  const decoder = new TextDecoder();
-  const stdout = decoder.decode(result.stdout);
-  if (result.code !== 0) {
-    throw new Error(decoder.decode(result.stderr) || stdout);
-  }
-  return stdout.trim();
-}
-
-function initRepo(
-  root: string,
-  name: string,
-  files: Record<string, string>,
-): string {
-  const repo = join(root, name);
-  Deno.mkdirSync(repo, { recursive: true });
-  git(["init", "--initial-branch=main"], repo);
-  for (const [relative, content] of Object.entries(files)) {
-    const file = join(repo, relative);
-    Deno.mkdirSync(dirname(file), { recursive: true });
-    Deno.writeTextFileSync(file, content);
-  }
-  git(["add", "."], repo);
-  git([
-    "-c",
-    "user.name=Wiki Tests",
-    "-c",
-    "user.email=wiki-tests@example.invalid",
-    "commit",
-    "-m",
-    "initial",
-  ], repo);
-  return repo;
-}
-
-function commitFile(repo: string, relative: string, content: string): string {
-  const file = join(repo, relative);
-  Deno.writeTextFileSync(file, content);
-  git(["add", relative], repo);
-  git([
-    "-c",
-    "user.name=Wiki Tests",
-    "-c",
-    "user.email=wiki-tests@example.invalid",
-    "commit",
-    "-m",
-    "update",
-  ], repo);
-  return git(["rev-parse", "HEAD"], repo);
-}
-
-function rootConfig(
-  root: string,
-  sources: readonly { name: string; url: string }[] = [],
-): Config {
-  const entries = sources.map(({ name, url }) =>
-    `  - name: ${name}\n    type: git\n    url: ${url}`
-  );
-  Deno.writeTextFileSync(
-    join(root, "wiki.yml"),
-    `wiki:\n  input: wiki\n${
-      entries.length ? `sources:\n${entries.join("\n")}\n` : ""
-    }`,
-  );
-  return Config.load(root);
-}
+import {
+  commitFile,
+  git,
+  initRepo,
+  rootConfig,
+  withTempDir,
+} from "./sources_management_support.ts";
 
 Deno.test("source install and removal preserve comments in wiki.yml", () => {
   withTempDir((root) => {
