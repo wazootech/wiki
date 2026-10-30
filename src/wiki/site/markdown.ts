@@ -7,89 +7,14 @@ import {
   resolvePageHref,
 } from "../links.ts";
 import { stripSparqlWrappersForHtml } from "../render.ts";
-import type { TocItem } from "./types.ts";
+import { installWikiLinkRule } from "./markdown/wiki_link_rule.ts";
 
-export function titleFromMarkdown(markdown: string, fallback: string): string {
-  const heading = parseHeadings(markdown).find((item) => item.level === 1);
-  if (heading !== undefined) return heading.text.trim();
-  const stem = fallback ? fallback.split("/").at(-1) ?? "Index" : "Index";
-  return stem.replaceAll("_", " ").replaceAll("-", " ").trim() || "Index";
-}
-
-function normalizeTitle(text: string): string {
-  return text.trim().normalize("NFKC").toLocaleLowerCase().replace(/\s+/g, " ");
-}
-
-function headingTextForTitle(text: string): string {
-  return normalizeTitle(text.replace(/`([^`\n]+)`/g, "$1"));
-}
-
-function stripLeadingTitleHeading(markdown: string, title: string): string {
-  if (normalizeTitle(title) === "") return markdown;
-  const lines = markdown.split("\n");
-  let index = 0;
-  while (index < lines.length && lines[index]!.trim() === "") index += 1;
-  const line = lines[index];
-  const match = line === undefined ? null : /^(#{1,6})\s+(.+)$/.exec(line);
-  if (match === null || match[1]!.length !== 1) return markdown;
-  if (headingTextForTitle(match[2]!) !== normalizeTitle(title)) return markdown;
-  index += 1;
-  while (index < lines.length && lines[index]!.trim() === "") index += 1;
-  return lines.slice(index).join("\n");
-}
-
-function installWikiLinkRule(
-  md: MarkdownIt,
-  baseUrl: string,
-  urlStyle: string,
-  currentRoute: string,
-): void {
-  md.inline.ruler.before(
-    "link",
-    "wikilink",
-    (state: MarkdownIt.StateInline, silent: boolean) => {
-      const start = state.pos;
-      if (state.src.slice(start, start + 2) !== "[[") return false;
-      const close = state.src.indexOf("]]", start + 2);
-      if (close < 0) return false;
-      const raw = state.src.slice(start + 2, close);
-      const separator = raw.indexOf("|");
-      const target = (separator < 0 ? raw : raw.slice(0, separator)).trim();
-      const label = (separator < 0 ? raw : raw.slice(separator + 1)).trim() ||
-        target;
-      if (target === "") return false;
-      if (silent) {
-        state.pos = close + 2;
-        return true;
-      }
-      const href = resolvePageHref(currentRoute, target, baseUrl, urlStyle);
-      if (href === null) {
-        const token = state.push("text", "", 0);
-        token.content = `[[${raw}]]`;
-      } else {
-        const open = state.push("link_open", "a", 1);
-        open.attrSet("class", "wikilink");
-        open.attrSet("href", href);
-        const text = state.push("text", "", 0);
-        text.content = label;
-        state.push("link_close", "a", -1);
-      }
-      state.pos = close + 2;
-      return true;
-    },
-  );
-}
-
-export function renderOutlineTitle(
-  title: string,
-  baseUrl = "/wiki",
-  urlStyle = "dir",
-  currentRoute = "",
-): string {
-  const md = new MarkdownIt({ html: false, linkify: false });
-  installWikiLinkRule(md, baseUrl, urlStyle, currentRoute);
-  return md.renderInline(title).trim();
-}
+export {
+  outlineForMarkdown,
+  stripLeadingTitle,
+  titleFromMarkdown,
+} from "./markdown/title.ts";
+export { renderOutlineTitle } from "./markdown/wiki_link_rule.ts";
 
 export function renderWikiMarkdown(
   markdown: string,
@@ -153,18 +78,4 @@ export function renderWikiMarkdown(
   };
   md.renderer.rules.fence = fenceRule;
   return md.render(stripSparqlWrappersForHtml(markdown));
-}
-
-export function outlineForMarkdown(markdown: string): TocItem[] {
-  return parseHeadings(markdown)
-    .filter((heading) => heading.level >= 2 && heading.level <= 6)
-    .map((heading) => ({
-      title: heading.text.trim(),
-      slug: heading.slug,
-      level: heading.level,
-    }));
-}
-
-export function stripLeadingTitle(markdown: string, title: string): string {
-  return stripLeadingTitleHeading(markdown, title);
 }

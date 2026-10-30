@@ -16,57 +16,16 @@
  */
 
 /** The data namespace the fixture mints IRIs in. */
-export const EX = "https://bench.example/";
-const SCHEMA = "https://schema.org/";
-const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+import {
+  EX,
+  ORG_TRIPLES,
+  PEOPLE_PER_ORG,
+  PERSON_TRIPLES,
+  RDF_TYPE,
+  SCHEMA,
+} from "./fixture/constants.ts";
 
-/** One organization per this many people. */
-const PEOPLE_PER_ORG = 20;
-/** Triples per conforming person and per organization. */
-const PERSON_TRIPLES = 6;
-const ORG_TRIPLES = 3;
-
-/** The shapes, in Turtle. Kept in one string so a consumer can copy it out. */
-export const SHAPES_TURTLE = `@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix schema: <${SCHEMA}> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix bench: <${EX}shape/> .
-
-bench:Person
-    a sh:NodeShape ;
-    sh:targetClass schema:Person ;
-    sh:property [
-        sh:path schema:givenName ;
-        sh:minCount 1 ;
-        sh:datatype xsd:string ;
-    ] , [
-        sh:path schema:email ;
-        sh:maxCount 1 ;
-    ] , [
-        sh:path schema:worksFor ;
-        sh:minCount 1 ;
-        sh:class schema:Organization ;
-    ] , [
-        sh:path ( schema:worksFor schema:name ) ;
-        sh:minCount 1 ;
-    ] , [
-        sh:path schema:knows ;
-        sh:nodeKind sh:IRI ;
-        sh:class schema:Person ;
-    ] .
-
-bench:Organization
-    a sh:NodeShape ;
-    sh:targetClass schema:Organization ;
-    sh:property [
-        sh:path schema:name ;
-        sh:minCount 1 ;
-        sh:maxCount 1 ;
-    ] , [
-        sh:path [ sh:inversePath schema:worksFor ] ;
-        sh:minCount 1 ;
-    ] .
-`;
+export { EX, SHAPES_TURTLE } from "./fixture/constants.ts";
 
 /** What a fixture holds, and how many violations were planted in it. */
 export interface Fixture {
