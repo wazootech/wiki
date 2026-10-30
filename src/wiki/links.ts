@@ -23,245 +23,30 @@
 
 import { quoteString } from "./describe.ts";
 import { ValueError } from "./errors.ts";
-import { headingSlug } from "./headings.ts";
 import { pageUrl } from "./paths.ts";
+import {
+  fragmentId,
+  markdownLinkTarget,
+  PAGE_LINK_EXTENSIONS,
+  splitTarget,
+  suffixOf,
+} from "./links/targets.ts";
+import { resolvePageRoute } from "./links/route_resolve.ts";
 
-/** Schemes treated as external rather than wiki-relative. */
-export const EXTERNAL_SCHEMES: ReadonlySet<string> = new Set([
-  "http",
-  "https",
-  "mailto",
-  "tel",
-]);
-
-/** Extensions a markdown link may name and still be a *page* link. */
-export const PAGE_LINK_EXTENSIONS: ReadonlySet<string> = new Set([
-  "",
-  ".md",
-  ".yaml",
-  ".yml",
-  ".json",
-]);
-
-/**
- * `true` for a link the engine will not try to resolve inside the wiki.
- *
- * Beyond the named schemes, anything of the form `scheme://` or `//host` is a
- * URL by construction (`ftp://`, `obsidian://`, `vscode://`), so it is never a
- * wiki path. A bare `Talk:Page.md` carries no `//` and stays a wiki path.
- */
-export function isExternalLink(target: string): boolean {
-  if (target.startsWith("//")) return true;
-  if (/^[A-Za-z][A-Za-z0-9+.\-]*:\/\//.test(target)) return true;
-  const scheme = schemeOf(target).toLowerCase();
-  return EXTERNAL_SCHEMES.has(scheme);
-}
-
-/**
- * A markdown link destination split around its target: `before` and `after`
- * hold the `<` `>` brackets, whitespace, and `"title"` that surround it, so a
- * rewrite can swap the target and keep the rest byte for byte.
- */
-export interface MarkdownDestination {
-  readonly before: string;
-  readonly target: string;
-  readonly after: string;
-}
-
-/**
- * Split the raw text between a link's parentheses into target and decoration.
- *
- * CommonMark allows `(<Page.md>)`, `(Page.md "Title")`, and both together. The
- * link scanner captures all of it, so treating the capture as the target made
- * every titled link "point to a missing asset" and left it out of backlinks.
- * Text that does not parse as one destination plus an optional title (a bare
- * space in the path, say) is returned whole as the target, as before.
- */
-export function parseMarkdownDestination(raw: string): MarkdownDestination {
-  const wrapped = /^(\s*<)([^<>\r\n]*)(>[\s\S]*)$/.exec(raw);
-  if (wrapped !== null) {
-    return {
-      before: wrapped[1] as string,
-      target: wrapped[2] as string,
-      after: wrapped[3] as string,
-    };
-  }
-  const titled = /^(\s*)(\S+?)(\s+(?:"[^"]*"|'[^']*'|\([^()]*\)))?(\s*)$/.exec(
-    raw,
-  );
-  if (titled === null) return { before: "", target: raw, after: "" };
-  return {
-    before: titled[1] as string,
-    target: titled[2] as string,
-    after: `${titled[3] ?? ""}${titled[4] ?? ""}`,
-  };
-}
-
-/**
- * `urllib.parse.urlsplit(target).scheme`.
- *
- * A URL parser rather than a `startsWith("http")` test: `mailto:` and `tel:`
- * carry no `//`, and `HTTP://` is the same scheme as `http://`, both of which
- * a prefix test gets wrong. The regex is `urlsplit`'s own rule — the scheme
- * must open the target and contain no `/` — which is what keeps `docs/Page.md`
- * a wiki path and not a `docs:` URL.
- */
-function schemeOf(target: string): string {
-  const match = /^([A-Za-z][A-Za-z0-9+.\-]*):/.exec(target);
-  return match === null ? "" : (match[1] as string).toLowerCase();
-}
-
-/** Split a target into its page part and its fragment, if any. */
-export function splitTarget(target: string): [string, string | null] {
-  const index = target.indexOf("#");
-  if (index < 0) return [target, null];
-  return [target.slice(0, index), target.slice(index + 1)];
-}
-
-/** The anchor id a fragment names, slugged the way GitHub slugs headings. */
-export function fragmentId(fragment: string | null): string {
-  if (!fragment) return "";
-  return headingSlug(unquote(fragment).trim());
-}
-
-/** `urllib.parse.unquote`. */
-export function unquote(text: string): string {
-  try {
-    return decodeURIComponent(text.replace(/\+/g, "%2B"));
-  } catch {
-    // Python leaves a malformed escape alone (`%zz` stays `%zz`), and so must
-    // this: a link with a stray `%` is a broken link, not a crash.
-    return text;
-  }
-}
-
-/**
- * `PurePosixPath(page_part).suffix.lower()`.
- *
- * Only the last component counts, and a dot that opens or closes that name is
- * not a suffix: `notes.` and `.hidden` both have none, which matters because
- * `markdown_link_is_page` treats a stray `.` as a page extension.
- */
-function suffixOf(pagePart: string): string {
-  const name = pagePart.split("/").pop() ?? "";
-  const index = name.lastIndexOf(".");
-  if (index <= 0 || index === name.length - 1) return "";
-  return name.slice(index).toLowerCase();
-}
-
-/**
- * Normalise a wiki route, POSIX-style.
- *
- * `posixpath.normpath` semantics, spelled out: `.` and empty segments vanish,
- * `..` pops, and a leading `..` survives so the caller can reject it.
- *
- * Exported because the asset resolver needs the same normalisation on the same
- * kind of string — a wiki-relative POSIX path — and Python reaches for
- * `posixpath` from both modules. One difference, accepted: `posixpath` keeps a
- * leading `//` (POSIX's implementation-defined form) where this collapses it,
- * and no wiki path starts with two slashes.
- */
-export function normalizePosixPath(path: string): string {
-  const absolute = path.startsWith("/");
-  const parts: string[] = [];
-  for (const part of path.split("/")) {
-    if (part === "" || part === ".") continue;
-    if (part === "..") {
-      if (parts.length > 0 && parts[parts.length - 1] !== "..") parts.pop();
-      else if (absolute) continue;
-      else parts.push("..");
-      continue;
-    }
-    parts.push(part);
-  }
-  const normalized = parts.join("/");
-  return absolute ? `/${normalized}` : normalized === "" ? "." : normalized;
-}
-
-/**
- * Resolve a link target against the route of the page that contains it.
- *
- * Returns the route, or `null` when the target points outside the wiki or is
- * malformed. `""` resolves to the current page (a bare `#fragment`, or a
- * `Page#Section` where `Page` is the current one).
- */
-export function resolvePageRoute(
-  currentRoute: string,
-  target: string,
-): string | null {
-  const [pagePartRaw] = splitTarget(target);
-  let pagePart = unquote(pagePartRaw).replaceAll("\\", "/").trim();
-  if (pagePart.startsWith("/")) return null;
-  const suffix = suffixOf(pagePart);
-  if (
-    suffix === ".md" || suffix === ".yaml" || suffix === ".yml" ||
-    suffix === ".json"
-  ) {
-    pagePart = pagePart.slice(0, -suffix.length);
-  }
-  const currentDir = posixDirname(currentRoute);
-  const raw = pagePart === "" ? "." : pagePart;
-  let combined = normalizePosixPath(
-    currentDir === "" ? raw : `${currentDir}/${raw}`,
-  );
-  if (combined === ".") combined = currentRoute;
-  if (combined.startsWith("../") || combined === "..") return null;
-  let parts = combined.split("/").filter((part) => part !== "" && part !== ".");
-  if (parts.length > 0 && parts[parts.length - 1] === "index") {
-    parts = parts.slice(0, -1);
-  }
-  return parts.join("/");
-}
-
-/**
- * The route a site-root-relative link names, or `null` when it is not one.
- *
- * The inverse of `pageUrl`: `/wiki/Guides/Setup/` under `base_url: /wiki` and
- * `url_style: dir` is the route `Guides/Setup`, and `/wiki/` is the index.
- * `null` covers a link outside `base_url`, a protocol-relative `//host`, and a
- * path that names a file the site would not emit for a page (`.png`), so the
- * caller keeps treating those as it always did.
- */
-export function routeFromSiteUrl(
-  target: string,
-  baseUrl: string,
-  urlStyle: string,
-): string | null {
-  const [pagePart] = splitTarget(target);
-  const path = unquote(pagePart).replaceAll("\\", "/");
-  if (!path.startsWith("/") || path.startsWith("//")) return null;
-  const base = baseUrl.replace(/\/+$/, "");
-  let rest: string;
-  if (base === "") {
-    rest = path;
-  } else if (path === base || path.startsWith(`${base}/`)) {
-    rest = path.slice(base.length);
-  } else {
-    return null;
-  }
-  rest = rest.replace(/^\/+/, "");
-  if (urlStyle === "file") {
-    if (rest === "" || rest === "index.html") return "";
-    if (!rest.endsWith(".html")) return null;
-    rest = rest.slice(0, -".html".length);
-  } else {
-    if (rest.endsWith("/index.html")) {
-      rest = rest.slice(0, -"index.html".length);
-    }
-    if (rest !== "" && !rest.endsWith("/")) return null;
-    rest = rest.replace(/\/+$/, "");
-  }
-  if (rest.split("/").some((part) => part === "." || part === "..")) {
-    return null;
-  }
-  return rest;
-}
-
-/** `posixpath.dirname`. */
-export function posixDirname(path: string): string {
-  const index = path.lastIndexOf("/");
-  return index < 0 ? "" : path.slice(0, index);
-}
+export {
+  EXTERNAL_SCHEMES,
+  fragmentId,
+  isExternalLink,
+  type MarkdownDestination,
+  markdownLinkTarget,
+  normalizePosixPath,
+  PAGE_LINK_EXTENSIONS,
+  parseMarkdownDestination,
+  posixDirname,
+  splitTarget,
+  unquote,
+} from "./links/targets.ts";
+export { resolvePageRoute, routeFromSiteUrl } from "./links/route_resolve.ts";
 
 /**
  * Resolve a link target straight to the href the site should emit.
@@ -293,11 +78,6 @@ export function markdownLinkIsPage(target: string): boolean {
   const [pagePart] = splitTarget(target);
   if (pagePart === "") return true;
   return PAGE_LINK_EXTENSIONS.has(suffixOf(pagePart));
-}
-
-/** The wiki-relative markdown path of a route, as a link target. */
-export function markdownLinkTarget(route: string): string {
-  return `${route}.md`;
 }
 
 /**
