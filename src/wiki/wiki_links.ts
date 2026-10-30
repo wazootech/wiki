@@ -40,51 +40,30 @@ import {
 } from "./document.ts";
 import { headingIds } from "./headings.ts";
 import {
-  fragmentId,
   isExternalLink,
   markdownLinkIsPage,
   parseMarkdownDestination,
-  resolvePageRoute,
   routeFromSiteUrl,
-  splitTarget,
   unquote,
 } from "./links.ts";
-import {
-  type DataRecord,
-  documentDataFromPath,
-  readTextTolerant,
-} from "./parser.ts";
+import { documentDataFromPath, readTextTolerant } from "./parser.ts";
 import { iterDocumentFiles, routeForDocumentFile } from "./paths.ts";
 import type { BrokenLink } from "./schemas/domain.ts";
+import { errorMessage, indexPageLinks } from "./wiki_links/page_links.ts";
+import {
+  frontmatterAssetTargets,
+  linkIssue,
+  pageTargetIssue,
+  pageTargetMessage,
+  wikiCuriesInMetadata,
+  wikiRouteFromCurie,
+} from "./wiki_links/link_targets.ts";
 
-/** A `wiki:` CURIE as it appears in metadata. */
-const WIKI_CURIE_RE = /^wiki:[^\s]+$/;
-
-/** Metadata keys whose values are identifiers or vocabulary, not wiki links. */
-const METADATA_SKIP_KEYS: ReadonlySet<string> = new Set([
-  "@context",
-  "@id",
-  "id",
-  "@type",
-  "type",
-]);
-
-/** A `BrokenLink` with the match-span fields left unset. */
-function linkIssue(
-  fields:
-    & Omit<
-      BrokenLink,
-      "match_start" | "match_end" | "full_match"
-    >
-    & Partial<Pick<BrokenLink, "match_start" | "match_end" | "full_match">>,
-): BrokenLink {
-  return {
-    match_start: null,
-    match_end: null,
-    full_match: null,
-    ...fields,
-  };
-}
+export {
+  outboundPageRoutes,
+  type PageLinkMatch,
+  pageLinkMatches,
+} from "./wiki_links/page_links.ts";
 
 /** Link graph of a wiki: routes, broken links, and backlinks. */
 export class LinkIndex {
@@ -340,238 +319,4 @@ export class LinkIndex {
 
     return issues;
   }
-}
-
-/** Python's `str(exception)`, which is what reaches a `read_error` message. */
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    // ValueError and friends carry their message as `name: message`; Python's
-    // `str` prints only the message.
-    return error.message;
-  }
-  return String(error);
-}
-
-/**
- * The page routes one document links to, in first-link order.
- *
- * The same scan {@link LinkIndex.fromConfig} inverts into backlinks, run for a
- * single page, so `wiki refs` reports outbound links by exactly the rules that
- * decide inbound ones. Unresolvable targets are dropped, as they are there.
- */
-export function outboundPageRoutes(
-  sourceRoute: string,
-  content: string,
-): string[] {
-  const targets = new Map<string, string[]>();
-  indexPageLinks(sourceRoute, content, targets);
-  return [...targets.keys()];
-}
-
-/** One page link in a document body, as the backlink index counts it. */
-export interface PageLinkMatch {
-  readonly kind: "WikiLink" | "Markdown link";
-  /** Offsets into the whole document text, frontmatter included. */
-  readonly start: number;
-  readonly end: number;
-  readonly fullMatch: string;
-  /** The target as the index reads it: trimmed (wikilink) or unquoted (markdown). */
-  readonly target: string;
-  /** The route the target resolves to from the source page, or `null`. */
-  readonly route: string | null;
-}
-
-/**
- * Every page link in a document body, in document order.
- *
- * This is the one definition of "a link" that the backlink index, `wiki refs`,
- * and the `mv`/`rm` rewrites share, so a move rewrites exactly the links the
- * index (and `lint`) count. Links inside inline or fenced code are code, not
- * links, so none of them count (wiki#362).
- */
-export function pageLinkMatches(
-  sourceRoute: string,
-  content: string,
-): PageLinkMatch[] {
-  const split = splitFrontmatterText(content);
-  const body = split.body;
-  const offset = split.prefix.length;
-  const protectedSpans = bodyCodeSpans(body);
-  const matches: PageLinkMatch[] = [];
-
-  for (const match of body.matchAll(WIKILINK_FULL_REGEX)) {
-    const start = match.index ?? 0;
-    const end = start + match[0].length;
-    if (spanOverlaps(start, end, protectedSpans)) continue;
-    const target = (match[1] as string).trim();
-    matches.push({
-      kind: "WikiLink",
-      start: offset + start,
-      end: offset + end,
-      fullMatch: match[0],
-      target,
-      route: resolvePageRoute(sourceRoute, target),
-    });
-  }
-
-  for (const match of body.matchAll(MARKDOWN_LINK_FULL_REGEX)) {
-    const start = match.index ?? 0;
-    const end = start + match[0].length;
-    if (spanOverlaps(start, end, protectedSpans)) continue;
-    const target = unquote(
-      parseMarkdownDestination(match[2] as string).target.split(
-        "?",
-      )[0] as string,
-    );
-    if (isExternalLink(target) || !markdownLinkIsPage(target)) continue;
-    matches.push({
-      kind: "Markdown link",
-      start: offset + start,
-      end: offset + end,
-      fullMatch: match[0],
-      target,
-      route: resolvePageRoute(sourceRoute, target),
-    });
-  }
-
-  return matches.sort((left, right) => left.start - right.start);
-}
-
-/**
- * Record the outbound page links of one document in the backlink index.
- *
- * Python passes `config` and `file_path` here and reads neither; the port
- * drops both, as it does for `_page_target_issue`'s `label`.
- */
-function indexPageLinks(
-  sourceRoute: string,
-  content: string,
-  backlinks: Map<string, string[]>,
-): void {
-  // Wikilinks first, then markdown links: the order the backlink lists have
-  // always been built in, which `refs` output and the oracle tests rely on.
-  const matches = pageLinkMatches(sourceRoute, content);
-  const ordered = [
-    ...matches.filter((match) => match.kind === "WikiLink"),
-    ...matches.filter((match) => match.kind === "Markdown link"),
-  ];
-  for (const { route } of ordered) {
-    if (route === null) continue;
-    const list = backlinks.get(route) ?? [];
-    if (!list.includes(sourceRoute)) list.push(sourceRoute);
-    backlinks.set(route, list);
-  }
-}
-
-/**
- * Why a page link does not resolve, or `null` when it does.
- *
- * A fragment-only target (`#Section`) resolves against the *current* route,
- * which is why `page_part === ""` is special-cased rather than passed to
- * `resolve_page_route`.
- */
-function pageTargetIssue(
-  existingFiles: ReadonlySet<string>,
-  headingIdsByRoute: ReadonlyMap<string, ReadonlySet<string>>,
-  currentRoute: string,
-  target: string,
-  siteRoute: string | null = null,
-): string | null {
-  const [pagePart, fragment] = splitTarget(target);
-  const route = siteRoute !== null
-    ? siteRoute
-    : pagePart === ""
-    ? currentRoute
-    : resolvePageRoute(currentRoute, target);
-  if (route === null || !existingFiles.has(route)) return "missing_document";
-  if (fragment) {
-    const targetFragment = fragmentId(fragment);
-    const ids = headingIdsByRoute.get(route) ?? new Set<string>();
-    // `#top` is the HTML spec's own "scroll to the top of the document", so it
-    // needs no heading to land on.
-    if (!ids.has(targetFragment) && fragment.toLowerCase() !== "top") {
-      return "missing_heading";
-    }
-  }
-  return null;
-}
-
-/** The user-facing message for a page-target failure. */
-function pageTargetMessage(
-  currentRoute: string,
-  target: string,
-  label: string,
-  issueKind: string,
-): string {
-  if (issueKind === "missing_document") {
-    return `In ${currentRoute}: Broken ${label} [${target}] points to non-existent document.`;
-  }
-  const [, fragment] = splitTarget(target);
-  const targetFragment = fragmentId(fragment);
-  return `In ${currentRoute}: Broken ${label} [${target}] points to missing heading '#${targetFragment}'.`;
-}
-
-/** The route a `wiki:` CURIE names, or `null` when it is not one. */
-function wikiRouteFromCurie(curie: string): string | null {
-  if (!WIKI_CURIE_RE.test(curie)) return null;
-  // `split(":", 1)[1]`, not `split(":")[1]`: everything after the *first*
-  // colon is the local name, so a CURIE with a second colon keeps it.
-  let local = curie.slice(curie.indexOf(":") + 1);
-  local = local.split("#", 1)[0] as string;
-  if (local.endsWith(".md")) local = local.slice(0, -3);
-  return local;
-}
-
-/** Every `wiki:` CURIE in a document's metadata, excluding identifier keys. */
-function wikiCuriesInMetadata(data: DataRecord): string[] {
-  const curies: string[] = [];
-
-  const walk = (value: unknown): void => {
-    if (typeof value === "string") {
-      if (WIKI_CURIE_RE.test(value)) curies.push(value);
-    } else if (Array.isArray(value)) {
-      for (const item of value) walk(item);
-    } else if (typeof value === "object" && value !== null) {
-      for (const [key, item] of Object.entries(value)) {
-        if (METADATA_SKIP_KEYS.has(key)) continue;
-        walk(item);
-      }
-    }
-  };
-
-  for (const [key, value] of Object.entries(data)) {
-    if (METADATA_SKIP_KEYS.has(key)) continue;
-    walk(value);
-  }
-  return curies;
-}
-
-/**
- * Frontmatter values that name an image asset.
- *
- * The key rule is deliberately loose — `image`, `thumbnail`, `logo`, or any key
- * ending in `image` — because frontmatter vocabularies differ, and a schema
- * tells the author which one they are using, not this function.
- */
-function frontmatterAssetTargets(data: DataRecord): string[] {
-  const targets: string[] = [];
-  for (const [key, value] of Object.entries(data)) {
-    const normalized = String(key).toLowerCase();
-    if (
-      normalized !== "image" && normalized !== "thumbnail" &&
-      normalized !== "logo" && !normalized.endsWith("image")
-    ) {
-      continue;
-    }
-    if (typeof value === "string" && !isExternalLink(value)) {
-      targets.push(value);
-    } else if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === "string" && !isExternalLink(item)) {
-          targets.push(item);
-        }
-      }
-    }
-  }
-  return targets;
 }
