@@ -382,8 +382,11 @@ export async function parseRdf(text: string, format: string): Promise<Quad[]> {
   const normalized = normalizeFormat(format);
   const parser = env.formats.parsers.get(mediaTypeFor(normalized));
   if (parser === undefined) throw new UnsupportedFormatError(format, "parse");
-  // deno-lint-ignore no-explicit-any -- rdf-parse takes a Node Readable
-  const stream = parser.import(Readable.from([text]) as any);
+  // rdf-parse takes a Node Readable, which the RDF/JS `Stream` type does not
+  // describe; the cast names the parameter type instead of erasing it.
+  const stream = parser.import(
+    Readable.from([text]) as unknown as Parameters<typeof parser.import>[0],
+  );
   if (stream === null) throw new UnsupportedFormatError(format, "parse");
   const dataset = await env.dataset().import(stream);
   return [...dataset] as unknown as Quad[];
