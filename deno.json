@@ -27,6 +27,14 @@
     "fmt:check": "deno fmt --check",
     "lint": "deno lint"
   },
+  "minimumDependencyAge": {
+    "age": "P1D",
+    "exclude": [
+      "jsr:@wazoo/linked-markdown",
+      "jsr:@wazoo/reasoner",
+      "jsr:@wazoo/sparql-engine"
+    ]
+  },
   "imports": {
     "@eslint/markdown": "npm:@eslint/markdown@8.0.3",
     "@dprint/formatter": "npm:@dprint/formatter@0.5.1",
