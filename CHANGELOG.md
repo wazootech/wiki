@@ -21,6 +21,13 @@
   default-graph input. The W3C OWL 2 RL suite now passes 88 of 90. `bench:shacl`
   at 1M quads shows no measurable difference between 0.1.0 and 0.3.0 (98.7 s
   and 95.6 s vs 101.7 s and 85.0 s); 0.4.0 was not benchmarked.
+- `@wazoo/reasoner` bumped from 0.4.0 to 0.4.1, a performance-only release:
+  rules whose other premises have no live facts are skipped
+  ([wazootech/reasoner#40](https://github.com/wazootech/reasoner/pull/40)), and
+  `propertyChainAxiom` no longer chains over the reasoner's own skolem chain
+  lists ([wazootech/reasoner#42](https://github.com/wazootech/reasoner/pull/42)).
+  Output is byte-identical; the reasoner's 1M-triple bench went from about 90 s
+  and 3.1 GB to 48 s and 2.3 GB.
 - Measured effect (`bench:shacl`, main vs branch): `loadGraph` is 1.6x faster at
   100k and 1M quads with 18-40% less peak RSS. On sameAs-heavy synthetic graphs
   the old engine was quadratic (18 s at 1k triples, 71 s at 2k); the new one
