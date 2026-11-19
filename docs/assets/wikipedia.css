@@ -282,6 +282,10 @@ a:hover {
 }
 
 /* Article content layout styling */
+#article-top {
+  overflow-wrap: anywhere;
+}
+
 #article-top h1 {
   font-family: inherit;
   font-size: 1.35em;
