@@ -33,6 +33,13 @@
   the old engine was quadratic (18 s at 1k triples, 71 s at 2k); the new one
   takes 97 ms and 264 ms, though it is still superlinear
   ([wazootech/reasoner#5](https://github.com/wazootech/reasoner/issues/5)).
+- `@wazoo/sparql-engine` bumped from 0.4.4 to 0.5.1 and `@wazoo/reasoner` from
+  0.4.1 to 0.4.2 (which depends on sparql-engine `^0.5.1`), so the resolved
+  graph holds one copy of sparql-engine instead of two
+  ([wazootech/workspace#50](https://github.com/wazootech/workspace/issues/50)).
+  Both pins stay exact. No source change was needed; the Turtle parse and
+  `dataFactory` calls in `src/wiki/rdf.ts` and `src/wiki/format.ts` and the
+  `Reasoner` calls in `src/wiki/infer.ts` behave as before.
 
 ### Removed
 
