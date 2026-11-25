@@ -10,32 +10,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: File length (warn-only; 120 src / 300 test, blank/comment/import/re-export lines excluded)
+      - name: File length (enforced; 120 src / 300 test, blank/comment/import/re-export lines excluded)
         run: |
-          git ls-files '*.ts' '*.tsx' '*.js' '*.mjs' \
-            | grep -vE '(^|/)(node_modules|dist|generated|fixtures|\.next)/|\.d\.ts$|\.gen\.|openapi|snapshot|schema|^docs/assets/' \
-            | while read -r f; do
-                # Multi-line import / export-from statements (deno fmt wraps long
-                # ones) are excluded like one-line ones; a plain `export { a };`
-                # or `export const` is still code.
-                n=$(awk '
-                  function skip(l) { return l ~ /^[ \t]*($|\/\/|\/\*|\*)/ }
-                  blk {
-                    if (!skip($0)) buf++
-                    if ($0 ~ /^[ \t]*\}/) { blk = 0; if ($0 !~ /from[ \t]*["'"'"']/) n += buf }
-                    next
-                  }
-                  skip($0) { next }
-                  /^[ \t]*export[ \t]+(type[ \t]+)?\{/ && !/\}/ { blk = 1; buf = 1; next }
-                  /^[ \t]*import[ \t].*\{/ && !/\}/ { blk = 1; buf = 1; next }
-                  /^[ \t]*import[ \t]/ { next }
-                  /^[ \t]*export .* from/ { next }
-                  { n++ }
-                  END { print n + 0 }
-                ' "$f")
-                case "$f" in *.test.*|*.spec.*|*/tests/*|tests/*) max=300;; *) max=120;; esac
-                if [ "$n" -gt "$max" ]; then echo "::warning file=$f::$n lines of code (limit $max)"; echo "- \`$f\`: $n (limit $max)" >> "$GITHUB_STEP_SUMMARY"; fi
-              done
+          # Files that stay over the limit because the code is one class, one
+          # function, one generated table, or mutually recursive, so there is no
+          # seam to split on without changing behavior. This list may only
+          # shrink: never add a path to get a change through.
+          allowlist='
+          src/wiki/wiki.ts                           # the Wiki class
+          src/wiki/wiki_links.ts                     # the LinkIndex class
+          src/wiki/mcp/server.ts                     # the WikiMcpServer class
+          src/wiki/audit/run_check.ts                # one function, runCheck
+          src/wiki/shape_lint/source.ts              # one function, lintSource
+          src/wiki/shape_lint/shacl_other_terms.ts   # generated SHACL term list
+          src/wiki/lint/eslint/markdown.ts           # one function, 1 line over
+          src/wiki/init_scaffold/wiki_yaml.ts        # one function, renderWikiYaml
+          src/wiki/graph/object_terms.ts             # mutually recursive addObject/addPath/rdfList
+          bench/shacl/case.ts                        # runCase plus the let it mutates
+          '
+          fail=0
+          while read -r f; do
+            # Multi-line import / export-from statements (deno fmt wraps long
+            # ones) are excluded like one-line ones; a plain `export { a };`
+            # or `export const` is still code.
+            n=$(awk '
+              function skip(l) { return l ~ /^[ \t]*($|\/\/|\/\*|\*)/ }
+              blk {
+                if (!skip($0)) buf++
+                if ($0 ~ /^[ \t]*\}/) { blk = 0; if ($0 !~ /from[ \t]*["'"'"']/) n += buf }
+                next
+              }
+              skip($0) { next }
+              /^[ \t]*export[ \t]+(type[ \t]+)?\{/ && !/\}/ { blk = 1; buf = 1; next }
+              /^[ \t]*import[ \t].*\{/ && !/\}/ { blk = 1; buf = 1; next }
+              /^[ \t]*import[ \t]/ { next }
+              /^[ \t]*export .* from/ { next }
+              { n++ }
+              END { print n + 0 }
+            ' "$f")
+            case "$f" in *.test.*|*.spec.*|*/tests/*|tests/*) max=300;; *) max=120;; esac
+            if [ "$n" -gt "$max" ]; then
+              if printf '%s\n' "$allowlist" | awk -v f="$f" '$1 == f { found = 1 } END { exit !found }'; then
+                echo "allowlisted: $f ($n lines of code, limit $max)"
+              else
+                echo "::error file=$f::$n lines of code (limit $max); split it, do not extend the allowlist"
+                echo "- \`$f\`: $n (limit $max)" >> "$GITHUB_STEP_SUMMARY"
+                fail=1
+              fi
+            fi
+          done < <(git ls-files '*.ts' '*.tsx' '*.js' '*.mjs' \
+            | grep -vE '(^|/)(node_modules|dist|generated|fixtures|\.next)/|\.d\.ts$|\.gen\.|openapi|snapshot|schema|^docs/assets/')
+          exit "$fail"
       - name: TODO/FIXME without an issue link (warn-only)
         run: |
           git grep -nE '\b(TODO|FIXME)\b' -- '*.ts' '*.tsx' '*.js' '*.mjs' ':!*generated*' \

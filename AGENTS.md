@@ -143,4 +143,4 @@ Family-wide rules live in the [wazootech workspace constitution](https://github.
 - CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.
 - Third-party actions are pinned to full commit SHAs with a version comment; `deno.json` sets `lock.frozen`, so commit `deno.lock` changes deliberately.
 - `secret-scan.yml` (gitleaks) runs on every PR and push to main; never suppress a finding.
-- `code-health.yml` is warn-only (file length, TODO/FIXME without an issue link). `.github/CODEOWNERS` assigns review.
+- `code-health.yml` enforces file length: a non-exempt file over 120 lines of code (300 for tests; blank, comment, and import/re-export lines, multi-line ones included, are not counted) fails the check. Ten files that are one class, one function, a generated table, or mutually recursive code are on an explicit `allowlist` inside the workflow, each with its reason; that list may only shrink, so split a file instead of adding to it. The TODO/FIXME-without-issue-link step stays warn-only. `.github/CODEOWNERS` assigns review.
