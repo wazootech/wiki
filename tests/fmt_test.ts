@@ -36,7 +36,6 @@
  * file answers "does `wiki fmt` do what `test_fmt.py` says it does?".
  */
 
-import { dirname, join } from "@std/path";
 import { ValueError } from "../src/wiki/errors.ts";
 import {
   assert,
@@ -44,92 +43,14 @@ import {
   assertStringIncludes,
   assertThrows,
 } from "@std/assert";
-import { fromFileUrl } from "@std/path";
 import { Config } from "../src/wiki/config.ts";
 import {
   describeFmtSource,
   formatMarkdown,
   resolveFmtOptions,
 } from "../src/wiki/fmt_util.ts";
-
-import { BOM, parseFrontmatter, readTextTolerant } from "../src/wiki/parser.ts";
-
-const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
-const DECODER = new TextDecoder();
-
-/** A unique temp directory, to be removed with {@link cleanup}. */
-function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-fmt-" });
-}
-
-function cleanup(root: string): void {
-  try {
-    Deno.removeSync(root, { recursive: true });
-  } catch {
-    // Windows keeps a handle open long enough to lose this race occasionally.
-  }
-}
-
-/** Write a file below `root`, creating parent directories. */
-function write(
-  root: string,
-  relative: string,
-  content: string,
-  options: { readonly bom?: boolean } = {},
-): string {
-  const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(
-    target,
-    options.bom ? BOM + content : content,
-  );
-  return target;
-}
-
-/**
- * A wiki root whose pages are the markdown files beside its config.
- *
- * The Python tests author no config at all and rely on `--input` overriding the
- * default. The port writes one, so `config_root` is the temp directory whatever
- * the working directory is — the CLI tests otherwise depend on where the test
- * runner happened to start, and here the wiki root *is* the corpus.
- */
-function wikiRoot(): string {
-  const root = tempRoot();
-  write(root, "wiki.yml", "wiki:\n  input: [.]\n");
-  return root;
-}
-
-interface CliResult {
-  readonly code: number;
-  readonly stdout: string;
-  readonly stderr: string;
-}
-
-/**
- * Run the real CLI as a subprocess, in `cwd`, with the permissions it needs:
- * `run` for the CLI itself, `env` for the RDF stack.
- *
- * Output is compared with `\n`. The Python CLI writes CRLF on Windows through
- * text-mode stdout; the migration targets normalised output rather than byte
- * parity, for the reason recorded in `CONTEXT.md`.
- */
-async function runCli(
-  args: readonly string[],
-  cwd: string,
-): Promise<CliResult> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
-    args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
-    cwd,
-    stdout: "piped",
-    stderr: "piped",
-  }).output();
-  return {
-    code,
-    stdout: DECODER.decode(stdout),
-    stderr: DECODER.decode(stderr),
-  };
-}
+import { BOM, readTextTolerant } from "../src/wiki/parser.ts";
+import { cleanup, runCli, tempRoot, wikiRoot, write } from "./fmt_support.ts";
 
 // ---------------------------------------------------------------------------
 // What the formatter must not mangle
@@ -416,105 +337,6 @@ Deno.test(
       assert(
         !Deno.readTextFileSync(filePath).includes("Some text  \n"),
       );
-    } finally {
-      cleanup(root);
-    }
-  },
-);
-
-Deno.test(
-  "fmt tolerates a page saved with a UTF-8 BOM",
-  { permissions: { run: true, read: true, write: true, env: true } },
-  async () => {
-    const root = wikiRoot();
-    try {
-      const filePath = write(
-        root,
-        "Bommed.md",
-        "---\ntype: schema:Person\nname: Bommed\n---\n\n# Bommed\n\nSome text  \n",
-        { bom: true },
-      );
-      const result = await runCli(
-        ["-c", "wiki.yml", "fmt", "-v"],
-        root,
-      );
-      assertEquals(result.code, 0, result.stderr);
-
-      // Read raw text: the BOM-tolerant parser strips a leading BOM, so
-      // using it here would mask a retained BOM.
-      const content = Deno.readTextFileSync(filePath);
-      assert(!content.startsWith(BOM), JSON.stringify(content));
-      assert(!content.includes("## "), content);
-      assert(!content.includes("Some text  \n"), content);
-      const data = parseFrontmatter(content);
-      assertEquals(data?.["type"], "schema:Person");
-    } finally {
-      cleanup(root);
-    }
-  },
-);
-
-Deno.test(
-  "fmt refuses a page whose frontmatter cannot be parsed",
-  { permissions: { run: true, read: true, write: true, env: true } },
-  async () => {
-    const root = wikiRoot();
-    try {
-      const original = "---\ntype: [unterminated\nname: Broken\n---\n\n" +
-        "# Broken\n\nSome text  \n";
-      const filePath = write(root, "Broken.md", original);
-
-      for (const args of [["fmt"], ["fmt", "--check"]]) {
-        const result = await runCli(
-          ["-c", "wiki.yml", ...args],
-          root,
-        );
-        assertEquals(result.code, 1, result.stderr);
-        assertStringIncludes(result.stderr, "Refusing to format Broken.md");
-        assertEquals(Deno.readTextFileSync(filePath), original);
-      }
-    } finally {
-      cleanup(root);
-    }
-  },
-);
-
-Deno.test(
-  "fmt --check flags stale pages and passes once they are written",
-  { permissions: { run: true, read: true, write: true, env: true } },
-  async () => {
-    const root = wikiRoot();
-    try {
-      const original = "---\ntype: schema:WebPage\nname: Test\n---\n\n" +
-        "# Header\n\nSome text  \n";
-      const filePath = write(root, "unformatted.md", original);
-
-      const stale = await runCli(
-        ["-c", "wiki.yml", "fmt", "--check", "-v"],
-        root,
-      );
-      assertEquals(stale.code, 1);
-      assertStringIncludes(
-        stale.stderr,
-        "Error: The following files are not correctly formatted:",
-      );
-      assertStringIncludes(stale.stderr, "unformatted.md");
-      // --check reports; it must not write.
-      assertEquals(Deno.readTextFileSync(filePath), original);
-
-      const written = await runCli(
-        ["-c", "wiki.yml", "fmt"],
-        root,
-      );
-      assertEquals(written.code, 0, written.stderr);
-
-      const clean = await runCli(
-        ["-c", "wiki.yml", "fmt", "--check", "-v"],
-        root,
-      );
-      assertEquals(clean.code, 0, clean.stderr);
-      assertStringIncludes(clean.stdout, "All files are correctly formatted.");
-      assertEquals(clean.stderr, "");
     } finally {
       cleanup(root);
     }

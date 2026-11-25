@@ -8,116 +8,21 @@
  * file byte-identical to before.
  */
 
-import { dirname, fromFileUrl, join } from "@std/path";
-import {
-  assert,
-  assertEquals,
-  assertFalse,
-  assertRejects,
-  assertThrows,
-} from "@std/assert";
-
-import {
-  EXIT_CONFLICT,
-  EXIT_FAILURE,
-  EXIT_OK,
-  EXIT_USAGE,
-} from "../src/wiki/cli.ts";
-import {
-  commitFiles,
-  contentHash,
-  EditUsageError,
-  type FilePlan,
-} from "../src/wiki/edit.ts";
+import { join } from "@std/path";
+import { assert, assertEquals, assertFalse, assertRejects } from "@std/assert";
+import { contentHash, EditUsageError } from "../src/wiki/edit.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
-
-const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
-const DECODER = new TextDecoder();
-
-const ARTICLE_SHAPE = `---
-'@type': sh:NodeShape
-rdfs:label: Article Shape
-sh:targetClass: schema:Article
-sh:property:
-  - sh:path: schema:headline
-    sh:minCount: 1
-    sh:message: Article must have a headline.
----
-
-# Article Shape
-`;
-
-const GOOD = `---
-'@type': schema:Article
-schema:headline: Good
----
-
-# Good
-
-Links to [Other](Other.md).
-`;
-
-const OTHER = `---
-'@type': schema:Article
-schema:headline: Other
----
-
-# Other
-`;
-
-/**
- * Already broken before any edit: no headline. It has no H1 either, because an
- * H1 supplies a derived `schema:headline` that satisfies the shape (wiki#318).
- */
-const BROKEN = `---
-'@type': schema:Article
----
-
-No title here.
-`;
-
-/** GOOD with no headline at all: neither the frontmatter key nor the H1. */
-const HEADLESS = GOOD.replace("schema:headline: Good\n", "").replace(
-  "# Good\n\n",
-  "",
-);
-
-function writeWiki(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-" });
-  const pages: Record<string, string> = {
-    "Article_Shape.md": ARTICLE_SHAPE,
-    "Good.md": GOOD,
-    "Other.md": OTHER,
-    "Broken.md": BROKEN,
-  };
-  Deno.mkdirSync(join(root, "wiki"));
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
-  for (const [name, content] of Object.entries(pages)) {
-    Deno.writeTextFileSync(join(root, "wiki", name), content);
-  }
-  return root;
-}
-
-function cleanup(root: string): void {
-  try {
-    Deno.removeSync(root, { recursive: true });
-  } catch {
-    // Windows keeps a handle open long enough to lose this race occasionally.
-  }
-}
-
-function read(root: string, rel: string): string {
-  return Deno.readTextFileSync(join(root, ...rel.split("/")));
-}
-
-function exists(root: string, rel: string): boolean {
-  try {
-    Deno.statSync(join(root, ...rel.split("/")));
-    return true;
-  } catch {
-    return false;
-  }
-}
+import {
+  BROKEN,
+  cleanup,
+  type EditOpInput,
+  exists,
+  GOOD,
+  HEADLESS,
+  OTHER,
+  read,
+  writeWiki,
+} from "./edit_support.ts";
 
 Deno.test("a dry run validates and reports without writing", async () => {
   const root = writeWiki();
@@ -380,9 +285,6 @@ Deno.test("edits are confined to wiki documents under wiki.input", async () => {
   }
 });
 
-/** One element of `Wiki.edit`'s `ops`, for deliberately malformed input. */
-type EditOpInput = Parameters<Wiki["edit"]>[0]["ops"][number];
-
 Deno.test("malformed ops are a clear usage error", async () => {
   const root = writeWiki();
   try {
@@ -405,167 +307,3 @@ Deno.test("malformed ops are a clear usage error", async () => {
     cleanup(root);
   }
 });
-
-Deno.test("a commit that fails midway restores every file byte for byte", () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-commit-" });
-  try {
-    const a = join(root, "A.md");
-    const b = join(root, "B.md");
-    const c = join(root, "C.md");
-    // A BOM and CRLFs, so a text round-trip would show up as a diff.
-    const original = new TextEncoder().encode("﻿# A\r\n\r\nBody\r\n");
-    Deno.writeFileSync(a, original);
-    Deno.writeFileSync(c, new TextEncoder().encode("# C\n"));
-    const plans: FilePlan[] = [
-      { path: a, before: original, after: "# A changed\n" },
-      { path: b, before: null, after: "# B\n" },
-      { path: c, before: new TextEncoder().encode("# C\n"), after: null },
-    ];
-    let renames = 0;
-    assertThrows(() =>
-      commitFiles(plans, {
-        writeFile: (path, data) => Deno.writeFileSync(path, data),
-        mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
-        remove: (path) => Deno.removeSync(path),
-        rename: (from, to) => {
-          if (++renames === 2) throw new Error("disk full");
-          Deno.renameSync(from, to);
-        },
-      })
-    );
-    assertEquals(Deno.readFileSync(a), original);
-    assertFalse(exists(root, "B.md"));
-    assertEquals(Deno.readTextFileSync(c), "# C\n");
-    assertEquals(
-      [...Deno.readDirSync(root)].map((entry) => entry.name).sort(),
-      ["A.md", "C.md"],
-    );
-  } finally {
-    cleanup(root);
-  }
-});
-
-Deno.test("a failed commit removes the directories it created", () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-dirs-" });
-  try {
-    const nested = join(root, "new", "deep", "Page.md");
-    const sibling = join(root, "Top.md");
-    const plans: FilePlan[] = [
-      { path: nested, before: null, after: "# Page\n" },
-      { path: sibling, before: null, after: "# Top\n" },
-    ];
-    let renames = 0;
-    assertThrows(() =>
-      commitFiles(plans, {
-        writeFile: (path, data) => Deno.writeFileSync(path, data),
-        mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
-        remove: (path) => Deno.removeSync(path),
-        rename: (from, to) => {
-          if (++renames === 2) throw new Error("disk full");
-          Deno.renameSync(from, to);
-        },
-      })
-    );
-    assertEquals([...Deno.readDirSync(root)].map((entry) => entry.name), []);
-  } finally {
-    cleanup(root);
-  }
-});
-
-async function runEdit(
-  root: string,
-  args: readonly string[],
-  stdin: string,
-): Promise<{ code: number; stdout: string; stderr: string }> {
-  const child = new Deno.Command(Deno.execPath(), {
-    args: ["run", "--quiet", "--allow-all", CLI_ENTRY, "edit", ...args],
-    cwd: root,
-    stdin: "piped",
-    stdout: "piped",
-    stderr: "piped",
-  }).spawn();
-  const writer = child.stdin.getWriter();
-  await writer.write(new TextEncoder().encode(stdin));
-  await writer.close();
-  const { code, stdout, stderr } = await child.output();
-  return {
-    code,
-    stdout: DECODER.decode(stdout),
-    stderr: DECODER.decode(stderr),
-  };
-}
-
-Deno.test(
-  "wiki edit maps statuses to exit codes and prints JSON on stdout",
-  { permissions: { run: true, read: true, write: true } },
-  async () => {
-    const root = writeWiki();
-    try {
-      const valid = JSON.stringify({
-        ops: [{ op: "replace", path: "wiki/Other.md", content: OTHER + "\n" }],
-      });
-      const dry = await runEdit(root, ["--json"], valid);
-      assertEquals(dry.code, EXIT_OK, dry.stderr);
-      assertEquals(JSON.parse(dry.stdout).status, "dry_run");
-      assertEquals(read(root, "wiki/Other.md"), OTHER);
-
-      const stale = JSON.stringify({
-        ops: [{
-          op: "replace",
-          path: "wiki/Other.md",
-          content: "x",
-          expect: contentHash("nope"),
-        }],
-      });
-      assertEquals((await runEdit(root, [], stale)).code, EXIT_CONFLICT);
-
-      const breaking = JSON.stringify({
-        ops: [{
-          op: "replace",
-          path: "wiki/Good.md",
-          content: HEADLESS,
-        }],
-      });
-      assertEquals(
-        (await runEdit(root, ["--apply"], breaking)).code,
-        EXIT_FAILURE,
-      );
-      assertEquals(read(root, "wiki/Good.md"), GOOD);
-
-      assertEquals((await runEdit(root, [], "not json")).code, EXIT_USAGE);
-      const malformed = JSON.stringify({
-        ops: [{ op: "move", from: "wiki/Good.md" }],
-      });
-      const usage = await runEdit(root, [], malformed);
-      assertEquals(usage.code, EXIT_USAGE);
-      assert(usage.stderr.includes("ops[0].to"), usage.stderr);
-
-      const applied = await runEdit(root, ["--apply"], valid);
-      assertEquals(applied.code, EXIT_OK, applied.stderr);
-      assertEquals(read(root, "wiki/Other.md"), OTHER + "\n");
-    } finally {
-      cleanup(root);
-    }
-  },
-);
-
-Deno.test(
-  "wiki edit --from reads a plan file",
-  { permissions: { run: true, read: true, write: true } },
-  async () => {
-    const root = writeWiki();
-    try {
-      const plan = join(root, "plan.json");
-      Deno.writeTextFileSync(
-        plan,
-        JSON.stringify({ ops: [{ op: "delete", path: "wiki/Broken.md" }] }),
-      );
-      const result = await runEdit(root, ["--from", plan, "--apply"], "");
-      assertEquals(result.code, EXIT_OK, result.stderr);
-      assertFalse(exists(root, "wiki/Broken.md"));
-      assert(dirname(plan) === root);
-    } finally {
-      cleanup(root);
-    }
-  },
-);
