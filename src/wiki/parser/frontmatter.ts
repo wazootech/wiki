@@ -1,0 +1,186 @@
+import { readText } from "../fspath.ts";
+import {
+  extract,
+  LinkedMarkdownError,
+  LMD_NO_FRONTMATTER,
+} from "@wazoo/linked-markdown";
+import { annotateScalars } from "../scalars.ts";
+
+/** Document extensions the engine treats as wiki inputs. */
+export const DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
+  ".md",
+  ".yaml",
+  ".yml",
+  ".json",
+  ".toml",
+]);
+
+/** Extensions that carry structured data rather than markdown. */
+export const DATA_DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
+  ".yaml",
+  ".yml",
+  ".json",
+  ".toml",
+]);
+
+/** The UTF-8 byte-order mark, as a string. */
+export const BOM = "\uFEFF";
+
+/** Closing delimiters linked-markdown accepts for a frontmatter block. */
+const FRONTMATTER_CLOSER_RE = /^(?:---|\+\+\+|= (?:yaml|json|toml) =)[ \t]*$/;
+
+/** A YAML/JSON/TOML document, as a plain object. */
+export type DataRecord = Record<string, unknown>;
+
+/**
+ * Read a document as UTF-8, tolerating and stripping a leading BOM.
+ *
+ * Windows editors — Notepad, PowerShell redirection, VS Code's "UTF-8 with
+ * BOM" — save text with a UTF-8 BOM. Read as plain UTF-8 it survives as a body
+ * character, which breaks structured parsers downstream (JSON) and makes
+ * `fmt` mistake frontmatter for prose (wiki#312).
+ */
+export function readTextTolerant(path: string): string {
+  return readText(path);
+}
+
+/**
+ * Return why a document's frontmatter cannot be parsed, else `null`.
+ *
+ * A document without a frontmatter block is not an error: this reports only
+ * blocks that were opened but could not be read. Callers use it as a guard
+ * before rewriting a file, because a formatter has no idea a broken block is
+ * frontmatter and would flatten it into prose (wiki#312).
+ */
+export function frontmatterError(content: string): string | null {
+  const text = content.replace(/^\uFEFF+/, "");
+  try {
+    extract(text);
+  } catch (error) {
+    if (!(error instanceof LinkedMarkdownError)) {
+      // Defensive: unknown parse failures are reported, not swallowed.
+      return String(error);
+    }
+    if (error.code === LMD_NO_FRONTMATTER) return null;
+    // An opener with no closer is not a frontmatter block to the renderer: the
+    // formatter keeps a lone `---` as a thematic break, so there is nothing to
+    // lose. Refuse only blocks the formatter could misread as frontmatter.
+    const lines = splitLines(text);
+    const hasCloser = lines
+      .slice(1)
+      .some((line) => FRONTMATTER_CLOSER_RE.test(line));
+    if (!hasCloser) return null;
+    if (error.cause !== undefined && error.cause !== null) {
+      return `${error.code}: ${String(error.cause)}`;
+    }
+    return linkedMarkdownMessage(error);
+  }
+  return null;
+}
+
+/** Parsed frontmatter, or `null` when there is none or it does not parse. */
+export function parseFrontmatter(content: string): DataRecord | null {
+  try {
+    const result = extractFrontmatter(content);
+    return result.attrs;
+  } catch (error) {
+    if (error instanceof LinkedMarkdownError) return null;
+    throw error;
+  }
+}
+
+/**
+ * `true` when the frontmatter block is YAML-flavoured (as opposed to JSON or
+ * TOML), mirroring the opener sniffing `@std/front-matter` performs inside
+ * linked-markdown's `extract`.
+ */
+function isYamlFrontmatter(content: string): boolean {
+  const text = content.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const firstLine = text.split("\n", 1)[0] ?? "";
+  if (/^---(json|toml)\b/i.test(firstLine)) return false;
+  if (/^=\s*(json|toml)\s*=/i.test(firstLine)) return false;
+  // `+++` opens a TOML block.
+  if (/^\+\+\+/.test(firstLine)) return false;
+  return true;
+}
+
+/**
+ * Extract frontmatter, annotating YAML timestamp and float scalars with the
+ * lexical provenance the graph layer needs for rdflib-compatible literals.
+ *
+ * Only YAML-flavoured blocks are annotated. `---json` blocks keep the JSON
+ * parser's native types (so `30.0` stays the number `30`, and there are no
+ * date scalars to annotate — JSON has no date literal), and TOML blocks
+ * keep the TOML parser's own types.
+ */
+export function extractFrontmatter(
+  content: string,
+): { attrs: DataRecord; body: string; frontMatter: string | undefined } {
+  const result = extract<DataRecord>(content);
+  const attrs = isRecord(result.attrs) ? result.attrs : {};
+  const frontMatter = typeof result.frontMatter === "string"
+    ? result.frontMatter
+    : undefined;
+  if (frontMatter !== undefined && isYamlFrontmatter(content)) {
+    return {
+      attrs: annotateScalars(attrs, frontMatter),
+      body: result.body,
+      frontMatter,
+    };
+  }
+  return { attrs, body: result.body, frontMatter };
+}
+
+/** Add the default `wiki`/`foaf` context when a document does not declare one. */
+export function ensureContext(data: DataRecord): DataRecord {
+  const defaults = {
+    wiki: "https://wiki.example.org/",
+    foaf: "http://xmlns.com/foaf/0.1/",
+  };
+  const existing = data["@context"];
+  if (existing === undefined) {
+    data["@context"] = { ...defaults };
+  } else if (isRecord(existing)) {
+    for (const [key, value] of Object.entries(defaults)) {
+      if (!(key in existing)) existing[key] = value;
+    }
+  }
+  return data;
+}
+
+/**
+ * Reproduce Python's `str(LinkedMarkdownError)`.
+ *
+ * The Python class formats as `"[{code}] {message}"`, and its message defaults
+ * to the code, so an error built from a code alone stringifies to `"[X] X"`.
+ * The JS port exposes the code as `message` without the prefix.
+ */
+export function linkedMarkdownMessage(error: LinkedMarkdownError): string {
+  return `[${error.code}] ${error.message}`;
+}
+
+/** `true` for a plain object, standing in for `isinstance(data, dict)`. */
+export function isRecord(value: unknown): value is DataRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Split on JavaScript's line terminators.
+ *
+ * `\r\n` is tried before `\n`, so a Windows-edited file does not produce a
+ * trailing empty field on every line.
+ */
+export function splitLines(text: string): string[] {
+  return text.split(/\r\n|[\n\r\u2028\u2029]/);
+}
+
+/**
+ * Emit a debug log line.
+ *
+ * The Python module logs through `logging.getLogger(__name__).debug`, which is
+ * off unless configured; `WIKI_DEBUG` opts in, so a diagnostic never appears in
+ * a normal run and stdout stays comparable with the oracle.
+ */
+export function logDebug(message: string): void {
+  if (Deno.env.get("WIKI_DEBUG")) console.error(`[wiki.parser] ${message}`);
+}
