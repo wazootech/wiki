@@ -19,6 +19,7 @@ export interface StaticSiteServerOptions {
   readonly watch?: boolean;
   readonly pollIntervalMs?: number;
   readonly requestHandler?: (request: Request) => Promise<Response | null>;
+  readonly responseHeaders?: Readonly<Record<string, string>>;
 }
 
 export interface StaticSiteServerHandle {
@@ -329,6 +330,7 @@ export function createStaticSiteHandler(
       }
       return serveResponse(body, mimeType, request.method, {
         "cache-control": "no-store",
+        ...options.responseHeaders,
       });
     } catch {
       return notFound(request.method);

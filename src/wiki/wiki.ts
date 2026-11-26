@@ -44,6 +44,7 @@ import {
   showDocument,
   type ShowReport,
 } from "./show.ts";
+import { createAuthHandler } from "./auth/handler.ts";
 import { buildStaticSite } from "./site/publish.ts";
 import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
@@ -517,6 +518,7 @@ export class Wiki {
     const tempDir = await Deno.makeTempDir({ prefix: "wiki-serve-" });
     const outputDir = tempDir;
     let server: ReturnType<typeof startStaticSiteServer> | null = null;
+    let auth: Awaited<ReturnType<typeof createAuthHandler>> | null = null;
     let stopWatching: (() => void) | null = null;
     try {
       const result = await this.build(outputDir, {
@@ -533,6 +535,11 @@ export class Wiki {
       const siteDir = baseParts.length > 0
         ? join(outputDir, ...baseParts)
         : outputDir;
+      auth = await createAuthHandler(this.config.site.auth, baseUrl);
+      const sparqlHandler = createSparqlServiceHandler(this, {
+        path: this.config.sparql_service.path,
+        baseUrl,
+      });
       server = startStaticSiteServer({
         siteDir: siteDir,
         host: options.host ?? "127.0.0.1",
@@ -540,10 +547,12 @@ export class Wiki {
         baseUrl,
         urlStyle,
         watch: options.watch ?? false,
-        requestHandler: createSparqlServiceHandler(this, {
-          path: this.config.sparql_service.path,
-          baseUrl,
-        }),
+        requestHandler: async (request) => {
+          const authResponse = await auth!.handle(request);
+          if (authResponse !== null) return authResponse;
+          return await sparqlHandler(request);
+        },
+        ...(auth.enabled ? { responseHeaders: auth.responseHeaders } : {}),
       });
       const stop = new AbortController();
       if (options.watch) {
@@ -601,6 +610,7 @@ export class Wiki {
       }
     } finally {
       stopWatching?.();
+      auth?.close();
       await server?.close();
       await Deno.remove(tempDir, { recursive: true });
     }

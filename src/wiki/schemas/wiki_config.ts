@@ -77,6 +77,12 @@ export const LINK_STYLES: ReadonlySet<string> = new Set([
   "wikilink",
 ]);
 
+/** Accepted `site.auth.provider` values. */
+export const AUTH_PROVIDERS: ReadonlySet<string> = new Set([
+  "local",
+  "cloudflare-access",
+]);
+
 /**
  * Deprecated `link.style` spellings and the value each maps to.
  *
@@ -420,11 +426,24 @@ export interface GraphBlock {
   readonly context: Readonly<Record<string, string | null>> | null;
 }
 
+/** The `site.auth:` block after resolution. */
+export interface AuthBlock {
+  readonly enabled: boolean;
+  readonly provider: string;
+  readonly session_ttl_seconds: number;
+  readonly cookie_name: string;
+  readonly users_file: string | null;
+  readonly session_file: string | null;
+  readonly team_domain: string | null;
+  readonly audience: string | null;
+}
+
 /** The `site:` block after resolution. */
 export interface SiteBlock {
   readonly layout: string | null;
   readonly base_url: string;
   readonly url_style: string;
+  readonly auth: AuthBlock;
 }
 
 /** The `link:` block after resolution. */
@@ -476,6 +495,61 @@ function coerceBoolean(
 /** Coerce `sparql_service.enabled`. */
 function coerceEnabled(value: unknown): boolean {
   return coerceBoolean(value, "enabled value", true);
+}
+
+/** Coerce a positive integer config field. */
+function coercePositiveInteger(
+  value: unknown,
+  label: string,
+  fallback: number,
+): number {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  throw new ValueError(
+    `expected positive integer ${label}, got ${describeValue(value)}`,
+  );
+}
+
+/** Coerce an optional string config field. */
+function coerceOptionalText(value: unknown, label: string): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") {
+    throw new ValueError(
+      `expected ${label} string, got ${describeValue(value)}`,
+    );
+  }
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Enforce fields required by a selected auth provider. */
+function validateAuthBlock(value: unknown): unknown {
+  if (!isMapping(value)) return value;
+  const auth = value;
+  if (coerceBoolean(auth["enabled"], "auth.enabled", true) === false) {
+    return value;
+  }
+  const provider = String(auth["provider"] ?? "local");
+  if (
+    provider === "local" &&
+    coerceOptionalText(auth["users_file"], "users_file") === null
+  ) {
+    throw new ValueError(
+      "site.auth.users_file is required for the local provider",
+    );
+  }
+  if (
+    provider === "cloudflare-access" &&
+    (coerceOptionalText(auth["team_domain"], "team_domain") === null ||
+      coerceOptionalText(auth["audience"], "audience") === null)
+  ) {
+    throw new ValueError(
+      "site.auth.team_domain and site.auth.audience are required for the cloudflare-access provider",
+    );
+  }
+  return value;
 }
 
 /** Coerce `link.style`, translating the legacy spellings with a warning. */
@@ -578,6 +652,43 @@ const graphBlockSpec: ModelSpec = {
   ],
 };
 
+const authBlockSpec: ModelSpec = {
+  label: "AuthConfig",
+  forbidExtra: true,
+  fields: [
+    ["enabled", {
+      defaultValue: false,
+      before: (value) => coerceBoolean(value, "auth.enabled", true),
+    }],
+    ["provider", {
+      defaultValue: "local",
+      literal: [...AUTH_PROVIDERS],
+    }],
+    ["session_ttl_seconds", {
+      defaultValue: 604800,
+      before: (value) =>
+        coercePositiveInteger(value, "session_ttl_seconds", 604800),
+    }],
+    ["cookie_name", { defaultValue: "wiki_session" }],
+    ["users_file", {
+      defaultValue: null,
+      before: (value) => coerceOptionalText(value, "users_file"),
+    }],
+    ["session_file", {
+      defaultValue: null,
+      before: (value) => coerceOptionalText(value, "session_file"),
+    }],
+    ["team_domain", {
+      defaultValue: null,
+      before: (value) => coerceOptionalText(value, "team_domain"),
+    }],
+    ["audience", {
+      defaultValue: null,
+      before: (value) => coerceOptionalText(value, "audience"),
+    }],
+  ],
+};
+
 const siteBlockSpec: ModelSpec = {
   label: "SiteConfig",
   forbidExtra: true,
@@ -585,6 +696,7 @@ const siteBlockSpec: ModelSpec = {
     ["layout", { defaultValue: null }],
     ["base_url", { defaultValue: null }],
     ["url_style", { defaultValue: null }],
+    ["auth", { model: () => authBlockSpec, after: validateAuthBlock }],
   ],
 };
 
@@ -917,6 +1029,7 @@ function resolveRuntime(
     layout: unknown;
     base_url: unknown;
     url_style: unknown;
+    auth: AuthBlock;
   };
   const baseUrl = String(
     site.base_url === null || site.base_url === undefined
@@ -925,6 +1038,15 @@ function resolveRuntime(
   ).replace(/\/+$/, "");
   const urlStyle = normalizeUrlStyle(site.url_style);
   const layout = parsePageLayoutPath(site.layout, baseDir);
+  const auth: AuthBlock = {
+    ...site.auth,
+    users_file: site.auth.users_file === null
+      ? null
+      : resolvePath(site.auth.users_file, baseDir),
+    session_file: site.auth.session_file === null
+      ? null
+      : resolvePath(site.auth.session_file, baseDir),
+  };
 
   const sparql = values["sparql_service"] as unknown as SparqlServiceBlock;
   const sparqlPath = normalizeApiPath(sparql.path);
@@ -939,7 +1061,7 @@ function resolveRuntime(
       filename_pattern: (wiki.filename_pattern ?? null) as string | null,
     },
     graph: values["graph"] as unknown as GraphBlock,
-    site: { layout, base_url: baseUrl, url_style: urlStyle },
+    site: { layout, base_url: baseUrl, url_style: urlStyle, auth },
     link: values["link"] as unknown as LinkBlock,
     check: values["check"] as unknown as CheckConfig,
     lint: values["lint"] as unknown as LintConfig,

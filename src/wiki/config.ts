@@ -29,7 +29,7 @@ export {
   normalizeUrlStyle,
   VALID_URL_STYLES,
 } from "./schemas/wiki_config.ts";
-export type { FmtConfig } from "./schemas/wiki_config.ts";
+export type { AuthBlock, FmtConfig } from "./schemas/wiki_config.ts";
 
 /** The filename pattern the shipped scaffolds use. */
 export const DEFAULT_FILENAME_PATTERN = "[A-Za-z0-9_()-]+\\.md";

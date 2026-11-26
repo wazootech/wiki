@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Whole-site server-side auth gateway for private hosted wikis
+  ([#48](https://github.com/wazootech/wiki/issues/48)). `wiki auth hash` creates
+  bcrypt password hashes, and `wiki auth serve` serves an already-built site
+  behind the gateway. `site.auth` is opt-in and supports local password accounts
+  and Cloudflare Access JWT verification. Generated static output is unchanged,
+  so GitHub Pages deployments remain public.
+
 ### Changed
 
 - OWL 2 RL inference now runs on
@@ -19,13 +28,14 @@
   view can gain copies such as `ex:a ex:p "1.0"^^xsd:decimal` beside
   `"1"^^xsd:integer`. Named graphs default to per-graph, which does not change
   default-graph input. The W3C OWL 2 RL suite now passes 88 of 90. `bench:shacl`
-  at 1M quads shows no measurable difference between 0.1.0 and 0.3.0 (98.7 s
-  and 95.6 s vs 101.7 s and 85.0 s); 0.4.0 was not benchmarked.
+  at 1M quads shows no measurable difference between 0.1.0 and 0.3.0 (98.7 s and
+  95.6 s vs 101.7 s and 85.0 s); 0.4.0 was not benchmarked.
 - `@wazoo/reasoner` bumped from 0.4.0 to 0.4.1, a performance-only release:
   rules whose other premises have no live facts are skipped
   ([wazootech/reasoner#40](https://github.com/wazootech/reasoner/pull/40)), and
   `propertyChainAxiom` no longer chains over the reasoner's own skolem chain
-  lists ([wazootech/reasoner#42](https://github.com/wazootech/reasoner/pull/42)).
+  lists
+  ([wazootech/reasoner#42](https://github.com/wazootech/reasoner/pull/42)).
   Output is byte-identical; the reasoner's 1M-triple bench went from about 90 s
   and 3.1 GB to 48 s and 2.3 GB.
 - Measured effect (`bench:shacl`, main vs branch): `loadGraph` is 1.6x faster at
@@ -57,9 +67,9 @@
   categories, metadata panels), `%wiki.*%` substitution, the output tree, and
   asset copying, so a theme supplies only its layouts, its token values, and its
   highlighter ([#409](https://github.com/wazootech/wiki/issues/409)).
-  `escapeHtml`, `safeJson`, and `substitute` are exported alongside it to compose
-  token values. This repository's own `docs/build.ts` is now a 93-line theme over
-  the driver, down from 791 lines, and builds byte-identical output.
+  `escapeHtml`, `safeJson`, and `substitute` are exported alongside it to
+  compose token values. This repository's own `docs/build.ts` is now a 93-line
+  theme over the driver, down from 791 lines, and builds byte-identical output.
 - `renderLayout` and `renderPageLayout` accept an `extraTokens` map for a theme
   that computes layout slots itself, instead of reimplementing the substitution
   loop ([#407](https://github.com/wazootech/wiki/issues/407)). The three
@@ -81,37 +91,37 @@
 
 - `wiki file new` no longer writes a `headline` frontmatter key that only
   repeats the H1 it just wrote and would then be flagged by
-  `lint.redundant_frontmatter` ([#402](https://github.com/wazootech/wiki/issues/402)).
-  `name`, `schema:name`, and a headline that differs from the H1 are kept.
+  `lint.redundant_frontmatter`
+  ([#402](https://github.com/wazootech/wiki/issues/402)). `name`, `schema:name`,
+  and a headline that differs from the H1 are kept.
 
 ## 0.6.0 — 2026-10-11
 
 ### Added
 
-- The graph derives document metadata instead of requiring authors to repeat
-  it ([#318](https://github.com/wazootech/wiki/issues/318)): every typed
-  document gets `schema:headline` from the plain text of its first ATX `# H1`
-  (outside fenced code), and `schema:dateCreated` / `schema:dateModified` from
-  the oldest and newest committer times `git log --follow` reaches, as UTC
-  `xsd:dateTime` to the second. Renames are followed; nothing is fetched. With
-  no usable history (no Git, untracked, no commit) both dates are the file's
-  modification time. An explicit frontmatter value for the same predicate IRI
-  always wins, derived values are never written to source files, and no shape
-  requires them.
-- `wiki fix [FILES...]` removes frontmatter that exactly repeats a derived
-  value ([#319](https://github.com/wazootech/wiki/issues/319)). It previews by
-  default (`--dry-run` is the explicit spelling, `-v` names each field) and
-  writes only with `--apply`, through the validated, atomic `Wiki.edit()` path.
-  It cuts only the removed entries' lines, keeping comments, key order,
-  quoting, line endings, and the body byte for byte. Library: `Wiki.fix()`.
+- The graph derives document metadata instead of requiring authors to repeat it
+  ([#318](https://github.com/wazootech/wiki/issues/318)): every typed document
+  gets `schema:headline` from the plain text of its first ATX `# H1` (outside
+  fenced code), and `schema:dateCreated` / `schema:dateModified` from the oldest
+  and newest committer times `git log --follow` reaches, as UTC `xsd:dateTime`
+  to the second. Renames are followed; nothing is fetched. With no usable
+  history (no Git, untracked, no commit) both dates are the file's modification
+  time. An explicit frontmatter value for the same predicate IRI always wins,
+  derived values are never written to source files, and no shape requires them.
+- `wiki fix [FILES...]` removes frontmatter that exactly repeats a derived value
+  ([#319](https://github.com/wazootech/wiki/issues/319)). It previews by default
+  (`--dry-run` is the explicit spelling, `-v` names each field) and writes only
+  with `--apply`, through the validated, atomic `Wiki.edit()` path. It cuts only
+  the removed entries' lines, keeping comments, key order, quoting, line
+  endings, and the body byte for byte. Library: `Wiki.fix()`.
 - `wiki export` includes the derived values: the RDF and JSON-LD formats carry
   them as the graph does, and `dict` adds each one the frontmatter does not set
   under its `schema:` key. `wiki file show` reports them in new `derived` and
   `dateSource` fields (and a `derived:` text section) while `frontmatter` stays
   exactly as written; `--field schema:headline` falls back to the derived value.
-- Lint rule `lint.redundant_frontmatter` reports the same exact repeats. It
-  is `off` by default: a wiki that repeats its H1 as `headline` (as this one
-  does) would otherwise fail `lint --strict` on most pages.
+- Lint rule `lint.redundant_frontmatter` reports the same exact repeats. It is
+  `off` by default: a wiki that repeats its H1 as `headline` (as this one does)
+  would otherwise fail `lint --strict` on most pages.
 - `@wazoo/wiki/theme` (`src/wiki/theme.ts`) is a public entrypoint for building
   custom static sites: `buildSite`, `buildStaticSite`, the Markdown and layout
   renderers, and the asset, path, and link helpers, re-exported from the engine.
@@ -122,9 +132,9 @@
 
 ### Changed
 
-- A SHACL shape that requires `schema:headline` is now satisfied by a page's
-  H1 alone, and a page without `schema:dateCreated`/`dateModified` now has
-  them. Shapes that previously failed on a missing headline may now pass; a
+- A SHACL shape that requires `schema:headline` is now satisfied by a page's H1
+  alone, and a page without `schema:dateCreated`/`dateModified` now has them.
+  Shapes that previously failed on a missing headline may now pass; a
   `sh:closed` shape that does not allow these properties will now report them.
 - The disk graph cache (`--cache`) is keyed on the Git `HEAD` as well as the
   file manifest, so a new commit invalidates derived dates.
@@ -133,8 +143,8 @@
 
 ### Changed
 
-- `wiki init --template <name>` resolves starter templates under `templates/`
-  in the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo,
+- `wiki init --template <name>` resolves starter templates under `templates/` in
+  the [wiki-templates](https://github.com/wazootech/wiki-templates) monorepo,
   falling back to the legacy root layout while the transition is in flight. The
   relocation of the templates themselves is tracked in
   [wazootech/wiki-templates#57](https://github.com/wazootech/wiki-templates/issues/57).

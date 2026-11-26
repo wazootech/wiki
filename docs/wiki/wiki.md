@@ -146,6 +146,7 @@ The `wiki-templates/templates/` subdirectories those names pointed at — `gener
 - **Install** — fetch and lock external data sources ([wiki install](wiki_install.md))
 - **Update** — check locked sources for newer commits ([wiki update](wiki_update.md))
 - **Remove** — delete a source from wiki.yml, cache, and lockfile ([wiki remove](wiki_remove.md))
+- **Auth** — whole-site server-side gate with local passwords or Cloudflare Access ([wiki auth](wiki_auth.md))
 - **Init** — scaffold `wiki.yml` ([wiki init](wiki_init.md))
 - **Upgrade** — check for Wiki CLI releases ([wiki upgrade](wiki_upgrade.md)); steps aside with exit 0 when JSR cannot answer
 
@@ -248,7 +249,7 @@ The commands fall into families by what they act on:
 | File edits        | [file new](wiki_file_new.md), [file set](wiki_file_set.md), [file patch](wiki_file_patch.md), [file mv](wiki_file_mv.md), [file rm](wiki_file_rm.md), with [edit](wiki_edit.md) for batches | Validated, link-aware edits to wiki documents; dry run by default. |
 | File reads        | [file show](wiki_file_show.md), [file refs](wiki_file_refs.md)                                                                                                                              | Inspect one wiki document file.                                    |
 | Graph             | [query](wiki_query.md), [graph](wiki_graph.md), [export](wiki_export.md)                                                                                                                    | The wiki as RDF: SPARQL, named graphs, and export.                 |
-| Publishing        | [build](wiki_build.md), [serve](wiki_serve.md), [mcp](wiki_mcp.md)                                                                                                                          | Output surfaces: static site, local server, MCP server.            |
+| Publishing        | [build](wiki_build.md), [serve](wiki_serve.md), [auth](wiki_auth.md), [mcp](wiki_mcp.md)                                                                                                    | Output surfaces: static site, local server, auth gateway, MCP.     |
 
 The per-file verbs are grouped under [wiki file](wiki_file.md).
 
@@ -273,6 +274,7 @@ ORDER BY ?command
 
 | command                               | description                                                                                                            |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [wiki_auth](wiki_auth.md)             | Hash passwords and serve a built wiki behind the whole-site auth gateway.                                              |
 | [wiki_build](wiki_build.md)           | Generate a static HTML site from the wiki.                                                                             |
 | [wiki_check](wiki_check.md)           | Integrity checks — SHACL validation, JSON Schema frontmatter, route safety, and layout frontmatter.                    |
 | [wiki_edit](wiki_edit.md)             | Change a wiki through validated, atomic edits instead of hand-written Markdown.                                        |

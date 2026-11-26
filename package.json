@@ -49,6 +49,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "bcryptjs": "3.0.3",
     "deno": "2.9.6"
   },
   "devDependencies": {

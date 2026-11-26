@@ -5,27 +5,47 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/wazootech/wiki)](https://skills.sh/wazootech/wiki)
 
-**Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in Obsidian, VS Code, or any editor — the CLI validates your documents, runs queries against them, and builds static sites. Drop a `wiki.yaml` in your folder and you're set.
+**Wiki CLI** is a command-line tool for Markdown wikis. You keep writing in
+Obsidian, VS Code, or any editor — the CLI validates your documents, runs
+queries against them, and builds static sites. Drop a `wiki.yaml` in your folder
+and you're set.
 
-Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI command: `wiki`. Install via [npm](https://www.npmjs.com/package/wazootech-wiki), [PyPI](https://pypi.org/project/wazootech-wiki/), or [JSR](https://jsr.io/@wazoo/wiki), or download a standalone executable from [GitHub Releases](https://github.com/wazootech/wiki/releases).
+Repository: [github.com/wazootech/wiki](https://github.com/wazootech/wiki). CLI
+command: `wiki`. Install via
+[npm](https://www.npmjs.com/package/wazootech-wiki),
+[PyPI](https://pypi.org/project/wazootech-wiki/), or
+[JSR](https://jsr.io/@wazoo/wiki), or download a standalone executable from
+[GitHub Releases](https://github.com/wazootech/wiki/releases).
 
-Starter templates: [wiki-templates](https://github.com/wazootech/wiki-templates) (monorepo with all starter templates). See [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
+Starter templates: [wiki-templates](https://github.com/wazootech/wiki-templates)
+(monorepo with all starter templates). See
+[Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ## Use cases and integrations
 
-Wiki CLI is **interop-first**: it runs beside your existing wiki without owning the editor.
+Wiki CLI is **interop-first**: it runs beside your existing wiki without owning
+the editor.
 
-- **Obsidian & PKM** — Validate links and run queries inside your personal wiki. See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
-- **Static Documentation & Wikis** — Auto-generate styled HTML documentation pages, tables of contents, and sidebar infoboxes for publishing to GitHub Pages or static hosts.
-- **LLM Wikis & Agent Memory** — Validate and query machine-generated Markdown databases. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
-- **Adoption path** — `wiki init` → `wiki check` → `wiki serve` (add `lint`, `query`, and `build` as you need them).
+- **Obsidian & PKM** — Validate links and run queries inside your personal wiki.
+  See [Obsidian integration](docs/wiki/Obsidian_Integration.md).
+- **Static Documentation & Wikis** — Auto-generate styled HTML documentation
+  pages, tables of contents, and sidebar infoboxes for publishing to GitHub
+  Pages or static hosts.
+- **LLM Wikis & Agent Memory** — Validate and query machine-generated Markdown
+  databases. See [LLM Wiki](docs/wiki/LLM_Wiki.md).
+- **Adoption path** — `wiki init` → `wiki check` → `wiki serve` (add `lint`,
+  `query`, and `build` as you need them).
 
 ### Distinguishing Wiki CLI from Farzapedia
 
-While inspired by personal digital gardens like **Farzapedia** (a subjective, first-person memory wiki optimized for a single agent), **Wiki CLI** is a general-purpose, multi-player toolchain:
+While inspired by personal digital gardens like **Farzapedia** (a subjective,
+first-person memory wiki optimized for a single agent), **Wiki CLI** is a
+general-purpose, multi-player toolchain:
 
-- **Farzapedia** is a specific *content wiki* containing diary entries, notes, and messages.
-- **Wiki CLI** is a *utility* for *any* wiki. It validates structure, runs queries, and builds static websites from a folder of Markdown files.
+- **Farzapedia** is a specific _content wiki_ containing diary entries, notes,
+  and messages.
+- **Wiki CLI** is a _utility_ for _any_ wiki. It validates structure, runs
+  queries, and builds static websites from a folder of Markdown files.
 
 Adoption path: [Wiki CLI](docs/wiki/wiki.md) in the docs wiki.
 
@@ -35,13 +55,16 @@ Everything you need for knowledge management, one toolchain:
 
 | Capability       | Commands                                                                                                                                   | What you get                                                                                 |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| **Trust**        | [`check`](#check), [`lint`](#lint), [`fmt`](docs/wiki/wiki_fmt.md)                                                                                          | Integrity checks (SHACL, JSON Schema), wiki conventions, automated formatting                |
+| **Trust**        | [`check`](#check), [`lint`](#lint), [`fmt`](docs/wiki/wiki_fmt.md)                                                                         | Integrity checks (SHACL, JSON Schema), wiki conventions, automated formatting                |
 | **Intelligence** | [`query`](#query), [`render`](#render), [`export`](#export), [`mcp`](#mcp)                                                                 | Semantic queries (SPARQL), live inline tables, data exports (JSON-LD, Turtle), an MCP server |
-| **Publish**      | [`build`](#build), [`serve`](#serve), [`link`](#link)                                                                                      | Static HTML with infoboxes and metadata viewer, local preview, wikilink hygiene              |
+| **Publish**      | [`build`](#build), [`serve`](#serve), [`auth`](docs/wiki/wiki_auth.md), [`link`](#link)                                                    | Static HTML, local preview, whole-site server-side auth, wikilink hygiene                    |
 | **Edit**         | [`file`](#file), [`edit`](#edit)                                                                                                           | Validated, link-aware page edits that are dry runs until you pass `--apply`                  |
 | **Sources**      | [`install`](#install-update-and-remove), [`update`](#install-update-and-remove), [`remove`](#install-update-and-remove), [`graph`](#graph) | Pinned external wikis and data as named graphs, with provenance you can query with `GRAPH`   |
 
-Also: [`init`](#init) scaffolds `wiki.yaml`; [`upgrade`](#upgrade) updates the CLI itself; `wiki query --pretty` renders Rich tables in the terminal; YAML and JSON frontmatter feed into the same queryable model; per-page layouts via `wazoo:layout`.
+Also: [`init`](#init) scaffolds `wiki.yaml`; [`upgrade`](#upgrade) updates the
+CLI itself; `wiki query --pretty` renders Rich tables in the terminal; YAML and
+JSON frontmatter feed into the same queryable model; per-page layouts via
+`wazoo:layout`.
 
 ## Agent skills
 
@@ -49,41 +72,44 @@ Wiki CLI ships one consolidated agent skill for coding assistants (Claude Code,
 Cursor, OpenCode, Gemini). It is not a thin wrapper — it encodes opinionated
 best practices that apply to any wiki or docs repo:
 
-- **[wiki](skills/wiki/SKILL.md)** — the consolidated operational skill.
-  Routes to install, scaffold, audit, deploy, or code-wiki sync workflows.
-  Encodes the "silence is golden" philosophy (exit 0 on success) and
-  deterministic verification scripts instead of agent reasoning about whether
-  things look right. Code-wiki maintenance (`references/sync.md`) treats the
-  last-synced commit as an anchor and diffs forward, editing only the pages
-  the diff demands; defaults to drift-free docs with an opt-in `detail_level`
-  directive.
+- **[wiki](skills/wiki/SKILL.md)** — the consolidated operational skill. Routes
+  to install, scaffold, audit, deploy, or code-wiki sync workflows. Encodes the
+  "silence is golden" philosophy (exit 0 on success) and deterministic
+  verification scripts instead of agent reasoning about whether things look
+  right. Code-wiki maintenance (`references/sync.md`) treats the last-synced
+  commit as an anchor and diffs forward, editing only the pages the diff
+  demands; defaults to drift-free docs with an opt-in `detail_level` directive.
 
 Integration and template proposals are not handled by a skill: they follow the
-contributing guide in the [wiki-templates](https://github.com/wazootech/wiki-templates)
-repository. No new templates are added there, so proposals belong in this
-repository's issue tracker.
+contributing guide in the
+[wiki-templates](https://github.com/wazootech/wiki-templates) repository. No new
+templates are added there, so proposals belong in this repository's issue
+tracker.
 
 ```bash
 npx skills add wazootech/wiki@wiki -g -y
 ```
 
 The skills follow the same convention as the CLI: deterministic scripts
-(`verify.sh`, `audit.sh`) for anything that can be checked, agent reasoning
-only for decisions that require judgment.
+(`verify.sh`, `audit.sh`) for anything that can be checked, agent reasoning only
+for decisions that require judgment.
 
 ## Templates
 
-[wiki-templates](https://github.com/wazootech/wiki-templates) holds exactly one template. Scaffold it into an empty directory:
+[wiki-templates](https://github.com/wazootech/wiki-templates) holds exactly one
+template. Scaffold it into an empty directory:
 
 ```bash
 wiki init --template wikipedia
 ```
 
-| Template                                                              | Description                                                                                                                                                       |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/templates/wikipedia)           | **Wikipedia theme** — Wikipedia-inspired static layout using the Wiki Deno/TypeScript engine                                                                 |
+| Template                                                                               | Description                                                                                  |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [wikipedia](https://github.com/wazootech/wiki-templates/tree/main/templates/wikipedia) | **Wikipedia theme** — Wikipedia-inspired static layout using the Wiki Deno/TypeScript engine |
 
-The other eleven templates were retired on 2026-10-14; their names live only in the [retired slugs](docs/wiki/wiki.md#retired-slugs) list. Full details: [Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
+The other eleven templates were retired on 2026-10-14; their names live only in
+the [retired slugs](docs/wiki/wiki.md#retired-slugs) list. Full details:
+[Wiki CLI templates](docs/wiki/wiki.md#ecosystem-templates).
 
 ## Installation
 
@@ -96,7 +122,9 @@ npm install -g wazootech-wiki
 wiki --help
 ```
 
-The package includes the platform-matched Deno runtime and engine source; system Python and a separate Deno installation are not required. `npx wazootech-wiki` accepts the same commands and flags:
+The package includes the platform-matched Deno runtime and engine source; system
+Python and a separate Deno installation are not required. `npx wazootech-wiki`
+accepts the same commands and flags:
 
 ```bash
 npx wazootech-wiki --help
@@ -104,35 +132,51 @@ npx wazootech-wiki init
 npx wazootech-wiki -c docs/wiki.yml check
 ```
 
-Supported platforms are the ones Deno ships binaries for: Windows and macOS on x64 or ARM64, and Linux on x64 or ARM64 with glibc. In particular musl-based Linux distributions (Alpine) are not supported: the install succeeds there, but every `wiki` invocation fails because no Deno binary exists for the platform.
+Supported platforms are the ones Deno ships binaries for: Windows and macOS on
+x64 or ARM64, and Linux on x64 or ARM64 with glibc. In particular musl-based
+Linux distributions (Alpine) are not supported: the install succeeds there, but
+every `wiki` invocation fails because no Deno binary exists for the platform.
 
-The first run needs network access: the package ships no vendored dependencies, so the JSR/npm module graph is fetched into `DENO_DIR` on first use and cached afterwards.
+The first run needs network access: the package ships no vendored dependencies,
+so the JSR/npm module graph is fetched into `DENO_DIR` on first use and cached
+afterwards.
 
 ### From PyPI
 
-From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary, the way ruff and uv ship: each platform wheel embeds the standalone executable and installs it as `wiki`. It needs Python 3.10 or newer:
+From 0.2.0, `wazootech-wiki` on PyPI installs the same CLI as a native binary,
+the way ruff and uv ship: each platform wheel embeds the standalone executable
+and installs it as `wiki`. It needs Python 3.10 or newer:
 
 ```bash
 pip install wazootech-wiki
 wiki --help
 ```
 
-There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and ARM64, so no Deno or Node.js install is needed. Version 0.1.23 was the last Python engine release; `pip install wazootech-wiki` installs the current native-binary release. See the [Python API Reference](docs/wiki/Python_API_Reference.md).
+There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and
+ARM64, so no Deno or Node.js install is needed. Version 0.1.23 was the last
+Python engine release; `pip install wazootech-wiki` installs the current
+native-binary release. See the
+[Python API Reference](docs/wiki/Python_API_Reference.md).
 
 ### Standalone executable
 
-Each [GitHub Release](https://github.com/wazootech/wiki/releases) publishes self-contained binaries for six targets (Linux, macOS, and Windows, each on x64 and ARM64) with a `SHA256SUMS` file. They require neither Node.js, Python, nor Deno.
+Each [GitHub Release](https://github.com/wazootech/wiki/releases) publishes
+self-contained binaries for six targets (Linux, macOS, and Windows, each on x64
+and ARM64) with a `SHA256SUMS` file. They require neither Node.js, Python, nor
+Deno.
 
 ### From source
 
-Install Deno 2.9.6 — the version CI pins (`deno-version: 2.9.6` in the workflows), so a local run and CI agree — then run `deno task check`, `deno task lint`, `deno task fmt:check`, and `deno task test`.
+Install Deno 2.9.6 — the version CI pins (`deno-version: 2.9.6` in the
+workflows), so a local run and CI agree — then run `deno task check`,
+`deno task lint`, `deno task fmt:check`, and `deno task test`.
 
 ## Programmatic APIs
 
 ### Embedding in TypeScript
 
-The engine is a TypeScript library. Import it and call it in process — there is no
-subprocess and no wrapper:
+The engine is a TypeScript library. Import it and call it in process — there is
+no subprocess and no wrapper:
 
 ```ts
 import { Wiki } from "jsr:@wazoo/wiki";
@@ -144,9 +188,9 @@ const report = await wiki.check({ strict: true });
 Methods cover the library surface: `check`, `lint`, `format`, `fix`, `render`,
 `build`, `export`, `link`, `query`, `graph`, `dataset`, `graphs`, `serve`,
 `edit`, `show`, `refs`, `install`, `update`, and `remove`, plus the static
-`Wiki.init` and `Wiki.load`. `mcp` and `upgrade` are CLI commands, not methods; the upgrade
-failure type `UpgradeError` is exported separately. The package is published on
-[JSR](https://jsr.io/@wazoo/wiki).
+`Wiki.init` and `Wiki.load`. `mcp` and `upgrade` are CLI commands, not methods;
+the upgrade failure type `UpgradeError` is exported separately. The package is
+published on [JSR](https://jsr.io/@wazoo/wiki).
 
 ### The `wazootech-wiki` npm package
 
@@ -172,16 +216,23 @@ JavaScript use the command.
 
 ## Local development
 
-Use Deno tasks for type checking, linting, formatting, and tests. Run the docs CLI from source with `deno run -A src/wiki/cli.ts -c docs/wiki.yml <command>`; the repository-specific Wikipedia-themed Pages site is built with `deno run -A docs/build.ts --output-dir _site`.
+Use Deno tasks for type checking, linting, formatting, and tests. Run the docs
+CLI from source with `deno run -A src/wiki/cli.ts -c docs/wiki.yml <command>`;
+the repository-specific Wikipedia-themed Pages site is built with
+`deno run -A docs/build.ts --output-dir _site`.
 
-`serve --watch` rebuilds when files under `wiki.input` and `wiki.assets` change. Restart the server after editing CLI code.
+`serve --watch` rebuilds when files under `wiki.input` and `wiki.assets` change.
+Restart the server after editing CLI code.
 
 Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
-- Use `deno run -A src/wiki/cli.ts -c docs/wiki.yml serve --watch` for the main live-preview workflow (restart after CLI changes).
-- Run `wiki -c docs/wiki.yml check --strict -v` and `wiki -c docs/wiki.yml lint --strict -v` before landing documentation changes.
-- Use `wiki render --cache` or `wiki build --render --cache` when you want faster repeated one-shot SPARQL runs across fresh shells.
+- Use `deno run -A src/wiki/cli.ts -c docs/wiki.yml serve --watch` for the main
+  live-preview workflow (restart after CLI changes).
+- Run `wiki -c docs/wiki.yml check --strict -v` and
+  `wiki -c docs/wiki.yml lint --strict -v` before landing documentation changes.
+- Use `wiki render --cache` or `wiki build --render --cache` when you want
+  faster repeated one-shot SPARQL runs across fresh shells.
 
 ## Quickstart
 
@@ -209,7 +260,9 @@ wiki serve
 
 ### `check`
 
-Run **integrity** validations: strict SHACL validation, JSON Schema frontmatter validation, route safety, output collisions, and layout frontmatter. Under the "silence is golden" philosophy, `check` exits silently with code 0 on success.
+Run **integrity** validations: strict SHACL validation, JSON Schema frontmatter
+validation, route safety, output collisions, and layout frontmatter. Under the
+"silence is golden" philosophy, `check` exits silently with code 0 on success.
 
 ```bash
 wiki check
@@ -218,11 +271,13 @@ wiki check -v
 wiki check --strict
 ```
 
-Single-file mode runs SHACL and JSON Schema validation for that document only. Broken links and other conventions are **`wiki lint`**.
+Single-file mode runs SHACL and JSON Schema validation for that document only.
+Broken links and other conventions are **`wiki lint`**.
 
 ### `lint`
 
-Run **convention** audits: broken links, filename pattern, heading style (ATX `#` only, sentence-case H2+), and link style.
+Run **convention** audits: broken links, filename pattern, heading style (ATX
+`#` only, sentence-case H2+), and link style.
 
 ```bash
 wiki lint
@@ -231,7 +286,8 @@ wiki lint -v
 wiki lint --strict
 ```
 
-Use `wiki.filename_pattern` for the regex (matched against the **full** `.md` filename). Set severity under `lint:`:
+Use `wiki.filename_pattern` for the regex (matched against the **full** `.md`
+filename). Set severity under `lint:`:
 
 ```yaml
 wiki:
@@ -245,11 +301,16 @@ link:
   style: standard
 ```
 
-**Wikipedia-style** names (for example `Gregory_Davidson.md`, `LLM_Wiki.md`) are the recommended default. Lowercase kebab-case is optional — only use it if you configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety rules, such as rejecting spaces and unsafe URL characters in page paths, are always enforced separately in `wiki check`.
+**Wikipedia-style** names (for example `Gregory_Davidson.md`, `LLM_Wiki.md`) are
+the recommended default. Lowercase kebab-case is optional — only use it if you
+configure a matching pattern (for example `[a-z0-9-]+\\.md`). Build-safety
+rules, such as rejecting spaces and unsafe URL characters in page paths, are
+always enforced separately in `wiki check`.
 
 ### `link`
 
-Suggest missing wikilinks for plain-text page mentions, or repair unambiguous broken internal links. Report-only by default.
+Suggest missing wikilinks for plain-text page mentions, or repair unambiguous
+broken internal links. Report-only by default.
 
 ```bash
 wiki link
@@ -261,11 +322,20 @@ wiki link --apply
 wiki link --fix-broken
 ```
 
-`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches prose with new internal links (`--apply`) or fixes typos and renames when the target is unique (`--fix-broken`). `--apply` uses `link.style` in `wiki.yaml` (`standard` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`). `lint.link_style` flags Obsidian wikilinks in body prose when `link.style` is `standard`. Optional `link.renames` maps old slugs to new routes for renames.
+`wiki lint` reports broken links (`lint.broken_links`). `wiki link` enriches
+prose with new internal links (`--apply`) or fixes typos and renames when the
+target is unique (`--fix-broken`). `--apply` uses `link.style` in `wiki.yaml`
+(`standard` inserts `[text](Page.md)`; `wikilink` inserts `[[Page|text]]`).
+`lint.link_style` flags Obsidian wikilinks in body prose when `link.style` is
+`standard`. Optional `link.renames` maps old slugs to new routes for renames.
 
 ### `query`
 
-Execute any SPARQL SELECT or CONSTRUCT query against the loaded and reasoning-expanded RDF graph. The graph is built once per process and reused across queries in the same run (see **Graph cache** under `render`). Use `--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI processes.
+Execute any SPARQL SELECT or CONSTRUCT query against the loaded and
+reasoning-expanded RDF graph. The graph is built once per process and reused
+across queries in the same run (see **Graph cache** under `render`). Use
+`--cache` to persist a warm graph under `.wiki/cache/` for reuse across new CLI
+processes.
 
 ```bash
 # Execute direct query string and output as ASCII table
@@ -292,7 +362,9 @@ wiki query --pretty "SELECT ?given ?family WHERE { ?s schema:givenName ?given ; 
 
 #### Inspect one document in the terminal
 
-Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples. This does not render markdown body or typed infobox layout — use [`serve`](#serve) for full page preview.
+Use `--pretty` with a subject-focused SELECT to peek at frontmatter triples.
+This does not render markdown body or typed infobox layout — use
+[`serve`](#serve) for full page preview.
 
 ```bash
 # Pretty-print all triples for a subject
@@ -301,13 +373,19 @@ wiki query --pretty "SELECT ?property ?value WHERE {
 }"
 ```
 
-`--pretty` requires the default `-f table` format, writes to stdout only (no `-o` or `--jq`), and supports SELECT queries only.
+`--pretty` requires the default `-f table` format, writes to stdout only (no
+`-o` or `--jq`), and supports SELECT queries only.
 
 ### `render`
 
-Identify embedded SPARQL blocks in your markdown files, run their queries against the reasoning-expanded RDF graph, and replace the outputs inline. Under the "silence is golden" Unix philosophy, this command exits silently with code 0 upon success.
+Identify embedded SPARQL blocks in your markdown files, run their queries
+against the reasoning-expanded RDF graph, and replace the outputs inline. Under
+the "silence is golden" Unix philosophy, this command exits silently with code 0
+upon success.
 
-Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL block in scope against that same graph (all markdown files with blocks, or only the FILE paths you pass).
+Each `wiki render` run builds the RDF graph once, then evaluates every SPARQL
+block in scope against that same graph (all markdown files with blocks, or only
+the FILE paths you pass).
 
 ```bash
 # Render all SPARQL blocks in the wiki
@@ -335,9 +413,20 @@ wiki render wiki/people/*.md
 wiki render --no-inference
 ```
 
-**Graph cache:** By default, the wiki graph (including OWL-RL when inference is on) is built once per process and reused for every SPARQL query and `render` pass in that run, so you do not reload the graph for each block or subcommand. A new shell still starts cold unless you opt into `--cache`, which persists the current graph under `.wiki/cache/` and reuses it across one-shot `query`, `render`, and `build --render` invocations when the wiki fingerprint still matches. Use `wiki serve --watch` for a long-lived process that rebuilds the graph and SPARQL output when files under `wiki.input` or `wiki.assets` change (not when CLI source code changes).
+**Graph cache:** By default, the wiki graph (including OWL-RL when inference is
+on) is built once per process and reused for every SPARQL query and `render`
+pass in that run, so you do not reload the graph for each block or subcommand. A
+new shell still starts cold unless you opt into `--cache`, which persists the
+current graph under `.wiki/cache/` and reuses it across one-shot `query`,
+`render`, and `build --render` invocations when the wiki fingerprint still
+matches. Use `wiki serve --watch` for a long-lived process that rebuilds the
+graph and SPARQL output when files under `wiki.input` or `wiki.assets` change
+(not when CLI source code changes).
 
-Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on unchanged wikis, but it adds `.wiki/cache/` artifacts and still invalidates on wiki or config changes. `--reload` rebuilds from source and refreshes the current cache entry.
+Disk-cache tradeoffs: `--cache` speeds up repeated one-shot commands on
+unchanged wikis, but it adds `.wiki/cache/` artifacts and still invalidates on
+wiki or config changes. `--reload` rebuilds from source and refreshes the
+current cache entry.
 
 An embedded SPARQL block is defined in your markdown files like this:
 
@@ -360,7 +449,8 @@ SELECT ?given ?family ?email WHERE {
 
 ### `build`
 
-Generate a static HTML site from your wiki markdown files for deployment to GitHub Pages or any static host.
+Generate a static HTML site from your wiki markdown files for deployment to
+GitHub Pages or any static host.
 
 ```bash
 # Build site (default: clean directory URLs)
@@ -393,10 +483,13 @@ wiki build --no-check
 
 The `--site-url-style` flag controls how pages are written to disk and linked:
 
-- `dir` (default): `_site/wiki/alice/index.html` on disk, clean `/wiki/alice/` in links
+- `dir` (default): `_site/wiki/alice/index.html` on disk, clean `/wiki/alice/`
+  in links
 - `file`: `_site/wiki/alice.html` on disk, `.html` in generated links
 
-The `--site-base-url` flag controls the URL prefix for wiki pages. Default is `/wiki`, so pages are accessible at `/wiki/{PageStem}/`. Set it to an empty string for root-level URLs. GitHub Pages paths are case-sensitive.
+The `--site-base-url` flag controls the URL prefix for wiki pages. Default is
+`/wiki`, so pages are accessible at `/wiki/{PageStem}/`. Set it to an empty
+string for root-level URLs. GitHub Pages paths are case-sensitive.
 
 Output structure (default `--site-base-url /wiki` + `--site-url-style dir`):
 
@@ -431,9 +524,18 @@ _site/
     +-- ...
 ```
 
-Page URLs are derived from the source path under `wiki.input`, minus `.md`, with case preserved. Folders are preserved. `index.md` maps to its containing folder route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns `/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do not create separate pages; they receive GitHub-compatible fragment IDs such as `#release-history`.
+Page URLs are derived from the source path under `wiki.input`, minus `.md`, with
+case preserved. Folders are preserved. `index.md` maps to its containing folder
+route, so `wiki/index.md` owns `/wiki/` and `wiki/games/index.md` owns
+`/wiki/games/`. For ordinary pages, the default examples use Wikipedia-style
+filenames such as `Gregory_Davidson.md` and `Pokemon_Diamond.md`. Headings do
+not create separate pages; they receive GitHub-compatible fragment IDs such as
+`#release-history`.
 
-`wiki build` runs `wiki check` and `wiki lint` before cleaning output unless `--no-check` is passed. If checks fail, the previous output is left untouched. Once checks pass, the owned output path is treated as disposable build output and rebuilt.
+`wiki build` runs `wiki check` and `wiki lint` before cleaning output unless
+`--no-check` is passed. If checks fail, the previous output is left untouched.
+Once checks pass, the owned output path is treated as disposable build output
+and rebuilt.
 
 Static assets can be published from configured asset directories:
 
@@ -445,17 +547,22 @@ wiki:
     - assets/private/**
 ```
 
-Asset directories are relative to the config file and copied under the base URL preserving their configured path, e.g. `assets/items/photo.jpg` becomes `/wiki/assets/items/photo.jpg`.
+Asset directories are relative to the config file and copied under the base URL
+preserving their configured path, e.g. `assets/items/photo.jpg` becomes
+`/wiki/assets/items/photo.jpg`.
 
 #### Page layouts and infoboxes
 
 The HTML builder distinguishes three concepts:
 
-- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all pages, usually `layouts/wikipedia.html`)
-- **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML file path relative to the config root
+- **Site page layout** — `site.layout` in `wiki.yaml` (default layout for all
+  pages, usually `layouts/wikipedia.html`)
+- **Per-page layout** — optional `wazoo:layout` frontmatter pointing at an HTML
+  file path relative to the config root
 - **Wiki article** — any markdown route (for example `wiki/Page_Layouts.md`)
 
-Set `wazoo:layout` to choose a different page layout for one page. Paths resolve like `site.layout` (relative to the directory containing `wiki.yaml`):
+Set `wazoo:layout` to choose a different page layout for one page. Paths resolve
+like `site.layout` (relative to the directory containing `wiki.yaml`):
 
 ```yaml
 id: wiki:Gregory_Davidson
@@ -465,7 +572,9 @@ knows: wiki:Bella_Davidson
 url: https://gregorydavidson.com
 ```
 
-When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are `.html` page layouts: use `%wiki.head%`, `%wiki.base_url%`, and `%wiki.body%` as listed in [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots).
+When `wazoo:layout` is omitted, the page uses `site.layout`. Layout files are
+`.html` page layouts: use `%wiki.head%`, `%wiki.base_url%`, and `%wiki.body%` as
+listed in [Layout slots](docs/wiki/Wiki_Configuration.md#layout-slots).
 
 In the built site:
 
@@ -476,11 +585,16 @@ In the built site:
 
 #### Metadata pane (RDF views)
 
-The repository's themed static docs build provides a **Metadata** tab with compacted JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads. RDF/XML input is supported, but RDF/XML output is deferred and is not included in the pane. The generic `wiki serve` renderer does not currently provide this repository-specific metadata panel.
+The repository's themed static docs build provides a **Metadata** tab with
+compacted JSON-LD, Turtle, N3, N-Triples, TriG, and N-Quads. RDF/XML input is
+supported, but RDF/XML output is deferred and is not included in the pane. The
+generic `wiki serve` renderer does not currently provide this
+repository-specific metadata panel.
 
 #### GitHub Pages deployment
 
-Create `.github/workflows/deploy.yml` in your wiki repository. For the native Deno CLI, install Deno and run the JSR module.
+Create `.github/workflows/deploy.yml` in your wiki repository. For the native
+Deno CLI, install Deno and run the JSR module.
 
 ```yaml
 name: Deploy Wiki to Pages
@@ -526,7 +640,11 @@ Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
 
 ### `serve`
 
-Start a local development HTTP server that renders wiki Markdown as HTML. Use `wiki serve` from an installed package or `deno run -A src/wiki/cli.ts serve --watch` from a source checkout. The repository-specific metadata panel is part of its static Wikipedia-themed docs build, not the generic serve renderer.
+Start a local development HTTP server that renders wiki Markdown as HTML. Use
+`wiki serve` from an installed package or
+`deno run -A src/wiki/cli.ts serve --watch` from a source checkout. The
+repository-specific metadata panel is part of its static Wikipedia-themed docs
+build, not the generic serve renderer.
 
 ```bash
 # Default: http://127.0.0.1:8080/wiki/ (when site.base_url is /wiki)
@@ -539,13 +657,28 @@ wiki serve --host 0.0.0.0 --port 3000
 wiki serve --watch
 ```
 
-`--watch` polls `wiki.input` and `wiki.assets` only. Restart the server after changing CLI code.
+`--watch` polls `wiki.input` and `wiki.assets` only. Restart the server after
+changing CLI code.
 
-When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes a read-only SPARQL endpoint (default path `/api/sparql`).
+When `sparql_service.enabled` is true in `wiki.yaml`, `wiki serve` also exposes
+a read-only SPARQL endpoint (default path `/api/sparql`).
+
+### `auth`
+
+Protect a hosted wiki at the server, not in the browser. Enable `site.auth`,
+hash a password with `wiki auth hash`, then run
+`wiki auth serve --site-dir _site` behind your HTTPS reverse proxy. The gateway
+also activates automatically in `wiki serve`. Cloudflare Access assertions are
+verified at the origin when `provider: cloudflare-access` is set.
+
+See [wiki auth](docs/wiki/wiki_auth.md) and
+[Wiki Configuration](docs/wiki/Wiki_Configuration.md#site-authentication-siteauth)
+for the full config and provider details.
 
 ### `init`
 
-Interactively scaffold a new wiki project (`wiki.yaml` + starter `wiki/` content) in the current directory.
+Interactively scaffold a new wiki project (`wiki.yaml` + starter `wiki/`
+content) in the current directory.
 
 ```bash
 wiki init
@@ -556,11 +689,16 @@ wiki init --git
 
 ### `export`
 
-Compile and export parsed **Frontmatter** blocks of documents in a supported RDF format.
+Compile and export parsed **Frontmatter** blocks of documents in a supported RDF
+format.
 
 When run without a file argument, exports all documents in the wiki directory.
 
-**Note:** `dict` and `json-ld` outputs are wrapped with `name` and `rdf`. Supported serialized output formats are `turtle`, `n3`, `nt`, `trig`, and `nquads`. RDF/XML input remains supported for `.rdf` and `.xml` files; RDF/XML output is deferred, and `-f xml` fails clearly rather than substituting another format.
+**Note:** `dict` and `json-ld` outputs are wrapped with `name` and `rdf`.
+Supported serialized output formats are `turtle`, `n3`, `nt`, `trig`, and
+`nquads`. RDF/XML input remains supported for `.rdf` and `.xml` files; RDF/XML
+output is deferred, and `-f xml` fails clearly rather than substituting another
+format.
 
 ```bash
 # Export parsed frontmatter of the entire wiki as dict (default)
@@ -582,11 +720,17 @@ wiki export wiki/rdf.md -f turtle
 wiki export -f json-ld -o wiki-export.json
 ```
 
-The `--format` choices are `dict`, `json-ld`, `turtle`, `n3`, `nt`, `trig`, and `nquads`. RDF/XML parsing remains supported for input `.rdf` and `.xml` files. RDF/XML output is deferred from the Deno cutover; `-f xml` returns a clear unsupported-format error.
+The `--format` choices are `dict`, `json-ld`, `turtle`, `n3`, `nt`, `trig`, and
+`nquads`. RDF/XML parsing remains supported for input `.rdf` and `.xml` files.
+RDF/XML output is deferred from the Deno cutover; `-f xml` returns a clear
+unsupported-format error.
 
 ### `file`
 
-Create, change, move, delete, or inspect one wiki document (`.md`, `.yaml`, `.yml`, `.json`, `.toml` under `wiki.input`). These are validated, link-aware edits, not plain file operations: each write verb is checked against `check` and `lint` first and is a dry run unless you pass `--apply`.
+Create, change, move, delete, or inspect one wiki document (`.md`, `.yaml`,
+`.yml`, `.json`, `.toml` under `wiki.input`). These are validated, link-aware
+edits, not plain file operations: each write verb is checked against `check` and
+`lint` first and is a dry run unless you pass `--apply`.
 
 ```bash
 wiki file new wiki/Alice.md --type schema:Person --set "schema:name=Alice" --apply
@@ -598,11 +742,18 @@ wiki file show wiki/Alice.md --json
 wiki file refs wiki/Alice.md
 ```
 
-`mv` repoints every link and metadata reference to the moved page, and `rm` refuses while other pages link to it unless you pass `--prune-links`. See [wiki file](docs/wiki/wiki_file.md).
+`mv` repoints every link and metadata reference to the moved page, and `rm`
+refuses while other pages link to it unless you pass `--prune-links`. See
+[wiki file](docs/wiki/wiki_file.md).
 
 ### `edit`
 
-Validate a batch of edits across many files and, with `--apply`, write them atomically. The input is JSON (`{"ops": [...]}`), read from `--from FILE` or stdin; each op is `create`, `replace`, `delete`, `set`, `patch`, or `move`. Nothing is written if the batch introduces `check` or `lint` errors (unless `--force`) or an op's `expect` hash no longer matches the file. Exit codes: `0` valid or applied, `1` rejected, `2` usage, `3` conflict.
+Validate a batch of edits across many files and, with `--apply`, write them
+atomically. The input is JSON (`{"ops": [...]}`), read from `--from FILE` or
+stdin; each op is `create`, `replace`, `delete`, `set`, `patch`, or `move`.
+Nothing is written if the batch introduces `check` or `lint` errors (unless
+`--force`) or an op's `expect` hash no longer matches the file. Exit codes: `0`
+valid or applied, `1` rejected, `2` usage, `3` conflict.
 
 ```bash
 wiki edit --from changes.json            # validate and report only
@@ -610,11 +761,15 @@ wiki edit --from changes.json --apply    # write atomically
 wiki edit --from changes.json --json     # machine-readable report
 ```
 
-The `wiki file` write verbs are shorthand for one-operation edits. See [wiki edit](docs/wiki/wiki_edit.md).
+The `wiki file` write verbs are shorthand for one-operation edits. See
+[wiki edit](docs/wiki/wiki_edit.md).
 
 ### `mcp`
 
-Start a local [Model Context Protocol](https://modelcontextprotocol.io/) server over stdio so agents can run SPARQL and inspect pages. It is read-only by default; `--allow-write` also lists the page-edit tools, which wrap `wiki edit` and default to a dry run.
+Start a local [Model Context Protocol](https://modelcontextprotocol.io/) server
+over stdio so agents can run SPARQL and inspect pages. It is read-only by
+default; `--allow-write` also lists the page-edit tools, which wrap `wiki edit`
+and default to a dry run.
 
 ```bash
 wiki mcp
@@ -629,7 +784,9 @@ See [wiki mcp](docs/wiki/wiki_mcp.md) for the tool list.
 
 ### `install`, `update`, and `remove`
 
-Manage external wikis and data declared under `sources:` in `wiki.yaml`. Each source is a git repository pinned in `wiki.lock`, cached under `.wiki/sources/`, and loaded as its own named graph.
+Manage external wikis and data declared under `sources:` in `wiki.yaml`. Each
+source is a git repository pinned in `wiki.lock`, cached under `.wiki/sources/`,
+and loaded as its own named graph.
 
 ```bash
 wiki install                                     # fetch and lock every declared source
@@ -639,11 +796,17 @@ wiki update                                      # move locked sources to their 
 wiki remove solar-system-wiki                    # drop a source from config, cache, and lockfile
 ```
 
-Transitive `sources:` are resolved recursively. Commit `wiki.lock` so builds are reproducible. See [wiki install](docs/wiki/wiki_install.md), [wiki update](docs/wiki/wiki_update.md), and [wiki remove](docs/wiki/wiki_remove.md). `wiki remove` removes a source; deleting a page is `wiki file rm`.
+Transitive `sources:` are resolved recursively. Commit `wiki.lock` so builds are
+reproducible. See [wiki install](docs/wiki/wiki_install.md),
+[wiki update](docs/wiki/wiki_update.md), and
+[wiki remove](docs/wiki/wiki_remove.md). `wiki remove` removes a source;
+deleting a page is `wiki file rm`.
 
 ### `graph`
 
-List the named graphs a composed wiki holds: the root plus one per installed source. The listed URI is what a SPARQL `GRAPH` clause addresses, which is how you ask which source a result came from.
+List the named graphs a composed wiki holds: the root plus one per installed
+source. The listed URI is what a SPARQL `GRAPH` clause addresses, which is how
+you ask which source a result came from.
 
 ```bash
 wiki graph list
@@ -654,7 +817,8 @@ wiki query 'SELECT ?g ?s WHERE { GRAPH ?g { ?s a <https://schema.org/Person> } }
 
 ### `upgrade`
 
-Check for a newer release and upgrade the CLI. It defers to npm or pip when the binary was installed through them.
+Check for a newer release and upgrade the CLI. It defers to npm or pip when the
+binary was installed through them.
 
 ```bash
 wiki upgrade --check   # exits 1 when outdated
@@ -667,24 +831,25 @@ See [wiki upgrade](docs/wiki/wiki_upgrade.md).
 
 These flags can be used on any subcommand:
 
-| Option                 | Description                                                                |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `-c, --config <path>`  | Path to `wiki.yaml` config file or directory containing one (default: `.`) |
-| `--input <path>` | Override `wiki.input` for this invocation (can be repeated)               |
+| Option                | Description                                                                |
+| --------------------- | -------------------------------------------------------------------------- |
+| `-c, --config <path>` | Path to `wiki.yaml` config file or directory containing one (default: `.`) |
+| `--input <path>`      | Override `wiki.input` for this invocation (can be repeated)                |
 
 ### Printing and piping
 
-Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with native system utilities. Outputs from query execution or document inspection can be easily formatted and spooled directly to your printer.
+Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
+native system utilities. Outputs from query execution or document inspection can
+be easily formatted and spooled directly to your printer.
 
 #### Unix/macOS
 
-- **Format and Print a Document:**
-  Use `pr` to add headers, margins, and page numbers before sending to `lp`:
+- **Format and Print a Document:** Use `pr` to add headers, margins, and page
+  numbers before sending to `lp`:
   ```bash
   cat wiki/Gregory_Davidson.md | pr -h "Gregory Document" | lp
   ```
-- **Format and Print Query Results:**
-  Run a query and print its tabular results:
+- **Format and Print Query Results:** Run a query and print its tabular results:
   ```bash
   wiki query "SELECT ?s ?p WHERE { ?s ?p ?o }" | pr -h "SPARQL Graph Query" | lp
   ```
@@ -702,20 +867,27 @@ Following the Unix philosophy of pipes and filters, `wiki` works seamlessly with
 
 ### Obsidian integration
 
-While the Wiki CLI operates as a standalone tool, it pairs naturally with Obsidian. You can seamlessly trigger operations directly from within your wiki using the **Shell Commands** community plugin.
+While the Wiki CLI operates as a standalone tool, it pairs naturally with
+Obsidian. You can seamlessly trigger operations directly from within your wiki
+using the **Shell Commands** community plugin.
 
 Recommended workflows:
 
-- **Check on save**: Bind `wiki check` to run whenever a file is modified — catch validation errors immediately.
-- **Trigger re-rendering**: Map a hotkey to `wiki render` to refresh live query tables in your documents.
+- **Check on save**: Bind `wiki check` to run whenever a file is modified —
+  catch validation errors immediately.
+- **Trigger re-rendering**: Map a hotkey to `wiki render` to refresh live query
+  tables in your documents.
 
 ### Validation rules and queries
 
-The Wiki CLI turns your folder of Markdown files into a structured, queryable knowledge base.
+The Wiki CLI turns your folder of Markdown files into a structured, queryable
+knowledge base.
 
 #### Define validation rules in frontmatter
 
-Because our frontmatter parser natively supports nested dictionary conversion to RDF blank nodes, you can define complete validation shapes and ontological classes inside any document's frontmatter:
+Because our frontmatter parser natively supports nested dictionary conversion to
+RDF blank nodes, you can define complete validation shapes and ontological
+classes inside any document's frontmatter:
 
 ```yaml
 # wiki/dog-shape.md
@@ -735,7 +907,8 @@ Requires that all `wiki:Dog` documents must declare a name.
 
 #### Class hierarchies and automatic inference
 
-Define class relationships in one document and declare instances in another — the CLI automatically connects them when you run queries.
+Define class relationships in one document and declare instances in another —
+the CLI automatically connects them when you run queries.
 
 Define a class hierarchy inside a shape file:
 
@@ -761,7 +934,8 @@ name: Gregory Davidson
 ---
 ```
 
-When you run queries, the reasoner **automatically infers** the implicit connection:
+When you run queries, the reasoner **automatically infers** the implicit
+connection:
 
 ```sparql
 # This returns Gregory, even though his type is "Engineer", NOT "Person"!
@@ -774,7 +948,11 @@ SELECT ?given ?family WHERE {
 
 #### Full-text search with SPARQL
 
-By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured markdown body (everything after the frontmatter) is automatically loaded as a literal under your configured predicate (for example `schema:articleBody` for article wikis). This allows you to perform hybrid logical and full-text searches inside a single SPARQL query:
+By enabling `graph.content_predicate` in your `wiki.yaml`, the unstructured
+markdown body (everything after the frontmatter) is automatically loaded as a
+literal under your configured predicate (for example `schema:articleBody` for
+article wikis). This allows you to perform hybrid logical and full-text searches
+inside a single SPARQL query:
 
 ```sparql
 PREFIX schema: <https://schema.org/>
@@ -788,7 +966,10 @@ SELECT ?doc ?content WHERE {
 
 ## Wiki configuration (`Config`)
 
-The CLI automatically detects and loads configurations from `wiki.yaml`, `wiki.yml`, or `wiki.json` in your current working directory. Settings are grouped under `wiki`, `graph`, `site`, and `link` blocks (see [Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
+The CLI automatically detects and loads configurations from `wiki.yaml`,
+`wiki.yml`, or `wiki.json` in your current working directory. Settings are
+grouped under `wiki`, `graph`, `site`, and `link` blocks (see
+[Wiki Configuration](docs/wiki/Wiki_Configuration.md)).
 
 ```yaml
 # wiki.yaml
@@ -823,6 +1004,8 @@ sparql_service:
 
 ## Glossary and decisions
 
-To understand the domain terminology (such as **Wiki**, **Document**, **Context**, **Validation**, and **Shape**), please refer to:
+To understand the domain terminology (such as **Wiki**, **Document**,
+**Context**, **Validation**, and **Shape**), please refer to:
 
-- [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) — Glossary and Domain Model mapping.
+- [CONTEXT.md](https://github.com/wazootech/wiki/blob/main/CONTEXT.md) —
+  Glossary and Domain Model mapping.
