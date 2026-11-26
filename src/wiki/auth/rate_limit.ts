@@ -10,6 +10,19 @@ interface Attempt {
 
 const attempts = new Map<string, Attempt>();
 
+const LOOPBACK = /^(127\.|::1$|::ffff:127\.)/;
+
+/**
+ * Key attempts by the connecting address. `x-forwarded-for` is client-supplied,
+ * so only the last hop appended by a loopback proxy is believed.
+ */
+export function clientKey(request: Request, peer?: string): string {
+  if (peer === undefined) return "local";
+  if (!LOOPBACK.test(peer)) return peer;
+  const forwarded = request.headers.get("x-forwarded-for");
+  return forwarded?.split(",").at(-1)?.trim() || peer;
+}
+
 export function isRateLimited(key: string): boolean {
   const attempt = attempts.get(key);
   if (attempt === undefined) return false;

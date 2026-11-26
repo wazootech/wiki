@@ -1,29 +1,17 @@
-/** Cloudflare Access JWT verification against a short-lived JWKS cache. */
+/** Cloudflare Access JWT verification. */
 
+import { findAccessKey, isRecord } from "./cloudflare_jwks.ts";
 import type { AuthIdentity } from "./types.ts";
 
-const CACHE_TTL_MS = 10 * 60 * 1000;
+/** Clock skew tolerated on `nbf`, which Access sets to the issue time. */
+const NOT_BEFORE_LEEWAY_SECONDS = 60;
 
-/** Deno's `JsonWebKey` lib type omits `kid`, which Access JWKS entries carry. */
-export interface AccessJwk extends JsonWebKey {
-  readonly kid: string;
-}
-
-interface CacheEntry {
-  keys: AccessJwk[];
-  expiresAt: number;
-}
-
-const cache = new Map<string, CacheEntry>();
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isJwk(value: unknown): value is AccessJwk {
-  return isRecord(value) && value.kty === "RSA" &&
-    typeof value.kid === "string" && typeof value.n === "string" &&
-    typeof value.e === "string";
+export interface AccessExpectations {
+  /** The Access application's AUD tag. */
+  readonly audience: string;
+  /** `https://<team>.cloudflareaccess.com` */
+  readonly issuer: string;
+  readonly jwksUrl: string;
 }
 
 function decodePart(part: string): Uint8Array<ArrayBuffer> {
@@ -41,27 +29,34 @@ function parsePart(part: string): unknown {
   return JSON.parse(new TextDecoder().decode(decodePart(part)));
 }
 
-async function loadKeys(jwksUrl: string): Promise<AccessJwk[]> {
-  const cached = cache.get(jwksUrl);
-  if (cached !== undefined && cached.expiresAt > Date.now()) {
-    return cached.keys;
-  }
-  const response = await fetch(jwksUrl);
-  if (!response.ok) throw new Error(`JWKS fetch failed: ${response.status}`);
-  const body: unknown = await response.json();
-  if (!isRecord(body) || !Array.isArray(body.keys)) {
-    throw new Error("Invalid JWKS document");
-  }
-  const keys = body.keys.filter(isJwk);
-  cache.set(jwksUrl, { keys, expiresAt: Date.now() + CACHE_TTL_MS });
-  return keys;
+function hasValidClaims(
+  payload: Record<string, unknown>,
+  expected: AccessExpectations,
+): boolean {
+  const now = Date.now() / 1000;
+  const { iss, aud, exp, nbf } = payload;
+  if (iss !== expected.issuer) return false;
+  if (!Array.isArray(aud) || !aud.includes(expected.audience)) return false;
+  if (typeof exp !== "number" || exp <= now) return false;
+  // Service-token assertions may omit `nbf`.
+  return nbf === undefined ||
+    (typeof nbf === "number" && nbf <= now + NOT_BEFORE_LEEWAY_SECONDS);
+}
+
+/** Service tokens carry an empty `sub` and name themselves in `common_name`. */
+function identityFrom(payload: Record<string, unknown>): AuthIdentity | null {
+  const id = [payload.email, payload.sub, payload.common_name].find(
+    (value): value is string => typeof value === "string" && value !== "",
+  );
+  if (id === undefined) return null;
+  const name = typeof payload.name === "string" ? payload.name : undefined;
+  return name === undefined ? { id } : { id, name };
 }
 
 /** Verify an Access assertion and turn its claims into a wiki identity. */
 export async function verifyAccessJwt(
   assertion: string,
-  audience: string,
-  jwksUrl: string,
+  expected: AccessExpectations,
 ): Promise<AuthIdentity | null> {
   try {
     const parts = assertion.split(".");
@@ -79,22 +74,9 @@ export async function verifyAccessJwt(
       typeof header.kid !== "string"
     ) return null;
     const kid = header.kid;
-    if (!isRecord(payload)) return null;
-    if (
-      !Array.isArray(payload.aud) || !payload.aud.includes(audience)
-    ) return null;
-    if (
-      typeof payload.exp !== "number" || payload.exp <= Date.now() / 1000
-    ) return null;
+    if (!isRecord(payload) || !hasValidClaims(payload, expected)) return null;
 
-    const id = typeof payload.email === "string"
-      ? payload.email
-      : typeof payload.sub === "string"
-      ? payload.sub
-      : null;
-    if (id === null) return null;
-
-    const jwk = (await loadKeys(jwksUrl)).find((key) => key.kid === kid);
+    const jwk = await findAccessKey(expected.jwksUrl, kid);
     if (jwk === undefined) return null;
     const key = await crypto.subtle.importKey(
       "jwk",
@@ -110,10 +92,7 @@ export async function verifyAccessJwt(
       decodePart(signaturePart),
       signed,
     );
-    if (!valid) return null;
-
-    const name = typeof payload.name === "string" ? payload.name : undefined;
-    return name === undefined ? { id } : { id, name };
+    return valid ? identityFrom(payload) : null;
   } catch {
     return null;
   }

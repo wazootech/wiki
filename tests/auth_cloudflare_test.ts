@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createCloudflareAccessProvider } from "../src/wiki/auth/cloudflare.ts";
-import type { AccessJwk } from "../src/wiki/auth/cloudflare_jwt.ts";
+import type { AccessJwk } from "../src/wiki/auth/cloudflare_jwks.ts";
 import type { AuthContext } from "../src/wiki/auth/types.ts";
 import type { AuthBlock } from "../src/wiki/config.ts";
 
@@ -12,7 +12,7 @@ const CONFIG: AuthBlock = {
   users_file: null,
   session_file: null,
   team_domain: "example",
-  audience: "https://wiki.example.org",
+  audience: "32eafc7626e974616deaf0dc3ce63d7bcbed58a2731e84d06bc3cdf1b53c4228",
 };
 
 const URL_OBJECT = new URL("https://wiki.example.org/");
@@ -46,8 +46,9 @@ function encodeJson(value: unknown): string {
 async function signJwt(
   privateKey: CryptoKey,
   payload: Record<string, unknown>,
+  kid = "test-key",
 ): Promise<string> {
-  const header = encodeJson({ alg: "RS256", typ: "JWT", kid: "test-key" });
+  const header = encodeJson({ alg: "RS256", typ: "JWT", kid });
   const body = encodeJson(payload);
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
@@ -72,17 +73,41 @@ async function generateKeys(): Promise<CryptoKeyPair> {
   return pair;
 }
 
-async function jwkFor(publicKey: CryptoKey): Promise<AccessJwk> {
+async function jwkFor(
+  publicKey: CryptoKey,
+  kid = "test-key",
+): Promise<AccessJwk> {
   const exported = await crypto.subtle.exportKey("jwk", publicKey);
-  return { ...exported, kid: "test-key", alg: "RS256", use: "sig" };
+  return { ...exported, kid, alg: "RS256", use: "sig" };
+}
+
+function claims(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    iss: "https://example.cloudflareaccess.com",
+    aud: [CONFIG.audience],
+    exp: now + 300,
+    nbf: now,
+    email: "alice@example.com",
+    ...overrides,
+  };
 }
 
 interface TestServer {
   readonly jwksUrl: string;
+  fetches(): number;
   close(): Promise<void>;
 }
 
-async function startJwksServer(jwk: AccessJwk): Promise<TestServer> {
+/** Serves `keys` as it is at request time, so a test can rotate it. */
+async function startJwksServer(...keys: AccessJwk[]): Promise<TestServer> {
+  return await serveKeys(keys);
+}
+
+async function serveKeys(keys: AccessJwk[]): Promise<TestServer> {
+  let fetches = 0;
   const abort = new AbortController();
   let resolveUrl: (url: string) => void = () => {};
   const ready = new Promise<string>((resolve) => {
@@ -93,10 +118,14 @@ async function startJwksServer(jwk: AccessJwk): Promise<TestServer> {
     port: 0,
     signal: abort.signal,
     onListen: ({ port }) => resolveUrl(`http://127.0.0.1:${port}/certs`),
-  }, () => Response.json({ keys: [jwk] }));
+  }, () => {
+    fetches += 1;
+    return Response.json({ keys });
+  });
   const jwksUrl = await ready;
   return {
     jwksUrl,
+    fetches: () => fetches,
     async close() {
       abort.abort();
       await server.finished;
@@ -119,12 +148,10 @@ Deno.test("cloudflare-access accepts a valid assertion", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
-    const assertion = await signJwt(keys.privateKey, {
-      aud: [CONFIG.audience],
-      exp: Math.floor(Date.now() / 1000) + 300,
-      email: "alice@example.com",
-      name: "Alice",
-    });
+    const assertion = await signJwt(
+      keys.privateKey,
+      claims({ name: "Alice" }),
+    );
     const identity = await identityFor(server.jwksUrl, assertion);
     assertEquals(identity, { id: "alice@example.com", name: "Alice" });
   } finally {
@@ -136,11 +163,10 @@ Deno.test("cloudflare-access rejects a wrong audience", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
-    const assertion = await signJwt(keys.privateKey, {
-      aud: ["https://other.example.org"],
-      exp: Math.floor(Date.now() / 1000) + 300,
-      email: "alice@example.com",
-    });
+    const assertion = await signJwt(
+      keys.privateKey,
+      claims({ aud: ["another-application"] }),
+    );
     const identity = await identityFor(server.jwksUrl, assertion);
     assertEquals(identity, null);
   } finally {
@@ -170,4 +196,77 @@ Deno.test("cloudflare-access has no local endpoints and a plain challenge", asyn
   assertEquals(response.status, 401);
   assertEquals(response.headers.get("location"), null);
   assertStringIncludes(await response.text(), "Cloudflare Access");
+});
+
+Deno.test("cloudflare-access checks issuer, expiry, and not-before", async () => {
+  const keys = await generateKeys();
+  const server = await startJwksServer(await jwkFor(keys.publicKey));
+  const now = Math.floor(Date.now() / 1000);
+  const identityWith = async (overrides: Record<string, unknown>) =>
+    await identityFor(
+      server.jwksUrl,
+      await signJwt(keys.privateKey, claims(overrides)),
+    );
+  try {
+    for (
+      const rejected of [
+        { iss: "https://other.cloudflareaccess.com" },
+        { iss: undefined },
+        { exp: now - 1 },
+        { nbf: now + 600 },
+        { nbf: "now" },
+      ]
+    ) assertEquals(await identityWith(rejected), null);
+    // Slight clock skew passes, and `nbf` is optional.
+    for (const accepted of [{ nbf: now + 30 }, { nbf: undefined }]) {
+      assertEquals(await identityWith(accepted), { id: "alice@example.com" });
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+Deno.test("cloudflare-access identifies a service token", async () => {
+  const keys = await generateKeys();
+  const server = await startJwksServer(await jwkFor(keys.publicKey));
+  try {
+    const assertion = await signJwt(
+      keys.privateKey,
+      claims({ email: undefined, sub: "", common_name: "robot.access" }),
+    );
+    assertEquals(await identityFor(server.jwksUrl, assertion), {
+      id: "robot.access",
+    });
+  } finally {
+    await server.close();
+  }
+});
+
+Deno.test("cloudflare-access refreshes once for a rotated key", async () => {
+  const first = await generateKeys();
+  const second = await generateKeys();
+  const published = [await jwkFor(first.publicKey, "first")];
+  const server = await serveKeys(published);
+  try {
+    const identityWith = async (key: CryptoKey, kid: string) =>
+      await identityFor(server.jwksUrl, await signJwt(key, claims(), kid));
+    const alice = { id: "alice@example.com" };
+
+    assertEquals(await identityWith(first.privateKey, "first"), alice);
+    published.push(await jwkFor(second.publicKey, "second"));
+    assertEquals(
+      await Promise.all([
+        identityWith(second.privateKey, "second"),
+        identityWith(second.privateKey, "second"),
+      ]),
+      [alice, alice],
+    );
+    assertEquals(server.fetches(), 2);
+
+    // Further unknown key IDs wait out the cooldown instead of refetching.
+    assertEquals(await identityWith(second.privateKey, "forged"), null);
+    assertEquals(server.fetches(), 2);
+  } finally {
+    await server.close();
+  }
 });

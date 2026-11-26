@@ -28,6 +28,7 @@ export interface AuthProvider {
     request: Request,
     url: URL,
     context: AuthContext,
+    peer?: string,
   ): Promise<Response | null>;
   identity(
     request: Request,

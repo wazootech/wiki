@@ -10,7 +10,8 @@ import type { AuthContext, AuthProvider, SessionStore } from "./types.ts";
 export interface AuthHandlerHandle {
   readonly enabled: boolean;
   readonly responseHeaders: Readonly<Record<string, string>>;
-  handle(request: Request): Promise<Response | null>;
+  /** `peer` is the connecting address, used to rate-limit sign-ins. */
+  handle(request: Request, peer?: string): Promise<Response | null>;
   close(): void;
 }
 
@@ -55,12 +56,12 @@ export async function createAuthHandler(
   return {
     enabled: true,
     responseHeaders: { "cache-control": "private, no-store" },
-    async handle(request) {
+    async handle(request, peer) {
       const url = new URL(request.url);
       if (isAuthPath(url, context, PUBLIC_HEALTH_PATH)) {
         return withNoStore(htmlResponse("ok\n"));
       }
-      const special = await provider.handle(request, url, context);
+      const special = await provider.handle(request, url, context, peer);
       if (special !== null) return withNoStore(special);
       const identity = await provider.identity(request, url, context);
       if (identity !== null) return null;

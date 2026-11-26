@@ -12,9 +12,12 @@ export async function createCloudflareAccessProvider(
   config: AuthBlock,
   jwksUrl?: string,
 ): Promise<AuthProvider> {
-  const certsUrl = jwksUrl ??
-    `https://${config.team_domain}.cloudflareaccess.com/cdn-cgi/access/certs`;
-  const audience = config.audience ?? "";
+  const issuer = `https://${config.team_domain}.cloudflareaccess.com`;
+  const expected = {
+    audience: config.audience ?? "",
+    issuer,
+    jwksUrl: jwksUrl ?? `${issuer}/cdn-cgi/access/certs`,
+  };
 
   return {
     id: "cloudflare-access",
@@ -24,7 +27,7 @@ export async function createCloudflareAccessProvider(
     async identity(request) {
       const assertion = request.headers.get(ASSERTION_HEADER);
       if (assertion === null || assertion === "") return null;
-      return await verifyAccessJwt(assertion, audience, certsUrl);
+      return await verifyAccessJwt(assertion, expected);
     },
     challenge() {
       return Promise.resolve(htmlResponse(

@@ -547,8 +547,8 @@ export class Wiki {
         baseUrl,
         urlStyle,
         watch: options.watch ?? false,
-        requestHandler: async (request) => {
-          const authResponse = await auth!.handle(request);
+        requestHandler: async (request, peer) => {
+          const authResponse = await auth!.handle(request, peer);
           if (authResponse !== null) return authResponse;
           return await sparqlHandler(request);
         },

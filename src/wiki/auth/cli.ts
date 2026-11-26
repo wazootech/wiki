@@ -63,7 +63,7 @@ export async function runAuthServeCommand(
       baseUrl,
       urlStyle,
       responseHeaders: auth.responseHeaders,
-      requestHandler: (request) => auth.handle(request),
+      requestHandler: (request, peer) => auth.handle(request, peer),
     });
     console.log(`Auth-gated wiki ready at ${server.url}`);
     console.log("Press Ctrl+C to stop.");

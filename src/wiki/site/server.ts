@@ -18,7 +18,10 @@ export interface StaticSiteServerOptions {
   readonly urlStyle?: StaticUrlStyle;
   readonly watch?: boolean;
   readonly pollIntervalMs?: number;
-  readonly requestHandler?: (request: Request) => Promise<Response | null>;
+  readonly requestHandler?: (
+    request: Request,
+    peer?: string,
+  ) => Promise<Response | null>;
   readonly responseHeaders?: Readonly<Record<string, string>>;
 }
 
@@ -29,7 +32,10 @@ export interface StaticSiteServerHandle {
 }
 
 export interface StaticSiteHandlerHandle {
-  handleRequest(request: Request): Promise<Response>;
+  handleRequest(
+    request: Request,
+    info?: Deno.ServeHandlerInfo<Deno.NetAddr>,
+  ): Promise<Response>;
   close(): void;
 }
 
@@ -281,9 +287,13 @@ export function createStaticSiteHandler(
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   const watchPath = `${base.pathname}/__watch` || "/__watch";
 
-  const handler = async (request: Request): Promise<Response> => {
+  const handler: StaticSiteHandlerHandle["handleRequest"] = async (
+    request,
+    info,
+  ) => {
     if (options.requestHandler !== undefined) {
-      const response = await options.requestHandler(request);
+      const peer = info?.remoteAddr.hostname;
+      const response = await options.requestHandler(request, peer);
       if (response !== null) return response;
     }
 

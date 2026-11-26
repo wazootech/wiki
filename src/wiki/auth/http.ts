@@ -48,8 +48,12 @@ export function clearCookie(name: string, secure: boolean): string {
   return parts.join("; ");
 }
 
-export function isSecure(url: URL): boolean {
-  return url.protocol === "https:";
+/** True for HTTPS, including TLS terminated by a proxy or tunnel. */
+export function isSecure(request: Request, url: URL): boolean {
+  const forwarded = request.headers.get("x-forwarded-proto");
+  // Spoofing this header can only add `Secure` to the sender's own cookie.
+  return url.protocol === "https:" ||
+    forwarded?.split(",")[0]?.trim().toLowerCase() === "https";
 }
 
 export function htmlResponse(
@@ -77,6 +81,8 @@ export function safeNext(value: string | null, baseUrl: string): string {
   if (value === null || !value.startsWith("/") || value.startsWith("//")) {
     return fallback;
   }
+  // Browsers read `\` as `/` and drop tabs and newlines, forming `//host`.
+  if (/[\\\p{Cc}]/u.test(value)) return fallback;
   if (
     fallback !== "/" && value !== fallback && !value.startsWith(`${fallback}/`)
   ) {
