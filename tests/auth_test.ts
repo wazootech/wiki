@@ -8,6 +8,8 @@ import { dirname, join } from "@std/path";
 import { Config } from "../src/wiki/config.ts";
 import { createAuthHandler } from "../src/wiki/auth/handler.ts";
 import { hashPassword } from "../src/wiki/auth/local_users.ts";
+import { isSecure, safeNext } from "../src/wiki/auth/http.ts";
+import { clientKey } from "../src/wiki/auth/rate_limit.ts";
 import { createStaticSiteHandler } from "../src/wiki/site/server.ts";
 
 function tempRoot(): string {
@@ -158,6 +160,80 @@ Deno.test("local auth gates the whole site until sign-in", async () => {
       assertEquals(blocked.status, 302);
     } finally {
       preview.close();
+      auth.close();
+    }
+  } finally {
+    Deno.removeSync(root, { recursive: true });
+  }
+});
+
+Deno.test("safeNext rejects redirects that leave the site", () => {
+  for (
+    const hostile of [
+      "//evil.example",
+      "/\\evil.example",
+      "/\t/evil.example",
+      "/\n/evil.example",
+      "https://evil.example",
+    ]
+  ) assertEquals(safeNext(hostile, ""), "/");
+  assertEquals(safeNext("/notes?q=1", ""), "/notes?q=1");
+});
+
+Deno.test("isSecure honours TLS terminated by a proxy", () => {
+  const url = new URL("http://wiki.example.org/");
+  const proxied = new Request(url, {
+    headers: { "x-forwarded-proto": "https" },
+  });
+  assertEquals(isSecure(proxied, url), true);
+  assertEquals(isSecure(new Request(url), url), false);
+});
+
+Deno.test("clientKey trusts forwarded addresses only from loopback", () => {
+  const request = new Request("http://localhost/", {
+    headers: { "x-forwarded-for": "198.51.100.1, 203.0.113.7" },
+  });
+  assertEquals(clientKey(request, "192.0.2.4"), "192.0.2.4");
+  assertEquals(clientKey(request, "127.0.0.1"), "203.0.113.7");
+  assertEquals(clientKey(request, "::1"), "203.0.113.7");
+  assertEquals(clientKey(request), "local");
+});
+
+Deno.test("local sign-in keeps the CSRF cookie and limits parallel guesses", async () => {
+  const root = tempRoot();
+  try {
+    const hash = await hashPassword("correct horse battery");
+    write(root, "users.json", JSON.stringify([{ username: "ethan", hash }]));
+    const config = Config.forRoot(root, {
+      site: { auth: { enabled: true, users_file: "users.json" } },
+    });
+    const auth = await createAuthHandler(config.site.auth, "");
+    try {
+      const login = "http://localhost/auth/login";
+      const headers = { cookie: "wiki_session_csrf=kept" };
+      const page = await auth.handle(new Request(login, { headers }));
+      assertEquals(page!.headers.get("set-cookie"), null);
+      assertStringIncludes(await page!.text(), 'value="kept"');
+
+      const guess = (index: number) => {
+        const body = new FormData();
+        body.set("csrf", "kept");
+        body.set("username", "ethan");
+        body.set("password", "wrong password");
+        const request = new Request(login, {
+          method: "POST",
+          body,
+          // A direct client cannot dodge the limit by varying this header.
+          headers: { ...headers, "x-forwarded-for": `198.51.100.${index}` },
+        });
+        return auth.handle(request, "192.0.2.200");
+      };
+      const responses = await Promise.all(
+        Array.from({ length: 8 }, (_, index) => guess(index)),
+      );
+      const statuses = responses.map((response) => response!.status).sort();
+      assertEquals(statuses, [401, 401, 401, 401, 401, 429, 429, 429]);
+    } finally {
       auth.close();
     }
   } finally {

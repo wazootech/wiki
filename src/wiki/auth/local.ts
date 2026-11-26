@@ -26,9 +26,9 @@ export async function createLocalProvider(
 
   return {
     id: "local",
-    async handle(request, url, context) {
+    async handle(request, url, context, peer) {
       if (isAuthPath(url, context, context.loginPath)) {
-        return await handleLogin(request, url, context);
+        return await handleLogin(request, url, context, peer);
       }
       if (
         isAuthPath(url, context, context.logoutPath) &&
@@ -52,11 +52,11 @@ export async function createLocalProvider(
         ));
         response.headers.append(
           "set-cookie",
-          clearCookie(context.config.cookie_name, isSecure(url)),
+          clearCookie(context.config.cookie_name, isSecure(request, url)),
         );
         response.headers.append(
           "set-cookie",
-          clearCookie(csrfName, isSecure(url)),
+          clearCookie(csrfName, isSecure(request, url)),
         );
         return response;
       }

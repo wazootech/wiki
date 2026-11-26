@@ -11,28 +11,29 @@ import {
   safeNext,
 } from "./http.ts";
 import { renderLoginPage } from "./login_page.ts";
-import { clearFailures, isRateLimited, recordFailure } from "./rate_limit.ts";
+import {
+  clearFailures,
+  clientKey,
+  isRateLimited,
+  recordFailure,
+} from "./rate_limit.ts";
 import type { LocalUser } from "./local_users.ts";
 import { verifyPassword } from "./local_users.ts";
 import { randomToken } from "./tokens.ts";
-import type { AuthContext } from "./types.ts";
-
-function clientKey(request: Request): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "local";
-}
+import type { AuthContext, AuthProvider } from "./types.ts";
 
 export function createLoginHandler(
   users: readonly LocalUser[],
   csrfName: string,
-): (request: Request, url: URL, context: AuthContext) => Promise<Response> {
+): AuthProvider["handle"] {
   const loginPage = (
+    request: Request,
     context: AuthContext,
     url: URL,
     error?: string,
     submittedCsrf?: string,
   ): Response => {
-    const existing = readCookie(new Request(url), csrfName);
+    const existing = readCookie(request, csrfName) || null;
     const csrf = submittedCsrf ?? existing ?? randomToken(16);
     const response = htmlResponse(
       renderLoginPage({
@@ -47,14 +48,14 @@ export function createLoginHandler(
     if (existing === null) {
       response.headers.append(
         "set-cookie",
-        cookie(csrfName, csrf, isSecure(url)),
+        cookie(csrfName, csrf, isSecure(request, url)),
       );
     }
     return response;
   };
 
-  return async (request, url, context) => {
-    if (request.method === "GET") return loginPage(context, url);
+  return async (request, url, context, peer) => {
+    if (request.method === "GET") return loginPage(request, context, url);
     if (request.method !== "POST") return new Response(null, { status: 405 });
 
     const form = await request.formData();
@@ -67,10 +68,13 @@ export function createLoginHandler(
       return htmlResponse("Invalid CSRF token.\n", 403);
     }
 
-    const key = clientKey(request);
+    const key = clientKey(request, peer);
     if (isRateLimited(key)) {
       return htmlResponse("Too many failed sign-in attempts.\n", 429);
     }
+
+    // Count the attempt before the slow hash so parallel guesses cannot pass.
+    recordFailure(key);
 
     const username = form.get("username");
     const password = form.get("password");
@@ -80,8 +84,8 @@ export function createLoginHandler(
     const valid = user !== undefined && typeof password === "string" &&
       await verifyPassword(user, password);
     if (!valid) {
-      recordFailure(key);
-      return loginPage(context, url, "Invalid username or password.", csrf);
+      const error = "Invalid username or password.";
+      return loginPage(request, context, url, error, csrf);
     }
 
     clearFailures(key);
@@ -96,7 +100,7 @@ export function createLoginHandler(
     );
     response.headers.append(
       "set-cookie",
-      cookie(context.config.cookie_name, token, isSecure(url)),
+      cookie(context.config.cookie_name, token, isSecure(request, url)),
     );
     return response;
   };

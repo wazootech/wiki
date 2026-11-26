@@ -7,6 +7,7 @@ import {
 import { dirname, resolve } from "@std/path";
 import {
   createStaticSiteHandler,
+  startStaticSiteServer,
   type StaticSiteHandlerHandle,
 } from "../src/wiki/site/server.ts";
 import { symlinksUnavailable } from "./support/symlink_support.ts";
@@ -238,6 +239,26 @@ Deno.test("rejects invalid base URLs, URL styles, hosts, and ports", () => {
       createStaticSiteHandler({ siteDir, urlStyle: "other" as never })
     );
   } finally {
+    Deno.removeSync(siteDir, { recursive: true });
+  }
+});
+
+Deno.test("passes the connecting address to the request handler", async () => {
+  const siteDir = Deno.makeTempDirSync({ prefix: "wiki-peer-" });
+  let seen: string | undefined;
+  const server = startStaticSiteServer({
+    siteDir,
+    port: 0,
+    requestHandler: (_request, peer) => {
+      seen = peer;
+      return Promise.resolve(new Response("ok"));
+    },
+  });
+  try {
+    await (await fetch(server.url)).body?.cancel();
+    assertEquals(seen, "127.0.0.1");
+  } finally {
+    await server.close();
     Deno.removeSync(siteDir, { recursive: true });
   }
 });

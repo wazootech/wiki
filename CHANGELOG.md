@@ -11,6 +11,17 @@
   and Cloudflare Access JWT verification. Generated static output is unchanged,
   so GitHub Pages deployments remain public.
 
+### Fixed
+
+- The Cloudflare Access provider now checks `iss` and `nbf`, refreshes signing
+  keys when it sees an unknown key ID, and identifies service tokens by
+  `common_name`. `site.auth.audience` is the application's AUD tag, not the site
+  URL as the docs previously showed.
+- Local auth rejects `next` redirects containing backslashes or control
+  characters, marks cookies `Secure` behind a TLS-terminating proxy, keeps the
+  CSRF token across page loads, and no longer lets a spoofed `X-Forwarded-For`
+  or parallel requests bypass the sign-in rate limit.
+
 ### Changed
 
 - OWL 2 RL inference now runs on
