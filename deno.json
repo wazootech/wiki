@@ -47,6 +47,7 @@
     "@std/path": "jsr:@std/path@^1.0.0",
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",
+    "bcrypt": "npm:bcryptjs@3.0.3",
     "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0",
     "@wazoo/reasoner": "jsr:@wazoo/reasoner@0.4.2",
     "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.5.1",

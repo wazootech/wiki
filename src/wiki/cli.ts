@@ -2466,6 +2466,17 @@ const COMMANDS: readonly CommandDefinition[] = [
     },
   },
   {
+    names: ["auth"],
+    description: "Hash passwords and serve an auth-gated wiki site.",
+    run: async ({ args, configPath, wikiInputs }) => {
+      const { runAuthCommand } = await import("./auth/cli.ts");
+      return await runAuthCommand(
+        args,
+        async () => await loadWiki(configPath, wikiInputs),
+      );
+    },
+  },
+  {
     names: ["check"],
     description: "Integrity checks: SHACL, JSON Schema, routes, collisions,...",
     run: async ({ command, args, configPath, wikiInputs }) => {

@@ -50,6 +50,7 @@ Top-level blocks follow a **compile pipeline** plus **audit lanes**, not arbitra
 | `wiki:`           | Corpus on disk — inputs, assets, filename regex       | `check`, `lint`, `build`, `serve` | optional | yes               |
 | `graph:`          | RDF compile — prefixes, document IRIs, body literals  | `check`, `query`, `render`        | optional | yes               |
 | `site:`           | Publish routing — layout path, URL prefix, path style | `build`, `serve`                  | optional | yes               |
+| `site.auth:`      | Whole-site server-side access gate                    | `wiki auth`, `wiki serve`         | optional | no                |
 | `link:`           | `wiki link` apply format and rename repair map        | `wiki link`                       | optional | yes               |
 | `check:`          | Integrity severities                                  | `wiki check`                      | optional | yes               |
 | `lint:`           | Convention severities                                 | `wiki lint`                       | optional | yes               |
@@ -149,10 +150,39 @@ site: # optional block
 | `layout`    | optional (recommended) | unset — packaged minimal `index.html` | writes | `wiki build`, `wiki serve`; `check.missing_layout_file` for per-page `wazoo:layout` |
 | `base_url`  | optional               | `/wiki` (`""` allowed for site root)  | writes | routes, layout `%wiki.base_url%`                                                    |
 | `url_style` | optional               | `dir` (`file` → `slug.html`)          | writes | output paths; overridable per CLI run                                               |
+| `auth`      | optional               | disabled                              | omits  | `wiki auth`, `wiki serve`                                                           |
 
 `site:` does not carry site name, theme color, favicon, or sidebar logo. If you want custom styling, write a custom layout template file and place custom assets under the `wiki.assets` directory, then configure `site.layout` to point to it.
 
 CLI flags on `wiki build` and `wiki serve` can override `site.base_url` and `site.url_style` for a single run.
+
+### Site authentication (`site.auth:`)
+
+Whole-site, server-side access control for hosted wikis. See [wiki auth](wiki_auth.md) for the password, Cloudflare Access, and gateway workflows.
+
+```yaml
+site:
+  auth:
+    enabled: true
+    provider: local # local or cloudflare-access
+    users_file: ../private/wiki-users.json # required for local
+    session_file: ../private/wiki-sessions.json # optional; persists sessions
+    session_ttl_seconds: 604800
+    cookie_name: wiki_session
+```
+
+| Key                   | Required                        | Default        | Init  | Audited by                |
+| --------------------- | ------------------------------- | -------------- | ----- | ------------------------- |
+| `enabled`             | optional                        | `false`        | omits | `wiki auth`, `wiki serve` |
+| `provider`            | optional                        | `local`        | omits | `wiki auth`, `wiki serve` |
+| `session_ttl_seconds` | optional                        | `604800`       | omits | `wiki auth`, `wiki serve` |
+| `cookie_name`         | optional                        | `wiki_session` | omits | `wiki auth`, `wiki serve` |
+| `users_file`          | required when `provider: local` | unset          | omits | `wiki auth`, `wiki serve` |
+| `session_file`        | optional                        | unset          | omits | `wiki auth`, `wiki serve` |
+| `team_domain`         | required for Cloudflare Access  | unset          | omits | `wiki auth`, `wiki serve` |
+| `audience`            | required for Cloudflare Access  | unset          | omits | `wiki auth`, `wiki serve` |
+
+Relative paths resolve against the config file directory. Keep the users and session files outside the built site and out of version control. Authentication is not applied to `wiki build`; GitHub Pages output stays public.
 
 ## Link (`link:`)
 
