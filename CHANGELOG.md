@@ -4,6 +4,9 @@
 
 ### Added
 
+- `wiki build --public` builds only pages marked `wazoo:visibility: public`.
+  Pages are private by default, and the build fails if a public page links to a
+  private one or an asset, or contains a query block.
 - Whole-site server-side auth gateway for private hosted wikis
   ([#48](https://github.com/wazootech/wiki/issues/48)). `wiki auth hash` creates
   bcrypt password hashes, and `wiki auth serve` serves an already-built site

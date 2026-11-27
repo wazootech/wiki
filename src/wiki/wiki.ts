@@ -45,6 +45,7 @@ import {
   type ShowReport,
 } from "./show.ts";
 import { createAuthHandler } from "./auth/handler.ts";
+import { copyConfig } from "./config_copy.ts";
 import { buildStaticSite } from "./site/publish.ts";
 import { startStaticSiteServer } from "./site/server.ts";
 import { Config, findConfigPath } from "./config.ts";
@@ -145,6 +146,8 @@ export interface BuildMethodOptions extends RuntimeOverrides {
   readonly reload?: boolean;
   readonly cache?: boolean;
   readonly noCheck?: boolean;
+  /** Build only pages marked `wazoo:visibility: public`. */
+  readonly publicOnly?: boolean;
   readonly verbose?: boolean;
 }
 
@@ -152,30 +155,6 @@ export interface ServeOptions extends RuntimeOverrides {
   readonly host?: string;
   readonly port?: number;
   readonly watch?: boolean;
-}
-
-/**
- * A copy of `config` with one or more top-level blocks replaced.
- *
- * The copy is made with `Object.create` so that the class's methods survive —
- * `Config.isExcluded` is called on every document scan — and shares every block
- * it is not asked to replace. Sharing is safe for the blocks that are already
- * immutable in practice (`graph`, `link`, `check`, `lint`) and is *not* safe for
- * `wiki.input`, which is why `Wiki.load` builds that list before copying rather
- * than appending to a shared one.
- */
-function copyConfig(
-  config: Config,
-  blocks: { readonly wiki?: Config["wiki"]; readonly site?: Config["site"] },
-): Config {
-  const copy = Object.create(Config.prototype) as Config;
-  Object.assign(
-    copy,
-    config,
-    blocks.wiki === undefined ? {} : { wiki: blocks.wiki },
-    blocks.site === undefined ? {} : { site: blocks.site },
-  );
-  return copy;
 }
 
 /**
@@ -506,6 +485,9 @@ export class Wiki {
       ...(options.noCheck === undefined
         ? {}
         : { skip_preflight: options.noCheck }),
+      ...(options.publicOnly === undefined
+        ? {}
+        : { public_only: options.publicOnly }),
       ...(options.verbose === undefined ? {} : { verbose: options.verbose }),
     });
   }

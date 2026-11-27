@@ -17,6 +17,7 @@ wiki build --site-base-url ''
 wiki build --render --reload
 wiki build --render --cache
 wiki build --no-check
+wiki build --public --output-dir _public
 ```
 
 ## Options
@@ -30,6 +31,7 @@ wiki build --no-check
 | `--reload`         | off         | Rebuild graph when using `--render`                             |
 | `--cache`          | off         | Persist a warm graph under `.wiki/cache/` when using `--render` |
 | `--no-check`       | off         | Skip pre-build `lint` then `check` preflight                    |
+| `--public`         | off         | Build only [public pages](#public-builds)                       |
 | `-v`, `--verbose`  | off         | List output paths                                               |
 
 ## Output layout
@@ -59,6 +61,25 @@ By default, convention (`wiki lint`) then integrity (`wiki check`) preflight mus
 Wiki page bodies are rendered without raw HTML passthrough; inline HTML tags in markdown are not emitted as live markup in built pages.
 
 `--output-dir` must point at a disposable directory that does not overlap the wiki config root, input directories, asset directories, or the page layout folder. The build refuses to delete paths that would remove source or config files.
+
+## Public builds
+
+Pages are private unless their frontmatter publishes them:
+
+```yaml
+wazoo:visibility: public
+```
+
+`wiki build --public` writes only those pages, and its generated index lists only them. A plain `wiki build` still writes every page. Build the two into different output directories, and serve the full one behind [wiki auth](wiki_auth.md).
+
+The public build copies no assets, and it fails, writing nothing, when a public page:
+
+- links to anything that is not a public page, including a private page's full IRI or any asset;
+- contains a query block, whose saved results may come from private pages.
+
+It also fails when `wazoo:visibility` is neither `public` nor `private`.
+
+It cannot judge prose: private facts written on a public page are published. A custom page layout is published as written, and `--public` does not apply to theme builds made through the Deno API.
 
 ## Related
 
