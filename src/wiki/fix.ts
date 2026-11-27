@@ -21,6 +21,7 @@
  * requires the key rejects the fix) and written atomically.
  */
 
+import * as sys from "./sys.ts";
 import { isMap, isScalar, parseDocument } from "yaml";
 import { extname } from "@std/path";
 import type { Config } from "./config.ts";
@@ -228,7 +229,7 @@ export async function fixRedundantFrontmatter(
     { op: "replace"; path: string; content: string; expect: string }
   > = [];
   for (const document of documents) {
-    const raw = Deno.readFileSync(document.path);
+    const raw = sys.readFileSync(document.path);
     const before = new TextDecoder().decode(raw);
     const keys = [...new Set(document.fields.map((field) => field.key))];
     const removal = removeFrontmatterKeys(before, keys);

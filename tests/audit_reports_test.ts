@@ -9,6 +9,8 @@
  * kept as the file's centrepiece and the other two are asserted alongside it.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import { runLint } from "../src/wiki/audit.ts";
@@ -17,12 +19,12 @@ import { Config } from "../src/wiki/config.ts";
 import { AuditReport, type Issue } from "../src/wiki/schemas/reports.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-audit-reports-" });
+  return sys.makeTempDirSync({ prefix: "wiki-audit-reports-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -30,12 +32,12 @@ function cleanup(root: string): void {
 
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
-Deno.test("two passes merge into one report, and the order stands", () => {
+test("two passes merge into one report, and the order stands", () => {
   const first = new AuditReport({
     ok: false,
     errors: [{ code: "broken_links", message: "broken", severity: "error" }],
@@ -56,7 +58,7 @@ Deno.test("two passes merge into one report, and the order stands", () => {
   assertEquals(second.merge(first).errors[0]!.code, "broken_links");
 });
 
-Deno.test("--strict promotes every warning and empties the warning list", () => {
+test("--strict promotes every warning and empties the warning list", () => {
   const report = new AuditReport({
     warnings: [{ code: "headings", message: "warn", severity: "warning" }],
   });
@@ -72,7 +74,7 @@ Deno.test("--strict promotes every warning and empties the warning list", () => 
   assertEquals(clean.applyStrict(), clean);
 });
 
-Deno.test("every issue code is the lint config key that controls it", async () => {
+test("every issue code is the lint config key that controls it", async () => {
   const root = tempRoot();
   try {
     // The fixture is the Python one: a page whose wikilink is broken and

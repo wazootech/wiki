@@ -1,5 +1,6 @@
 /** External Git source lifecycle and lockfile resolution. */
 
+import * as sys from "./sys.ts";
 import { basename, extname, join, resolve as resolvePath } from "@std/path";
 import { errorText } from "./errors.ts";
 import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
@@ -149,7 +150,7 @@ function writeYamlConfig(path: string, data: Record<string, unknown>): void {
     flowCollectionPadding: false,
     lineWidth: 0,
   });
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     path,
     newline === "\n" ? serialized : serialized.replaceAll("\n", newline),
   );
@@ -236,7 +237,7 @@ interface GitResult {
 }
 
 function runGit(args: readonly string[], cwd?: string): GitResult {
-  const command = new Deno.Command("git", {
+  const command = new sys.Command("git", {
     args: [...args],
     ...(cwd === undefined ? {} : { cwd: cwd }),
     stdout: "piped",
@@ -273,24 +274,24 @@ function checkedGit(
 function removeTree(path: string): void {
   if (!pathExists(path)) return;
   try {
-    Deno.removeSync(path, { recursive: true });
+    sys.removeSync(path, { recursive: true });
   } catch (firstError) {
     const makeWritable = (entry: string): void => {
       if (isSymlink(entry)) return;
       if (isDirectory(entry)) {
-        for (const child of Deno.readDirSync(entry)) {
+        for (const child of sys.readDirSync(entry)) {
           makeWritable(join(entry, child.name));
         }
       }
       try {
-        const mode = Deno.statSync(entry).mode;
-        if (mode !== null) Deno.chmodSync(entry, mode | 0o200);
+        const mode = sys.statSync(entry).mode;
+        if (mode !== null) sys.chmodSync(entry, mode | 0o200);
       } catch {
         throw firstError;
       }
     };
     makeWritable(path);
-    Deno.removeSync(path, { recursive: true });
+    sys.removeSync(path, { recursive: true });
   }
 }
 
@@ -346,7 +347,7 @@ function cloneOrFetch(source: SourceConfig, cacheDir: string): string {
     return repoDir;
   }
 
-  Deno.mkdirSync(cacheDir, { recursive: true });
+  sys.mkdirSync(cacheDir, { recursive: true });
   const depth = source.ref && FULL_SHA.test(source.ref) ? [] : ["--depth", "1"];
   const clone = runGit(["clone", ...depth, source.url, repoDir]);
   if (clone.code !== 0) {
@@ -459,8 +460,8 @@ function sourcePathWithinRepo(resolved: string, repoDir: string): boolean {
   let realRoot: string;
   let realResolved: string;
   try {
-    realRoot = Deno.realPathSync(repoDir);
-    realResolved = Deno.realPathSync(resolved);
+    realRoot = sys.realPathSync(repoDir);
+    realResolved = sys.realPathSync(resolved);
   } catch {
     return false;
   }

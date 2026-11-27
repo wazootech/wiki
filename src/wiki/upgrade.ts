@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { errorText, UpgradeError } from "./errors.ts";
 import { basename, dirname, join, normalize } from "@std/path";
 
@@ -240,7 +241,7 @@ async function runDenoCommand(
   executable: string,
   args: readonly string[],
 ): Promise<CommandResult> {
-  const result = await new Deno.Command(executable, {
+  const result = await new sys.Command(executable, {
     args: [...args],
     stdin: "null",
     stdout: "piped",
@@ -254,15 +255,15 @@ async function runDenoCommand(
 }
 
 async function confirmDefaultYes(message: string): Promise<boolean> {
-  if (!Deno.stdin.isTerminal()) {
+  if (!sys.stdin.isTerminal()) {
     throw new Error(
       "confirmation required in a non-interactive session; rerun with --yes",
     );
   }
-  const reader = Deno.stdin.readable.getReader();
+  const reader = sys.stdin.readable.getReader();
   try {
     while (true) {
-      await Deno.stdout.write(TEXT_ENCODER.encode(`${message} [Y/n] `));
+      await sys.stdout.write(TEXT_ENCODER.encode(`${message} [Y/n] `));
       const chunks: Uint8Array[] = [];
       let byteCount = 0;
       let reachedLineEnd = false;
@@ -297,14 +298,14 @@ function isDenoExecutable(path: string): boolean {
 }
 
 function candidateNames(): readonly string[] {
-  return Deno.build.os === "windows"
+  return sys.build.os === "windows"
     ? ["wiki.cmd", "wiki.bat", "wiki.ps1", "wiki"]
     : ["wiki"];
 }
 
 async function isWikiDenoShim(path: string): Promise<boolean> {
   try {
-    const text = await Deno.readTextFile(path);
+    const text = await sys.readTextFile(path);
     return /\bdeno(?:\.exe)?\b/i.test(text) &&
       /(?:jsr:|https:\/\/jsr\.io\/)@wazoo\/wiki(?:@|\/)/i.test(text);
   } catch {
@@ -326,7 +327,7 @@ function siteDirectoriesFor(binDir: string): string[] {
   ];
   for (const lib of ["lib", "lib64"]) {
     try {
-      for (const entry of Deno.readDirSync(join(prefix, lib))) {
+      for (const entry of sys.readDirSync(join(prefix, lib))) {
         if (!entry.isDirectory || !entry.name.startsWith("python")) continue;
         sites.push(join(prefix, lib, entry.name, "site-packages"));
         sites.push(join(prefix, lib, entry.name, "dist-packages"));
@@ -341,7 +342,7 @@ function siteDirectoriesFor(binDir: string): string[] {
 function samePath(left: string, right: string): boolean {
   const a = normalize(left);
   const b = normalize(right);
-  return Deno.build.os === "windows"
+  return sys.build.os === "windows"
     ? a.toLowerCase() === b.toLowerCase()
     : a === b;
 }
@@ -358,14 +359,14 @@ function samePath(left: string, right: string): boolean {
 export function isPypiInstall(executable: string): boolean {
   let resolved = executable;
   try {
-    resolved = Deno.realPathSync(executable);
+    resolved = sys.realPathSync(executable);
   } catch {
     // Keep the path as given.
   }
   for (const site of siteDirectoriesFor(dirname(resolved))) {
-    let entries: Deno.DirEntry[];
+    let entries: sys.DirEntry[];
     try {
-      entries = [...Deno.readDirSync(site)];
+      entries = [...sys.readDirSync(site)];
     } catch {
       continue;
     }
@@ -373,7 +374,7 @@ export function isPypiInstall(executable: string): boolean {
       if (!/^wazootech_wiki-[^/\\]+\.dist-info$/.test(entry.name)) continue;
       let record: string;
       try {
-        record = Deno.readTextFileSync(join(site, entry.name, "RECORD"));
+        record = sys.readTextFileSync(join(site, entry.name, "RECORD"));
       } catch {
         continue;
       }
@@ -387,17 +388,17 @@ export function isPypiInstall(executable: string): boolean {
 }
 
 async function findDefaultInstallTarget(): Promise<InstallTarget> {
-  const executable = Deno.execPath();
+  const executable = sys.execPath();
   if (!isDenoExecutable(executable)) {
     return isPypiInstall(executable)
       ? { kind: "pypi", path: executable }
       : { kind: "standalone", path: executable };
   }
   try {
-    const pathValue = Deno.env.get("PATH") ?? "";
-    const separator = Deno.build.os === "windows" ? ";" : ":";
+    const pathValue = sys.env.get("PATH") ?? "";
+    const separator = sys.build.os === "windows" ? ";" : ":";
     const pathEntries = pathValue.split(separator).filter(Boolean);
-    const configuredRoot = Deno.env.get("DENO_INSTALL_ROOT");
+    const configuredRoot = sys.env.get("DENO_INSTALL_ROOT");
     const searchEntries = configuredRoot
       ? [join(configuredRoot, "bin"), ...pathEntries]
       : pathEntries;
@@ -409,7 +410,7 @@ async function findDefaultInstallTarget(): Promise<InstallTarget> {
       for (const name of candidateNames()) {
         const candidate = join(normalizedDirectory, name);
         try {
-          const info = await Deno.stat(candidate);
+          const info = await sys.stat(candidate);
           if (!info.isFile) continue;
         } catch {
           continue;
@@ -442,7 +443,7 @@ const defaultDependencies: UpgradeDependencies = {
   stdout: (text) => console.log(text),
   stderr: (text) => console.error(text),
   currentVersion: VERSION,
-  denoExecutable: Deno.execPath(),
+  denoExecutable: sys.execPath(),
 };
 
 function errorMessage(error: unknown): string {

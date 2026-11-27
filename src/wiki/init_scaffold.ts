@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { dirname, join, resolve } from "@std/path";
 import { isDirectory, isSymlink, pathExists } from "./fspath.ts";
 import { errorText, ValueError } from "./errors.ts";
@@ -184,7 +185,7 @@ function runGit(
   args: string[],
   cwd: string,
 ): { code: number; stdout: string; stderr: string } {
-  const output = new Deno.Command("git", {
+  const output = new sys.Command("git", {
     args,
     cwd,
     stdout: "piped",
@@ -494,7 +495,7 @@ function conflict(root: string): string | null {
   if (!isDirectory(wikiDir)) {
     return "wiki/ exists and is not a directory. Use a new directory or remove wiki/.";
   }
-  if (Deno.readDirSync(wikiDir).next().done === false) {
+  if (sys.readDirSync(wikiDir).next().done === false) {
     return "wiki/ is not empty. Use a new directory or clear wiki/ before init.";
   }
   return null;
@@ -516,7 +517,7 @@ function ensureDirectory(path: string, created: string[]): void {
   }
   for (const directory of missing.reverse()) {
     try {
-      Deno.mkdirSync(directory);
+      sys.mkdirSync(directory);
       created.push(directory);
     } catch (error) {
       if (!isDirectory(directory)) throw error;
@@ -525,7 +526,7 @@ function ensureDirectory(path: string, created: string[]): void {
 }
 
 function writeNewFile(path: string, text: string, created: string[]): void {
-  const file = Deno.openSync(path, { write: true, createNew: true });
+  const file = sys.openSync(path, { write: true, createNew: true });
   created.push(path);
   try {
     const bytes = encoder.encode(text);
@@ -542,10 +543,10 @@ function writeNewFile(path: string, text: string, created: string[]): void {
 
 function removeIfPresent(path: string, recursive = false): string | null {
   try {
-    Deno.removeSync(path, { recursive });
+    sys.removeSync(path, { recursive });
     return null;
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return null;
+    if (sys.isNotFound(error)) return null;
     return `${path}: ${errorText(error)}`;
   }
 }
@@ -627,7 +628,7 @@ export function scaffoldWiki(
 
     const wikiDirectory = join(root, "wiki");
     if (!pathExists(wikiDirectory)) {
-      Deno.mkdirSync(wikiDirectory);
+      sys.mkdirSync(wikiDirectory);
       created.push(wikiDirectory);
     }
     writtenPaths.push(wikiDirectory);
@@ -643,7 +644,7 @@ export function scaffoldWiki(
       try {
         result = (settings.git_runner ?? defaultGitRunner)(root);
       } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
+        if (sys.isNotFound(error)) {
           return failure(
             "git was requested with --git, but no git executable was found on PATH.",
           );
@@ -695,7 +696,7 @@ const TEMPLATE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function cloneTemplateRepository(destination: string): TemplateCloneResult {
   try {
-    const result = new Deno.Command("git", {
+    const result = new sys.Command("git", {
       args: [
         "clone",
         "--depth",
@@ -723,7 +724,7 @@ function templateEntries(
   topLevel = true,
   result: TemplateEntry[] = [],
 ): TemplateEntry[] {
-  for (const entry of Deno.readDirSync(directory)) {
+  for (const entry of sys.readDirSync(directory)) {
     if (topLevel && entry.name.startsWith(".") && entry.name !== ".gitignore") {
       continue;
     }
@@ -751,8 +752,8 @@ function copyTemplateFile(
   destination: string,
   created: string[],
 ): void {
-  const bytes = Deno.readFileSync(source);
-  const file = Deno.openSync(destination, {
+  const bytes = sys.readFileSync(source);
+  const file = sys.openSync(destination, {
     write: true,
     createNew: true,
   });
@@ -769,27 +770,27 @@ function copyTemplateFile(
   } finally {
     file.close();
   }
-  const mode = Deno.statSync(source).mode;
-  if (mode !== null) Deno.chmodSync(destination, mode & 0o777);
+  const mode = sys.statSync(source).mode;
+  if (mode !== null) sys.chmodSync(destination, mode & 0o777);
 }
 
 function removeTemplateDirectory(path: string): void {
   try {
-    Deno.removeSync(path, { recursive: true });
+    sys.removeSync(path, { recursive: true });
   } catch (firstError) {
     const makeWritable = (entry: string): void => {
       if (isSymlink(entry)) return;
       if (isDirectory(entry)) {
-        for (const child of Deno.readDirSync(entry)) {
+        for (const child of sys.readDirSync(entry)) {
           makeWritable(join(entry, child.name));
         }
       }
-      const mode = Deno.statSync(entry).mode;
-      if (mode !== null) Deno.chmodSync(entry, mode | 0o200);
+      const mode = sys.statSync(entry).mode;
+      if (mode !== null) sys.chmodSync(entry, mode | 0o200);
     };
     try {
       makeWritable(path);
-      Deno.removeSync(path, { recursive: true });
+      sys.removeSync(path, { recursive: true });
     } catch {
       throw firstError;
     }
@@ -832,7 +833,7 @@ function availableTemplateNames(cloneDir: string): string[] {
   const listingDir = isDirectory(templatesDir) && !isSymlink(templatesDir)
     ? templatesDir
     : cloneDir;
-  return [...Deno.readDirSync(listingDir)]
+  return [...sys.readDirSync(listingDir)]
     .filter((entry) => entry.isDirectory && !entry.name.startsWith("."))
     .map((entry) => entry.name)
     .filter((name) => name !== WIKI_TEMPLATES_DIR)
@@ -855,7 +856,7 @@ export function fetchTemplate(
   const existingConflict = conflict(root);
   if (existingConflict !== null) return templateFailure(existingConflict);
 
-  const tempRoot = Deno.makeTempDirSync({ prefix: "wiki-template-" });
+  const tempRoot = sys.makeTempDirSync({ prefix: "wiki-template-" });
   const cloneDir = join(tempRoot, "wiki-templates");
   const created: string[] = [];
   try {
@@ -898,7 +899,7 @@ export function fetchTemplate(
     for (const entry of entries) {
       const destination = join(root, ...entry.path);
       if (entry.directory) {
-        Deno.mkdirSync(destination);
+        sys.mkdirSync(destination);
         created.push(destination);
       } else {
         copyTemplateFile(entry.source, destination, created);

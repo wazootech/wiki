@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { pathExists, readText } from "../src/wiki/fspath.ts";
 import { gitSymlinksUnavailable } from "./support/symlink_support.ts";
@@ -13,16 +15,16 @@ import { loadLockfile } from "../src/wiki/schemas/sources.ts";
 import { install, remove, update } from "../src/wiki/sources.ts";
 
 function withTempDir(body: (root: string) => void): void {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-sources-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-sources-" });
   try {
     body(root);
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 }
 
 function git(args: string[], cwd: string): string {
-  const result = new Deno.Command("git", {
+  const result = new sys.Command("git", {
     args,
     cwd: cwd,
     stdout: "piped",
@@ -42,12 +44,12 @@ function initRepo(
   files: Record<string, string>,
 ): string {
   const repo = join(root, name);
-  Deno.mkdirSync(repo, { recursive: true });
+  sys.mkdirSync(repo, { recursive: true });
   git(["init", "--initial-branch=main"], repo);
   for (const [relative, content] of Object.entries(files)) {
     const file = join(repo, relative);
-    Deno.mkdirSync(dirname(file), { recursive: true });
-    Deno.writeTextFileSync(file, content);
+    sys.mkdirSync(dirname(file), { recursive: true });
+    sys.writeTextFileSync(file, content);
   }
   git(["add", "."], repo);
   git([
@@ -64,7 +66,7 @@ function initRepo(
 
 function commitFile(repo: string, relative: string, content: string): string {
   const file = join(repo, relative);
-  Deno.writeTextFileSync(file, content);
+  sys.writeTextFileSync(file, content);
   git(["add", relative], repo);
   git([
     "-c",
@@ -85,7 +87,7 @@ function rootConfig(
   const entries = sources.map(({ name, url }) =>
     `  - name: ${name}\n    type: git\n    url: ${url}`
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(root, "wiki.yml"),
     `wiki:\n  input: wiki\n${
       entries.length ? `sources:\n${entries.join("\n")}\n` : ""
@@ -94,14 +96,14 @@ function rootConfig(
   return Config.load(root);
 }
 
-Deno.test("source install and removal preserve comments in wiki.yml", () => {
+test("source install and removal preserve comments in wiki.yml", () => {
   withTempDir((root) => {
     const existing = initRepo(root, "existing", { "page.md": "# Existing\n" });
     const added = initRepo(root, "added", { "page.md": "# Added\n" });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const configPath = join(wikiRoot, "wiki.yml");
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       configPath,
       `# root comment\n` +
         `wiki:\n` +
@@ -143,11 +145,11 @@ Deno.test("source install and removal preserve comments in wiki.yml", () => {
   });
 });
 
-Deno.test("install from URL adds config entry and locks a local Git source", () => {
+test("install from URL adds config entry and locks a local Git source", () => {
   withTempDir((root) => {
     const repo = initRepo(root, "source", { "page.md": "# Source\n" });
     const rootDir = join(root, "wiki-root");
-    Deno.mkdirSync(rootDir);
+    sys.mkdirSync(rootDir);
     const config = rootConfig(rootDir);
     const expectedRef = git(["rev-parse", "HEAD"], repo);
 
@@ -166,11 +168,11 @@ Deno.test("install from URL adds config entry and locks a local Git source", () 
   });
 });
 
-Deno.test("update dry-run reports the new ref without changing the lock", () => {
+test("update dry-run reports the new ref without changing the lock", () => {
   withTempDir((root) => {
     const repo = initRepo(root, "source", { "page.md": "# v1\n" });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "source",
       url: repo,
@@ -197,7 +199,7 @@ Deno.test("update dry-run reports the new ref without changing the lock", () => 
   });
 });
 
-Deno.test("install resolves transitive sources and records parent links", () => {
+test("install resolves transitive sources and records parent links", () => {
   withTempDir((root) => {
     const dep = initRepo(root, "dependency", { "dep.md": "# Dependency\n" });
     const parent = initRepo(root, "parent", {
@@ -206,7 +208,7 @@ Deno.test("install resolves transitive sources and records parent links", () => 
       "parent.md": "# Parent\n",
     });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "parent",
       url: parent,
@@ -224,7 +226,7 @@ Deno.test("install resolves transitive sources and records parent links", () => 
   });
 });
 
-Deno.test("remove cascades orphan caches while preserving shared dependencies", () => {
+test("remove cascades orphan caches while preserving shared dependencies", () => {
   withTempDir((root) => {
     const shared = initRepo(root, "shared", { "shared.md": "# Shared\n" });
     const sourceA = initRepo(root, "source-a", {
@@ -236,7 +238,7 @@ Deno.test("remove cascades orphan caches while preserving shared dependencies", 
         `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
     });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [
       { name: "source-a", url: sourceA },
       { name: "source-b", url: sourceB },
@@ -258,7 +260,7 @@ Deno.test("remove cascades orphan caches while preserving shared dependencies", 
   });
 });
 
-Deno.test("remove recursively deletes orphaned dependency chains", () => {
+test("remove recursively deletes orphaned dependency chains", () => {
   withTempDir((root) => {
     const leaf = initRepo(root, "leaf", { "leaf.md": "# Leaf\n" });
     const middle = initRepo(root, "middle", {
@@ -269,7 +271,7 @@ Deno.test("remove recursively deletes orphaned dependency chains", () => {
         `sources:\n  - name: middle\n    type: git\n    url: ${middle}\n`,
     });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{ name: "top", url: top }]);
     install(config);
 
@@ -283,13 +285,13 @@ Deno.test("remove recursively deletes orphaned dependency chains", () => {
   });
 });
 
-Deno.test("remove rejects path-traversing names without touching external data", () => {
+test("remove rejects path-traversing names without touching external data", () => {
   withTempDir((root) => {
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const outside = join(root, "outside");
-    Deno.mkdirSync(outside);
-    Deno.writeTextFileSync(join(outside, "keep.txt"), "keep\n");
+    sys.mkdirSync(outside);
+    sys.writeTextFileSync(join(outside, "keep.txt"), "keep\n");
     const config = rootConfig(wikiRoot);
     assertThrows(
       () => remove(config, "../outside"),
@@ -300,10 +302,10 @@ Deno.test("remove rejects path-traversing names without touching external data",
   });
 });
 
-Deno.test("failed clone retains Git stderr in the install error", () => {
+test("failed clone retains Git stderr in the install error", () => {
   withTempDir((root) => {
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{
       name: "missing",
       url: join(root, "does-not-exist"),
@@ -323,7 +325,7 @@ Deno.test("failed clone retains Git stderr in the install error", () => {
   });
 });
 
-Deno.test("install rejects a transitive source path escaping its clone", () => {
+test("install rejects a transitive source path escaping its clone", () => {
   withTempDir((root) => {
     // The `path` of a transitive source comes from the *cloned remote repo's*
     // config, so `../../..` would escape the clone dir into the victim's
@@ -336,7 +338,7 @@ Deno.test("install rejects a transitive source path escaping its clone", () => {
       "parent.md": "# Parent\n",
     });
     const wikiRoot = join(root, "wiki-root");
-    Deno.mkdirSync(wikiRoot);
+    sys.mkdirSync(wikiRoot);
     const config = rootConfig(wikiRoot, [{ name: "parent", url: parent }]);
 
     const error = assertThrows(() => install(config), Error);
@@ -344,20 +346,19 @@ Deno.test("install rejects a transitive source path escaping its clone", () => {
   });
 });
 
-Deno.test({
-  name:
-    "install rejects a transitive source path via a symlink escaping its clone",
-  ignore: gitSymlinksUnavailable(),
-  fn: () => {
+test(
+  "install rejects a transitive source path via a symlink escaping its clone",
+  { skip: gitSymlinksUnavailable() },
+  () => {
     withTempDir((root) => {
       // A symlink inside the clone pointing outside it is the same escape
       // through a different mechanism: the lexical `join` stays in-tree,
       // but the resolved path does not.
       const evilDir = join(root, "evil");
-      Deno.mkdirSync(evilDir, { recursive: true });
+      sys.mkdirSync(evilDir, { recursive: true });
       git(["init", "--initial-branch=main"], evilDir);
-      Deno.writeTextFileSync(join(evilDir, "evil.md"), "# Evil\n");
-      Deno.symlinkSync("..", join(evilDir, "link"));
+      sys.writeTextFileSync(join(evilDir, "evil.md"), "# Evil\n");
+      sys.symlinkSync("..", join(evilDir, "link"));
       git(["add", "."], evilDir);
       git(
         [
@@ -377,16 +378,16 @@ Deno.test({
         "parent.md": "# Parent\n",
       });
       const wikiRoot = join(root, "wiki-root");
-      Deno.mkdirSync(wikiRoot);
+      sys.mkdirSync(wikiRoot);
       const config = rootConfig(wikiRoot, [{ name: "parent", url: parent }]);
 
       const error = assertThrows(() => install(config), Error);
       assertStringIncludes(error.message, "escapes the cloned repository");
     });
   },
-});
+);
 
-Deno.test("install accepts a transitive source rooted at its clone", () => {
+test("install accepts a transitive source rooted at its clone", () => {
   withTempDir((root) => {
     // The fix must not break the legitimate cases: no `path` (the repo root
     // itself) and `path: "."` both select the clone dir. Directory names come
@@ -406,7 +407,7 @@ Deno.test("install accepts a transitive source rooted at its clone", () => {
         "parent.md": "# Parent\n",
       });
       const wikiRoot = join(root, `wiki-root-${label}`);
-      Deno.mkdirSync(wikiRoot);
+      sys.mkdirSync(wikiRoot);
       const config = rootConfig(wikiRoot, [{
         name: "parent",
         url: parent,

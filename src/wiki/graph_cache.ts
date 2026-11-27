@@ -15,7 +15,7 @@
  * Two fidelity notes:
  *
  * - **`mtime_ns` is milliseconds here.** Python's `st_mtime_ns` is nanosecond
- *   resolution; `Deno.statSync` exposes a `Date`. A file edited twice within
+ *   resolution; `sys.statSync` exposes a `Date`. A file edited twice within
  *   the same millisecond therefore keeps its fingerprint, where the oracle
  *   would change it. Everything else about the digest *is* verified against the
  *   oracle: with file mtimes pinned to whole seconds, the canonical manifest,
@@ -29,6 +29,7 @@
  *   {@link canonicalJson}.
  */
 
+import * as sys from "./sys.ts";
 import {
   activeOverlay,
   fileStat,
@@ -128,7 +129,7 @@ export function iterWikiFiles(config: Config): string[] {
 export function wikiManifest(config: Config): WikiManifest {
   const files: WikiManifestEntry[] = [];
   for (const filePath of iterWikiFiles(config)) {
-    // Through `fileStat`, not `Deno.statSync`: under an edit overlay a staged
+    // Through `fileStat`, not `sys.statSync`: under an edit overlay a staged
     // page has no file on disk yet, or a stale one.
     const stat = fileStat(filePath);
     files.push({
@@ -237,7 +238,7 @@ export function wikiFingerprint(config: Config): string {
  */
 function gitHead(config: Config): string {
   try {
-    const result = new Deno.Command("git", {
+    const result = new sys.Command("git", {
       args: ["rev-parse", "--verify", "--quiet", "HEAD"],
       cwd: config.config_root,
       stdin: "null",
@@ -321,7 +322,7 @@ export async function getDiskGraph(
     // A corrupt or partial cache must never block a command: drop it and let
     // the caller rebuild.
     try {
-      Deno.removeSync(cachePath);
+      sys.removeSync(cachePath);
     } catch {
       // Already gone, or not ours to remove.
     }
@@ -343,7 +344,7 @@ export async function getDiskDataset(
     return dataset;
   } catch {
     try {
-      Deno.removeSync(cachePath);
+      sys.removeSync(cachePath);
     } catch {
       // Already gone, or not ours to remove.
     }
@@ -392,10 +393,10 @@ export function setDiskGraph(
   graph: RdfGraph,
 ): void {
   const root = cacheDir(config);
-  Deno.mkdirSync(root, { recursive: true });
+  sys.mkdirSync(root, { recursive: true });
   const cachePath = diskCachePath(config, infer);
   removeStaleCacheFiles(root, `${diskCachePrefix(infer)}-`, ".nt", cachePath);
-  Deno.writeTextFileSync(cachePath, serializeNt(graph.toArray()));
+  sys.writeTextFileSync(cachePath, serializeNt(graph.toArray()));
 }
 
 /** Persist a named-graph dataset for reuse across one-shot CLI invocations. */
@@ -405,7 +406,7 @@ export function setDiskDataset(
   dataset: RdfDataset,
 ): void {
   const root = cacheDir(config);
-  Deno.mkdirSync(root, { recursive: true });
+  sys.mkdirSync(root, { recursive: true });
   const cachePath = datasetCachePath(config, infer);
   removeStaleCacheFiles(
     root,
@@ -413,7 +414,7 @@ export function setDiskDataset(
     ".nq",
     cachePath,
   );
-  Deno.writeTextFileSync(cachePath, serializeNquadsDataset([...dataset]));
+  sys.writeTextFileSync(cachePath, serializeNquadsDataset([...dataset]));
 }
 
 /** Delete cache files for the same kind and mode but a different fingerprint. */
@@ -425,7 +426,7 @@ function removeStaleCacheFiles(
 ): void {
   let names: string[];
   try {
-    names = [...Deno.readDirSync(root)].map((entry) => entry.name);
+    names = [...sys.readDirSync(root)].map((entry) => entry.name);
   } catch {
     return;
   }
@@ -434,7 +435,7 @@ function removeStaleCacheFiles(
     const candidate = join(root, name);
     if (candidate === keep) continue;
     try {
-      Deno.removeSync(candidate);
+      sys.removeSync(candidate);
     } catch {
       // A stale file we cannot remove is not worth failing a build over.
     }
@@ -454,7 +455,7 @@ export function clearProcessDataset(config: Config, infer: boolean): void {
 /** Drop the persisted graph entry for the current wiki fingerprint. */
 export function clearDiskGraph(config: Config, infer: boolean): void {
   try {
-    Deno.removeSync(diskCachePath(config, infer));
+    sys.removeSync(diskCachePath(config, infer));
   } catch {
     // Nothing cached under this fingerprint.
   }
@@ -463,7 +464,7 @@ export function clearDiskGraph(config: Config, infer: boolean): void {
 /** Drop the persisted dataset entry for the current wiki fingerprint. */
 export function clearDiskDataset(config: Config, infer: boolean): void {
   try {
-    Deno.removeSync(datasetCachePath(config, infer));
+    sys.removeSync(datasetCachePath(config, infer));
   } catch {
     // Nothing cached under this fingerprint.
   }

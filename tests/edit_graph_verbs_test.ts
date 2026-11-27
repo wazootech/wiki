@@ -7,6 +7,8 @@
  * never leaves a link dangling unless asked to prune it.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { fromFileUrl, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 
@@ -43,31 +45,31 @@ function article(title: string, body = ""): string {
 }
 
 function writeWiki(pages: Record<string, string>): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-graph-verbs-" });
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  const root = sys.makeTempDirSync({ prefix: "wiki-graph-verbs-" });
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   for (const [name, content] of Object.entries(pages)) {
     const path = join(root, "wiki", ...name.split("/"));
-    Deno.mkdirSync(join(path, ".."), { recursive: true });
-    Deno.writeTextFileSync(path, content);
+    sys.mkdirSync(join(path, ".."), { recursive: true });
+    sys.writeTextFileSync(path, content);
   }
   return root;
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 function read(root: string, rel: string): string {
-  return Deno.readTextFileSync(join(root, ...rel.split("/")));
+  return sys.readTextFileSync(join(root, ...rel.split("/")));
 }
 
 function exists(root: string, rel: string): boolean {
   try {
-    Deno.statSync(join(root, ...rel.split("/")));
+    sys.statSync(join(root, ...rel.split("/")));
     return true;
   } catch {
     return false;
@@ -78,7 +80,7 @@ async function runCli(
   root: string,
   args: readonly string[],
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const output = await new Deno.Command(Deno.execPath(), {
+  const output = await new sys.Command(sys.execPath(), {
     args: ["run", "-A", CLI_ENTRY, "-c", join(root, "wiki.yml"), ...args],
     cwd: root,
     stdout: "piped",
@@ -91,7 +93,7 @@ async function runCli(
   };
 }
 
-Deno.test("rewriteLinkTargets keeps each link's own style", () => {
+test("rewriteLinkTargets keeps each link's own style", () => {
   const content = [
     "See [Beta](Beta.md), [b](./Beta.md#Early_life), [[Beta]], [[Beta|the b]],",
     "[[Beta#Bio]], [self](#Top), [Gamma](Gamma.md), and `[code](Beta.md)`.",
@@ -112,7 +114,7 @@ Deno.test("rewriteLinkTargets keeps each link's own style", () => {
   );
 });
 
-Deno.test("rewriteLinkTargets keeps a link's title and angle brackets (#376)", () => {
+test("rewriteLinkTargets keeps a link's title and angle brackets (#376)", () => {
   const out = rewriteLinkTargets(
     'See [a](Beta.md "The title") and [b](<Beta.md#Bio> "t").',
     "Alpha",
@@ -124,7 +126,7 @@ Deno.test("rewriteLinkTargets keeps a link's title and angle brackets (#376)", (
   );
 });
 
-Deno.test("only an unbalanced parenthesis is percent-encoded", () => {
+test("only an unbalanced parenthesis is percent-encoded", () => {
   const out = rewriteLinkTargets(
     "See [Beta](Beta.md) and [[Beta]].",
     "Alpha",
@@ -133,7 +135,7 @@ Deno.test("only an unbalanced parenthesis is percent-encoded", () => {
   assertEquals(out, "See [Beta](Beta_%28draft.md) and [[Beta_(draft]].");
 });
 
-Deno.test("a page moving directories re-derives its own relative links", () => {
+test("a page moving directories re-derives its own relative links", () => {
   const content = "Up to [Index](../Home.md) and [Peer](Peer.md).";
   const out = rewriteLinkTargets(
     content,
@@ -144,7 +146,7 @@ Deno.test("a page moving directories re-derives its own relative links", () => {
   assertEquals(out, "Up to [Index](Home.md) and [Peer](sub/Peer.md).");
 });
 
-Deno.test("rewriteMetadataRefs is token-exact and leaves @id alone", () => {
+test("rewriteMetadataRefs is token-exact and leaves @id alone", () => {
   const yaml = [
     "---",
     "'@id': wiki:Beta",
@@ -174,7 +176,7 @@ Deno.test("rewriteMetadataRefs is token-exact and leaves @id alone", () => {
   );
 });
 
-Deno.test("pruneLinksTo leaves each link's label", () => {
+test("pruneLinksTo leaves each link's label", () => {
   const out = pruneLinksTo(
     "A [Beta](Beta.md) and [[Beta|b]] and [[Beta]] and [Gamma](Gamma.md).",
     "Alpha",
@@ -183,7 +185,7 @@ Deno.test("pruneLinksTo leaves each link's label", () => {
   assertEquals(out, "A Beta and b and Beta and [Gamma](Gamma.md).");
 });
 
-Deno.test("mv moves the page and repoints every link to it", async () => {
+test("mv moves the page and repoints every link to it", async () => {
   const root = writeWiki({
     "Alpha.md":
       `---\n'@type': schema:Article\nschema:headline: Alpha\nschema:knows: wiki:Beta\n---\n\n# Alpha\n\nSee [Beta](Beta.md#Bio) and [[Beta]].\n`,
@@ -227,7 +229,7 @@ Deno.test("mv moves the page and repoints every link to it", async () => {
   }
 });
 
-Deno.test("a finding the moved page already had is not blamed on the move", async () => {
+test("a finding the moved page already had is not blamed on the move", async () => {
   const root = writeWiki({
     "Article_Shape.md": ARTICLE_SHAPE,
     // No headline (a SHACL violation) and a broken link (a lint warning).
@@ -247,7 +249,7 @@ Deno.test("a finding the moved page already had is not blamed on the move", asyn
   }
 });
 
-Deno.test("a move onto an existing page is a conflict that writes nothing", async () => {
+test("a move onto an existing page is a conflict that writes nothing", async () => {
   const root = writeWiki({
     "Alpha.md": article("Alpha", "See [Beta](Beta.md)."),
     "Beta.md": article("Beta"),
@@ -280,7 +282,7 @@ Deno.test("a move onto an existing page is a conflict that writes nothing", asyn
   }
 });
 
-Deno.test("rm refuses while pages link in, then prunes on request", async () => {
+test("rm refuses while pages link in, then prunes on request", async () => {
   const root = writeWiki({
     "Alpha.md": article("Alpha", "See [the beta](Beta.md) and [[Beta]]."),
     "Beta.md": article("Beta"),
@@ -320,7 +322,7 @@ Deno.test("rm refuses while pages link in, then prunes on request", async () => 
   }
 });
 
-Deno.test("rm of an unlinked page needs no flag", async () => {
+test("rm of an unlinked page needs no flag", async () => {
   const root = writeWiki({
     "Alpha.md": article("Alpha"),
     "Beta.md": article("Beta", "To [Alpha](Alpha.md)."),

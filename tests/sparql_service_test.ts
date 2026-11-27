@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { join } from "@std/path";
 import { createSparqlServiceHandler } from "../src/wiki/sparql_service.ts";
@@ -5,20 +7,20 @@ import { Wiki } from "../src/wiki/wiki.ts";
 
 function createWiki(root: string, enabled = true): Wiki {
   const wikiDir = join(root, "wiki");
-  Deno.mkdirSync(wikiDir, { recursive: true });
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wikiDir, { recursive: true });
+  sys.writeTextFileSync(
     join(root, "wiki.yml"),
     `wiki:\n  input: [wiki]\nsparql_service:\n  enabled: ${enabled}\n  path: /api/sparql\n`,
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wikiDir, "Ethan.md"),
     "---\nname: Ethan\ntype: schema:Person\n---\n\n# Ethan\n",
   );
   return Wiki.load(join(root, "wiki.yml"));
 }
 
-Deno.test("SPARQL service returns a Turtle service description by default", async () => {
-  const root = await Deno.makeTempDir({ prefix: "wiki-sparql-service-" });
+test("SPARQL service returns a Turtle service description by default", async () => {
+  const root = await sys.makeTempDir({ prefix: "wiki-sparql-service-" });
   const wiki = createWiki(root);
   try {
     const handler = createSparqlServiceHandler(wiki, {
@@ -34,12 +36,12 @@ Deno.test("SPARQL service returns a Turtle service description by default", asyn
     );
     assertStringIncludes(await response.text(), "sd:Service");
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("SPARQL service defers RDF/XML with an explicit error", async () => {
-  const root = await Deno.makeTempDir({ prefix: "wiki-sparql-service-" });
+test("SPARQL service defers RDF/XML with an explicit error", async () => {
+  const root = await sys.makeTempDir({ prefix: "wiki-sparql-service-" });
   const wiki = createWiki(root);
   try {
     const handler = createSparqlServiceHandler(wiki, {
@@ -58,12 +60,12 @@ Deno.test("SPARQL service defers RDF/XML with an explicit error", async () => {
       "RDF/XML serialization is deferred",
     );
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("SPARQL service supports GET JSON and POST N-Triples", async () => {
-  const root = await Deno.makeTempDir({ prefix: "wiki-sparql-service-" });
+test("SPARQL service supports GET JSON and POST N-Triples", async () => {
+  const root = await sys.makeTempDir({ prefix: "wiki-sparql-service-" });
   const wiki = createWiki(root);
   try {
     const handler = createSparqlServiceHandler(wiki, {
@@ -103,12 +105,12 @@ Deno.test("SPARQL service supports GET JSON and POST N-Triples", async () => {
     );
     assertStringIncludes(await ntriplesResponse.text(), "schema.org/name");
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });
 
-Deno.test("SPARQL service rejects updates and disabled endpoints", async () => {
-  const root = await Deno.makeTempDir({ prefix: "wiki-sparql-service-" });
+test("SPARQL service rejects updates and disabled endpoints", async () => {
+  const root = await sys.makeTempDir({ prefix: "wiki-sparql-service-" });
   const wiki = createWiki(root);
   const disabledWiki = createWiki(join(root, "disabled"), false);
   try {
@@ -135,6 +137,6 @@ Deno.test("SPARQL service rejects updates and disabled endpoints", async () => {
     assert(response !== null);
     assertEquals(response.status, 404);
   } finally {
-    await Deno.remove(root, { recursive: true });
+    await sys.remove(root, { recursive: true });
   }
 });

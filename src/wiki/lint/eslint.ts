@@ -1,3 +1,4 @@
+import * as sys from "../sys.ts";
 import { basename, join } from "@std/path";
 import type { Linter } from "eslint";
 import type { Config } from "../config.ts";
@@ -75,7 +76,7 @@ export async function lintMarkdownWithEslint(
     if (fileFilter !== null && !fileFilter.has(route)) continue;
 
     const body = markdownBody(readTextTolerant(filePath));
-    const eslintPath = join(Deno.cwd(), `wiki-lint-${fileIndex++}.md`);
+    const eslintPath = join(sys.cwd(), `wiki-lint-${fileIndex++}.md`);
 
     if (headingLevelsEnabled) {
       const [result] = await eslint.lintText(body, { filePath: eslintPath });

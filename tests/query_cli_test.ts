@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 
@@ -5,7 +7,7 @@ const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
 const DECODER = new TextDecoder();
 
 async function runQueryCli(args: readonly string[], cwd: string) {
-  const result = await new Deno.Command(Deno.execPath(), {
+  const result = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd,
     stdout: "piped",
@@ -18,16 +20,15 @@ async function runQueryCli(args: readonly string[], cwd: string) {
   };
 }
 
-Deno.test(
+test(
   "query CLI handles JSON output, output files, and --jq",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
-    const root = Deno.makeTempDirSync({ prefix: "wiki-query-cli-" });
+    const root = sys.makeTempDirSync({ prefix: "wiki-query-cli-" });
     try {
       const wiki = `${root}/wiki`;
-      Deno.mkdirSync(wiki);
-      Deno.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
-      Deno.writeTextFileSync(
+      sys.mkdirSync(wiki);
+      sys.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
+      sys.writeTextFileSync(
         `${wiki}/Ada.md`,
         "---\ntype: schema:Person\nname: Ada\n---\n# Ada\n",
       );
@@ -50,7 +51,7 @@ Deno.test(
       );
       assertEquals(output.code, 0, output.stderr);
       assertEquals(output.stdout, `Written results to ${outputPath}\n`);
-      const results = JSON.parse(Deno.readTextFileSync(outputPath));
+      const results = JSON.parse(sys.readTextFileSync(outputPath));
       assertEquals(results.results.bindings[0].name.value, "Ada");
 
       const filtered = await runQueryCli(
@@ -84,7 +85,7 @@ Deno.test(
       assertEquals(filteredEmpty.stdout, "\n");
       assertEquals(filteredEmpty.stderr, "");
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );

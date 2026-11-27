@@ -1,3 +1,4 @@
+import { test } from "node:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { factory, parseRdf, RdfDataset, RdfGraph } from "../src/wiki/rdf.ts";
 import { normalizeQueryFormat, runQuery } from "../src/wiki/format.ts";
@@ -18,7 +19,7 @@ function graphWithNames(): RdfGraph {
   return graph;
 }
 
-Deno.test("query format aliases normalize and unsupported formats reject", () => {
+test("query format aliases normalize and unsupported formats reject", () => {
   assertEquals(normalizeQueryFormat("JSON"), "json");
   assertEquals(normalizeQueryFormat("text/csv"), "csv");
   assertEquals(normalizeQueryFormat("ttl"), "turtle");
@@ -35,7 +36,7 @@ Deno.test("query format aliases normalize and unsupported formats reject", () =>
   }
 });
 
-Deno.test("SPARQL updates are rejected after comments and prefixes", async () => {
+test("SPARQL updates are rejected after comments and prefixes", async () => {
   const error = await assertRejects(
     () =>
       runQuery(
@@ -51,7 +52,7 @@ Deno.test("SPARQL updates are rejected after comments and prefixes", async () =>
   assertStringIncludes(error.message, "SPARQL updates are not supported");
 });
 
-Deno.test("SELECT query supports table and structured output formats", async () => {
+test("SELECT query supports table and structured output formats", async () => {
   const graph = graphWithNames();
   const query =
     "SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name";
@@ -82,7 +83,7 @@ Deno.test("SELECT query supports table and structured output formats", async () 
   );
 });
 
-Deno.test("SELECT pretty output and ASK queries remain usable", async () => {
+test("SELECT pretty output and ASK queries remain usable", async () => {
   const graph = graphWithNames();
   const pretty = await runQuery(
     graph,
@@ -111,7 +112,7 @@ Deno.test("SELECT pretty output and ASK queries remain usable", async () => {
   assertEquals(ask.boolean, true);
 });
 
-Deno.test("CONSTRUCT results serialize as RDF and preserve triples", async () => {
+test("CONSTRUCT results serialize as RDF and preserve triples", async () => {
   const graph = graphWithNames();
   const turtle = await runQuery(
     graph,
@@ -136,7 +137,7 @@ Deno.test("CONSTRUCT results serialize as RDF and preserve triples", async () =>
   );
 });
 
-Deno.test("query datasets expose their union and named graphs", async () => {
+test("query datasets expose their union and named graphs", async () => {
   const dataset = new RdfDataset({ defaultUnion: true });
   const graphName = factory.namedNode(
     "https://wiki.example.org/graphs/source/docs",
@@ -159,7 +160,7 @@ Deno.test("query datasets expose their union and named graphs", async () => {
   assertEquals(named, union);
 });
 
-Deno.test("CSV quotes cells and prefixes blank-node values", async () => {
+test("CSV quotes cells and prefixes blank-node values", async () => {
   const graph = new RdfGraph();
   graph.add(
     factory.blankNode("record"),
@@ -184,7 +185,7 @@ Deno.test("CSV quotes cells and prefixes blank-node values", async () => {
   );
 });
 
-Deno.test("Markdown query output links root-wiki page IRIs", async () => {
+test("Markdown query output links root-wiki page IRIs", async () => {
   const graph = new RdfGraph();
   graph.add(
     factory.namedNode("https://wiki.example.org/index"),

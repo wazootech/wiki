@@ -1,3 +1,4 @@
+import * as sys from "../../../src/wiki/sys.ts";
 import {
   literal,
   namedNode,
@@ -39,7 +40,7 @@ function stableStatements(statements: readonly string[]): string {
 
 const fixtureUrl = new URL("./", import.meta.url);
 const fixture = JSON.parse(
-  Deno.readTextFileSync(new URL("terms.json", fixtureUrl)),
+  sys.readTextFileSync(new URL("terms.json", fixtureUrl)),
 ) as { triples: TripleSpec[] };
 const quads = fixture.triples.map((item) =>
   triple(termOf(item.s), namedNode(item.p), termOf(item.o))
@@ -50,7 +51,7 @@ const nquads = stableStatements(
   quads.map((quad) => serializeNquads([quad]).trimEnd()),
 );
 
-await Deno.writeTextFile(new URL("oracle-nt.txt", fixtureUrl), nt);
-await Deno.writeTextFile(new URL("oracle-nquads.txt", fixtureUrl), nquads);
+await sys.writeTextFile(new URL("oracle-nt.txt", fixtureUrl), nt);
+await sys.writeTextFile(new URL("oracle-nquads.txt", fixtureUrl), nquads);
 
 console.log(`wrote ${quads.length} triples to ${fixtureUrl.pathname}`);

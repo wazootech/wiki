@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals } from "@std/assert";
 import { parse as parseToml } from "@std/toml";
 import { VERSION } from "../src/wiki/version.ts";
@@ -6,7 +8,7 @@ const ROOT = new URL("../", import.meta.url);
 
 async function jsonVersion(path: string): Promise<string> {
   const value: unknown = JSON.parse(
-    await Deno.readTextFile(new URL(path, ROOT)),
+    await sys.readTextFile(new URL(path, ROOT)),
   );
   if (typeof value !== "object" || value === null) {
     throw new Error(`${path} did not parse as an object`);
@@ -18,17 +20,17 @@ async function jsonVersion(path: string): Promise<string> {
   return version;
 }
 
-Deno.test("VERSION matches deno.json", async () => {
+test("VERSION matches deno.json", async () => {
   assertEquals(VERSION, await jsonVersion("deno.json"));
 });
 
-Deno.test("VERSION matches package.json", async () => {
+test("VERSION matches package.json", async () => {
   assertEquals(VERSION, await jsonVersion("package.json"));
 });
 
-Deno.test("VERSION matches package-lock.json", async () => {
+test("VERSION matches package-lock.json", async () => {
   const lock: unknown = JSON.parse(
-    await Deno.readTextFile(new URL("package-lock.json", ROOT)),
+    await sys.readTextFile(new URL("package-lock.json", ROOT)),
   );
   if (typeof lock !== "object" || lock === null) {
     throw new Error("package-lock.json did not parse as an object");
@@ -38,15 +40,15 @@ Deno.test("VERSION matches package-lock.json", async () => {
   assertEquals(root?.version, VERSION);
 });
 
-Deno.test("VERSION matches pyproject.toml", async () => {
+test("VERSION matches pyproject.toml", async () => {
   const project = parseToml(
-    await Deno.readTextFile(new URL("pyproject.toml", ROOT)),
+    await sys.readTextFile(new URL("pyproject.toml", ROOT)),
   ).project as { version?: unknown } | undefined;
   assertEquals(project?.version, VERSION);
 });
 
-Deno.test("VERSION matches the docs wiki metadata", async () => {
-  const text = await Deno.readTextFile(
+test("VERSION matches the docs wiki metadata", async () => {
+  const text = await sys.readTextFile(
     new URL("docs/wiki/wiki.md", ROOT),
   );
   const match = /^softwareVersion:\s*(\S+)/m.exec(text);

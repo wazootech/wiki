@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { resolve } from "@std/path";
 import { errorText } from "./errors.ts";
 import { relativeWithin } from "./fspath.ts";
@@ -1025,8 +1026,8 @@ export async function runMcpServer(
   const mode = options.mode ?? "stdio";
   if (mode !== "stdio") throw new Error(`Unsupported MCP mode: ${mode}`);
   const transport = options.transport ?? {
-    readable: Deno.stdin.readable,
-    writable: Deno.stdout.writable,
+    readable: sys.stdin.readable,
+    writable: sys.stdout.writable,
   };
   const server = createMcpServer(wiki, {
     diskCache: options.diskCache ?? false,

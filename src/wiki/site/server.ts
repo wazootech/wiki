@@ -6,6 +6,8 @@
  * name a subdirectory inside `siteDir`.
  */
 
+import { listen } from "./listen.ts";
+import * as sys from "../sys.ts";
 import { extname, isAbsolute, relative, resolve } from "@std/path";
 
 export type StaticUrlStyle = "dir" | "file";
@@ -25,8 +27,19 @@ export interface StaticSiteServerOptions {
   readonly responseHeaders?: Readonly<Record<string, string>>;
 }
 
+/** What the request handler learns about the connection. */
+export interface ConnectionInfo {
+  readonly remoteAddr: { readonly hostname: string };
+}
+
+export interface SiteServer {
+  /** Resolves once the server has closed. */
+  readonly finished: Promise<void>;
+  shutdown(): Promise<void>;
+}
+
 export interface StaticSiteServerHandle {
-  readonly server: Deno.HttpServer;
+  readonly server: SiteServer;
   readonly url: string;
   close(): Promise<void>;
 }
@@ -34,7 +47,7 @@ export interface StaticSiteServerHandle {
 export interface StaticSiteHandlerHandle {
   handleRequest(
     request: Request,
-    info?: Deno.ServeHandlerInfo<Deno.NetAddr>,
+    info?: ConnectionInfo,
   ): Promise<Response>;
   close(): void;
 }
@@ -145,9 +158,9 @@ function isWithinRoot(root: string, filePath: string): boolean {
 
 function getRegularFile(root: string, candidate: string): string | null {
   try {
-    const realCandidate = Deno.realPathSync(candidate);
+    const realCandidate = sys.realPathSync(candidate);
     if (!isWithinRoot(root, realCandidate)) return null;
-    return Deno.statSync(realCandidate).isFile ? realCandidate : null;
+    return sys.statSync(realCandidate).isFile ? realCandidate : null;
   } catch {
     return null;
   }
@@ -216,7 +229,7 @@ function serveResponse(
 function siteFingerprint(root: string): string {
   const entries: string[] = [];
   const visit = (directory: string, prefix: string): void => {
-    for (const entry of Deno.readDirSync(directory)) {
+    for (const entry of sys.readDirSync(directory)) {
       const name = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
       const path = resolve(directory, entry.name);
       if (entry.isSymlink) continue;
@@ -224,7 +237,7 @@ function siteFingerprint(root: string): string {
         visit(path, name);
       } else if (entry.isFile) {
         try {
-          const stat = Deno.statSync(path);
+          const stat = sys.statSync(path);
           entries.push(`${name}\t${stat.size}\t${stat.mtime?.getTime() ?? 0}`);
         } catch {
           continue;
@@ -270,13 +283,13 @@ export function createStaticSiteHandler(
 
   let root: string;
   try {
-    root = Deno.realPathSync(resolve(options.siteDir));
+    root = sys.realPathSync(resolve(options.siteDir));
   } catch {
     throw new TypeError(
       `Static site directory does not exist: ${options.siteDir}`,
     );
   }
-  if (!Deno.statSync(root).isDirectory) {
+  if (!sys.statSync(root).isDirectory) {
     throw new TypeError(
       `Static site path is not a directory: ${options.siteDir}`,
     );
@@ -327,7 +340,7 @@ export function createStaticSiteHandler(
     if (filePath === null) return notFound(request.method);
 
     try {
-      let body = await Deno.readFile(filePath);
+      let body = await sys.readFile(filePath);
       const mimeType = contentType(filePath);
       if (watch && mimeType.startsWith("text/html")) {
         const html = new TextDecoder().decode(body);
@@ -369,20 +382,23 @@ export function createStaticSiteHandler(
   };
 }
 
-export function startStaticSiteServer(
+export async function startStaticSiteServer(
   options: StaticSiteServerOptions,
-): StaticSiteServerHandle {
+): Promise<StaticSiteServerHandle> {
   const preview = createStaticSiteHandler(options);
   const host = options.host ?? "127.0.0.1";
   const port = options.port ?? 8080;
-  const server = Deno.serve(
-    { hostname: host, port, onListen: () => {} },
-    preview.handleRequest,
-  );
-  const address = server.addr;
-  const hostname = address.hostname.includes(":")
-    ? `[${address.hostname}]`
-    : address.hostname;
+  let listening: Awaited<ReturnType<typeof listen>>;
+  try {
+    listening = await listen(preview.handleRequest, host, port);
+  } catch (error) {
+    preview.close();
+    throw error;
+  }
+  const { server, address } = listening;
+  const hostname = address.address.includes(":")
+    ? `[${address.address}]`
+    : address.address;
   const url = `http://${hostname}:${address.port}`;
   let closePromise: Promise<void> | undefined;
   return {

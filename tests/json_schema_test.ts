@@ -15,6 +15,8 @@
  * (`probes/json-schema/oracle/generate.py`, then `probe.ts` to re-diff ajv).
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assert, assertEquals } from "@std/assert";
 import {
   JsonSchemaCompileError,
@@ -41,7 +43,7 @@ interface GoldenCase {
 const PROBE = new URL("../probes/json-schema/", import.meta.url);
 
 async function readJson<T>(name: string): Promise<T> {
-  return JSON.parse(await Deno.readTextFile(new URL(name, PROBE))) as T;
+  return JSON.parse(await sys.readTextFile(new URL(name, PROBE))) as T;
 }
 
 const corpus = await readJson<{ cases: CorpusCase[] }>("corpus.json");
@@ -54,7 +56,7 @@ const raised = golden.cases.filter((entry) =>
   entry.validation_error !== undefined
 );
 
-Deno.test("the corpus and the oracle golden describe the same cases", () => {
+test("the corpus and the oracle golden describe the same cases", () => {
   assertEquals(
     corpus.cases.map((entry) => entry.name).sort(),
     golden.cases.map((entry) => entry.name).sort(),
@@ -62,7 +64,7 @@ Deno.test("the corpus and the oracle golden describe the same cases", () => {
   assert(corpus.cases.length >= 63, "the corpus lost cases");
 });
 
-Deno.test("every case matches the oracle's verdict and instance paths", () => {
+test("every case matches the oracle's verdict and instance paths", () => {
   const mismatches: string[] = [];
   let verdicts = 0;
   let compared = 0;
@@ -111,7 +113,7 @@ Deno.test("every case matches the oracle's verdict and instance paths", () => {
   assertEquals(mismatches, [], `${mismatches.length} divergences`);
 });
 
-Deno.test("a schema the oracle rejects mid-validation is reported, not thrown", () => {
+test("a schema the oracle rejects mid-validation is reported, not thrown", () => {
   assertEquals(raised.length, 3);
   // The three corpus cases where jsonschema raises out of `iter_errors`:
   // an unknown `type` name, a non-numeric `minimum`, and a ref it cannot
@@ -143,7 +145,7 @@ Deno.test("a schema the oracle rejects mid-validation is reported, not thrown", 
   }
 });
 
-Deno.test("sortByInstancePath is stable, so schema-key order survives", () => {
+test("sortByInstancePath is stable, so schema-key order survives", () => {
   // Two node-level failures at the same path: the order they arrive in is the
   // schema's keyword order and the stable sort must not disturb it.
   const errors = [
@@ -157,7 +159,7 @@ Deno.test("sortByInstancePath is stable, so schema-key order survives", () => {
   );
 });
 
-Deno.test("list indices are numbers and dict keys are strings", () => {
+test("list indices are numbers and dict keys are strings", () => {
   // `sorted(key=lambda e: list(e.path))` compares ints to ints and strs to
   // strs; a JSON object with a numeric-looking key must not become an index.
   const validator = new JsonSchemaValidator({

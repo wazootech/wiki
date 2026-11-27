@@ -7,6 +7,8 @@
  * still on stderr, and the exit code unchanged.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { fromFileUrl, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { EXIT_FAILURE, EXIT_OK, EXIT_USAGE } from "../src/wiki/cli.ts";
@@ -43,11 +45,11 @@ sh:property:
 `;
 
 function writeVault(pages: Record<string, string>): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-check-json-" });
-  Deno.mkdirSync(join(root, "wiki"));
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  const root = sys.makeTempDirSync({ prefix: "wiki-check-json-" });
+  sys.mkdirSync(join(root, "wiki"));
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   for (const [name, content] of Object.entries(pages)) {
-    Deno.writeTextFileSync(join(root, name), content);
+    sys.writeTextFileSync(join(root, name), content);
   }
   return root;
 }
@@ -56,7 +58,7 @@ async function check(
   root: string,
   args: readonly string[],
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, "check", ...args],
     cwd: root,
     stdout: "piped",
@@ -85,9 +87,8 @@ const RESULT_KEYS = [
   "value",
 ];
 
-Deno.test(
+test(
   "check -f json reports each missing field with its key, constraint, and named shape",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({
       "wiki/Article_Shape.md": ARTICLE_SHAPE,
@@ -143,14 +144,13 @@ Deno.test(
       assertEquals(payload.issues[0]!.code, "shacl_violation");
       assertEquals(payload.issues[0]!.path, "wiki/CSS.md");
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check --json attributes a shared path to the shape that declared it",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({
       "wiki/Article_Shape.md": ARTICLE_SHAPE,
@@ -170,14 +170,13 @@ Deno.test(
         ["Article_Shape"],
       );
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check --json names a referenced property shape page as the source shape",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     // SHACL's sh:sourceShape is the shape the constraint belongs to. A named
     // sh:PropertyShape page keeps that identity even when a node shape lists
@@ -222,14 +221,13 @@ Deno.test(
         ["Thing_Shape"],
       );
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check -f json on a conforming document is a well-formed passing payload",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({
       "wiki/Article_Shape.md": ARTICLE_SHAPE,
@@ -253,14 +251,13 @@ Deno.test(
         issues: [],
       });
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check -f json over the whole wiki maps focus nodes back to documents",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({
       "wiki/Article_Shape.md": ARTICLE_SHAPE,
@@ -277,14 +274,13 @@ Deno.test(
       assertEquals(only!.frontmatterKeys[0], "description");
       assertEquals(only!.sourceShapes[0]!.route, "Article_Shape");
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check -f json carries JSON Schema failures with their code and instance path",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({
       "thing.schema.json": JSON.stringify({
@@ -310,14 +306,13 @@ Deno.test(
       assertEquals(found!.frontmatterKeys, ["name"]);
       assertEquals(found!.keyword, "minLength");
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "check rejects an unknown --format value as a usage error",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeVault({});
     try {
@@ -329,7 +324,7 @@ Deno.test(
         result.stderr,
       );
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );

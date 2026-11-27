@@ -8,6 +8,7 @@
  * layer up.
  */
 
+import { test } from "node:test";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import {
   formatInternalLink,
@@ -22,7 +23,7 @@ import {
   splitTarget,
 } from "../src/wiki/links.ts";
 
-Deno.test("external schemes are recognised without a trailing slash", () => {
+test("external schemes are recognised without a trailing slash", () => {
   for (
     const target of [
       "http://example.org",
@@ -48,14 +49,14 @@ Deno.test("external schemes are recognised without a trailing slash", () => {
   }
 });
 
-Deno.test("a target splits once, on the first hash", () => {
+test("a target splits once, on the first hash", () => {
   assertEquals(splitTarget("Page#Section"), ["Page", "Section"]);
   assertEquals(splitTarget("Page"), ["Page", null]);
   assertEquals(splitTarget("#Section"), ["", "Section"]);
   assertEquals(splitTarget("Page#Section#More"), ["Page", "Section#More"]);
 });
 
-Deno.test("fragments are slugged the way headings are", () => {
+test("fragments are slugged the way headings are", () => {
   assertEquals(fragmentId("Section One"), "section-one");
   assertEquals(fragmentId("Early%20Life"), "early-life");
   assertEquals(fragmentId("  Early Life  "), "early-life");
@@ -63,7 +64,7 @@ Deno.test("fragments are slugged the way headings are", () => {
   assertEquals(fragmentId(""), "");
 });
 
-Deno.test("a page route resolves against the linking page's directory", () => {
+test("a page route resolves against the linking page's directory", () => {
   assertEquals(resolvePageRoute("Beta", "Alpha"), "Alpha");
   assertEquals(resolvePageRoute("Beta", "Alpha.md"), "Alpha");
   assertEquals(resolvePageRoute("Beta", "Alpha#Section"), "Alpha");
@@ -78,20 +79,20 @@ Deno.test("a page route resolves against the linking page's directory", () => {
   assertEquals(resolvePageRoute("Beta", "Alpha%20One.md"), "Alpha One");
 });
 
-Deno.test("index collapses and the current page resolves to itself", () => {
+test("index collapses and the current page resolves to itself", () => {
   assertEquals(resolvePageRoute("Beta", "docs/index.md"), "docs");
   assertEquals(resolvePageRoute("Beta", "index.md"), "");
   assertEquals(resolvePageRoute("Beta", ""), "Beta");
   assertEquals(resolvePageRoute("Beta", "#Section"), "Beta");
 });
 
-Deno.test("a link may not climb out of the wiki or use an absolute path", () => {
+test("a link may not climb out of the wiki or use an absolute path", () => {
   assertEquals(resolvePageRoute("Beta", "../../Alpha"), null);
   assertEquals(resolvePageRoute("docs/Beta", "../../Alpha"), null);
   assertEquals(resolvePageRoute("Beta", "/docs/Alpha"), null);
 });
 
-Deno.test("a markdown link is a page link unless its extension says otherwise", () => {
+test("a markdown link is a page link unless its extension says otherwise", () => {
   assert(markdownLinkIsPage("Page.md"));
   assert(markdownLinkIsPage("Page.yaml"));
   assert(markdownLinkIsPage("Page"));
@@ -102,7 +103,7 @@ Deno.test("a markdown link is a page link unless its extension says otherwise", 
   assert(markdownLinkIsPage("notes."));
 });
 
-Deno.test("an href is the page URL plus a slugged fragment", () => {
+test("an href is the page URL plus a slugged fragment", () => {
   assertEquals(
     resolvePageHref("Beta", "Alpha#Section One", "/wiki", "dir"),
     "/wiki/Alpha/#section-one",
@@ -115,7 +116,7 @@ Deno.test("an href is the page URL plus a slugged fragment", () => {
   assertEquals(resolvePageHref("Beta", "../Alpha", "/wiki", "dir"), null);
 });
 
-Deno.test("link formatting has exactly two styles and refuses anything else", () => {
+test("link formatting has exactly two styles and refuses anything else", () => {
   assertEquals(formatInternalLink("Beta", "Beta page"), "[Beta page](Beta.md)");
   assertEquals(
     formatInternalLink("Beta", "Beta page", "wikilink"),
@@ -129,7 +130,7 @@ Deno.test("link formatting has exactly two styles and refuses anything else", ()
   assertEquals(markdownLinkTarget("docs/Alpha"), "docs/Alpha.md");
 });
 
-Deno.test("any scheme:// and protocol-relative URL is external (#376)", () => {
+test("any scheme:// and protocol-relative URL is external (#376)", () => {
   for (
     const target of [
       "ftp://example.org/a",
@@ -144,7 +145,7 @@ Deno.test("any scheme:// and protocol-relative URL is external (#376)", () => {
   assert(!isExternalLink("Talk:Page.md"));
 });
 
-Deno.test("a markdown destination splits around its target (#376)", () => {
+test("a markdown destination splits around its target (#376)", () => {
   assertEquals(parseMarkdownDestination("Page.md"), {
     before: "",
     target: "Page.md",
@@ -169,7 +170,7 @@ Deno.test("a markdown destination splits around its target (#376)", () => {
   assertEquals(parseMarkdownDestination("a b.md").target, "a b.md");
 });
 
-Deno.test("a site-root-relative URL maps back to its route (#376)", () => {
+test("a site-root-relative URL maps back to its route (#376)", () => {
   const dir = (target: string) => routeFromSiteUrl(target, "/wiki", "dir");
   assertEquals(dir("/wiki/Guides/Setup/"), "Guides/Setup");
   assertEquals(dir("/wiki/Guides/Setup/#Install"), "Guides/Setup");

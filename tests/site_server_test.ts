@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import {
   assert,
   assertEquals,
@@ -14,8 +16,8 @@ import { symlinksUnavailable } from "./support/symlink_support.ts";
 
 function writeFile(siteDir: string, path: string, content: string): string {
   const fullPath = resolve(siteDir, path);
-  Deno.mkdirSync(dirname(fullPath), { recursive: true });
-  Deno.writeTextFileSync(fullPath, content);
+  sys.mkdirSync(dirname(fullPath), { recursive: true });
+  sys.writeTextFileSync(fullPath, content);
   return fullPath;
 }
 
@@ -43,10 +45,10 @@ function request(
   return handle.handleRequest(new Request(`http://preview.test${path}`, init));
 }
 
-Deno.test(
+test(
   "serves generated directory-style pages under the configured base URL",
   async () => {
-    const siteDir = Deno.makeTempDirSync();
+    const siteDir = sys.makeTempDirSync();
     writeFile(siteDir, "index.html", "<h1>Home</h1>");
     writeFile(siteDir, "guide/index.html", "<h1>Guide</h1>");
     try {
@@ -74,15 +76,15 @@ Deno.test(
         },
       );
     } finally {
-      Deno.removeSync(siteDir, { recursive: true });
+      sys.removeSync(siteDir, { recursive: true });
     }
   },
 );
 
-Deno.test(
+test(
   "serves file-style pages and static assets with MIME types",
   async () => {
-    const siteDir = Deno.makeTempDirSync();
+    const siteDir = sys.makeTempDirSync();
     writeFile(siteDir, "index.html", "<h1>Home</h1>");
     writeFile(siteDir, "guide.html", "<h1>Guide</h1>");
     writeFile(siteDir, "assets/site.css", "body { color: black; }");
@@ -109,13 +111,13 @@ Deno.test(
         },
       );
     } finally {
-      Deno.removeSync(siteDir, { recursive: true });
+      sys.removeSync(siteDir, { recursive: true });
     }
   },
 );
 
-Deno.test("supports root base URL, HEAD, and method rejection", async () => {
-  const siteDir = Deno.makeTempDirSync();
+test("supports root base URL, HEAD, and method rejection", async () => {
+  const siteDir = sys.makeTempDirSync();
   writeFile(siteDir, "index.html", "<h1>Root</h1>");
   try {
     await withHandler(siteDir, { baseUrl: "/" }, async (handle) => {
@@ -128,14 +130,14 @@ Deno.test("supports root base URL, HEAD, and method rejection", async () => {
       assertEquals(post.headers.get("allow"), "GET, HEAD");
     });
   } finally {
-    Deno.removeSync(siteDir, { recursive: true });
+    sys.removeSync(siteDir, { recursive: true });
   }
 });
 
-Deno.test(
+test(
   "serves the site root when the configured base URL is empty",
   async () => {
-    const siteDir = Deno.makeTempDirSync();
+    const siteDir = sys.makeTempDirSync();
     writeFile(siteDir, "index.html", "<h1>Root</h1>");
     try {
       await withHandler(siteDir, { baseUrl: "" }, async (handle) => {
@@ -145,56 +147,54 @@ Deno.test(
         assertEquals((await request(handle, "/preview/")).status, 404);
       });
     } finally {
-      Deno.removeSync(siteDir, { recursive: true });
+      sys.removeSync(siteDir, { recursive: true });
     }
   },
 );
 
-Deno.test("rejects encoded path separators", async () => {
-  const siteDir = Deno.makeTempDirSync();
+test("rejects encoded path separators", async () => {
+  const siteDir = sys.makeTempDirSync();
   writeFile(siteDir, "index.html", "<h1>Safe</h1>");
   try {
     await withHandler(siteDir, { baseUrl: "/preview" }, async (handle) => {
       assertEquals((await request(handle, "/preview/a%2Fb")).status, 404);
     });
   } finally {
-    Deno.removeSync(siteDir, { recursive: true });
+    sys.removeSync(siteDir, { recursive: true });
   }
 });
 
-Deno.test({
-  name: "does not follow symlinks outside the static site root",
-  // The escape guard is the whole point of this case, so it cannot be faked
-  // with a regular file -- it needs a real symlink, and therefore the same
-  // Windows privilege the fspath case documents.
-  ignore: symlinksUnavailable(),
-  fn: async () => {
-    const siteDir = Deno.makeTempDirSync();
-    const outsideDir = Deno.makeTempDirSync();
-    writeFile(siteDir, "index.html", "<h1>Safe</h1>");
-    writeFile(outsideDir, "secret.txt", "secret");
-    Deno.symlinkSync(
-      resolve(outsideDir, "secret.txt"),
-      resolve(siteDir, "secret.txt"),
-    );
-    try {
-      await withHandler(siteDir, { baseUrl: "/preview" }, async (handle) => {
-        assertEquals(
-          (await request(handle, "/preview/secret.txt")).status,
-          404,
-        );
-      });
-    } finally {
-      Deno.removeSync(siteDir, { recursive: true });
-      Deno.removeSync(outsideDir, { recursive: true });
-    }
-  },
+// The escape guard is the whole point of this case, so it cannot be faked
+// with a regular file -- it needs a real symlink, and therefore the same
+// Windows privilege the fspath case documents.
+test("does not follow symlinks outside the static site root", {
+  skip: symlinksUnavailable(),
+}, async () => {
+  const siteDir = sys.makeTempDirSync();
+  const outsideDir = sys.makeTempDirSync();
+  writeFile(siteDir, "index.html", "<h1>Safe</h1>");
+  writeFile(outsideDir, "secret.txt", "secret");
+  sys.symlinkSync(
+    resolve(outsideDir, "secret.txt"),
+    resolve(siteDir, "secret.txt"),
+  );
+  try {
+    await withHandler(siteDir, { baseUrl: "/preview" }, async (handle) => {
+      assertEquals(
+        (await request(handle, "/preview/secret.txt")).status,
+        404,
+      );
+    });
+  } finally {
+    sys.removeSync(siteDir, { recursive: true });
+    sys.removeSync(outsideDir, { recursive: true });
+  }
 });
 
-Deno.test(
+test(
   "optional polling endpoint detects file changes and closes its poller",
   async () => {
-    const siteDir = Deno.makeTempDirSync();
+    const siteDir = sys.makeTempDirSync();
     writeFile(siteDir, "index.html", "<html><body>first</body></html>");
     const handle = createStaticSiteHandler({
       siteDir,
@@ -222,13 +222,13 @@ Deno.test(
       assert(build > 0);
     } finally {
       handle.close();
-      Deno.removeSync(siteDir, { recursive: true });
+      sys.removeSync(siteDir, { recursive: true });
     }
   },
 );
 
-Deno.test("rejects invalid base URLs, URL styles, hosts, and ports", () => {
-  const siteDir = Deno.makeTempDirSync();
+test("rejects invalid base URLs, URL styles, hosts, and ports", () => {
+  const siteDir = sys.makeTempDirSync();
   try {
     assertThrows(() =>
       createStaticSiteHandler({ siteDir, baseUrl: "https://example.com" })
@@ -239,14 +239,14 @@ Deno.test("rejects invalid base URLs, URL styles, hosts, and ports", () => {
       createStaticSiteHandler({ siteDir, urlStyle: "other" as never })
     );
   } finally {
-    Deno.removeSync(siteDir, { recursive: true });
+    sys.removeSync(siteDir, { recursive: true });
   }
 });
 
-Deno.test("passes the connecting address to the request handler", async () => {
-  const siteDir = Deno.makeTempDirSync({ prefix: "wiki-peer-" });
+test("passes the connecting address to the request handler", async () => {
+  const siteDir = sys.makeTempDirSync({ prefix: "wiki-peer-" });
   let seen: string | undefined;
-  const server = startStaticSiteServer({
+  const server = await startStaticSiteServer({
     siteDir,
     port: 0,
     requestHandler: (_request, peer) => {
@@ -259,6 +259,6 @@ Deno.test("passes the connecting address to the request handler", async () => {
     assertEquals(seen, "127.0.0.1");
   } finally {
     await server.close();
-    Deno.removeSync(siteDir, { recursive: true });
+    sys.removeSync(siteDir, { recursive: true });
   }
 });

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- The engine reaches the host only through `node:` APIs, in
+  `src/wiki/sys.ts`, as the first step of moving off Deno. Deno remains the
+  runtime and the commands behave as before.
+
 ### Added
 
 - `wiki build --public` builds only pages marked `wazoo:visibility: public`.

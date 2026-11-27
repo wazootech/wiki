@@ -8,6 +8,8 @@
  * `graph.ts` lands there is nothing left to discover.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { basename, extname, join } from "@std/path";
 import {
   overlayKey,
@@ -55,12 +57,12 @@ const PINNED_MTIME = 1_700_000_000;
 async function withTempDir(
   body: (root: string) => void | Promise<void>,
 ): Promise<void> {
-  const dir = Deno.makeTempDirSync({ prefix: "wiki-cache-" });
+  const dir = sys.makeTempDirSync({ prefix: "wiki-cache-" });
   try {
     await body(dir);
   } finally {
     clearAllProcessGraphs();
-    Deno.removeSync(dir, { recursive: true });
+    sys.removeSync(dir, { recursive: true });
   }
 }
 
@@ -70,9 +72,9 @@ function wiki(
   content = "---\ntype: Person\ngivenName: Ada\n---\n",
 ) {
   const wikiDir = join(root, "wiki");
-  Deno.mkdirSync(wikiDir, { recursive: true });
+  sys.mkdirSync(wikiDir, { recursive: true });
   const page = join(wikiDir, "page.md");
-  Deno.writeTextFileSync(page, content);
+  sys.writeTextFileSync(page, content);
   return {
     wikiDir,
     page,
@@ -80,7 +82,7 @@ function wiki(
   };
 }
 
-Deno.test("the fingerprint follows content and configuration, not the clock", async () => {
+test("the fingerprint follows content and configuration, not the clock", async () => {
   await withTempDir((root) => {
     const { page, config } = wiki(root);
     const first = wikiFingerprint(config);
@@ -90,7 +92,7 @@ Deno.test("the fingerprint follows content and configuration, not the clock", as
       "a repeat call must be stable",
     );
 
-    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
+    sys.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     const edited = wikiFingerprint(config);
     assertNotEquals(edited, first);
 
@@ -104,7 +106,7 @@ Deno.test("the fingerprint follows content and configuration, not the clock", as
   });
 });
 
-Deno.test("the manifest describes each contributing file", async () => {
+test("the manifest describes each contributing file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const manifest = wikiManifest(config);
@@ -117,29 +119,29 @@ Deno.test("the manifest describes each contributing file", async () => {
   });
 });
 
-Deno.test("the cache directory is excluded from the files it fingerprints", async () => {
+test("the cache directory is excluded from the files it fingerprints", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const cache = cacheDir(config);
-    Deno.mkdirSync(cache, { recursive: true });
-    Deno.writeTextFileSync(
+    sys.mkdirSync(cache, { recursive: true });
+    sys.writeTextFileSync(
       join(cache, "graph-asserted-deadbeef.nt"),
       "<a> <b> <c> .\n",
     );
     // A staged file inside the wiki tree that is not a cache artifact.
-    Deno.writeTextFileSync(join(config.wiki.input[0]!, "other.md"), "x");
+    sys.writeTextFileSync(join(config.wiki.input[0]!, "other.md"), "x");
 
     const files = iterWikiFiles(config).map((path) => basename(path)).sort();
     assertEquals(files, ["other.md", "page.md"]);
   });
 });
 
-Deno.test("excluded files do not contribute to the fingerprint", async () => {
+test("excluded files do not contribute to the fingerprint", async () => {
   await withTempDir((root) => {
     const wikiDir = join(root, "wiki");
-    Deno.mkdirSync(join(wikiDir, "drafts"), { recursive: true });
-    Deno.writeTextFileSync(join(wikiDir, "Published.md"), "x");
-    Deno.writeTextFileSync(join(wikiDir, "drafts", "Draft.md"), "x");
+    sys.mkdirSync(join(wikiDir, "drafts"), { recursive: true });
+    sys.writeTextFileSync(join(wikiDir, "Published.md"), "x");
+    sys.writeTextFileSync(join(wikiDir, "drafts", "Draft.md"), "x");
     const config = Config.forRoot(root, {
       wiki: { input: [wikiDir], exclude: ["wiki/drafts/**"] },
     });
@@ -149,7 +151,7 @@ Deno.test("excluded files do not contribute to the fingerprint", async () => {
   });
 });
 
-Deno.test("canonical json reproduces Python's json.dumps output", () => {
+test("canonical json reproduces Python's json.dumps output", () => {
   // Sorted keys, no separator whitespace, and `ensure_ascii` escaping — the
   // three things JSON.stringify gets wrong for this use.
   assertEquals(canonicalJson({ b: 1, a: [2, 3] }), '{"a":[2,3],"b":1}');
@@ -174,7 +176,7 @@ Deno.test("canonical json reproduces Python's json.dumps output", () => {
   assertEquals(canonicalJson({ z: { b: 1, a: 2 } }), '{"z":{"a":2,"b":1}}');
 });
 
-Deno.test("the in-process cache separates infer modes and drops stale entries", async () => {
+test("the in-process cache separates infer modes and drops stale entries", async () => {
   await withTempDir((root) => {
     const { page, config } = wiki(root);
     const asserted = new RdfGraph();
@@ -206,7 +208,7 @@ Deno.test("the in-process cache separates infer modes and drops stale entries", 
 
     // Editing the wiki changes the fingerprint, so the old entry is no longer
     // reachable — and setting a new one drops it rather than leaking it.
-    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
+    sys.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     assertEquals(getProcessGraph(config, true), null);
     const rebuilt = new RdfGraph();
     setProcessGraph(config, true, rebuilt);
@@ -215,7 +217,7 @@ Deno.test("the in-process cache separates infer modes and drops stale entries", 
   });
 });
 
-Deno.test("a graph survives a disk round trip across a cleared process cache", async () => {
+test("a graph survives a disk round trip across a cleared process cache", async () => {
   await withTempDir(async (root) => {
     const { config } = wiki(root);
     const graph = new RdfGraph();
@@ -246,7 +248,7 @@ Deno.test("a graph survives a disk round trip across a cleared process cache", a
   });
 });
 
-Deno.test("the infer and asserted caches do not share a file", async () => {
+test("the infer and asserted caches do not share a file", async () => {
   await withTempDir(async (root) => {
     const { config } = wiki(root);
     const graph = new RdfGraph();
@@ -263,7 +265,7 @@ Deno.test("the infer and asserted caches do not share a file", async () => {
   });
 });
 
-Deno.test("writing a new fingerprint removes the old cache file", async () => {
+test("writing a new fingerprint removes the old cache file", async () => {
   await withTempDir((root) => {
     const { page, config } = wiki(root);
     const graph = new RdfGraph();
@@ -275,7 +277,7 @@ Deno.test("writing a new fingerprint removes the old cache file", async () => {
     setDiskGraph(config, false, graph);
     const stale = diskCachePath(config, false);
 
-    Deno.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
+    sys.writeTextFileSync(page, "---\ntype: Person\ngivenName: Grace\n---\n");
     setDiskGraph(config, false, graph);
     const current = diskCachePath(config, false);
 
@@ -289,7 +291,7 @@ Deno.test("writing a new fingerprint removes the old cache file", async () => {
   });
 });
 
-Deno.test("a corrupt cache file is discarded rather than propagated", async () => {
+test("a corrupt cache file is discarded rather than propagated", async () => {
   await withTempDir(async (root) => {
     const { config } = wiki(root);
     const graph = new RdfGraph();
@@ -300,7 +302,7 @@ Deno.test("a corrupt cache file is discarded rather than propagated", async () =
     );
     setDiskGraph(config, false, graph);
     const cachePath = diskCachePath(config, false);
-    Deno.writeTextFileSync(cachePath, "this is not n-triples\n");
+    sys.writeTextFileSync(cachePath, "this is not n-triples\n");
 
     assertEquals(await getDiskGraph(config, false), null);
     assertEquals(
@@ -311,7 +313,7 @@ Deno.test("a corrupt cache file is discarded rather than propagated", async () =
   });
 });
 
-Deno.test("a named-graph dataset round-trips through its own cache file", async () => {
+test("a named-graph dataset round-trips through its own cache file", async () => {
   await withTempDir(async (root) => {
     const { config } = wiki(root);
     const dataset = new RdfDataset({ defaultUnion: true });
@@ -351,7 +353,7 @@ Deno.test("a named-graph dataset round-trips through its own cache file", async 
   });
 });
 
-Deno.test("a triple added twice is one triple in the cache file", async () => {
+test("a triple added twice is one triple in the cache file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const graph = new RdfGraph();
@@ -368,15 +370,15 @@ Deno.test("a triple added twice is one triple in the cache file", async () => {
   });
 });
 
-Deno.test("the manifest orders paths by standard string order", async () => {
+test("the manifest orders paths by standard string order", async () => {
   await withTempDir((root) => {
     const wikiDir = join(root, "wiki");
-    Deno.mkdirSync(join(wikiDir, "notes"), { recursive: true });
-    Deno.writeTextFileSync(
+    sys.mkdirSync(join(wikiDir, "notes"), { recursive: true });
+    sys.writeTextFileSync(
       join(wikiDir, "notes.md"),
       "---\ntype: Thing\n---\n",
     );
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       join(wikiDir, "notes", "inner.md"),
       "---\ntype: Thing\n---\n",
     );
@@ -401,7 +403,7 @@ Deno.test("the manifest orders paths by standard string order", async () => {
         join(wikiDir, "notes", "inner.md"),
       ]
     ) {
-      Deno.utimeSync(file, PINNED_MTIME, PINNED_MTIME);
+      sys.utimeSync(file, PINNED_MTIME, PINNED_MTIME);
     }
 
     // This pins the Deno manifest order, canonical JSON, and SHA-256 together.
@@ -413,7 +415,7 @@ Deno.test("the manifest orders paths by standard string order", async () => {
   });
 });
 
-Deno.test("an edit overlay gets its own fingerprint and sees staged files", async () => {
+test("an edit overlay gets its own fingerprint and sees staged files", async () => {
   await withTempDir((root) => {
     const { wikiDir, page, config } = wiki(root);
     const onDisk = wikiFingerprint(config);

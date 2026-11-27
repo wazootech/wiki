@@ -11,6 +11,7 @@
  * agreement is checked.
  */
 
+import { test } from "node:test";
 import { assert, assertEquals } from "@std/assert";
 import {
   GitHubHeadingSlugger,
@@ -19,7 +20,7 @@ import {
   parseHeadings,
 } from "../src/wiki/headings.ts";
 
-Deno.test("duplicate heading text gets a numbered slug", () => {
+test("duplicate heading text gets a numbered slug", () => {
   const headings = parseHeadings("# Title\n\n## Early Life\n\n## Early Life\n");
   assertEquals(
     headings.map((heading) => heading.slug),
@@ -35,7 +36,7 @@ Deno.test("duplicate heading text gets a numbered slug", () => {
   );
 });
 
-Deno.test("heading text keeps its inline markup", () => {
+test("heading text keeps its inline markup", () => {
   const markdown = "# Page\n\n" +
     "## Request headers\n\n" +
     "### `Accept`\n\n" +
@@ -54,7 +55,7 @@ Deno.test("heading text keeps its inline markup", () => {
   assertEquals(headingIds(markdown), new Set(headings.map((h) => h.slug)));
 });
 
-Deno.test("setext headings and fenced code are parsed, not approximated", () => {
+test("setext headings and fenced code are parsed, not approximated", () => {
   // A regex-based heading scan gets both of these wrong: `Title\n===` is an H1
   // with its line number on the text row, and a `#` inside a fence is content.
   const markdown = [
@@ -78,7 +79,7 @@ Deno.test("setext headings and fenced code are parsed, not approximated", () => 
   );
 });
 
-Deno.test("the slug rule strips punctuation, dashes spaces, and folds accents", () => {
+test("the slug rule strips punctuation, dashes spaces, and folds accents", () => {
   // Every expectation below is the pinned oracle's own output for the same
   // input (`wiki.headings.heading_slug`), including the CJK case, which is
   // where JavaScript's `\w` without the `u` flag would silently differ.
@@ -111,7 +112,7 @@ Deno.test("the slug rule strips punctuation, dashes spaces, and folds accents", 
   assertEquals(headingSlug("Cafe\u0301"), headingSlug("Café"));
 });
 
-Deno.test("a slugger numbers collisions per base, in document order", () => {
+test("a slugger numbers collisions per base, in document order", () => {
   const slugger = new GitHubHeadingSlugger();
   assertEquals(
     ["Notes", "Notes", "Notes", "Other", "Notes"].map((title) =>
@@ -121,7 +122,7 @@ Deno.test("a slugger numbers collisions per base, in document order", () => {
   );
 });
 
-Deno.test("a document with no headings has no ids", () => {
+test("a document with no headings has no ids", () => {
   assertEquals(parseHeadings("Just prose."), []);
   assert(headingIds("Just prose.").size === 0);
 });

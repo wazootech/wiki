@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
@@ -17,7 +19,7 @@ async function runCliIn(
   args: readonly string[],
   cwd: string,
 ): Promise<CliResult> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd,
     stdout: "piped",
@@ -31,12 +33,12 @@ async function runCliIn(
 }
 
 function makeRoot(prefix: string): string {
-  return Deno.makeTempDirSync({ prefix });
+  return sys.makeTempDirSync({ prefix });
 }
 
 function removeRoot(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -71,7 +73,7 @@ const INTERNAL_HELPERS: readonly string[] = [
   "stripChars",
 ];
 
-Deno.test("the entrypoint does not export internal helpers", () => {
+test("the entrypoint does not export internal helpers", () => {
   const exported = Object.keys(wiki);
   for (const name of INTERNAL_HELPERS) {
     assert(
@@ -82,7 +84,7 @@ Deno.test("the entrypoint does not export internal helpers", () => {
   }
 });
 
-Deno.test("the entrypoint still exports the documented domain API", () => {
+test("the entrypoint still exports the documented domain API", () => {
   const exported = Object.keys(wiki);
   // A representative sample, not an exhaustive lock: the point is that the
   // entrypoint keeps its real surface after the parity removals.
@@ -123,9 +125,8 @@ Deno.test("the entrypoint still exports the documented domain API", () => {
  * simultaneously supported and refused depending on where it appeared. The flag
  * now accepts them too.
  */
-Deno.test(
+test(
   "init accepts a retired --link-style spelling and rewrites it",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = makeRoot("wiki-linkstyle-");
     try {
@@ -140,7 +141,7 @@ Deno.test(
         `expected a deprecation warning naming both spellings, got: ${result.stderr}`,
       );
 
-      const config = await Deno.readTextFile(join(root, "wiki.yml"));
+      const config = await sys.readTextFile(join(root, "wiki.yml"));
       assert(
         config.includes('style: "wikilink"'),
         `scaffolded config should use the modern spelling, got:\n${config}`,
@@ -160,9 +161,8 @@ Deno.test(
  * unknown value must still point at the canonical names only, or it would nudge
  * people back onto the spelling we are retiring.
  */
-Deno.test(
+test(
   "an invalid --link-style error advertises only canonical names",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = makeRoot("wiki-linkstyle-bad-");
     try {

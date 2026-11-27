@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 
@@ -5,7 +7,7 @@ const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
 const DECODER = new TextDecoder();
 
 async function runExportCli(args: readonly string[], cwd: string) {
-  const result = await new Deno.Command(Deno.execPath(), {
+  const result = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd,
     stdout: "piped",
@@ -18,26 +20,25 @@ async function runExportCli(args: readonly string[], cwd: string) {
   };
 }
 
-Deno.test(
+test(
   "export CLI writes JSON, raw RDF, and explicitly rejects deferred RDF/XML",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
-    const root = Deno.makeTempDirSync({ prefix: "wiki-export-cli-" });
+    const root = sys.makeTempDirSync({ prefix: "wiki-export-cli-" });
     try {
       const wiki = `${root}/wiki`;
-      Deno.mkdirSync(wiki);
+      sys.mkdirSync(wiki);
       const config = `${root}/wiki.yml`;
-      Deno.writeTextFileSync(
+      sys.writeTextFileSync(
         config,
         'wiki:\n  input: [wiki]\ngraph:\n  context:\n    "@vocab": https://schema.org/\n    schema: https://schema.org/\n    wiki: https://wiki.example.org/\n',
       );
       const ada = `${wiki}/Ada.md`;
       const bob = `${wiki}/Bob.md`;
-      Deno.writeTextFileSync(
+      sys.writeTextFileSync(
         ada,
         "---\nid: wiki:Ada\ntype: schema:Person\nname: Ada\n---\n",
       );
-      Deno.writeTextFileSync(
+      sys.writeTextFileSync(
         bob,
         "---\nid: wiki:Bob\ntype: schema:Person\nname: Bob\n---\n",
       );
@@ -97,9 +98,9 @@ Deno.test(
       ], root);
       assertEquals(written.code, 0);
       assertStringIncludes(written.stdout, "Written payload");
-      assertEquals(JSON.parse(Deno.readTextFileSync(output)).rdf.name, "Ada");
+      assertEquals(JSON.parse(sys.readTextFileSync(output)).rdf.name, "Ada");
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );

@@ -7,6 +7,7 @@
  * Usage: `deno run -A bench/shacl/case.ts <case> <fixture-dir>`
  */
 
+import * as sys from "../../src/wiki/sys.ts";
 import { join } from "@std/path";
 import { Parser, Store } from "n3";
 import type { Quad } from "@rdfjs/types";
@@ -55,7 +56,7 @@ export interface CaseResult {
 
 function readGraph(path: string): RdfGraph {
   const graph = new RdfGraph();
-  for (const quad of new Parser().parse(Deno.readTextFileSync(path))) {
+  for (const quad of new Parser().parse(sys.readTextFileSync(path))) {
     graph.addQuad(quad as Quad);
   }
   return graph;
@@ -64,17 +65,17 @@ function readGraph(path: string): RdfGraph {
 /** Peak RSS from the OS: `VmHWM` on Linux, `PeakWorkingSet64` on Windows. */
 async function peakRss(): Promise<number | null> {
   try {
-    if (Deno.build.os === "linux") {
-      const status = Deno.readTextFileSync("/proc/self/status");
+    if (sys.build.os === "linux") {
+      const status = sys.readTextFileSync("/proc/self/status");
       const match = /^VmHWM:\s+(\d+) kB$/m.exec(status);
       return match ? Number(match[1]) * 1024 : null;
     }
-    if (Deno.build.os === "windows") {
-      const output = await new Deno.Command("powershell", {
+    if (sys.build.os === "windows") {
+      const output = await new sys.Command("powershell", {
         args: [
           "-NoProfile",
           "-Command",
-          `(Get-Process -Id ${Deno.pid}).PeakWorkingSet64`,
+          `(Get-Process -Id ${sys.pid}).PeakWorkingSet64`,
         ],
         stdout: "piped",
         stderr: "null",
@@ -187,7 +188,7 @@ async function runCase(name: CaseName, dir: string): Promise<CaseResult> {
       const store = await phase(phases, "index", () => {
         const store = new Store();
         store.addQuads(
-          new Parser().parse(Deno.readTextFileSync(join(dir, "data.nt"))),
+          new Parser().parse(sys.readTextFileSync(join(dir, "data.nt"))),
         );
         return store;
       });
@@ -280,13 +281,13 @@ async function runCase(name: CaseName, dir: string): Promise<CaseResult> {
 }
 
 if (import.meta.main) {
-  const [name, dir] = Deno.args;
+  const [name, dir] = sys.args;
   if (!CASES.includes(name as CaseName) || dir === undefined) {
     console.error(`Usage: case.ts <${CASES.join("|")}> <fixture-dir>`);
-    Deno.exit(2);
+    sys.exit(2);
   }
   const sampler = setInterval(() => {
-    peakHeap = Math.max(peakHeap, Deno.memoryUsage().heapUsed);
+    peakHeap = Math.max(peakHeap, sys.memoryUsage().heapUsed);
   }, 25);
   const result = await runCase(name as CaseName, dir);
   clearInterval(sampler);

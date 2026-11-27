@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { basename, dirname, join } from "@std/path";
 import { isDirectory, pathExists, readText } from "../src/wiki/fspath.ts";
 import { assertEquals, assertStringIncludes } from "@std/assert";
@@ -18,14 +20,14 @@ import {
 } from "../src/wiki/init_scaffold.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-init-scaffold-" });
+  return sys.makeTempDirSync({ prefix: "wiki-init-scaffold-" });
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
-Deno.test("GitHub repository parsing and Pages URL inference cover shorthand and URL forms", () => {
+test("GitHub repository parsing and Pages URL inference cover shorthand and URL forms", () => {
   assertEquals(parseGithubRepo("wazootech/wiki"), ["wazootech", "wiki"]);
   assertEquals(
     parseGithubRepo("https://github.com/wazootech/wiki.git"),
@@ -42,7 +44,7 @@ Deno.test("GitHub repository parsing and Pages URL inference cover shorthand and
   assertEquals(normalizeBaseUrl("manual///"), "/manual");
 });
 
-Deno.test("resolveInitOptions uses non-interactive defaults and maps explicit overrides", () => {
+test("resolveInitOptions uses non-interactive defaults and maps explicit overrides", () => {
   const root = tempRoot();
   try {
     const defaults = resolveInitOptions({ cwd: root });
@@ -67,17 +69,17 @@ Deno.test("resolveInitOptions uses non-interactive defaults and maps explicit ov
   }
 });
 
-Deno.test("detectOriginRepo reads a local origin and resolver infers Pages defaults", () => {
+test("detectOriginRepo reads a local origin and resolver infers Pages defaults", () => {
   const root = tempRoot();
   try {
-    const init = new Deno.Command("git", {
+    const init = new sys.Command("git", {
       args: ["init"],
       cwd: root,
       stdout: "null",
       stderr: "null",
     }).outputSync();
     assertEquals(init.code, 0);
-    const remote = new Deno.Command("git", {
+    const remote = new sys.Command("git", {
       args: ["remote", "add", "origin", "git@github.com:wazootech/wiki.git"],
       cwd: root,
       stdout: "null",
@@ -97,7 +99,7 @@ Deno.test("detectOriginRepo reads a local origin and resolver infers Pages defau
   }
 });
 
-Deno.test("init option mapping preserves all supported nested config values", () => {
+test("init option mapping preserves all supported nested config values", () => {
   const options: InitOptions = {
     graph_context_wiki: "https://wiki.example.org/",
     site_base_url: "/manual",
@@ -131,7 +133,7 @@ Deno.test("init option mapping preserves all supported nested config values", ()
   });
 });
 
-Deno.test("renderWikiYaml safely emits option values and parses as YAML", () => {
+test("renderWikiYaml safely emits option values and parses as YAML", () => {
   const options: InitOptions = {
     graph_context_wiki: 'https://example.org/wiki/?q="quoted"',
     site_base_url: "/manual",
@@ -160,7 +162,7 @@ Deno.test("renderWikiYaml safely emits option values and parses as YAML", () => 
 
   const root = tempRoot();
   try {
-    Deno.writeTextFileSync(join(root, "wiki.yml"), rendered);
+    sys.writeTextFileSync(join(root, "wiki.yml"), rendered);
     const config = Config.load(join(root, "wiki.yml"));
     assertEquals(config.site.url_style, "file");
     assertEquals(config.site.base_url, "/manual");
@@ -177,11 +179,11 @@ Deno.test("renderWikiYaml safely emits option values and parses as YAML", () => 
   }
 });
 
-Deno.test("scaffold writes the starter files while preserving an existing gitignore", () => {
+test("scaffold writes the starter files while preserving an existing gitignore", () => {
   const root = tempRoot();
   try {
     const gitignore = join(root, ".gitignore");
-    Deno.writeTextFileSync(gitignore, "# custom ignore\n.env\n");
+    sys.writeTextFileSync(gitignore, "# custom ignore\n.env\n");
     const result = scaffoldWiki(root, {
       graph_context_wiki: "https://example.org/wiki/",
       site_base_url: "/manual",
@@ -216,13 +218,13 @@ Deno.test("scaffold writes the starter files while preserving an existing gitign
   }
 });
 
-Deno.test("scaffold refuses existing configs, README files, and nonempty wiki directories without overwriting", () => {
+test("scaffold refuses existing configs, README files, and nonempty wiki directories without overwriting", () => {
   const configRoot = tempRoot();
   const readmeRoot = tempRoot();
   const wikiRoot = tempRoot();
   try {
     const config = join(configRoot, "wiki.toml");
-    Deno.writeTextFileSync(config, "existing config\n");
+    sys.writeTextFileSync(config, "existing config\n");
     const configResult = scaffoldWiki(configRoot, {
       graph_context_wiki: "https://example.org/",
     });
@@ -232,7 +234,7 @@ Deno.test("scaffold refuses existing configs, README files, and nonempty wiki di
     assertEquals(pathExists(join(readmeRoot, "README.md")), false);
 
     const readme = join(readmeRoot, "README.md");
-    Deno.writeTextFileSync(readme, "keep me\n");
+    sys.writeTextFileSync(readme, "keep me\n");
     const readmeResult = scaffoldWiki(readmeRoot, {
       graph_context_wiki: "https://example.org/",
     });
@@ -245,8 +247,8 @@ Deno.test("scaffold refuses existing configs, README files, and nonempty wiki di
     assertEquals(pathExists(join(readmeRoot, "wiki.yml")), false);
 
     const page = join(wikiRoot, "wiki", "Keep.md");
-    Deno.mkdirSync(dirname(page), { recursive: true });
-    Deno.writeTextFileSync(page, "# Keep\n");
+    sys.mkdirSync(dirname(page), { recursive: true });
+    sys.writeTextFileSync(page, "# Keep\n");
     const wikiResult = scaffoldWiki(wikiRoot, {
       graph_context_wiki: "https://example.org/",
     });
@@ -261,7 +263,7 @@ Deno.test("scaffold refuses existing configs, README files, and nonempty wiki di
   }
 });
 
-Deno.test("scaffold creates a default gitignore and reports every created path", () => {
+test("scaffold creates a default gitignore and reports every created path", () => {
   const root = tempRoot();
   try {
     const result = scaffoldWiki(root, {
@@ -282,11 +284,11 @@ Deno.test("scaffold creates a default gitignore and reports every created path",
   }
 });
 
-Deno.test("render failure rolls back created files but preserves a pre-existing empty wiki directory", () => {
+test("render failure rolls back created files but preserves a pre-existing empty wiki directory", () => {
   const root = tempRoot();
   const wikiDirectory = join(root, "wiki");
   try {
-    Deno.mkdirSync(wikiDirectory);
+    sys.mkdirSync(wikiDirectory);
     const result = scaffoldWiki(root, {
       graph_context_wiki: "https://example.org/",
       site_url_style: "invalid",
@@ -295,7 +297,7 @@ Deno.test("render failure rolls back created files but preserves a pre-existing 
     assertEquals(result.ok, false);
     assertStringIncludes(result.error_message ?? "", "Invalid site_url_style");
     assertEquals(isDirectory(wikiDirectory), true);
-    assertEquals([...Deno.readDirSync(wikiDirectory)].length, 0);
+    assertEquals([...sys.readDirSync(wikiDirectory)].length, 0);
     assertEquals(pathExists(join(root, ".gitignore")), false);
     assertEquals(pathExists(join(root, "README.md")), false);
     assertEquals(pathExists(join(root, "wiki.yml")), false);
@@ -304,13 +306,13 @@ Deno.test("render failure rolls back created files but preserves a pre-existing 
   }
 });
 
-Deno.test("failed local git init rolls back generated files and preserves existing paths", () => {
+test("failed local git init rolls back generated files and preserves existing paths", () => {
   const root = tempRoot();
   try {
     const gitignore = join(root, ".gitignore");
-    Deno.writeTextFileSync(gitignore, "# keep\n");
+    sys.writeTextFileSync(gitignore, "# keep\n");
     const wikiDirectory = join(root, "wiki");
-    Deno.mkdirSync(wikiDirectory);
+    sys.mkdirSync(wikiDirectory);
 
     const result = scaffoldWiki(root, {
       graph_context_wiki: "https://example.org/",
@@ -318,8 +320,8 @@ Deno.test("failed local git init rolls back generated files and preserves existi
       init_git: true,
       git_runner: (cwd) => {
         const gitDirectory = `${cwd}/.git`;
-        Deno.mkdirSync(gitDirectory);
-        Deno.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
+        sys.mkdirSync(gitDirectory);
+        sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
         return { code: 1, stderr: "controlled git failure" };
       },
     });
@@ -339,7 +341,7 @@ Deno.test("failed local git init rolls back generated files and preserves existi
   }
 });
 
-Deno.test("failed local git init removes only a scaffold-created target tree", () => {
+test("failed local git init removes only a scaffold-created target tree", () => {
   const parent = tempRoot();
   const root = join(parent, "new", "wiki-project");
   try {
@@ -349,8 +351,8 @@ Deno.test("failed local git init removes only a scaffold-created target tree", (
       init_git: true,
       git_runner: (cwd) => {
         const gitDirectory = `${cwd}/.git`;
-        Deno.mkdirSync(gitDirectory);
-        Deno.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
+        sys.mkdirSync(gitDirectory);
+        sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
         return { code: 1, stderr: "controlled git failure" };
       },
     });
@@ -367,7 +369,7 @@ Deno.test("failed local git init removes only a scaffold-created target tree", (
   }
 });
 
-Deno.test("optional local git init creates a repository after scaffolding", () => {
+test("optional local git init creates a repository after scaffolding", () => {
   const root = tempRoot();
   try {
     const result = scaffoldWiki(root, {
@@ -376,7 +378,7 @@ Deno.test("optional local git init creates a repository after scaffolding", () =
     assertEquals(result.ok, true);
     assertStringIncludes(result.message, "Ran git init.");
     assertEquals(isDirectory(join(root, ".git")), true);
-    const status = new Deno.Command("git", {
+    const status = new sys.Command("git", {
       args: ["rev-parse", "--is-inside-work-tree"],
       cwd: root,
       stdout: "piped",
@@ -389,34 +391,34 @@ Deno.test("optional local git init creates a repository after scaffolding", () =
   }
 });
 
-Deno.test("template fetching copies visible files without copying Git metadata", () => {
+test("template fetching copies visible files without copying Git metadata", () => {
   const root = tempRoot();
   try {
     const result = fetchTemplate(root, "generic", {
       cloneRepository: (destination) => {
         const template = join(destination, "templates", "generic");
-        Deno.mkdirSync(template, { recursive: true });
-        Deno.writeTextFileSync(
+        sys.mkdirSync(template, { recursive: true });
+        sys.writeTextFileSync(
           join(template, "README.md"),
           "# Template\n",
         );
-        Deno.writeTextFileSync(
+        sys.writeTextFileSync(
           join(template, ".gitignore"),
           ".wiki/\n",
         );
-        Deno.writeTextFileSync(
+        sys.writeTextFileSync(
           join(template, ".hidden"),
           "do not copy\n",
         );
         const nested = join(template, "nested");
-        Deno.mkdirSync(nested);
-        Deno.writeTextFileSync(
+        sys.mkdirSync(nested);
+        sys.writeTextFileSync(
           join(nested, "page.md"),
           "# Nested\n",
         );
         const git = join(destination, ".git");
-        Deno.mkdirSync(git);
-        Deno.writeTextFileSync(join(git, "config"), "private\n");
+        sys.mkdirSync(git);
+        sys.writeTextFileSync(join(git, "config"), "private\n");
         return { code: 0, stderr: "" };
       },
     });
@@ -435,14 +437,14 @@ Deno.test("template fetching copies visible files without copying Git metadata",
   }
 });
 
-Deno.test("template fetching falls back to a legacy root template when templates/ is absent", () => {
+test("template fetching falls back to a legacy root template when templates/ is absent", () => {
   const root = tempRoot();
   try {
     const result = fetchTemplate(root, "generic", {
       cloneRepository: (destination) => {
         const template = join(destination, "generic");
-        Deno.mkdirSync(template, { recursive: true });
-        Deno.writeTextFileSync(join(template, "README.md"), "# Legacy\n");
+        sys.mkdirSync(template, { recursive: true });
+        sys.writeTextFileSync(join(template, "README.md"), "# Legacy\n");
         return { code: 0, stderr: "" };
       },
     });
@@ -457,17 +459,17 @@ Deno.test("template fetching falls back to a legacy root template when templates
   }
 });
 
-Deno.test("template fetching prefers templates/ over a legacy root template", () => {
+test("template fetching prefers templates/ over a legacy root template", () => {
   const root = tempRoot();
   try {
     const result = fetchTemplate(root, "generic", {
       cloneRepository: (destination) => {
         const legacy = join(destination, "generic");
-        Deno.mkdirSync(legacy, { recursive: true });
-        Deno.writeTextFileSync(join(legacy, "README.md"), "root\n");
+        sys.mkdirSync(legacy, { recursive: true });
+        sys.writeTextFileSync(join(legacy, "README.md"), "root\n");
         const preferred = join(destination, "templates", "generic");
-        Deno.mkdirSync(preferred, { recursive: true });
-        Deno.writeTextFileSync(join(preferred, "README.md"), "templates\n");
+        sys.mkdirSync(preferred, { recursive: true });
+        sys.writeTextFileSync(join(preferred, "README.md"), "templates\n");
         return { code: 0, stderr: "" };
       },
     });
@@ -478,7 +480,7 @@ Deno.test("template fetching prefers templates/ over a legacy root template", ()
   }
 });
 
-Deno.test("template fetching reports clone failures without changing files", () => {
+test("template fetching reports clone failures without changing files", () => {
   const root = tempRoot();
   try {
     const result = fetchTemplate(root, "generic", {
@@ -487,13 +489,13 @@ Deno.test("template fetching reports clone failures without changing files", () 
     assertEquals(result.ok, false);
     assertStringIncludes(result.error_message ?? "", "Failed to clone");
     assertStringIncludes(result.error_message ?? "", "offline");
-    assertEquals([...Deno.readDirSync(root)].length, 0);
+    assertEquals([...sys.readDirSync(root)].length, 0);
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("template fetching refuses path traversal and existing destinations before cloning", () => {
+test("template fetching refuses path traversal and existing destinations before cloning", () => {
   const root = tempRoot();
   try {
     let cloneCount = 0;
@@ -509,7 +511,7 @@ Deno.test("template fetching refuses path traversal and existing destinations be
     );
     assertEquals(cloneCount, 0);
 
-    Deno.writeTextFileSync(join(root, "README.md"), "keep me\n");
+    sys.writeTextFileSync(join(root, "README.md"), "keep me\n");
     const conflictResult = fetchTemplate(root, "generic", { cloneRepository });
     assertEquals(conflictResult.ok, false);
     assertStringIncludes(
@@ -523,7 +525,7 @@ Deno.test("template fetching refuses path traversal and existing destinations be
   }
 });
 
-Deno.test("a freshly scaffolded wiki passes lint --strict and check --strict (#376)", () => {
+test("a freshly scaffolded wiki passes lint --strict and check --strict (#376)", () => {
   const root = tempRoot();
   try {
     const result = scaffoldWiki(root, {
@@ -534,7 +536,7 @@ Deno.test("a freshly scaffolded wiki passes lint --strict and check --strict (#3
     const entry = new URL("../src/wiki/cli.ts", import.meta.url).pathname
       .replace(/^\/([A-Za-z]:)/, "$1");
     for (const command of ["lint", "check"]) {
-      const out = new Deno.Command(Deno.execPath(), {
+      const out = new sys.Command(sys.execPath(), {
         args: ["run", "--quiet", "--allow-all", entry, command, "--strict"],
         cwd: root,
         stdout: "piped",

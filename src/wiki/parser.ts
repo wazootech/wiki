@@ -22,6 +22,7 @@
  *   change whether a body predicate sees content.
  */
 
+import * as sys from "./sys.ts";
 import { readText } from "./fspath.ts";
 import { extname } from "@std/path";
 import {
@@ -294,5 +295,5 @@ export function splitLines(text: string): string[] {
  * a normal run and stdout stays comparable with the oracle.
  */
 function logDebug(message: string): void {
-  if (Deno.env.get("WIKI_DEBUG")) console.error(`[wiki.parser] ${message}`);
+  if (sys.env.get("WIKI_DEBUG")) console.error(`[wiki.parser] ${message}`);
 }

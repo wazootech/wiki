@@ -1,3 +1,4 @@
+import { test } from "node:test";
 import { assert, assertEquals } from "@std/assert";
 import { Parser } from "n3";
 import type { Quad } from "@rdfjs/types";
@@ -27,7 +28,7 @@ function has(graph: RdfGraph, s: string, p: string, o: string): boolean {
   return graph.has(namedNode(EX + s), namedNode(p), namedNode(EX + o));
 }
 
-Deno.test("an asserted owl:sameAs still substitutes into every triple", () => {
+test("an asserted owl:sameAs still substitutes into every triple", () => {
   const graph = closureOf(`
 ex:a owl:sameAs ex:b .
 ex:a ex:knows ex:c .
@@ -36,7 +37,7 @@ ex:a ex:knows ex:c .
   assert(has(graph, "b", `${OWL}sameAs`, "a"));
 });
 
-Deno.test("a functional property still derives owl:sameAs and substitutes", () => {
+test("a functional property still derives owl:sameAs and substitutes", () => {
   const graph = closureOf(`
 ex:hasMother a owl:FunctionalProperty .
 ex:gus ex:hasMother ex:m1 , ex:m2 .
@@ -46,7 +47,7 @@ ex:m1 ex:livesIn ex:town .
   assert(has(graph, "m2", `${EX}livesIn`, "town"));
 });
 
-Deno.test("class and property axioms apply and derive no owl:sameAs", () => {
+test("class and property axioms apply and derive no owl:sameAs", () => {
   const graph = closureOf(`
 ex:Student rdfs:subClassOf ex:Person .
 ex:hasChild owl:inverseOf ex:hasParent .

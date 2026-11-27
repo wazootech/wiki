@@ -20,6 +20,8 @@
  *   error and asserts the merge order.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { basename, dirname, join } from "@std/path";
 import { isDirectory } from "../src/wiki/fspath.ts";
 import { assert, assertEquals, assertFalse } from "@std/assert";
@@ -29,12 +31,12 @@ import { Wiki } from "../src/wiki/wiki.ts";
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-session-" });
+  return sys.makeTempDirSync({ prefix: "wiki-session-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -43,8 +45,8 @@ function cleanup(root: string): void {
 /** Write a file below `root`, creating parent directories. */
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -67,7 +69,7 @@ function writeWiki(root: string, pages: Record<string, string>): void {
   write(root, "wiki.yaml", "wiki:\n  input: [wiki]\n");
 }
 
-Deno.test("Wiki.load resolves the config and checks the whole wiki", () => {
+test("Wiki.load resolves the config and checks the whole wiki", () => {
   const root = tempRoot();
   try {
     writeWiki(root, { "Page.md": "# Page\n\nContent." });
@@ -83,7 +85,7 @@ Deno.test("Wiki.load resolves the config and checks the whole wiki", () => {
   }
 });
 
-Deno.test("Wiki.load honours wiki_inputs over the config file", () => {
+test("Wiki.load honours wiki_inputs over the config file", () => {
   const root = tempRoot();
   try {
     writeWiki(root, { "Page.md": "# Page\n" });
@@ -109,7 +111,7 @@ Deno.test("Wiki.load honours wiki_inputs over the config file", () => {
   }
 });
 
-Deno.test("a scoped check reports per-document findings, a whole-wiki check does not", async () => {
+test("a scoped check reports per-document findings, a whole-wiki check does not", async () => {
   const root = tempRoot();
   try {
     writeWiki(root, {
@@ -140,7 +142,7 @@ Deno.test("a scoped check reports per-document findings, a whole-wiki check does
   }
 });
 
-Deno.test("strict promotes a warning into an error and flips the report", async () => {
+test("strict promotes a warning into an error and flips the report", async () => {
   const root = tempRoot();
   try {
     writeWiki(root, {
@@ -169,7 +171,7 @@ Deno.test("strict promotes a warning into an error and flips the report", async 
   }
 });
 
-Deno.test("preflight merges lint then check", () => {
+test("preflight merges lint then check", () => {
   const root = tempRoot();
   return (async () => {
     try {
@@ -199,7 +201,7 @@ Deno.test("preflight merges lint then check", () => {
   })();
 });
 
-Deno.test("withRuntime overrides the site block without mutating the original", () => {
+test("withRuntime overrides the site block without mutating the original", () => {
   const root = tempRoot();
   try {
     writeWiki(root, { "Page.md": "# Page\n" });
@@ -221,15 +223,15 @@ Deno.test("withRuntime overrides the site block without mutating the original", 
   }
 });
 
-Deno.test("locked sources extend wiki.input, and a missing cache warns", () => {
+test("locked sources extend wiki.input, and a missing cache warns", () => {
   const root = tempRoot();
   try {
     writeWiki(root, { "Page.md": "# Page\n" });
     const wikiDir = join(root, "wiki");
     // A locked source with a populated cache, and one whose checkout is gone.
     const cached = join(root, ".wiki", "sources", "cached", "repo");
-    Deno.mkdirSync(cached, { recursive: true });
-    Deno.writeTextFileSync(
+    sys.mkdirSync(cached, { recursive: true });
+    sys.writeTextFileSync(
       join(cached, "Sourced.md"),
       "---\ntype: schema:WebPage\n---\n",
     );

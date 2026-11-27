@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 /**
  * A stand-in for Python's `logging` module.
  *
@@ -42,7 +43,7 @@ function emit(record: LogRecord): void {
   }
   // `logging.lastResort` writes the bare message to stderr at WARNING and above.
   if (record.level === "debug") {
-    if (Deno.env.get("WIKI_DEBUG")) {
+    if (sys.env.get("WIKI_DEBUG")) {
       console.error(`[${record.logger}] ${record.message}`);
     }
     return;

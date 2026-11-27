@@ -7,6 +7,8 @@
  * own formatting), and a new page is honest about what its type requires.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { fromFileUrl, join } from "@std/path";
 import { assert, assertEquals, assertRejects } from "@std/assert";
 
@@ -75,30 +77,30 @@ Nested.
 `;
 
 function writeWiki(extra: Record<string, string> = {}): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-body-verbs-" });
-  Deno.mkdirSync(join(root, "wiki"));
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  const root = sys.makeTempDirSync({ prefix: "wiki-body-verbs-" });
+  sys.mkdirSync(join(root, "wiki"));
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   const pages: Record<string, string> = {
     "PurchaseShape.md": PURCHASE_SHAPE,
     "DeepSeek_(payment).md": LEDGER,
     ...extra,
   };
   for (const [name, content] of Object.entries(pages)) {
-    Deno.writeTextFileSync(join(root, "wiki", name), content);
+    sys.writeTextFileSync(join(root, "wiki", name), content);
   }
   return root;
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 function read(root: string, rel: string): string {
-  return Deno.readTextFileSync(join(root, ...rel.split("/")));
+  return sys.readTextFileSync(join(root, ...rel.split("/")));
 }
 
 async function runCli(
@@ -106,7 +108,7 @@ async function runCli(
   args: readonly string[],
   stdin = "",
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const child = new Deno.Command(Deno.execPath(), {
+  const child = new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd: root,
     stdin: "piped",
@@ -126,7 +128,7 @@ async function runCli(
 
 const PAGE = "wiki/DeepSeek_(payment).md";
 
-Deno.test("findSections ignores headings inside fenced code", () => {
+test("findSections ignores headings inside fenced code", () => {
   const sections = findSections(
     LEDGER.split("---").slice(2).join("---"),
     "Change log",
@@ -135,7 +137,7 @@ Deno.test("findSections ignores headings inside fenced code", () => {
   assertEquals(sections.map((section) => section.level), [2, 3]);
 });
 
-Deno.test("set keeps comments, key order, and scalar spelling", async () => {
+test("set keeps comments, key order, and scalar spelling", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -170,7 +172,7 @@ Deno.test("set keeps comments, key order, and scalar spelling", async () => {
   }
 });
 
-Deno.test("set with value null removes the field", async () => {
+test("set with value null removes the field", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -200,7 +202,7 @@ Deno.test("set with value null removes the field", async () => {
   }
 });
 
-Deno.test("set keeps CRLF line endings", async () => {
+test("set keeps CRLF line endings", async () => {
   const crlf = LEDGER.replaceAll("\n", "\r\n");
   const root = writeWiki({ "DeepSeek_(payment).md": crlf });
   try {
@@ -217,7 +219,7 @@ Deno.test("set keeps CRLF line endings", async () => {
   }
 });
 
-Deno.test("patch appends under a heading, skipping fenced lookalikes", async () => {
+test("patch appends under a heading, skipping fenced lookalikes", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -261,7 +263,7 @@ Deno.test("patch appends under a heading, skipping fenced lookalikes", async () 
   }
 });
 
-Deno.test("patch prepends, replaces, and reports a missing heading", async () => {
+test("patch prepends, replaces, and reports a missing heading", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -304,7 +306,7 @@ Deno.test("patch prepends, replaces, and reports a missing heading", async () =>
   }
 });
 
-Deno.test("a typed create scaffolds required fields first and an H1", async () => {
+test("a typed create scaffolds required fields first and an H1", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -347,9 +349,8 @@ Deno.test("a typed create scaffolds required fields first and an H1", async () =
   }
 });
 
-Deno.test(
+test(
   "wiki new, set, and patch map statuses to exit codes",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {
@@ -467,7 +468,7 @@ Deno.test(
   },
 );
 
-Deno.test("an unformatted page is not reformatted by an unrelated set", async () => {
+test("an unformatted page is not reformatted by an unrelated set", async () => {
   // Two blank lines before the H1: `wiki fmt` would collapse them.
   const messy = LEDGER.replace("---\n\n# DeepSeek", "---\n\n\n# DeepSeek");
   const root = writeWiki({ "DeepSeek_(payment).md": messy });
@@ -522,7 +523,7 @@ async function patchLog(
   }
 }
 
-Deno.test("patch keeps a list tight when appending an item to it", async () => {
+test("patch keeps a list tight when appending an item to it", async () => {
   assertEquals(
     await patchLog("append", "- 2026-10-10 — Test entry.\n"),
     HISTORY.replace(
@@ -532,7 +533,7 @@ Deno.test("patch keeps a list tight when appending an item to it", async () => {
   );
 });
 
-Deno.test("patch keeps a list tight when prepending an item to it", async () => {
+test("patch keeps a list tight when prepending an item to it", async () => {
   assertEquals(
     await patchLog("prepend", "- 2026-09-01 — Drafted."),
     HISTORY.replace(
@@ -542,7 +543,7 @@ Deno.test("patch keeps a list tight when prepending an item to it", async () => 
   );
 });
 
-Deno.test("patch separates blocks that are not items of the same list", async () => {
+test("patch separates blocks that are not items of the same list", async () => {
   // A paragraph after a list, and an ordered item after `-` items (a new list in
   // CommonMark), both keep the blank line.
   assertEquals(
@@ -574,9 +575,8 @@ sh:property:
 # Article Shape
 `;
 
-Deno.test(
+test(
   "file new leaves a headline out of the frontmatter when the H1 supplies it (#402)",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki({ "ArticleShape.md": ARTICLE_SHAPE });
     try {
@@ -607,7 +607,7 @@ Deno.test(
         assert(!probe, JSON.stringify(check.errors));
         const lint = await runCli(root, ["lint", "--strict"]);
         assert(!lint.stderr.includes("repeats the derived"), lint.stderr);
-        Deno.removeSync(join(root, "wiki", "Scaffold_Probe.md"));
+        sys.removeSync(join(root, "wiki", "Scaffold_Probe.md"));
       }
     } finally {
       cleanup(root);
@@ -615,9 +615,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "file new keeps name, and a headline that differs from the H1 (#402)",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {

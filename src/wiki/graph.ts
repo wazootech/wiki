@@ -35,6 +35,7 @@
  *   flagged where they happen rather than papered over.
  */
 
+import * as sys from "./sys.ts";
 import {
   IS_WINDOWS,
   isDirectory,
@@ -164,7 +165,7 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
   const cacheRoot = join(config.config_root, ".wiki", "sources");
   if (
     lockfile.sources.size === 0 && isDirectory(cacheRoot) &&
-    [...Deno.readDirSync(cacheRoot)].length > 0
+    [...sys.readDirSync(cacheRoot)].length > 0
   ) {
     logger.warning(
       `Source cache exists under ${cacheRoot} but wiki.lock has no sources; ` +

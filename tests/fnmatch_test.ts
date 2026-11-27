@@ -7,6 +7,8 @@
  * from) a command's input set.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals } from "@std/assert";
 import { fnmatchCase } from "../src/wiki/fnmatch.ts";
 
@@ -18,12 +20,12 @@ interface GoldenRow {
 }
 
 const golden = JSON.parse(
-  Deno.readTextFileSync(
+  sys.readTextFileSync(
     new URL("../probes/fnmatch/golden.json", import.meta.url),
   ),
 ) as { readonly results: readonly GoldenRow[] };
 
-Deno.test("fnmatchCase agrees with fnmatch.fnmatchcase across the corpus", () => {
+test("fnmatchCase agrees with fnmatch.fnmatchcase across the corpus", () => {
   const mismatches: string[] = [];
   for (const row of golden.results) {
     const actual = fnmatchCase(row.name, row.pattern);
@@ -38,12 +40,12 @@ Deno.test("fnmatchCase agrees with fnmatch.fnmatchcase across the corpus", () =>
   assertEquals(mismatches, []);
 });
 
-Deno.test("the corpus covers both verdicts, so agreement is not vacuous", () => {
+test("the corpus covers both verdicts, so agreement is not vacuous", () => {
   const matching = golden.results.filter((row) => row.matches).length;
   assertEquals(matching > 0 && matching < golden.results.length, true);
 });
 
-Deno.test("the golden is the Python 3.12 translate form", () => {
+test("the golden is the Python 3.12 translate form", () => {
   // A Python upgrade changes `fnmatch.translate`'s shape. Pinning it here means
   // the golden's provenance is visible rather than implied, so a toolchain bump
   // shows up as a failing assertion instead of a silently weakened corpus.
@@ -53,7 +55,7 @@ Deno.test("the golden is the Python 3.12 translate form", () => {
   }
 });
 
-Deno.test("double star is not a globstar: it crosses separators like a star", () => {
+test("double star is not a globstar: it crosses separators like a star", () => {
   // The reason `@std/path`'s `globToRegExp` is unusable here: a globstar would
   // stop at `/`, quietly narrowing every exclude pattern.
   assertEquals(fnmatchCase("a/b/c.md", "a/*"), true);
@@ -61,7 +63,7 @@ Deno.test("double star is not a globstar: it crosses separators like a star", ()
   assertEquals(fnmatchCase("a/b/c.md", "a/**/c.md"), true);
 });
 
-Deno.test("a trailing separator in the pattern is required, not optional", () => {
+test("a trailing separator in the pattern is required, not optional", () => {
   // Oracle-verified: `**` is a star, but the `/` next to it is a literal, so
   // these reject a name with no directory component.
   assertEquals(fnmatchCase("x.md", "**/x.md"), false);
@@ -70,7 +72,7 @@ Deno.test("a trailing separator in the pattern is required, not optional", () =>
   assertEquals(fnmatchCase("wiki/a/x.md", "wiki/**/*.md"), true);
 });
 
-Deno.test("an inverted range matches nothing, as in Python", () => {
+test("an inverted range matches nothing, as in Python", () => {
   // CPython's range fix-up drops `[z-a]` entirely, leaving a never-matching
   // pattern. Passing it through to JavaScript would instead throw a syntax
   // error mid-command, so this is the case that must not regress.
@@ -78,14 +80,14 @@ Deno.test("an inverted range matches nothing, as in Python", () => {
   assertEquals(fnmatchCase("z-a.md", "[z-a].md"), false);
 });
 
-Deno.test("unclosed bracket and star crossings behave like fnmatch", () => {
+test("unclosed bracket and star crossings behave like fnmatch", () => {
   assertEquals(fnmatchCase("[", "["), true);
   assertEquals(fnmatchCase("bracket[.md", "bracket[.md"), true);
   // `fnmatch` matches newlines because it compiles with dot-all.
   assertEquals(fnmatchCase("a\nb.md", "*.md"), true);
 });
 
-Deno.test("a leading ] in a class is a literal, including after !", () => {
+test("a leading ] in a class is a literal, including after !", () => {
   // Python's `translate` treats a `]` in first position (or right after the
   // `!` negation) as a literal member of the class. The naive translation
   // closes the class early and miscompiles the pattern.

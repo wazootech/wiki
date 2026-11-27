@@ -16,6 +16,8 @@
  * Linux CI the forward-slash-only implementation would pass and the regression
  * would return unnoticed.
  */
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals } from "@std/assert";
 import { install } from "../src/wiki/sources.ts";
 import { Config } from "../src/wiki/config.ts";
@@ -28,7 +30,7 @@ import { Config } from "../src/wiki/config.ts";
  * clone failure -- which is what lets this run without a real repository.
  */
 function inferredNameOr(url: string): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-source-name-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-source-name-" });
   try {
     const config = Config.load(root);
     const lockfile = install(config, url);
@@ -39,11 +41,11 @@ function inferredNameOr(url: string): string {
     // Any other failure means naming was accepted and the clone was attempted.
     return "<accepted>";
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 }
 
-Deno.test("a source name is inferred from either path separator", () => {
+test("a source name is inferred from either path separator", () => {
   // Forward slashes: the documented URL and POSIX forms.
   assertEquals(inferredNameOr("/srv/git/some-source"), "<accepted>");
   assertEquals(
@@ -57,13 +59,13 @@ Deno.test("a source name is inferred from either path separator", () => {
   assertEquals(inferredNameOr("C:\\git\\some-source\\"), "<accepted>");
 });
 
-Deno.test("a rejected name names the whole path, which is the bug's signature", () => {
+test("a rejected name names the whole path, which is the bug's signature", () => {
   // Documents what the failure looked like, so a future regression is
   // recognisable from the message rather than merely present in a log.
   const message = (() => {
     try {
       install(
-        Config.load(Deno.makeTempDirSync({ prefix: "wiki-source-name-" })),
+        Config.load(sys.makeTempDirSync({ prefix: "wiki-source-name-" })),
         "/srv/git/some-source",
       );
       return "";
@@ -75,7 +77,7 @@ Deno.test("a rejected name names the whole path, which is the bug's signature", 
   assertEquals(message.includes("Unsafe source name"), false);
 });
 
-Deno.test("trailing separators never become the source name", () => {
+test("trailing separators never become the source name", () => {
   // Both separators, stripped. A name of "." or "" would fall through to the
   // "source" default, which is silently wrong rather than loudly broken.
   for (

@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 
@@ -14,7 +16,7 @@ async function runCli(
   args: readonly string[],
   cwd: string,
 ): Promise<CliResult> {
-  const result = await new Deno.Command(Deno.execPath(), {
+  const result = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd,
     stdout: "piped",
@@ -28,16 +30,15 @@ async function runCli(
 }
 
 function createRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-cli-lifecycle-" });
+  return sys.makeTempDirSync({ prefix: "wiki-cli-lifecycle-" });
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
-Deno.test(
+test(
   "init scaffolds a wiki and honors repo-derived defaults",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = createRoot();
     try {
@@ -45,10 +46,10 @@ Deno.test(
       assertEquals(result.code, 0, result.stderr);
       assertStringIncludes(result.stdout, "Initialized wiki config");
       assertEquals(result.stderr, "");
-      assert(Deno.statSync(`${root}/wiki.yml`).isFile);
-      assert(Deno.statSync(`${root}/README.md`).isFile);
-      assert(Deno.statSync(`${root}/wiki`).isDirectory);
-      const config = Deno.readTextFileSync(`${root}/wiki.yml`);
+      assert(sys.statSync(`${root}/wiki.yml`).isFile);
+      assert(sys.statSync(`${root}/README.md`).isFile);
+      assert(sys.statSync(`${root}/wiki`).isDirectory);
+      const config = sys.readTextFileSync(`${root}/wiki.yml`);
       assertStringIncludes(config, "https://wazootech.github.io/wiki/");
     } finally {
       cleanup(root);
@@ -56,9 +57,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "non-interactive init selects the default namespace and explains how to override it",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = createRoot();
     try {
@@ -70,7 +70,7 @@ Deno.test(
       );
       assertStringIncludes(result.stderr, "--repo or --graph-context-wiki");
       assertStringIncludes(
-        Deno.readTextFileSync(`${root}/wiki.yml`),
+        sys.readTextFileSync(`${root}/wiki.yml`),
         'wiki: "https://wiki.example.org/"',
       );
     } finally {
@@ -79,32 +79,30 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "init template refuses an existing README without overwriting it",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = createRoot();
     try {
-      Deno.writeTextFileSync(`${root}/README.md`, "keep me\n");
+      sys.writeTextFileSync(`${root}/README.md`, "keep me\n");
       const result = await runCli(["init", "--template", "generic"], root);
       assertEquals(result.code, 1);
       assertStringIncludes(result.stderr, "README.md already exists");
-      assertEquals(Deno.readTextFileSync(`${root}/README.md`), "keep me\n");
-      assertEquals([...Deno.readDirSync(root)].length, 1);
+      assertEquals(sys.readTextFileSync(`${root}/README.md`), "keep me\n");
+      assertEquals([...sys.readDirSync(root)].length, 1);
     } finally {
       cleanup(root);
     }
   },
 );
 
-Deno.test(
+test(
   "source lifecycle commands and install alias run on an empty config",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = createRoot();
     try {
-      Deno.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
-      Deno.mkdirSync(`${root}/wiki`);
+      sys.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
+      sys.mkdirSync(`${root}/wiki`);
       for (const command of ["install", "i"]) {
         const result = await runCli(["-c", "wiki.yml", command], root);
         assertEquals(result.code, 0, result.stderr);
@@ -127,11 +125,10 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "upgrade help is local and documents check, confirmation, and verbosity flags",
-  { permissions: { run: true } },
   async () => {
-    const result = await runCli(["upgrade", "--help"], Deno.cwd());
+    const result = await runCli(["upgrade", "--help"], sys.cwd());
     assertEquals(result.code, 0, result.stderr);
     assertStringIncludes(result.stdout, "wiki upgrade [OPTIONS]");
     assertStringIncludes(result.stdout, "-c, --check");

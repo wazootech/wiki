@@ -8,6 +8,7 @@
  * repository should not each reimplement the page loop.
  */
 
+import * as sys from "../src/wiki/sys.ts";
 import { dirname, fromFileUrl, join, resolve } from "@std/path";
 import {
   buildThemedSite,
@@ -96,5 +97,5 @@ function parseOutputDir(args: string[]): string {
 
 if (import.meta.main) {
   const config = Config.load(join(DOCS_DIR, "wiki.yml"));
-  await buildDocsSite(config, parseOutputDir(Deno.args));
+  await buildDocsSite(config, parseOutputDir(sys.args));
 }

@@ -26,6 +26,8 @@
  * them.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { basename, dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import {
@@ -52,12 +54,12 @@ import {
 } from "../src/wiki/shacl.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-audit-" });
+  return sys.makeTempDirSync({ prefix: "wiki-audit-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -65,8 +67,8 @@ function cleanup(root: string): void {
 
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -78,7 +80,7 @@ function withRoot(run: (root: string) => void | Promise<void>): Promise<void> {
 
 const PAGE_FRONTMATTER = "---\ntype: TechArticle\n---\n";
 
-Deno.test("filenames are linted against filename_pattern", () =>
+test("filenames are linted against filename_pattern", () =>
   withRoot((root) => {
     // The Python test writes the two files into the input dir itself, so the
     // root doubles as the wiki.
@@ -97,7 +99,7 @@ Deno.test("filenames are linted against filename_pattern", () =>
     );
   }));
 
-Deno.test("filename_pattern is a custom pattern, not a preset style", () =>
+test("filename_pattern is a custom pattern, not a preset style", () =>
   withRoot(async (root) => {
     // `test_filename_pattern_reports_non_matching_names`: the same two files
     // pass under the default pattern and fail under an inverted one, which is
@@ -114,7 +116,7 @@ Deno.test("filename_pattern is a custom pattern, not a preset style", () =>
     assert(report.warnings[0]!.message.includes("ethan-davidson.md"));
   }));
 
-Deno.test("a filename_pattern never applies to YAML documents", () =>
+test("a filename_pattern never applies to YAML documents", () =>
   withRoot((root) => {
     write(root, "Invalid_Name.yml", "type: Thing\n");
     write(root, "Invalid_Name.yaml", "type: Thing\n");
@@ -126,7 +128,7 @@ Deno.test("a filename_pattern never applies to YAML documents", () =>
     assertEquals(lintFilenames(config), []);
   }));
 
-Deno.test("broken wikilinks and markdown links are both reported", () =>
+test("broken wikilinks and markdown links are both reported", () =>
   withRoot((root) => {
     write(root, "target-page.md", "content");
     write(
@@ -152,7 +154,7 @@ Deno.test("broken wikilinks and markdown links are both reported", () =>
     );
   }));
 
-Deno.test("a wiki: CURIE in frontmatter must name a real route", () =>
+test("a wiki: CURIE in frontmatter must name a real route", () =>
   withRoot((root) => {
     write(root, "wiki.md", "---\ntype: SoftwareApplication\n---\n");
     write(
@@ -168,7 +170,7 @@ Deno.test("a wiki: CURIE in frontmatter must name a real route", () =>
     assert(warnings[0]!.includes("Metadata reference"));
   }));
 
-Deno.test("a CURIE fragment and a YAML document target both resolve", () =>
+test("a CURIE fragment and a YAML document target both resolve", () =>
   withRoot((root) => {
     // `wiki:Microdata#example` is the same document as `wiki:Microdata`, and a
     // wikilink to a `.yml` target is a document link like any other.
@@ -185,7 +187,7 @@ Deno.test("a CURIE fragment and a YAML document target both resolve", () =>
     assertEquals(lintBrokenLinks(config), []);
   }));
 
-Deno.test("a wikilink target needs a path specifier, not a space", () =>
+test("a wikilink target needs a path specifier, not a space", () =>
   withRoot(async (root) => {
     // `[[Ethan Davidson]]` is not `[[Ethan_Davidson]]`: wikilink resolution does
     // not space-normalize, so the pretty spelling is a broken link.
@@ -205,7 +207,7 @@ Deno.test("a wikilink target needs a path specifier, not a space", () =>
     );
   }));
 
-Deno.test("headings lint: numbering, title case, and Setext", () =>
+test("headings lint: numbering, title case, and Setext", () =>
   withRoot((root) => {
     write(
       root,
@@ -229,7 +231,7 @@ Deno.test("headings lint: numbering, title case, and Setext", () =>
     );
   }));
 
-Deno.test("headings lint: sentence case for H2+ only", () =>
+test("headings lint: sentence case for H2+ only", () =>
   withRoot((root) => {
     const cases: readonly [string, readonly string[], boolean][] = [
       // `#` is the page title, where title case is correct.
@@ -264,7 +266,7 @@ Deno.test("headings lint: sentence case for H2+ only", () =>
     });
   }));
 
-Deno.test("headings lint never reports Setext syntax, in any form", () =>
+test("headings lint never reports Setext syntax, in any form", () =>
   withRoot((root) => {
     // `wiki fmt` converts Setext headings to ATX, so they are not an editorial
     // error; and a Setext underline inside a fence is content, so it is not a
@@ -305,7 +307,7 @@ Deno.test("headings lint never reports Setext syntax, in any form", () =>
     );
   }));
 
-Deno.test("heading levels increase by one at a time", () =>
+test("heading levels increase by one at a time", () =>
   withRoot(async (root) => {
     const cases: readonly [string, number][] = [
       ["# A\n\n### C\n", 1],
@@ -326,7 +328,7 @@ Deno.test("heading levels increase by one at a time", () =>
     }
   }));
 
-Deno.test("ESLint duplicate heading lint preserves Wiki's H2+ normalization", () =>
+test("ESLint duplicate heading lint preserves Wiki's H2+ normalization", () =>
   withRoot(async (root) => {
     const cases: readonly [string, number][] = [
       ["## Foo\n\nBody.\n\n## Foo\n", 1],
@@ -352,7 +354,7 @@ Deno.test("ESLint duplicate heading lint preserves Wiki's H2+ normalization", ()
     }
   }));
 
-Deno.test("ESLint duplicate findings preserve Wiki report code and severity", () =>
+test("ESLint duplicate findings preserve Wiki report code and severity", () =>
   withRoot(async (root) => {
     write(
       root,
@@ -371,7 +373,7 @@ Deno.test("ESLint duplicate findings preserve Wiki report code and severity", ()
     assertEquals(report.errors[0]!.severity, "error");
   }));
 
-Deno.test("ESLint Markdown rules map together into Wiki severities", () =>
+test("ESLint Markdown rules map together into Wiki severities", () =>
   withRoot(async (root) => {
     write(root, "Page.md", `${PAGE_FRONTMATTER}## Foo\n\n#### Foo\n`);
     const config = new Config({
@@ -389,10 +391,10 @@ Deno.test("ESLint Markdown rules map together into Wiki severities", () =>
     ]);
   }));
 
-Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
+test("link_style flags wikilinks in prose, and only in prose", () =>
   withRoot((root) => {
     const wiki = join(root, "wiki");
-    Deno.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
     write(root, "wiki/Target.md", "# Target\n");
     write(root, "wiki/Guide.md", "# Guide\n\nSee [[Target]] for details.\n");
     const config = new Config({
@@ -426,7 +428,7 @@ Deno.test("link_style flags wikilinks in prose, and only in prose", () =>
     );
   }));
 
-Deno.test("links inside fenced code are neither broken links nor style violations (#362)", () =>
+test("links inside fenced code are neither broken links nor style violations (#362)", () =>
   withRoot((root) => {
     // A fence holds examples, so a link inside one is code, not a link: the
     // link audit and the style lint agree on that, as they already did for
@@ -457,7 +459,7 @@ Deno.test("links inside fenced code are neither broken links nor style violation
     assertEquals(lintLinkStyle(config), []);
   }));
 
-Deno.test("run_lint routes each rule at its configured severity", () =>
+test("run_lint routes each rule at its configured severity", () =>
   withRoot(async (root) => {
     // `test_run_lint_severity_and_promotion`, for one rule across all three
     // severities — the same routing every other rule shares.
@@ -484,7 +486,7 @@ Deno.test("run_lint routes each rule at its configured severity", () =>
     }
   }));
 
-Deno.test("run_lint severity applies to the style rules too", () =>
+test("run_lint severity applies to the style rules too", () =>
   withRoot(async (root) => {
     // The four `test_run_lint_*_severity` tests: each rule reports into
     // `errors` and flips `ok` when it is configured as an error.
@@ -513,7 +515,7 @@ Deno.test("run_lint severity applies to the style rules too", () =>
 
     for (const [rule, body, fragment, lintConfig] of cases) {
       const wiki = join(root, "wiki");
-      Deno.mkdirSync(wiki, { recursive: true });
+      sys.mkdirSync(wiki, { recursive: true });
       write(root, "wiki/x.md", `${PAGE_FRONTMATTER}${body}`);
       const report = await runLint(
         new Config({
@@ -530,7 +532,7 @@ Deno.test("run_lint severity applies to the style rules too", () =>
     }
   }));
 
-Deno.test("run_lint stops at an unsafe route instead of linting it", () =>
+test("run_lint stops at an unsafe route instead of linting it", () =>
   withRoot(async (root) => {
     // A route the site could not serve makes every link finding speculative, so
     // the safety error is the whole report. A space is the unsafe character
@@ -544,7 +546,7 @@ Deno.test("run_lint stops at an unsafe route instead of linting it", () =>
     assertEquals(report.warnings.length, 0);
   }));
 
-Deno.test("load_shapes survives a missing input directory", () =>
+test("load_shapes survives a missing input directory", () =>
   withRoot(async (root) => {
     assertEquals(loadShapes(new RdfGraph()).size, 0);
     const config = new Config({
@@ -554,10 +556,10 @@ Deno.test("load_shapes survives a missing input directory", () =>
     assertEquals(loadShapes(graph).size, 0);
   }));
 
-Deno.test("a .ttl shape file constrains the pages beside it", () =>
+test("a .ttl shape file constrains the pages beside it", () =>
   withRoot(async (root) => {
     const wiki = join(root, "wiki");
-    Deno.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
     write(
       root,
       "wiki/person-shape.ttl",
@@ -623,10 +625,10 @@ schema:PersonShape
     assertFalse((await checkShaclAll(config)).conforms);
   }));
 
-Deno.test("shapes can be declared in markdown frontmatter", () =>
+test("shapes can be declared in markdown frontmatter", () =>
   withRoot(async (root) => {
     const wiki = join(root, "wiki");
-    Deno.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
     const config = new Config({ wiki: { input: [wiki] } });
     write(
       root,
@@ -661,10 +663,10 @@ Deno.test("shapes can be declared in markdown frontmatter", () =>
     assert(valid !== null && valid.conforms);
   }));
 
-Deno.test("wazoo:layout must resolve to a readable .html file", () =>
+test("wazoo:layout must resolve to a readable .html file", () =>
   withRoot((root) => {
     const wiki = join(root, "wiki");
-    Deno.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
     write(
       root,
       "wiki/page.md",
@@ -714,7 +716,7 @@ const ARTICLE_SCHEMA = {
 /** A wiki whose `Broken.md` fails a required-field schema, and a missing ref. */
 function writeSeverityFixture(root: string): string {
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
+  sys.mkdirSync(wiki, { recursive: true });
   writeSchema(root, "schemas/article.json", ARTICLE_SCHEMA);
   write(
     root,
@@ -755,10 +757,10 @@ function issueMessages(report: {
   return [...errors, ...warnings];
 }
 
-Deno.test("run_check reports frontmatter schema errors", () =>
+test("run_check reports frontmatter schema errors", () =>
   withRoot(async (root) => {
     const wiki = join(root, "wiki");
-    Deno.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
     writeSchema(root, "schemas/article.json", ARTICLE_SCHEMA);
     write(
       root,
@@ -786,7 +788,7 @@ Deno.test("run_check reports frontmatter schema errors", () =>
     );
   }));
 
-Deno.test("run_check routes both schema rules at their severity", () =>
+test("run_check routes both schema rules at their severity", () =>
   withRoot(async (root) => {
     const wiki = writeSeverityFixture(root);
     const base = { wiki: { input: [wiki] }, config_root: root };
@@ -852,7 +854,7 @@ Deno.test("run_check routes both schema rules at their severity", () =>
     }
   }));
 
-Deno.test("run_check skips the schema pass when both rules are off", () =>
+test("run_check skips the schema pass when both rules are off", () =>
   withRoot(async (root) => {
     const wiki = writeSeverityFixture(root);
     const results = await runCheck(
@@ -878,7 +880,7 @@ Deno.test("run_check skips the schema pass when both rules are off", () =>
     );
   }));
 
-Deno.test("run_check in scoped mode reports per-file findings", () =>
+test("run_check in scoped mode reports per-file findings", () =>
   withRoot(async (root) => {
     // `build --only` and the watcher call `_run_check(file_paths=[...])`, which
     // skips the whole-wiki SHACL pass and reports a file with no metadata at all
@@ -897,7 +899,7 @@ Deno.test("run_check in scoped mode reports per-file findings", () =>
     assertEquals(basename(results.errors[0]!.path!), "Plain.md");
   }));
 
-Deno.test("ESLint heading findings preserve Wiki report severity and body line numbers", () =>
+test("ESLint heading findings preserve Wiki report severity and body line numbers", () =>
   withRoot(async (root) => {
     write(
       root,
