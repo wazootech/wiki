@@ -1,6 +1,5 @@
-import { BuildError } from "../errors.ts";
 import { dirname, join, resolve } from "@std/path";
-import { isFile, pathExists, relativeWithin } from "../fspath.ts";
+import { isFile, pathExists } from "../fspath.ts";
 import type { Wiki } from "../wiki.ts";
 
 import { buildAssetManifest, iterAssetFiles } from "../assets.ts";
@@ -16,57 +15,12 @@ import {
 } from "../schemas/reports.ts";
 import { buildIndexHtml, buildPageHtml } from "./html.ts";
 import { buildSite } from "./build.ts";
-
-function pathIsSameOrAncestor(ancestor: string, descendant: string): boolean {
-  const root = resolve(ancestor);
-  const candidate = resolve(descendant);
-  if (root === candidate) return true;
-  try {
-    relativeWithin(candidate, root);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function validateOutputDir(pageOutputDir: string, wiki: Wiki): void {
-  const protectedPaths: [string, string][] = [
-    ["config root", wiki.config.config_root],
-    ...wiki.config.wiki.input.map((path) =>
-      ["wiki input", path] as [string, string]
-    ),
-    ...wiki.config.wiki.assets.map((path) =>
-      ["wiki asset", path] as [string, string]
-    ),
-  ];
-  const layout = wiki.config.site.layout;
-  if (layout !== null && isFile(layout)) {
-    protectedPaths.push(["page layout", dirname(layout)]);
-  }
-  for (const [label, path] of protectedPaths) {
-    if (!pathIsSameOrAncestor(pageOutputDir, path)) continue;
-    throw new BuildError(
-      `refusing to clean build output path ${
-        resolve(pageOutputDir)
-      } because it overlaps ${label} at ${
-        resolve(path)
-      }. Choose a separate output directory such as _site.`,
-    );
-  }
-}
-
-function outputSubdirectory(outputDir: string, baseUrl: string): string {
-  const relative = baseUrl.replace(/^\/+|\/+$/g, "");
-  const parts = relative.split("/").filter((part) => part !== "");
-  if (parts.some((part) => part === "." || part === "..")) {
-    throw new BuildError(`invalid site.base_url path: ${baseUrl}`);
-  }
-  return parts.length === 0 ? outputDir : join(outputDir, ...parts);
-}
-
-function relativeOutputPath(path: string, outputDir: string): string {
-  return relativeWithin(resolve(path), resolve(outputDir));
-}
+import {
+  outputSubdirectory,
+  relativeOutputPath,
+  validateOutputDir,
+} from "./output_dir.ts";
+import { publicConfig, publicLeaks, visibilityErrors } from "./public.ts";
 
 export async function buildStaticSite(
   wiki: Wiki,
@@ -107,12 +61,28 @@ export async function buildStaticSite(
 
   const baseUrl = options.base_url ?? config.site.base_url;
   const urlStyle = options.url_style ?? config.site.url_style;
-  const site = buildSite(config, baseUrl, urlStyle);
+  const published = options.public_only ? publicConfig(config) : config;
+  const site = buildSite(published, baseUrl, urlStyle);
+  if (options.public_only) {
+    const leaks = [
+      ...visibilityErrors(config),
+      ...publicLeaks(site, baseUrl, urlStyle),
+    ];
+    if (leaks.length > 0) {
+      return {
+        ok: false,
+        page_count: 0,
+        asset_count: 0,
+        written_paths: [],
+        error_message: `public build refused:\n  ${leaks.join("\n  ")}`,
+      };
+    }
+  }
   const outputDir = resolve(options.output_dir);
   const pageOutputDir = resolve(outputSubdirectory(outputDir, baseUrl));
   const manifest = [
-    ...buildPageManifest(config, pageOutputDir, baseUrl, urlStyle),
-    ...buildAssetManifest(config, pageOutputDir, baseUrl),
+    ...buildPageManifest(published, pageOutputDir, baseUrl, urlStyle),
+    ...buildAssetManifest(published, pageOutputDir, baseUrl),
   ];
   const collisions = detectOutputCollisions(manifest);
   if (collisions.length > 0) {
@@ -162,7 +132,7 @@ export async function buildStaticSite(
     writtenPaths.push(relativeOutputPath(outputPath, outputDir));
   }
 
-  const assetEntries = buildAssetManifest(config, pageOutputDir, baseUrl);
+  const assetEntries = buildAssetManifest(published, pageOutputDir, baseUrl);
   for (const entry of assetEntries) {
     Deno.mkdirSync(dirname(entry.output_path), { recursive: true });
     if (entry.source !== null) {
@@ -174,7 +144,7 @@ export async function buildStaticSite(
   return {
     ok: true,
     page_count: site.pages.length,
-    asset_count: iterAssetFiles(config).length,
+    asset_count: iterAssetFiles(published).length,
     written_paths: writtenPaths,
   };
 }

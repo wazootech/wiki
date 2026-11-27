@@ -1049,6 +1049,7 @@ interface ParsedBuildCommand {
   readonly reload: boolean;
   readonly cache: boolean;
   readonly noCheck: boolean;
+  readonly publicOnly: boolean;
   readonly verbose: boolean;
 }
 
@@ -1062,6 +1063,7 @@ function parseBuildCommandArgs(
   let reload = false;
   let cache = false;
   let noCheck = false;
+  let publicOnly = false;
   let verbose = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -1076,7 +1078,7 @@ function parseBuildCommandArgs(
     };
     if (token === "--help" || token === "-h") {
       console.log(
-        `Usage: wiki build [OPTIONS]\n\nBuild static HTML site from wiki documents.\n\nOptions:\n  --output-dir PATH       Directory to write site files. (default: _site)\n  --site-base-url TEXT    Override site.base_url. Empty string for root-level URLs.\n  --site-url-style STYLE  Override site.url_style: file or dir.\n  --render                Render inline SPARQL blocks before building.\n  --reload                Rebuild graph before --render.\n  --cache                 Persist graph under .wiki/cache when using --render.\n  --no-check              Skip lint and check preflight before building.\n  -v, --verbose           Print generated file paths.`,
+        `Usage: wiki build [OPTIONS]\n\nBuild static HTML site from wiki documents.\n\nOptions:\n  --output-dir PATH       Directory to write site files. (default: _site)\n  --site-base-url TEXT    Override site.base_url. Empty string for root-level URLs.\n  --site-url-style STYLE  Override site.url_style: file or dir.\n  --render                Render inline SPARQL blocks before building.\n  --reload                Rebuild graph before --render.\n  --cache                 Persist graph under .wiki/cache when using --render.\n  --no-check              Skip lint and check preflight before building.\n  --public                Build only pages marked wazoo:visibility: public.\n  -v, --verbose           Print generated file paths.`,
       );
       return EXIT_OK;
     }
@@ -1084,6 +1086,7 @@ function parseBuildCommandArgs(
     else if (token === "--reload") reload = true;
     else if (token === "--cache") cache = true;
     else if (token === "--no-check") noCheck = true;
+    else if (token === "--public") publicOnly = true;
     else if (token === "-v" || token === "--verbose") verbose = true;
     else if (token === "--output-dir") {
       const value = readValue();
@@ -1130,6 +1133,7 @@ function parseBuildCommandArgs(
     reload,
     cache,
     noCheck,
+    publicOnly,
     verbose,
   };
 }
@@ -1598,6 +1602,7 @@ async function runBuildCommand(
       reload: parsed.reload,
       cache: parsed.cache,
       noCheck: parsed.noCheck,
+      publicOnly: parsed.publicOnly,
       verbose: parsed.verbose,
     });
   } catch (error) {

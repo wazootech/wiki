@@ -170,6 +170,7 @@ export interface BuildOptions {
   readonly reload_graph?: boolean;
   readonly disk_cache?: boolean;
   readonly skip_preflight?: boolean;
+  readonly public_only?: boolean;
   readonly verbose?: boolean;
 }
 
