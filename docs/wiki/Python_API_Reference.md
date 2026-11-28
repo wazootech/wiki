@@ -24,8 +24,8 @@ wiki --help
 | -------------------------- | ------------------------ |
 | Linux x64 (glibc 2.27+)    | `manylinux_2_27_x86_64`  |
 | Linux ARM64 (glibc 2.27+)  | `manylinux_2_27_aarch64` |
-| macOS 12+ on Intel         | `macosx_12_0_x86_64`     |
-| macOS 12+ on Apple silicon | `macosx_12_0_arm64`      |
+| macOS 13+ on Intel         | `macosx_13_0_x86_64`     |
+| macOS 13+ on Apple silicon | `macosx_13_0_arm64`      |
 | Windows x64                | `win_amd64`              |
 | Windows ARM64              | `win_arm64`              |
 

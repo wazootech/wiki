@@ -1,6 +1,6 @@
 """Locate the Wiki binary and build the argv that runs it.
 
-Each platform wheel embeds the ``deno compile`` standalone for its target in
+Each platform wheel embeds the compiled standalone for its target in
 ``.data/scripts/``, so pip installs it as ``wiki`` (``wiki.exe``) straight onto
 ``PATH`` with no Python in between, the way ruff and uv ship. This module is
 for Python callers: it finds that installed binary and runs it.

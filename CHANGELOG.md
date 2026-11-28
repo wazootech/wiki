@@ -13,6 +13,9 @@
   instead of starting a bundled Deno. It no longer downloads anything on first
   use (0.7.1 fetched several hundred packages then), and it works on musl Linux.
 - `wiki upgrade` tells npm and Bun installs how to update.
+- The standalone binaries and PyPI wheels are compiled with Bun instead of
+  Deno. macOS wheels now require macOS 13 or newer. The binaries don't read
+  `.env` or `bunfig.toml` from the folder they run in.
 
 ### Removed
 

@@ -2,7 +2,7 @@
 
 `wazootech-wiki` 0.2.0 and later installs the [Wiki](https://github.com/wazootech/wiki)
 CLI as a native binary, the way ruff and uv ship. Each platform wheel embeds the
-standalone executable that `deno compile` builds from the Deno/TypeScript engine
+standalone executable that `bun build --compile` builds from the TypeScript engine
 and installs it as `wiki` on your `PATH`. No Python runs in the command's hot
 path, and no Deno, Node.js, or download step is needed.
 
@@ -12,7 +12,7 @@ wiki init
 wiki check
 ```
 
-Wheels exist for Linux (glibc 2.27+), macOS 12+, and Windows, each on x64 and
+Wheels exist for Linux (glibc 2.27+), macOS 13+, and Windows, each on x64 and
 ARM64. Elsewhere (musl Linux such as Alpine), pip installs a binary-less
 fallback whose `wiki` runs a standalone `wazootech-wiki` from `PATH`, and says
 so clearly when there is none.

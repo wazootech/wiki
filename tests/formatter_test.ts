@@ -295,7 +295,7 @@ test(
   "fmt needs no `run` permission, because nothing spawns a formatter",
   () => {
     // The subprocess this replaced needed `--allow-run` on every `wiki fmt`
-    // invocation, and could not work at all under `deno compile`. Both facts are
+    // invocation, and could not work at all in a compiled binary. Both facts are
     // gone only while nothing spawns anything, so the CLI is run here with every
     // permission *except* `run`.
     const root = sys.makeTempDirSync({ prefix: "wiki-fmt-perm-" });

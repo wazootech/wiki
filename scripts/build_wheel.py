@@ -1,4 +1,4 @@
-"""Build a `wazootech-wiki` wheel around a `deno compile` standalone binary.
+"""Build a `wazootech-wiki` wheel around a compiled standalone binary.
 
     python scripts/build_wheel.py --binary dist/wazootech-wiki-linux-x64 \
         --target x86_64-unknown-linux-gnu --out dist/wheels
@@ -38,12 +38,12 @@ PACKAGE = ROOT / "python" / "wiki"
 #: PyPI's default per-file upload limit.
 PYPI_FILE_LIMIT = 100 * 1000 * 1000
 
-#: Each `deno compile --target` to its wheel platform tag and the binary that
-#: tag requires. `floor` is the glibc (Linux) or macOS version the tag
-#: promises, and `inspect_binary` refuses a binary that needs more. Measured
-#: from Deno 2.9.6 output: both Linux binaries need glibc 2.27 (as the `deno`
-#: PyPI package's wheels do), and both macOS binaries declare a 12.0 minimum
-#: (LC_BUILD_VERSION), above the 10.12/11.0 the `deno` package tags with.
+#: Each target of `scripts/build_binary.ts` to its wheel platform tag and the
+#: binary that tag requires. `floor` is the glibc (Linux) or macOS version the
+#: tag promises, and `inspect_binary` refuses a binary that needs more.
+#: Measured from Bun 1.4.5 output: the Linux binaries need glibc 2.17 symbols
+#: (the tag stays at 2.27, the oldest release tested before), and both macOS
+#: binaries declare a 13.0 minimum (LC_BUILD_VERSION).
 TARGETS: dict[str, dict[str, object]] = {
     "x86_64-unknown-linux-gnu": {
         "tag": "manylinux_2_27_x86_64", "format": "elf", "machine": 0x3E, "floor": (2, 27),
@@ -52,10 +52,10 @@ TARGETS: dict[str, dict[str, object]] = {
         "tag": "manylinux_2_27_aarch64", "format": "elf", "machine": 0xB7, "floor": (2, 27),
     },
     "x86_64-apple-darwin": {
-        "tag": "macosx_12_0_x86_64", "format": "macho", "machine": 0x01000007, "floor": (12, 0),
+        "tag": "macosx_13_0_x86_64", "format": "macho", "machine": 0x01000007, "floor": (13, 0),
     },
     "aarch64-apple-darwin": {
-        "tag": "macosx_12_0_arm64", "format": "macho", "machine": 0x0100000C, "floor": (12, 0),
+        "tag": "macosx_13_0_arm64", "format": "macho", "machine": 0x0100000C, "floor": (13, 0),
     },
     "x86_64-pc-windows-msvc": {"tag": "win_amd64", "format": "pe", "machine": 0x8664},
     "aarch64-pc-windows-msvc": {"tag": "win_arm64", "format": "pe", "machine": 0xAA64},
@@ -263,7 +263,7 @@ def build(out: Path, *, binary: Path | None, target: str | None) -> Path:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--binary", type=Path, help="a `deno compile` standalone")
+    group.add_argument("--binary", type=Path, help="a compiled standalone")
     group.add_argument("--pure", action="store_true", help="the binary-less fallback wheel")
     parser.add_argument("--target", choices=sorted(TARGETS), help="the binary's --target")
     parser.add_argument("--out", type=Path, default=ROOT / "dist" / "wheels")
