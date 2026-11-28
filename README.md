@@ -122,9 +122,9 @@ npm install -g wazootech-wiki
 wiki --help
 ```
 
-The package includes the platform-matched Deno runtime and engine source; system
-Python and a separate Deno installation are not required. `npx wazootech-wiki`
-accepts the same commands and flags:
+The package runs the engine on your Node.js, so system Python and Deno are not
+required. It also runs on [Bun](https://bun.sh) (`bunx wazootech-wiki`).
+`npx wazootech-wiki` accepts the same commands and flags:
 
 ```bash
 npx wazootech-wiki --help
@@ -132,14 +132,9 @@ npx wazootech-wiki init
 npx wazootech-wiki -c docs/wiki.yml check
 ```
 
-Supported platforms are the ones Deno ships binaries for: Windows and macOS on
-x64 or ARM64, and Linux on x64 or ARM64 with glibc. In particular musl-based
-Linux distributions (Alpine) are not supported: the install succeeds there, but
-every `wiki` invocation fails because no Deno binary exists for the platform.
-
-The first run needs network access: the package ships no vendored dependencies,
-so the JSR/npm module graph is fetched into `DENO_DIR` on first use and cached
-afterwards.
+It ships JavaScript and WebAssembly only, so it has no platform-specific binary,
+and musl-based Linux such as Alpine works. Nothing more is downloaded on first
+run.
 
 ### From PyPI
 
@@ -204,8 +199,8 @@ npm install -g wazootech-wiki
 wiki -c docs/wiki.yml check --strict
 ```
 
-It bundles the Deno runtime, so npm users need neither Python nor a separate
-Deno installation; Node.js 18 or newer is the only requirement.
+It runs on Node.js 18 or newer, or on Bun. npm users need neither Python nor
+Deno.
 
 There is deliberately no `Wiki` class in this package. A wrapper that spawns the
 CLI can only hand back an exit code and captured strings, where the embedded

@@ -1,9 +1,15 @@
 import * as sys from "../src/wiki/sys.ts";
 import { test } from "node:test";
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import {
+  assert,
+  assertEquals,
+  assertFalse,
+  assertStringIncludes,
+} from "@std/assert";
 import {
   type CommandResult,
   type InstallTarget,
+  isNpmRuntime,
   isPypiInstall,
   JSR_METADATA_URL,
   runUpgrade,
@@ -293,6 +299,26 @@ test("non-global and standalone installs are not overwritten", async () => {
         "pip install -U wazootech-wiki",
       );
     }
+  }
+});
+
+test("an npm install is told how to update through npm or Bun", async () => {
+  const state = harness({
+    findInstallTarget: () => Promise.resolve({ kind: "npm" }),
+  });
+  assertEquals(await runUpgrade(automaticUpgrade, state.dependencies), 1);
+  assertEquals(state.commands, []);
+  const message = state.stderr.join("\n");
+  assertStringIncludes(message, "installed from npm");
+  assertStringIncludes(message, "bun update -g wazootech-wiki");
+});
+
+test("Node and Bun are recognised as the npm runtime", () => {
+  for (const path of ["/usr/bin/node", "/home/a/.bun/bin/bun", "node.exe"]) {
+    assert(isNpmRuntime(path), path);
+  }
+  for (const path of ["/usr/bin/deno", "/usr/local/bin/wiki", "nodemon"]) {
+    assertFalse(isNpmRuntime(path), path);
   }
 });
 

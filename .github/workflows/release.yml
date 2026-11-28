@@ -162,11 +162,25 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.x"
 
-      - name: Verify npm can pack
-        run: npm pack --dry-run
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # `npm pack` runs `prepack`, which builds `dist/`. Publishing is
+      # irreversible, so the packed package has to work first.
+      - name: Smoke test the packed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/npm-package"
+          mkdir -p "$root/install"
+          tarball="$(npm pack --silent --pack-destination "$root" | tail -1)"
+          npm install --prefix "$root/install" --no-audit --no-fund "$root/$tarball"
+          bash scripts/smoke_cli.sh node "$root/install/node_modules/wazootech-wiki/bin/wiki.js"
 
       - name: Publish to npm (trusted publishing / OIDC)
         run: |

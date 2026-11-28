@@ -9,9 +9,20 @@
   runtime and the commands behave as before.
 - The formatter plugins ship inside the engine, so `wiki fmt` no longer reads
   them from npm packages.
+- The `wazootech-wiki` npm package runs on Node.js 18 or newer, and on Bun,
+  instead of starting a bundled Deno. It no longer downloads anything on first
+  use (0.7.1 fetched several hundred packages then), and it works on musl Linux.
+- `wiki upgrade` tells npm and Bun installs how to update.
+
+### Removed
+
+- The npm package's `createWikiCommand` export, which started the bundled Deno.
+  The package ships the `wiki` command only.
 
 ### Fixed
 
+- On Node.js before 21, deriving page dates no longer needs the `navigator`
+  global.
 - Looking up Git dates for a page in a directory that doesn't exist yet no
   longer turns derived Git dates off for the rest of the process.
 

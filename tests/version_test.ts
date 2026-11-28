@@ -28,18 +28,6 @@ test("VERSION matches package.json", async () => {
   assertEquals(VERSION, await jsonVersion("package.json"));
 });
 
-test("VERSION matches package-lock.json", async () => {
-  const lock: unknown = JSON.parse(
-    await sys.readTextFile(new URL("package-lock.json", ROOT)),
-  );
-  if (typeof lock !== "object" || lock === null) {
-    throw new Error("package-lock.json did not parse as an object");
-  }
-  const root = (lock as { packages?: Record<string, { version?: string }> })
-    .packages?.[""];
-  assertEquals(root?.version, VERSION);
-});
-
 test("VERSION matches pyproject.toml", async () => {
   const project = parseToml(
     await sys.readTextFile(new URL("pyproject.toml", ROOT)),

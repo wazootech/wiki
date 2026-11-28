@@ -97,7 +97,7 @@ The library also exposes formatting, inline SPARQL rendering, link analysis and 
 
 ## The `wazootech-wiki` npm package: command only
 
-The npm package publishes the `wiki` command and nothing else. It bundles the Deno runtime, so npm users need neither system Python nor a separate Deno installation; Node.js 18 or newer is the only requirement.
+The npm package publishes the `wiki` command and nothing else. It runs on Node.js or Bun, so npm users need neither system Python nor a separate Deno installation; Node.js 18 or newer is the only requirement.
 
 ```bash
 npm install -g wazootech-wiki

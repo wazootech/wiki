@@ -1,7 +1,7 @@
 {
   "name": "wazootech-wiki",
   "version": "0.7.1",
-  "description": "Clean, pure, idiomatic CLI for managing a semantic LLM wiki",
+  "description": "Wiki CLI: check, query and publish a folder of Markdown notes",
   "repository": {
     "type": "git",
     "url": "https://github.com/wazootech/wiki.git"
@@ -11,55 +11,42 @@
     "url": "https://github.com/wazootech/wiki/issues"
   },
   "license": "MIT",
-  "main": "./dist/runtime.js",
-  "module": "./dist/runtime.mjs",
-  "types": "./dist/runtime.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.mjs",
-      "require": "./dist/runtime.js"
-    }
-  },
+  "type": "module",
   "bin": {
     "wiki": "bin/wiki.js"
   },
   "scripts": {
-    "build": "tsup src/runtime.ts --format cjs,esm --dts --out-dir dist --clean --shims --silent",
-    "prepack": "npm run build",
-    "format": "prettier \"src/*.ts\" --write",
-    "format:check": "prettier \"src/*.ts\" --check",
-    "lint": "eslint --max-warnings 0 src/*.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test:npm": "npm run typecheck && npm run build && node tests/npm/test-runtime.js",
+    "build": "bun scripts/build_npm.ts",
+    "prepack": "bun scripts/build_npm.ts",
     "test:bun": "bun test --timeout 120000 tests/"
   },
   "files": [
     "bin/",
     "dist/",
-    "deno.json",
-    "deno.lock",
-    "src/wiki/**/*.ts",
-    "src/wiki/**/*.html",
-    "src/wiki/templates/**/*.yml",
-    "package.json",
     "README.md",
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
-    "bcryptjs": "3.0.3",
-    "deno": "2.9.6"
+    "@dprint/formatter": "0.5.1",
+    "@eslint/markdown": "8.0.3",
+    "@zazuko/env": "^3.0.0",
+    "@zazuko/env-node": "^3.0.0",
+    "ajv": "^8.17.1",
+    "bcrypt": "npm:bcryptjs@3.0.3",
+    "eslint": "9.39.5",
+    "jsonld": "9.0.0",
+    "markdown-it": "^14.1.0",
+    "n3": "^2.0.0",
+    "rdf-validate-shacl": "0.6.5",
+    "yaml": "2.9.1"
   },
   "devDependencies": {
-    "@dprint/formatter": "0.5.1",
     "@dprint/json": "0.21.3",
     "@dprint/markdown": "0.20.0",
     "@dprint/typescript": "0.96.1",
-    "@eslint/js": "^9.20.0",
-    "@eslint/markdown": "8.0.3",
     "@rdfjs/types": "^2.0.1",
     "@std/assert": "npm:@jsr/std__assert@^1.0.0",
     "@std/path": "npm:@jsr/std__path@^1.0.0",
@@ -69,28 +56,9 @@
     "@wazoo/linked-markdown": "npm:@jsr/wazoo__linked-markdown@^0.1.0",
     "@wazoo/reasoner": "npm:@jsr/wazoo__reasoner@0.4.2",
     "@wazoo/sparql-engine": "npm:@jsr/wazoo__sparql-engine@0.5.1",
-    "@zazuko/env": "^3.0.0",
-    "@zazuko/env-node": "^3.0.0",
-    "ajv": "^8.17.1",
-    "bcrypt": "npm:bcryptjs@3.0.3",
     "dprint-plugin-yaml": "0.5.0",
-    "esbuild": "0.28.1",
-    "eslint": "9.39.5",
-    "globals": "^16.0.0",
-    "jsonld": "9.0.0",
     "lax-css": "0.3.0",
-    "lax-markup": "0.3.2",
-    "markdown-it": "^14.1.0",
-    "n3": "^2.0.0",
-    "prettier": "^3.9.5",
-    "rdf-validate-shacl": "0.6.5",
-    "tsup": "^8.3.0",
-    "typescript": "^5.8.0",
-    "typescript-eslint": "^8.24.0",
-    "yaml": "2.9.1"
-  },
-  "overrides": {
-    "esbuild": "0.28.1"
+    "lax-markup": "0.3.2"
   },
   "publishConfig": {
     "access": "public"

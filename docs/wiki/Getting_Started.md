@@ -16,7 +16,7 @@ npm install -g wazootech-wiki
 wiki --help
 ```
 
-The package provides the `wiki` command and a bundled Deno runtime; system Python and a separately installed Deno are not required. Use `npx` without a global install:
+The package provides the `wiki` command and runs on your Node.js or on Bun; system Python and Deno are not required. Use `npx` without a global install:
 
 ```bash
 npx wazootech-wiki --help
