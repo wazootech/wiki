@@ -3,11 +3,12 @@ import type { VirtualPage, WikiSite } from "./types.ts";
 import { renderLayout, renderPageLayout } from "./layout.ts";
 
 function escapeHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll(
-      "'",
-      "&#x27;",
-    );
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;");
 }
 
 function pageCategories(page: VirtualPage): string[] {
@@ -24,12 +25,14 @@ function pageCategories(page: VirtualPage): string[] {
     );
   }
   const seen = new Set<string>();
-  return categories.map((value) => value.trim()).filter((value) => {
-    const key = value.toLowerCase();
-    if (key === "" || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return categories
+    .map((value) => value.trim())
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (key === "" || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export function buildIndexHtml(
@@ -38,13 +41,15 @@ export function buildIndexHtml(
   urlStyle: string,
   defaultLayout: string | null,
 ): string {
-  const links = site.pages.map((page) => {
-    const categories = escapeHtml(pageCategories(page).join(","));
-    const href = escapeHtml(pageUrl(baseUrl, page.file_slug, urlStyle));
-    return `<li data-categories="${categories}"><a href="${href}">${
-      escapeHtml(page.title)
-    }</a></li>`;
-  }).join("\n");
+  const links = site.pages
+    .map((page) => {
+      const categories = escapeHtml(pageCategories(page).join(","));
+      const href = escapeHtml(pageUrl(baseUrl, page.file_slug, urlStyle));
+      return `<li data-categories="${categories}"><a href="${href}">${escapeHtml(
+        page.title,
+      )}</a></li>`;
+    })
+    .join("\n");
   return renderLayout(
     "All Pages",
     baseUrl,

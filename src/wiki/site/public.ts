@@ -41,14 +41,16 @@ export function publicConfig(config: Config): Config {
 /** Misspelled values, which would otherwise hide a page without a word. */
 export function visibilityErrors(config: Config): string[] {
   return iterDocumentFiles(config)
-    .filter((path) =>
-      ![undefined, "public", "private"].includes(
-        visibility(path) as string | undefined,
-      )
+    .filter(
+      (path) =>
+        ![undefined, "public", "private"].includes(
+          visibility(path) as string | undefined,
+        ),
     )
-    .map((path) =>
-      `${config.relativeToRoot(path)}: ${VISIBILITY_FRONTMATTER_KEY} must be ` +
-      '"public" or "private".'
+    .map(
+      (path) =>
+        `${config.relativeToRoot(path)}: ${VISIBILITY_FRONTMATTER_KEY} must be ` +
+        '"public" or "private".',
     );
 }
 
@@ -56,7 +58,7 @@ function linkTargets(html: string): string[] {
   return [...html.matchAll(TAG)].flatMap(([tag]) =>
     [...tag.matchAll(ATTRIBUTE)]
       .filter(([, name]) => name === "href" || name === "src")
-      .map((match) => match[2]!.replaceAll("&amp;", "&"))
+      .map((match) => match[2]!.replaceAll("&amp;", "&")),
   );
 }
 

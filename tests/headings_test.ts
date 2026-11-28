@@ -37,7 +37,8 @@ test("duplicate heading text gets a numbered slug", () => {
 });
 
 test("heading text keeps its inline markup", () => {
-  const markdown = "# Page\n\n" +
+  const markdown =
+    "# Page\n\n" +
     "## Request headers\n\n" +
     "### `Accept`\n\n" +
     "## Importance in the [[Semantic_Web|semantic web]]\n";
@@ -116,7 +117,7 @@ test("a slugger numbers collisions per base, in document order", () => {
   const slugger = new GitHubHeadingSlugger();
   assertEquals(
     ["Notes", "Notes", "Notes", "Other", "Notes"].map((title) =>
-      slugger.slug(title)
+      slugger.slug(title),
     ),
     ["notes", "notes-1", "notes-2", "other", "notes-3"],
   );

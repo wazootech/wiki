@@ -72,12 +72,18 @@ test("theme entrypoint assembles a site from the published surface", () => {
     const config = fixtureConfig(root);
 
     const site: WikiSite = buildSite(config);
-    assertEquals(site.pages.map((page) => page.file_slug), ["Home", "Other"]);
+    assertEquals(
+      site.pages.map((page) => page.file_slug),
+      ["Home", "Other"],
+    );
     const home: VirtualPage = site.pages_by_route.get("Home")!;
     assertEquals(home.title, "Home");
     assertStringIncludes(home.html, 'href="/manual/Other.html"');
     const outline: readonly TocItem[] = home.outline;
-    assertEquals(outline.map((item) => item.slug), ["getting-started"]);
+    assertEquals(
+      outline.map((item) => item.slug),
+      ["getting-started"],
+    );
   } finally {
     cleanup(root);
   }
@@ -94,10 +100,7 @@ test("theme entrypoint renders markdown, titles, and layouts", () => {
       renderWikiMarkdown("See [Other](Other.md)", "/manual", "file", "Home"),
       'href="/manual/Other.html"',
     );
-    assertEquals(
-      renderOutlineTitle("Home", "/manual", "file", "Home"),
-      "Home",
-    );
+    assertEquals(renderOutlineTitle("Home", "/manual", "file", "Home"), "Home");
 
     const shell = renderLayout("T", "/manual", "<p>body</p>", null);
     assertStringIncludes(shell, "<p>body</p>");
@@ -310,11 +313,7 @@ test("buildThemedSite owns the flow while the theme owns the vocabulary", async 
         "# Home\n\n## Section\n\nSee [Other](Other.md).\n",
     );
     write(root, "wiki/Other.md", "# Other\n");
-    write(
-      root,
-      "wiki/Legacy.md",
-      "---\nredirect_to: Home\n---\n\n# Legacy\n",
-    );
+    write(root, "wiki/Legacy.md", "---\nredirect_to: Home\n---\n\n# Legacy\n");
     write(root, "assets/site.css", "body { color: navy; }\n");
     const config = Config.forRoot(root, {
       wiki: { input: [join(root, "wiki")], assets: [join(root, "assets")] },
@@ -328,9 +327,10 @@ test("buildThemedSite owns the flow while the theme owns the vocabulary", async 
       redirect_layout: "layouts/redirect.html",
       title_suffix: " - Custom",
       tokens: (context) => {
-        const redirectTo = context.page === null
-          ? ""
-          : String(context.page.frontmatter.redirect_to ?? "");
+        const redirectTo =
+          context.page === null
+            ? ""
+            : String(context.page.frontmatter.redirect_to ?? "");
         return new Map([
           [
             "%wiki.extra%",

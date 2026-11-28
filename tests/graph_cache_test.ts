@@ -131,7 +131,9 @@ test("the cache directory is excluded from the files it fingerprints", async () 
     // A staged file inside the wiki tree that is not a cache artifact.
     sys.writeTextFileSync(join(config.wiki.input[0]!, "other.md"), "x");
 
-    const files = iterWikiFiles(config).map((path) => basename(path)).sort();
+    const files = iterWikiFiles(config)
+      .map((path) => basename(path))
+      .sort();
     assertEquals(files, ["other.md", "page.md"]);
   });
 });
@@ -145,9 +147,10 @@ test("excluded files do not contribute to the fingerprint", async () => {
     const config = Config.forRoot(root, {
       wiki: { input: [wikiDir], exclude: ["wiki/drafts/**"] },
     });
-    assertEquals(wikiManifest(config).files.map((entry) => entry.path), [
-      "wiki/Published.md",
-    ]);
+    assertEquals(
+      wikiManifest(config).files.map((entry) => entry.path),
+      ["wiki/Published.md"],
+    );
   });
 });
 
@@ -253,14 +256,8 @@ test("the infer and asserted caches do not share a file", async () => {
     const { config } = wiki(root);
     const graph = new RdfGraph();
     setDiskGraph(config, false, graph);
-    assertNotEquals(
-      diskCachePath(config, false),
-      diskCachePath(config, true),
-    );
-    assertStringIncludes(
-      diskCachePath(config, true),
-      "graph-infer-",
-    );
+    assertNotEquals(diskCachePath(config, false), diskCachePath(config, true));
+    assertStringIncludes(diskCachePath(config, true), "graph-infer-");
     assertEquals(await getDiskGraph(config, true), null);
   });
 });
@@ -319,16 +316,12 @@ test("a named-graph dataset round-trips through its own cache file", async () =>
     const dataset = new RdfDataset({ defaultUnion: true });
     const subject = namedNode("https://e/s");
     const predicate = namedNode("https://e/p");
-    dataset.graph("https://e/graphs/root").add(
-      subject,
-      predicate,
-      literal("root"),
-    );
-    dataset.graph("https://e/graphs/source/a").add(
-      subject,
-      predicate,
-      literal("source"),
-    );
+    dataset
+      .graph("https://e/graphs/root")
+      .add(subject, predicate, literal("root"));
+    dataset
+      .graph("https://e/graphs/source/a")
+      .add(subject, predicate, literal("source"));
 
     setDiskDataset(config, false, dataset);
     const cachePath = datasetCachePath(config, false);
@@ -374,10 +367,7 @@ test("the manifest orders paths by standard string order", async () => {
   await withTempDir((root) => {
     const wikiDir = join(root, "wiki");
     sys.mkdirSync(join(wikiDir, "notes"), { recursive: true });
-    sys.writeTextFileSync(
-      join(wikiDir, "notes.md"),
-      "---\ntype: Thing\n---\n",
-    );
+    sys.writeTextFileSync(join(wikiDir, "notes.md"), "---\ntype: Thing\n---\n");
     sys.writeTextFileSync(
       join(wikiDir, "notes", "inner.md"),
       "---\ntype: Thing\n---\n",
@@ -397,12 +387,10 @@ test("the manifest orders paths by standard string order", async () => {
     // nanoseconds and this port derives nanoseconds from a `Date`'s
     // milliseconds: a sub-second mtime would be a difference in the fixture
     // rather than in the code.
-    for (
-      const file of [
-        join(wikiDir, "notes.md"),
-        join(wikiDir, "notes", "inner.md"),
-      ]
-    ) {
+    for (const file of [
+      join(wikiDir, "notes.md"),
+      join(wikiDir, "notes", "inner.md"),
+    ]) {
       sys.utimeSync(file, PINNED_MTIME, PINNED_MTIME);
     }
 
@@ -432,9 +420,8 @@ test("an edit overlay gets its own fingerprint and sees staged files", async () 
     assertNotEquals(staged, onDisk);
     // Same staged tree under a different overlay id must not share a key, or
     // the in-process cache could serve one edit's graph to another.
-    const again = withOverlay(
-      { ...overlay, id: "other-overlay" },
-      () => wikiFingerprint(config),
+    const again = withOverlay({ ...overlay, id: "other-overlay" }, () =>
+      wikiFingerprint(config),
     );
     assertNotEquals(again, staged);
     assertEquals(wikiFingerprint(config), onDisk);

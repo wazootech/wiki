@@ -97,54 +97,54 @@ export type EditTarget =
  */
 export type EditOp =
   | {
-    readonly op: "create";
-    readonly path: string;
-    readonly content?: string;
-    readonly type?: string;
-    readonly frontmatter?: Readonly<Record<string, unknown>>;
-    readonly body?: string;
-    readonly expect?: "absent";
-  }
+      readonly op: "create";
+      readonly path: string;
+      readonly content?: string;
+      readonly type?: string;
+      readonly frontmatter?: Readonly<Record<string, unknown>>;
+      readonly body?: string;
+      readonly expect?: "absent";
+    }
   | {
-    readonly op: "replace";
-    readonly path: string;
-    readonly content: string;
-    readonly expect?: string;
-  }
+      readonly op: "replace";
+      readonly path: string;
+      readonly content: string;
+      readonly expect?: string;
+    }
   | {
-    readonly op: "delete";
-    readonly path: string;
-    readonly expect?: string;
-    /** Replace inbound links with their label text instead of refusing. */
-    readonly pruneLinks?: boolean;
-  }
+      readonly op: "delete";
+      readonly path: string;
+      readonly expect?: string;
+      /** Replace inbound links with their label text instead of refusing. */
+      readonly pruneLinks?: boolean;
+    }
   | {
-    readonly op: "set";
-    readonly path: string;
-    readonly field: string;
-    /** `null` removes the field. */
-    readonly value?: unknown;
-    /**
-     * The value as YAML source, kept verbatim (`"12.00"` stays `12.00`, where
-     * the JSON `12.00` is the number `12`). Exclusive with `value`.
-     */
-    readonly yaml?: string;
-    readonly expect?: string;
-  }
+      readonly op: "set";
+      readonly path: string;
+      readonly field: string;
+      /** `null` removes the field. */
+      readonly value?: unknown;
+      /**
+       * The value as YAML source, kept verbatim (`"12.00"` stays `12.00`, where
+       * the JSON `12.00` is the number `12`). Exclusive with `value`.
+       */
+      readonly yaml?: string;
+      readonly expect?: string;
+    }
   | {
-    readonly op: "patch";
-    readonly path: string;
-    readonly target: EditTarget;
-    readonly mode: "append" | "prepend" | "replace";
-    readonly content: string;
-    readonly expect?: string;
-  }
+      readonly op: "patch";
+      readonly path: string;
+      readonly target: EditTarget;
+      readonly mode: "append" | "prepend" | "replace";
+      readonly content: string;
+      readonly expect?: string;
+    }
   | {
-    readonly op: "move";
-    readonly from: string;
-    readonly to: string;
-    readonly expect?: string;
-  };
+      readonly op: "move";
+      readonly from: string;
+      readonly to: string;
+      readonly expect?: string;
+    };
 
 /** A batch of operations, validated once and written all-or-nothing. */
 export interface WikiEdit {
@@ -364,8 +364,8 @@ function relativePath(config: Config, path: string): string {
 /** An `@id` or `id` the page sets itself: its IRI then survives a move. */
 function hasExplicitId(data: Record<string, unknown> | null): boolean {
   if (data === null) return false;
-  return [data["@id"], data["id"]].some((value) =>
-    value !== undefined && value !== null && value !== ""
+  return [data["@id"], data["id"]].some(
+    (value) => value !== undefined && value !== null && value !== "",
   );
 }
 
@@ -380,9 +380,9 @@ function backlinkers(
 ): Array<readonly [string, string]> {
   return withOverlay(overlayOf(plans), () => {
     const sources = new Set(
-      LinkIndex.fromConfig(config).backlinksTo(route).filter((source) =>
-        source !== route
-      ),
+      LinkIndex.fromConfig(config)
+        .backlinksTo(route)
+        .filter((source) => source !== route),
     );
     const found: Array<readonly [string, string]> = [];
     for (const path of iterDocumentFiles(config)) {
@@ -434,12 +434,10 @@ function stageMove(
 
   const oldRoute = safeRoute(config, from);
   const newRoute = safeRoute(config, to);
-  const explicitId = withOverlay(
-    overlayOf(plans),
-    () =>
-      hasExplicitId(
-        documentDataFromPath(from, config.graph.content_predicate ?? undefined),
-      ),
+  const explicitId = withOverlay(overlayOf(plans), () =>
+    hasExplicitId(
+      documentDataFromPath(from, config.graph.content_predicate ?? undefined),
+    ),
   );
   const base = config.context.baseIri;
   const derived = !explicitId && base !== "";
@@ -459,9 +457,8 @@ function stageMove(
   }
 
   const linkers = backlinkers(config, plans, oldRoute);
-  const documents = withOverlay(
-    overlayOf(plans),
-    () => iterDocumentFiles(config),
+  const documents = withOverlay(overlayOf(plans), () =>
+    iterDocumentFiles(config),
   );
   const routeMap = new Map([[oldRoute, newRoute]]);
   const refs = [{ from: `wiki:${oldRoute}`, to: `wiki:${newRoute}` }];
@@ -518,7 +515,7 @@ function guardDelete(
   const route = safeRoute(config, plan.path);
   if (route === null) return [];
   const linkers = backlinkers(config, plans, route).filter(([, path]) =>
-    isMarkdown(path)
+    isMarkdown(path),
   );
   if (prune) {
     for (const [source, path] of linkers) {
@@ -531,7 +528,8 @@ function guardDelete(
   return linkers.map(([source, path]) => ({
     code: "dangling_links",
     severity: "error",
-    message: `${source} links to ${route}, which this edit deletes; remove ` +
+    message:
+      `${source} links to ${route}, which this edit deletes; remove ` +
       `the links first, or prune them (pruneLinks, wiki rm --prune-links).`,
     path: relativePath(config, path),
     route: source,
@@ -587,9 +585,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * by index so the agent can fix its plan.
  */
 function validateShape(edit: WikiEdit): EditOp[] {
-  if (
-    edit === null || typeof edit !== "object" || !Array.isArray(edit.ops)
-  ) {
+  if (edit === null || typeof edit !== "object" || !Array.isArray(edit.ops)) {
     throw new EditUsageError('An edit is an object with an "ops" array.');
   }
   if (edit.ops.length === 0) {
@@ -605,9 +601,9 @@ function validateShape(edit: WikiEdit): EditOp[] {
     const kind = op.op;
     if (typeof kind !== "string" || !KNOWN_OPS.has(kind)) {
       throw new EditUsageError(
-        `${where}.op must be one of ${[...KNOWN_OPS].join(", ")}; got ${
-          JSON.stringify(kind)
-        }.`,
+        `${where}.op must be one of ${[...KNOWN_OPS].join(", ")}; got ${JSON.stringify(
+          kind,
+        )}.`,
       );
     }
     const pathKeys = kind === "move" ? ["from", "to"] : ["path"];
@@ -643,7 +639,9 @@ function validateOpFields(
           `${where}: a create can only expect "absent".`,
         );
       }
-      const scaffold = op.type !== undefined || op.frontmatter !== undefined ||
+      const scaffold =
+        op.type !== undefined ||
+        op.frontmatter !== undefined ||
         op.body !== undefined;
       if (op.content !== undefined && scaffold) {
         throw new EditUsageError(
@@ -679,7 +677,7 @@ function validateOpFields(
       if (typeof op.field !== "string" || op.field === "") {
         throw new EditUsageError(`${where}.field must be a non-empty string.`);
       }
-      if (("value" in op) === (op.yaml !== undefined)) {
+      if ("value" in op === (op.yaml !== undefined)) {
         throw new EditUsageError(
           `${where}: a set needs exactly one of value (null removes the field) or yaml.`,
         );
@@ -688,10 +686,11 @@ function validateOpFields(
       return;
     case "patch": {
       const target = op.target;
-      const valid = isRecord(target) && (
-        (typeof target.heading === "string" && target.heading !== "") ||
-        target.frontmatter === true || target.body === true
-      );
+      const valid =
+        isRecord(target) &&
+        ((typeof target.heading === "string" && target.heading !== "") ||
+          target.frontmatter === true ||
+          target.body === true);
       if (!valid) {
         throw new EditUsageError(
           `${where}.target must be {"heading": "..."}, {"frontmatter": true}, or {"body": true}.`,
@@ -721,9 +720,9 @@ function targetPath(config: Config, raw: string): string {
   const extension = extname(path).toLowerCase();
   if (!DOCUMENT_EXTENSIONS.has(extension)) {
     throw new EditUsageError(
-      `${raw}: only wiki document files (${
-        [...DOCUMENT_EXTENSIONS].sort().join(", ")
-      }) can be edited.`,
+      `${raw}: only wiki document files (${[...DOCUMENT_EXTENSIONS]
+        .sort()
+        .join(", ")}) can be edited.`,
     );
   }
   if (within(path, join(config.config_root, ".wiki"))) {
@@ -780,9 +779,8 @@ function checkExpect(
 ): EditConflict | null {
   if (expect === undefined) return null;
   const actual = before === null ? null : contentHash(before);
-  const matches = expect === "absent"
-    ? actual === null
-    : actual === expect.toLowerCase();
+  const matches =
+    expect === "absent" ? actual === null : actual === expect.toLowerCase();
   if (matches) return null;
   return {
     path: config.relativeToRoot(path).replaceAll("\\", "/"),
@@ -816,9 +814,9 @@ async function stage(
         return;
       }
       const type = op.type ?? null;
-      const fields = Object.entries(op.frontmatter ?? {}).map((
-        [key, json],
-      ) => [key, { json }] as const);
+      const fields = Object.entries(op.frontmatter ?? {}).map(
+        ([key, json]) => [key, { json }] as const,
+      );
       const page = scaffoldPage({
         path: plan.path,
         typeKey: typeKey(config),
@@ -858,18 +856,19 @@ async function stage(
       }
       let next: string;
       try {
-        next = op.op === "set"
-          ? setField(
-            current,
-            op.path,
-            op.field,
-            op.yaml !== undefined
-              ? { yaml: op.yaml }
-              : op.value === null
-              ? null
-              : { json: op.value },
-          )
-          : patchContent(current, op.path, op.target, op.mode, op.content);
+        next =
+          op.op === "set"
+            ? setField(
+                current,
+                op.path,
+                op.field,
+                op.yaml !== undefined
+                  ? { yaml: op.yaml }
+                  : op.value === null
+                    ? null
+                    : { json: op.value },
+              )
+            : patchContent(current, op.path, op.target, op.mode, op.content);
       } catch (error) {
         if (error instanceof EditOpError) {
           throw new EditUsageError(error.message);
@@ -898,11 +897,12 @@ function unchanged(plan: FilePlan): boolean {
 function fileChange(config: Config, plan: FilePlan): EditFileChange {
   return {
     path: config.relativeToRoot(plan.path).replaceAll("\\", "/"),
-    action: plan.before === null
-      ? "create"
-      : plan.after === null
-      ? "delete"
-      : "modify",
+    action:
+      plan.before === null
+        ? "create"
+        : plan.after === null
+          ? "delete"
+          : "modify",
     before: plan.before === null ? null : contentHash(plan.before),
     after: plan.after === null ? null : contentHash(plan.after),
   };
@@ -957,7 +957,7 @@ async function validate(
   return await withOverlay(overlay, async () => {
     const after = await scopedAudit(config, touched, lintRoutes);
     const introduced = newIssues(beforeReport, after.report).map((issue) =>
-      checkIssue(config, issue)
+      checkIssue(config, issue),
     );
     const envelope = buildCheckEnvelope(after.report, config, after.documents);
     return { introduced, envelope };
@@ -998,9 +998,10 @@ async function scopedAudit(
     );
   } else {
     const baseUrl = config.site.base_url;
-    const outputDir = baseUrl === ""
-      ? "_site"
-      : join("_site", baseUrl.replace(/^\/+|\/+$/g, ""));
+    const outputDir =
+      baseUrl === ""
+        ? "_site"
+        : join("_site", baseUrl.replace(/^\/+|\/+$/g, ""));
     const collisions = detectOutputCollisions(
       buildPageManifest(config, outputDir, baseUrl, config.site.url_style),
     );
@@ -1041,7 +1042,8 @@ function remapReport(
 function remapIssue(issue: Issue, moves: readonly StagedMove[]): Issue {
   for (const move of moves) {
     const onRoute = move.oldRoute !== null && issue.route === move.oldRoute;
-    const onPath = typeof issue.path === "string" &&
+    const onPath =
+      typeof issue.path === "string" &&
       overlayKey(issue.path) === overlayKey(move.fromPath);
     // Lint findings often carry no route or path, only a message that opens
     // with the page's route or file name (`In Beta:`, `In Beta.md:3:`).
@@ -1075,12 +1077,14 @@ function remapIssue(issue: Issue, moves: readonly StagedMove[]): Issue {
       message,
       ...(onRoute ? { route: move.newRoute } : {}),
       ...(onPath ? { path: move.toPath } : {}),
-      ...(issue.results === undefined ? {} : {
-        results: issue.results.map((result) => ({
-          ...result,
-          focusNode: remapIri(result.focusNode) ?? null,
-        })),
-      }),
+      ...(issue.results === undefined
+        ? {}
+        : {
+            results: issue.results.map((result) => ({
+              ...result,
+              focusNode: remapIri(result.focusNode) ?? null,
+            })),
+          }),
     };
   }
   return issue;
@@ -1115,7 +1119,7 @@ function issueKeys(issue: Issue): string[] {
       result.schema ?? "",
       result.keyword ?? "",
       JSON.stringify(result.instancePath ?? []),
-    ].join("\0")
+    ].join("\0"),
   );
 }
 

@@ -31,8 +31,8 @@ export async function loadUsers(file: string): Promise<LocalUser[]> {
   const entries = Array.isArray(parsed)
     ? parsed
     : Array.isArray(parsed?.users)
-    ? parsed.users
-    : null;
+      ? parsed.users
+      : null;
   if (entries === null) throw new Error(`Invalid users file: ${file}`);
   return entries.map((entry: unknown, index: number) => {
     const user = entry as Partial<LocalUser>;

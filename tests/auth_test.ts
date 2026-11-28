@@ -99,10 +99,7 @@ test("local auth gates the whole site until sign-in", async () => {
       );
       assertEquals(challenge.status, 302);
       assertEquals(challenge.headers.get("location"), "/auth/login?next=%2F");
-      assertEquals(
-        challenge.headers.get("cache-control"),
-        "private, no-store",
-      );
+      assertEquals(challenge.headers.get("cache-control"), "private, no-store");
 
       const login = await preview.handleRequest(
         new Request("http://localhost/auth/login"),
@@ -170,15 +167,14 @@ test("local auth gates the whole site until sign-in", async () => {
 });
 
 test("safeNext rejects redirects that leave the site", () => {
-  for (
-    const hostile of [
-      "//evil.example",
-      "/\\evil.example",
-      "/\t/evil.example",
-      "/\n/evil.example",
-      "https://evil.example",
-    ]
-  ) assertEquals(safeNext(hostile, ""), "/");
+  for (const hostile of [
+    "//evil.example",
+    "/\\evil.example",
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "https://evil.example",
+  ])
+    assertEquals(safeNext(hostile, ""), "/");
   assertEquals(safeNext("/notes?q=1", ""), "/notes?q=1");
 });
 

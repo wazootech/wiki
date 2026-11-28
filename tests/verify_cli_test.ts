@@ -52,17 +52,19 @@ function createStub(root: string, name: string, content: string): void {
   sys.chmodSync(path, 0o755);
 }
 
-async function runVerifier(options: {
-  readonly wikiVersion?: string;
-  readonly wikiFormat?: string;
-  readonly wikiHelp?: boolean;
-  readonly denoVersion?: string;
-} = {}): Promise<sys.CommandOutput> {
+async function runVerifier(
+  options: {
+    readonly wikiVersion?: string;
+    readonly wikiFormat?: string;
+    readonly wikiHelp?: boolean;
+    readonly denoVersion?: string;
+  } = {},
+): Promise<sys.CommandOutput> {
   const root = sys.makeTempDirSync({ prefix: "wiki-verify-" });
   const bin = join(root, "bin");
   const wikiVersion = options.wikiVersion ?? "0.2.0";
-  const wikiFormat = options.wikiFormat ??
-    "Format markdown wiki pages with the Deno formatter.";
+  const wikiFormat =
+    options.wikiFormat ?? "Format markdown wiki pages with the Deno formatter.";
   const wikiHelp = options.wikiHelp ?? true;
   const denoVersion = options.denoVersion ?? "0.2.0";
 
@@ -102,9 +104,10 @@ async function runVerifier(options: {
       // stubs live in `bin`, and verify.sh has to find `deno` and `wiki`
       // through the same PATH it hands to `command -v`.
       env: {
-        PATH: sys.build.os === "windows"
-          ? `${bin};${sys.env.get("PATH") ?? ""}`
-          : `${bin}:/usr/bin:/bin`,
+        PATH:
+          sys.build.os === "windows"
+            ? `${bin};${sys.env.get("PATH") ?? ""}`
+            : `${bin}:/usr/bin:/bin`,
       },
       stdout: "piped",
       stderr: "piped",

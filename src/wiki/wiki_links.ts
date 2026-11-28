@@ -71,12 +71,8 @@ const METADATA_SKIP_KEYS: ReadonlySet<string> = new Set([
 
 /** A `BrokenLink` with the match-span fields left unset. */
 function linkIssue(
-  fields:
-    & Omit<
-      BrokenLink,
-      "match_start" | "match_end" | "full_match"
-    >
-    & Partial<Pick<BrokenLink, "match_start" | "match_end" | "full_match">>,
+  fields: Omit<BrokenLink, "match_start" | "match_end" | "full_match"> &
+    Partial<Pick<BrokenLink, "match_start" | "match_end" | "full_match">>,
 ): BrokenLink {
   return {
     match_start: null,
@@ -258,9 +254,9 @@ export class LinkIndex {
                     link_kind: "Asset link",
                     raw_target: target,
                     issue_kind: "missing_asset",
-                    message: `In ${
-                      basename(filePath)
-                    }: Broken asset link [${target}] ${assetIssue}.`,
+                    message: `In ${basename(
+                      filePath,
+                    )}: Broken asset link [${target}] ${assetIssue}.`,
                     match_start: bodyOffset + start,
                     match_end: bodyOffset + end,
                     full_match: match[0],
@@ -282,8 +278,7 @@ export class LinkIndex {
               link_kind: "Metadata reference",
               raw_target: curie,
               issue_kind: "missing_document",
-              message:
-                `In ${fileSlug}: Broken Metadata reference [${curie}] points to non-existent wiki document.`,
+              message: `In ${fileSlug}: Broken Metadata reference [${curie}] points to non-existent wiki document.`,
             }),
           );
         }
@@ -302,9 +297,9 @@ export class LinkIndex {
                 link_kind: "Frontmatter asset",
                 raw_target: target,
                 issue_kind: "missing_asset",
-                message: `In ${
-                  basename(filePath)
-                }: Broken frontmatter asset [${target}] ${assetIssue}.`,
+                message: `In ${basename(
+                  filePath,
+                )}: Broken frontmatter asset [${target}] ${assetIssue}.`,
               }),
             );
           }
@@ -317,9 +312,9 @@ export class LinkIndex {
             link_kind: "Read error",
             raw_target: "",
             issue_kind: "read_error",
-            message: `Failed to read ${basename(filePath)} for link audit: ${
-              errorMessage(error)
-            }`,
+            message: `Failed to read ${basename(filePath)} for link audit: ${errorMessage(
+              error,
+            )}`,
           }),
         );
       }
@@ -478,11 +473,12 @@ function pageTargetIssue(
   siteRoute: string | null = null,
 ): string | null {
   const [pagePart, fragment] = splitTarget(target);
-  const route = siteRoute !== null
-    ? siteRoute
-    : pagePart === ""
-    ? currentRoute
-    : resolvePageRoute(currentRoute, target);
+  const route =
+    siteRoute !== null
+      ? siteRoute
+      : pagePart === ""
+        ? currentRoute
+        : resolvePageRoute(currentRoute, target);
   if (route === null || !existingFiles.has(route)) return "missing_document";
   if (fragment) {
     const targetFragment = fragmentId(fragment);
@@ -558,8 +554,10 @@ function frontmatterAssetTargets(data: DataRecord): string[] {
   for (const [key, value] of Object.entries(data)) {
     const normalized = String(key).toLowerCase();
     if (
-      normalized !== "image" && normalized !== "thumbnail" &&
-      normalized !== "logo" && !normalized.endsWith("image")
+      normalized !== "image" &&
+      normalized !== "thumbnail" &&
+      normalized !== "logo" &&
+      !normalized.endsWith("image")
     ) {
       continue;
     }

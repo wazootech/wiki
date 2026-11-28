@@ -20,72 +20,69 @@ async function runQueryCli(args: readonly string[], cwd: string) {
   };
 }
 
-test(
-  "query CLI handles JSON output, output files, and --jq",
-  async () => {
-    const root = sys.makeTempDirSync({ prefix: "wiki-query-cli-" });
-    try {
-      const wiki = `${root}/wiki`;
-      sys.mkdirSync(wiki);
-      sys.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
-      sys.writeTextFileSync(
-        `${wiki}/Ada.md`,
-        "---\ntype: schema:Person\nname: Ada\n---\n# Ada\n",
-      );
-      const query =
-        "SELECT ?name WHERE { ?person a <https://schema.org/Person> ; <https://schema.org/name> ?name }";
-      const outputPath = `${root}/results.json`;
-      const output = await runQueryCli(
-        [
-          "-c",
-          "wiki.yml",
-          "query",
-          "--no-inference",
-          query,
-          "--format",
-          "json",
-          "-o",
-          outputPath,
-        ],
-        root,
-      );
-      assertEquals(output.code, 0, output.stderr);
-      assertEquals(output.stdout, `Written results to ${outputPath}\n`);
-      const results = JSON.parse(sys.readTextFileSync(outputPath));
-      assertEquals(results.results.bindings[0].name.value, "Ada");
+test("query CLI handles JSON output, output files, and --jq", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-query-cli-" });
+  try {
+    const wiki = `${root}/wiki`;
+    sys.mkdirSync(wiki);
+    sys.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
+    sys.writeTextFileSync(
+      `${wiki}/Ada.md`,
+      "---\ntype: schema:Person\nname: Ada\n---\n# Ada\n",
+    );
+    const query =
+      "SELECT ?name WHERE { ?person a <https://schema.org/Person> ; <https://schema.org/name> ?name }";
+    const outputPath = `${root}/results.json`;
+    const output = await runQueryCli(
+      [
+        "-c",
+        "wiki.yml",
+        "query",
+        "--no-inference",
+        query,
+        "--format",
+        "json",
+        "-o",
+        outputPath,
+      ],
+      root,
+    );
+    assertEquals(output.code, 0, output.stderr);
+    assertEquals(output.stdout, `Written results to ${outputPath}\n`);
+    const results = JSON.parse(sys.readTextFileSync(outputPath));
+    assertEquals(results.results.bindings[0].name.value, "Ada");
 
-      const filtered = await runQueryCli(
-        [
-          "-c",
-          "wiki.yml",
-          "query",
-          "--no-inference",
-          "--jq",
-          "results.bindings[].name.value",
-          query,
-        ],
-        root,
-      );
-      assertEquals(filtered.code, 0, filtered.stderr);
-      assertEquals(filtered.stdout, "Ada\n");
+    const filtered = await runQueryCli(
+      [
+        "-c",
+        "wiki.yml",
+        "query",
+        "--no-inference",
+        "--jq",
+        "results.bindings[].name.value",
+        query,
+      ],
+      root,
+    );
+    assertEquals(filtered.code, 0, filtered.stderr);
+    assertEquals(filtered.stdout, "Ada\n");
 
-      const filteredEmpty = await runQueryCli(
-        [
-          "-c",
-          "wiki.yml",
-          "query",
-          "--no-inference",
-          "--jq",
-          "results.nonexistent",
-          query,
-        ],
-        root,
-      );
-      assertEquals(filteredEmpty.code, 0, filteredEmpty.stderr);
-      assertEquals(filteredEmpty.stdout, "\n");
-      assertEquals(filteredEmpty.stderr, "");
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+    const filteredEmpty = await runQueryCli(
+      [
+        "-c",
+        "wiki.yml",
+        "query",
+        "--no-inference",
+        "--jq",
+        "results.nonexistent",
+        query,
+      ],
+      root,
+    );
+    assertEquals(filteredEmpty.code, 0, filteredEmpty.stderr);
+    assertEquals(filteredEmpty.stdout, "\n");
+    assertEquals(filteredEmpty.stderr, "");
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});

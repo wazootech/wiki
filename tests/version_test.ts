@@ -36,9 +36,7 @@ test("VERSION matches pyproject.toml", async () => {
 });
 
 test("VERSION matches the docs wiki metadata", async () => {
-  const text = await sys.readTextFile(
-    new URL("docs/wiki/wiki.md", ROOT),
-  );
+  const text = await sys.readTextFile(new URL("docs/wiki/wiki.md", ROOT));
   const match = /^softwareVersion:\s*(\S+)/m.exec(text);
   assertEquals(match?.[1], VERSION);
 });

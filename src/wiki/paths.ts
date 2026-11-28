@@ -81,8 +81,8 @@ export function iterDocumentFiles(config: Config): string[] {
 
 /** Markdown documents only. */
 export function iterMarkdownFiles(config: Config): string[] {
-  return iterDocumentFiles(config).filter((filePath) =>
-    extname(filePath).toLowerCase() === ".md"
+  return iterDocumentFiles(config).filter(
+    (filePath) => extname(filePath).toLowerCase() === ".md",
   );
 }
 
@@ -108,17 +108,17 @@ function resolveWikiPaths(
     const wikiPath = index.get(resolve(path));
     if (wikiPath === undefined) {
       throw new ValueError(
-        `${
-          basename(path)
-        } is not a wiki document under inputs (or is excluded).`,
+        `${basename(
+          path,
+        )} is not a wiki document under inputs (or is excluded).`,
       );
     }
     if (!options.allowedSuffixes.has(extname(wikiPath).toLowerCase())) {
       const suffixes = [...options.allowedSuffixes].sort().join(", ");
       throw new ValueError(
-        `${options.label} only supports ${suffixes} files, got ${
-          basename(wikiPath)
-        }.`,
+        `${options.label} only supports ${suffixes} files, got ${basename(
+          wikiPath,
+        )}.`,
       );
     }
     selected.push(wikiPath);
@@ -155,7 +155,7 @@ export function routesFromMarkdownFiles(
 ): Set<string> {
   return new Set(
     selectMarkdownPaths(config, paths).map((path) =>
-      routeForDocumentFile(config, path)
+      routeForDocumentFile(config, path),
     ),
   );
 }
@@ -169,9 +169,9 @@ export function routesFromMarkdownFiles(
 export function routeForDocumentFile(config: Config, filePath: string): string {
   const relativePath = relativeToInputDir(config, filePath);
   const extension = extname(relativePath);
-  const rel =
-    (extension === "" ? relativePath : relativePath.slice(0, -extension.length))
-      .replaceAll("\\", "/");
+  const rel = (
+    extension === "" ? relativePath : relativePath.slice(0, -extension.length)
+  ).replaceAll("\\", "/");
   let parts = rel.split("/").filter((part) => part !== "");
   if (parts.length > 0 && parts[parts.length - 1] === "index") {
     parts = parts.slice(0, -1);
@@ -365,13 +365,14 @@ function validateRouteParts(parts: readonly string[], source: string): void {
         `Unsafe route for ${source}: control characters are not allowed in page paths.`,
       );
     }
-    const found = [...UNSAFE_ROUTE_CHARS].filter((char) => part.includes(char))
+    const found = [...UNSAFE_ROUTE_CHARS]
+      .filter((char) => part.includes(char))
       .sort();
     if (found.length > 0) {
       throw new ValueError(
-        `Unsafe route for ${source}: characters '${
-          found.join("")
-        }' are not allowed in page paths.`,
+        `Unsafe route for ${source}: characters '${found.join(
+          "",
+        )}' are not allowed in page paths.`,
       );
     }
   }
@@ -383,8 +384,10 @@ function collisionMessage(
   first: OutputEntry,
   second: OutputEntry,
 ): string {
-  return `Output collision on ${kind} '${first.public_url}': ` +
-    `${sourceLabel(first)} conflicts with ${sourceLabel(second)}.`;
+  return (
+    `Output collision on ${kind} '${first.public_url}': ` +
+    `${sourceLabel(first)} conflicts with ${sourceLabel(second)}.`
+  );
 }
 
 /** How an entry is named in a collision message. */

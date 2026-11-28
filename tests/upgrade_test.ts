@@ -109,14 +109,16 @@ test("upgrade check is successful when already current", async () => {
 test("metadata fallback selects the highest stable non-yanked version", async () => {
   const state = harness({
     fetchMetadata: () =>
-      Promise.resolve(Response.json({
-        versions: {
-          "0.1.9": {},
-          "0.1.8": { yanked: true },
-          "0.2.0-beta.2": {},
-          "0.2.0-beta.10": {},
-        },
-      })),
+      Promise.resolve(
+        Response.json({
+          versions: {
+            "0.1.9": {},
+            "0.1.8": { yanked: true },
+            "0.2.0-beta.2": {},
+            "0.2.0-beta.10": {},
+          },
+        }),
+      ),
     currentVersion: "0.1.2",
   });
   const code = await runUpgrade(check, state.dependencies);

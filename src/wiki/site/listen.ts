@@ -5,10 +5,7 @@ import type { AddressInfo } from "node:net";
 import { Readable } from "node:stream";
 import type { ConnectionInfo, SiteServer } from "./server.ts";
 
-type Handler = (
-  request: Request,
-  info: ConnectionInfo,
-) => Promise<Response>;
+type Handler = (request: Request, info: ConnectionInfo) => Promise<Response>;
 
 /** Methods the Fetch `Request` constructor refuses to build. */
 const FORBIDDEN_METHODS = new Set(["TRACE", "TRACK"]);
@@ -30,13 +27,13 @@ function requestOf(message: IncomingMessage, authority: string): Request {
   if (method === "GET" || method === "HEAD") {
     return new Request(url, { method, headers });
   }
-  const body = Readable.toWeb(message) as unknown as ReadableStream<
-    Uint8Array
-  >;
-  return new Request(
-    url,
-    { method, headers, body, duplex: "half" } as RequestInit,
-  );
+  const body = Readable.toWeb(message) as unknown as ReadableStream<Uint8Array>;
+  return new Request(url, {
+    method,
+    headers,
+    body,
+    duplex: "half",
+  } as RequestInit);
 }
 
 /** listen starts serving and resolves once the port is bound. */

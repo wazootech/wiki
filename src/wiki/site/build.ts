@@ -17,13 +17,14 @@ import type { VirtualPage, WikiSite } from "./types.ts";
 
 function objectRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 
 function expandKnownCurie(value: string, config: Config): string {
   if (
-    !value.includes(":") || isExternalLink(value) ||
+    !value.includes(":") ||
+    isExternalLink(value) ||
     value.toLowerCase().startsWith("urn:")
   ) {
     return value;
@@ -61,7 +62,9 @@ function chooseTitle(
 ): string {
   const candidate = frontmatter.headline || frontmatter.name;
   if (
-    candidate !== undefined && candidate !== null && String(candidate) !== ""
+    candidate !== undefined &&
+    candidate !== null &&
+    String(candidate) !== ""
   ) {
     return describeText(candidate);
   }

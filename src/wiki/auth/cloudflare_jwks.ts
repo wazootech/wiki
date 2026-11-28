@@ -23,9 +23,13 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isJwk(value: unknown): value is AccessJwk {
-  return isRecord(value) && value.kty === "RSA" &&
-    typeof value.kid === "string" && typeof value.n === "string" &&
-    typeof value.e === "string";
+  return (
+    isRecord(value) &&
+    value.kty === "RSA" &&
+    typeof value.kid === "string" &&
+    typeof value.n === "string" &&
+    typeof value.e === "string"
+  );
 }
 
 async function download(jwksUrl: string): Promise<AccessJwk[]> {

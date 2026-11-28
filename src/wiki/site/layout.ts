@@ -7,11 +7,12 @@ import type { VirtualPage } from "./types.ts";
 import fallbackLayoutHtml from "../index.html" with { type: "text" };
 
 function escapeHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll(
-      "'",
-      "&#x27;",
-    );
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;");
 }
 
 function templateText(path: string | null): string {
@@ -54,11 +55,9 @@ export function renderLayout(
     for (const [token, value] of extraTokens) tokens.set(token, value);
   }
   let result = templateText(templatePath);
-  for (
-    const [token, value] of [...tokens].sort((left, right) =>
-      right[0].length - left[0].length
-    )
-  ) {
+  for (const [token, value] of [...tokens].sort(
+    (left, right) => right[0].length - left[0].length,
+  )) {
     result = result.replaceAll(token, value);
   }
   return result;

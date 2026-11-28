@@ -394,7 +394,7 @@ function valueIri(value: unknown, context: Context): string | null {
   if (isRecord(value)) {
     const id = value["@id"];
     if (typeof id !== "string" || id === "") return null;
-    return id.includes(":") ? expandCurie(id, context) ?? id : id;
+    return id.includes(":") ? (expandCurie(id, context) ?? id) : id;
   }
   if (typeof value !== "string") return null;
   if (value.startsWith("http")) return value;
@@ -511,7 +511,7 @@ function lintValues(
 ): void {
   if (Array.isArray(value)) {
     value.forEach((item, index) =>
-      lintValues(item, `${where}[${index}]`, context, findings)
+      lintValues(item, `${where}[${index}]`, context, findings),
     );
     return;
   }
@@ -584,10 +584,9 @@ function lintShape(
       if (kind === null || !NODE_KINDS.has(kind)) {
         findings.add(
           at,
-          `sh:nodeKind must be one of ${
-            [...NODE_KINDS].map((k) => `sh:${k}`)
-              .join(", ")
-          }, not ${describeValue(value)} (SHACL §4.1.3).`,
+          `sh:nodeKind must be one of ${[...NODE_KINDS]
+            .map((k) => `sh:${k}`)
+            .join(", ")}, not ${describeValue(value)} (SHACL §4.1.3).`,
         );
       }
       continue;
@@ -607,11 +606,8 @@ function lintShape(
     }
 
     if (SHAPE_VALUED.has(local) || SHAPE_LISTS.has(local)) {
-      const childKind = local === "property"
-        ? "property"
-        : local === "node"
-        ? "node"
-        : "other";
+      const childKind =
+        local === "property" ? "property" : local === "node" ? "node" : "other";
       (Array.isArray(value) ? value : [value]).forEach((item, index) => {
         if (isBlankMapping(item)) {
           lintShape(
@@ -676,8 +672,8 @@ function typeIris(data: DataRecord, config: Config): Set<string> {
   const out = new Set<string>();
   for (const item of effectiveTypes(data, config)) {
     if (typeof item !== "string") continue;
-    const iri = valueIri(item, context) ??
-      (context.vocab ? context.vocab + item : null);
+    const iri =
+      valueIri(item, context) ?? (context.vocab ? context.vocab + item : null);
     if (iri !== null) out.add(iri);
   }
   return out;
@@ -721,7 +717,9 @@ export async function lintShapeDefinitions(
   const context = config.context;
   let referenced: Set<string> | null = null;
   const referencedShapeIris = async (): Promise<Set<string>> =>
-    referenced ??= referencedShapes(await loadGraph(config, { infer: false }));
+    (referenced ??= referencedShapes(
+      await loadGraph(config, { infer: false }),
+    ));
 
   for (const filePath of options.filePaths ?? iterDocumentFiles(config)) {
     let route: string;
@@ -766,9 +764,12 @@ export async function lintShapeDefinitions(
     }
 
     if (
-      lintUnused && isNodeShape && !isPropertyShape &&
+      lintUnused &&
+      isNodeShape &&
+      !isPropertyShape &&
       !hasTarget(data, context) &&
-      !types.has(RDFS + "Class") && !types.has(OWL + "Class")
+      !types.has(RDFS + "Class") &&
+      !types.has(OWL + "Class")
     ) {
       const shapeIris = await referencedShapeIris();
       const graph = frontmatterToGraph(data, config, { fileId: route });
@@ -864,7 +865,8 @@ function compactIri(iri: string, context: Context): string {
   let best: [string, string] | null = null;
   for (const [prefix, namespace] of context.namespaces) {
     if (
-      namespace !== "" && iri.startsWith(namespace) &&
+      namespace !== "" &&
+      iri.startsWith(namespace) &&
       (best === null || namespace.length > best[1].length)
     ) {
       best = [prefix, namespace];
@@ -918,7 +920,8 @@ class SourceFindings {
   ) {}
 
   add(node: Term, predicate: string | null, message: string): void {
-    const at = locate(node, this.index, this.context) +
+    const at =
+      locate(node, this.index, this.context) +
       (predicate === null ? "" : ` ${compactIri(predicate, this.context)}`);
     this.messages.push(`In ${this.label}: ${at}: ${message}`);
   }
@@ -1005,8 +1008,9 @@ async function lintSource(
 ): Promise<void> {
   const typed = (local: string) =>
     index.quads
-      .filter((item) =>
-        item.predicate.value === RDF_TYPE && item.object.value === SH + local
+      .filter(
+        (item) =>
+          item.predicate.value === RDF_TYPE && item.object.value === SH + local,
       )
       .map((item) => item.subject);
   const objectsOf = (local: string) =>
@@ -1095,9 +1099,10 @@ async function lintSource(
           findings.add(
             item.subject,
             item.predicate.value,
-            `${
-              describeTerm(member, findings.context)
-            } is not an IRI (SHACL §4.8.1).`,
+            `${describeTerm(
+              member,
+              findings.context,
+            )} is not an IRI (SHACL §4.8.1).`,
           );
         }
       }
@@ -1105,21 +1110,25 @@ async function lintSource(
       findings.add(
         item.subject,
         item.predicate.value,
-        `${
-          describeTerm(item.object, findings.context)
-        } is not an IRI; sh:${local} takes an IRI.`,
+        `${describeTerm(
+          item.object,
+          findings.context,
+        )} is not an IRI; sh:${local} takes an IRI.`,
       );
     } else if (
       local === "nodeKind" &&
-      !(item.object.termType === "NamedNode" &&
-        NODE_KINDS.has(shLocal(item.object.value) ?? ""))
+      !(
+        item.object.termType === "NamedNode" &&
+        NODE_KINDS.has(shLocal(item.object.value) ?? "")
+      )
     ) {
       findings.add(
         item.subject,
         item.predicate.value,
-        `${
-          describeTerm(item.object, findings.context)
-        } is not one of the six node kinds (SHACL §4.1.3).`,
+        `${describeTerm(
+          item.object,
+          findings.context,
+        )} is not one of the six node kinds (SHACL §4.1.3).`,
       );
     }
   }
@@ -1137,9 +1146,10 @@ async function lintSource(
     if ([...TARGETS].some((local) => predicates.has(SH + local))) continue;
     const types = new Set(index.values(node, RDF_TYPE).map((t) => t.value));
     if (types.has(RDFS + "Class") || types.has(OWL + "Class")) continue;
-    const isReferenced = node.termType === "BlankNode"
-      ? index.incoming(node).length > 0
-      : (await referenced()).has(node.value);
+    const isReferenced =
+      node.termType === "BlankNode"
+        ? index.incoming(node).length > 0
+        : (await referenced()).has(node.value);
     if (!isReferenced) {
       unused.add(
         node,
@@ -1154,8 +1164,8 @@ async function lintSource(
 
 /** Whether a triple touches the SHACL namespace at all. */
 function isShaclRelevant(item: Quad): boolean {
-  return [item.subject, item.predicate, item.object].some((term) =>
-    term.termType === "NamedNode" && term.value.startsWith(SH)
+  return [item.subject, item.predicate, item.object].some(
+    (term) => term.termType === "NamedNode" && term.value.startsWith(SH),
   );
 }
 
@@ -1174,19 +1184,20 @@ async function lintRdfShapes(
 ): Promise<ShapeLintResult> {
   const definitions: IssueDetail[] = [];
   const unused: IssueDetail[] = [];
-  const scoped = filePaths === null
-    ? null
-    : new Set(filePaths.map((path) => resolve(path)));
+  const scoped =
+    filePaths === null ? null : new Set(filePaths.map((path) => resolve(path)));
   for (const source of await rdfSources(config)) {
     if (scoped !== null && !scoped.has(resolve(source.path))) continue;
     if (
       fileFilter !== null &&
       (source.route === null || !fileFilter.has(source.route))
-    ) continue;
+    )
+      continue;
     if (!source.quads.some(isShaclRelevant)) continue;
-    const label = source.route === null
-      ? config.relativeToRoot(source.path)
-      : `${source.route} (turtle block ${source.block})`;
+    const label =
+      source.route === null
+        ? config.relativeToRoot(source.path)
+        : `${source.route} (turtle block ${source.block})`;
     const index = new TripleIndex(source.quads);
     const findings = new SourceFindings(label, index, config.context);
     const unusedFindings = lint.unused

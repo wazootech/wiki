@@ -49,8 +49,8 @@ export async function runAuthServeCommand(
   }
 
   const baseUrl = parsed.baseUrl ?? wiki.config.site.base_url;
-  const urlStyle = parsed.urlStyle ??
-    wiki.config.site.url_style as "dir" | "file";
+  const urlStyle =
+    parsed.urlStyle ?? (wiki.config.site.url_style as "dir" | "file");
   const siteDir = resolve(
     parsed.siteDir ?? join(wiki.config.config_root, "_site"),
   );

@@ -112,7 +112,7 @@ export function peopleFor(quads: number): number {
   const perBlock = PEOPLE_PER_ORG * PERSON_TRIPLES + ORG_TRIPLES;
   return Math.max(
     PEOPLE_PER_ORG,
-    Math.round(quads * PEOPLE_PER_ORG / perBlock),
+    Math.round((quads * PEOPLE_PER_ORG) / perBlock),
   );
 }
 
@@ -159,9 +159,8 @@ export function generateFixture(quads: number, seed = 414): Fixture {
     if (violation === 1) {
       lines.push(`${person} ${s("email")} ${str(`p${p}.alt@bench.example`)} .`);
     }
-    const employer = violation === 2
-      ? iri(personIri(knows))
-      : iri(orgIri(employerOf(p)));
+    const employer =
+      violation === 2 ? iri(personIri(knows)) : iri(orgIri(employerOf(p)));
     lines.push(`${person} ${s("worksFor")} ${employer} .`);
     lines.push(`${person} ${s("knows")} ${iri(personIri(knows))} .`);
   }

@@ -97,8 +97,8 @@ export interface RefsReport {
 export function resolveDocumentPath(config: Config, raw: string): string {
   const path = resolve(config.config_root, raw);
   const key = overlayKey(path);
-  const document = iterDocumentFiles(config).find((candidate) =>
-    overlayKey(candidate) === key
+  const document = iterDocumentFiles(config).find(
+    (candidate) => overlayKey(candidate) === key,
   );
   if (document === undefined) {
     throw new EditUsageError(`${raw}: not a wiki document.`);
@@ -118,15 +118,19 @@ export async function showDocument(
     config.graph.content_predicate ?? undefined,
   );
   const metadata = await deriveMetadata(path);
-  const jsonld = frontmatter === null
-    ? null
-    : await documentJsonLd(config, path, frontmatter, metadata);
-  const derived = frontmatter === null ? {} : Object.fromEntries(
-    derivedAdditions(frontmatter, metadata, config).map((addition) => [
-      addition.key,
-      addition.value,
-    ]),
-  );
+  const jsonld =
+    frontmatter === null
+      ? null
+      : await documentJsonLd(config, path, frontmatter, metadata);
+  const derived =
+    frontmatter === null
+      ? {}
+      : Object.fromEntries(
+          derivedAdditions(frontmatter, metadata, config).map((addition) => [
+            addition.key,
+            addition.value,
+          ]),
+        );
 
   let headings: ShowHeading[] = [];
   let links: PageRef[] = [];
@@ -164,9 +168,10 @@ export function documentRefs(config: Config, raw: string): RefsReport {
   const path = resolveDocumentPath(config, raw);
   const route = routeForDocumentFile(config, path);
   const index = LinkIndex.fromConfig(config);
-  const outbound = extname(path).toLowerCase() === ".md"
-    ? outboundPageRoutes(route, readText(path))
-    : [];
+  const outbound =
+    extname(path).toLowerCase() === ".md"
+      ? outboundPageRoutes(route, readText(path))
+      : [];
   return {
     version: SHOW_REPORT_VERSION,
     path: relativePath(config, path),

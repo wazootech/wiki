@@ -462,7 +462,7 @@ function relativePath(path: string, root: string): string {
   const resolvedRoot = resolve(root);
   if (resolved === resolvedRoot) return ".";
   try {
-    return (relativeWithin(resolved, resolvedRoot)).replaceAll("\\", "/");
+    return relativeWithin(resolved, resolvedRoot).replaceAll("\\", "/");
   } catch {
     return resolved.replaceAll("\\", "/");
   }
@@ -479,9 +479,11 @@ function compactIri(
   namespaces: ReadonlyMap<string, string>,
 ): string | null {
   const candidates = [...namespaces]
-    .filter(([prefix, namespace]) =>
-      prefix !== "" && iri.startsWith(namespace) &&
-      iri.length > namespace.length
+    .filter(
+      ([prefix, namespace]) =>
+        prefix !== "" &&
+        iri.startsWith(namespace) &&
+        iri.length > namespace.length,
     )
     .sort((left, right) => right[1].length - left[1].length);
   for (const [prefix, namespace] of candidates) {
@@ -543,7 +545,8 @@ export async function describeWiki(
 }
 
 function stripSparqlPrelude(query: string): string {
-  return query.replace(/^[ \t]*(?:#.*)?$/gm, "")
+  return query
+    .replace(/^[ \t]*(?:#.*)?$/gm, "")
     .replace(/\bPREFIX\b\s+[^\n\r]+/gi, "")
     .replace(/\bBASE\b\s+[^\n\r]+/gi, "")
     .trimStart();
@@ -589,9 +592,9 @@ function stableJson(value: unknown): string {
     if (Array.isArray(item)) return item.map(sort);
     if (item !== null && typeof item === "object") {
       return Object.fromEntries(
-        Object.entries(item).sort(([left], [right]) =>
-          left < right ? -1 : left > right ? 1 : 0
-        ).map(([key, nested]) => [key, sort(nested)]),
+        Object.entries(item)
+          .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+          .map(([key, nested]) => [key, sort(nested)]),
       );
     }
     return item;
@@ -670,10 +673,12 @@ function assertBoolean(value: unknown, label: string): boolean {
 
 function toolError(error: unknown): Record<string, unknown> {
   return {
-    content: [{
-      type: "text",
-      text: errorText(error),
-    }],
+    content: [
+      {
+        type: "text",
+        text: errorText(error),
+      },
+    ],
     isError: true,
   };
 }
@@ -764,7 +769,8 @@ export class WikiMcpServer {
 
   async handleMessage(message: unknown): Promise<JsonRpcResponse | null> {
     if (
-      !isRecord(message) || message["jsonrpc"] !== "2.0" ||
+      !isRecord(message) ||
+      message["jsonrpc"] !== "2.0" ||
       typeof message["method"] !== "string"
     ) {
       return protocolError(null, -32600, "Invalid Request");
@@ -773,12 +779,15 @@ export class WikiMcpServer {
     const idValue = message["id"];
     if (
       hasId &&
-      !(typeof idValue === "string" || typeof idValue === "number" ||
-        idValue === null)
+      !(
+        typeof idValue === "string" ||
+        typeof idValue === "number" ||
+        idValue === null
+      )
     ) {
       return protocolError(null, -32600, "Invalid Request");
     }
-    const id = hasId ? idValue as string | number | null : null;
+    const id = hasId ? (idValue as string | number | null) : null;
     if (message["params"] !== undefined && !isRecord(message["params"])) {
       return hasId ? protocolError(id, -32600, "Invalid Request") : null;
     }
@@ -794,11 +803,7 @@ export class WikiMcpServer {
       if (error instanceof RpcRequestError) {
         return protocolError(id, error.code, error.message);
       }
-      return protocolError(
-        id,
-        -32603,
-        errorText(error),
-      );
+      return protocolError(id, -32603, errorText(error));
     }
   }
 
@@ -855,21 +860,25 @@ export class WikiMcpServer {
     let args: Record<string, unknown>;
     try {
       name = assertString(params["name"], "name");
-      args = params["arguments"] === undefined
-        ? {}
-        : assertObject(params["arguments"], "arguments");
+      args =
+        params["arguments"] === undefined
+          ? {}
+          : assertObject(params["arguments"], "arguments");
       if (name === "query_sparql") {
         assertNoExtraFields(args, ["query", "format", "inference", "reload"]);
         const query = assertString(args["query"], "query");
-        const format = args["format"] === undefined
-          ? "json"
-          : assertString(args["format"], "format");
-        const inference = args["inference"] === undefined
-          ? true
-          : assertBoolean(args["inference"], "inference");
-        const reload = args["reload"] === undefined
-          ? false
-          : assertBoolean(args["reload"], "reload");
+        const format =
+          args["format"] === undefined
+            ? "json"
+            : assertString(args["format"], "format");
+        const inference =
+          args["inference"] === undefined
+            ? true
+            : assertBoolean(args["inference"], "inference");
+        const reload =
+          args["reload"] === undefined
+            ? false
+            : assertBoolean(args["reload"], "reload");
         const result = await querySparql(this.#wiki, query, {
           format,
           inference,
@@ -897,9 +906,10 @@ export class WikiMcpServer {
       if (name === "wiki_page_show" || name === "wiki_page_refs") {
         assertNoExtraFields(args, ["path"]);
         const path = assertString(args["path"], "path");
-        const report = name === "wiki_page_show"
-          ? await this.#wiki.show(path)
-          : this.#wiki.refs(path);
+        const report =
+          name === "wiki_page_show"
+            ? await this.#wiki.show(path)
+            : this.#wiki.refs(path);
         return structuredResult(report, false);
       }
       if (name === "wiki_edit_apply") {

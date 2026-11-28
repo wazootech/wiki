@@ -76,10 +76,9 @@ test("SPARQL service supports GET JSON and POST N-Triples", async () => {
       "SELECT ?name WHERE { ?person <https://schema.org/name> ?name }",
     );
     const jsonResponse = await handler(
-      new Request(
-        `http://localhost/api/sparql?query=${select}`,
-        { headers: { accept: "application/sparql-results+json" } },
-      ),
+      new Request(`http://localhost/api/sparql?query=${select}`, {
+        headers: { accept: "application/sparql-results+json" },
+      }),
     );
     assert(jsonResponse !== null);
     assertEquals(jsonResponse.status, 200);

@@ -38,7 +38,8 @@ export async function createLocalProvider(
         const form = await request.formData();
         const submitted = form.get("csrf");
         if (
-          csrf === null || typeof submitted !== "string" ||
+          csrf === null ||
+          typeof submitted !== "string" ||
           !constantTimeEquals(csrf, submitted)
         ) {
           return htmlResponse("Invalid CSRF token.\n", 403);
@@ -47,9 +48,9 @@ export async function createLocalProvider(
         if (token !== null) {
           await context.sessionStore.delete(await hashToken(token));
         }
-        const response = htmlResponse(renderSignedOutPage(
-          authPath(context, context.loginPath),
-        ));
+        const response = htmlResponse(
+          renderSignedOutPage(authPath(context, context.loginPath)),
+        );
         response.headers.append(
           "set-cookie",
           clearCookie(context.config.cookie_name, isSecure(request, url)),

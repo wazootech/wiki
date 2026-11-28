@@ -23,16 +23,18 @@ const GRAPH_FORMATS = [
 ] as const;
 
 function escapedHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#x27;");
 }
 
 function errorResponse(status: number, message: string): Response {
-  const body =
-    `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>${status}</title>\n</head>\n<body>\n<h1>${status}</h1>\n<p>${
-      escapedHtml(message)
-    }</p>\n</body>\n</html>`;
+  const body = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>${status}</title>\n</head>\n<body>\n<h1>${status}</h1>\n<p>${escapedHtml(
+    message,
+  )}</p>\n</body>\n</html>`;
   return new Response(body, {
     status,
     headers: { "content-type": "text/html; charset=utf-8" },
@@ -43,10 +45,7 @@ function normalizePath(path: string): string {
   return path.replace(/\/+$/, "") || "/";
 }
 
-export function validateSparqlServicePath(
-  path: string,
-  baseUrl: string,
-): void {
+export function validateSparqlServicePath(path: string, baseUrl: string): void {
   const servicePath = normalizePath(path);
   const base = normalizePath(baseUrl);
   const watchPath = normalizePath(`${base === "/" ? "" : base}/__watch`);
@@ -61,7 +60,8 @@ export function validateSparqlServicePath(
     );
   }
   if (
-    base !== "/" && (servicePath === base || servicePath.startsWith(`${base}/`))
+    base !== "/" &&
+    (servicePath === base || servicePath.startsWith(`${base}/`))
   ) {
     throw new Error(
       `Invalid sparql_service.path: '${path}' collides with page routes under base_url '${baseUrl}'.`,
@@ -86,19 +86,22 @@ function bestAcceptMedia(
   supported: readonly string[],
 ): string | null {
   if (accept.trim() === "") return supported[0] ?? null;
-  const ranked = accept.split(",").flatMap((entry, index) => {
-    const [rawMedia, ...parameters] = entry.trim().split(";");
-    const media = rawMedia?.trim().toLowerCase() ?? "";
-    if (media === "") return [];
-    let quality = 1;
-    for (const parameter of parameters) {
-      const normalized = parameter.trim();
-      if (!normalized.startsWith("q=")) continue;
-      const parsed = Number(normalized.slice(2));
-      quality = Number.isFinite(parsed) ? parsed : 0;
-    }
-    return [{ media, quality, index }];
-  }).sort((a, b) => b.quality - a.quality || a.index - b.index);
+  const ranked = accept
+    .split(",")
+    .flatMap((entry, index) => {
+      const [rawMedia, ...parameters] = entry.trim().split(";");
+      const media = rawMedia?.trim().toLowerCase() ?? "";
+      if (media === "") return [];
+      let quality = 1;
+      for (const parameter of parameters) {
+        const normalized = parameter.trim();
+        if (!normalized.startsWith("q=")) continue;
+        const parsed = Number(normalized.slice(2));
+        quality = Number.isFinite(parsed) ? parsed : 0;
+      }
+      return [{ media, quality, index }];
+    })
+    .sort((a, b) => b.quality - a.quality || a.index - b.index);
   for (const entry of ranked) {
     if (supported.includes(entry.media)) return entry.media;
     if (entry.media === "*/*") return supported[0] ?? null;
@@ -138,16 +141,15 @@ function serviceDescription(
     `${SD}defaultSupportedEntailmentProfile`,
     namedNode(`${PROF}RL`),
   );
-  for (
-    const format of [
-      "SPARQL_Results_JSON",
-      "SPARQL_Results_CSV",
-      "SPARQL_Results_TSV",
-      "Turtle",
-      "N-Triples",
-      "N3",
-    ]
-  ) add(service, `${SD}resultFormat`, namedNode(`${FMT}${format}`));
+  for (const format of [
+    "SPARQL_Results_JSON",
+    "SPARQL_Results_CSV",
+    "SPARQL_Results_TSV",
+    "Turtle",
+    "N-Triples",
+    "N3",
+  ])
+    add(service, `${SD}resultFormat`, namedNode(`${FMT}${format}`));
   add(service, `${SD}defaultDataset`, dataset);
   add(dataset, `${RDF}type`, namedNode(`${SD}Dataset`));
   add(dataset, `${SD}defaultGraph`, defaultGraph);
@@ -198,10 +200,11 @@ function last(params: URLSearchParams, name: string): string | null {
 }
 
 async function requestParameters(request: Request): Promise<
-  {
-    query: string | null;
-    params: URLSearchParams;
-  } | Response
+  | {
+      query: string | null;
+      params: URLSearchParams;
+    }
+  | Response
 > {
   const url = new URL(request.url);
   if (request.method === "GET") {
@@ -210,10 +213,10 @@ async function requestParameters(request: Request): Promise<
   if (request.method !== "POST") {
     return errorResponse(405, `Unsupported method: ${request.method}`);
   }
-  const contentType = (request.headers.get("content-type") ?? "").split(
-    ";",
-    1,
-  )[0]!.trim().toLowerCase();
+  const contentType = (request.headers.get("content-type") ?? "")
+    .split(";", 1)[0]!
+    .trim()
+    .toLowerCase();
   const body = await request.text();
   if (contentType === "application/sparql-query") {
     const params = new URLSearchParams(url.searchParams);
@@ -270,17 +273,15 @@ export function createSparqlServiceHandler(
     try {
       form = detectQueryForm(query);
     } catch (error) {
-      return errorResponse(
-        400,
-        errorText(error),
-      );
+      return errorResponse(400, errorText(error));
     }
     if (!new Set(["SELECT", "ASK", "CONSTRUCT", "DESCRIBE"]).has(form)) {
       return errorResponse(405, `Unsupported SPARQL query form: ${form}`);
     }
-    const accepted = form === "CONSTRUCT" || form === "DESCRIBE"
-      ? GRAPH_FORMATS
-      : SELECT_FORMATS;
+    const accepted =
+      form === "CONSTRUCT" || form === "DESCRIBE"
+        ? GRAPH_FORMATS
+        : SELECT_FORMATS;
     const accept = request.headers.get("accept") ?? "";
     const media = bestAcceptMedia(
       accept,
@@ -305,25 +306,23 @@ export function createSparqlServiceHandler(
         noInference: !parseBoolean(params, "inference", true),
         reload: parseBoolean(params, "reload", false),
       });
-      const contentType = form === "CONSTRUCT" || form === "DESCRIBE"
-        ? format === "turtle"
-          ? "text/turtle"
-          : format === "nt"
-          ? "application/n-triples"
-          : "text/n3"
-        : format === "json"
-        ? "application/sparql-results+json"
-        : format === "csv"
-        ? "text/csv"
-        : "text/tab-separated-values";
+      const contentType =
+        form === "CONSTRUCT" || form === "DESCRIBE"
+          ? format === "turtle"
+            ? "text/turtle"
+            : format === "nt"
+              ? "application/n-triples"
+              : "text/n3"
+          : format === "json"
+            ? "application/sparql-results+json"
+            : format === "csv"
+              ? "text/csv"
+              : "text/tab-separated-values";
       return new Response(body, {
         headers: { "content-type": `${contentType}; charset=utf-8` },
       });
     } catch (error) {
-      return errorResponse(
-        422,
-        `Query Execution Error: ${errorText(error)}`,
-      );
+      return errorResponse(422, `Query Execution Error: ${errorText(error)}`);
     }
   };
 }

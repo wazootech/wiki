@@ -34,7 +34,7 @@ export const EXPORT_FORMATS = [
   "nquads",
 ] as const;
 
-export type ExportFormat = typeof EXPORT_FORMATS[number];
+export type ExportFormat = (typeof EXPORT_FORMATS)[number];
 export type ExportMode = "expanded" | "compacted";
 
 export interface ExportOptions {
@@ -77,16 +77,16 @@ const FORMAT_ALIASES: Readonly<Record<string, ExportFormat>> = Object.assign(
     "rdf/xml": "xml",
     "application/trig": "trig",
     "application/x-turtle": "turtle",
-    "jsonld": "json-ld",
+    jsonld: "json-ld",
     "n-quads": "nquads",
     "n-triples": "nt",
-    "nq": "nquads",
-    "ntriples": "nt",
-    "rdf": "xml",
+    nq: "nquads",
+    ntriples: "nt",
+    rdf: "xml",
     "text/n3": "n3",
     "text/turtle": "turtle",
-    "tt": "turtle",
-    "ttl": "turtle",
+    tt: "turtle",
+    ttl: "turtle",
   } as const,
 );
 
@@ -96,7 +96,8 @@ export function normalizeExportFormat(format: string): ExportFormat {
     ? FORMAT_ALIASES[raw]!
     : raw;
   if (
-    canonical === "dict" || EXPORT_FORMATS.includes(canonical as ExportFormat)
+    canonical === "dict" ||
+    EXPORT_FORMATS.includes(canonical as ExportFormat)
   ) {
     return canonical as ExportFormat;
   }
@@ -106,9 +107,9 @@ export function normalizeExportFormat(format: string): ExportFormat {
     if (!(error instanceof UnsupportedFormatError)) throw error;
   }
   throw new ValueError(
-    `Invalid export format '${format}'. Choose from ${
-      EXPORT_FORMATS.join(", ")
-    }.`,
+    `Invalid export format '${format}'. Choose from ${EXPORT_FORMATS.join(
+      ", ",
+    )}.`,
   );
 }
 
@@ -182,7 +183,7 @@ export async function documentJsonLd(
     config,
     "json-ld",
     "compacted",
-    derived ?? await deriveMetadata(filePath),
+    derived ?? (await deriveMetadata(filePath)),
   );
 }
 
@@ -193,9 +194,10 @@ export async function exportFrontmatter(
 ): Promise<ExportResult> {
   const format = normalizeExportFormat(options.format ?? "dict");
   const mode = normalizeExportMode(options.mode ?? "expanded");
-  const selected = files && files.length > 0
-    ? selectDocumentPaths(config, files)
-    : iterDocumentFiles(config);
+  const selected =
+    files && files.length > 0
+      ? selectDocumentPaths(config, files)
+      : iterDocumentFiles(config);
 
   if (files && files.length > 1 && RAW_FORMATS.has(format)) {
     return {
@@ -219,9 +221,9 @@ export async function exportFrontmatter(
         return {
           ok: false,
           output: "",
-          error_message: `No valid document metadata found in ${
-            basename(filePath)
-          }`,
+          error_message: `No valid document metadata found in ${basename(
+            filePath,
+          )}`,
         };
       }
       continue;
@@ -246,13 +248,15 @@ export async function exportFrontmatter(
     }
   }
 
-  const payload: unknown = files && files.length > 0 && converted.length === 1
-    ? converted[0]
-    : converted;
-  const output = RAW_FORMATS.has(format) && !Array.isArray(payload)
-    ? typeof (payload as { rdf: unknown }).rdf === "string"
-      ? (payload as { rdf: string }).rdf
-      : JSON.stringify((payload as { rdf: unknown }).rdf, null, 2)
-    : JSON.stringify(payload, null, 2);
+  const payload: unknown =
+    files && files.length > 0 && converted.length === 1
+      ? converted[0]
+      : converted;
+  const output =
+    RAW_FORMATS.has(format) && !Array.isArray(payload)
+      ? typeof (payload as { rdf: unknown }).rdf === "string"
+        ? (payload as { rdf: string }).rdf
+        : JSON.stringify((payload as { rdf: unknown }).rdf, null, 2)
+      : JSON.stringify(payload, null, 2);
   return { ok: true, output };
 }

@@ -34,9 +34,10 @@ const config = JSON.parse(
   readFileSync(new URL("../deno.json", import.meta.url), "utf8"),
 ) as { imports: Record<string, string> };
 
-const entries = pluginSources().map(({ name, specifier, path }) =>
-  `  // ${config.imports[specifier]}\n` +
-  `  ${name}: [\n${encode(readFileSync(path))}\n  ].join(""),`
+const entries = pluginSources().map(
+  ({ name, specifier, path }) =>
+    `  // ${config.imports[specifier]}\n` +
+    `  ${name}: [\n${encode(readFileSync(path))}\n  ].join(""),`,
 );
 
 writeFileSync(

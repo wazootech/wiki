@@ -194,7 +194,9 @@ export function resolvePageRoute(
   if (pagePart.startsWith("/")) return null;
   const suffix = suffixOf(pagePart);
   if (
-    suffix === ".md" || suffix === ".yaml" || suffix === ".yml" ||
+    suffix === ".md" ||
+    suffix === ".yaml" ||
+    suffix === ".yml" ||
     suffix === ".json"
   ) {
     pagePart = pagePart.slice(0, -suffix.length);

@@ -41,9 +41,7 @@ export class EditOpError extends ValueError {
  * A frontmatter value: YAML source kept verbatim (`{ yaml: "12.00" }`, what the
  * CLI passes) or a JSON value serialized by `yaml` (`{ json: 12 }`).
  */
-export type FieldValue =
-  | { readonly yaml: string }
-  | { readonly json: unknown };
+export type FieldValue = { readonly yaml: string } | { readonly json: unknown };
 
 /** Where a `patch` op lands. Mirrors `EditTarget` in `edit.ts`. */
 export type PatchTarget =
@@ -164,9 +162,8 @@ function joinBlocks(
   if (mode === "replace") return [...added];
   if (existing.length === 0) return [...added];
   if (added.length === 0) return [...existing];
-  const [first, second] = mode === "append"
-    ? [existing, added]
-    : [added, existing];
+  const [first, second] =
+    mode === "append" ? [existing, added] : [added, existing];
   const family = listFamily(first.at(-1));
   const sameList = family !== null && family === listFamily(second[0]);
   return sameList ? [...first, ...second] : [...first, "", ...second];
@@ -196,16 +193,16 @@ export function patchContent(
     if ("frontmatter" in target) {
       const current = frontmatterYaml(text);
       const existing = trimBlankLines((current?.yaml ?? "").split("\n"));
-      const lines = mode === "replace"
-        ? added
-        : mode === "append"
-        ? [...existing, ...added]
-        : [...added, ...existing];
+      const lines =
+        mode === "replace"
+          ? added
+          : mode === "append"
+            ? [...existing, ...added]
+            : [...added, ...existing];
       const yaml = lines.length === 0 ? "" : `${lines.join("\n")}\n`;
       parseFrontmatter(yaml, path);
-      const body = current === null
-        ? `\n\n${text.replace(/^\s+/, "")}`
-        : current.body;
+      const body =
+        current === null ? `\n\n${text.replace(/^\s+/, "")}` : current.body;
       return `---\n${yaml}---${body}`;
     }
 
@@ -224,11 +221,11 @@ export function patchContent(
     }
     if (sections.length > 1) {
       throw new EditOpError(
-        `${path}: ${sections.length} headings match ${
-          JSON.stringify(target.heading)
-        }; use a more specific heading or its anchor slug (${
-          sections.map((section) => `#${section.slug}`).join(", ")
-        }).`,
+        `${path}: ${sections.length} headings match ${JSON.stringify(
+          target.heading,
+        )}; use a more specific heading or its anchor slug (${sections
+          .map((section) => `#${section.slug}`)
+          .join(", ")}).`,
       );
     }
     const section = sections[0]!;
@@ -329,9 +326,8 @@ export function scaffoldTitle(
   for (const key of TITLE_KEYS) {
     const entry = fields.find(([field]) => field === key);
     if (entry === undefined) continue;
-    const value = "yaml" in entry[1]
-      ? parseDocument(entry[1].yaml).toJS()
-      : entry[1].json;
+    const value =
+      "yaml" in entry[1] ? parseDocument(entry[1].yaml).toJS() : entry[1].json;
     if (typeof value === "string" && value.trim() !== "") return value.trim();
   }
   return null;
@@ -343,10 +339,10 @@ export function scaffoldTitle(
  * guide and `lint.filename_pattern` expect.
  */
 export function titleFilename(title: string): string {
-  const stem = title.trim().replace(/\s+/g, "_").replace(
-    /[^\p{L}\p{N}_().,'-]/gu,
-    "",
-  );
+  const stem = title
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^\p{L}\p{N}_().,'-]/gu, "");
   if (stem === "") {
     throw new EditOpError(
       `Cannot derive a filename from the title ${JSON.stringify(title)}.`,
@@ -364,8 +360,9 @@ function isDerivedHeadline(
 ): boolean {
   if (
     resolvePredicate(key, context)?.value !==
-      derivedPredicate("headline", context)
-  ) return false;
+    derivedPredicate("headline", context)
+  )
+    return false;
   const text = "yaml" in value ? parseDocument(value.yaml).toJS() : value.json;
   return typeof text === "string" && text.trim() === title;
 }
@@ -395,24 +392,26 @@ export function scaffoldPage(options: {
   const doc = parseDocument("");
   if (options.type !== null) doc.set(options.typeKey, options.type);
   const title = scaffoldTitle(options.fields);
-  const fields = options.context === undefined || title === null
-    ? options.fields
-    : options.fields.filter(([key, value]) =>
-      !isDerivedHeadline(key, value, title, options.context!)
-    );
+  const fields =
+    options.context === undefined || title === null
+      ? options.fields
+      : options.fields.filter(
+          ([key, value]) =>
+            !isDerivedHeadline(key, value, title, options.context!),
+        );
   const supplied = new Map(fields.map(([key, value]) => [key, value]));
   const ordered = [
     ...options.required.filter((key) => supplied.has(key)),
-    ...fields.map(([key]) => key).filter((key) =>
-      !options.required.includes(key)
-    ),
+    ...fields
+      .map(([key]) => key)
+      .filter((key) => !options.required.includes(key)),
   ];
   for (const key of ordered) {
     doc.set(key, valueNode(supplied.get(key)!, key));
   }
   const yaml = doc.contents === null ? "" : doc.toString({ lineWidth: 0 });
-  const heading = title ??
-    basename(options.path, extname(options.path)).replaceAll("_", " ");
+  const heading =
+    title ?? basename(options.path, extname(options.path)).replaceAll("_", " ");
   const body = options.body?.trim() ?? "";
   return `---\n${yaml}---\n\n# ${heading}\n${body === "" ? "" : `\n${body}\n`}`;
 }

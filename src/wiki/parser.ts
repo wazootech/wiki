@@ -141,14 +141,15 @@ function isYamlFrontmatter(content: string): boolean {
  * date scalars to annotate — JSON has no date literal), and TOML blocks
  * keep the TOML parser's own types.
  */
-function extractFrontmatter(
-  content: string,
-): { attrs: DataRecord; body: string; frontMatter: string | undefined } {
+function extractFrontmatter(content: string): {
+  attrs: DataRecord;
+  body: string;
+  frontMatter: string | undefined;
+} {
   const result = extract<DataRecord>(content);
   const attrs = isRecord(result.attrs) ? result.attrs : {};
-  const frontMatter = typeof result.frontMatter === "string"
-    ? result.frontMatter
-    : undefined;
+  const frontMatter =
+    typeof result.frontMatter === "string" ? result.frontMatter : undefined;
   if (frontMatter !== undefined && isYamlFrontmatter(content)) {
     return {
       attrs: annotateScalars(attrs, frontMatter),
@@ -246,9 +247,7 @@ export function splitFrontmatterBody(
 }
 
 /** Split a document file into its data and body; data files have no body. */
-export function splitDocumentBody(
-  path: string,
-): [DataRecord | null, string] {
+export function splitDocumentBody(path: string): [DataRecord | null, string] {
   const suffix = extname(path).toLowerCase();
   if (suffix === ".md") {
     try {

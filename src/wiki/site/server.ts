@@ -45,10 +45,7 @@ export interface StaticSiteServerHandle {
 }
 
 export interface StaticSiteHandlerHandle {
-  handleRequest(
-    request: Request,
-    info?: ConnectionInfo,
-  ): Promise<Response>;
+  handleRequest(request: Request, info?: ConnectionInfo): Promise<Response>;
   close(): void;
 }
 
@@ -105,10 +102,15 @@ function decodePathSegments(pathname: string): string[] | null {
         return code <= 0x1f || code === 0x7f;
       });
       if (
-        segment === "" || segment === "." || segment === ".." ||
-        segment.includes("/") || segment.includes("\\") ||
-        segment.includes(":") || hasControlCharacter
-      ) return null;
+        segment === "" ||
+        segment === "." ||
+        segment === ".." ||
+        segment.includes("/") ||
+        segment.includes("\\") ||
+        segment.includes(":") ||
+        hasControlCharacter
+      )
+        return null;
       segments.push(segment);
     }
   } catch {
@@ -120,8 +122,10 @@ function decodePathSegments(pathname: string): string[] | null {
 function normalizeBaseUrl(baseUrl: string): NormalizedBaseUrl {
   if (baseUrl === "") return { segments: [], pathname: "" };
   if (
-    !baseUrl.startsWith("/") || baseUrl.startsWith("//") ||
-    baseUrl.includes("?") || baseUrl.includes("#")
+    !baseUrl.startsWith("/") ||
+    baseUrl.startsWith("//") ||
+    baseUrl.includes("?") ||
+    baseUrl.includes("#")
   ) {
     throw new TypeError(`Invalid baseUrl: ${baseUrl}`);
   }
@@ -129,9 +133,10 @@ function normalizeBaseUrl(baseUrl: string): NormalizedBaseUrl {
   if (segments === null) throw new TypeError(`Invalid baseUrl: ${baseUrl}`);
   return {
     segments,
-    pathname: segments.length === 0
-      ? ""
-      : `/${segments.map((segment) => encodeURIComponent(segment)).join("/")}`,
+    pathname:
+      segments.length === 0
+        ? ""
+        : `/${segments.map((segment) => encodeURIComponent(segment)).join("/")}`,
   };
 }
 
@@ -193,9 +198,11 @@ function contentType(filePath: string): string {
   const extension = extname(filePath).toLowerCase();
   const mimeType = MIME_TYPES[extension] ?? "application/octet-stream";
   if (
-    mimeType.startsWith("text/") || mimeType === "application/json" ||
+    mimeType.startsWith("text/") ||
+    mimeType === "application/json" ||
     mimeType === "application/manifest+json" ||
-    mimeType === "application/xml" || mimeType === "application/rdf+xml" ||
+    mimeType === "application/xml" ||
+    mimeType === "application/rdf+xml" ||
     mimeType === "image/svg+xml"
   ) {
     return `${mimeType}; charset=utf-8`;
@@ -218,11 +225,14 @@ function serveResponse(
   headers.set("content-type", mimeType);
   headers.set("content-length", String(body.byteLength));
   headers.set("x-content-type-options", "nosniff");
-  const responseBody = method === "HEAD" ? null : (() => {
-    const buffer = new ArrayBuffer(body.byteLength);
-    new Uint8Array(buffer).set(body);
-    return buffer;
-  })();
+  const responseBody =
+    method === "HEAD"
+      ? null
+      : (() => {
+          const buffer = new ArrayBuffer(body.byteLength);
+          new Uint8Array(buffer).set(body);
+          return buffer;
+        })();
   return new Response(responseBody, { headers });
 }
 
@@ -324,9 +334,7 @@ export function createStaticSiteHandler(
     const relSegments = relativeSegments(url.pathname, base);
     if (relSegments === null) return notFound(request.method);
 
-    if (
-      watch && relSegments.length === 1 && relSegments[0] === "__watch"
-    ) {
+    if (watch && relSegments.length === 1 && relSegments[0] === "__watch") {
       const body = new TextEncoder().encode(JSON.stringify({ build }));
       return serveResponse(
         body,

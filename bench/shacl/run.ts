@@ -152,8 +152,12 @@ async function runOne(
     if (!output.success) {
       const stderr = new TextDecoder().decode(output.stderr);
       const oom = /heap out of memory|Allocation failed/i.test(stderr);
-      const last = stderr.split("\n").map((line) => line.trim())
-        .filter((line) => line !== "").at(-1) ?? "(no stderr)";
+      const last =
+        stderr
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line !== "")
+          .at(-1) ?? "(no stderr)";
       return {
         case: name,
         ok: false,
@@ -191,12 +195,12 @@ function table(results: readonly SizeResult[]): string {
     for (const result of size.cases) {
       rows.push(
         result.ok
-          ? `| ${size.quads} | ${result.case} | ${seconds(result.totalMs)} | ${
-            phaseText(result.phases)
-          } | ${megabytes(result.peakRss)} | ${result.violations ?? ""} |`
-          : `| ${size.quads} | ${result.case} | ${
-            seconds(result.totalMs)
-          } | **failed: ${result.reason}** | | |`,
+          ? `| ${size.quads} | ${result.case} | ${seconds(result.totalMs)} | ${phaseText(
+              result.phases,
+            )} | ${megabytes(result.peakRss)} | ${result.violations ?? ""} |`
+          : `| ${size.quads} | ${result.case} | ${seconds(
+              result.totalMs,
+            )} | **failed: ${result.reason}** | | |`,
       );
     }
   }
@@ -216,8 +220,8 @@ if (import.meta.main) {
     sys.exit(0);
   }
 
-  const root = options.out ??
-    sys.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
+  const root =
+    options.out ?? sys.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
   const results: SizeResult[] = [];
   for (const size of options.sizes) {
     const fixture = generateFixture(size);

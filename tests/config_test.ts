@@ -54,10 +54,9 @@ function strings(paths: readonly string[]): string[] {
 
 test("Config has the documented defaults", () => {
   const config = new Config();
-  assertEquals(
-    strings(config.wiki.input),
-    [join(resolve(config.config_root), "wiki")],
-  );
+  assertEquals(strings(config.wiki.input), [
+    join(resolve(config.config_root), "wiki"),
+  ]);
   assertEquals(config.wiki.assets.length, 0);
   assertEquals(config.graph.include_file_extension, false);
   assertEquals(config.site.base_url, "/wiki");
@@ -102,10 +101,9 @@ test("graph.include_file_extension coerces quoted YAML booleans", () => {
 test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yml", `\uFEFF${MINIMAL_WIKI_YAML}`);
-    assertEquals(
-      strings(Config.load(base).wiki.input),
-      [join(resolve(base), "wiki")],
-    );
+    assertEquals(strings(Config.load(base).wiki.input), [
+      join(resolve(base), "wiki"),
+    ]);
   });
   withTempDir((base) => {
     // JSON is strict about a BOM, so this used to fail to parse at all.
@@ -114,20 +112,18 @@ test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () => {
       "wiki.json",
       `\uFEFF${JSON.stringify({ wiki: { input: ["wiki"] } })}`,
     );
-    assertEquals(
-      strings(Config.load(base).wiki.input),
-      [join(resolve(base), "wiki")],
-    );
+    assertEquals(strings(Config.load(base).wiki.input), [
+      join(resolve(base), "wiki"),
+    ]);
   });
 });
 
 test("Config.load falls back to defaults when no config file exists", () => {
   withTempDir((base) => {
     const config = Config.load(base);
-    assertEquals(
-      strings(config.wiki.input),
-      [join(resolve(config.config_root), "wiki")],
-    );
+    assertEquals(strings(config.wiki.input), [
+      join(resolve(config.config_root), "wiki"),
+    ]);
   });
 });
 
@@ -170,10 +166,10 @@ test("Config.load parses a full wiki.yaml", () => {
       join(resolve(base), "assets"),
       join(resolve(base), "media/photos"),
     ]);
-    assertEquals([...config.wiki.exclude], [
-      "wiki/drafts/**",
-      "assets/private/**",
-    ]);
+    assertEquals(
+      [...config.wiki.exclude],
+      ["wiki/drafts/**", "assets/private/**"],
+    );
     assertEquals(config.check.missing_layout_file, "error");
     assertEquals(config.check.frontmatter_schema, "error");
     assertEquals(config.check.missing_schema_ref, "warning");
@@ -335,9 +331,7 @@ test("the assets default only kicks in when the directory exists", () => {
     sys.mkdirSync(join(base, "assets"));
     writeFile(base, "wiki.yaml", MINIMAL_WIKI_YAML);
     const config = Config.load(base);
-    assertEquals(strings(config.wiki.assets), [
-      join(resolve(base), "assets"),
-    ]);
+    assertEquals(strings(config.wiki.assets), [join(resolve(base), "assets")]);
   });
 });
 
@@ -351,14 +345,8 @@ test("exclude patterns match config-root-relative paths", () => {
       config.isExcluded(join(root, "wiki", "drafts", "note.md")),
       true,
     );
-    assertEquals(
-      config.isExcluded(join(root, "assets", ".env.local")),
-      true,
-    );
-    assertEquals(
-      config.isExcluded(join(root, "wiki", "published.md")),
-      false,
-    );
+    assertEquals(config.isExcluded(join(root, "assets", ".env.local")), true);
+    assertEquals(config.isExcluded(join(root, "wiki", "published.md")), false);
   });
 });
 
@@ -493,17 +481,15 @@ test("a yaml syntax error names the file it came from", () => {
 test("a null block is refused rather than defaulted", () => {
   // `wiki:` with no content is an empty mapping, but `wiki: null` is a type
   // error — and the router turns that into a sentence naming the block.
-  for (
-    const block of [
-      "wiki",
-      "site",
-      "graph",
-      "link",
-      "check",
-      "lint",
-      "sparql_service",
-    ]
-  ) {
+  for (const block of [
+    "wiki",
+    "site",
+    "graph",
+    "link",
+    "check",
+    "lint",
+    "sparql_service",
+  ]) {
     withTempDir((base) => {
       writeFile(base, "wiki.yaml", `${block}: null\n`);
       const error = assertThrows(() => Config.load(base), ValueError);
@@ -655,19 +641,11 @@ test("fmt accepts only an inline options mapping", () => {
   });
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt: custom.toml\n");
-    assertThrows(
-      () => Config.load(base),
-      ValueError,
-      "fmt must be a mapping",
-    );
+    assertThrows(() => Config.load(base), ValueError, "fmt must be a mapping");
   });
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "wiki:\n  input: wiki\nfmt: true\n");
-    assertThrows(
-      () => Config.load(base),
-      ValueError,
-      "fmt must be a mapping",
-    );
+    assertThrows(() => Config.load(base), ValueError, "fmt must be a mapping");
   });
 });
 
@@ -753,11 +731,13 @@ test("formatConfigValidationError routes each error shape to its sentence", () =
     'Invalid config file wiki.yml: Invalid link_style: "nope" (expected standard or wikilink)',
   );
   assertEquals(
-    route([{
-      type: "extra_forbidden",
-      loc: ["graph", "zzz"],
-      msg: "Extra inputs are not permitted",
-    }]),
+    route([
+      {
+        type: "extra_forbidden",
+        loc: ["graph", "zzz"],
+        msg: "Extra inputs are not permitted",
+      },
+    ]),
     "Invalid config file wiki.yml: unknown graph keys: zzz",
   );
   assertEquals(
@@ -776,11 +756,13 @@ test("formatConfigValidationError routes each error shape to its sentence", () =
     "Invalid config file wiki.yml: unknown top-level keys: inputs, serve_api",
   );
   assertEquals(
-    route([{
-      type: "model_type",
-      loc: ["site"],
-      msg: "Input should be a valid dictionary or instance of SiteConfig",
-    }]),
+    route([
+      {
+        type: "model_type",
+        loc: ["site"],
+        msg: "Input should be a valid dictionary or instance of SiteConfig",
+      },
+    ]),
     "Invalid config file wiki.yml: site must be a mapping",
   );
   // A failure that matches no branch falls back to the plain report.

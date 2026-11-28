@@ -73,8 +73,8 @@ export function auditAssets(config: Config): string[] {
   const warnings: string[] = [];
   for (const assetDir of config.wiki.assets) {
     if (config.isExcluded(assetDir)) continue;
-    const usable = pathExists(assetDir) && isDirectory(assetDir) &&
-      !isSymlink(assetDir);
+    const usable =
+      pathExists(assetDir) && isDirectory(assetDir) && !isSymlink(assetDir);
     // A missing directory is not a finding: nothing references it, and a link
     // into it is already reported per link (`missing_asset`). `wiki init` and
     // Git (which does not track an empty directory) both leave it absent.
@@ -148,9 +148,10 @@ export function resolveAssetPath(
 
   let currentRel: string;
   try {
-    currentRel =
-      (relativeWithin(resolve(currentFile), resolve(config.config_root)))
-        .replaceAll("\\", "/");
+    currentRel = relativeWithin(
+      resolve(currentFile),
+      resolve(config.config_root),
+    ).replaceAll("\\", "/");
   } catch {
     currentRel = currentFile.replaceAll("\\", "/");
   }

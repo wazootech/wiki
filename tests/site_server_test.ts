@@ -45,76 +45,67 @@ function request(
   return handle.handleRequest(new Request(`http://preview.test${path}`, init));
 }
 
-test(
-  "serves generated directory-style pages under the configured base URL",
-  async () => {
-    const siteDir = sys.makeTempDirSync();
-    writeFile(siteDir, "index.html", "<h1>Home</h1>");
-    writeFile(siteDir, "guide/index.html", "<h1>Guide</h1>");
-    try {
-      await withHandler(
-        siteDir,
-        { baseUrl: "/preview", urlStyle: "dir" },
-        async (handle) => {
-          const home = await request(handle, "/preview/");
-          assertEquals(home.status, 200);
-          assertEquals(
-            home.headers.get("content-type"),
-            "text/html; charset=utf-8",
-          );
-          assertStringIncludes(await home.text(), "Home");
+test("serves generated directory-style pages under the configured base URL", async () => {
+  const siteDir = sys.makeTempDirSync();
+  writeFile(siteDir, "index.html", "<h1>Home</h1>");
+  writeFile(siteDir, "guide/index.html", "<h1>Guide</h1>");
+  try {
+    await withHandler(
+      siteDir,
+      { baseUrl: "/preview", urlStyle: "dir" },
+      async (handle) => {
+        const home = await request(handle, "/preview/");
+        assertEquals(home.status, 200);
+        assertEquals(
+          home.headers.get("content-type"),
+          "text/html; charset=utf-8",
+        );
+        assertStringIncludes(await home.text(), "Home");
 
-          const page = await request(handle, "/preview/guide");
-          assertEquals(page.status, 200);
-          assertStringIncludes(await page.text(), "Guide");
-          assertEquals(
-            (await request(handle, "/previewish/guide")).status,
-            404,
-          );
-          assertEquals((await request(handle, "/missing/guide")).status, 404);
-          assertEquals((await request(handle, "/preview/missing")).status, 404);
-        },
-      );
-    } finally {
-      sys.removeSync(siteDir, { recursive: true });
-    }
-  },
-);
+        const page = await request(handle, "/preview/guide");
+        assertEquals(page.status, 200);
+        assertStringIncludes(await page.text(), "Guide");
+        assertEquals((await request(handle, "/previewish/guide")).status, 404);
+        assertEquals((await request(handle, "/missing/guide")).status, 404);
+        assertEquals((await request(handle, "/preview/missing")).status, 404);
+      },
+    );
+  } finally {
+    sys.removeSync(siteDir, { recursive: true });
+  }
+});
 
-test(
-  "serves file-style pages and static assets with MIME types",
-  async () => {
-    const siteDir = sys.makeTempDirSync();
-    writeFile(siteDir, "index.html", "<h1>Home</h1>");
-    writeFile(siteDir, "guide.html", "<h1>Guide</h1>");
-    writeFile(siteDir, "assets/site.css", "body { color: black; }");
-    try {
-      await withHandler(
-        siteDir,
-        { baseUrl: "/preview", urlStyle: "file" },
-        async (handle) => {
-          assertStringIncludes(
-            await (await request(handle, "/preview/guide.html")).text(),
-            "Guide",
-          );
-          assertStringIncludes(
-            await (await request(handle, "/preview/guide")).text(),
-            "Guide",
-          );
-          const asset = await request(handle, "/preview/assets/site.css");
-          assertEquals(asset.status, 200);
-          assertEquals(
-            asset.headers.get("content-type"),
-            "text/css; charset=utf-8",
-          );
-          assertStringIncludes(await asset.text(), "color: black");
-        },
-      );
-    } finally {
-      sys.removeSync(siteDir, { recursive: true });
-    }
-  },
-);
+test("serves file-style pages and static assets with MIME types", async () => {
+  const siteDir = sys.makeTempDirSync();
+  writeFile(siteDir, "index.html", "<h1>Home</h1>");
+  writeFile(siteDir, "guide.html", "<h1>Guide</h1>");
+  writeFile(siteDir, "assets/site.css", "body { color: black; }");
+  try {
+    await withHandler(
+      siteDir,
+      { baseUrl: "/preview", urlStyle: "file" },
+      async (handle) => {
+        assertStringIncludes(
+          await (await request(handle, "/preview/guide.html")).text(),
+          "Guide",
+        );
+        assertStringIncludes(
+          await (await request(handle, "/preview/guide")).text(),
+          "Guide",
+        );
+        const asset = await request(handle, "/preview/assets/site.css");
+        assertEquals(asset.status, 200);
+        assertEquals(
+          asset.headers.get("content-type"),
+          "text/css; charset=utf-8",
+        );
+        assertStringIncludes(await asset.text(), "color: black");
+      },
+    );
+  } finally {
+    sys.removeSync(siteDir, { recursive: true });
+  }
+});
 
 test("supports root base URL, HEAD, and method rejection", async () => {
   const siteDir = sys.makeTempDirSync();
@@ -134,23 +125,20 @@ test("supports root base URL, HEAD, and method rejection", async () => {
   }
 });
 
-test(
-  "serves the site root when the configured base URL is empty",
-  async () => {
-    const siteDir = sys.makeTempDirSync();
-    writeFile(siteDir, "index.html", "<h1>Root</h1>");
-    try {
-      await withHandler(siteDir, { baseUrl: "" }, async (handle) => {
-        const response = await request(handle, "/");
-        assertEquals(response.status, 200);
-        assertStringIncludes(await response.text(), "Root");
-        assertEquals((await request(handle, "/preview/")).status, 404);
-      });
-    } finally {
-      sys.removeSync(siteDir, { recursive: true });
-    }
-  },
-);
+test("serves the site root when the configured base URL is empty", async () => {
+  const siteDir = sys.makeTempDirSync();
+  writeFile(siteDir, "index.html", "<h1>Root</h1>");
+  try {
+    await withHandler(siteDir, { baseUrl: "" }, async (handle) => {
+      const response = await request(handle, "/");
+      assertEquals(response.status, 200);
+      assertStringIncludes(await response.text(), "Root");
+      assertEquals((await request(handle, "/preview/")).status, 404);
+    });
+  } finally {
+    sys.removeSync(siteDir, { recursive: true });
+  }
+});
 
 test("rejects encoded path separators", async () => {
   const siteDir = sys.makeTempDirSync();
@@ -167,76 +155,77 @@ test("rejects encoded path separators", async () => {
 // The escape guard is the whole point of this case, so it cannot be faked
 // with a regular file -- it needs a real symlink, and therefore the same
 // Windows privilege the fspath case documents.
-test("does not follow symlinks outside the static site root", {
-  skip: symlinksUnavailable(),
-}, async () => {
-  const siteDir = sys.makeTempDirSync();
-  const outsideDir = sys.makeTempDirSync();
-  writeFile(siteDir, "index.html", "<h1>Safe</h1>");
-  writeFile(outsideDir, "secret.txt", "secret");
-  sys.symlinkSync(
-    resolve(outsideDir, "secret.txt"),
-    resolve(siteDir, "secret.txt"),
-  );
-  try {
-    await withHandler(siteDir, { baseUrl: "/preview" }, async (handle) => {
-      assertEquals(
-        (await request(handle, "/preview/secret.txt")).status,
-        404,
-      );
-    });
-  } finally {
-    sys.removeSync(siteDir, { recursive: true });
-    sys.removeSync(outsideDir, { recursive: true });
-  }
-});
-
 test(
-  "optional polling endpoint detects file changes and closes its poller",
+  "does not follow symlinks outside the static site root",
+  {
+    skip: symlinksUnavailable(),
+  },
   async () => {
     const siteDir = sys.makeTempDirSync();
-    writeFile(siteDir, "index.html", "<html><body>first</body></html>");
-    const handle = createStaticSiteHandler({
-      siteDir,
-      baseUrl: "/preview",
-      watch: true,
-      pollIntervalMs: 10,
-    });
+    const outsideDir = sys.makeTempDirSync();
+    writeFile(siteDir, "index.html", "<h1>Safe</h1>");
+    writeFile(outsideDir, "secret.txt", "secret");
+    sys.symlinkSync(
+      resolve(outsideDir, "secret.txt"),
+      resolve(siteDir, "secret.txt"),
+    );
     try {
-      const before = await request(handle, "/preview/__watch");
-      assertEquals((await before.json()).build, 0);
-      const html = await request(handle, "/preview/");
-      assertStringIncludes(await html.text(), 'fetch("/preview/__watch"');
-
-      writeFile(
-        siteDir,
-        "index.html",
-        "<html><body>updated content</body></html>",
-      );
-      let build = 0;
-      for (let attempt = 0; attempt < 50 && build === 0; attempt++) {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        const response = await request(handle, "/preview/__watch");
-        build = (await response.json()).build;
-      }
-      assert(build > 0);
+      await withHandler(siteDir, { baseUrl: "/preview" }, async (handle) => {
+        assertEquals(
+          (await request(handle, "/preview/secret.txt")).status,
+          404,
+        );
+      });
     } finally {
-      handle.close();
       sys.removeSync(siteDir, { recursive: true });
+      sys.removeSync(outsideDir, { recursive: true });
     }
   },
 );
+
+test("optional polling endpoint detects file changes and closes its poller", async () => {
+  const siteDir = sys.makeTempDirSync();
+  writeFile(siteDir, "index.html", "<html><body>first</body></html>");
+  const handle = createStaticSiteHandler({
+    siteDir,
+    baseUrl: "/preview",
+    watch: true,
+    pollIntervalMs: 10,
+  });
+  try {
+    const before = await request(handle, "/preview/__watch");
+    assertEquals((await before.json()).build, 0);
+    const html = await request(handle, "/preview/");
+    assertStringIncludes(await html.text(), 'fetch("/preview/__watch"');
+
+    writeFile(
+      siteDir,
+      "index.html",
+      "<html><body>updated content</body></html>",
+    );
+    let build = 0;
+    for (let attempt = 0; attempt < 50 && build === 0; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const response = await request(handle, "/preview/__watch");
+      build = (await response.json()).build;
+    }
+    assert(build > 0);
+  } finally {
+    handle.close();
+    sys.removeSync(siteDir, { recursive: true });
+  }
+});
 
 test("rejects invalid base URLs, URL styles, hosts, and ports", () => {
   const siteDir = sys.makeTempDirSync();
   try {
     assertThrows(() =>
-      createStaticSiteHandler({ siteDir, baseUrl: "https://example.com" })
+      createStaticSiteHandler({ siteDir, baseUrl: "https://example.com" }),
     );
     assertThrows(() => createStaticSiteHandler({ siteDir, port: 65_536 }));
     assertThrows(() => createStaticSiteHandler({ siteDir, host: " " }));
     assertThrows(() =>
-      createStaticSiteHandler({ siteDir, urlStyle: "other" as never })
+      createStaticSiteHandler({ siteDir, urlStyle: "other" as never }),
     );
   } finally {
     sys.removeSync(siteDir, { recursive: true });

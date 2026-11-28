@@ -125,14 +125,7 @@ export function quad(
 
 /** The format names the Python engine passes to rdflib. */
 export type RdfFormat =
-  | "turtle"
-  | "ttl"
-  | "n3"
-  | "trig"
-  | "nt"
-  | "nquads"
-  | "xml"
-  | "json-ld";
+  "turtle" | "ttl" | "n3" | "trig" | "nt" | "nquads" | "xml" | "json-ld";
 
 /** Normalize the aliases rdflib accepts, so `ttl` and `jsonld` both work. */
 export function normalizeFormat(format: string): RdfFormat {
@@ -191,9 +184,10 @@ export class UnsupportedFormatError extends Error {
     const rdfXml = ["xml", "rdf", "rdf/xml", "application/rdf+xml"].includes(
       format.toLowerCase(),
     );
-    const message = direction === "serialize" && rdfXml
-      ? "RDF/XML serialization is deferred; use Turtle, N-Triples, N-Quads, N3, TriG, or JSON-LD."
-      : `Unsupported ${direction} format: ${format}`;
+    const message =
+      direction === "serialize" && rdfXml
+        ? "RDF/XML serialization is deferred; use Turtle, N-Triples, N-Quads, N3, TriG, or JSON-LD."
+        : `Unsupported ${direction} format: ${format}`;
     super(message);
     this.name = "UnsupportedFormatError";
   }
@@ -202,8 +196,10 @@ export class UnsupportedFormatError extends Error {
 /** Every format the engine can parse. */
 export function canParse(format: string): boolean {
   try {
-    return env.formats.parsers.get(mediaTypeFor(normalizeFormat(format))) !==
-      undefined;
+    return (
+      env.formats.parsers.get(mediaTypeFor(normalizeFormat(format))) !==
+      undefined
+    );
   } catch {
     return false;
   }
@@ -231,13 +227,11 @@ export function canSerialize(format: string): boolean {
 
 /** Escape a string for N-Triples, copying rdflib's `NTSerializer._quote_encode`. */
 function quoteLiteralNt(value: string): string {
-  return `"${
-    value
-      .replaceAll("\\", "\\\\")
-      .replaceAll("\n", "\\n")
-      .replaceAll('"', '\\"')
-      .replaceAll("\r", "\\r")
-  }"`;
+  return `"${value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\n", "\\n")
+    .replaceAll('"', '\\"')
+    .replaceAll("\r", "\\r")}"`;
 }
 
 /** The datatype suffix rdflib writes, or `""` for a plain literal. */
@@ -300,12 +294,10 @@ function quoteLiteralN3(value: string): string {
     }
     return `"""${encoded.replaceAll("\r", "\\r")}"""`;
   }
-  return `"${
-    value
-      .replaceAll("\\", "\\\\")
-      .replaceAll('"', '\\"')
-      .replaceAll("\r", "\\r")
-  }"`;
+  return `"${value
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"')
+    .replaceAll("\r", "\\r")}"`;
 }
 
 /**
@@ -314,13 +306,16 @@ function quoteLiteralN3(value: string): string {
  * This writes the `.wiki/cache/*.nt` file, so its bytes are the contract.
  */
 export function serializeNt(quads: readonly Quad[]): string {
-  return quads
-    .map((item) =>
-      `${ntTerm(item.subject)} ${ntTerm(item.predicate)} ${
-        ntTerm(item.object)
-      } .`
-    )
-    .join("\n") + (quads.length > 0 ? "\n" : "");
+  return (
+    quads
+      .map(
+        (item) =>
+          `${ntTerm(item.subject)} ${ntTerm(item.predicate)} ${ntTerm(
+            item.object,
+          )} .`,
+      )
+      .join("\n") + (quads.length > 0 ? "\n" : "")
+  );
 }
 
 /**
@@ -331,13 +326,16 @@ export function serializeNt(quads: readonly Quad[]): string {
  * different here than in {@link serializeNt}.
  */
 export function serializeNquads(quads: readonly Quad[]): string {
-  return quads
-    .map((item) =>
-      `${n3Term(item.subject)} ${n3Term(item.predicate)} ${
-        n3Term(item.object)
-      } .`
-    )
-    .join("\n") + (quads.length > 0 ? "\n" : "");
+  return (
+    quads
+      .map(
+        (item) =>
+          `${n3Term(item.subject)} ${n3Term(item.predicate)} ${n3Term(
+            item.object,
+          )} .`,
+      )
+      .join("\n") + (quads.length > 0 ? "\n" : "")
+  );
 }
 
 /**
@@ -349,16 +347,19 @@ export function serializeNquads(quads: readonly Quad[]): string {
  * round-trip; only the export path has an oracle byte contract.
  */
 export function serializeNquadsDataset(quads: readonly Quad[]): string {
-  return quads
-    .map((item) => {
-      const graph = item.graph.termType === "DefaultGraph"
-        ? ""
-        : ` ${ntTerm(item.graph)}`;
-      return `${ntTerm(item.subject)} ${ntTerm(item.predicate)} ${
-        ntTerm(item.object)
-      }${graph} .`;
-    })
-    .join("\n") + (quads.length > 0 ? "\n" : "");
+  return (
+    quads
+      .map((item) => {
+        const graph =
+          item.graph.termType === "DefaultGraph"
+            ? ""
+            : ` ${ntTerm(item.graph)}`;
+        return `${ntTerm(item.subject)} ${ntTerm(item.predicate)} ${ntTerm(
+          item.object,
+        )}${graph} .`;
+      })
+      .join("\n") + (quads.length > 0 ? "\n" : "")
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -400,8 +401,7 @@ export async function parseRdf(text: string, format: string): Promise<Quad[]> {
  * rather than `instanceof Map`, which does not narrow a `ReadonlyMap`.
  */
 export type PrefixTable =
-  | ReadonlyMap<string, string>
-  | Readonly<Record<string, string>>;
+  ReadonlyMap<string, string> | Readonly<Record<string, string>>;
 
 function prefixObject(
   prefixes: PrefixTable | undefined,
@@ -434,7 +434,8 @@ export async function serializeRdf(
     if (env.formats.serializers.get(mediaTypeFor(normalized)) === undefined) {
       throw new UnsupportedFormatError(format);
     }
-    return await env.dataset(quads as Quad[])
+    return await env
+      .dataset(quads as Quad[])
       .serialize({ format: mediaTypeFor(normalized) as never });
   }
 
@@ -442,11 +443,8 @@ export async function serializeRdf(
   // N-Triples under a Turtle media type.
   return await new Promise<string>((resolve, reject) => {
     const writer = new Writer({
-      format: normalized === "trig"
-        ? "TriG"
-        : normalized === "n3"
-        ? "N3"
-        : "Turtle",
+      format:
+        normalized === "trig" ? "TriG" : normalized === "n3" ? "N3" : "Turtle",
       prefixes: prefixObject(options.prefixes),
     });
     writer.addQuads(quads as never[]);
@@ -512,9 +510,10 @@ export class RdfGraph {
 
   /** Add a triple; adding the same triple twice is a no-op. */
   add(subject: Term, predicate: NamedNode, object: Term): void {
-    const item = this.#graph === null
-      ? dataFactory.quad(subject, predicate, object)
-      : dataFactory.quad(subject, predicate, object, this.#graph);
+    const item =
+      this.#graph === null
+        ? dataFactory.quad(subject, predicate, object)
+        : dataFactory.quad(subject, predicate, object, this.#graph);
     const key = quadKey(item);
     if (this.#keys.has(key)) return;
     this.#keys.add(key);
@@ -543,9 +542,10 @@ export class RdfGraph {
    * for every triple in a `Dataset`.
    */
   has(subject: Term, predicate: NamedNode, object: Term): boolean {
-    const item = this.#graph === null
-      ? triple(subject, predicate, object)
-      : quad(subject, predicate, object, this.#graph);
+    const item =
+      this.#graph === null
+        ? triple(subject, predicate, object)
+        : quad(subject, predicate, object, this.#graph);
     return this.#keys.has(quadKey(item));
   }
 
@@ -560,7 +560,8 @@ export class RdfGraph {
         continue;
       }
       if (
-        predicate !== null && termKey(item.predicate) !== termKey(predicate)
+        predicate !== null &&
+        termKey(item.predicate) !== termKey(predicate)
       ) {
         continue;
       }
@@ -699,10 +700,11 @@ export class RdfDataset implements Iterable<Quad> {
 
 /** A stable key for a quad, so the containers can deduplicate. */
 function quadKey(item: Quad): string {
-  return `${termKey(item.subject)}|${termKey(item.predicate)}|${
-    termKey(item.object)
-  }` +
-    `|${item.graph.termType === "DefaultGraph" ? "" : item.graph.value}`;
+  return (
+    `${termKey(item.subject)}|${termKey(item.predicate)}|${termKey(
+      item.object,
+    )}` + `|${item.graph.termType === "DefaultGraph" ? "" : item.graph.value}`
+  );
 }
 
 /** A stable key for a term, including its datatype or language. */

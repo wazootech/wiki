@@ -44,9 +44,10 @@ test("Wiki.link --apply inserts a page link and check accepts the result", () =>
   try {
     const report = wiki.link(null, { apply: true, verbose: true });
     assertEquals(report.opportunities, 1);
-    assertEquals(report.changed_paths.map((path) => basename(path)), [
-      "Notes.md",
-    ]);
+    assertEquals(
+      report.changed_paths.map((path) => basename(path)),
+      ["Notes.md"],
+    );
     assertStringIncludes(
       sys.readTextFileSync(source),
       "[Ethan Davidson](Ethan_Davidson.md)",
@@ -60,10 +61,12 @@ test("Wiki.link --apply inserts a page link and check accepts the result", () =>
 test("Wiki.link repairs unambiguous targets in place and honors dry-run", () => {
   const { root, source, wiki } = createWiki();
   try {
-    const original = sys.readTextFileSync(source).replace(
-      "Ethan Davidson shared these notes.",
-      "[[Ethan_Davison|Biography]] and [Early life](Ethan_Davidson.md#Eary-life).",
-    );
+    const original = sys
+      .readTextFileSync(source)
+      .replace(
+        "Ethan Davidson shared these notes.",
+        "[[Ethan_Davison|Biography]] and [Early life](Ethan_Davidson.md#Eary-life).",
+      );
     sys.writeTextFileSync(source, original);
 
     const preview = wiki.link(null, {
@@ -72,9 +75,10 @@ test("Wiki.link repairs unambiguous targets in place and honors dry-run", () => 
       verbose: true,
     });
     assertEquals(preview.fixes, 2);
-    assertEquals(preview.changed_paths.map((path) => basename(path)), [
-      "Notes.md",
-    ]);
+    assertEquals(
+      preview.changed_paths.map((path) => basename(path)),
+      ["Notes.md"],
+    );
     assertEquals(sys.readTextFileSync(source), original);
 
     const applied = wiki.link(null, { fixBroken: true, verbose: true });

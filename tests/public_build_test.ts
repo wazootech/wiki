@@ -12,9 +12,8 @@ function write(root: string, relative: string, content: string): void {
 }
 
 function page(title: string, body = "", visibility?: string): string {
-  const flag = visibility === undefined
-    ? ""
-    : `wazoo:visibility: ${visibility}\n`;
+  const flag =
+    visibility === undefined ? "" : `wazoo:visibility: ${visibility}\n`;
   return `---\ntype: TechArticle\n${flag}---\n\n# ${title}\n\n${body}\n`;
 }
 
@@ -41,50 +40,50 @@ const build = (wiki: Wiki, root: string, publicOnly = true) =>
   wiki.build(join(root, "_public"), { publicOnly, noCheck: true });
 
 test("public build writes only pages marked public", async () => {
-  await withWiki({
-    "wiki/Open.md": page(
-      "Open",
-      "See [Also](Also_Open.md), [home](https://brain.example.org/), " +
-        "[Also again](https://brain.example.org/Also_Open#top), " +
-        "[elsewhere](https://example.com/Secret) and [here](#open).",
-      "public",
-    ),
-    "wiki/Also_Open.md": page("Also Open", "", "public"),
-    "wiki/Secret.md": page("Secret", "Hidden [Open](Open.md)."),
-    "wiki/Stated_(private)[1].md": page("Stated", "", "private"),
-    "assets/photo.txt": "private asset",
-  }, async (wiki, root) => {
-    const result = await build(wiki, root);
-    assertEquals(result.error_message ?? null, null);
-    const written = result.written_paths.map((path) =>
-      path.replaceAll("\\", "/")
-    );
-    assertEquals(written.sort(), [
-      "Also_Open/index.html",
-      "Open/index.html",
-      "index.html",
-    ]);
-    const index = sys.readTextFileSync(join(root, "_public", "index.html"));
-    assertStringIncludes(index, "Also Open");
-    assert(!index.includes("Secret"));
-    assert(!index.includes("Stated"));
+  await withWiki(
+    {
+      "wiki/Open.md": page(
+        "Open",
+        "See [Also](Also_Open.md), [home](https://brain.example.org/), " +
+          "[Also again](https://brain.example.org/Also_Open#top), " +
+          "[elsewhere](https://example.com/Secret) and [here](#open).",
+        "public",
+      ),
+      "wiki/Also_Open.md": page("Also Open", "", "public"),
+      "wiki/Secret.md": page("Secret", "Hidden [Open](Open.md)."),
+      "wiki/Stated_(private)[1].md": page("Stated", "", "private"),
+      "assets/photo.txt": "private asset",
+    },
+    async (wiki, root) => {
+      const result = await build(wiki, root);
+      assertEquals(result.error_message ?? null, null);
+      const written = result.written_paths.map((path) =>
+        path.replaceAll("\\", "/"),
+      );
+      assertEquals(written.sort(), [
+        "Also_Open/index.html",
+        "Open/index.html",
+        "index.html",
+      ]);
+      const index = sys.readTextFileSync(join(root, "_public", "index.html"));
+      assertStringIncludes(index, "Also Open");
+      assert(!index.includes("Secret"));
+      assert(!index.includes("Stated"));
 
-    const full = await build(wiki, root, false);
-    assertEquals(full.page_count, 4);
-    assertEquals(full.asset_count, 1);
-  });
+      const full = await build(wiki, root, false);
+      assertEquals(full.page_count, 4);
+      assertEquals(full.asset_count, 1);
+    },
+  );
 });
 
 test("public build publishes nothing without a flag", async () => {
-  await withWiki(
-    { "wiki/Secret.md": page("Secret") },
-    async (wiki, root) => {
-      const result = await build(wiki, root);
-      assertEquals(result.ok, true);
-      assertEquals(result.page_count, 0);
-      assertEquals(result.written_paths, ["index.html"]);
-    },
-  );
+  await withWiki({ "wiki/Secret.md": page("Secret") }, async (wiki, root) => {
+    const result = await build(wiki, root);
+    assertEquals(result.ok, true);
+    assertEquals(result.page_count, 0);
+    assertEquals(result.written_paths, ["index.html"]);
+  });
 });
 
 const LEAKS: Record<string, string> = {
@@ -102,16 +101,19 @@ const LEAKS: Record<string, string> = {
 
 for (const [name, body] of Object.entries(LEAKS)) {
   test(`public build refuses ${name}`, async () => {
-    await withWiki({
-      "wiki/Open.md": page("Open", body, "public"),
-      "wiki/Secret.md": page("Secret"),
-      "assets/photo.png": "private asset",
-    }, async (wiki, root) => {
-      const result = await build(wiki, root);
-      assertEquals(result.ok, false);
-      assertStringIncludes(result.error_message ?? "", "wiki/Open.md");
-      assertEquals(result.written_paths, []);
-    });
+    await withWiki(
+      {
+        "wiki/Open.md": page("Open", body, "public"),
+        "wiki/Secret.md": page("Secret"),
+        "assets/photo.png": "private asset",
+      },
+      async (wiki, root) => {
+        const result = await build(wiki, root);
+        assertEquals(result.ok, false);
+        assertStringIncludes(result.error_message ?? "", "wiki/Open.md");
+        assertEquals(result.written_paths, []);
+      },
+    );
   });
 }
 

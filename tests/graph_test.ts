@@ -256,12 +256,15 @@ test("resolveObject maps datatypes the way rdflib does", () => {
 test("a nested mapping without @type becomes a blank node", () => {
   const config = new Config();
   const context = config.context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:gregory",
-    givenName: "Gregory",
-    address: { street: "123 Main St", city: "Seattle" },
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:gregory",
+      givenName: "Gregory",
+      address: { street: "123 Main St", city: "Seattle" },
+    },
+    context,
+  );
   const subject = namedNode(WIKI + "gregory");
 
   assert(
@@ -280,12 +283,15 @@ test("a nested mapping without @type becomes a blank node", () => {
 
 test("a nested mapping with @type becomes a typed blank node", () => {
   const context = new Config().context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:gregory",
-    givenName: "Gregory",
-    address: { "@type": "PostalAddress", street: "123 Main St" },
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:gregory",
+      givenName: "Gregory",
+      address: { "@type": "PostalAddress", street: "123 Main St" },
+    },
+    context,
+  );
   const subject = namedNode(WIKI + "gregory");
   const blank = [...graph.match(subject, namedNode(SCHEMA + "address"))][0]!
     .object;
@@ -301,16 +307,21 @@ test("a nested @type resolves through the configured vocab", () => {
       context: { "@vocab": "https://custom.example.org/vocab/", wiki: WIKI },
     },
   }).context;
-  const graph = frontmatterToGraph({
-    "@type": "Document",
-    "@id": "wiki:doc",
-    embed: { "@type": "CustomEmbed", name: "test" },
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Document",
+      "@id": "wiki:doc",
+      embed: { "@type": "CustomEmbed", name: "test" },
+    },
+    context,
+  );
   const subject = namedNode(WIKI + "doc");
-  const blank = [...graph.match(
-    subject,
-    namedNode("https://custom.example.org/vocab/embed"),
-  )][0]!.object;
+  const blank = [
+    ...graph.match(
+      subject,
+      namedNode("https://custom.example.org/vocab/embed"),
+    ),
+  ][0]!.object;
 
   assert(
     graph.has(
@@ -326,12 +337,15 @@ test("a nested @type resolves through the configured vocab", () => {
 
 test("a nested @id becomes a URI reference", () => {
   const context = new Config().context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:gregory",
-    givenName: "Gregory",
-    spouse: { "@id": "wiki:bella" },
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:gregory",
+      givenName: "Gregory",
+      spouse: { "@id": "wiki:bella" },
+    },
+    context,
+  );
 
   assert(
     graph.has(
@@ -344,19 +358,23 @@ test("a nested @id becomes a URI reference", () => {
 
 test("a list of nested mappings creates one node per item", () => {
   const context = new Config().context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:gregory",
-    address: [{ street: "123 Main St" }, { street: "456 Oak Ave" }],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:gregory",
+      address: [{ street: "123 Main St" }, { street: "456 Oak Ave" }],
+    },
+    context,
+  );
   const subject = namedNode(WIKI + "gregory");
 
   const blanks = [...graph.match(subject, namedNode(SCHEMA + "address"))];
   assertEquals(blanks.length, 2);
   const streets = new Set(
-    blanks.map((item) =>
-      [...graph.match(item.object, namedNode(SCHEMA + "street"))][0]!.object
-        .value
+    blanks.map(
+      (item) =>
+        [...graph.match(item.object, namedNode(SCHEMA + "street"))][0]!.object
+          .value,
     ),
   );
   assertEquals(streets, new Set(["123 Main St", "456 Oak Ave"]));
@@ -415,10 +433,8 @@ test("empty frontmatter and missing ids produce empty graphs", () => {
     0,
   );
   assertEquals(
-    frontmatterToGraph(
-      { "@type": "WebPage", givenName: "Some Page" },
-      config,
-    ).size,
+    frontmatterToGraph({ "@type": "WebPage", givenName: "Some Page" }, config)
+      .size,
     0,
   );
   assert(context.vocab === SCHEMA);
@@ -429,10 +445,12 @@ test("identical nested frontmatter yields distinct blank nodes (#144)", () => {
   const shape = (id: string) => ({
     "@type": "sh:NodeShape",
     "@id": `wiki:${id}`,
-    "sh:property": [{
-      "sh:path": "schema:name",
-      "sh:datatype": "xsd:string",
-    }],
+    "sh:property": [
+      {
+        "sh:path": "schema:name",
+        "sh:datatype": "xsd:string",
+      },
+    ],
   });
 
   const combined = new RdfGraph();
@@ -465,15 +483,20 @@ function listMembers(graph: RdfGraph, head: Quad["object"]): string[] {
 test("sh:in nested in a list of mappings compiles to an RDF list (#305)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:NodeShape",
-    "@id": "wiki:status-shape",
-    "sh:targetClass": "schema:Thing",
-    "sh:property": [{
-      "sh:path": "schema:status",
-      "sh:in": ["schema:Open", "schema:Shipped", "draft"],
-    }],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:NodeShape",
+      "@id": "wiki:status-shape",
+      "sh:targetClass": "schema:Thing",
+      "sh:property": [
+        {
+          "sh:path": "schema:status",
+          "sh:in": ["schema:Open", "schema:Shipped", "draft"],
+        },
+      ],
+    },
+    context,
+  );
 
   const ins = [...graph.match(null, namedNode(sh + "in"))];
   assertEquals(ins.length, 1);
@@ -485,18 +508,24 @@ test("sh:in nested in a list of mappings compiles to an RDF list (#305)", () => 
   ]);
   // A single `sh:path` stays a plain IRI, not a one-member sequence path.
   const paths = [...graph.match(null, namedNode(sh + "path"))];
-  assertEquals(paths.map((quad) => quad.object.value), [SCHEMA + "status"]);
+  assertEquals(
+    paths.map((quad) => quad.object.value),
+    [SCHEMA + "status"],
+  );
 });
 
 test("a top-level sh:in on a property shape page is an RDF list too", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:PropertyShape",
-    "@id": "wiki:status-property",
-    "sh:path": "schema:status",
-    "sh:in": ["schema:Open"],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:PropertyShape",
+      "@id": "wiki:status-property",
+      "sh:path": "schema:status",
+      "sh:in": ["schema:Open"],
+    },
+    context,
+  );
   const ins = [...graph.match(null, namedNode(sh + "in"))];
   assertEquals(ins.length, 1);
   assertEquals(listMembers(graph, ins[0]!.object), [SCHEMA + "Open"]);
@@ -505,34 +534,43 @@ test("a top-level sh:in on a property shape page is an RDF list too", () => {
 test("a one-member sh:path list stays a predicate path (SHACL §2.3.1.1)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:PropertyShape",
-    "@id": "wiki:name-property",
-    "sh:path": ["schema:name"],
-    "sh:minCount": 1,
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:PropertyShape",
+      "@id": "wiki:name-property",
+      "sh:path": ["schema:name"],
+      "sh:minCount": 1,
+    },
+    context,
+  );
   const paths = [...graph.match(null, namedNode(sh + "path"))];
-  assertEquals(paths.map((quad) => quad.object.value), [SCHEMA + "name"]);
+  assertEquals(
+    paths.map((quad) => quad.object.value),
+    [SCHEMA + "name"],
+  );
   assertEquals([...graph.match(null, namedNode(RDF_FIRST))].length, 0);
 });
 
 test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:NodeShape",
-    "@id": "wiki:knows-shape",
-    "sh:property": [
-      { "sh:path": ["schema:knows", "schema:name"] },
-      { "sh:path": { "sh:inversePath": ["schema:knows", "schema:name"] } },
-    ],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:NodeShape",
+      "@id": "wiki:knows-shape",
+      "sh:property": [
+        { "sh:path": ["schema:knows", "schema:name"] },
+        { "sh:path": { "sh:inversePath": ["schema:knows", "schema:name"] } },
+      ],
+    },
+    context,
+  );
   for (const key of ["path", "inversePath"]) {
-    const heads = [...graph.match(null, namedNode(sh + key))]
-      .filter((quad) =>
+    const heads = [...graph.match(null, namedNode(sh + key))].filter(
+      (quad) =>
         quad.object.termType === "BlankNode" &&
-        [...graph.match(quad.object, namedNode(RDF_FIRST))].length > 0
-      );
+        [...graph.match(quad.object, namedNode(RDF_FIRST))].length > 0,
+    );
     assertEquals(heads.length, 1, key);
     assertEquals(listMembers(graph, heads[0]!.object), [
       SCHEMA + "knows",
@@ -544,17 +582,20 @@ test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () => {
 test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:PropertyShape",
-    "@id": "wiki:label-property",
-    "sh:path": {
-      "sh:alternativePath": [
-        "schema:name",
-        ["schema:author", "schema:name"],
-        ["schema:alternateName"],
-      ],
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:PropertyShape",
+      "@id": "wiki:label-property",
+      "sh:path": {
+        "sh:alternativePath": [
+          "schema:name",
+          ["schema:author", "schema:name"],
+          ["schema:alternateName"],
+        ],
+      },
     },
-  }, context);
+    context,
+  );
   const alternatives = [
     ...graph.match(null, namedNode(sh + "alternativePath")),
   ];
@@ -563,8 +604,9 @@ test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
   assertEquals(members.length, 3);
   assertEquals(members[0], SCHEMA + "name");
   // A nested list member is itself a sequence path...
-  const sequence = [...graph.match(null, namedNode(RDF_FIRST))]
-    .find((quad) => quad.object.termType === "BlankNode")!.object;
+  const sequence = [...graph.match(null, namedNode(RDF_FIRST))].find(
+    (quad) => quad.object.termType === "BlankNode",
+  )!.object;
   assertEquals(listMembers(graph, sequence), [
     SCHEMA + "author",
     SCHEMA + "name",
@@ -576,12 +618,15 @@ test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
 test("a list inside an sh:in list nests instead of repeating rdf:first", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
-  const graph = frontmatterToGraph({
-    "@type": "sh:PropertyShape",
-    "@id": "wiki:nested-in",
-    "sh:path": "schema:status",
-    "sh:in": [["schema:Open", "schema:Shipped"], null],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "sh:PropertyShape",
+      "@id": "wiki:nested-in",
+      "sh:path": "schema:status",
+      "sh:in": [["schema:Open", "schema:Shipped"], null],
+    },
+    context,
+  );
   const ins = [...graph.match(null, namedNode(sh + "in"))];
   assertEquals(ins.length, 1);
   // `listMembers` asserts exactly one `rdf:first` and `rdf:rest` per cell, and
@@ -597,23 +642,29 @@ test("a list inside an sh:in list nests instead of repeating rdf:first", () => {
 
 test("a plain list nested in a list of mappings repeats the predicate", () => {
   const context = new Config().context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:gregory",
-    knowsAbout: [{ name: "Topic", keywords: ["a", "b"] }],
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:gregory",
+      knowsAbout: [{ name: "Topic", keywords: ["a", "b"] }],
+    },
+    context,
+  );
   const keywords = [...graph.match(null, namedNode(SCHEMA + "keywords"))];
   assertEquals(keywords.map((quad) => quad.object.value).sort(), ["a", "b"]);
 });
 
 test("the wazoo layout predicate is emitted and nothing else", () => {
   const context = new Config().context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:ethan",
-    givenName: "Ethan",
-    "wazoo:layout": "layouts/person.html",
-  }, context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:ethan",
+      givenName: "Ethan",
+      "wazoo:layout": "layouts/person.html",
+    },
+    context,
+  );
 
   const wazoo = ns(context, "wazoo");
   assert(
@@ -644,11 +695,14 @@ test("implicit types fall back for an untyped page", () => {
 test("implicit types leave an explicit type alone under fallback", () => {
   const config = new Config({ graph: { implicit_types: ["TechArticle"] } });
   const context = config.context;
-  const graph = frontmatterToGraph({
-    "@type": "Person",
-    "@id": "wiki:alice",
-    givenName: "Alice",
-  }, config);
+  const graph = frontmatterToGraph(
+    {
+      "@type": "Person",
+      "@id": "wiki:alice",
+      givenName: "Alice",
+    },
+    config,
+  );
   const subject = namedNode(WIKI + "alice");
 
   const types = [...graph.match(subject, namedNode(RDF_TYPE))];
@@ -664,17 +718,20 @@ test("append policy unions implicit types and dedupes by URI", () => {
       implicit_types_policy: "append",
     },
   });
-  const graph = frontmatterToGraph({
-    "@type": ["TechArticle", "Person"],
-    "@id": "wiki:doc",
-    headline: "Doc",
-  }, config);
+  const graph = frontmatterToGraph(
+    {
+      "@type": ["TechArticle", "Person"],
+      "@id": "wiki:doc",
+      headline: "Doc",
+    },
+    config,
+  );
   const subject = namedNode(WIKI + "doc");
 
   assertEquals(
     new Set(
-      [...graph.match(subject, namedNode(RDF_TYPE))].map((item) =>
-        item.object.value
+      [...graph.match(subject, namedNode(RDF_TYPE))].map(
+        (item) => item.object.value,
       ),
     ),
     new Set([
@@ -731,11 +788,14 @@ test("graph.base_iri overrides graph.context.wiki for page subjects", () => {
 
 test("a list of types adds one rdf:type per entry", () => {
   const config = new Config();
-  const graph = frontmatterToGraph({
-    "@type": ["Person", "Developer"],
-    "@id": "wiki:multi",
-    givenName: "Multi Guy",
-  }, config.context);
+  const graph = frontmatterToGraph(
+    {
+      "@type": ["Person", "Developer"],
+      "@id": "wiki:multi",
+      givenName: "Multi Guy",
+    },
+    config.context,
+  );
   const subject = namedNode(WIKI + "multi");
 
   const types = [...graph.match(subject, namedNode(RDF_TYPE))];
@@ -791,7 +851,7 @@ Raw Body Text.
       graph: { content_predicate: "schema:text" },
     });
     const { records, value: graph } = await captureLogs(() =>
-      loadGraph(config, { infer: false })
+      loadGraph(config, { infer: false }),
     );
 
     assert(graph.size > 0);
@@ -841,16 +901,13 @@ test("separate Turtle fences keep blank-node labels in separate scopes", async (
       useCache: false,
       diskCache: false,
     });
-    const blankSubjects = [...graph.subjects()].filter((term) =>
-      term.termType === "BlankNode"
+    const blankSubjects = [...graph.subjects()].filter(
+      (term) => term.termType === "BlankNode",
     );
 
     assertEquals(graph.size, 4);
     assertEquals(blankSubjects.length, 2);
-    assertEquals(
-      new Set(blankSubjects.map((term) => term.value)).size,
-      2,
-    );
+    assertEquals(new Set(blankSubjects.map((term) => term.value)).size, 2);
     assertEquals(
       [...graph.match(blankSubjects[0] ?? null, null, null)].length,
       2,
@@ -877,7 +934,7 @@ name: Good Page
     const config = Config.forRoot(root, { wiki: { input: ["wiki"] } });
 
     const { records, value: graph } = await captureLogs(() =>
-      loadGraph(config, { infer: false })
+      loadGraph(config, { infer: false }),
     );
 
     const messages = records.map((item) => item.message);
@@ -1089,9 +1146,7 @@ sh:property:
     // shape-loading failure this guards against was a *duplicate* blank node
     // holding both paths.
     assert(properties.length >= 2);
-    const shapeSubjects = new Set(
-      properties.map((item) => item.subject.value),
-    );
+    const shapeSubjects = new Set(properties.map((item) => item.subject.value));
     assertEquals(shapeSubjects.size, 2);
     for (const item of properties) {
       assertEquals(item.object.termType, "BlankNode");
@@ -1119,17 +1174,25 @@ function lockBrain(
   root: string,
   requiredBy: readonly string[] = ["root"],
 ): void {
-  saveLockfile({
-    version: 2,
-    sources: new Map([["brain", {
-      url: "https://example.com/brain.git",
-      resolved_ref: "abcdef1234567890",
-      ref: null,
-      path: "wiki",
-      fetched_at: "2026-01-01T00:00:00+00:00",
-      required_by: requiredBy,
-    }]]),
-  }, join(root, "wiki.lock"));
+  saveLockfile(
+    {
+      version: 2,
+      sources: new Map([
+        [
+          "brain",
+          {
+            url: "https://example.com/brain.git",
+            resolved_ref: "abcdef1234567890",
+            ref: null,
+            path: "wiki",
+            fetched_at: "2026-01-01T00:00:00+00:00",
+            required_by: requiredBy,
+          },
+        ],
+      ]),
+    },
+    join(root, "wiki.lock"),
+  );
 }
 
 test("loadDataset keeps root and source graphs separate", async () => {
@@ -1169,11 +1232,12 @@ name: Source Doc
       ),
     );
     assertEquals(
-      [...sourceGraph.match(
-        namedNode(`${WIKI}Root`),
-        namedNode(SCHEMA + "name"),
-      )]
-        .length,
+      [
+        ...sourceGraph.match(
+          namedNode(`${WIKI}Root`),
+          namedNode(SCHEMA + "name"),
+        ),
+      ].length,
       0,
     );
 
@@ -1222,18 +1286,20 @@ name: Source Doc
     const cached = await loadDataset(config, { infer: false, diskCache: true });
 
     assert(
-      cached.graph(sourceUri).has(
-        namedNode(`${WIKI}Source`),
-        namedNode(SCHEMA + "name"),
-        literal("Source Doc"),
-      ),
+      cached
+        .graph(sourceUri)
+        .has(
+          namedNode(`${WIKI}Source`),
+          namedNode(SCHEMA + "name"),
+          literal("Source Doc"),
+        ),
     );
-    const cacheFiles = [...sys.readDirSync(
-      join(root, ".wiki", "cache"),
-    )].map((entry) => entry.name);
+    const cacheFiles = [...sys.readDirSync(join(root, ".wiki", "cache"))].map(
+      (entry) => entry.name,
+    );
     assert(
-      cacheFiles.some((name) =>
-        name.startsWith("dataset-asserted-") && name.endsWith(".nq")
+      cacheFiles.some(
+        (name) => name.startsWith("dataset-asserted-") && name.endsWith(".nq"),
       ),
       `no dataset cache in ${JSON.stringify(cacheFiles)}`,
     );
@@ -1246,17 +1312,25 @@ test("graphDescriptors reports locked source metadata", () => {
   const root = tempRoot();
   try {
     const { wiki, source } = sourceFixture(root);
-    saveLockfile({
-      version: 2,
-      sources: new Map([["brain", {
-        url: "https://example.com/brain.git",
-        resolved_ref: "abcdef1234567890",
-        ref: "main",
-        path: "wiki",
-        fetched_at: "2026-01-01T00:00:00+00:00",
-        required_by: ["root"],
-      }]]),
-    }, join(root, "wiki.lock"));
+    saveLockfile(
+      {
+        version: 2,
+        sources: new Map([
+          [
+            "brain",
+            {
+              url: "https://example.com/brain.git",
+              resolved_ref: "abcdef1234567890",
+              ref: "main",
+              path: "wiki",
+              fetched_at: "2026-01-01T00:00:00+00:00",
+              required_by: ["root"],
+            },
+          ],
+        ]),
+      },
+      join(root, "wiki.lock"),
+    );
 
     const config = Config.forRoot(root, { wiki: { input: [wiki, source] } });
     const descriptors = graphDescriptors(config);
@@ -1269,10 +1343,7 @@ test("graphDescriptors reports locked source metadata", () => {
     assertEquals(brain.ref, "main");
     assertEquals(brain.resolved_ref, "abcdef1234567890");
     assertEquals(brain.required_by, ["root"]);
-    assertEquals(
-      resolve(brain.local_path!),
-      resolve(source),
-    );
+    assertEquals(resolve(brain.local_path!), resolve(source));
   } finally {
     cleanup(root);
   }
@@ -1286,15 +1357,17 @@ test("a directly declared source is marked required by root", () => {
 
     const config = Config.forRoot(root, {
       wiki: { input: [wiki, source] },
-      sources: [{
-        name: "brain",
-        type: "git",
-        url: "https://example.com/brain.git",
-      }],
+      sources: [
+        {
+          name: "brain",
+          type: "git",
+          url: "https://example.com/brain.git",
+        },
+      ],
     });
 
-    const brain = graphDescriptors(config).find((item) =>
-      item.name === "brain"
+    const brain = graphDescriptors(config).find(
+      (item) => item.name === "brain",
     );
     assertEquals(brain?.required_by, ["root"]);
   } finally {
@@ -1309,10 +1382,13 @@ test("graphDescriptors warns when a cache has no lockfile sources", async () => 
     const config = Config.forRoot(root, { wiki: { input: [wiki, source] } });
 
     const { records, value: descriptors } = await captureLogs(() =>
-      graphDescriptors(config)
+      graphDescriptors(config),
     );
 
-    assertEquals(descriptors.map((item) => item.kind), ["root"]);
+    assertEquals(
+      descriptors.map((item) => item.kind),
+      ["root"],
+    );
     assert(
       records.some((item) => item.message.includes("Source cache exists")),
       JSON.stringify(records),
@@ -1432,10 +1508,11 @@ givenName: Gregory
 
     const graph = await loadGraph(config, { infer: true });
 
-    const leaked = [...graph].filter((item: Quad) =>
-      item.subject.value.includes("rdfjs-inference-engine") ||
-      item.predicate.value.includes("rdfjs-inference-engine") ||
-      item.object.value.includes("rdfjs-inference-engine")
+    const leaked = [...graph].filter(
+      (item: Quad) =>
+        item.subject.value.includes("rdfjs-inference-engine") ||
+        item.predicate.value.includes("rdfjs-inference-engine") ||
+        item.object.value.includes("rdfjs-inference-engine"),
     );
     assertEquals(leaked, []);
     assert(
@@ -1456,9 +1533,7 @@ test("YAML date-only frontmatter becomes xsd:date with its lexical form", () => 
   // `Date` would lose both the type and the spelling, so the parser records
   // the lexical form at the YAML layer (see `scalars.ts`).
   const config = new Config();
-  const attrs = parseFrontmatter(
-    "---\npublished: 2026-05-30\n---\n\nBody\n",
-  );
+  const attrs = parseFrontmatter("---\npublished: 2026-05-30\n---\n\nBody\n");
   const graph = frontmatterToGraph(
     { "@type": "TechArticle", "@id": "wiki:dates", ...attrs },
     config.context,
@@ -1581,19 +1656,18 @@ test("inference keeps one literal per numeric value (#367)", () => {
   const graph = new RdfGraph();
   for (const [id, value] of Object.entries(values)) {
     const attrs = parseFrontmatter(`---\nprice: ${value}\n---\n\nBody\n`);
-    for (
-      const quad of frontmatterToGraph(
-        { "@type": "Product", "@id": `wiki:${id}`, ...attrs },
-        config.context,
-      )
-    ) {
+    for (const quad of frontmatterToGraph(
+      { "@type": "Product", "@id": `wiki:${id}`, ...attrs },
+      config.context,
+    )) {
       graph.add(quad.subject, quad.predicate as NamedNode, quad.object);
     }
   }
   applyInference(graph, config);
   const prices = (id: string) =>
-    [...graph.match(namedNode(`${WIKI}${id}`), namedNode(`${SCHEMA}price`))]
-      .map(({ object }) => termKey(object));
+    [
+      ...graph.match(namedNode(`${WIKI}${id}`), namedNode(`${SCHEMA}price`)),
+    ].map(({ object }) => termKey(object));
   assertEquals(prices("int"), [
     termKey(literal("1", { datatype: XSD_INTEGER })),
   ]);

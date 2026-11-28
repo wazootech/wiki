@@ -139,9 +139,7 @@ function normalizeInitLinkStyle(
 function normalizeInitUrlStyle(value: string | null | undefined): string {
   const normalized = (value || DEFAULT_URL_STYLE).trim().toLowerCase();
   if (!URL_STYLES.has(normalized)) {
-    throw new ValueError(
-      `Invalid site_url_style: ${JSON.stringify(value)}`,
-    );
+    throw new ValueError(`Invalid site_url_style: ${JSON.stringify(value)}`);
   }
   return normalized;
 }
@@ -165,9 +163,9 @@ export function parseGithubRepo(value: string): [string, string] {
     if (match) return [match[1]!, match[2]!];
   }
   throw new ValueError(
-    `Invalid GitHub repo: ${
-      JSON.stringify(value)
-    } (expected owner/repo, https://github.com/owner/repo, or git@github.com:owner/repo.git)`,
+    `Invalid GitHub repo: ${JSON.stringify(
+      value,
+    )} (expected owner/repo, https://github.com/owner/repo, or git@github.com:owner/repo.git)`,
   );
 }
 
@@ -225,9 +223,9 @@ function normalizeInitOptionStyles(options: InitOptions): InitOptions {
     implicitTypesPolicy = implicitTypesPolicy.trim().toLowerCase();
     if (!IMPLICIT_TYPES_POLICIES.has(implicitTypesPolicy)) {
       throw new ValueError(
-        `expected fallback or append, got ${
-          JSON.stringify(options.graph_implicit_types_policy)
-        }`,
+        `expected fallback or append, got ${JSON.stringify(
+          options.graph_implicit_types_policy,
+        )}`,
       );
     }
   }
@@ -262,10 +260,13 @@ export function resolveInitOptions(options: ResolveInitOptions): InitOptions {
     );
   }
 
-  const contextWiki = options.graph_context_wiki || inferredContextWiki ||
-    options.prompt_context_wiki?.(DEFAULT_WIKI_BASE) || DEFAULT_WIKI_BASE;
-  const siteBaseUrl = options.site_base_url || inferredBaseUrl ||
-    DEFAULT_BASE_URL;
+  const contextWiki =
+    options.graph_context_wiki ||
+    inferredContextWiki ||
+    options.prompt_context_wiki?.(DEFAULT_WIKI_BASE) ||
+    DEFAULT_WIKI_BASE;
+  const siteBaseUrl =
+    options.site_base_url || inferredBaseUrl || DEFAULT_BASE_URL;
   const siteUrlStyle = normalizeInitUrlStyle(options.site_url_style);
   const linkStyle = normalizeInitLinkStyle(options.link_style);
 
@@ -274,9 +275,9 @@ export function resolveInitOptions(options: ResolveInitOptions): InitOptions {
     implicitTypesPolicy = implicitTypesPolicy.trim().toLowerCase();
     if (!IMPLICIT_TYPES_POLICIES.has(implicitTypesPolicy)) {
       throw new ValueError(
-        `expected fallback or append, got ${
-          JSON.stringify(options.graph_implicit_types_policy)
-        }`,
+        `expected fallback or append, got ${JSON.stringify(
+          options.graph_implicit_types_policy,
+        )}`,
       );
     }
   }
@@ -319,7 +320,9 @@ function setPath(
   for (const part of path.slice(0, -1)) {
     const child = current[part];
     if (
-      child === undefined || child === null || Array.isArray(child) ||
+      child === undefined ||
+      child === null ||
+      Array.isArray(child) ||
       typeof child !== "object"
     ) {
       current[part] = {};
@@ -397,17 +400,19 @@ export function renderWikiYaml(options: InitOptions): string {
 
   if (options.graph_implicit_types_policy) {
     lines.push(
-      `  implicit_types_policy: ${
-        yamlString(options.graph_implicit_types_policy)
-      }`,
+      `  implicit_types_policy: ${yamlString(
+        options.graph_implicit_types_policy,
+      )}`,
     );
   } else lines.push("  # implicit_types_policy: fallback");
 
   if (options.graph_base_iri) {
     lines.push(`  base_iri: ${yamlString(options.graph_base_iri)}`);
-  } else {lines.push(
+  } else {
+    lines.push(
       "  # base_iri: https://example.org/docs/  # optional override; defaults to context.wiki",
-    );}
+    );
+  }
 
   lines.push(
     "  # CURIE prefix map for frontmatter.",
@@ -427,9 +432,11 @@ export function renderWikiYaml(options: InitOptions): string {
   );
   if (options.site_layout) {
     lines.push(`  layout: ${yamlString(options.site_layout)}`);
-  } else {lines.push(
+  } else {
+    lines.push(
       "  # layout: custom.html  # layout unset → packaged minimal index layout (see Wiki Configuration → Page layout).",
-    );}
+    );
+  }
   lines.push(
     "  # URL prefix for built and served pages.",
     `  base_url: ${baseUrl === "" ? '""' : yamlString(baseUrl)}`,
@@ -649,9 +656,7 @@ export function scaffoldWiki(
             "git was requested with --git, but no git executable was found on PATH.",
           );
         }
-        return failure(
-          `git init failed: ${errorText(error)}`,
-        );
+        return failure(`git init failed: ${errorText(error)}`);
       }
       if (result.code !== 0) {
         const stderr = result.stderr.trim() || "unknown git init error";
@@ -669,9 +674,7 @@ export function scaffoldWiki(
       message,
     };
   } catch (error) {
-    return failure(
-      `Failed to scaffold wiki: ${errorText(error)}`,
-    );
+    return failure(`Failed to scaffold wiki: ${errorText(error)}`);
   }
 }
 
@@ -731,9 +734,9 @@ function templateEntries(
     const source = join(directory, entry.name);
     if (entry.isSymlink) {
       throw new Error(
-        `Template entry '${
-          [...parent, entry.name].join("/")
-        }' is a symlink and cannot be copied safely.`,
+        `Template entry '${[...parent, entry.name].join(
+          "/",
+        )}' is a symlink and cannot be copied safely.`,
       );
     }
     const path = [...parent, entry.name];
@@ -817,12 +820,10 @@ function resolveTemplateDir(
   cloneDir: string,
   templateName: string,
 ): string | null {
-  for (
-    const candidate of [
-      join(cloneDir, WIKI_TEMPLATES_DIR, templateName),
-      join(cloneDir, templateName),
-    ]
-  ) {
+  for (const candidate of [
+    join(cloneDir, WIKI_TEMPLATES_DIR, templateName),
+    join(cloneDir, templateName),
+  ]) {
     if (isDirectory(candidate) && !isSymlink(candidate)) return candidate;
   }
   return null;
@@ -830,9 +831,10 @@ function resolveTemplateDir(
 
 function availableTemplateNames(cloneDir: string): string[] {
   const templatesDir = join(cloneDir, WIKI_TEMPLATES_DIR);
-  const listingDir = isDirectory(templatesDir) && !isSymlink(templatesDir)
-    ? templatesDir
-    : cloneDir;
+  const listingDir =
+    isDirectory(templatesDir) && !isSymlink(templatesDir)
+      ? templatesDir
+      : cloneDir;
   return [...sys.readDirSync(listingDir)]
     .filter((entry) => entry.isDirectory && !entry.name.startsWith("."))
     .map((entry) => entry.name)
@@ -875,9 +877,9 @@ export function fetchTemplate(
     if (templateDir === null) {
       const available = availableTemplateNames(cloneDir);
       return templateFailure(
-        `Template '${templateName}' not found in wiki-templates. Available: ${
-          available.join(", ")
-        }`,
+        `Template '${templateName}' not found in wiki-templates. Available: ${available.join(
+          ", ",
+        )}`,
       );
     }
 
@@ -909,14 +911,13 @@ export function fetchTemplate(
     return {
       ok: true,
       written_paths: written,
-      message:
-        `Initialized wiki from template '${templateName}' (wazootech/wiki-templates).`,
+      message: `Initialized wiki from template '${templateName}' (wazootech/wiki-templates).`,
     };
   } catch (error) {
     return templateFailure(
-      `Failed to initialize from template '${templateName}': ${
-        errorText(error)
-      }`,
+      `Failed to initialize from template '${templateName}': ${errorText(
+        error,
+      )}`,
       created,
     );
   } finally {
@@ -924,9 +925,9 @@ export function fetchTemplate(
       removeTemplateDirectory(tempRoot);
     } catch (error) {
       console.error(
-        `Warning: could not remove template checkout ${tempRoot}: ${
-          errorText(error)
-        }`,
+        `Warning: could not remove template checkout ${tempRoot}: ${errorText(
+          error,
+        )}`,
       );
     }
   }

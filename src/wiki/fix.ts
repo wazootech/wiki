@@ -51,8 +51,8 @@ export async function findRedundantFrontmatter(
   config: Config,
   paths: readonly string[] | null = null,
 ): Promise<RedundantDocument[]> {
-  const files = (paths ?? iterMarkdownFiles(config)).filter((path) =>
-    extname(path).toLowerCase() === ".md"
+  const files = (paths ?? iterMarkdownFiles(config)).filter(
+    (path) => extname(path).toLowerCase() === ".md",
   );
   const withData = files.flatMap((path) => {
     const data = documentDataFromPath(path);
@@ -115,23 +115,25 @@ export function removeFrontmatterKeys(
   const cuts: Array<{ key: string; start: number; end: number }> = [];
   const skipped: SkippedKey[] = [];
   for (const key of keys) {
-    const matches = pairs.filter((pair) =>
-      isScalar(pair.key) && pair.key.value === key
+    const matches = pairs.filter(
+      (pair) => isScalar(pair.key) && pair.key.value === key,
     );
     if (matches.length !== 1) {
       skipped.push({
         key,
-        reason: matches.length === 0
-          ? "no top-level entry has that key"
-          : "the key is written more than once",
+        reason:
+          matches.length === 0
+            ? "no top-level entry has that key"
+            : "the key is written more than once",
       });
       continue;
     }
     const pair = matches[0]!;
     const keyNode = pair.key as { range?: [number, number, number] };
-    const value = pair.value as
-      | { range?: [number, number, number]; anchor?: string }
-      | null;
+    const value = pair.value as {
+      range?: [number, number, number];
+      anchor?: string;
+    } | null;
     if (!keyNode.range || !value?.range) {
       skipped.push({ key, reason: "the entry has no value" });
       continue;
@@ -169,8 +171,8 @@ export function removeFrontmatterKeys(
   let next = yaml;
   for (const cut of cuts) next = next.slice(0, cut.start) + next.slice(cut.end);
   return {
-    content: content.slice(0, offset) + next +
-      content.slice(offset + yaml.length),
+    content:
+      content.slice(0, offset) + next + content.slice(offset + yaml.length),
     removed: keys.filter((key) => cuts.some((cut) => cut.key === key)),
     skipped,
   };
@@ -193,11 +195,7 @@ export interface FixFile {
  * - `rejected` / `conflict`: as for `wiki edit`; nothing was written.
  */
 export type FixStatus =
-  | "clean"
-  | "dry_run"
-  | "applied"
-  | "rejected"
-  | "conflict";
+  "clean" | "dry_run" | "applied" | "rejected" | "conflict";
 
 export interface FixReport {
   readonly status: FixStatus;
@@ -225,9 +223,12 @@ export async function fixRedundantFrontmatter(
 ): Promise<FixReport> {
   const documents = await findRedundantFrontmatter(config, paths);
   const files: FixFile[] = [];
-  const ops: Array<
-    { op: "replace"; path: string; content: string; expect: string }
-  > = [];
+  const ops: Array<{
+    op: "replace";
+    path: string;
+    content: string;
+    expect: string;
+  }> = [];
   for (const document of documents) {
     const raw = sys.readFileSync(document.path);
     const before = new TextDecoder().decode(raw);
@@ -238,7 +239,7 @@ export async function fixRedundantFrontmatter(
       path,
       route: document.route,
       removed: document.fields.filter((field) =>
-        removal.removed.includes(field.key)
+        removal.removed.includes(field.key),
       ),
       skipped: removal.skipped,
     });
@@ -254,8 +255,12 @@ export async function fixRedundantFrontmatter(
   if (ops.length === 0) {
     return { status: "clean", ok: true, files, edit: null };
   }
-  const edit = await applyEdit(config, { ops }, {
-    apply: options.apply ?? false,
-  });
+  const edit = await applyEdit(
+    config,
+    { ops },
+    {
+      apply: options.apply ?? false,
+    },
+  );
   return { status: edit.status, ok: edit.ok, files, edit };
 }

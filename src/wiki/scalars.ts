@@ -260,9 +260,9 @@ function timestampLexical(
   const match = YAML_TIMESTAMP_REGEXP.exec(raw);
   if (match === null) return null;
   const pad2 = (s: string): string => s.padStart(2, "0");
-  let lexical = `${match[1]}-${pad2(match[2]!)}-${pad2(match[3]!)}T${
-    pad2(match[4]!)
-  }:${match[5]}:${match[6]}`;
+  let lexical = `${match[1]}-${pad2(match[2]!)}-${pad2(match[3]!)}T${pad2(
+    match[4]!,
+  )}:${match[5]}:${match[6]}`;
   const fraction = match[7] ?? "";
   if (fraction !== "") {
     // Python's `isoformat()` pads the fraction to six digits and omits it

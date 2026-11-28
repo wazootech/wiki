@@ -178,13 +178,14 @@ async function runAuditCommand(
     readonly format?: "text" | "json";
   },
 ): Promise<number> {
-  const report = command === "check"
-    ? await wiki.check(files.length > 0 ? files : null, {
-      strict: options.strict,
-    })
-    : await wiki.lint(files.length > 0 ? files : null, {
-      strict: options.strict,
-    });
+  const report =
+    command === "check"
+      ? await wiki.check(files.length > 0 ? files : null, {
+          strict: options.strict,
+        })
+      : await wiki.lint(files.length > 0 ? files : null, {
+          strict: options.strict,
+        });
   if (options.format === "json") {
     // The payload goes to stdout before the exit code is decided, so CI can
     // read it and still fail on it; the human report stays on stderr.
@@ -225,13 +226,15 @@ async function loadWiki(
 function parseFileCommandArgs(
   command: string,
   args: readonly string[],
-): {
-  readonly files: string[];
-  readonly verbose: boolean;
-  readonly strict: boolean;
-  readonly check: boolean;
-  readonly format: "text" | "json";
-} | number {
+):
+  | {
+      readonly files: string[];
+      readonly verbose: boolean;
+      readonly strict: boolean;
+      readonly check: boolean;
+      readonly format: "text" | "json";
+    }
+  | number {
   const flags = FILE_COMMAND_FLAGS[command] ?? [];
   const files: string[] = [];
   let verbose = false;
@@ -246,8 +249,10 @@ function parseFileCommandArgs(
       continue;
     }
     if (
-      (token === "-f" || token === "--format" ||
-        token.startsWith("--format=")) && flags.includes("--format")
+      (token === "-f" ||
+        token === "--format" ||
+        token.startsWith("--format=")) &&
+      flags.includes("--format")
     ) {
       let value: string | undefined;
       if (token.startsWith("--format=")) {
@@ -320,17 +325,18 @@ async function runFmtCommand(
   try {
     if (parsed.verbose) {
       const explicit = parsed.files[0];
-      const probe = explicit ??
+      const probe =
+        explicit ??
         (await import("./paths.ts")).iterMarkdownFiles(wiki.config)[0];
       if (probe !== undefined) {
         console.log(`Using ${describeFmtSource(wiki.config)}.`);
       }
     }
 
-    const report = wiki.format(
-      parsed.files.length > 0 ? parsed.files : null,
-      { check: parsed.check, verbose: parsed.verbose },
-    );
+    const report = wiki.format(parsed.files.length > 0 ? parsed.files : null, {
+      check: parsed.check,
+      verbose: parsed.verbose,
+    });
 
     for (const line of report.verbose_lines) console.log(line);
 
@@ -453,16 +459,17 @@ async function runFixCommand(
     if (parsed.verbose) {
       for (const field of file.removed) {
         console.log(
-          `${file.path}: ${field.key} (schema:${field.property} = ${
-            JSON.stringify(field.value)
-          })`,
+          `${file.path}: ${field.key} (schema:${field.property} = ${JSON.stringify(
+            field.value,
+          )})`,
         );
       }
     } else {
       console.log(file.path);
     }
   }
-  const counted = `${fields} redundant field${fields === 1 ? "" : "s"} ` +
+  const counted =
+    `${fields} redundant field${fields === 1 ? "" : "s"} ` +
     `from ${files} file${files === 1 ? "" : "s"}`;
 
   switch (report.status) {
@@ -593,9 +600,7 @@ async function parseQueryCommandArgs(
       verbose,
     };
   } catch (error) {
-    return usageError(
-      `Error: ${errorText(error)}`,
-    );
+    return usageError(`Error: ${errorText(error)}`);
   }
 }
 
@@ -698,7 +703,8 @@ async function runLinkCommand(
     const prefix = parsed.dryRun ? "would fix" : "fixed";
     for (const path of report.changed_paths) console.log(`${prefix} ${path}`);
   } else if (
-    parsed.apply && report.changed_paths.length > 0 &&
+    parsed.apply &&
+    report.changed_paths.length > 0 &&
     (parsed.verbose || parsed.dryRun)
   ) {
     const prefix = parsed.dryRun ? "would update" : "updated";
@@ -807,9 +813,7 @@ async function parseExportCommandArgs(
     const { normalizeExportFormat } = await import("./export.ts");
     return { files, output, format: normalizeExportFormat(format), mode };
   } catch (error) {
-    return usageError(
-      `Error: ${errorText(error)}`,
-    );
+    return usageError(`Error: ${errorText(error)}`);
   }
 }
 
@@ -819,10 +823,10 @@ async function runExportCommand(
 ): Promise<number> {
   let result: Awaited<ReturnType<Wiki["export"]>>;
   try {
-    result = await wiki.export(
-      parsed.files.length > 0 ? parsed.files : null,
-      { format: parsed.format, mode: parsed.mode },
-    );
+    result = await wiki.export(parsed.files.length > 0 ? parsed.files : null, {
+      format: parsed.format,
+      mode: parsed.mode,
+    });
   } catch (error) {
     if (error instanceof ValueError) {
       console.error(`Error: ${error.message}`);
@@ -840,9 +844,7 @@ async function runExportCommand(
     try {
       await sys.writeTextFile(parsed.output, result.output);
     } catch (error) {
-      console.error(
-        `Error: ${errorText(error)}`,
-      );
+      console.error(`Error: ${errorText(error)}`);
       return EXIT_FAILURE;
     }
     const rawFormats = new Set(["turtle", "xml", "n3", "nt", "trig", "nquads"]);
@@ -1035,9 +1037,7 @@ async function runQueryCommand(
     }
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Query Execution Error: ${errorText(error)}`,
-    );
+    console.error(`Query Execution Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1337,8 +1337,10 @@ function parseInitCommandArgs(
     // spellings are accepted too, because `link.style` in a config file has
     // always honoured them -- the flag and the file must not disagree about
     // which values are legal. `normalizeInitLinkStyle` then rewrites them.
-    "--link-style": [...LINK_STYLES, ...Object.keys(LEGACY_LINK_STYLE_MAP)]
-      .sort(),
+    "--link-style": [
+      ...LINK_STYLES,
+      ...Object.keys(LEGACY_LINK_STYLE_MAP),
+    ].sort(),
     "--graph-implicit-types-policy": ["fallback", "append"],
   };
   // What a "Choose from" error names. Retired spellings stay accepted but are
@@ -1369,11 +1371,12 @@ function parseInitCommandArgs(
 
     const equalsAt = token.indexOf("=");
     const option = equalsAt < 0 ? token : token.slice(0, equalsAt);
-    const field = option === "--input"
-      ? "wiki_inputs"
-      : option === "--graph-implicit-types"
-      ? "graph_implicit_types"
-      : valueOptions[option];
+    const field =
+      option === "--input"
+        ? "wiki_inputs"
+        : option === "--graph-implicit-types"
+          ? "graph_implicit_types"
+          : valueOptions[option];
     if (field === undefined) {
       return usageError(`Error: No such option: ${token}`);
     }
@@ -1389,9 +1392,9 @@ function parseInitCommandArgs(
     if (allowed !== undefined && !allowed.includes(value)) {
       const suggested = advisedChoices[option] ?? allowed;
       return usageError(
-        `Error: Invalid value for '${option}': '${value}'. Choose from ${
-          suggested.map((item) => `'${item}'`).join(", ")
-        }.`,
+        `Error: Invalid value for '${option}': '${value}'. Choose from ${suggested
+          .map((item) => `'${item}'`)
+          .join(", ")}.`,
       );
     }
     if (field === "wiki_inputs" || field === "graph_implicit_types") {
@@ -1489,9 +1492,7 @@ function runInstallCommand(wiki: Wiki, url: string | null): number {
     }
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1521,9 +1522,7 @@ function runUpdateCommand(wiki: Wiki, parsed: ParsedUpdateCommand): number {
     }
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1534,9 +1533,7 @@ function runRemoveCommand(wiki: Wiki, name: string): number {
     console.log(`Removed source '${name}'.`);
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1568,10 +1565,12 @@ async function runInitCommand(options: WikiInitOptions): Promise<number> {
           );
           return defaultValue;
         }
-        return prompt(
-          "Custom wiki namespace IRI (graph.context.wiki)",
-          defaultValue,
-        )?.trim() || defaultValue;
+        return (
+          prompt(
+            "Custom wiki namespace IRI (graph.context.wiki)",
+            defaultValue,
+          )?.trim() || defaultValue
+        );
       },
     });
     if (!result.ok) {
@@ -1583,9 +1582,7 @@ async function runInitCommand(options: WikiInitOptions): Promise<number> {
     console.log(result.message);
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1607,9 +1604,7 @@ async function runBuildCommand(
       verbose: parsed.verbose,
     });
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
   if (parsed.render && parsed.verbose && result.ok) {
@@ -1645,9 +1640,7 @@ async function runServeCommand(
     await wiki.serve(parsed);
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1665,9 +1658,7 @@ async function runMcpCommand(
     });
     return EXIT_OK;
   } catch (error) {
-    console.error(
-      `Error: ${errorText(error)}`,
-    );
+    console.error(`Error: ${errorText(error)}`);
     return EXIT_FAILURE;
   }
 }
@@ -1721,9 +1712,7 @@ function parseEditCommandArgs(
       force = true;
     } else if (token === "--json") {
       format = "json";
-    } else if (
-      token === "--from" || token === "-f" || token === "--format"
-    ) {
+    } else if (token === "--from" || token === "-f" || token === "--format") {
       const value = args[++i];
       if (value === undefined) {
         return usageError(`Error: Option '${token}' requires an argument.`);
@@ -1762,9 +1751,10 @@ async function runEditCommand(
 ): Promise<number> {
   let text: string;
   try {
-    text = parsed.from === "-"
-      ? await new Response(sys.stdin.readable).text()
-      : await sys.readTextFile(parsed.from);
+    text =
+      parsed.from === "-"
+        ? await new Response(sys.stdin.readable).text()
+        : await sys.readTextFile(parsed.from);
   } catch (error) {
     return usageError(
       `Error: Cannot read edit from '${parsed.from}': ${errorText(error)}`,
@@ -1882,8 +1872,10 @@ const NEW_HELP = [
   "  --set KEY=VALUE",
   "                 A frontmatter field; VALUE is YAML (repeatable).",
   "  --body TEXT    Markdown to put under the H1.",
-  ...WRITE_VERB_OPTIONS.filter((line) =>
-    !line.startsWith("  --expect") && !line.startsWith("                 show)")
+  ...WRITE_VERB_OPTIONS.filter(
+    (line) =>
+      !line.startsWith("  --expect") &&
+      !line.startsWith("                 show)"),
   ),
 ].join("\n");
 
@@ -2058,9 +2050,8 @@ async function runNewCommand(
       }
       path = join(path, titleFilename(title));
     }
-    const required = type === null
-      ? []
-      : await requiredFields(wiki.config, type);
+    const required =
+      type === null ? [] : await requiredFields(wiki.config, type);
     const content = scaffoldPage({
       path,
       typeKey: typeKey(wiki.config),
@@ -2150,30 +2141,38 @@ async function runPatchCommand(
     );
   }
   const modes = (["append", "prepend", "replace"] as const).filter((mode) =>
-    parsed.flags.has(`--${mode}`)
+    parsed.flags.has(`--${mode}`),
   );
   if (modes.length !== 1) {
     return usageError(
       "Error: give exactly one of --append, --prepend, or --replace.",
     );
   }
-  const content = parsed.values.get("--content")?.at(-1) ??
-    await new Response(sys.stdin.readable).text();
-  const target = heading !== undefined
-    ? { heading }
-    : parsed.flags.has("--body")
-    ? { body: true }
-    : { frontmatter: true };
-  return await applyAndReport(wiki, {
-    ops: [{
-      op: "patch",
-      path: parsed.positionals[0]!,
-      target,
-      mode: modes[0],
-      content,
-      ...(parsed.expect ? { expect: parsed.expect } : {}),
-    }],
-  }, parsed.run);
+  const content =
+    parsed.values.get("--content")?.at(-1) ??
+    (await new Response(sys.stdin.readable).text());
+  const target =
+    heading !== undefined
+      ? { heading }
+      : parsed.flags.has("--body")
+        ? { body: true }
+        : { frontmatter: true };
+  return await applyAndReport(
+    wiki,
+    {
+      ops: [
+        {
+          op: "patch",
+          path: parsed.positionals[0]!,
+          target,
+          mode: modes[0],
+          content,
+          ...(parsed.expect ? { expect: parsed.expect } : {}),
+        },
+      ],
+    },
+    parsed.run,
+  );
 }
 
 const MV_HELP = [
@@ -2222,14 +2221,20 @@ async function runMvCommand(
     return usageError("Error: wiki mv takes FROM and TO.");
   }
   const [from, to] = parsed.positionals as [string, string];
-  return await applyAndReport(wiki, {
-    ops: [{
-      op: "move",
-      from,
-      to,
-      ...(parsed.expect ? { expect: parsed.expect } : {}),
-    }],
-  }, parsed.run);
+  return await applyAndReport(
+    wiki,
+    {
+      ops: [
+        {
+          op: "move",
+          from,
+          to,
+          ...(parsed.expect ? { expect: parsed.expect } : {}),
+        },
+      ],
+    },
+    parsed.run,
+  );
 }
 
 async function runRmCommand(
@@ -2245,14 +2250,20 @@ async function runRmCommand(
   if (parsed.positionals.length !== 1) {
     return usageError("Error: wiki rm takes exactly one PATH.");
   }
-  return await applyAndReport(wiki, {
-    ops: [{
-      op: "delete",
-      path: parsed.positionals[0]!,
-      ...(parsed.flags.has("--prune-links") ? { pruneLinks: true } : {}),
-      ...(parsed.expect ? { expect: parsed.expect } : {}),
-    }],
-  }, parsed.run);
+  return await applyAndReport(
+    wiki,
+    {
+      ops: [
+        {
+          op: "delete",
+          path: parsed.positionals[0]!,
+          ...(parsed.flags.has("--prune-links") ? { pruneLinks: true } : {}),
+          ...(parsed.expect ? { expect: parsed.expect } : {}),
+        },
+      ],
+    },
+    parsed.run,
+  );
 }
 
 const SHOW_HELP = [
@@ -2568,31 +2579,35 @@ const COMMANDS: readonly CommandDefinition[] = [
     run: async ({ args, configPath, wikiInputs }) => {
       const graphCommand = args[0];
       if (graphCommand === "--help" || graphCommand === "-h") {
-        console.log([
-          "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...",
-          "",
-          "  Inspect read-only RDF named graph provenance.",
-          "",
-          "Options:",
-          "  --help  Show this message and exit.",
-          "",
-          "Commands:",
-          "  list  List named graphs available to SPARQL GRAPH queries.",
-        ].join("\n"));
+        console.log(
+          [
+            "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...",
+            "",
+            "  Inspect read-only RDF named graph provenance.",
+            "",
+            "Options:",
+            "  --help  Show this message and exit.",
+            "",
+            "Commands:",
+            "  list  List named graphs available to SPARQL GRAPH queries.",
+          ].join("\n"),
+        );
         return EXIT_OK;
       }
       if (
         graphCommand === "list" &&
         (args[1] === "--help" || args[1] === "-h")
       ) {
-        console.log([
-          "Usage: wiki graph list [OPTIONS]",
-          "",
-          "  List named graphs available to SPARQL GRAPH queries.",
-          "",
-          "Options:",
-          "  --help  Show this message and exit.",
-        ].join("\n"));
+        console.log(
+          [
+            "Usage: wiki graph list [OPTIONS]",
+            "",
+            "  List named graphs available to SPARQL GRAPH queries.",
+            "",
+            "Options:",
+            "  --help  Show this message and exit.",
+          ].join("\n"),
+        );
         return EXIT_OK;
       }
       if (graphCommand === undefined) {
@@ -2618,12 +2633,12 @@ const COMMANDS: readonly CommandDefinition[] = [
         descriptor.required_by.join(","),
       ]);
       const widths = headers.map((header, index) =>
-        Math.max(header.length, ...rows.map((row) => row[index]!.length))
+        Math.max(header.length, ...rows.map((row) => row[index]!.length)),
       );
       console.log(
-        headers.map((header, index) => header.padEnd(widths[index]!)).join(
-          "  ",
-        ),
+        headers
+          .map((header, index) => header.padEnd(widths[index]!))
+          .join("  "),
       );
       console.log(widths.map((width) => "-".repeat(width)).join("  "));
       for (const row of rows) {
@@ -2877,13 +2892,14 @@ const FILE_HELP_LINES = [
   "  --help  Show this message and exit.",
   "",
   "Commands:",
-  ...FILE_COMMANDS.map(({ names, description }) =>
-    `  ${names.join(", ").padEnd(FILE_HELP_WIDTH)}  ${description}`
+  ...FILE_COMMANDS.map(
+    ({ names, description }) =>
+      `  ${names.join(", ").padEnd(FILE_HELP_WIDTH)}  ${description}`,
   ),
 ];
 
-export const COMMAND_NAMES: readonly string[] = COMMANDS.flatMap(({ names }) =>
-  names
+export const COMMAND_NAMES: readonly string[] = COMMANDS.flatMap(
+  ({ names }) => names,
 );
 
 const COMMAND_BY_NAME = new Map<string, CommandDefinition>();
@@ -2896,8 +2912,9 @@ const COMMAND_HELP_WIDTH = Math.max(
 );
 const ROOT_HELP_LINES = [
   ...ROOT_HELP_HEADER_LINES,
-  ...COMMANDS.map(({ names, description }) =>
-    `  ${names.join(", ").padEnd(COMMAND_HELP_WIDTH)}  ${description}`
+  ...COMMANDS.map(
+    ({ names, description }) =>
+      `  ${names.join(", ").padEnd(COMMAND_HELP_WIDTH)}  ${description}`,
   ),
 ];
 /**

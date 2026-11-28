@@ -18,7 +18,7 @@ import type { TocItem } from "./types.ts";
 export function titleFromMarkdown(markdown: string, fallback: string): string {
   const heading = parseHeadings(markdown).find((item) => item.level === 1);
   if (heading !== undefined) return heading.text.trim();
-  const stem = fallback ? fallback.split("/").at(-1) ?? "Index" : "Index";
+  const stem = fallback ? (fallback.split("/").at(-1) ?? "Index") : "Index";
   return stem.replaceAll("_", " ").replaceAll("-", " ").trim() || "Index";
 }
 
@@ -61,8 +61,8 @@ function installWikiLinkRule(
       const raw = state.src.slice(start + 2, close);
       const separator = raw.indexOf("|");
       const target = (separator < 0 ? raw : raw.slice(0, separator)).trim();
-      const label = (separator < 0 ? raw : raw.slice(separator + 1)).trim() ||
-        target;
+      const label =
+        (separator < 0 ? raw : raw.slice(separator + 1)).trim() || target;
       if (target === "") return false;
       if (silent) {
         state.pos = close + 2;
@@ -138,23 +138,18 @@ export function renderWikiMarkdown(
     return renderer.renderToken(tokens, index, options);
   };
   md.renderer.rules.link_open = linkRule;
-  const fenceRule: RendererRule = (
-    tokens: Token[],
-    index: number,
-  ) => {
+  const fenceRule: RendererRule = (tokens: Token[], index: number) => {
     const token = tokens[index]!;
     const language = token.info.trim().split(/\s+/, 1)[0] ?? "";
-    const escapedLanguage = md.utils.escapeHtml(language).replaceAll(
-      '"',
-      "&quot;",
-    );
-    const classAttribute = language === ""
-      ? ""
-      : ` class="language-${escapedLanguage}"`;
+    const escapedLanguage = md.utils
+      .escapeHtml(language)
+      .replaceAll('"', "&quot;");
+    const classAttribute =
+      language === "" ? "" : ` class="language-${escapedLanguage}"`;
     const raw = md.utils.escapeHtml(token.content).replaceAll('"', "&quot;");
-    const code = `<pre data-copy="${raw}"><code${classAttribute}>${
-      md.utils.escapeHtml(token.content)
-    }</code></pre>\n`;
+    const code = `<pre data-copy="${raw}"><code${classAttribute}>${md.utils.escapeHtml(
+      token.content,
+    )}</code></pre>\n`;
     return code;
   };
   md.renderer.rules.fence = fenceRule;

@@ -45,29 +45,31 @@ export async function lintMarkdownWithEslint(
   const rules: Linter.RulesRecord = {
     ...(headingLevelsEnabled
       ? {
-        "markdown/heading-increment": [
-          eslintSeverity(severities.heading_levels),
-          { frontmatterTitle: "" },
-        ],
-      }
+          "markdown/heading-increment": [
+            eslintSeverity(severities.heading_levels),
+            { frontmatterTitle: "" },
+          ],
+        }
       : {}),
     ...(duplicateHeadingsEnabled
       ? {
-        "markdown/no-duplicate-headings": eslintSeverity(
-          severities.duplicate_headings,
-        ),
-      }
+          "markdown/no-duplicate-headings": eslintSeverity(
+            severities.duplicate_headings,
+          ),
+        }
       : {}),
   };
   const eslint = new ESLint({
     allowInlineConfig: false,
     overrideConfigFile: true,
-    overrideConfig: [{
-      files: ["**/*.md"],
-      language: "markdown/gfm",
-      plugins: { markdown },
-      rules,
-    }],
+    overrideConfig: [
+      {
+        files: ["**/*.md"],
+        language: "markdown/gfm",
+        plugins: { markdown },
+        rules,
+      },
+    ],
   });
 
   let fileIndex = 0;
@@ -143,9 +145,9 @@ export async function lintMarkdownWithEslint(
         const firstLine = firstLineByDuplicate.get(line);
         if (heading === undefined || firstLine === undefined) continue;
         issues.duplicate_headings.push(
-          `In ${
-            basename(filePath)
-          }:${line}: Duplicate heading h${heading.level} ` +
+          `In ${basename(
+            filePath,
+          )}:${line}: Duplicate heading h${heading.level} ` +
             `${quoteString(heading.text)} (first at line ${firstLine}).`,
         );
       }
@@ -160,10 +162,12 @@ export async function lintHeadingLevelsWithEslint(
   fileFilter: ReadonlySet<string> | null = null,
   severity: Severity = "warning",
 ): Promise<string[]> {
-  return (await lintMarkdownWithEslint(config, fileFilter, {
-    heading_levels: severity,
-    duplicate_headings: "off",
-  })).heading_levels;
+  return (
+    await lintMarkdownWithEslint(config, fileFilter, {
+      heading_levels: severity,
+      duplicate_headings: "off",
+    })
+  ).heading_levels;
 }
 
 export async function lintDuplicateHeadingsWithEslint(
@@ -171,8 +175,10 @@ export async function lintDuplicateHeadingsWithEslint(
   fileFilter: ReadonlySet<string> | null = null,
   severity: Severity = "warning",
 ): Promise<string[]> {
-  return (await lintMarkdownWithEslint(config, fileFilter, {
-    heading_levels: "off",
-    duplicate_headings: severity,
-  })).duplicate_headings;
+  return (
+    await lintMarkdownWithEslint(config, fileFilter, {
+      heading_levels: "off",
+      duplicate_headings: severity,
+    })
+  ).duplicate_headings;
 }

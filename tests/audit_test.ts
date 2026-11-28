@@ -144,12 +144,12 @@ test("broken wikilinks and markdown links are both reported", () =>
     assertEquals(warnings.length, 2);
     assert(
       warnings.some((warning) =>
-        warning.includes("Broken WikiLink [non-existent-page]")
+        warning.includes("Broken WikiLink [non-existent-page]"),
       ),
     );
     assert(
       warnings.some((warning) =>
-        warning.includes("Broken Markdown link [missing.md]")
+        warning.includes("Broken Markdown link [missing.md]"),
       ),
     );
   }));
@@ -202,7 +202,7 @@ test("a wikilink target needs a path specifier, not a space", () =>
     const report = await runLint(config);
     assert(
       report.warnings.some((issue) =>
-        issue.message.includes("Broken WikiLink [Ethan Davidson]")
+        issue.message.includes("Broken WikiLink [Ethan Davidson]"),
       ),
     );
   }));
@@ -241,20 +241,20 @@ test("headings lint: sentence case for H2+ only", () =>
       // A proper noun is not title case, and neither is a single capitalized
       // word: the rule needs two or more.
       ["Deploy.md", ["# Deploying to GitHub Pages"], false],
-      ["Compare.md", [
-        "## Comparison with [Wiki CLI](wiki.md) and [Letta MemFS](Letta_MemFS.md)",
-      ], false],
+      [
+        "Compare.md",
+        [
+          "## Comparison with [Wiki CLI](wiki.md) and [Letta MemFS](Letta_MemFS.md)",
+        ],
+        false,
+      ],
     ];
     // Each case gets its own wiki, because the lint reads every file it can
     // see: the Python tests each have a fresh `TemporaryDirectory`, and sharing
     // one here would read the previous case's page too.
     cases.forEach(([name, headings, expectWarning], index) => {
       const caseRoot = join(root, `case-${index}`);
-      write(
-        caseRoot,
-        name,
-        `${PAGE_FRONTMATTER}${headings.join("\n\n")}\n`,
-      );
+      write(caseRoot, name, `${PAGE_FRONTMATTER}${headings.join("\n\n")}\n`);
       const warnings = lintHeadings(
         new Config({ wiki: { input: [caseRoot] } }),
       );
@@ -286,7 +286,7 @@ test("headings lint never reports Setext syntax, in any form", () =>
       );
       assertFalse(
         lintThematicBreaks(config).some((warning) =>
-          warning.includes("Thematic break")
+          warning.includes("Thematic break"),
         ),
         `${name} thematic break`,
       );
@@ -356,11 +356,7 @@ test("ESLint duplicate heading lint preserves Wiki's H2+ normalization", () =>
 
 test("ESLint duplicate findings preserve Wiki report code and severity", () =>
   withRoot(async (root) => {
-    write(
-      root,
-      "Page.md",
-      `${PAGE_FRONTMATTER}## Foo\n\n## Foo\n`,
-    );
+    write(root, "Page.md", `${PAGE_FRONTMATTER}## Foo\n\n## Foo\n`);
     const config = new Config({
       wiki: { input: [root] },
       lint: { duplicate_headings: "error" },
@@ -383,12 +379,14 @@ test("ESLint Markdown rules map together into Wiki severities", () =>
 
     const report = await runLint(config);
     assertFalse(report.ok);
-    assertEquals(report.warnings.map((issue) => issue.code), [
-      "heading_levels",
-    ]);
-    assertEquals(report.errors.map((issue) => issue.code), [
-      "duplicate_headings",
-    ]);
+    assertEquals(
+      report.warnings.map((issue) => issue.code),
+      ["heading_levels"],
+    );
+    assertEquals(
+      report.errors.map((issue) => issue.code),
+      ["duplicate_headings"],
+    );
   }));
 
 test("link_style flags wikilinks in prose, and only in prose", () =>
@@ -452,7 +450,7 @@ test("links inside fenced code are neither broken links nor style violations (#3
     // Real findings outside code are still reported.
     assert(
       broken.some((warning) =>
-        warning.startsWith("In Guide.md: Broken frontmatter asset")
+        warning.startsWith("In Guide.md: Broken frontmatter asset"),
       ),
       broken.join(" | "),
     );
@@ -589,14 +587,8 @@ schema:PersonShape
 
     // No metadata is `null`, which `audit` turns into `missing_metadata` —
     // distinct from "conforms".
-    assertEquals(
-      await checkShaclFile(join(wiki, "no-fm.md"), config),
-      null,
-    );
-    const valid = await checkShaclFile(
-      join(wiki, "valid-person.md"),
-      config,
-    );
+    assertEquals(await checkShaclFile(join(wiki, "no-fm.md"), config), null);
+    const valid = await checkShaclFile(join(wiki, "valid-person.md"), config);
     assert(valid !== null && valid.conforms);
     const invalid = await checkShaclFile(
       join(wiki, "invalid-person.md"),
@@ -656,10 +648,7 @@ test("shapes can be declared in markdown frontmatter", () =>
       config,
     );
     assert(invalid !== null && !invalid.conforms);
-    const valid = await checkShaclFile(
-      join(wiki, "valid-project.md"),
-      config,
-    );
+    const valid = await checkShaclFile(join(wiki, "valid-project.md"), config);
     assert(valid !== null && valid.conforms);
   }));
 
@@ -750,9 +739,7 @@ function writeSeverityFixture(root: string): string {
 }
 
 /** `AuditReport.messages()` flattened, as the Python helpers do it. */
-function issueMessages(report: {
-  messages(): [string[], string[]];
-}): string[] {
+function issueMessages(report: { messages(): [string[], string[]] }): string[] {
   const [errors, warnings] = report.messages();
   return [...errors, ...warnings];
 }
@@ -814,7 +801,7 @@ test("run_check routes both schema rules at their severity", () =>
       );
       assertEquals(
         results.warnings.filter((issue) =>
-          issue.message.includes("description")
+          issue.message.includes("description"),
         ).length,
         warnings,
         `frontmatter_schema=${severity} warnings`,
@@ -830,10 +817,10 @@ test("run_check routes both schema rules at their severity", () =>
         }),
       );
       const missing = issueMessages(results).filter((message) =>
-        message.includes("missing.json")
+        message.includes("missing.json"),
       );
       const missingErrors = results.errors.filter((issue) =>
-        issue.message.includes("missing.json")
+        issue.message.includes("missing.json"),
       );
       if (severity === "off") {
         assertEquals(missing, [], "missing_schema_ref=off");
@@ -844,7 +831,7 @@ test("run_check routes both schema rules at their severity", () =>
         assert(missingErrors.length > 0, "missing_schema_ref=error reports");
         assertEquals(
           results.warnings.filter((issue) =>
-            issue.message.includes("missing.json")
+            issue.message.includes("missing.json"),
           ).length,
           0,
           "missing_schema_ref=error is not also a warning",
@@ -868,13 +855,13 @@ test("run_check skips the schema pass when both rules are off", () =>
     assert(results.ok);
     assertEquals(
       issueMessages(results).filter((message) =>
-        message.includes("missing.json")
+        message.includes("missing.json"),
       ),
       [],
     );
     assertEquals(
       issueMessages(results).filter((message) =>
-        message.includes("description")
+        message.includes("description"),
       ),
       [],
     );

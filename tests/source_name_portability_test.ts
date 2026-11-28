@@ -80,13 +80,11 @@ test("a rejected name names the whole path, which is the bug's signature", () =>
 test("trailing separators never become the source name", () => {
   // Both separators, stripped. A name of "." or "" would fall through to the
   // "source" default, which is silently wrong rather than loudly broken.
-  for (
-    const url of [
-      "/srv/git/trailing/",
-      "C:\\git\\trailing\\",
-      "C:\\git\\trailing",
-    ]
-  ) {
+  for (const url of [
+    "/srv/git/trailing/",
+    "C:\\git\\trailing\\",
+    "C:\\git\\trailing",
+  ]) {
     const name = inferredNameOr(url);
     assertEquals(name === "<accepted>" || name === "trailing", true);
     assertEquals(name === "." || name === "" || name === "source", false);

@@ -138,7 +138,7 @@ export function severityIssues(
   return messages.map((entry) =>
     typeof entry === "string"
       ? { code, message: entry, severity }
-      : { ...entry, code, severity }
+      : { ...entry, code, severity },
   );
 }
 

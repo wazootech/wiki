@@ -14,5 +14,13 @@
       }
     ]
   },
-  "ignorePatterns": ["node_modules", "dist", "_site", "probes", "spike-reasoning", "docs/assets", "src/wiki/dprint/*.gen.ts"]
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "_site",
+    "probes",
+    "spike-reasoning",
+    "docs/assets",
+    "src/wiki/dprint/*.gen.ts"
+  ]
 }

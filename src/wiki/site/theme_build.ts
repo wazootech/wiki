@@ -48,8 +48,8 @@ const DEFAULT_HIDDEN_FIELDS: ReadonlySet<string> = new Set([
   "type",
 ]);
 /** Every view except `xml`, whose serialization is deferred (see module docs). */
-const DEFAULT_VIEWS: readonly MetadataView[] = METADATA_VIEWS.filter((view) =>
-  view.format !== "xml"
+const DEFAULT_VIEWS: readonly MetadataView[] = METADATA_VIEWS.filter(
+  (view) => view.format !== "xml",
 );
 /** Page-menu item linking to the metadata tab, when a page has frontmatter. */
 const METADATA_TOOL_HTML =
@@ -118,11 +118,12 @@ interface InfoboxRow {
 
 /** Escape text for insertion into HTML markup. */
 export function escapeHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll(
-      "'",
-      "&#x27;",
-    );
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;");
 }
 
 /** Serialize a value for embedding inside a `<script>` element. */
@@ -178,9 +179,9 @@ function buildTocHtml(
         urlStyle,
         page.file_slug,
       );
-      return `<li class="toclevel-${item.level - 1} l${item.level}"><a href="#${
-        escapeHtml(item.slug)
-      }">${title}</a></li>`;
+      return `<li class="toclevel-${item.level - 1} l${item.level}"><a href="#${escapeHtml(
+        item.slug,
+      )}">${title}</a></li>`;
     }),
   ].join("\n");
   return `<div class="toc" id="toc">
@@ -208,22 +209,27 @@ function pageCategories(page: VirtualPage): string[] {
     );
   }
   const seen = new Set<string>();
-  return categories.map((value) => value.trim()).filter((value) => {
-    const key = value.toLowerCase();
-    if (key === "" || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return categories
+    .map((value) => value.trim())
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (key === "" || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function buildCategoriesHtml(page: VirtualPage, baseUrl: string): string {
   const categories = pageCategories(page);
   if (categories.length === 0) return "";
-  const items = categories.map((category) =>
-    `<li class="catlinks-item"><a href="${escapeHtml(baseUrl)}/?category=${
-      encodeURIComponent(category)
-    }">${escapeHtml(category)}</a></li>`
-  ).join("");
+  const items = categories
+    .map(
+      (category) =>
+        `<li class="catlinks-item"><a href="${escapeHtml(baseUrl)}/?category=${encodeURIComponent(
+          category,
+        )}">${escapeHtml(category)}</a></li>`,
+    )
+    .join("");
   return `<div class="catlinks" id="catlinks">
 <div class="catlinks-label">Categories:</div>
 <ul class="catlinks-list">
@@ -239,18 +245,20 @@ function buildBacklinksHtml(
   urlStyle: string,
 ): string {
   if (page.backlink_slugs.length === 0) return "";
-  const items = page.backlink_slugs.map((slug) => {
-    const target = site.pages_by_route.get(slug);
-    const title = target?.title ??
-      slug.replaceAll("-", " ").replace(
-        /\b\w/g,
-        (letter) => letter.toUpperCase(),
-      );
-    const route = target?.file_slug ?? slug;
-    return `<li><a href="${escapeHtml(pageUrl(baseUrl, route, urlStyle))}">${
-      escapeHtml(title)
-    }</a></li>`;
-  }).join("\n");
+  const items = page.backlink_slugs
+    .map((slug) => {
+      const target = site.pages_by_route.get(slug);
+      const title =
+        target?.title ??
+        slug
+          .replaceAll("-", " ")
+          .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      const route = target?.file_slug ?? slug;
+      return `<li><a href="${escapeHtml(pageUrl(baseUrl, route, urlStyle))}">${escapeHtml(
+        title,
+      )}</a></li>`;
+    })
+    .join("\n");
   return `<section class="page-meta">
 <h2>Backlinks</h2>
 <ul class="backlinks-list">
@@ -261,9 +269,11 @@ ${items}
 
 function expandKnownCurie(value: string, site: WikiSite): string {
   if (
-    !value.includes(":") || isExternalLink(value) ||
+    !value.includes(":") ||
+    isExternalLink(value) ||
     value.toLowerCase().startsWith("urn:")
-  ) return value;
+  )
+    return value;
   const separator = value.indexOf(":");
   const namespace = site.config.context.namespaces.get(
     value.slice(0, separator),
@@ -340,8 +350,8 @@ function displayLabelForTarget(
   const normalizedLabel = label.trim();
   const normalizedTarget = target.trim();
   return normalizedLabel === normalizedTarget ||
-      targetPage.wiki_ids.includes(normalizedLabel) ||
-      normalizedLabel === targetPage.file_slug
+    targetPage.wiki_ids.includes(normalizedLabel) ||
+    normalizedLabel === targetPage.file_slug
     ? targetPage.title
     : label;
 }
@@ -366,9 +376,9 @@ function renderLinkLike(
   if (href === null) return [displayLabel, escapedLabel];
   return [
     displayLabel,
-    `<a${external ? "" : ' class="wikilink"'} href="${
-      escapeHtml(href)
-    }">${escapedLabel}</a>`,
+    `<a${external ? "" : ' class="wikilink"'} href="${escapeHtml(
+      href,
+    )}">${escapedLabel}</a>`,
   ];
 }
 
@@ -381,17 +391,22 @@ function renderMetadataValue(
 ): [string, string] {
   if (value === null || value === undefined) return ["", ""];
   if (Array.isArray(value)) {
-    const rendered = value.map((item) =>
-      renderMetadataValue(item, page, site, baseUrl, urlStyle)
-    ).filter((item) => item[1] !== "");
+    const rendered = value
+      .map((item) => renderMetadataValue(item, page, site, baseUrl, urlStyle))
+      .filter((item) => item[1] !== "");
     if (rendered.length === 0) return ["", ""];
-    const html = rendered.map(([, itemHtml]) =>
-      itemHtml.includes('class="infobox-dict"')
-        ? `<li class="infobox-list-block">${itemHtml}</li>`
-        : `<li><span class="infobox-chip">${itemHtml}</span></li>`
-    ).join("");
+    const html = rendered
+      .map(([, itemHtml]) =>
+        itemHtml.includes('class="infobox-dict"')
+          ? `<li class="infobox-list-block">${itemHtml}</li>`
+          : `<li><span class="infobox-chip">${itemHtml}</span></li>`,
+      )
+      .join("");
     return [
-      rendered.map(([text]) => text).filter(Boolean).join(", "),
+      rendered
+        .map(([text]) => text)
+        .filter(Boolean)
+        .join(", "),
       `<ul class="infobox-list">${html}</ul>`,
     ];
   }
@@ -422,9 +437,9 @@ function renderMetadataValue(
       );
       if (html === "") continue;
       rows.push(
-        `<div class="infobox-dict-row"><span class="infobox-key">${
-          escapeHtml(key)
-        }</span><span>${html}</span></div>`,
+        `<div class="infobox-dict-row"><span class="infobox-key">${escapeHtml(
+          key,
+        )}</span><span>${html}</span></div>`,
       );
       if (text) texts.push(`${key}: ${text}`);
     }
@@ -478,9 +493,9 @@ function buildInfoboxHtml(
 ): string {
   const rows = buildInfoboxRows(page, site, baseUrl, urlStyle, hiddenFields);
   if (rows.length === 0) return "";
-  const details = rows.map((row) =>
-    `<dt>${escapeHtml(row.label)}</dt><dd>${row.html}</dd>`
-  ).join("\n");
+  const details = rows
+    .map((row) => `<dt>${escapeHtml(row.label)}</dt><dd>${row.html}</dd>`)
+    .join("\n");
   return `<section class="infobox page-meta">
 <h2>Infobox</h2>
 <dl>
@@ -491,10 +506,9 @@ ${details}
 
 function metadataViewDomId(page: VirtualPage): string {
   const safeSlug =
-    (page.file_slug || "index").replace(/[^a-zA-Z0-9_-]+/g, "-").replace(
-      /^-+|-+$/g,
-      "",
-    ) || "index";
+    (page.file_slug || "index")
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "index";
   return `metadata-format-${safeSlug.toLowerCase()}`;
 }
 
@@ -513,9 +527,9 @@ function renderCopyablePre(
   const codeClassAttribute = codeClass
     ? ` class="${escapeHtml(codeClass)}"`
     : "";
-  return `<pre data-copy="${
-    escapeHtml(rawText)
-  }"${preClassAttribute}><code${codeClassAttribute}>${codeHtml}</code></pre>\n`;
+  return `<pre data-copy="${escapeHtml(
+    rawText,
+  )}"${preClassAttribute}><code${codeClassAttribute}>${codeHtml}</code></pre>\n`;
 }
 
 async function metadataText(
@@ -544,41 +558,37 @@ async function metadataText(
 async function buildMetadataPanelHtml(
   page: VirtualPage,
   config: Config,
-  options:
-    & Required<Pick<ThemeMetadataOptions, "views" | "selected_view">>
-    & Pick<ThemeMetadataOptions, "note" | "highlight">,
+  options: Required<Pick<ThemeMetadataOptions, "views" | "selected_view">> &
+    Pick<ThemeMetadataOptions, "note" | "highlight">,
 ): Promise<string> {
   if (Object.keys(page.frontmatter).length === 0) return "";
   const groupId = metadataViewDomId(page);
-  const highlight = options.highlight ??
-    ((text: string) => escapeHtml(text));
+  const highlight = options.highlight ?? ((text: string) => escapeHtml(text));
   const radios: string[] = [];
   const panels: string[] = [];
   for (const view of options.views) {
     const inputId = `${groupId}-${view.id}`;
-    const checked = view.id === options.selected_view
-      ? ' checked="checked"'
-      : "";
+    const checked =
+      view.id === options.selected_view ? ' checked="checked"' : "";
     radios.push(
-      `<input class="metadata-format-input" type="radio" name="${groupId}" id="${inputId}" value="${view.id}"${checked}><label class="metadata-format-label" for="${inputId}">${
-        escapeHtml(view.label)
-      }</label>`,
+      `<input class="metadata-format-input" type="radio" name="${groupId}" id="${inputId}" value="${view.id}"${checked}><label class="metadata-format-label" for="${inputId}">${escapeHtml(
+        view.label,
+      )}</label>`,
     );
     const text = await metadataText(page, config, view);
     panels.push(
-      `<div class="metadata-format-panel metadata-format-panel-${view.id}">${
-        renderCopyablePre(
-          text,
-          highlight(text, view),
-          "highlight",
-          `language-${view.lexer}`,
-        )
-      }</div>`,
+      `<div class="metadata-format-panel metadata-format-panel-${view.id}">${renderCopyablePre(
+        text,
+        highlight(text, view),
+        "highlight",
+        `language-${view.lexer}`,
+      )}</div>`,
     );
   }
-  const note = options.note === false
-    ? ""
-    : `\n  <p class="metadata-format-note">RDF/XML serialization is deferred.</p>`;
+  const note =
+    options.note === false
+      ? ""
+      : `\n  <p class="metadata-format-note">RDF/XML serialization is deferred.</p>`;
   return `<section class="page-meta metadata-panel">
 <div class="metadata-format-switch" role="group" aria-label="Metadata RDF format">
   <div class="metadata-format-toolbar">
@@ -608,7 +618,9 @@ function typeLabel(page: VirtualPage): string {
 
 function layoutLabel(page: VirtualPage): string {
   if (page.layout_stem === "default") return "";
-  const label = page.layout_stem.replaceAll("_", " ").replaceAll("-", " ")
+  const label = page.layout_stem
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
   return `<div class="layout-label">${escapeHtml(label)}</div>`;
 }
@@ -626,9 +638,9 @@ function buildIndexBodyHtml(
     seen.add(page.file_slug);
     const categories = escapeHtml(pageCategories(page).join(","));
     links.push(
-      `<li data-categories="${categories}"><a href="${
-        escapeHtml(pageUrl(baseUrl, page.file_slug, urlStyle))
-      }">${escapeHtml(page.title)}</a></li>`,
+      `<li data-categories="${categories}"><a href="${escapeHtml(
+        pageUrl(baseUrl, page.file_slug, urlStyle),
+      )}">${escapeHtml(page.title)}</a></li>`,
     );
   }
   return `<ul class="pages-list">\n${links.join("\n")}${
@@ -654,8 +666,7 @@ function shellTokens(
   },
 ): Map<string, string> {
   const title = page?.title ?? "All Pages";
-  const hasMetadata = page !== null &&
-    Object.keys(page.frontmatter).length > 0;
+  const hasMetadata = page !== null && Object.keys(page.frontmatter).length > 0;
   return new Map([
     ["%wiki.base_url%", baseUrl],
     ["%wiki.url_style%", urlStyle],
@@ -665,9 +676,7 @@ function shellTokens(
     ["%wiki.source%", escapeHtml(page?.markdown ?? "")],
     [
       "%wiki.layout_stem%",
-      escapeHtml(
-        page === null ? "index" : page.layout_stem,
-      ),
+      escapeHtml(page === null ? "index" : page.layout_stem),
     ],
     ["%wiki.page_kind%", escapeHtml(page === null ? "index" : "article")],
     [
@@ -681,13 +690,9 @@ function shellTokens(
     ],
     [
       "%wiki.infobox%",
-      page === null ? "" : buildInfoboxHtml(
-        page,
-        site,
-        baseUrl,
-        urlStyle,
-        options.hiddenFields,
-      ),
+      page === null
+        ? ""
+        : buildInfoboxHtml(page, site, baseUrl, urlStyle, options.hiddenFields),
     ],
     [
       "%wiki.categories%",
@@ -730,15 +735,15 @@ function validateOutputDir(
     ...themeLayoutPaths.map((path) => dirname(path)),
     ...(config.site.layout === null ? [] : [dirname(config.site.layout)]),
     ...site.pages.flatMap((page) =>
-      page.layout_path === null ? [] : [dirname(page.layout_path)]
+      page.layout_path === null ? [] : [dirname(page.layout_path)],
     ),
   ];
   for (const path of protectedPaths) {
     if (pathIsSameOrAncestor(outputDir, path)) {
       throw new Error(
-        `Refusing to clean output directory ${
-          resolve(outputDir)
-        } because it overlaps source or layout path ${resolve(path)}.`,
+        `Refusing to clean output directory ${resolve(
+          outputDir,
+        )} because it overlaps source or layout path ${resolve(path)}.`,
       );
     }
   }
@@ -781,10 +786,10 @@ export async function buildThemedSite(
   const wikiOutput = resolve(outputSubdirectory(resolvedOutputDir, baseUrl));
   const site = buildSite(config, baseUrl, urlStyle);
   const layoutPath = join(themeDir, theme.layout ?? DEFAULT_LAYOUT);
-  const redirectLayoutPath = theme.redirect_layout === undefined ||
-      theme.redirect_layout === null
-    ? null
-    : join(themeDir, theme.redirect_layout);
+  const redirectLayoutPath =
+    theme.redirect_layout === undefined || theme.redirect_layout === null
+      ? null
+      : join(themeDir, theme.redirect_layout);
   validateOutputDir(
     resolvedOutputDir,
     config,
@@ -795,9 +800,8 @@ export async function buildThemedSite(
   );
 
   const defaultLayout = readTemplate(layoutPath);
-  const redirectLayout = redirectLayoutPath === null
-    ? null
-    : readTemplate(redirectLayoutPath);
+  const redirectLayout =
+    redirectLayoutPath === null ? null : readTemplate(redirectLayoutPath);
   const pagesJson = safeJson(
     site.pages.map((page) => ({ slug: page.file_slug, title: page.title })),
   );
@@ -847,21 +851,22 @@ export async function buildThemedSite(
     const hasMetadata = Object.keys(page.frontmatter).length > 0;
     const metadataPane = hasMetadata
       ? await buildMetadataPanelHtml(page, config, {
-        views,
-        selected_view: selectedView,
-        ...(note === undefined ? {} : { note }),
-        ...(highlight === undefined ? {} : { highlight }),
-      })
+          views,
+          selected_view: selectedView,
+          ...(note === undefined ? {} : { note }),
+          ...(highlight === undefined ? {} : { highlight }),
+        })
       : "";
-    const redirectTo = typeof page.frontmatter.redirect_to === "string"
-      ? page.frontmatter.redirect_to
-      : "";
-    const selectedLayout = page.layout_path !== null &&
-        isFile(page.layout_path)
-      ? readTemplate(page.layout_path)
-      : redirectTo && redirectLayout !== null
-      ? redirectLayout
-      : defaultLayout;
+    const redirectTo =
+      typeof page.frontmatter.redirect_to === "string"
+        ? page.frontmatter.redirect_to
+        : "";
+    const selectedLayout =
+      page.layout_path !== null && isFile(page.layout_path)
+        ? readTemplate(page.layout_path)
+        : redirectTo && redirectLayout !== null
+          ? redirectLayout
+          : defaultLayout;
     const tokens = mergeTokens(
       shellTokens(page, site, baseUrl, urlStyle, pagesJson, {
         titleSuffix: theme.title_suffix ?? DEFAULT_TITLE_SUFFIX,

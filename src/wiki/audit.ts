@@ -172,9 +172,11 @@ function isProperNounToken(word: string): boolean {
     return true;
   }
   const [first, ...rest] = chars;
-  return isUppercase(first as string) &&
+  return (
+    isUppercase(first as string) &&
     chars.some((char) => isLowercase(char)) &&
-    rest.some((char) => isUppercase(char));
+    rest.some((char) => isUppercase(char))
+  );
 }
 
 /** A line that can be the text row of a Setext heading: not ATX, not a rule. */
@@ -201,10 +203,12 @@ export function titleCaseWordsAfterFirst(text: string): string[] {
   if (words.length < 2) return [];
   return words.slice(1).filter((word) => {
     const chars = [...word];
-    return chars.length > 2 &&
+    return (
+      chars.length > 2 &&
       isUppercase(chars[0] as string) &&
       chars.some((char) => isLowercase(char)) &&
-      !isProperNounToken(word);
+      !isProperNounToken(word)
+    );
   });
 }
 
@@ -239,7 +243,8 @@ export function lintThematicBreaks(
       const lineEnd = offset + line.length;
       const stripped = line.trim();
       const inCode = spanOverlaps(lineStart, lineEnd, protectedSpans);
-      const previousInCode = previousLine !== null &&
+      const previousInCode =
+        previousLine !== null &&
         spanOverlaps(previousLineStart, previousLineEnd, protectedSpans);
       let isSetext = false;
       if (
@@ -252,9 +257,9 @@ export function lintThematicBreaks(
       }
       if (!isSetext && THEMATIC_BREAK_RE.test(stripped) && !inCode) {
         warnings.push(
-          `In ${
-            basename(filePath)
-          }:${lineNo}: Thematic break '${stripped}' in body; ` +
+          `In ${basename(
+            filePath,
+          )}:${lineNo}: Thematic break '${stripped}' in body; ` +
             "use headings instead of horizontal rules.",
         );
       }
@@ -305,18 +310,17 @@ export function lintHeadings(
       const text = heading.text.trim();
       if (NUMBERED_HEADING_RE.test(text)) {
         warnings.push(
-          `In ${basename(filePath)}: Numbered heading ${level} ${
-            quoteString(text)
-          }; ` +
-            "use unnumbered headings.",
+          `In ${basename(filePath)}: Numbered heading ${level} ${quoteString(
+            text,
+          )}; ` + "use unnumbered headings.",
         );
         continue;
       }
       if (heading.level > 1 && titleCaseWordsAfterFirst(text).length >= 2) {
         warnings.push(
-          `In ${basename(filePath)}: H2+ heading ${level} ${
-            quoteString(text)
-          } looks like ` +
+          `In ${basename(filePath)}: H2+ heading ${level} ${quoteString(
+            text,
+          )} looks like ` +
             "title case; use sentence case (capitalize only the first word and proper nouns).",
         );
       }
@@ -350,10 +354,9 @@ export function lintLinkStyle(
       if (spanOverlaps(start, end, protectedSpans)) continue;
       const lineNo = lineNumberForOffset(content, bodyOffset + start);
       warnings.push(
-        `In ${basename(filePath)}:${lineNo}: Wikilink ${
-          quoteString(match[0])
-        }; ` +
-          "use standard links ([display](Page.md)) per link.style.",
+        `In ${basename(filePath)}:${lineNo}: Wikilink ${quoteString(
+          match[0],
+        )}; ` + "use standard links ([display](Page.md)) per link.style.",
       );
     }
   }
@@ -447,9 +450,9 @@ export function checkLayoutFrontmatter(
     const layoutPath = resolveLayoutPath(rawLayout, configRoot);
     if (!layoutFileIsValid(layoutPath, configRoot)) {
       missing.push(
-        `In ${route}: ${LAYOUT_FRONTMATTER_KEY} ${
-          quoteString(rawLayout)
-        } must resolve ` +
+        `In ${route}: ${LAYOUT_FRONTMATTER_KEY} ${quoteString(
+          rawLayout,
+        )} must resolve ` +
           "to a readable .html file under the wiki config root.",
       );
     }
@@ -507,48 +510,55 @@ export async function runCheck(
     config.check,
   );
   report = applyIssues(report, "shape_unused", shapes.unused, config.check);
-  const skipShacl = config.check.shape_definition === "error" &&
-    shapes.definitions.length > 0;
+  const skipShacl =
+    config.check.shape_definition === "error" && shapes.definitions.length > 0;
   if (skipShacl) {
     report = new AuditReport({
       ok: report.ok,
       errors: report.errors,
-      warnings: [...report.warnings, {
-        code: "shacl_skipped",
-        message: "SHACL validation skipped: fix the shape_definition " +
-          "errors first, or the SHACL verdict would be meaningless.",
-        severity: "warning",
-      }],
+      warnings: [
+        ...report.warnings,
+        {
+          code: "shacl_skipped",
+          message:
+            "SHACL validation skipped: fix the shape_definition " +
+            "errors first, or the SHACL verdict would be meaningless.",
+          severity: "warning",
+        },
+      ],
     });
   }
 
   if (filePaths !== null) {
     // One shapes graph for every file: extracting it scans the whole corpus,
     // and per file that made a scoped check O(files × corpus) (#414).
-    const shapesGraph = filePaths.length > 0
-      ? await loadWikiShapes(config)
-      : undefined;
+    const shapesGraph =
+      filePaths.length > 0 ? await loadWikiShapes(config) : undefined;
     for (const filePath of filePaths) {
       const result = await checkShaclFile(filePath, config, shapesGraph);
       if (result === null) {
-        report = addErrors(report, [{
-          code: "missing_metadata",
-          message: `No valid document metadata found in ${basename(filePath)}`,
-          path: filePath,
-          route: safeRoute(config, filePath),
-          severity: "error",
-        }]);
+        report = addErrors(report, [
+          {
+            code: "missing_metadata",
+            message: `No valid document metadata found in ${basename(filePath)}`,
+            path: filePath,
+            route: safeRoute(config, filePath),
+            severity: "error",
+          },
+        ]);
       } else if (!result.conforms && !skipShacl) {
-        report = addErrors(report, [{
-          code: "shacl_violation",
-          message: `SHACL Validation Violation in ${
-            basename(filePath)
-          }:\n${result.resultsText}`,
-          path: filePath,
-          route: safeRoute(config, filePath),
-          severity: "error",
-          results: result.results,
-        }]);
+        report = addErrors(report, [
+          {
+            code: "shacl_violation",
+            message: `SHACL Validation Violation in ${basename(
+              filePath,
+            )}:\n${result.resultsText}`,
+            path: filePath,
+            route: safeRoute(config, filePath),
+            severity: "error",
+            results: result.results,
+          },
+        ]);
       }
     }
 
@@ -572,21 +582,25 @@ export async function runCheck(
   try {
     const shacl = skipShacl ? null : await checkShaclAll(config);
     if (shacl !== null && !shacl.conforms) {
-      report = addErrors(report, [{
-        code: "shacl_violation",
-        message: `SHACL Validation Violation:\n${shacl.resultsText}`,
-        severity: "error",
-        results: shacl.results,
-      }]);
+      report = addErrors(report, [
+        {
+          code: "shacl_violation",
+          message: `SHACL Validation Violation:\n${shacl.resultsText}`,
+          severity: "error",
+          results: shacl.results,
+        },
+      ]);
     }
   } catch (error) {
     // A crash in the validator is a finding, not an exception: `check` has
     // other things to report and a traceback would lose them.
-    report = addErrors(report, [{
-      code: "shacl_system_error",
-      message: `SHACL validation system error: ${errorText(error)}`,
-      severity: "error",
-    }]);
+    report = addErrors(report, [
+      {
+        code: "shacl_system_error",
+        message: `SHACL validation system error: ${errorText(error)}`,
+        severity: "error",
+      },
+    ]);
   }
 
   const safetyIssues = validateRouteSafety(config);
@@ -597,9 +611,10 @@ export async function runCheck(
     );
   } else {
     const baseUrl = config.site.base_url;
-    const ownedOutputDir = baseUrl === ""
-      ? "_site"
-      : join("_site", baseUrl.replace(/^\/+|\/+$/g, ""));
+    const ownedOutputDir =
+      baseUrl === ""
+        ? "_site"
+        : join("_site", baseUrl.replace(/^\/+|\/+$/g, ""));
     const collisionIssues = detectOutputCollisions([
       ...buildPageManifest(
         config,
@@ -737,15 +752,17 @@ export async function lintRedundantFrontmatter(
   config: Config,
   fileFilter: ReadonlySet<string> | null = null,
 ): Promise<IssueDetail[]> {
-  const paths = iterMarkdownFiles(config).filter((filePath) =>
-    fileFilter === null ||
-    fileFilter.has(routeForDocumentFile(config, filePath))
+  const paths = iterMarkdownFiles(config).filter(
+    (filePath) =>
+      fileFilter === null ||
+      fileFilter.has(routeForDocumentFile(config, filePath)),
   );
   const issues: IssueDetail[] = [];
   for (const document of await findRedundantFrontmatter(config, paths)) {
     for (const field of document.fields) {
       issues.push({
-        message: `In ${basename(document.path)}: frontmatter '${field.key}' ` +
+        message:
+          `In ${basename(document.path)}: frontmatter '${field.key}' ` +
           `repeats the derived schema:${field.property} ` +
           `(${JSON.stringify(field.value)}); remove it with \`wiki fix\`.`,
         path: document.path,
