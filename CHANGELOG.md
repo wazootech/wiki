@@ -2,22 +2,24 @@
 
 ## Unreleased
 
+## 0.7.2 — 2026-11-28
+
+Wiki has moved from Deno to Bun. The commands behave as before; how each package
+runs has changed.
+
 ### Changed
 
-- The engine reaches the host only through `node:` APIs, in
-  `src/wiki/sys.ts`, as the first step of moving off Deno. Deno remains the
-  runtime and the commands behave as before.
-- The formatter plugins ship inside the engine, so `wiki fmt` no longer reads
-  them from npm packages.
 - The `wazootech-wiki` npm package runs on Node.js 18 or newer, and on Bun,
   instead of starting a bundled Deno. It no longer downloads anything on first
   use (0.7.1 fetched several hundred packages then), and it works on musl Linux.
+- The standalone binaries and PyPI wheels are compiled with Bun. macOS now needs
+  version 13 or newer. The binaries don't read `.env` or `bunfig.toml` from the
+  folder they run in.
+- `@wazoo/wiki` is developed, tested and published to JSR with Bun, and still
+  runs on Deno. `jsr.json` replaces `deno.json`.
+- The formatter plugins ship inside the engine, so `wiki fmt` no longer reads
+  them from npm packages.
 - `wiki upgrade` tells npm and Bun installs how to update.
-- Wiki is developed, tested and published with Bun; `jsr.json` replaces
-  `deno.json`. `@wazoo/wiki` is still published to JSR and runs on Deno.
-- The standalone binaries and PyPI wheels are compiled with Bun instead of
-  Deno. macOS wheels now require macOS 13 or newer. The binaries don't read
-  `.env` or `bunfig.toml` from the folder they run in.
 
 ### Removed
 

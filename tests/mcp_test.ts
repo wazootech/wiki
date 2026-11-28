@@ -48,7 +48,7 @@ test("describeWiki reports factual config, graph, namespace, and vocabulary data
   try {
     const description = await describeWiki(makeWiki(root));
 
-    assertEquals(description.version, "0.7.1");
+    assertEquals(description.version, "0.7.2");
     assertEquals(description.config, "wiki.yaml");
     assertEquals(description.inputs, ["wiki"]);
     assert(description.graph.triples > 0);
