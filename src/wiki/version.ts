@@ -7,4 +7,4 @@
  * Kept as a literal rather than read from `jsr.json` at runtime so that
  * compiled binaries need no filesystem access to report their version.
  */
-export const VERSION = "0.7.1";
+export const VERSION = "0.7.2";

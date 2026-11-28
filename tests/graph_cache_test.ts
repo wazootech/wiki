@@ -110,7 +110,7 @@ test("the manifest describes each contributing file", async () => {
   await withTempDir((root) => {
     const { config } = wiki(root);
     const manifest = wikiManifest(config);
-    assertEquals(manifest.version, "0.7.1");
+    assertEquals(manifest.version, "0.7.2");
     assertEquals(manifest.files.length, 1);
     assertEquals(manifest.files[0]!.path, "wiki/page.md");
     assertEquals(manifest.files[0]!.size > 0, true);
@@ -398,7 +398,7 @@ test("the manifest orders paths by standard string order", async () => {
     // The manifest includes VERSION, so a version bump changes this hash.
     assertEquals(
       wikiFingerprint(config),
-      "cdb6d6e90981a61c61ec6a121aed644bc75b4c017c1f281805a762ed2b7f3e3a",
+      "3b02021e765accb0af27757850d6f23e17e63a461a7db85565acd80f6d93b734",
     );
   });
 });
