@@ -165,6 +165,22 @@ test("no ATX H1 derives no headline", () => {
 // Git dates
 // ---------------------------------------------------------------------------
 
+test("a directory that is not on disk does not switch Git off", async () => {
+  const root = gitWiki();
+  try {
+    const page = write(root, "wiki/Page.md", "# Page\n");
+    commit(root, "create", "2026-03-04T10:00:00Z");
+    // A staged page can sit in a directory that does not exist yet.
+    assertEquals(await gitDates(join(root, "wiki", "new", "Page.md")), null);
+    assertEquals(await gitDates(page), {
+      created: "2026-03-04T10:00:00Z",
+      modified: "2026-03-04T10:00:00Z",
+    });
+  } finally {
+    cleanup(root);
+  }
+});
+
 test("Git dates are the oldest and newest committer times, in UTC", async () => {
   const root = gitWiki();
   try {

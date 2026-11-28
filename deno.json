@@ -75,7 +75,7 @@
       "docs/build.ts",
       "deno.json"
     ],
-    "exclude": ["docs/**/*.md"]
+    "exclude": ["docs/**/*.md", "src/wiki/dprint/*.gen.ts"]
   },
   "lint": {
     "include": [
@@ -85,7 +85,7 @@
       "bench/**/*.ts",
       "docs/build.ts"
     ],
-    "exclude": ["docs/**/*.md"]
+    "exclude": ["docs/**/*.md", "src/wiki/dprint/*.gen.ts"]
   },
   "exclude": ["docs/**/*.md"],
   "compilerOptions": {

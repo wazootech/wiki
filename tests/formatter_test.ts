@@ -28,16 +28,14 @@ import { dirname, join } from "@std/path";
 import { ValueError } from "../src/wiki/errors.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { createFromBuffer } from "@dprint/formatter";
-import * as jsonPlugin from "@dprint/json";
-import * as markdownPlugin from "@dprint/markdown";
-import * as typescriptPlugin from "@dprint/typescript";
+import { type PluginName, pluginWasm } from "../src/wiki/dprint/embedded.ts";
+import { pluginSources } from "../scripts/dprint_sources.ts";
 import { fromFileUrl } from "@std/path";
 
 import {
   DEFAULT_LINE_WIDTH,
   formatMarkdownText,
   FORMATTER_PLUGIN_VERSIONS,
-  YAML_PLUGIN_PACKAGE_JSON,
 } from "../src/wiki/formatter.ts";
 
 const CLI_ENTRY = fromFileUrl(new URL("../src/wiki/cli.ts", import.meta.url));
@@ -53,59 +51,40 @@ function fenced(tag: string, body: string): string {
   return `# ${tag}\n\n\`\`\`${tag}\n${body}\n\`\`\`\n`;
 }
 
-test("the yaml plugin's runtime specifier matches deno.json", () => {
-  // JSR rewrites bare specifiers only in import statements, so the string that
-  // formatter.ts resolves at runtime is a full npm: specifier. It must name the
-  // version deno.json pins, or the snapshot and the runtime disagree.
-  const config = JSON.parse(
-    sys.readTextFileSync(new URL("../deno.json", import.meta.url)),
-  );
-  assertEquals(
-    YAML_PLUGIN_PACKAGE_JSON,
-    `${config.imports["dprint-plugin-yaml"]}/package.json`,
-  );
+test("each embedded plugin is byte for byte the pinned package's", () => {
+  const sources = pluginSources();
+  assertEquals(sources.length, Object.keys(FORMATTER_PLUGIN_VERSIONS).length);
+  for (const { name, path } of sources) {
+    assertEquals(
+      pluginWasm(name),
+      new Uint8Array(sys.readFileSync(path)),
+      `${name} is stale: run \`bun scripts/embed_dprint.ts\``,
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
 // The pinned plugin versions
 // ---------------------------------------------------------------------------
 
-test("the markdown, json and typescript plugins load at their pinned versions", () => {
-  for (
-    const [name, plugin, pinned] of [
-      ["@dprint/markdown", markdownPlugin, FORMATTER_PLUGIN_VERSIONS.markdown],
-      ["@dprint/json", jsonPlugin, FORMATTER_PLUGIN_VERSIONS.json],
-      [
-        "@dprint/typescript",
-        typescriptPlugin,
-        FORMATTER_PLUGIN_VERSIONS.typescript,
-      ],
-    ] as const
-  ) {
-    const info = createFromBuffer(
-      new Uint8Array(sys.readFileSync(plugin.getPath())),
-    ).getPluginInfo();
+test("the embedded plugins load at their pinned versions", () => {
+  const pinned: Record<PluginName, string> = {
+    markdown: FORMATTER_PLUGIN_VERSIONS.markdown,
+    typescript: FORMATTER_PLUGIN_VERSIONS.typescript,
+    json: FORMATTER_PLUGIN_VERSIONS.json,
+    yaml: FORMATTER_PLUGIN_VERSIONS.yaml,
+    css: FORMATTER_PLUGIN_VERSIONS.laxCss,
+    markup: FORMATTER_PLUGIN_VERSIONS.laxMarkup,
+  };
+  for (const [name, version] of Object.entries(pinned)) {
     assertEquals(
-      info.version,
-      pinned,
-      `${name} is ${info.version}, not the pinned ${pinned} — the pin in ` +
-        `deno.json and FORMATTER_PLUGIN_VERSIONS have to move together, and ` +
-        `both have to match the plugin version Deno 2.9.6 bundles, because the ` +
-        `pinned output is that version's output.`,
+      createFromBuffer(pluginWasm(name as PluginName)).getPluginInfo().version,
+      version,
+      `${name} has to move together with deno.json and ` +
+        `FORMATTER_PLUGIN_VERSIONS, and match the version Deno 2.9.6 bundles, ` +
+        `because the pinned output is that version's output.`,
     );
   }
-});
-
-test("the yaml plugin loads at its pinned version", () => {
-  const wasm = new Uint8Array(
-    sys.readFileSync(
-      new URL(import.meta.resolve("dprint-plugin-yaml/plugin.wasm")),
-    ),
-  );
-  assertEquals(
-    createFromBuffer(wasm).getPluginInfo().version,
-    FORMATTER_PLUGIN_VERSIONS.yaml,
-  );
 });
 
 // ---------------------------------------------------------------------------
@@ -171,7 +150,7 @@ test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", () => {
   // Asserting the diagnostic is what keeps the coincidence from being relied on.
   const diagnosticsFor = (textWrap: string) => {
     const formatter = createFromBuffer(
-      new Uint8Array(sys.readFileSync(markdownPlugin.getPath())),
+      pluginWasm("markdown"),
     );
     formatter.setConfig({ lineWidth: DEFAULT_LINE_WIDTH }, { textWrap });
     return formatter.getConfigDiagnostics();
