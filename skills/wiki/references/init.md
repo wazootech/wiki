@@ -8,7 +8,7 @@ This workflow **only** scaffolds or customizes a wiki project. When done, summar
 
 Run `bash skills/wiki/scripts/verify.sh` first.
 
-Prefer `wiki` on PATH when exit code is `0`. In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale, try `deno run -A src/wiki/cli.ts` from the checkout root. Do not use `uv run wiki` or `python -m wiki`. If neither the PATH command nor Deno source command works, stop and recommend upgrading or reinstalling `wazootech-wiki` from npm (one-liner only).
+Prefer `wiki` on PATH when exit code is `0`. In the **Wiki CLI repository checkout**, if PATH `wiki` is missing or stale, try `bun src/wiki/cli.ts` from the checkout root. Do not use `uv run wiki` or `python -m wiki`. If neither the PATH command nor Bun source command works, stop and recommend upgrading or reinstalling `wazootech-wiki` from npm (one-liner only).
 
 ## Prerequisite gate
 

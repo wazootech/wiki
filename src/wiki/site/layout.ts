@@ -1,10 +1,26 @@
 import { isFile } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import type { VirtualPage } from "./types.ts";
-// Embedded at compile time: a compiled binary does not carry the
-// `readTextFileSync(new URL(...))` below, which broke `wiki build` in every
-// standalone release asset.
-import fallbackLayoutHtml from "../index.html" with { type: "text" };
+
+/**
+ * The page layout used when a wiki sets none. Kept in the source because the
+ * `jsr` publisher rejects text imports.
+ */
+const FALLBACK_LAYOUT_HTML = [
+  "<!DOCTYPE html>",
+  "<html lang=en>",
+  "<head>",
+  "<meta charset=UTF-8>",
+  "<meta name=viewport content=width=device-width,initial-scale=1.0>",
+  "%wiki.head%",
+  "</head>",
+  "<body>",
+  "%wiki.body%",
+  "</body>",
+  "</html>",
+  "",
+  "",
+].join("\n");
 
 function escapeHtml(value: string): string {
   return value
@@ -17,8 +33,7 @@ function escapeHtml(value: string): string {
 
 function templateText(path: string | null): string {
   if (path !== null && isFile(path)) return readTextTolerant(path);
-  // Bun types an HTML import as a bundle; the `text` attribute makes it a string.
-  return fallbackLayoutHtml as unknown as string;
+  return FALLBACK_LAYOUT_HTML;
 }
 
 /**

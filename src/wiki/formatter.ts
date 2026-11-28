@@ -58,7 +58,7 @@ import {
  * `dprint-plugin-json = "=0.21.3"`, `dprint-plugin-typescript = "=0.96.1"`,
  * `pretty_yaml = "=0.5.0"`, `lax-css = "=0.3.0"`, `lax-markup = "=0.3.2"`), and
  * the published package carries the same number as the crate. Pinned exactly
- * rather than with a caret in `deno.json`, because a patch bump is a formatting
+ * rather than with a caret in `package.json`, because a patch bump is a formatting
  * change: `tests/formatter_test.ts` asserts the loaded plugin agrees with the
  * table, so a drift is a failing test rather than a silently reflowed wiki.
  */

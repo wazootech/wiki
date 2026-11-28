@@ -9,7 +9,7 @@
  *    formatter's output is only reproducible while the plugin is the version
  *    Deno 2.9.6 bundles and the option values are the ones deno's `deno()`
  *    presets set. A patch bump is a formatting change, so the versions are
- *    pinned exactly in `deno.json` and asserted here against the loaded plugin.
+ *    pinned exactly in `package.json` and asserted here against the loaded plugin.
  * 2. **Which fence tags reach which formatter.** `deno fmt` calls the plugin's
  *    *library* and picks the tags itself; the WASM build filters tags before the
  *    host callback is consulted, and the two tables disagree in both directions.
@@ -80,7 +80,7 @@ test("the embedded plugins load at their pinned versions", () => {
     assertEquals(
       createFromBuffer(pluginWasm(name as PluginName)).getPluginInfo().version,
       version,
-      `${name} has to move together with deno.json and ` +
+      `${name} has to move together with package.json and ` +
         `FORMATTER_PLUGIN_VERSIONS, and match the version Deno 2.9.6 bundles, ` +
         `because the pinned output is that version's output.`,
     );

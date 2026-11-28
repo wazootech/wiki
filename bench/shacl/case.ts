@@ -4,7 +4,7 @@
  * `run.ts` spawns a fresh process per case so no case inherits another's graph
  * cache or heap, and so a case that runs out of memory fails alone.
  *
- * Usage: `deno run -A bench/shacl/case.ts <case> <fixture-dir>`
+ * Usage: `bun bench/shacl/case.ts <case> <fixture-dir>`
  */
 
 import * as sys from "../../src/wiki/sys.ts";

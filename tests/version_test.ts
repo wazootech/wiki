@@ -20,8 +20,8 @@ async function jsonVersion(path: string): Promise<string> {
   return version;
 }
 
-test("VERSION matches deno.json", async () => {
-  assertEquals(VERSION, await jsonVersion("deno.json"));
+test("VERSION matches jsr.json", async () => {
+  assertEquals(VERSION, await jsonVersion("jsr.json"));
 });
 
 test("VERSION matches package.json", async () => {

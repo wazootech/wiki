@@ -37,15 +37,17 @@ Or import `jsr:@wazoo/wiki` from a Deno project. For npm projects, use `npx jsr 
 To work on Wiki itself, use the repository source:
 
 ```bash
-deno run -A src/wiki/cli.ts --help
-deno task check
+bun install
+bun src/wiki/cli.ts --help
+bun run ci
 ```
 
 ### From source
 
 ```bash
-deno run -A src/wiki/cli.ts --help
-deno task check
+bun install
+bun src/wiki/cli.ts --help
+bun run ci
 ```
 
 ## Scaffold a new wiki
@@ -102,10 +104,10 @@ Use `wiki check -v` / `wiki lint -v` to see warnings. In CI, run both with `--st
 Run commands from the repository root:
 
 ```bash
-deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
-deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict -v
-deno run -A src/wiki/cli.ts -c docs/wiki.yml render --cache
-deno run -A docs/build.ts --output-dir _site
+bun src/wiki/cli.ts -c docs/wiki.yml check --strict -v
+bun src/wiki/cli.ts -c docs/wiki.yml lint --strict -v
+bun src/wiki/cli.ts -c docs/wiki.yml render --cache
+bun docs/build.ts --output-dir _site
 ```
 
 See [Deploying to GitHub Pages](Deploying_to_GitHub_Pages.md) for the GitHub Actions workflow.

@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-wiki_supports_deno() {
+wiki_supports_engine() {
   local version help fmt_help major minor patch
   version="$("$@" --version 2>&1)" || return 1
   if [[ ! "$version" =~ ^wiki,\ version\ ([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -27,12 +27,12 @@ wiki_help_ok() {
 }
 
 source_checkout_ready() {
-  command -v deno >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/deno.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]] && \
-    (cd "${REPO_ROOT}" && wiki_supports_deno deno run -A src/wiki/cli.ts)
+  command -v bun >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/jsr.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]] && \
+    (cd "${REPO_ROOT}" && wiki_supports_engine bun src/wiki/cli.ts)
 }
 
 # The write verbs (wiki edit, new, set, patch, mv, rm) arrived after the CLI
-# above qualifies as Deno-backed, so a ready CLI may still lack them. Report
+# above qualifies as the TypeScript engine, so a ready CLI may still lack them. Report
 # which, without changing the exit code: an older CLI is still a working CLI,
 # and the skill routes structural edits to the hand-edit fallback.
 report_write_verbs() {
@@ -43,22 +43,22 @@ report_write_verbs() {
   fi
 }
 
-if command -v wiki >/dev/null 2>&1 && wiki_supports_deno wiki; then
+if command -v wiki >/dev/null 2>&1 && wiki_supports_engine wiki; then
   echo "verify.sh: wiki ready on PATH"
   report_write_verbs wiki
   exit 0
 fi
 
 if source_checkout_ready; then
-  echo "verify.sh: wiki ready via Deno source checkout"
-  (cd "${REPO_ROOT}" && report_write_verbs deno run -A src/wiki/cli.ts)
+  echo "verify.sh: wiki ready via Bun source checkout"
+  (cd "${REPO_ROOT}" && report_write_verbs bun src/wiki/cli.ts)
   exit 0
 fi
 
 if wiki_help_ok; then
-  echo "verify.sh: stale wiki on PATH — use the Deno source checkout or wait for the cutover release (see references/install.md)" >&2
+  echo "verify.sh: stale wiki on PATH — upgrade it or use a Bun source checkout (see references/install.md)" >&2
   exit 2
 fi
 
-echo "verify.sh: supported Deno Wiki CLI not found; the cutover package is not yet released (see references/install.md)" >&2
+echo "verify.sh: supported Wiki CLI not found (see references/install.md)" >&2
 exit 1

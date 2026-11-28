@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run
+#!/usr/bin/env bun
 /**
  * CLI entrypoint — Deno port of `src/wiki/cli.py`.
  *

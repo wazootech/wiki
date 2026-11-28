@@ -12,7 +12,7 @@ import type { PluginName } from "../src/wiki/dprint/embedded.ts";
 
 export interface PluginSource {
   readonly name: PluginName;
-  /** The `deno.json` import that pins the package. */
+  /** The `package.json` dependency that pins the package. */
   readonly specifier: string;
   readonly path: string;
 }

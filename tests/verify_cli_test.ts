@@ -57,7 +57,7 @@ async function runVerifier(
     readonly wikiVersion?: string;
     readonly wikiFormat?: string;
     readonly wikiHelp?: boolean;
-    readonly denoVersion?: string;
+    readonly bunVersion?: string;
   } = {},
 ): Promise<sys.CommandOutput> {
   const root = sys.makeTempDirSync({ prefix: "wiki-verify-" });
@@ -66,7 +66,7 @@ async function runVerifier(
   const wikiFormat =
     options.wikiFormat ?? "Format markdown wiki pages with the Deno formatter.";
   const wikiHelp = options.wikiHelp ?? true;
-  const denoVersion = options.denoVersion ?? "0.2.0";
+  const bunVersion = options.bunVersion ?? "0.2.0";
 
   createStub(
     root,
@@ -84,11 +84,11 @@ async function runVerifier(
   );
   createStub(
     root,
-    "deno",
+    "bun",
     [
       "#!/usr/bin/env bash",
       'case "$*" in',
-      `  *--version) printf '%s\\n' 'wiki, version ${denoVersion}' ;;`,
+      `  *--version) printf '%s\\n' 'wiki, version ${bunVersion}' ;;`,
       "  *'fmt --help') printf '%s\\n' 'Format markdown wiki pages with the Deno formatter.' ;;",
       "  *--help) printf '%s\\n' 'Commands: fmt check' ;;",
       "  *) exit 0 ;;",
@@ -101,7 +101,7 @@ async function runVerifier(
       args: [VERIFY_SCRIPT],
       cwd: REPO_ROOT,
       // PATH is `:`-separated on POSIX and `;`-separated on Windows. The
-      // stubs live in `bin`, and verify.sh has to find `deno` and `wiki`
+      // stubs live in `bin`, and verify.sh has to find `bun` and `wiki`
       // through the same PATH it hands to `command -v`.
       env: {
         PATH:
@@ -117,7 +117,7 @@ async function runVerifier(
   }
 }
 
-test("verify prefers the Deno source checkout over the retired Python CLI on PATH", async () => {
+test("verify prefers the Bun source checkout over the retired Python CLI on PATH", async () => {
   const result = await runVerifier({
     wikiVersion: "0.1.23",
     wikiFormat: "Format markdown with mdformat.",
@@ -125,7 +125,7 @@ test("verify prefers the Deno source checkout over the retired Python CLI on PAT
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   assertStringIncludes(
     new TextDecoder().decode(result.stdout),
-    "wiki ready via Deno source checkout",
+    "wiki ready via Bun source checkout",
   );
 });
 
@@ -133,7 +133,7 @@ test("verify rejects the retired CLI when the source checkout is also stale", as
   const result = await runVerifier({
     wikiVersion: "0.1.23",
     wikiFormat: "Format markdown with mdformat.",
-    denoVersion: "0.1.23",
+    bunVersion: "0.1.23",
   });
   assertEquals(result.code, 2);
   assertStringIncludes(
@@ -146,7 +146,7 @@ test("verify requires the Deno formatter signature at the cutover version", asyn
   const result = await runVerifier({
     wikiVersion: "0.2.0",
     wikiFormat: "Format markdown with mdformat.",
-    denoVersion: "0.1.23",
+    bunVersion: "0.1.23",
   });
   assertEquals(result.code, 2);
 });
@@ -160,11 +160,11 @@ test("verify accepts the Deno CLI at the cutover version", async () => {
   );
 });
 
-test("verify checks the Deno identity on its source checkout fallback", async () => {
+test("verify checks the engine identity on its source checkout fallback", async () => {
   const result = await runVerifier({ wikiHelp: false });
   assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
   assertStringIncludes(
     new TextDecoder().decode(result.stdout),
-    "wiki ready via Deno source checkout",
+    "wiki ready via Bun source checkout",
   );
 });

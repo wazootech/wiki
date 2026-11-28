@@ -51,7 +51,7 @@ function removeRoot(root: string): void {
 /**
  * The internal helpers must not be reachable from the package entrypoint.
  *
- * `deno.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
+ * `jsr.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
  * entrypoint as a semver commitment. These answer implementation questions --
  * how a diagnostic renders a value, whether a heading word is uppercase, how
  * two strings differ -- rather than describing the domain, so a consumer should

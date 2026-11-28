@@ -221,7 +221,7 @@
       "expected_output": "Replace the Python/PyPI workflow with Deno setup and the Deno-native CLI template; preserve Pages artifact alignment.",
       "files": [],
       "expectations": [
-        "Recommends denoland/setup-deno@v2 or the npm package with bundled runtime",
+        "Recommends denoland/setup-deno@v2 or the npm package",
         "Does not recommend pip, PyPI, uv, or system Python",
         "Aligns artifact path with site.base_url",
         "Mentions Deno-native command jsr:@wazoo/wiki/cli when using repository source"
