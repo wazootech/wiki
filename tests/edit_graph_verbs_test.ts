@@ -81,7 +81,15 @@ async function runCli(
   args: readonly string[],
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   const output = await new sys.Command(sys.execPath(), {
-    args: ["run", "-A", CLI_ENTRY, "-c", join(root, "wiki.yml"), ...args],
+    args: [
+      "run",
+      "--quiet",
+      "--allow-all",
+      CLI_ENTRY,
+      "-c",
+      join(root, "wiki.yml"),
+      ...args,
+    ],
     cwd: root,
     stdout: "piped",
     stderr: "piped",

@@ -155,6 +155,9 @@ function denoTypescriptConfig(): Record<string, unknown> {
 export const YAML_PLUGIN_PACKAGE_JSON =
   "npm:dprint-plugin-yaml@0.5.0/package.json";
 
+/** The same file on Bun and Node, which resolve the installed package. */
+const YAML_PLUGIN_BARE_PACKAGE_JSON = "dprint-plugin-yaml/package.json";
+
 function denoYamlConfig(): Record<string, unknown> {
   return { ignore_comment_directive: "deno-fmt-ignore" };
 }
@@ -166,13 +169,18 @@ function denoYamlConfig(): Record<string, unknown> {
  * `import.meta.resolve` finds the package in the compiled binary's npm
  * snapshot; without that import `--exclude-unused-npm` drops it and the
  * resolve fails with "Could not find constraint ... in the list of packages".
+ *
+ * Bun and Node have no `npm:` specifiers, so they resolve the installed
+ * package by its bare name.
  */
 function wasmAdjacentToPackageJson(
   packageJsonSpecifier: string,
 ): Uint8Array<ArrayBuffer> {
   const url = new URL(
     "./plugin.wasm",
-    import.meta.resolve(packageJsonSpecifier),
+    import.meta.resolve(
+      sys.version.deno ? packageJsonSpecifier : YAML_PLUGIN_BARE_PACKAGE_JSON,
+    ),
   );
   return new Uint8Array(sys.readFileSync(url));
 }
