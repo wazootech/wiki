@@ -3001,5 +3001,7 @@ export async function main(
 }
 
 if (import.meta.main) {
-  sys.exit(await main());
+  // Let the event loop drain: exiting at once drops output still queued on a
+  // pipe, and aborts Node on Windows while a handle is closing.
+  sys.setExitCode(await main());
 }
