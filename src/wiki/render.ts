@@ -37,9 +37,11 @@ function hasSparqlBlocks(path: string): boolean {
 }
 
 function normalizeMarkdownTable(text: string): string {
-  const lines = text.trim().split(/\r?\n/).map((line) => line.trim()).filter(
-    Boolean,
-  );
+  const lines = text
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   const normalized: string[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]!;
@@ -47,9 +49,11 @@ function normalizeMarkdownTable(text: string): string {
       normalized.push(line);
       continue;
     }
-    const cells = line.replace(/^\|+/, "").replace(/\|+$/, "").split("|").map((
-      cell,
-    ) => cell.trim());
+    const cells = line
+      .replace(/^\|+/, "")
+      .replace(/\|+$/, "")
+      .split("|")
+      .map((cell) => cell.trim());
     if (index === 0) {
       normalized.push(
         "| " + cells.map((cell) => cell.toLowerCase()).join(" | ") + " |",
@@ -76,16 +80,18 @@ function replaceSparqlTable(
   renderedMarkdown: string,
 ): string {
   const suffix = group(match, "suffix") || "\n";
-  return `${group(match, "start")}${group(match, "prefix")}${
-    group(match, "fence")
-  }${group(match, "mid")}${group(match, "comment_end")}${
-    group(match, "post_comment")
-  }${renderedMarkdown}${suffix}${group(match, "end")}`;
+  return `${group(match, "start")}${group(match, "prefix")}${group(
+    match,
+    "fence",
+  )}${group(match, "mid")}${group(match, "comment_end")}${group(
+    match,
+    "post_comment",
+  )}${renderedMarkdown}${suffix}${group(match, "end")}`;
 }
 
 function relativePath(path: string): string {
   try {
-    return (relativeWithin(path, sys.cwd())).replaceAll("\\", "/");
+    return relativeWithin(path, sys.cwd()).replaceAll("\\", "/");
   } catch {
     return path;
   }
@@ -104,9 +110,10 @@ export async function renderMarkdownFiles(
   options: RenderMarkdownOptions,
 ): Promise<RenderReport> {
   const explicitFiles = options.explicitFiles ?? [];
-  const candidates = explicitFiles.length > 0
-    ? selectMarkdownPaths(config, explicitFiles)
-    : iterMarkdownFiles(config);
+  const candidates =
+    explicitFiles.length > 0
+      ? selectMarkdownPaths(config, explicitFiles)
+      : iterMarkdownFiles(config);
   const markdownFiles = candidates.filter(hasSparqlBlocks);
   const staleFiles: string[] = [];
   const renderErrors: string[] = [];

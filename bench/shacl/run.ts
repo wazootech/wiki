@@ -3,9 +3,9 @@
  * case against it in its own process, and print a Markdown table.
  *
  * Usage:
- *   deno task bench:shacl [--sizes 1e3,1e4,1e5,1e6] [--cases a,b]
+ *   bun run bench:shacl [--sizes 1e3,1e4,1e5,1e6] [--cases a,b]
  *                         [--timeout 600] [--json results.json] [--out DIR]
- *   deno task bench:shacl --emit DIR [--sizes ...]   # fixture files only
+ *   bun run bench:shacl --emit DIR [--sizes ...]   # fixture files only
  *
  * `--emit` writes `data.nt` and `shapes.ttl` per size and stops, which is how a
  * Worlds-side harness gets the identical graph. See `bench/shacl/README.md`.
@@ -140,7 +140,7 @@ async function runOne(
   });
   try {
     const output = await new sys.Command(sys.execPath(), {
-      args: ["run", "-A", CASE_SCRIPT, name, dir],
+      args: ["run", CASE_SCRIPT, name, dir],
       stdout: "piped",
       stderr: "piped",
       signal,
@@ -152,8 +152,12 @@ async function runOne(
     if (!output.success) {
       const stderr = new TextDecoder().decode(output.stderr);
       const oom = /heap out of memory|Allocation failed/i.test(stderr);
-      const last = stderr.split("\n").map((line) => line.trim())
-        .filter((line) => line !== "").at(-1) ?? "(no stderr)";
+      const last =
+        stderr
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line !== "")
+          .at(-1) ?? "(no stderr)";
       return {
         case: name,
         ok: false,
@@ -191,12 +195,12 @@ function table(results: readonly SizeResult[]): string {
     for (const result of size.cases) {
       rows.push(
         result.ok
-          ? `| ${size.quads} | ${result.case} | ${seconds(result.totalMs)} | ${
-            phaseText(result.phases)
-          } | ${megabytes(result.peakRss)} | ${result.violations ?? ""} |`
-          : `| ${size.quads} | ${result.case} | ${
-            seconds(result.totalMs)
-          } | **failed: ${result.reason}** | | |`,
+          ? `| ${size.quads} | ${result.case} | ${seconds(result.totalMs)} | ${phaseText(
+              result.phases,
+            )} | ${megabytes(result.peakRss)} | ${result.violations ?? ""} |`
+          : `| ${size.quads} | ${result.case} | ${seconds(
+              result.totalMs,
+            )} | **failed: ${result.reason}** | | |`,
       );
     }
   }
@@ -216,8 +220,8 @@ if (import.meta.main) {
     sys.exit(0);
   }
 
-  const root = options.out ??
-    sys.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
+  const root =
+    options.out ?? sys.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
   const results: SizeResult[] = [];
   for (const size of options.sizes) {
     const fixture = generateFixture(size);

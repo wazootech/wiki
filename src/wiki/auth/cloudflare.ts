@@ -30,13 +30,15 @@ export async function createCloudflareAccessProvider(
       return await verifyAccessJwt(assertion, expected);
     },
     challenge() {
-      return Promise.resolve(htmlResponse(
-        '<!doctype html>\n<html lang="en">' +
-          '<head><meta charset="utf-8"><title>Sign in required</title></head>\n' +
-          "<body><h1>Sign in required</h1>\n" +
-          "<p>Sign in through Cloudflare Access to view this wiki.</p></body></html>\n",
-        401,
-      ));
+      return Promise.resolve(
+        htmlResponse(
+          '<!doctype html>\n<html lang="en">' +
+            '<head><meta charset="utf-8"><title>Sign in required</title></head>\n' +
+            "<body><h1>Sign in required</h1>\n" +
+            "<p>Sign in through Cloudflare Access to view this wiki.</p></body></html>\n",
+          401,
+        ),
+      );
     },
   };
 }

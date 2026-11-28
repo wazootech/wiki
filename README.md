@@ -162,9 +162,8 @@ Deno.
 
 ### From source
 
-Install Deno 2.9.6 — the version CI pins (`deno-version: 2.9.6` in the
-workflows), so a local run and CI agree — then run `deno task check`,
-`deno task lint`, `deno task fmt:check`, and `deno task test`.
+Install [Bun](https://bun.sh) 1.4.5 or newer, then run `bun install` and
+`bun run ci` (format, lint, type check, tests and a JSR publish dry run).
 
 ## Programmatic APIs
 
@@ -211,10 +210,11 @@ JavaScript use the command.
 
 ## Local development
 
-Use Deno tasks for type checking, linting, formatting, and tests. Run the docs
-CLI from source with `deno run -A src/wiki/cli.ts -c docs/wiki.yml <command>`;
-the repository-specific Wikipedia-themed Pages site is built with
-`deno run -A docs/build.ts --output-dir _site`.
+Use `bun run check`, `lint`, `fmt` and `test` for type checking, linting,
+formatting, and tests. Run the docs CLI from source with
+`bun src/wiki/cli.ts -c docs/wiki.yml <command>`; the repository-specific
+Wikipedia-themed Pages site is built with
+`bun docs/build.ts --output-dir _site`.
 
 `serve --watch` rebuilds when files under `wiki.input` and `wiki.assets` change.
 Restart the server after editing CLI code.
@@ -222,7 +222,7 @@ Restart the server after editing CLI code.
 Suggested contributor loop:
 
 - Edit files under `docs/wiki/`.
-- Use `deno run -A src/wiki/cli.ts -c docs/wiki.yml serve --watch` for the main
+- Use `bun src/wiki/cli.ts -c docs/wiki.yml serve --watch` for the main
   live-preview workflow (restart after CLI changes).
 - Run `wiki -c docs/wiki.yml check --strict -v` and
   `wiki -c docs/wiki.yml lint --strict -v` before landing documentation changes.
@@ -637,7 +637,7 @@ Then enable **GitHub Pages > Source: GitHub Actions** in your repo settings.
 
 Start a local development HTTP server that renders wiki Markdown as HTML. Use
 `wiki serve` from an installed package or
-`deno run -A src/wiki/cli.ts serve --watch` from a source checkout. The
+`bun src/wiki/cli.ts serve --watch` from a source checkout. The
 repository-specific metadata panel is part of its static Wikipedia-themed docs
 build, not the generic serve renderer.
 

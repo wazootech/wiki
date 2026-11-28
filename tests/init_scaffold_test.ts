@@ -29,18 +29,18 @@ function cleanup(root: string): void {
 
 test("GitHub repository parsing and Pages URL inference cover shorthand and URL forms", () => {
   assertEquals(parseGithubRepo("wazootech/wiki"), ["wazootech", "wiki"]);
-  assertEquals(
-    parseGithubRepo("https://github.com/wazootech/wiki.git"),
-    ["wazootech", "wiki"],
-  );
-  assertEquals(
-    parseGithubRepo("git@github.com:wazootech/wiki.git"),
-    ["wazootech", "wiki"],
-  );
-  assertEquals(
-    inferGithubPagesUrls("wazootech", "wiki"),
-    ["https://wazootech.github.io/wiki/", "/wiki"],
-  );
+  assertEquals(parseGithubRepo("https://github.com/wazootech/wiki.git"), [
+    "wazootech",
+    "wiki",
+  ]);
+  assertEquals(parseGithubRepo("git@github.com:wazootech/wiki.git"), [
+    "wazootech",
+    "wiki",
+  ]);
+  assertEquals(inferGithubPagesUrls("wazootech", "wiki"), [
+    "https://wazootech.github.io/wiki/",
+    "/wiki",
+  ]);
   assertEquals(normalizeBaseUrl("manual///"), "/manual");
 });
 
@@ -170,10 +170,10 @@ test("renderWikiYaml safely emits option values and parses as YAML", () => {
     assertEquals(config.graph.content_predicate, "schema:articleBody");
     assertEquals(config.graph.include_file_extension, false);
     assertEquals(config.graph.implicit_types, ["schema:TechArticle"]);
-    assertEquals(config.wiki.input.map((path) => basename(path)), [
-      "wiki",
-      "content: #1",
-    ]);
+    assertEquals(
+      config.wiki.input.map((path) => basename(path)),
+      ["wiki", "content: #1"],
+    );
   } finally {
     cleanup(root);
   }
@@ -190,10 +190,7 @@ test("scaffold writes the starter files while preserving an existing gitignore",
     });
 
     assertEquals(result.ok, true);
-    assertEquals(
-      result.config_path,
-      join(root, "wiki.yml"),
-    );
+    assertEquals(result.config_path, join(root, "wiki.yml"));
     assertEquals(
       result.written_paths.map((path) => basename(path)),
       ["README.md", "wiki", "wiki.yml"],
@@ -271,12 +268,10 @@ test("scaffold creates a default gitignore and reports every created path", () =
     });
 
     assertEquals(result.ok, true);
-    assertEquals(result.written_paths.map((path) => basename(path)), [
-      ".gitignore",
-      "README.md",
-      "wiki",
-      "wiki.yml",
-    ]);
+    assertEquals(
+      result.written_paths.map((path) => basename(path)),
+      [".gitignore", "README.md", "wiki", "wiki.yml"],
+    );
     assertStringIncludes(readText(join(root, ".gitignore")), ".wiki/");
     assertStringIncludes(readText(join(root, ".gitignore")), "_site/");
   } finally {
@@ -314,17 +309,21 @@ test("failed local git init rolls back generated files and preserves existing pa
     const wikiDirectory = join(root, "wiki");
     sys.mkdirSync(wikiDirectory);
 
-    const result = scaffoldWiki(root, {
-      graph_context_wiki: "https://example.org/",
-    }, {
-      init_git: true,
-      git_runner: (cwd) => {
-        const gitDirectory = `${cwd}/.git`;
-        sys.mkdirSync(gitDirectory);
-        sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
-        return { code: 1, stderr: "controlled git failure" };
+    const result = scaffoldWiki(
+      root,
+      {
+        graph_context_wiki: "https://example.org/",
       },
-    });
+      {
+        init_git: true,
+        git_runner: (cwd) => {
+          const gitDirectory = `${cwd}/.git`;
+          sys.mkdirSync(gitDirectory);
+          sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
+          return { code: 1, stderr: "controlled git failure" };
+        },
+      },
+    );
 
     assertEquals(result.ok, false);
     assertStringIncludes(
@@ -345,17 +344,21 @@ test("failed local git init removes only a scaffold-created target tree", () => 
   const parent = tempRoot();
   const root = join(parent, "new", "wiki-project");
   try {
-    const result = scaffoldWiki(root, {
-      graph_context_wiki: "https://example.org/",
-    }, {
-      init_git: true,
-      git_runner: (cwd) => {
-        const gitDirectory = `${cwd}/.git`;
-        sys.mkdirSync(gitDirectory);
-        sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
-        return { code: 1, stderr: "controlled git failure" };
+    const result = scaffoldWiki(
+      root,
+      {
+        graph_context_wiki: "https://example.org/",
       },
-    });
+      {
+        init_git: true,
+        git_runner: (cwd) => {
+          const gitDirectory = `${cwd}/.git`;
+          sys.mkdirSync(gitDirectory);
+          sys.writeTextFileSync(`${gitDirectory}/partial`, "partial init");
+          return { code: 1, stderr: "controlled git failure" };
+        },
+      },
+    );
 
     assertEquals(result.ok, false);
     assertStringIncludes(
@@ -372,9 +375,13 @@ test("failed local git init removes only a scaffold-created target tree", () => 
 test("optional local git init creates a repository after scaffolding", () => {
   const root = tempRoot();
   try {
-    const result = scaffoldWiki(root, {
-      graph_context_wiki: "https://example.org/",
-    }, { init_git: true });
+    const result = scaffoldWiki(
+      root,
+      {
+        graph_context_wiki: "https://example.org/",
+      },
+      { init_git: true },
+    );
     assertEquals(result.ok, true);
     assertStringIncludes(result.message, "Ran git init.");
     assertEquals(isDirectory(join(root, ".git")), true);
@@ -398,24 +405,12 @@ test("template fetching copies visible files without copying Git metadata", () =
       cloneRepository: (destination) => {
         const template = join(destination, "templates", "generic");
         sys.mkdirSync(template, { recursive: true });
-        sys.writeTextFileSync(
-          join(template, "README.md"),
-          "# Template\n",
-        );
-        sys.writeTextFileSync(
-          join(template, ".gitignore"),
-          ".wiki/\n",
-        );
-        sys.writeTextFileSync(
-          join(template, ".hidden"),
-          "do not copy\n",
-        );
+        sys.writeTextFileSync(join(template, "README.md"), "# Template\n");
+        sys.writeTextFileSync(join(template, ".gitignore"), ".wiki/\n");
+        sys.writeTextFileSync(join(template, ".hidden"), "do not copy\n");
         const nested = join(template, "nested");
         sys.mkdirSync(nested);
-        sys.writeTextFileSync(
-          join(nested, "page.md"),
-          "# Nested\n",
-        );
+        sys.writeTextFileSync(join(nested, "page.md"), "# Nested\n");
         const git = join(destination, ".git");
         sys.mkdirSync(git);
         sys.writeTextFileSync(join(git, "config"), "private\n");
@@ -533,8 +528,10 @@ test("a freshly scaffolded wiki passes lint --strict and check --strict (#376)",
     });
     assertEquals(result.ok, true);
     assertEquals(isDirectory(join(root, "assets")), false);
-    const entry = new URL("../src/wiki/cli.ts", import.meta.url).pathname
-      .replace(/^\/([A-Za-z]:)/, "$1");
+    const entry = new URL(
+      "../src/wiki/cli.ts",
+      import.meta.url,
+    ).pathname.replace(/^\/([A-Za-z]:)/, "$1");
     for (const command of ["lint", "check"]) {
       const out = new sys.Command(sys.execPath(), {
         args: ["run", "--quiet", "--allow-all", entry, command, "--strict"],
@@ -542,7 +539,8 @@ test("a freshly scaffolded wiki passes lint --strict and check --strict (#376)",
         stdout: "piped",
         stderr: "piped",
       }).outputSync();
-      const text = new TextDecoder().decode(out.stdout) +
+      const text =
+        new TextDecoder().decode(out.stdout) +
         new TextDecoder().decode(out.stderr);
       assertEquals(out.code, 0, `${command} --strict:\n${text}`);
     }

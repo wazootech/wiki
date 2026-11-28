@@ -181,13 +181,15 @@ export function saveLockfile(lockfile: Lockfile, path: string): void {
 export function lockfileTimestamp(now: Date = new Date()): string {
   const pad = (value: number, width = 2) => String(value).padStart(width, "0");
   const micros = `${pad(now.getUTCMilliseconds(), 3)}000`;
-  return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${
-    pad(now.getUTCDate())
-  }` +
-    `T${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${
-      pad(now.getUTCSeconds())
-    }` +
-    `.${micros}+00:00`;
+  return (
+    `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(
+      now.getUTCDate(),
+    )}` +
+    `T${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(
+      now.getUTCSeconds(),
+    )}` +
+    `.${micros}+00:00`
+  );
 }
 
 /** The `Lockfile` model, with its `dict[str, LockedSource]` field. */
@@ -196,30 +198,31 @@ const lockfileSpec: ModelSpec = {
   forbidExtra: true,
   fields: [
     ["version", { defaultValue: LOCKFILE_VERSION }],
-    ["sources", {
-      factory: () => new Map(),
-      after: (value) => {
-        if (typeof value !== "object" || value === null) {
-          throw new TypeError("sources must be a mapping");
-        }
-        const entries = new Map<string, LockedSource>();
-        for (
-          const [name, entry] of Object.entries(
+    [
+      "sources",
+      {
+        factory: () => new Map(),
+        after: (value) => {
+          if (typeof value !== "object" || value === null) {
+            throw new TypeError("sources must be a mapping");
+          }
+          const entries = new Map<string, LockedSource>();
+          for (const [name, entry] of Object.entries(
             value as Record<string, unknown>,
-          )
-        ) {
-          entries.set(
-            name,
-            validateModel(
-              lockedSourceSpec,
-              entry,
-              [],
-              [],
-            ) as unknown as LockedSource,
-          );
-        }
-        return entries;
+          )) {
+            entries.set(
+              name,
+              validateModel(
+                lockedSourceSpec,
+                entry,
+                [],
+                [],
+              ) as unknown as LockedSource,
+            );
+          }
+          return entries;
+        },
       },
-    }],
+    ],
   ],
 };

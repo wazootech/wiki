@@ -33,15 +33,14 @@ function longestMatch(
     previous = current;
   }
 
-  while (
-    bestA > alo && bestB > blo && a[bestA - 1] === b[bestB - 1]
-  ) {
+  while (bestA > alo && bestB > blo && a[bestA - 1] === b[bestB - 1]) {
     bestA -= 1;
     bestB -= 1;
     bestSize += 1;
   }
   while (
-    bestA + bestSize < ahi && bestB + bestSize < bhi &&
+    bestA + bestSize < ahi &&
+    bestB + bestSize < bhi &&
     a[bestA + bestSize] === b[bestB + bestSize]
   ) {
     bestSize += 1;
@@ -106,9 +105,8 @@ function matchingBlocks(
 
 function compareCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(left, (character) => character.codePointAt(0)!);
-  const rightPoints = Array.from(
-    right,
-    (character) => character.codePointAt(0)!,
+  const rightPoints = Array.from(right, (character) =>
+    character.codePointAt(0)!,
   );
   const sharedLength = Math.min(leftPoints.length, rightPoints.length);
   for (let index = 0; index < sharedLength; index += 1) {
@@ -149,10 +147,11 @@ export function getCloseMatches(
       ratio: sequenceMatcherRatio(word, candidate),
     }))
     .filter((item) => item.ratio >= cutoff)
-    .sort((left, right) =>
-      right.ratio - left.ratio ||
-      compareCodePoints(right.candidate, left.candidate) ||
-      left.order - right.order
+    .sort(
+      (left, right) =>
+        right.ratio - left.ratio ||
+        compareCodePoints(right.candidate, left.candidate) ||
+        left.order - right.order,
     )
     .slice(0, count)
     .map((item) => item.candidate);

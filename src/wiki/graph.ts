@@ -151,9 +151,9 @@ function sourceResolvedPath(source: SourceConfig, repoDir: string): string {
   const base = source.path ? join(repoDir, source.path) : repoDir;
   if (!pathExists(base)) {
     throw new Error(
-      `Source ${describeValue(source.name)}: path ${
-        describeValue(source.path)
-      } does not exist`,
+      `Source ${describeValue(source.name)}: path ${describeValue(
+        source.path,
+      )} does not exist`,
     );
   }
   return resolve(base);
@@ -164,7 +164,8 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
   const lockfile = loadLockfile(join(config.config_root, "wiki.lock"));
   const cacheRoot = join(config.config_root, ".wiki", "sources");
   if (
-    lockfile.sources.size === 0 && isDirectory(cacheRoot) &&
+    lockfile.sources.size === 0 &&
+    isDirectory(cacheRoot) &&
     [...sys.readDirSync(cacheRoot)].length > 0
   ) {
     logger.warning(
@@ -232,8 +233,8 @@ export function graphDescriptors(config: Config): GraphDescriptor[] {
     ref: null,
     resolved_ref: null,
     local_path: config.config_root,
-    path: rootInputs.map((path) => config.relativeToRoot(path)).join(", ") ||
-      null,
+    path:
+      rootInputs.map((path) => config.relativeToRoot(path)).join(", ") || null,
     required_by: [],
   };
   return [root, ...sourceDescriptors];
@@ -395,8 +396,13 @@ const SHACL_LIST_PARAMETERS: ReadonlySet<string> = new Set(
  * predicate path `schema:name`.
  */
 const SHACL_PATH_PARAMETERS: ReadonlySet<string> = new Set(
-  ["path", "inversePath", "zeroOrMorePath", "oneOrMorePath", "zeroOrOnePath"]
-    .map((local) => `${SH}${local}`),
+  [
+    "path",
+    "inversePath",
+    "zeroOrMorePath",
+    "oneOrMorePath",
+    "zeroOrOnePath",
+  ].map((local) => `${SH}${local}`),
 );
 
 /** `sh:alternativePath`: always a SHACL list, and each member is a path. */
@@ -553,7 +559,9 @@ function addObject(
     if (value.startsWith("http")) {
       graph.add(subject, pred, namedNode(value));
     } else if (
-      value.includes(":") && !value.includes(" ") && !value.includes("\n")
+      value.includes(":") &&
+      !value.includes(" ") &&
+      !value.includes("\n")
     ) {
       // A CURIE-ish string, but only a *known* prefix makes it a URI; anything
       // else stays a literal so `time: 9:30` does not invent a namespace.
@@ -586,9 +594,10 @@ function addObject(
 }
 
 /** The context and content predicate a `Config` or bare `Context` implies. */
-function rdfBinding(
-  context: Context | Config,
-): { context: Context; contentPredicate: string | null } {
+function rdfBinding(context: Context | Config): {
+  context: Context;
+  contentPredicate: string | null;
+} {
   if (context instanceof Config) {
     return {
       context: context.context,
@@ -611,8 +620,10 @@ function isShaclShapeDocument(types: readonly unknown[]): boolean {
     if (typeof item !== "string") continue;
     const normalized = item.trim();
     if (
-      normalized === "sh:NodeShape" || normalized === "sh:PropertyShape" ||
-      normalized === "NodeShape" || normalized === "PropertyShape"
+      normalized === "sh:NodeShape" ||
+      normalized === "sh:PropertyShape" ||
+      normalized === "NodeShape" ||
+      normalized === "PropertyShape"
     ) {
       return true;
     }
@@ -823,14 +834,14 @@ function scopeTurtleBlock(
       item.predicate,
       scopeTerm(item.object) as Quad["object"],
       item.graph,
-    )
+    ),
   );
 }
 
 /** The bodies of a page's ` ```turtle ` blocks, in document order. */
 function turtleBlocks(content: string): string[] {
   return [...content.matchAll(/```turtle\s*([\s\S]*?)```/g)].map((match) =>
-    match[1]!.trim()
+    match[1]!.trim(),
   );
 }
 
@@ -890,9 +901,9 @@ function processDocumentFile(
       );
     } catch (error) {
       logger.warning(
-        `Failed to parse turtle block in ${basename(filePath)}: ${
-          String(error)
-        }`,
+        `Failed to parse turtle block in ${basename(filePath)}: ${String(
+          error,
+        )}`,
       );
     }
   }
@@ -942,9 +953,10 @@ async function processInputDir(
     try {
       const derived = documentFiles.get(pathKey(filePath));
       if (derived !== undefined) {
-        const targets = documentGraph === undefined
-          ? [graph]
-          : [graph, documentGraph(filePath, true)];
+        const targets =
+          documentGraph === undefined
+            ? [graph]
+            : [graph, documentGraph(filePath, true)];
         processDocumentFile(targets, filePath, config, derived);
       } else {
         const format = EXT_FORMAT_MAP.get(extname(filePath).toLowerCase());
@@ -1110,16 +1122,12 @@ export async function loadDataset(
     if (descriptor.kind !== "source" || descriptor.local_path === null) {
       continue;
     }
-    sourceByPath.set(
-      resolve(descriptor.local_path),
-      descriptor,
-    );
+    sourceByPath.set(resolve(descriptor.local_path), descriptor);
   }
   const rootDescriptor = descriptors[0]!;
 
   for (const inputDir of config.wiki.input) {
-    const descriptor = sourceByPath.get(resolve(inputDir)) ??
-      rootDescriptor;
+    const descriptor = sourceByPath.get(resolve(inputDir)) ?? rootDescriptor;
     const graph = dataset.graph(descriptor.uri);
     config.bindNamespaces(graph);
     graph.vocab = config.context.vocab;

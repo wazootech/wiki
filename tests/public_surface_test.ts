@@ -51,7 +51,7 @@ function removeRoot(root: string): void {
 /**
  * The internal helpers must not be reachable from the package entrypoint.
  *
- * `deno.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
+ * `jsr.json` maps "." to `src/wiki/mod.ts`, and JSR treats every export of the
  * entrypoint as a semver commitment. These answer implementation questions --
  * how a diagnostic renders a value, whether a heading word is uppercase, how
  * two strings differ -- rather than describing the domain, so a consumer should
@@ -88,25 +88,23 @@ test("the entrypoint still exports the documented domain API", () => {
   const exported = Object.keys(wiki);
   // A representative sample, not an exhaustive lock: the point is that the
   // entrypoint keeps its real surface after the parity removals.
-  for (
-    const name of [
-      "Wiki",
-      "Config",
-      "VERSION",
-      "RdfGraph",
-      "runCheck",
-      "runLint",
-      "scaffoldWiki",
-      "parseRdf",
-      "serializeRdf",
-      "formatMarkdown",
-      "applyEdit",
-      "contentHash",
-      "EditUsageError",
-      "showDocument",
-      "documentRefs",
-    ]
-  ) {
+  for (const name of [
+    "Wiki",
+    "Config",
+    "VERSION",
+    "RdfGraph",
+    "runCheck",
+    "runLint",
+    "scaffoldWiki",
+    "parseRdf",
+    "serializeRdf",
+    "formatMarkdown",
+    "applyEdit",
+    "contentHash",
+    "EditUsageError",
+    "showDocument",
+    "documentRefs",
+  ]) {
     assert(
       exported.includes(name),
       `'${name}' should still be exported from mod.ts.`,
@@ -125,64 +123,51 @@ test("the entrypoint still exports the documented domain API", () => {
  * simultaneously supported and refused depending on where it appeared. The flag
  * now accepts them too.
  */
-test(
-  "init accepts a retired --link-style spelling and rewrites it",
-  async () => {
-    const root = makeRoot("wiki-linkstyle-");
-    try {
-      const result = await runCliIn(
-        ["init", "--link-style", "obsidian"],
-        root,
-      );
-      assertEquals(result.code, 0);
-      assert(
-        result.stderr.includes("obsidian") &&
-          result.stderr.includes("wikilink"),
-        `expected a deprecation warning naming both spellings, got: ${result.stderr}`,
-      );
+test("init accepts a retired --link-style spelling and rewrites it", async () => {
+  const root = makeRoot("wiki-linkstyle-");
+  try {
+    const result = await runCliIn(["init", "--link-style", "obsidian"], root);
+    assertEquals(result.code, 0);
+    assert(
+      result.stderr.includes("obsidian") && result.stderr.includes("wikilink"),
+      `expected a deprecation warning naming both spellings, got: ${result.stderr}`,
+    );
 
-      const config = await sys.readTextFile(join(root, "wiki.yml"));
-      assert(
-        config.includes('style: "wikilink"'),
-        `scaffolded config should use the modern spelling, got:\n${config}`,
-      );
-      assert(
-        !config.includes("obsidian"),
-        "scaffolded config must not persist the retired spelling.",
-      );
-    } finally {
-      removeRoot(root);
-    }
-  },
-);
+    const config = await sys.readTextFile(join(root, "wiki.yml"));
+    assert(
+      config.includes('style: "wikilink"'),
+      `scaffolded config should use the modern spelling, got:\n${config}`,
+    );
+    assert(
+      !config.includes("obsidian"),
+      "scaffolded config must not persist the retired spelling.",
+    );
+  } finally {
+    removeRoot(root);
+  }
+});
 
 /**
  * A retired spelling is accepted but never advertised: the error for a genuinely
  * unknown value must still point at the canonical names only, or it would nudge
  * people back onto the spelling we are retiring.
  */
-test(
-  "an invalid --link-style error advertises only canonical names",
-  async () => {
-    const root = makeRoot("wiki-linkstyle-bad-");
-    try {
-      const result = await runCliIn(
-        ["init", "--link-style", "bogus"],
-        root,
-      );
-      assertEquals(result.code, 2);
-      assert(
-        result.stderr.includes("'standard'") &&
-          result.stderr.includes("'wikilink'"),
-        `error should name the canonical styles, got: ${result.stderr}`,
-      );
-      assert(
-        !result.stderr.includes("obsidian") &&
-          !result.stderr.includes("markdown"),
-        `error must not advertise retired spellings, got: ${result.stderr}`,
-      );
-    } finally {
-      removeRoot(root);
-    }
-  },
-);
+test("an invalid --link-style error advertises only canonical names", async () => {
+  const root = makeRoot("wiki-linkstyle-bad-");
+  try {
+    const result = await runCliIn(["init", "--link-style", "bogus"], root);
+    assertEquals(result.code, 2);
+    assert(
+      result.stderr.includes("'standard'") &&
+        result.stderr.includes("'wikilink'"),
+      `error should name the canonical styles, got: ${result.stderr}`,
+    );
+    assert(
+      !result.stderr.includes("obsidian") &&
+        !result.stderr.includes("markdown"),
+      `error must not advertise retired spellings, got: ${result.stderr}`,
+    );
+  } finally {
+    removeRoot(root);
+  }
+});

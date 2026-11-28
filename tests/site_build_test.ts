@@ -46,7 +46,10 @@ test("buildSite globally sorts pages and filters excluded documents", () => {
 
     const site = buildSite(config);
 
-    assertEquals(site.pages.map((page) => page.file_slug), ["Alpha", "Zulu"]);
+    assertEquals(
+      site.pages.map((page) => page.file_slug),
+      ["Alpha", "Zulu"],
+    );
     assertEquals(site.pages_by_route.has("drafts/Hidden"), false);
   } finally {
     cleanup(root);
@@ -82,10 +85,7 @@ test("buildSite maps Markdown links and data documents to canonical routes", () 
     assertEquals(ethan.title, "Ethan Davidson");
     assertEquals(princeton.title, "Princeton");
     assert(ethan.wiki_ids.includes("wiki:Ethan_Davidson"));
-    assertStringIncludes(
-      ethan.html,
-      'href="/manual/Places/Princeton.html"',
-    );
+    assertStringIncludes(ethan.html, 'href="/manual/Places/Princeton.html"');
   } finally {
     cleanup(root);
   }
@@ -112,11 +112,7 @@ test("buildStaticSite writes selected layouts, routes, and filtered assets", asy
       "layouts/article.html",
       '<article data-layout="article">%wiki.body%</article>',
     );
-    write(
-      root,
-      "wiki/index.md",
-      "# Home\n\nWelcome to the manual.\n",
-    );
+    write(root, "wiki/index.md", "# Home\n\nWelcome to the manual.\n");
     write(
       root,
       "wiki/People/Ethan.md",
@@ -145,14 +141,9 @@ test("buildStaticSite writes selected layouts, routes, and filtered assets", asy
       join(output, "manual/People/Ethan.html"),
     );
     assertStringIncludes(ethanHtml, 'data-layout="article"');
-    assertStringIncludes(
-      ethanHtml,
-      'href="/manual/Places/Princeton.html"',
-    );
+    assertStringIncludes(ethanHtml, 'href="/manual/Places/Princeton.html"');
     assertEquals(
-      sys.readTextFileSync(
-        join(output, "manual/assets/site.css"),
-      ),
+      sys.readTextFileSync(join(output, "manual/assets/site.css")),
       css,
     );
     assertEquals(
@@ -161,9 +152,9 @@ test("buildStaticSite writes selected layouts, routes, and filtered assets", asy
     );
     assertEquals(pathExists(join(output, "manual/stale.txt")), false);
     assertEquals(
-      sys.readTextFileSync(
-        join(output, "manual/index.html"),
-      ).includes("All Pages"),
+      sys
+        .readTextFileSync(join(output, "manual/index.html"))
+        .includes("All Pages"),
       false,
     );
   } finally {
@@ -193,8 +184,8 @@ test("output collisions are reported before the previous site is cleaned", async
 
     assertEquals(result.ok, false);
     assert(
-      result.preflight?.errors.some((issue) =>
-        issue.code === "output_collision"
+      result.preflight?.errors.some(
+        (issue) => issue.code === "output_collision",
       ),
     );
     assertEquals(
@@ -254,11 +245,13 @@ test("build render flags are forwarded, while failed preflight preserves output"
       Promise.resolve(
         new AuditReport({
           ok: false,
-          errors: [{
-            code: "fixture",
-            message: "failed checks",
-            severity: "error",
-          }],
+          errors: [
+            {
+              code: "fixture",
+              message: "failed checks",
+              severity: "error",
+            },
+          ],
         }),
       );
 

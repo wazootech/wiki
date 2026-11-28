@@ -24,7 +24,7 @@ export const QUERY_FORMATS = [
   "markdown",
 ] as const;
 
-export type QueryFormat = typeof QUERY_FORMATS[number];
+export type QueryFormat = (typeof QUERY_FORMATS)[number];
 
 const FORMAT_ALIASES: Readonly<Record<string, QueryFormat>> = {
   "application/json": "json",
@@ -46,18 +46,18 @@ export function normalizeQueryFormat(format: string): QueryFormat {
     return canonical as QueryFormat;
   }
   throw new Error(
-    `Invalid value for '-f' / '--format': '${format}'. Choose from ${
-      QUERY_FORMATS.join(", ")
-    }.`,
+    `Invalid value for '-f' / '--format': '${format}'. Choose from ${QUERY_FORMATS.join(
+      ", ",
+    )}.`,
   );
 }
 
 function scalar(value: SparqlValue | undefined): string {
   if (value === undefined) return "";
   if (value.type !== "triple") return value.value;
-  return `<< ${scalar(value.value.subject as SparqlValue)} ${
-    scalar(value.value.predicate as SparqlValue)
-  } ${scalar(value.value.object as SparqlValue)} >>`;
+  return `<< ${scalar(value.value.subject as SparqlValue)} ${scalar(
+    value.value.predicate as SparqlValue,
+  )} ${scalar(value.value.object as SparqlValue)} >>`;
 }
 
 function csvValue(value: SparqlValue | undefined): string {
@@ -72,7 +72,7 @@ function formatCsv(result: SparqlSelectResults): string {
   const rows = [
     result.head.vars,
     ...result.results.bindings.map((binding) =>
-      result.head.vars.map((name) => csvValue(binding[name]))
+      result.head.vars.map((name) => csvValue(binding[name])),
     ),
   ];
   return rows.map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
@@ -83,7 +83,7 @@ function formatTsv(result: SparqlSelectResults): string {
   const rows = [
     result.head.vars,
     ...result.results.bindings.map((binding) =>
-      result.head.vars.map((name) => scalar(binding[name]))
+      result.head.vars.map((name) => scalar(binding[name])),
     ),
   ];
   return rows.map((row) => row.join("\t")).join("\n");
@@ -96,19 +96,19 @@ function formatTable(result: SparqlSelectResults): string {
   if (vars.length === 0) return "(empty query)";
   const values = rows.map((row) => vars.map((name) => scalar(row[name])));
   const widths = vars.map((name, index) =>
-    Math.max(name.length, ...values.map((row) => row[index]?.length ?? 0))
+    Math.max(name.length, ...values.map((row) => row[index]?.length ?? 0)),
   );
-  const header = vars.map((name, index) => name.padEnd(widths[index]!)).join(
-    " | ",
-  );
+  const header = vars
+    .map((name, index) => name.padEnd(widths[index]!))
+    .join(" | ");
   const divider = widths.map((width) => "-".repeat(width)).join("-+-");
   return [
     header,
     divider,
     ...values.map((row) =>
-      vars.map((_, index) => (row[index] ?? "").padEnd(widths[index]!)).join(
-        " | ",
-      )
+      vars
+        .map((_, index) => (row[index] ?? "").padEnd(widths[index]!))
+        .join(" | "),
     ),
   ].join("\n");
 }
@@ -118,16 +118,16 @@ function formatPrettyTable(result: SparqlSelectResults): string {
   const vars = result.head.vars;
   if (vars.length === 0) return "(empty query)";
   const values = result.results.bindings.map((row) =>
-    vars.map((name) => scalar(row[name]))
+    vars.map((name) => scalar(row[name])),
   );
   const widths = vars.map((name, index) =>
-    Math.max(name.length, ...values.map((row) => row[index]?.length ?? 0))
+    Math.max(name.length, ...values.map((row) => row[index]?.length ?? 0)),
   );
   const edge = `+${widths.map((width) => "-".repeat(width + 2)).join("+")}+`;
   const line = (cells: readonly string[]) =>
-    `|${
-      cells.map((cell, index) => ` ${cell.padEnd(widths[index]!)} `).join("|")
-    }|`;
+    `|${cells
+      .map((cell, index) => ` ${cell.padEnd(widths[index]!)} `)
+      .join("|")}|`;
   return [edge, line(vars), edge, ...values.map(line), edge].join("\n");
 }
 
@@ -158,10 +158,9 @@ function formatMarkdown(
   ];
   for (const row of rows) {
     lines.push(
-      `| ${
-        vars.map((name) => wikiLink(scalar(row[name]), baseIri, knownSlugs))
-          .join(" | ")
-      } |`,
+      `| ${vars
+        .map((name) => wikiLink(scalar(row[name]), baseIri, knownSlugs))
+        .join(" | ")} |`,
     );
   }
   return lines.join("\n");
@@ -178,7 +177,8 @@ function isQueryDataset(graph: RdfGraph | RdfDataset): graph is RdfDataset {
 function createQueryStore(graph: RdfGraph | RdfDataset): MemoryStore {
   const quads = [...graph];
   if (isQueryDataset(graph) && graph.defaultUnion) {
-    for (const quad of [...quads]) {
+    // A copy: the loop appends to `quads`.
+    for (const quad of quads.slice()) {
       if (quad.graph.termType !== "DefaultGraph") {
         quads.push(factory.quad(quad.subject, quad.predicate, quad.object));
       }
@@ -188,15 +188,17 @@ function createQueryStore(graph: RdfGraph | RdfDataset): MemoryStore {
 }
 
 function stripSparqlPrelude(query: string): string {
-  return query.replace(/^[ \t]*(?:#.*)?$/gm, "")
+  return query
+    .replace(/^[ \t]*(?:#.*)?$/gm, "")
     .replace(/\bPREFIX\b\s+[^\n\r]+/gi, "")
     .replace(/\bBASE\b\s+[^\n\r]+/gi, "")
     .trimStart();
 }
 
 export function isSparqlUpdate(query: string): boolean {
-  return /^(?:INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b/i
-    .test(stripSparqlPrelude(query));
+  return /^(?:INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|COPY|MOVE|ADD|WITH)\b/i.test(
+    stripSparqlPrelude(query),
+  );
 }
 
 export function detectQueryForm(query: string): string {
@@ -233,11 +235,8 @@ export async function runQuery(
     ...(options.baseIri === undefined ? {} : { baseIri: options.baseIri }),
   });
   if (response.kind === "construct") {
-    const rdfFormat = format === "n3"
-      ? "n3"
-      : format === "nt"
-      ? "nt"
-      : "turtle";
+    const rdfFormat =
+      format === "n3" ? "n3" : format === "nt" ? "nt" : "turtle";
     return await serializeRdf(response.data.quads, rdfFormat, {
       prefixes: graph.bindings,
     });

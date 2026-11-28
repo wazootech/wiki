@@ -127,21 +127,25 @@ test("a dry run validates and reports without writing", async () => {
     const wiki = Wiki.load(root);
     const content = GOOD.replace("# Good\n", "# Good\n\nMore prose.\n");
     const report = await wiki.edit({
-      ops: [{
-        op: "replace",
-        path: "wiki/Good.md",
-        content,
-        expect: contentHash(GOOD),
-      }],
+      ops: [
+        {
+          op: "replace",
+          path: "wiki/Good.md",
+          content,
+          expect: contentHash(GOOD),
+        },
+      ],
     });
     assertEquals(report.status, "dry_run");
     assert(report.ok);
-    assertEquals(report.files, [{
-      path: "wiki/Good.md",
-      action: "modify",
-      before: contentHash(GOOD),
-      after: contentHash(content),
-    }]);
+    assertEquals(report.files, [
+      {
+        path: "wiki/Good.md",
+        action: "modify",
+        before: contentHash(GOOD),
+        after: contentHash(content),
+      },
+    ]);
     assertEquals(read(root, "wiki/Good.md"), GOOD);
   } finally {
     cleanup(root);
@@ -153,14 +157,19 @@ test("apply writes the edit and reports the next expect hash", async () => {
   try {
     const wiki = Wiki.load(root);
     const page = OTHER.replaceAll("Other", "New_Page");
-    const report = await wiki.edit({
-      ops: [{
-        op: "create",
-        path: "wiki/New_Page.md",
-        content: page,
-        expect: "absent",
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "create",
+            path: "wiki/New_Page.md",
+            content: page,
+            expect: "absent",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     assertEquals(read(root, "wiki/New_Page.md"), page);
     assertEquals(report.files[0]!.after, contentHash(page));
@@ -173,28 +182,31 @@ test("a stale expect is a conflict and writes nothing", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [
-        {
-          op: "replace",
-          path: "wiki/Good.md",
-          content: GOOD + "\nChanged.\n",
-          expect: contentHash("something else"),
-        },
-        {
-          op: "create",
-          path: "wiki/Other.md",
-          content: OTHER,
-          expect: "absent",
-        },
-      ],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "replace",
+            path: "wiki/Good.md",
+            content: GOOD + "\nChanged.\n",
+            expect: contentHash("something else"),
+          },
+          {
+            op: "create",
+            path: "wiki/Other.md",
+            content: OTHER,
+            expect: "absent",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "conflict");
     assertFalse(report.ok);
-    assertEquals(report.conflicts.map((c) => c.path), [
-      "wiki/Good.md",
-      "wiki/Other.md",
-    ]);
+    assertEquals(
+      report.conflicts.map((c) => c.path),
+      ["wiki/Good.md", "wiki/Other.md"],
+    );
     assertEquals(report.conflicts[0]!.actual, contentHash(GOOD));
     assertEquals(read(root, "wiki/Good.md"), GOOD);
   } finally {
@@ -207,18 +219,21 @@ test("an edit that introduces an error is rejected unless forced", async () => {
   try {
     const wiki = Wiki.load(root);
     const edit = {
-      ops: [{
-        op: "replace" as const,
-        path: "wiki/Good.md",
-        content: HEADLESS,
-      }],
+      ops: [
+        {
+          op: "replace" as const,
+          path: "wiki/Good.md",
+          content: HEADLESS,
+        },
+      ],
     };
 
     const rejected = await wiki.edit(edit, { apply: true });
     assertEquals(rejected.status, "rejected");
     assert(
-      rejected.introduced.some((issue) =>
-        issue.code === "shacl_violation" && issue.severity === "error"
+      rejected.introduced.some(
+        (issue) =>
+          issue.code === "shacl_violation" && issue.severity === "error",
       ),
       JSON.stringify(rejected.introduced),
     );
@@ -244,9 +259,12 @@ test("an H1 satisfies a shape that requires schema:headline", async () => {
     // The frontmatter key goes, the `# Good` H1 stays: the graph derives the
     // headline from it (wiki#318), so the shape is still met.
     const content = GOOD.replace("schema:headline: Good\n", "");
-    const report = await wiki.edit({
-      ops: [{ op: "replace", path: "wiki/Good.md", content }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [{ op: "replace", path: "wiki/Good.md", content }],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied", JSON.stringify(report.introduced));
     assertEquals(read(root, "wiki/Good.md"), content);
   } finally {
@@ -259,13 +277,18 @@ test("pre-existing errors elsewhere do not block an edit", async () => {
   try {
     const wiki = Wiki.load(root);
     assertFalse((await wiki.check()).ok, "fixture should start broken");
-    const report = await wiki.edit({
-      ops: [{
-        op: "replace",
-        path: "wiki/Other.md",
-        content: OTHER + "\nMore.\n",
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "replace",
+            path: "wiki/Other.md",
+            content: OTHER + "\nMore.\n",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     assertEquals(report.introduced, []);
   } finally {
@@ -287,16 +310,18 @@ test("a create does not introduce pre-existing wiki-wide lint findings", async (
     const lint = await wiki.lint();
     assert(
       lint.warnings.some((issue) =>
-        issue.message.includes("Asset directory is not a directory")
+        issue.message.includes("Asset directory is not a directory"),
       ),
       JSON.stringify(lint.warnings),
     );
     const report = await wiki.edit({
-      ops: [{
-        op: "create",
-        path: "wiki/Fresh.md",
-        content: OTHER.replaceAll("Other", "Fresh"),
-      }],
+      ops: [
+        {
+          op: "create",
+          path: "wiki/Fresh.md",
+          content: OTHER.replaceAll("Other", "Fresh"),
+        },
+      ],
     });
     assertEquals(report.status, "dry_run");
     assertEquals(report.introduced, [], JSON.stringify(report.introduced));
@@ -310,11 +335,13 @@ test("editing an already-broken page is not blocked by its old error", async () 
   try {
     const wiki = Wiki.load(root);
     const report = await wiki.edit({
-      ops: [{
-        op: "replace",
-        path: "wiki/Broken.md",
-        content: BROKEN + "\nStill no headline.\n",
-      }],
+      ops: [
+        {
+          op: "replace",
+          path: "wiki/Broken.md",
+          content: BROKEN + "\nStill no headline.\n",
+        },
+      ],
     });
     assertEquals(report.status, "dry_run");
   } finally {
@@ -326,13 +353,18 @@ test("a create that collides with an existing route is rejected", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{
-        op: "create",
-        path: "wiki/Good/index.md",
-        content: OTHER.replaceAll("Other", "Good"),
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "create",
+            path: "wiki/Good/index.md",
+            content: OTHER.replaceAll("Other", "Good"),
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "rejected");
     assert(
       report.introduced.some((issue) => issue.code === "output_collision"),
@@ -348,9 +380,12 @@ test("delete removes the file and reports it", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{ op: "delete", path: "wiki/Broken.md" }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [{ op: "delete", path: "wiki/Broken.md" }],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     assertEquals(report.files[0]!.action, "delete");
     assertEquals(report.files[0]!.after, null);
@@ -364,14 +399,12 @@ test("edits are confined to wiki documents under wiki.input", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    for (
-      const path of [
-        "notes/Outside.md",
-        "../Escape.md",
-        ".wiki/sources/x/repo/Page.md",
-        "wiki/script.sh",
-      ]
-    ) {
+    for (const path of [
+      "notes/Outside.md",
+      "../Escape.md",
+      ".wiki/sources/x/repo/Page.md",
+      "wiki/script.sh",
+    ]) {
       await assertRejects(
         () => wiki.edit({ ops: [{ op: "create", path, content: "x" }] }),
         EditUsageError,
@@ -433,15 +466,15 @@ test("a commit that fails midway restores every file byte for byte", () => {
           if (++renames === 2) throw new Error("disk full");
           sys.renameSync(from, to);
         },
-      })
+      }),
     );
     assertEquals(sys.readFileSync(a), original);
     assertFalse(exists(root, "B.md"));
     assertEquals(sys.readTextFileSync(c), "# C\n");
-    assertEquals(
-      [...sys.readDirSync(root)].map((entry) => entry.name).sort(),
-      ["A.md", "C.md"],
-    );
+    assertEquals([...sys.readDirSync(root)].map((entry) => entry.name).sort(), [
+      "A.md",
+      "C.md",
+    ]);
   } finally {
     cleanup(root);
   }
@@ -466,9 +499,12 @@ test("a failed commit removes the directories it created", () => {
           if (++renames === 2) throw new Error("disk full");
           sys.renameSync(from, to);
         },
-      })
+      }),
     );
-    assertEquals([...sys.readDirSync(root)].map((entry) => entry.name), []);
+    assertEquals(
+      [...sys.readDirSync(root)].map((entry) => entry.name),
+      [],
+    );
   } finally {
     cleanup(root);
   }
@@ -497,75 +533,73 @@ async function runEdit(
   };
 }
 
-test(
-  "wiki edit maps statuses to exit codes and prints JSON on stdout",
-  async () => {
-    const root = writeWiki();
-    try {
-      const valid = JSON.stringify({
-        ops: [{ op: "replace", path: "wiki/Other.md", content: OTHER + "\n" }],
-      });
-      const dry = await runEdit(root, ["--json"], valid);
-      assertEquals(dry.code, EXIT_OK, dry.stderr);
-      assertEquals(JSON.parse(dry.stdout).status, "dry_run");
-      assertEquals(read(root, "wiki/Other.md"), OTHER);
+test("wiki edit maps statuses to exit codes and prints JSON on stdout", async () => {
+  const root = writeWiki();
+  try {
+    const valid = JSON.stringify({
+      ops: [{ op: "replace", path: "wiki/Other.md", content: OTHER + "\n" }],
+    });
+    const dry = await runEdit(root, ["--json"], valid);
+    assertEquals(dry.code, EXIT_OK, dry.stderr);
+    assertEquals(JSON.parse(dry.stdout).status, "dry_run");
+    assertEquals(read(root, "wiki/Other.md"), OTHER);
 
-      const stale = JSON.stringify({
-        ops: [{
+    const stale = JSON.stringify({
+      ops: [
+        {
           op: "replace",
           path: "wiki/Other.md",
           content: "x",
           expect: contentHash("nope"),
-        }],
-      });
-      assertEquals((await runEdit(root, [], stale)).code, EXIT_CONFLICT);
+        },
+      ],
+    });
+    assertEquals((await runEdit(root, [], stale)).code, EXIT_CONFLICT);
 
-      const breaking = JSON.stringify({
-        ops: [{
+    const breaking = JSON.stringify({
+      ops: [
+        {
           op: "replace",
           path: "wiki/Good.md",
           content: HEADLESS,
-        }],
-      });
-      assertEquals(
-        (await runEdit(root, ["--apply"], breaking)).code,
-        EXIT_FAILURE,
-      );
-      assertEquals(read(root, "wiki/Good.md"), GOOD);
+        },
+      ],
+    });
+    assertEquals(
+      (await runEdit(root, ["--apply"], breaking)).code,
+      EXIT_FAILURE,
+    );
+    assertEquals(read(root, "wiki/Good.md"), GOOD);
 
-      assertEquals((await runEdit(root, [], "not json")).code, EXIT_USAGE);
-      const malformed = JSON.stringify({
-        ops: [{ op: "move", from: "wiki/Good.md" }],
-      });
-      const usage = await runEdit(root, [], malformed);
-      assertEquals(usage.code, EXIT_USAGE);
-      assert(usage.stderr.includes("ops[0].to"), usage.stderr);
+    assertEquals((await runEdit(root, [], "not json")).code, EXIT_USAGE);
+    const malformed = JSON.stringify({
+      ops: [{ op: "move", from: "wiki/Good.md" }],
+    });
+    const usage = await runEdit(root, [], malformed);
+    assertEquals(usage.code, EXIT_USAGE);
+    assert(usage.stderr.includes("ops[0].to"), usage.stderr);
 
-      const applied = await runEdit(root, ["--apply"], valid);
-      assertEquals(applied.code, EXIT_OK, applied.stderr);
-      assertEquals(read(root, "wiki/Other.md"), OTHER + "\n");
-    } finally {
-      cleanup(root);
-    }
-  },
-);
+    const applied = await runEdit(root, ["--apply"], valid);
+    assertEquals(applied.code, EXIT_OK, applied.stderr);
+    assertEquals(read(root, "wiki/Other.md"), OTHER + "\n");
+  } finally {
+    cleanup(root);
+  }
+});
 
-test(
-  "wiki edit --from reads a plan file",
-  async () => {
-    const root = writeWiki();
-    try {
-      const plan = join(root, "plan.json");
-      sys.writeTextFileSync(
-        plan,
-        JSON.stringify({ ops: [{ op: "delete", path: "wiki/Broken.md" }] }),
-      );
-      const result = await runEdit(root, ["--from", plan, "--apply"], "");
-      assertEquals(result.code, EXIT_OK, result.stderr);
-      assertFalse(exists(root, "wiki/Broken.md"));
-      assert(dirname(plan) === root);
-    } finally {
-      cleanup(root);
-    }
-  },
-);
+test("wiki edit --from reads a plan file", async () => {
+  const root = writeWiki();
+  try {
+    const plan = join(root, "plan.json");
+    sys.writeTextFileSync(
+      plan,
+      JSON.stringify({ ops: [{ op: "delete", path: "wiki/Broken.md" }] }),
+    );
+    const result = await runEdit(root, ["--from", plan, "--apply"], "");
+    assertEquals(result.code, EXIT_OK, result.stderr);
+    assertFalse(exists(root, "wiki/Broken.md"));
+    assert(dirname(plan) === root);
+  } finally {
+    cleanup(root);
+  }
+});

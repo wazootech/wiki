@@ -57,10 +57,7 @@ test("SELECT query supports table and structured output formats", async () => {
   const query =
     "SELECT ?name WHERE { ?s <https://schema.org/name> ?name } ORDER BY ?name";
 
-  assertEquals(
-    await runQuery(graph, query),
-    "name \n-----\nAlice\nBob  ",
-  );
+  assertEquals(await runQuery(graph, query), "name \n-----\nAlice\nBob  ");
   assertEquals(
     await runQuery(graph, query, { format: "csv" }),
     "name\r\nAlice\r\nBob\r\n",
@@ -76,8 +73,8 @@ test("SELECT query supports table and structured output formats", async () => {
   const json = JSON.parse(await runQuery(graph, query, { format: "json" }));
   assertEquals(json.head.vars, ["name"]);
   assertEquals(
-    json.results.bindings.map((binding: { name: { value: string } }) =>
-      binding.name.value
+    json.results.bindings.map(
+      (binding: { name: { value: string } }) => binding.name.value,
     ),
     ["Alice", "Bob"],
   );

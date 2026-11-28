@@ -1,6 +1,6 @@
 # Agent Guidelines
 
-Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the Deno/TypeScript Wiki CLI: `fmt` (mechanical Markdown), `check` (integrity), and `lint` (conventions). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
+Welcome! This document outlines the style, hygiene, and design guidelines for managing and contributing to this wiki. These guidelines are enforced by the TypeScript Wiki CLI: `fmt` (mechanical Markdown), `check` (integrity), and `lint` (conventions). Canonical wiki-authoring detail lives in the wiki [Style Guide](docs/wiki/Style_Guide.md).
 
 This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **`-c docs/wiki.yml`** on wiki commands here so local runs match CI.
 
@@ -78,22 +78,19 @@ Python is served by the binding below. Other languages that cannot embed JavaScr
 Before submitting commits, format the wiki and verify against the active schema and guidelines. In this repo, mirror CI:
 
 ```bash
-deno task check
-deno task lint
-deno task fmt:check
-deno task test
+bun install
+bun run ci   # fmt:check, lint, check, test, publish:dry
 
-deno run -A src/wiki/cli.ts -c docs/wiki.yml fmt --check
-deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict
-deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict
-deno run -A src/wiki/cli.ts -c docs/wiki.yml render --check
-deno run -A docs/build.ts --output-dir _site
-bun install && bun run test:bun
+bun src/wiki/cli.ts -c docs/wiki.yml fmt --check
+bun src/wiki/cli.ts -c docs/wiki.yml lint --strict
+bun src/wiki/cli.ts -c docs/wiki.yml check --strict
+bun src/wiki/cli.ts -c docs/wiki.yml render --check
+bun docs/build.ts --output-dir _site
 ```
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
-The Deno `Wiki` API is the in-process library surface; the npm package ships only the command, and the previous class-based Node.js SDK was removed. Unit tests under `tests/` run on both Deno and Bun.
+The Deno `Wiki` API is the in-process library surface; the npm package ships only the command, and the previous class-based Node.js SDK was removed. Unit tests under `tests/` run on Bun.
 
 ### Deploy configuration
 
@@ -104,7 +101,7 @@ The Deno `Wiki` API is the in-process library surface; the npm package ships onl
 
 ### Release workflow
 
-A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `deno.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Three more places pin the version and are not generated: the `example shape` JSON in `docs/wiki/wiki_mcp.md`, and the version and manifest-fingerprint assertions in `tests/mcp_test.ts` and `tests/graph_cache_test.ts` (the manifest includes `VERSION`, so the fingerprint hash changes on every bump). Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
+A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `jsr.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Three more places pin the version and are not generated: the `example shape` JSON in `docs/wiki/wiki_mcp.md`, and the version and manifest-fingerprint assertions in `tests/mcp_test.ts` and `tests/graph_cache_test.ts` (the manifest includes `VERSION`, so the fingerprint hash changes on every bump). Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `bun src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
 `@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, compiles the standalone binaries with Bun for all six targets, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance and to PyPI through Trusted Publishing. The PyPI wheels are built from the published release assets after `SHA256SUMS` verifies them, so a wheel never ships before, or differently from, its release binary. The platform wheels upload before the binary-less fallback, so an index caught mid-upload never lists the fallback alone (#347). The PyPI job is gated on the repository variable `PYPI_PUBLISH_ENABLED=true` and on a `pypi` environment trusted by the PyPI project. Do not publish packages by hand.
 
@@ -138,17 +135,17 @@ See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/w
 
 Family-wide rules live in the [wazootech workspace constitution](https://github.com/wazootech/workspace/blob/main/AGENTS.md#code-health-standards); this repo's specifics:
 
-- **Before pushing**, run what CI runs: `deno task fmt:check && deno task lint && deno task check && deno task test`, then `bun install && bun run test:bun`.
+- **Before pushing**, run what CI runs: `bun run ci`.
 - No `any` and no lint-ignore comments; narrow `unknown` or cast instead.
-- Call the host through `src/wiki/sys.ts` (`node:` APIs); don't use `Deno.*` in
-  `src/`, `tests/` or `bench/` (wazootech/workspace#50).
-- CI also runs the tests on Bun (`bun install && bun run test:bun`). Add a
-  dependency to both `deno.json` and `package.json`
-  (`tests/manifest_test.ts` checks they agree), then update `deno.lock` and
-  `bun.lock`. Packages the npm build leaves external belong in `dependencies`.
+- Call the host through `src/wiki/sys.ts` (`node:` APIs); the engine runs on
+  Node, Bun and, from JSR, Deno, so don't use `Deno.*` or `Bun.*` in `src/`
+  (wazootech/workspace#50).
+- Add a dependency to `package.json`, and to `jsr.json` if the published engine
+  imports it (`tests/manifest_test.ts` checks they agree). Packages the npm
+  build leaves external belong in `dependencies`.
 - The formatter plugins are embedded in `src/wiki/dprint/plugins.gen.ts`. After
   changing a plugin version, run `bun scripts/embed_dprint.ts`.
-- CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.
-- Third-party actions are pinned to full commit SHAs with a version comment; `deno.json` sets `lock.frozen`, so commit `deno.lock` changes deliberately.
+- CI runs Bun `1.x` (floating on purpose) and Node from `.node-version`.
+- Third-party actions are pinned to full commit SHAs with a version comment; installs use `bun install --frozen-lockfile`.
 - `secret-scan.yml` (gitleaks) runs on every PR and push to main; never suppress a finding.
 - `code-health.yml` is warn-only (file length, TODO/FIXME without an issue link). `.github/CODEOWNERS` assigns review.

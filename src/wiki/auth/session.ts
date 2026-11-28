@@ -65,7 +65,9 @@ export class FileSessionStore implements SessionStore {
     try {
       const parsed = JSON.parse(await sys.readTextFile(this.#file!));
       if (
-        typeof parsed !== "object" || parsed === null || Array.isArray(parsed)
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
       ) {
         return;
       }

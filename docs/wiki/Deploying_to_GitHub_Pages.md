@@ -9,9 +9,9 @@ This repository publishes `docs/wiki/` using `docs/wiki.yml`. The workflow lives
 
 ## Pipeline
 
-1. Set up Deno and Node.js in GitHub Actions
-1. Run Deno type-checking, lint, format, test, and docs-wiki audits
-1. `deno run -A docs/build.ts --output-dir _site` — build the themed static site
+1. Set up Bun in GitHub Actions
+1. Run the docs-wiki audits
+1. `bun docs/build.ts --output-dir _site` — build the themed static site
 1. Upload `_site` as the Pages artifact
 1. `deploy-pages` — publish
 
@@ -20,19 +20,19 @@ Enable **GitHub Pages → Build and deployment → GitHub Actions** in repositor
 ## Local preview
 
 ```bash
-deno run -A src/wiki/cli.ts -c docs/wiki.yml serve
+bun src/wiki/cli.ts -c docs/wiki.yml serve
 # http://127.0.0.1:8080/
 ```
 
 Build the exact themed Pages output locally with:
 
 ```bash
-deno run -A docs/build.ts --output-dir _site
+bun docs/build.ts --output-dir _site
 ```
 
 ## Custom wikis
 
-For a regular wiki, use `wiki build` (or `deno run -A src/wiki/cli.ts build`) and adapt a Pages workflow to:
+For a regular wiki, use `wiki build` (or `bun src/wiki/cli.ts build` from a source checkout) and adapt a Pages workflow to:
 
 - pass `-c` with your config path;
 - set `--site-base-url` to your Pages path (`/wiki`, `/my-wiki`, or `''` for root);

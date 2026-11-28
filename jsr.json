@@ -1,0 +1,40 @@
+{
+  "name": "@wazoo/wiki",
+  "version": "0.7.1",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/wiki/mod.ts",
+    "./cli": "./src/wiki/cli.ts",
+    "./theme": "./src/wiki/theme.ts"
+  },
+  "imports": {
+    "@dprint/formatter": "npm:@dprint/formatter@0.5.1",
+    "@eslint/markdown": "npm:@eslint/markdown@8.0.3",
+    "@rdfjs/types": "npm:@rdfjs/types@^2.0.1",
+    "@std/path": "jsr:@std/path@^1.0.0",
+    "@std/toml": "jsr:@std/toml@^1.0.0",
+    "@std/yaml": "jsr:@std/yaml@^1.0.0",
+    "@wazoo/linked-markdown": "jsr:@wazoo/linked-markdown@^0.1.0",
+    "@wazoo/reasoner": "jsr:@wazoo/reasoner@0.4.2",
+    "@wazoo/sparql-engine": "jsr:@wazoo/sparql-engine@0.5.1",
+    "@zazuko/env": "npm:@zazuko/env@^3.0.0",
+    "@zazuko/env-node": "npm:@zazuko/env-node@^3.0.0",
+    "ajv": "npm:ajv@^8.17.1",
+    "bcrypt": "npm:bcryptjs@3.0.3",
+    "eslint": "npm:eslint@9.39.5",
+    "jsonld": "npm:jsonld@9.0.0",
+    "markdown-it": "npm:markdown-it@^14.1.0",
+    "n3": "npm:n3@^2.0.0",
+    "rdf-validate-shacl": "npm:rdf-validate-shacl@0.6.5",
+    "yaml": "npm:yaml@2.9.1"
+  },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "jsr.json",
+      "src/wiki/**/*.ts",
+      "src/wiki/templates/**/*.yml"
+    ]
+  }
+}

@@ -111,9 +111,9 @@ export class DocumentBatch {
             stale_files: staleFiles,
             formatted_count: formattedCount,
             error_message:
-              `Refusing to format ${
-                basename(filePath)
-              }: its frontmatter could not be ` +
+              `Refusing to format ${basename(
+                filePath,
+              )}: its frontmatter could not be ` +
               `parsed (${blocked}). The file is unchanged; fix the frontmatter ` +
               "block and run again.",
             verbose_lines: verboseLines,
@@ -135,9 +135,9 @@ export class DocumentBatch {
           ok: false,
           stale_files: staleFiles,
           formatted_count: formattedCount,
-          error_message: `Error formatting ${basename(filePath)}: ${
-            errorText(error)
-          }`,
+          error_message: `Error formatting ${basename(filePath)}: ${errorText(
+            error,
+          )}`,
           verbose_lines: verboseLines,
         };
       }

@@ -71,7 +71,7 @@ function termOf(spec: TermSpec): Term {
 }
 
 const quads: Quad[] = fixture.triples.map((item) =>
-  triple(termOf(item.s), namedNode(item.p), termOf(item.o))
+  triple(termOf(item.s), namedNode(item.p), termOf(item.o)),
 );
 
 const goldenNt = sys.readTextFileSync(new URL("oracle-nt.txt", fixtureDir));
@@ -150,20 +150,21 @@ test("the Turtle writer emits prefixes and abbreviated IRIs", async () => {
 
 test("every format the engine reads is still parsable", async () => {
   const documents: Record<string, string> = {
-    "turtle": '<https://example.org/a> <https://schema.org/name> "caf\u00e9" .',
-    "trig":
-      '<https://example.org/g> { <https://example.org/a> <https://schema.org/name> "x" . }',
-    "nt": '<https://example.org/a> <https://schema.org/name> "x" .',
-    "nquads":
+    turtle: '<https://example.org/a> <https://schema.org/name> "caf\u00e9" .',
+    trig: '<https://example.org/g> { <https://example.org/a> <https://schema.org/name> "x" . }',
+    nt: '<https://example.org/a> <https://schema.org/name> "x" .',
+    nquads:
       '<https://example.org/a> <https://schema.org/name> "x" <https://example.org/g> .',
-    "xml": `<?xml version="1.0"?>
+    xml: `<?xml version="1.0"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:schema="https://schema.org/">
   <rdf:Description rdf:about="https://example.org/a"><schema:name>x</schema:name></rdf:Description>
 </rdf:RDF>`,
-    "json-ld": JSON.stringify([{
-      "@id": "https://example.org/a",
-      "https://schema.org/name": [{ "@value": "x" }],
-    }]),
+    "json-ld": JSON.stringify([
+      {
+        "@id": "https://example.org/a",
+        "https://schema.org/name": [{ "@value": "x" }],
+      },
+    ]),
   };
   for (const [format, text] of Object.entries(documents)) {
     assertEquals(canParse(format), true, `${format} should be parsable`);
@@ -195,7 +196,10 @@ test("a graph deduplicates, matches, and reports distinct terms", () => {
   assertEquals(graph.has(alice, name, literal("Ada")), true);
   assertEquals(graph.has(alice, name, literal("Grace")), false);
   assertEquals([...graph.subjects()].length, 1);
-  assertEquals([...graph.predicates()].map((term) => term.value), [name.value]);
+  assertEquals(
+    [...graph.predicates()].map((term) => term.value),
+    [name.value],
+  );
   assertEquals([...graph.objects()].length, 2);
   assertEquals([...graph.match(alice, name, bob)].length, 1);
   assertEquals([...graph.match(null, null, null)].length, 2);
@@ -221,23 +225,19 @@ test("graph matching uses complete RDF term identity", () => {
     0,
   );
   assertEquals(
-    [...graph.match(
-      subject,
-      predicate,
-      literal("x", {
-        datatype: "http://www.w3.org/2001/XMLSchema#token",
-      }),
-    )].length,
+    [
+      ...graph.match(
+        subject,
+        predicate,
+        literal("x", {
+          datatype: "http://www.w3.org/2001/XMLSchema#token",
+        }),
+      ),
+    ].length,
     0,
   );
-  assertEquals(
-    [...graph.match(subject, predicate, literal("x"))].length,
-    0,
-  );
-  assertEquals(
-    [...graph.match(subject, predicate, namedNode("x"))].length,
-    0,
-  );
+  assertEquals([...graph.match(subject, predicate, literal("x"))].length, 0);
+  assertEquals([...graph.match(subject, predicate, namedNode("x"))].length, 0);
 });
 
 test("a dataset keeps named graphs separate and unions them", () => {
@@ -245,16 +245,12 @@ test("a dataset keeps named graphs separate and unions them", () => {
   const alice = namedNode("https://example.org/Alice");
   const name = namedNode("https://schema.org/name");
 
-  dataset.graph("https://example.org/graphs/root").add(
-    alice,
-    name,
-    literal("root"),
-  );
-  dataset.graph("https://example.org/graphs/source/a").add(
-    alice,
-    name,
-    literal("source"),
-  );
+  dataset
+    .graph("https://example.org/graphs/root")
+    .add(alice, name, literal("root"));
+  dataset
+    .graph("https://example.org/graphs/source/a")
+    .add(alice, name, literal("source"));
 
   assertEquals(dataset.graphNames().length, 2);
   assertEquals(dataset.size, 2);

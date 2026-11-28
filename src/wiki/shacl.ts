@@ -103,9 +103,8 @@ export function loadShapes(dataGraph: RdfGraph): RdfGraph {
   const listReachable = new Set<string>(shObjects);
   const listEdges = new Map<string, string[]>();
   for (const quad of quads) {
-    if (
-      quad.predicate.value !== RDF_REST && quad.predicate.value !== RDF_FIRST
-    ) continue;
+    if (quad.predicate.value !== RDF_REST && quad.predicate.value !== RDF_FIRST)
+      continue;
     const from = termKey(quad.subject);
     const list = listEdges.get(from) ?? [];
     list.push(termKey(quad.object));
@@ -132,7 +131,8 @@ export function loadShapes(dataGraph: RdfGraph): RdfGraph {
   const typedShapes = new Set<string>();
   for (const quad of quads) {
     if (
-      quad.predicate.value === RDF_TYPE && SHAPE_TYPES.has(quad.object.value)
+      quad.predicate.value === RDF_TYPE &&
+      SHAPE_TYPES.has(quad.object.value)
     ) {
       typedShapes.add(termKey(quad.subject));
     }
@@ -185,7 +185,7 @@ export async function validateShacl(
     conforms: report.conforms,
     resultsText: formatReport(report.conforms, report.results),
     results: report.results.map((result) =>
-      structuredResult(result, shapesGraph)
+      structuredResult(result, shapesGraph),
     ),
   };
 }
@@ -206,9 +206,8 @@ export function structuredResult(
     check: "shacl",
     message: messages.join(" "),
     focusNode: stableTermValue(result.focusNode),
-    resultPath: result.path?.termType === "NamedNode"
-      ? result.path.value
-      : null,
+    resultPath:
+      result.path?.termType === "NamedNode" ? result.path.value : null,
     shaclSeverity: stableTermValue(result.severity),
     sourceConstraintComponent: stableTermValue(
       result.sourceConstraintComponent,
@@ -368,7 +367,7 @@ export async function checkShaclFile(
   const data = documentDataFromPath(filePath);
   if (data === null || Object.keys(data).length === 0) return null;
 
-  const shapes = shapesGraph ?? await loadWikiShapes(config);
+  const shapes = shapesGraph ?? (await loadWikiShapes(config));
   const dataGraph = frontmatterToGraph(data, config, {
     fileId: routeForDocumentFile(config, filePath),
     derived: await deriveMetadata(filePath),

@@ -49,11 +49,11 @@ When the user asks for multiple intents in one message, pick the **blocking** wo
 Before any wiki command:
 
 1. Run `bash skills/wiki/scripts/verify.sh` (or `.agents/skills/wiki/scripts/verify.sh` when vendored).
-1. Exit `0` → use the verified Deno-backed CLI or the verified Deno source checkout. It also prints whether the write verbs are available (`write verbs available` or `write verbs unavailable`); the latter routes structural edits to the hand-edit fallback in [references/edit.md](references/edit.md).
-1. Exit `2` (stale) → if this is the Wiki CLI repository, use the verified Deno source checkout. Otherwise, the PATH `wiki` is a stale install; upgrade only that installation (see [references/install.md](references/install.md#stale-cli)) with the user's approval.
+1. Exit `0` → use the verified CLI or the verified Bun source checkout. It also prints whether the write verbs are available (`write verbs available` or `write verbs unavailable`); the latter routes structural edits to the hand-edit fallback in [references/edit.md](references/edit.md).
+1. Exit `2` (stale) → if this is the Wiki CLI repository, use the verified Bun source checkout. Otherwise, the PATH `wiki` is a stale install; upgrade only that installation (see [references/install.md](references/install.md#stale-cli)) with the user's approval.
 1. Exit `1` (missing) → read [references/install.md](references/install.md). The npm, JSR, PyPI, and standalone distributions are all published.
 
-In the **Wiki CLI repository checkout**, when the PATH `wiki` is missing or stale, use `deno run -A src/wiki/cli.ts` only when Deno and the source checkout are present; verify `--help` and `fmt --help` first.
+In the **Wiki CLI repository checkout**, when the PATH `wiki` is missing or stale, use `bun src/wiki/cli.ts` only when Bun and the source checkout are present; verify `--help` and `fmt --help` first.
 
 `npx wazootech-wiki <args>` is equivalent to `wiki <args>`. Deno-native projects can run `deno run -A jsr:@wazoo/wiki/cli <args>`.
 

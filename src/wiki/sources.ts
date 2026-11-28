@@ -108,9 +108,9 @@ function writeYamlConfig(path: string, data: Record<string, unknown>): void {
   const document = parseDocument(source, { uniqueKeys: true });
   if (document.errors.length > 0) {
     throw new Error(
-      `${basename(path)}: ${
-        document.errors.map((error) => error.message).join("; ")
-      }`,
+      `${basename(path)}: ${document.errors
+        .map((error) => error.message)
+        .join("; ")}`,
     );
   }
 
@@ -124,8 +124,8 @@ function writeYamlConfig(path: string, data: Record<string, unknown>): void {
       const names = new Set(
         previous.filter(isRecord).map((entry) => entry["name"]),
       );
-      const added = nextSources.find((entry) =>
-        isRecord(entry) && !names.has(entry["name"])
+      const added = nextSources.find(
+        (entry) => isRecord(entry) && !names.has(entry["name"]),
       );
       if (added === undefined) document.set("sources", nextSources);
       else currentSources.add(added);
@@ -133,8 +133,8 @@ function writeYamlConfig(path: string, data: Record<string, unknown>): void {
       const names = new Set(
         nextSources.filter(isRecord).map((entry) => entry["name"]),
       );
-      const removedIndex = previous.findIndex((entry) =>
-        isRecord(entry) && !names.has(entry["name"])
+      const removedIndex = previous.findIndex(
+        (entry) => isRecord(entry) && !names.has(entry["name"]),
       );
       if (removedIndex < 0) document.set("sources", nextSources);
       else currentSources.items.splice(removedIndex, 1);
@@ -170,9 +170,9 @@ function addToConfig(config: Config, source: SourceConfig): void {
   for (const existing of sources) {
     if (isRecord(existing) && existing["name"] === source.name) {
       throw new Error(
-        `Source ${
-          describeValue(source.name)
-        } already exists in the config file`,
+        `Source ${describeValue(
+          source.name,
+        )} already exists in the config file`,
       );
     }
   }
@@ -198,8 +198,8 @@ function removeFromConfig(config: Config, name: string): void {
   const sources = data["sources"];
   if (!Array.isArray(sources)) return;
 
-  const remaining = sources.filter((entry) =>
-    !(isRecord(entry) && entry["name"] === name)
+  const remaining = sources.filter(
+    (entry) => !(isRecord(entry) && entry["name"] === name),
   );
   if (remaining.length === sources.length) {
     throw new Error(`Source ${describeValue(name)} not found in config file`);
@@ -225,7 +225,11 @@ function inferNameFromUrl(url: string): string {
   // that path uses backslashes, so splitting on "/" alone returned the entire
   // path as the source name -- which then tripped `assertSafeSourceName` and
   // made `wiki install <local-path>` fail outright on Windows.
-  const tail = url.replace(/[\\/]+$/, "").split(/[\\/]/).at(-1) ?? "";
+  const tail =
+    url
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .at(-1) ?? "";
   const stem = tail.replace(/(?:\.wiki|\.git)$/i, "");
   return stem || "source";
 }
@@ -253,9 +257,9 @@ function runGit(args: readonly string[], cwd?: string): GitResult {
 }
 
 function gitDetails(result: GitResult): string {
-  return [result.stderr.trim(), result.stdout.trim()].filter(Boolean).join(
-    "\n",
-  );
+  return [result.stderr.trim(), result.stdout.trim()]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function checkedGit(
@@ -318,13 +322,10 @@ function cloneOrFetch(source: SourceConfig, cacheDir: string): string {
       );
     }
 
-    const fetch = runGit([
-      "fetch",
-      "--tags",
-      "--force",
-      "origin",
-      "+refs/heads/*:refs/heads/*",
-    ], repoDir);
+    const fetch = runGit(
+      ["fetch", "--tags", "--force", "origin", "+refs/heads/*:refs/heads/*"],
+      repoDir,
+    );
     if (fetch.code !== 0) {
       const details = gitDetails(fetch);
       throw new Error(
@@ -380,10 +381,9 @@ function prepareRef(source: SourceConfig, repoDir: string): void {
     repoDir,
   );
   if (symbolic.code === 0) {
-    const defaultBranch = symbolic.stdout.trim().replace(
-      /^refs\/remotes\/origin\//,
-      "",
-    );
+    const defaultBranch = symbolic.stdout
+      .trim()
+      .replace(/^refs\/remotes\/origin\//, "");
     checkedGit(
       ["checkout", defaultBranch, "--"],
       repoDir,
@@ -394,12 +394,15 @@ function prepareRef(source: SourceConfig, repoDir: string): void {
 
   const remoteBranches = runGit(["branch", "-r"], repoDir);
   if (remoteBranches.code !== 0) return;
-  const refs = remoteBranches.stdout.split(/\r?\n/)
+  const refs = remoteBranches.stdout
+    .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.startsWith("origin/"))
     .map((line) => line.slice("origin/".length));
-  const fallback = refs.find((ref) => ref === "main") ??
-    refs.find((ref) => ref === "master") ?? refs[0];
+  const fallback =
+    refs.find((ref) => ref === "main") ??
+    refs.find((ref) => ref === "master") ??
+    refs[0];
   if (fallback) {
     checkedGit(
       ["checkout", fallback, "--"],
@@ -429,9 +432,9 @@ function resolvedSourcePath(
   const base = source.path ? join(repoDir, source.path) : repoDir;
   if (!pathExists(base)) {
     throw new Error(
-      `Source ${describeValue(source.name)}: path ${
-        describeValue(source.path ?? null)
-      } does not exist`,
+      `Source ${describeValue(source.name)}: path ${describeValue(
+        source.path ?? null,
+      )} does not exist`,
     );
   }
   const resolved = resolvePath(base);
@@ -440,9 +443,9 @@ function resolvedSourcePath(
   // dir into the victim's wiki inputs; reject it outright.
   if (!sourcePathWithinRepo(resolved, repoDir)) {
     throw new Error(
-      `Source ${describeValue(source.name)}: path ${
-        describeValue(source.path ?? null)
-      } escapes the cloned repository`,
+      `Source ${describeValue(source.name)}: path ${describeValue(
+        source.path ?? null,
+      )} escapes the cloned repository`,
     );
   }
   return resolved;
@@ -482,9 +485,9 @@ function discoverSources(repoDir: string): SourceConfig[] {
         const source = coerceSourceConfig(raw, ["sources", index], issues);
         if (issues.length > 0) {
           logger.warning(
-            `Skipping invalid source entry in ${path}: ${
-              issues.map((issue) => issue.msg).join("; ")
-            }`,
+            `Skipping invalid source entry in ${path}: ${issues
+              .map((issue) => issue.msg)
+              .join("; ")}`,
           );
           continue;
         }
@@ -565,9 +568,10 @@ function installTree(
       lockedSource(source, resolvedRef, parent === null ? [] : [parent]),
     );
     logger.debug(
-      `Locked source ${describeValue(source.name)} at ${
-        resolvedRef.slice(0, 12)
-      } -> ${resolvedPath}`,
+      `Locked source ${describeValue(source.name)} at ${resolvedRef.slice(
+        0,
+        12,
+      )} -> ${resolvedPath}`,
     );
 
     const transitive = discoverSources(repoDir);
@@ -649,10 +653,9 @@ function reportOrphans(config: Config, lockfile: Lockfile): void {
   for (const [name, entry] of lockfile.sources) {
     if (!topLevel.has(name) && entry.required_by.length > 0) {
       logger.warning(
-        `Source ${describeValue(name)} (required_by=${
-          describeValue(entry.required_by)
-        }) may be orphaned. ` +
-          `Run 'wiki remove ${name}' to clean up.`,
+        `Source ${describeValue(name)} (required_by=${describeValue(
+          entry.required_by,
+        )}) may be orphaned. ` + `Run 'wiki remove ${name}' to clean up.`,
       );
     }
   }
@@ -667,8 +670,8 @@ export function update(
   const dryRun = options.dry_run ?? false;
   const lockfile = mutableLockfile(loadLockfile(lockfilePath(config)));
   const updates: SourceUpdate[] = [];
-  const sources = config.sources.filter((source) =>
-    name == null || source.name === name
+  const sources = config.sources.filter(
+    (source) => name == null || source.name === name,
   );
   if (sources.length === 0) {
     if (name) {
@@ -681,9 +684,9 @@ export function update(
     const locked = lockfile.sources.get(source.name);
     if (!locked) {
       logger.warning(
-        `Source ${
-          describeValue(source.name)
-        } is not locked. Run 'wiki install' first.`,
+        `Source ${describeValue(
+          source.name,
+        )} is not locked. Run 'wiki install' first.`,
       );
       continue;
     }
@@ -748,16 +751,16 @@ function removeOrphans(
     if (entry.required_by.includes(removedName)) {
       setLockedSource(lockfile, name, {
         ...entry,
-        required_by: entry.required_by.filter((parent) =>
-          parent !== removedName
+        required_by: entry.required_by.filter(
+          (parent) => parent !== removedName,
         ),
       });
     }
   }
 
   const orphaned = [...lockfile.sources]
-    .filter(([name, entry]) =>
-      entry.required_by.length === 0 && !topLevel.has(name)
+    .filter(
+      ([name, entry]) => entry.required_by.length === 0 && !topLevel.has(name),
     )
     .map(([name]) => name);
   for (const orphan of orphaned) {
@@ -770,9 +773,9 @@ function removeOrphans(
     }
     deleteLockedSource(lockfile, orphan);
     logger.debug(
-      `Removed orphaned transitive source ${
-        describeValue(orphan)
-      } from lockfile`,
+      `Removed orphaned transitive source ${describeValue(
+        orphan,
+      )} from lockfile`,
     );
     removeOrphans(config, lockfile, orphan);
   }
@@ -825,9 +828,7 @@ export function resolve(config: Config): string[] {
     try {
       resolved.push(resolvedSourcePath({ name, path: locked.path }, repoDir));
     } catch (error) {
-      logger.warning(
-        `Source '${name}': ${errorText(error)}`,
-      );
+      logger.warning(`Source '${name}': ${errorText(error)}`);
     }
   }
   return resolved;

@@ -64,92 +64,76 @@ async function runCliIn(
   };
 }
 
-test(
-  "--version matches the Python CLI output",
-  async () => {
-    const result = await runCli(["--version"]);
+test("--version matches the Python CLI output", async () => {
+  const result = await runCli(["--version"]);
+  assertEquals(result.code, EXIT_OK);
+  assertEquals(result.stdout, `${PROG_NAME}, version ${VERSION}\n`);
+  assertEquals(result.stderr, "");
+});
+
+test("an unrecognised subcommand is a usage error on stderr", async () => {
+  const result = await runCli(["bogus"]);
+  assertEquals(result.code, EXIT_USAGE);
+  assertEquals(result.stdout, "");
+  assertEquals(
+    result.stderr,
+    `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...\n` +
+      `Try '${PROG_NAME} --help' for help.\n` +
+      `\n` +
+      `Error: No such command 'bogus'.\n`,
+  );
+});
+
+test("--help prints the full command catalog, and empty argv prints it to stderr", async () => {
+  const help = await runCli(["--help"]);
+  assertEquals(help.code, EXIT_OK);
+  assertEquals(help.stderr, "");
+  assert(help.stdout.startsWith("Usage: wiki [OPTIONS] COMMAND [ARGS]...\n\n"));
+  assert(help.stdout.includes("Commands:\n  build"));
+  assert(
+    help.stdout.includes("Format markdown wiki pages with the Deno formatter."),
+  );
+  const commandSection =
+    help.stdout.split("Commands:\n")[1]?.split("\n\n")[0] ?? "";
+  const namesInHelp = commandSection.split("\n").flatMap((line) => {
+    const match = /^\s{2}(.+?)\s{2,}/.exec(line);
+    return match?.[1]?.split(", ") ?? [];
+  });
+  assertEquals([...namesInHelp].sort(), [...COMMAND_NAMES].sort());
+  assert(namesInHelp.includes("i"));
+  assertEquals(new Set(COMMAND_NAMES).size, COMMAND_NAMES.length);
+
+  const empty = await runCli([]);
+  assertEquals(empty.code, EXIT_USAGE);
+  assertEquals(empty.stdout, "");
+  assertEquals(empty.stderr, help.stdout);
+});
+
+test("file command help lists each command's actual options", async () => {
+  const cases = [
+    ["check", "--strict", "--verbose"],
+    ["lint", "--strict", "--verbose"],
+    ["fmt", "--check", "--verbose"],
+  ] as const;
+
+  for (const [command, option, verbose] of cases) {
+    const result = await runCli([command, "--help"]);
     assertEquals(result.code, EXIT_OK);
-    assertEquals(result.stdout, `${PROG_NAME}, version ${VERSION}\n`);
     assertEquals(result.stderr, "");
-  },
-);
+    assert(result.stdout.startsWith(`Usage: wiki ${command} [OPTIONS]`));
+    assert(result.stdout.includes(option));
+    assert(result.stdout.includes(verbose));
+    assert(result.stdout.includes("--help"));
+  }
 
-test(
-  "an unrecognised subcommand is a usage error on stderr",
-  async () => {
-    const result = await runCli(["bogus"]);
-    assertEquals(result.code, EXIT_USAGE);
-    assertEquals(result.stdout, "");
-    assertEquals(
-      result.stderr,
-      `Usage: ${PROG_NAME} [OPTIONS] COMMAND [ARGS]...\n` +
-        `Try '${PROG_NAME} --help' for help.\n` +
-        `\n` +
-        `Error: No such command 'bogus'.\n`,
-    );
-  },
-);
-
-test(
-  "--help prints the full command catalog, and empty argv prints it to stderr",
-  async () => {
-    const help = await runCli(["--help"]);
-    assertEquals(help.code, EXIT_OK);
-    assertEquals(help.stderr, "");
-    assert(
-      help.stdout.startsWith("Usage: wiki [OPTIONS] COMMAND [ARGS]...\n\n"),
-    );
-    assert(help.stdout.includes("Commands:\n  build"));
-    assert(
-      help.stdout.includes(
-        "Format markdown wiki pages with the Deno formatter.",
-      ),
-    );
-    const commandSection =
-      help.stdout.split("Commands:\n")[1]?.split("\n\n")[0] ?? "";
-    const namesInHelp = commandSection.split("\n").flatMap((line) => {
-      const match = /^\s{2}(.+?)\s{2,}/.exec(line);
-      return match?.[1]?.split(", ") ?? [];
-    });
-    assertEquals([...namesInHelp].sort(), [...COMMAND_NAMES].sort());
-    assert(namesInHelp.includes("i"));
-    assertEquals(new Set(COMMAND_NAMES).size, COMMAND_NAMES.length);
-
-    const empty = await runCli([]);
-    assertEquals(empty.code, EXIT_USAGE);
-    assertEquals(empty.stdout, "");
-    assertEquals(empty.stderr, help.stdout);
-  },
-);
-
-test(
-  "file command help lists each command's actual options",
-  async () => {
-    const cases = [
-      ["check", "--strict", "--verbose"],
-      ["lint", "--strict", "--verbose"],
-      ["fmt", "--check", "--verbose"],
-    ] as const;
-
-    for (const [command, option, verbose] of cases) {
-      const result = await runCli([command, "--help"]);
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(result.stderr, "");
-      assert(result.stdout.startsWith(`Usage: wiki ${command} [OPTIONS]`));
-      assert(result.stdout.includes(option));
-      assert(result.stdout.includes(verbose));
-      assert(result.stdout.includes("--help"));
-    }
-
-    const alias = await runCli(["i", "--help"]);
-    assertEquals(alias.code, EXIT_OK);
-    assertEquals(
-      alias.stdout,
-      "Usage: wiki i [OPTIONS] [URL]\n\nAlias for install.\n\nOptions:\n  --help  Show this message and exit.\n",
-    );
-    assertEquals(alias.stderr, "");
-  },
-);
+  const alias = await runCli(["i", "--help"]);
+  assertEquals(alias.code, EXIT_OK);
+  assertEquals(
+    alias.stdout,
+    "Usage: wiki i [OPTIONS] [URL]\n\nAlias for install.\n\nOptions:\n  --help  Show this message and exit.\n",
+  );
+  assertEquals(alias.stderr, "");
+});
 
 // ---------------------------------------------------------------------------
 // The audit commands, driven through the process contract
@@ -160,10 +144,7 @@ function writeAuditCorpus(): string {
   const root = sys.makeTempDirSync({ prefix: "wiki-cli-" });
   const wiki = join(root, "wiki");
   sys.mkdirSync(wiki, { recursive: true });
-  sys.writeTextFileSync(
-    join(root, "wiki.yml"),
-    "wiki:\n  input: [wiki]\n",
-  );
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   sys.writeTextFileSync(
     join(wiki, "Page.md"),
     "---\ntype: schema:WebPage\nwazoo:layout: layouts/missing.html\n---\n\nSee [[Missing]].\n",
@@ -179,234 +160,197 @@ function removeCorpus(root: string): void {
   }
 }
 
-test(
-  "lint reports warnings on stderr and passes without --strict",
-  async () => {
-    const root = writeAuditCorpus();
-    try {
-      const result = await runCliIn(
-        ["-c", "wiki.yml", "lint", "-v"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(result.code, EXIT_OK);
-      // Diagnostics never touch stdout: a caller might be piping a report.
-      assertEquals(result.stdout, "");
-      assertEquals(
-        result.stderr,
-        "Warnings:\n" +
-          "  - In Page: Broken WikiLink [Missing] points to non-existent document.\n" +
-          '  - In Page.md:6: Wikilink "[[Missing]]"; use standard links ' +
-          "([display](Page.md)) per link.style.\n",
-      );
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
-
-test(
-  "lint --strict promotes the warnings and exits 1",
-  async () => {
-    const root = writeAuditCorpus();
-    try {
-      const result = await runCliIn(
-        ["-c", "wiki.yml", "lint", "--strict", "-v"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(result.code, EXIT_FAILURE);
-      assertEquals(result.stdout, "");
-      assert(result.stderr.startsWith("Errors:\n"));
-      // The same two findings, now errors rather than warnings.
-      assertEquals(result.stderr.match(/^ {2}- /gm)?.length, 2);
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
-
-test(
-  "check reports the layout error and exits 1",
-  async () => {
-    const root = writeAuditCorpus();
-    try {
-      const result = await runCliIn(
-        ["-c", "wiki.yml", "check", "--strict", "-v"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(result.code, EXIT_FAILURE);
-      assertEquals(result.stdout, "");
-      assert(
-        result.stderr.includes(
-          'In Page: wazoo:layout "layouts/missing.html" must resolve to a ' +
-            "readable .html file under the wiki config root.",
-        ),
-        result.stderr,
-      );
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
-
-test(
-  "graph and graph list help match the Python CLI",
-  async () => {
-    const group = await runCli(["graph", "--help"]);
-    assertEquals(group.code, EXIT_OK);
-    assertEquals(group.stderr, "");
-    assertEquals(
-      group.stdout,
-      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n\n" +
-        "  Inspect read-only RDF named graph provenance.\n\n" +
-        "Options:\n" +
-        "  --help  Show this message and exit.\n\n" +
-        "Commands:\n" +
-        "  list  List named graphs available to SPARQL GRAPH queries.\n",
-    );
-
-    const list = await runCli(["graph", "list", "--help"]);
-    assertEquals(list.code, EXIT_OK);
-    assertEquals(list.stderr, "");
-    assertEquals(
-      list.stdout,
-      "Usage: wiki graph list [OPTIONS]\n\n" +
-        "  List named graphs available to SPARQL GRAPH queries.\n\n" +
-        "Options:\n" +
-        "  --help  Show this message and exit.\n",
-    );
-  },
-);
-
-test(
-  "graph group usage errors identify the correct command context",
-  async () => {
-    const missing = await runCli(["graph"]);
-    assertEquals(missing.code, EXIT_USAGE);
-    assertEquals(missing.stdout, "");
-    assertEquals(
-      missing.stderr,
-      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
-        "Try 'wiki graph --help' for help.\n\n" +
-        "Error: Missing command.\n",
-    );
-
-    const unknown = await runCli(["graph", "bogus"]);
-    assertEquals(unknown.code, EXIT_USAGE);
-    assertEquals(unknown.stdout, "");
-    assertEquals(
-      unknown.stderr,
-      "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
-        "Try 'wiki graph --help' for help.\n\n" +
-        "Error: No such command 'bogus'.\n",
-    );
-
-    const extra = await runCli(["graph", "list", "extra"]);
-    assertEquals(extra.code, EXIT_USAGE);
-    assertEquals(extra.stdout, "");
-    assertEquals(
-      extra.stderr,
-      "Usage: wiki graph list [OPTIONS]\n" +
-        "Try 'wiki graph list --help' for help.\n\n" +
-        "Error: Got unexpected extra argument (extra)\n",
-    );
-  },
-);
-
-test(
-  "graph list prints the root graph table",
-  async () => {
-    const root = writeAuditCorpus();
-    try {
-      const result = await runCliIn(
-        ["-c", "wiki.yml", "graph", "list"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(result.stderr, "");
-      const header = result.stdout.split("\n")[0] ?? "";
-      assert(/^name\s+kind\s+uri\s+commit\s+required_by$/.test(header), header);
-      assert(result.stdout.includes("root  root  "));
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
-
-test(
-  "build writes a static page and reports generated files",
-  async () => {
-    const root = sys.makeTempDirSync({ prefix: "wiki-cli-build-" });
-    const wikiDir = join(root, "wiki");
-    sys.mkdirSync(wikiDir, { recursive: true });
-    sys.writeTextFileSync(
-      join(root, "wiki.yml"),
-      "wiki:\n  input: [wiki]\n",
-    );
-    sys.writeTextFileSync(
-      join(wikiDir, "Ethan.md"),
-      "# Ethan\n\nA valid page.\n",
-    );
-    try {
-      const result = await runCliIn(
-        [
-          "-c",
-          "wiki.yml",
-          "build",
-          "--output-dir",
-          "published",
-          "--no-check",
-          "-v",
-        ],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(result.code, EXIT_OK, result.stderr);
-      assert(result.stdout.includes("Built 1 pages and 0 assets to published"));
-      const page = sys.readTextFileSync(
-        join(root, "published", "wiki", "Ethan", "index.html"),
-      );
-      assert(page.includes("A valid page."));
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
-
-test(
-  "MCP help is available without loading a wiki",
-  async () => {
-    const result = await runCli(["mcp", "--help"]);
+test("lint reports warnings on stderr and passes without --strict", async () => {
+  const root = writeAuditCorpus();
+  try {
+    const result = await runCliIn(["-c", "wiki.yml", "lint", "-v"], root, [
+      "--allow-all",
+    ]);
     assertEquals(result.code, EXIT_OK);
-    assert(result.stdout.includes("Start a read-only MCP server"));
-  },
-);
+    // Diagnostics never touch stdout: a caller might be piping a report.
+    assertEquals(result.stdout, "");
+    assertEquals(
+      result.stderr,
+      "Warnings:\n" +
+        "  - In Page: Broken WikiLink [Missing] points to non-existent document.\n" +
+        '  - In Page.md:6: Wikilink "[[Missing]]"; use standard links ' +
+        "([display](Page.md)) per link.style.\n",
+    );
+  } finally {
+    removeCorpus(root);
+  }
+});
 
-test(
-  "serve rejects an invalid URL style as a usage error",
-  async () => {
-    const result = await runCli(["serve", "--site-url-style", "bad"]);
-    assertEquals(result.code, EXIT_USAGE);
-    assert(result.stderr.includes("--site-url-style"));
-  },
-);
+test("lint --strict promotes the warnings and exits 1", async () => {
+  const root = writeAuditCorpus();
+  try {
+    const result = await runCliIn(
+      ["-c", "wiki.yml", "lint", "--strict", "-v"],
+      root,
+      ["--allow-all"],
+    );
+    assertEquals(result.code, EXIT_FAILURE);
+    assertEquals(result.stdout, "");
+    assert(result.stderr.startsWith("Errors:\n"));
+    // The same two findings, now errors rather than warnings.
+    assertEquals(result.stderr.match(/^ {2}- /gm)?.length, 2);
+  } finally {
+    removeCorpus(root);
+  }
+});
 
-test(
-  "a FILE that does not exist is a usage error",
-  async () => {
-    const result = await runCli(["check", "nope.md"]);
-    assertEquals(result.code, EXIT_USAGE);
+test("check reports the layout error and exits 1", async () => {
+  const root = writeAuditCorpus();
+  try {
+    const result = await runCliIn(
+      ["-c", "wiki.yml", "check", "--strict", "-v"],
+      root,
+      ["--allow-all"],
+    );
+    assertEquals(result.code, EXIT_FAILURE);
+    assertEquals(result.stdout, "");
     assert(
-      result.stderr.endsWith(
-        "Error: Invalid value for '[FILES]...': Path 'nope.md' does not exist.\n",
+      result.stderr.includes(
+        'In Page: wazoo:layout "layouts/missing.html" must resolve to a ' +
+          "readable .html file under the wiki config root.",
       ),
       result.stderr,
     );
-  },
-);
+  } finally {
+    removeCorpus(root);
+  }
+});
+
+test("graph and graph list help match the Python CLI", async () => {
+  const group = await runCli(["graph", "--help"]);
+  assertEquals(group.code, EXIT_OK);
+  assertEquals(group.stderr, "");
+  assertEquals(
+    group.stdout,
+    "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n\n" +
+      "  Inspect read-only RDF named graph provenance.\n\n" +
+      "Options:\n" +
+      "  --help  Show this message and exit.\n\n" +
+      "Commands:\n" +
+      "  list  List named graphs available to SPARQL GRAPH queries.\n",
+  );
+
+  const list = await runCli(["graph", "list", "--help"]);
+  assertEquals(list.code, EXIT_OK);
+  assertEquals(list.stderr, "");
+  assertEquals(
+    list.stdout,
+    "Usage: wiki graph list [OPTIONS]\n\n" +
+      "  List named graphs available to SPARQL GRAPH queries.\n\n" +
+      "Options:\n" +
+      "  --help  Show this message and exit.\n",
+  );
+});
+
+test("graph group usage errors identify the correct command context", async () => {
+  const missing = await runCli(["graph"]);
+  assertEquals(missing.code, EXIT_USAGE);
+  assertEquals(missing.stdout, "");
+  assertEquals(
+    missing.stderr,
+    "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
+      "Try 'wiki graph --help' for help.\n\n" +
+      "Error: Missing command.\n",
+  );
+
+  const unknown = await runCli(["graph", "bogus"]);
+  assertEquals(unknown.code, EXIT_USAGE);
+  assertEquals(unknown.stdout, "");
+  assertEquals(
+    unknown.stderr,
+    "Usage: wiki graph [OPTIONS] COMMAND [ARGS]...\n" +
+      "Try 'wiki graph --help' for help.\n\n" +
+      "Error: No such command 'bogus'.\n",
+  );
+
+  const extra = await runCli(["graph", "list", "extra"]);
+  assertEquals(extra.code, EXIT_USAGE);
+  assertEquals(extra.stdout, "");
+  assertEquals(
+    extra.stderr,
+    "Usage: wiki graph list [OPTIONS]\n" +
+      "Try 'wiki graph list --help' for help.\n\n" +
+      "Error: Got unexpected extra argument (extra)\n",
+  );
+});
+
+test("graph list prints the root graph table", async () => {
+  const root = writeAuditCorpus();
+  try {
+    const result = await runCliIn(["-c", "wiki.yml", "graph", "list"], root, [
+      "--allow-all",
+    ]);
+    assertEquals(result.code, EXIT_OK);
+    assertEquals(result.stderr, "");
+    const header = result.stdout.split("\n")[0] ?? "";
+    assert(/^name\s+kind\s+uri\s+commit\s+required_by$/.test(header), header);
+    assert(result.stdout.includes("root  root  "));
+  } finally {
+    removeCorpus(root);
+  }
+});
+
+test("build writes a static page and reports generated files", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-cli-build-" });
+  const wikiDir = join(root, "wiki");
+  sys.mkdirSync(wikiDir, { recursive: true });
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  sys.writeTextFileSync(
+    join(wikiDir, "Ethan.md"),
+    "# Ethan\n\nA valid page.\n",
+  );
+  try {
+    const result = await runCliIn(
+      [
+        "-c",
+        "wiki.yml",
+        "build",
+        "--output-dir",
+        "published",
+        "--no-check",
+        "-v",
+      ],
+      root,
+      ["--allow-all"],
+    );
+    assertEquals(result.code, EXIT_OK, result.stderr);
+    assert(result.stdout.includes("Built 1 pages and 0 assets to published"));
+    const page = sys.readTextFileSync(
+      join(root, "published", "wiki", "Ethan", "index.html"),
+    );
+    assert(page.includes("A valid page."));
+  } finally {
+    removeCorpus(root);
+  }
+});
+
+test("MCP help is available without loading a wiki", async () => {
+  const result = await runCli(["mcp", "--help"]);
+  assertEquals(result.code, EXIT_OK);
+  assert(result.stdout.includes("Start a read-only MCP server"));
+});
+
+test("serve rejects an invalid URL style as a usage error", async () => {
+  const result = await runCli(["serve", "--site-url-style", "bad"]);
+  assertEquals(result.code, EXIT_USAGE);
+  assert(result.stderr.includes("--site-url-style"));
+});
+
+test("a FILE that does not exist is a usage error", async () => {
+  const result = await runCli(["check", "nope.md"]);
+  assertEquals(result.code, EXIT_USAGE);
+  assert(
+    result.stderr.endsWith(
+      "Error: Invalid value for '[FILES]...': Path 'nope.md' does not exist.\n",
+    ),
+    result.stderr,
+  );
+});
 
 // ---------------------------------------------------------------------------
 // The link command, driven through the process contract
@@ -446,89 +390,75 @@ async function runLinkIn(
   ]);
 }
 
-test(
-  "link reports an opportunity on stdout and exits 0",
-  async () => {
-    const root = writeLinkCorpus();
-    try {
-      const result = await runLinkIn([], root);
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(result.stderr, "");
-      assertEquals(
-        result.stdout,
-        'Source_Page.md:5:5: "Target Page" -> [Target Page](Target_Page.md)\n',
-      );
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
+test("link reports an opportunity on stdout and exits 0", async () => {
+  const root = writeLinkCorpus();
+  try {
+    const result = await runLinkIn([], root);
+    assertEquals(result.code, EXIT_OK);
+    assertEquals(result.stderr, "");
+    assertEquals(
+      result.stdout,
+      'Source_Page.md:5:5: "Target Page" -> [Target Page](Target_Page.md)\n',
+    );
+  } finally {
+    removeCorpus(root);
+  }
+});
 
-test(
-  "link --check exits 1 while an opportunity remains, 0 once applied",
-  async () => {
-    const root = writeLinkCorpus();
-    try {
-      // The command-level -c/--check shadows the global -c/--config that
-      // selects the config file: both must parse at once.
-      const failing = await runLinkIn(["--check"], root);
-      assertEquals(failing.code, EXIT_FAILURE);
-      assertEquals(failing.stderr, "");
+test("link --check exits 1 while an opportunity remains, 0 once applied", async () => {
+  const root = writeLinkCorpus();
+  try {
+    // The command-level -c/--check shadows the global -c/--config that
+    // selects the config file: both must parse at once.
+    const failing = await runLinkIn(["--check"], root);
+    assertEquals(failing.code, EXIT_FAILURE);
+    assertEquals(failing.stderr, "");
 
-      const applied = await runLinkIn(["--apply"], root);
-      assertEquals(applied.code, EXIT_OK);
+    const applied = await runLinkIn(["--apply"], root);
+    assertEquals(applied.code, EXIT_OK);
 
-      const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
-      assert(page.includes("See [Target Page](Target_Page.md) for details."));
+    const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+    assert(page.includes("See [Target Page](Target_Page.md) for details."));
 
-      const passing = await runLinkIn(["--check"], root);
-      assertEquals(passing.code, EXIT_OK);
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
+    const passing = await runLinkIn(["--check"], root);
+    assertEquals(passing.code, EXIT_OK);
+  } finally {
+    removeCorpus(root);
+  }
+});
 
-test(
-  "link --dry-run previews the apply without writing the file",
-  async () => {
-    const root = writeLinkCorpus();
-    try {
-      const before = sys.readTextFileSync(
-        join(root, "wiki", "Source_Page.md"),
-      );
-      const result = await runLinkIn(["--apply", "--dry-run"], root);
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(
-        sys.readTextFileSync(join(root, "wiki", "Source_Page.md")),
-        before,
-      );
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
+test("link --dry-run previews the apply without writing the file", async () => {
+  const root = writeLinkCorpus();
+  try {
+    const before = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+    const result = await runLinkIn(["--apply", "--dry-run"], root);
+    assertEquals(result.code, EXIT_OK);
+    assertEquals(
+      sys.readTextFileSync(join(root, "wiki", "Source_Page.md")),
+      before,
+    );
+  } finally {
+    removeCorpus(root);
+  }
+});
 
-test(
-  "link --fix-broken repairs an unambiguous fragment and writes the file",
-  async () => {
-    const root = writeLinkCorpus();
-    try {
-      const result = await runLinkIn(["--fix-broken"], root);
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(result.stderr, "");
-      assert(
-        result.stdout.includes(
-          "Target_Page.md#targt-page -> Target_Page.md#target-page",
-        ),
-      );
-      const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
-      assert(page.includes("[frag](Target_Page.md#target-page)"));
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
+test("link --fix-broken repairs an unambiguous fragment and writes the file", async () => {
+  const root = writeLinkCorpus();
+  try {
+    const result = await runLinkIn(["--fix-broken"], root);
+    assertEquals(result.code, EXIT_OK);
+    assertEquals(result.stderr, "");
+    assert(
+      result.stdout.includes(
+        "Target_Page.md#targt-page -> Target_Page.md#target-page",
+      ),
+    );
+    const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+    assert(page.includes("[frag](Target_Page.md#target-page)"));
+  } finally {
+    removeCorpus(root);
+  }
+});
 
 // ---------------------------------------------------------------------------
 // The render command, driven through the process contract
@@ -559,43 +489,38 @@ function writeRenderCorpus(): string {
   return root;
 }
 
-test(
-  "render --check reports stale blocks on stderr and exits 1, then render writes them",
-  async () => {
-    const root = writeRenderCorpus();
-    try {
-      const stale = await runCliIn(
-        ["-c", "wiki.yml", "render", "--check"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(stale.code, EXIT_FAILURE);
-      assertEquals(stale.stdout, "");
-      assert(stale.stderr.includes("Inline SPARQL blocks are out of date"));
+test("render --check reports stale blocks on stderr and exits 1, then render writes them", async () => {
+  const root = writeRenderCorpus();
+  try {
+    const stale = await runCliIn(
+      ["-c", "wiki.yml", "render", "--check"],
+      root,
+      ["--allow-all"],
+    );
+    assertEquals(stale.code, EXIT_FAILURE);
+    assertEquals(stale.stdout, "");
+    assert(stale.stderr.includes("Inline SPARQL blocks are out of date"));
 
-      const rendered = await runCliIn(
-        ["-c", "wiki.yml", "render", "-v"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(rendered.code, EXIT_OK, rendered.stderr);
-      assertEquals(rendered.stderr, "");
-      assert(rendered.stdout.includes("Rendered SPARQL: Updated 2 files."));
+    const rendered = await runCliIn(["-c", "wiki.yml", "render", "-v"], root, [
+      "--allow-all",
+    ]);
+    assertEquals(rendered.code, EXIT_OK, rendered.stderr);
+    assertEquals(rendered.stderr, "");
+    assert(rendered.stdout.includes("Rendered SPARQL: Updated 2 files."));
 
-      const alice = sys.readTextFileSync(join(root, "wiki", "Alice.md"));
-      assert(alice.includes("<!-- sparql:end -->"));
+    const alice = sys.readTextFileSync(join(root, "wiki", "Alice.md"));
+    assert(alice.includes("<!-- sparql:end -->"));
 
-      const fresh = await runCliIn(
-        ["-c", "wiki.yml", "render", "--check"],
-        root,
-        ["--allow-all"],
-      );
-      assertEquals(fresh.code, EXIT_OK);
-    } finally {
-      removeCorpus(root);
-    }
-  },
-);
+    const fresh = await runCliIn(
+      ["-c", "wiki.yml", "render", "--check"],
+      root,
+      ["--allow-all"],
+    );
+    assertEquals(fresh.code, EXIT_OK);
+  } finally {
+    removeCorpus(root);
+  }
+});
 
 test("wiki file groups the single-file verbs", async () => {
   const help = await runCli(["file", "--help"]);
@@ -609,10 +534,15 @@ test("wiki file groups the single-file verbs", async () => {
     return match?.[1] ? [match[1]] : [];
   });
   assertEquals(names.sort(), [...FILE_COMMAND_NAMES].sort());
-  assertEquals(
-    [...FILE_COMMAND_NAMES].sort(),
-    ["mv", "new", "patch", "refs", "rm", "set", "show"],
-  );
+  assertEquals([...FILE_COMMAND_NAMES].sort(), [
+    "mv",
+    "new",
+    "patch",
+    "refs",
+    "rm",
+    "set",
+    "show",
+  ]);
   // The verbs are not top-level, and `edit` (the batch engine) stays there.
   for (const verb of FILE_COMMAND_NAMES) {
     assert(!COMMAND_NAMES.includes(verb), verb);

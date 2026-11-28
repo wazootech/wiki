@@ -149,8 +149,8 @@ export function spanOverlaps(
   end: number,
   spans: readonly (readonly [number, number])[],
 ): boolean {
-  return spans.some(([spanStart, spanEnd]) =>
-    start < spanEnd && end > spanStart
+  return spans.some(
+    ([spanStart, spanEnd]) => start < spanEnd && end > spanStart,
   );
 }
 

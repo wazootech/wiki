@@ -12,13 +12,21 @@
   },
   "license": "MIT",
   "type": "module",
+  "packageManager": "bun@1.4.5",
   "bin": {
     "wiki": "bin/wiki.js"
   },
   "scripts": {
+    "bench:shacl": "bun bench/shacl/run.ts",
     "build": "bun scripts/build_npm.ts",
+    "check": "bun check --no-script",
+    "ci": "bun run fmt:check && bun run lint && bun run check && bun run test && bun run publish:dry",
+    "fmt": "bun fmt --no-script src/wiki tests bench scripts docs/build.ts package.json jsr.json tsconfig.json .oxlintrc.json",
+    "fmt:check": "bun fmt --no-script src/wiki tests bench scripts docs/build.ts package.json jsr.json tsconfig.json .oxlintrc.json --check",
+    "lint": "oxlint --deny-warnings",
     "prepack": "bun scripts/build_npm.ts",
-    "test:bun": "bun test --timeout 120000 tests/"
+    "publish:dry": "jsr publish --dry-run --allow-dirty",
+    "test": "bun test --timeout 120000 tests/"
   },
   "files": [
     "bin/",
@@ -52,13 +60,18 @@
     "@std/path": "npm:@jsr/std__path@^1.0.0",
     "@std/toml": "npm:@jsr/std__toml@^1.0.0",
     "@std/yaml": "npm:@jsr/std__yaml@^1.0.0",
+    "@types/bun": "1.4.5",
+    "@types/markdown-it": "^14",
+    "@types/n3": "^1.26.6",
     "@types/node": "^24.0.0",
     "@wazoo/linked-markdown": "npm:@jsr/wazoo__linked-markdown@^0.1.0",
     "@wazoo/reasoner": "npm:@jsr/wazoo__reasoner@0.4.2",
     "@wazoo/sparql-engine": "npm:@jsr/wazoo__sparql-engine@0.5.1",
     "dprint-plugin-yaml": "0.5.0",
+    "jsr": "0.14.3",
     "lax-css": "0.3.0",
-    "lax-markup": "0.3.2"
+    "lax-markup": "0.3.2",
+    "oxlint": "1.95.0"
   },
   "publishConfig": {
     "access": "public"

@@ -107,14 +107,8 @@ test("output paths for dir and file styles", () => {
     pageOutputPath(owned, "games/Pokemon", "file"),
     join(owned, "games", "Pokemon.html"),
   );
-  assertEquals(
-    pageOutputPath(owned, "", "dir"),
-    join(owned, "index.html"),
-  );
-  assertEquals(
-    pageOutputPath(owned, "", "file"),
-    join(owned, "index.html"),
-  );
+  assertEquals(pageOutputPath(owned, "", "dir"), join(owned, "index.html"));
+  assertEquals(pageOutputPath(owned, "", "file"), join(owned, "index.html"));
 });
 
 test("route safety rejects spaces and URL-special characters", () => {
@@ -185,7 +179,10 @@ test("excluded markdown files do not create routes", () => {
     const config = Config.forRoot(root, {
       wiki: { input: [wiki], exclude: ["wiki/drafts/**"] },
     });
-    assertEquals(pageRoutes(config).map((route) => route.route), ["Published"]);
+    assertEquals(
+      pageRoutes(config).map((route) => route.route),
+      ["Published"],
+    );
   });
 });
 
@@ -204,7 +201,10 @@ test("duplicate routes collide", () => {
     );
     const issues = detectOutputCollisions(entries);
     assertEquals(issues.length >= 1, true);
-    assertEquals(issues.some((issue) => issue.includes("About")), true);
+    assertEquals(
+      issues.some((issue) => issue.includes("About")),
+      true,
+    );
   });
 });
 
@@ -224,8 +224,8 @@ test("markdown and yaml with the same slug collide", () => {
     const issues = detectOutputCollisions(entries);
     assertEquals(issues.length >= 1, true);
     assertEquals(
-      issues.some((issue) =>
-        issue.includes("About.md") && issue.includes("About.yaml")
+      issues.some(
+        (issue) => issue.includes("About.md") && issue.includes("About.yaml"),
       ),
       true,
     );
@@ -251,8 +251,8 @@ test("case-only output paths collide", () => {
   const issues = detectOutputCollisions(entries);
   assertEquals(issues.length >= 1, true);
   assertEquals(
-    issues.some((issue) =>
-      issue.includes("Page.md") && issue.includes("page.md")
+    issues.some(
+      (issue) => issue.includes("Page.md") && issue.includes("page.md"),
     ),
     true,
   );

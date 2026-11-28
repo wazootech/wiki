@@ -1,22 +1,39 @@
 import { isFile } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import type { VirtualPage } from "./types.ts";
-// Embedded at compile time: a compiled binary does not carry the
-// `readTextFileSync(new URL(...))` below, which broke `wiki build` in every
-// standalone release asset.
-import fallbackLayoutHtml from "../index.html" with { type: "text" };
+
+/**
+ * The page layout used when a wiki sets none. Kept in the source because the
+ * `jsr` publisher rejects text imports.
+ */
+const FALLBACK_LAYOUT_HTML = [
+  "<!DOCTYPE html>",
+  "<html lang=en>",
+  "<head>",
+  "<meta charset=UTF-8>",
+  "<meta name=viewport content=width=device-width,initial-scale=1.0>",
+  "%wiki.head%",
+  "</head>",
+  "<body>",
+  "%wiki.body%",
+  "</body>",
+  "</html>",
+  "",
+  "",
+].join("\n");
 
 function escapeHtml(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll(
-      "'",
-      "&#x27;",
-    );
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#x27;");
 }
 
 function templateText(path: string | null): string {
   if (path !== null && isFile(path)) return readTextTolerant(path);
-  return fallbackLayoutHtml;
+  return FALLBACK_LAYOUT_HTML;
 }
 
 /**
@@ -53,11 +70,9 @@ export function renderLayout(
     for (const [token, value] of extraTokens) tokens.set(token, value);
   }
   let result = templateText(templatePath);
-  for (
-    const [token, value] of [...tokens].sort((left, right) =>
-      right[0].length - left[0].length
-    )
-  ) {
+  for (const [token, value] of [...tokens].sort(
+    (left, right) => right[0].length - left[0].length,
+  )) {
     result = result.replaceAll(token, value);
   }
   return result;

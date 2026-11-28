@@ -28,7 +28,9 @@ export function canCreateSymlinks(): boolean {
   } finally {
     try {
       sys.removeSync(dir, { recursive: true });
-    } catch { /* the probe's own leftovers are not worth failing over */ }
+    } catch {
+      /* the probe's own leftovers are not worth failing over */
+    }
   }
   return cached;
 }

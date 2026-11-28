@@ -240,10 +240,11 @@ export class Wiki {
       }
     }
 
-    let current = inputs.length === config.wiki.input.length &&
-        inputs.every((path, index) => path === config.wiki.input[index])
-      ? config
-      : copyConfig(config, { wiki: { ...config.wiki, input: inputs } });
+    let current =
+      inputs.length === config.wiki.input.length &&
+      inputs.every((path, index) => path === config.wiki.input[index])
+        ? config
+        : copyConfig(config, { wiki: { ...config.wiki, input: inputs } });
 
     // A resolved path that is already an input is not added twice: a config can
     // name the same directory as a source and as `wiki.input` after a hand edit.
@@ -334,9 +335,10 @@ export class Wiki {
     const batch = new DocumentBatch(this.config, files ?? null);
     const fileFilter = batch.routeFilter();
     const filePaths = batch.documentPaths();
-    let report = filePaths !== null
-      ? await runCheck(this.config, { fileFilter, filePaths })
-      : await runCheck(this.config, { fileFilter });
+    let report =
+      filePaths !== null
+        ? await runCheck(this.config, { fileFilter, filePaths })
+        : await runCheck(this.config, { fileFilter });
     if (options.strict ?? false) report = report.applyStrict();
     return report;
   }
@@ -415,16 +417,17 @@ export class Wiki {
       diskCache: options.cache ?? false,
     });
     const result = await runQuery(graph, sparqlQuery, {
-      format: options.jq !== undefined && options.jq !== null
-        ? "json"
-        : options.format ?? "table",
+      format:
+        options.jq !== undefined && options.jq !== null
+          ? "json"
+          : (options.format ?? "table"),
       baseIri: this.config.base_iri,
       pretty: options.pretty ?? false,
     });
     if (options.jq === undefined || options.jq === null) return result;
-    return resolvePath(JSON.parse(result), options.jq).map(describeText).join(
-      "\n",
-    );
+    return resolvePath(JSON.parse(result), options.jq)
+      .map(describeText)
+      .join("\n");
   }
 
   async render(
@@ -496,8 +499,7 @@ export class Wiki {
   async serve(options: ServeOptions = {}): Promise<void> {
     const baseUrl = options.baseUrl ?? this.config.site.base_url;
     const urlStyle = (options.urlStyle ?? this.config.site.url_style) as
-      | "dir"
-      | "file";
+      "dir" | "file";
     const tempDir = await sys.makeTempDir({ prefix: "wiki-serve-" });
     const outputDir = tempDir;
     let server: Awaited<ReturnType<typeof startStaticSiteServer>> | null = null;
@@ -515,9 +517,8 @@ export class Wiki {
         );
       }
       const baseParts = baseUrl.split("/").filter(Boolean);
-      const siteDir = baseParts.length > 0
-        ? join(outputDir, ...baseParts)
-        : outputDir;
+      const siteDir =
+        baseParts.length > 0 ? join(outputDir, ...baseParts) : outputDir;
       auth = await createAuthHandler(this.config.site.auth, baseUrl);
       const sparqlHandler = createSparqlServiceHandler(this, {
         path: this.config.sparql_service.path,
@@ -560,9 +561,7 @@ export class Wiki {
                 );
               }
             } catch (error) {
-              console.error(
-                `Error: ${errorText(error)}`,
-              );
+              console.error(`Error: ${errorText(error)}`);
             }
             snapshot = this.watchSnapshot();
           }
@@ -572,9 +571,9 @@ export class Wiki {
       }
       console.log(`Wiki server ready at ${server.url}`);
       console.log(
-        `Serving ${result.page_count} pages from ${
-          this.config.wiki.input.join(", ")
-        }`,
+        `Serving ${result.page_count} pages from ${this.config.wiki.input.join(
+          ", ",
+        )}`,
       );
       if (result.page_count === 0) {
         console.log(
@@ -627,9 +626,10 @@ export class Wiki {
       ".ttf",
     ]);
     const files = new Map<string, string>();
-    for (
-      const root of [...this.config.wiki.input, ...this.config.wiki.assets]
-    ) {
+    for (const root of [
+      ...this.config.wiki.input,
+      ...this.config.wiki.assets,
+    ]) {
       if (!pathExists(root)) continue;
       const paths = isFile(root) ? [root] : walkTree(root);
       for (const path of paths) {
@@ -638,20 +638,23 @@ export class Wiki {
         files.set(path, path);
       }
     }
-    return [...files.values()].sort((a, b) => a.localeCompare(b))
+    return [...files.values()]
+      .sort((a, b) => a.localeCompare(b))
       .map((path) => {
         const stat = sys.statSync(path);
         return `${path}:${stat.mtime?.getTime() ?? 0}:${stat.size}`;
-      }).join("\n");
+      })
+      .join("\n");
   }
 
   link(
     files?: readonly string[] | null,
     options: LinkOptions = {},
   ): LinkReport {
-    const fileFilter = files && files.length > 0
-      ? routesFromMarkdownFiles(this.config, files)
-      : null;
+    const fileFilter =
+      files && files.length > 0
+        ? routesFromMarkdownFiles(this.config, files)
+        : null;
     const report = {
       ok: true,
       opportunities: 0,

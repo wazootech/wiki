@@ -1,5 +1,11 @@
 import MarkdownIt from "markdown-it";
-import type { Token } from "markdown-it/index.js";
+import type {
+  Options,
+  Renderer,
+  RendererRule,
+  StateInline,
+  Token,
+} from "markdown-it";
 import { GitHubHeadingSlugger, parseHeadings } from "../headings.ts";
 import {
   isExternalLink,
@@ -12,7 +18,7 @@ import type { TocItem } from "./types.ts";
 export function titleFromMarkdown(markdown: string, fallback: string): string {
   const heading = parseHeadings(markdown).find((item) => item.level === 1);
   if (heading !== undefined) return heading.text.trim();
-  const stem = fallback ? fallback.split("/").at(-1) ?? "Index" : "Index";
+  const stem = fallback ? (fallback.split("/").at(-1) ?? "Index") : "Index";
   return stem.replaceAll("_", " ").replaceAll("-", " ").trim() || "Index";
 }
 
@@ -47,7 +53,7 @@ function installWikiLinkRule(
   md.inline.ruler.before(
     "link",
     "wikilink",
-    (state: MarkdownIt.StateInline, silent: boolean) => {
+    (state: StateInline, silent: boolean) => {
       const start = state.pos;
       if (state.src.slice(start, start + 2) !== "[[") return false;
       const close = state.src.indexOf("]]", start + 2);
@@ -55,8 +61,8 @@ function installWikiLinkRule(
       const raw = state.src.slice(start + 2, close);
       const separator = raw.indexOf("|");
       const target = (separator < 0 ? raw : raw.slice(0, separator)).trim();
-      const label = (separator < 0 ? raw : raw.slice(separator + 1)).trim() ||
-        target;
+      const label =
+        (separator < 0 ? raw : raw.slice(separator + 1)).trim() || target;
       if (target === "") return false;
       if (silent) {
         state.pos = close + 2;
@@ -102,12 +108,12 @@ export function renderWikiMarkdown(
   const headings = parseHeadings(markdown);
   const slugger = new GitHubHeadingSlugger();
   let headingIndex = 0;
-  const headingRule: MarkdownIt.Renderer.RenderRule = (
+  const headingRule: RendererRule = (
     tokens: Token[],
     index: number,
-    options: MarkdownIt.Options,
+    options: Options,
     _environment: unknown,
-    renderer: MarkdownIt.Renderer,
+    renderer: Renderer,
   ) => {
     const token = tokens[index]!;
     const heading = headings[headingIndex++];
@@ -116,12 +122,12 @@ export function renderWikiMarkdown(
     return renderer.renderToken(tokens, index, options);
   };
   md.renderer.rules.heading_open = headingRule;
-  const linkRule: MarkdownIt.Renderer.RenderRule = (
+  const linkRule: RendererRule = (
     tokens: Token[],
     index: number,
-    options: MarkdownIt.Options,
+    options: Options,
     _environment: unknown,
-    renderer: MarkdownIt.Renderer,
+    renderer: Renderer,
   ) => {
     const token = tokens[index]!;
     const href = token.attrGet("href") ?? "";
@@ -132,23 +138,18 @@ export function renderWikiMarkdown(
     return renderer.renderToken(tokens, index, options);
   };
   md.renderer.rules.link_open = linkRule;
-  const fenceRule: MarkdownIt.Renderer.RenderRule = (
-    tokens: Token[],
-    index: number,
-  ) => {
+  const fenceRule: RendererRule = (tokens: Token[], index: number) => {
     const token = tokens[index]!;
     const language = token.info.trim().split(/\s+/, 1)[0] ?? "";
-    const escapedLanguage = md.utils.escapeHtml(language).replaceAll(
-      '"',
-      "&quot;",
-    );
-    const classAttribute = language === ""
-      ? ""
-      : ` class="language-${escapedLanguage}"`;
+    const escapedLanguage = md.utils
+      .escapeHtml(language)
+      .replaceAll('"', "&quot;");
+    const classAttribute =
+      language === "" ? "" : ` class="language-${escapedLanguage}"`;
     const raw = md.utils.escapeHtml(token.content).replaceAll('"', "&quot;");
-    const code = `<pre data-copy="${raw}"><code${classAttribute}>${
-      md.utils.escapeHtml(token.content)
-    }</code></pre>\n`;
+    const code = `<pre data-copy="${raw}"><code${classAttribute}>${md.utils.escapeHtml(
+      token.content,
+    )}</code></pre>\n`;
     return code;
   };
   md.renderer.rules.fence = fenceRule;

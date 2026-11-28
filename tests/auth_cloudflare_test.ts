@@ -35,10 +35,10 @@ const CONTEXT: AuthContext = {
 function encodeBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(
-    /=+$/,
-    "",
-  );
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 function encodeJson(value: unknown): string {
@@ -125,10 +125,7 @@ async function serveKeys(keys: AccessJwk[]): Promise<TestServer> {
   };
 }
 
-async function identityFor(
-  jwksUrl: string,
-  assertion: string,
-) {
+async function identityFor(jwksUrl: string, assertion: string) {
   const provider = await createCloudflareAccessProvider(CONFIG, jwksUrl);
   const request = new Request("https://wiki.example.org/", {
     headers: { "Cf-Access-Jwt-Assertion": assertion },
@@ -140,10 +137,7 @@ test("cloudflare-access accepts a valid assertion", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
-    const assertion = await signJwt(
-      keys.privateKey,
-      claims({ name: "Alice" }),
-    );
+    const assertion = await signJwt(keys.privateKey, claims({ name: "Alice" }));
     const identity = await identityFor(server.jwksUrl, assertion);
     assertEquals(identity, { id: "alice@example.com", name: "Alice" });
   } finally {
@@ -200,15 +194,14 @@ test("cloudflare-access checks issuer, expiry, and not-before", async () => {
       await signJwt(keys.privateKey, claims(overrides)),
     );
   try {
-    for (
-      const rejected of [
-        { iss: "https://other.cloudflareaccess.com" },
-        { iss: undefined },
-        { exp: now - 1 },
-        { nbf: now + 600 },
-        { nbf: "now" },
-      ]
-    ) assertEquals(await identityWith(rejected), null);
+    for (const rejected of [
+      { iss: "https://other.cloudflareaccess.com" },
+      { iss: undefined },
+      { exp: now - 1 },
+      { nbf: now + 600 },
+      { nbf: "now" },
+    ])
+      assertEquals(await identityWith(rejected), null);
     // Slight clock skew passes, and `nbf` is optional.
     for (const accepted of [{ nbf: now + 30 }, { nbf: undefined }]) {
       assertEquals(await identityWith(accepted), { id: "alice@example.com" });

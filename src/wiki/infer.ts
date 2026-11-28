@@ -37,9 +37,9 @@ const logger = getLogger("wiki.infer");
 
 /** A stable key for a quad, excluding the graph (the caller is one graph). */
 function tripleKey(quad: Quad): string {
-  return `${termKey(quad.subject)}|${termKey(quad.predicate)}|${
-    termKey(quad.object)
-  }`;
+  return `${termKey(quad.subject)}|${termKey(quad.predicate)}|${termKey(
+    quad.object,
+  )}`;
 }
 
 /**
@@ -60,9 +60,11 @@ export function applyInference(
     // A dataset's named graph holds quads that carry their graph term; the
     // reasoner ignores the graph term (#382). `graph.add` below puts each
     // derived triple back into this graph.
-    const asserted = graph.toArray().map((item) =>
-      triple(item.subject, item.predicate as NamedNode, item.object)
-    );
+    const asserted = graph
+      .toArray()
+      .map((item) =>
+        triple(item.subject, item.predicate as NamedNode, item.object),
+      );
     const reasoner = new Reasoner();
     reasoner.add(asserted);
     reasoner.run();

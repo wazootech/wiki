@@ -104,7 +104,7 @@ test("Wiki.load honours wiki_inputs over the config file", () => {
     // The filesystem normalises one spelling to the other, so the assertion is
     // on the segment rather than the separator.
     assert(
-      (absolute.config.wiki.input[0]!).replaceAll("\\", "/").endsWith("/extra"),
+      absolute.config.wiki.input[0]!.replaceAll("\\", "/").endsWith("/extra"),
     );
   } finally {
     cleanup(root);

@@ -20,9 +20,7 @@ test("resolvePath handles nested keys, wildcards, and indexes", () => {
 });
 
 test("resolvePath supports Unicode keys and absent paths", () => {
-  assertEquals(resolvePath({ "naïve": { "名字": "Ada" } }, "naïve.名字"), [
-    "Ada",
-  ]);
+  assertEquals(resolvePath({ naïve: { 名字: "Ada" } }, "naïve.名字"), ["Ada"]);
   assertEquals(resolvePath({ users: [] }, "users[].name"), []);
   assertEquals(resolvePath({ value: 1 }, "missing"), []);
   assertEquals(resolvePath(["Ada"], "0"), []);
@@ -32,7 +30,7 @@ test("resolvePath supports Unicode keys and absent paths", () => {
 
 test("resolvePath rejects malformed tokens", () => {
   const error = assertThrows(() =>
-    resolvePath({ items: [] }, "items[not-an-index]")
+    resolvePath({ items: [] }, "items[not-an-index]"),
   );
   assert(error instanceof Error);
   assertStringIncludes(error.message, "Invalid path token");

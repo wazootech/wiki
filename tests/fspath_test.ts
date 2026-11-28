@@ -23,39 +23,44 @@ import { symlinksUnavailable } from "./support/symlink_support.ts";
 // Needs SeCreateSymbolicLinkPrivilege, which a Windows host only grants to
 // Administrators or processes in Developer Mode. Skipped, not passed, where
 // the OS refuses the symlink.
-test("path helpers read BOM-tolerant text and check symlinks", {
-  skip: symlinksUnavailable(),
-}, () => {
-  const root = sys.makeTempDirSync({ prefix: "wiki-fspath-" });
-  const outside = sys.makeTempDirSync({ prefix: "wiki-fspath-outside-" });
-  try {
-    const text = join(root, "text.md");
-    const dotDotName = join(root, "..notes.md");
-    const target = join(outside, "target.md");
-    const link = join(root, "link.md");
-    sys.writeTextFileSync(text, "\uFEFF# Page\n");
-    sys.writeTextFileSync(dotDotName, "# Notes\n");
-    sys.writeTextFileSync(target, "# Outside\n");
-    sys.symlinkSync(target, link);
+test(
+  "path helpers read BOM-tolerant text and check symlinks",
+  {
+    skip: symlinksUnavailable(),
+  },
+  () => {
+    const root = sys.makeTempDirSync({ prefix: "wiki-fspath-" });
+    const outside = sys.makeTempDirSync({ prefix: "wiki-fspath-outside-" });
+    try {
+      const text = join(root, "text.md");
+      const dotDotName = join(root, "..notes.md");
+      const target = join(outside, "target.md");
+      const link = join(root, "link.md");
+      sys.writeTextFileSync(text, "\uFEFF# Page\n");
+      sys.writeTextFileSync(dotDotName, "# Notes\n");
+      sys.writeTextFileSync(target, "# Outside\n");
+      sys.symlinkSync(target, link);
 
-    assertEquals(readText(text), "# Page\n");
-    assertEquals(pathExists(link), true);
-    assertEquals(isSymlink(link), true);
-    assertEquals(isFile(link), true);
-    assertEquals(isDirectory(link), false);
-    assertEquals(relativeWithin(dotDotName, root), "..notes.md");
-    assertThrows(() => relativeWithin(link, root), ValueError);
-  } finally {
-    sys.removeSync(root, { recursive: true });
-    sys.removeSync(outside, { recursive: true });
-  }
-});
+      assertEquals(readText(text), "# Page\n");
+      assertEquals(pathExists(link), true);
+      assertEquals(isSymlink(link), true);
+      assertEquals(isFile(link), true);
+      assertEquals(isDirectory(link), false);
+      assertEquals(relativeWithin(dotDotName, root), "..notes.md");
+      assertThrows(() => relativeWithin(link, root), ValueError);
+    } finally {
+      sys.removeSync(root, { recursive: true });
+      sys.removeSync(outside, { recursive: true });
+    }
+  },
+);
 
 test("path sorting uses string order and traversal stays in-tree", () => {
-  assertEquals(
-    sortPaths(["notes.md", "notes/inner.md", "notes"]),
-    ["notes", "notes.md", "notes/inner.md"],
-  );
+  assertEquals(sortPaths(["notes.md", "notes/inner.md", "notes"]), [
+    "notes",
+    "notes.md",
+    "notes/inner.md",
+  ]);
 
   const root = sys.makeTempDirSync({ prefix: "wiki-fspath-walk-" });
   try {
@@ -71,31 +76,37 @@ test("path sorting uses string order and traversal stays in-tree", () => {
   }
 });
 
-test("walkTree never follows or lists symlinks", {
-  skip: symlinksUnavailable(),
-}, () => {
-  const root = sys.makeTempDirSync({ prefix: "wiki-fspath-walklink-" });
-  const outside = sys.makeTempDirSync({ prefix: "wiki-fspath-walkout-" });
-  try {
-    sys.writeTextFileSync(join(root, "real.md"), "# Real\n");
-    sys.mkdirSync(join(root, "realdir"));
-    sys.writeTextFileSync(join(root, "realdir", "inner.md"), "# Inner\n");
-    sys.writeTextFileSync(join(outside, "secret.md"), "# Secret\n");
-    // A symlink to a file outside the tree, one to a directory outside it,
-    // and one looping back inside: none may be followed or listed, so a
-    // symlinked wiki input can neither leak outside files into the build
-    // nor let `fmt`/`render` write through the link.
-    sys.symlinkSync(join(outside, "secret.md"), join(root, "evil.md"));
-    sys.symlinkSync(outside, join(root, "evildir"));
-    sys.symlinkSync(join(root, "realdir"), join(root, "loop"));
+test(
+  "walkTree never follows or lists symlinks",
+  {
+    skip: symlinksUnavailable(),
+  },
+  () => {
+    const root = sys.makeTempDirSync({ prefix: "wiki-fspath-walklink-" });
+    const outside = sys.makeTempDirSync({ prefix: "wiki-fspath-walkout-" });
+    try {
+      sys.writeTextFileSync(join(root, "real.md"), "# Real\n");
+      sys.mkdirSync(join(root, "realdir"));
+      sys.writeTextFileSync(join(root, "realdir", "inner.md"), "# Inner\n");
+      sys.writeTextFileSync(join(outside, "secret.md"), "# Secret\n");
+      // A symlink to a file outside the tree, one to a directory outside it,
+      // and one looping back inside: none may be followed or listed, so a
+      // symlinked wiki input can neither leak outside files into the build
+      // nor let `fmt`/`render` write through the link.
+      sys.symlinkSync(join(outside, "secret.md"), join(root, "evil.md"));
+      sys.symlinkSync(outside, join(root, "evildir"));
+      sys.symlinkSync(join(root, "realdir"), join(root, "loop"));
 
-    const rel = walkTree(root).map((path) => relative(root, path)).sort();
-    assertEquals(rel, ["real.md", "realdir", join("realdir", "inner.md")]);
-  } finally {
-    sys.removeSync(root, { recursive: true });
-    sys.removeSync(outside, { recursive: true });
-  }
-});
+      const rel = walkTree(root)
+        .map((path) => relative(root, path))
+        .sort();
+      assertEquals(rel, ["real.md", "realdir", join("realdir", "inner.md")]);
+    } finally {
+      sys.removeSync(root, { recursive: true });
+      sys.removeSync(outside, { recursive: true });
+    }
+  },
+);
 
 test("an overlay stages creates, edits, and deletes for every read", async () => {
   const root = sys.makeTempDirSync({ prefix: "wiki-overlay-" });
@@ -140,10 +151,10 @@ test("an overlay stages creates, edits, and deletes for every read", async () =>
     assertEquals(activeOverlay(), undefined);
     assertEquals(readText(kept), "old");
     assertEquals(isFile(created), false);
-    assertEquals(walkTree(root).map((path) => relative(root, path)), [
-      "gone.md",
-      "kept.md",
-    ]);
+    assertEquals(
+      walkTree(root).map((path) => relative(root, path)),
+      ["gone.md", "kept.md"],
+    );
   } finally {
     sys.removeSync(root, { recursive: true });
   }

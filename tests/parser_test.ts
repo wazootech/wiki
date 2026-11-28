@@ -145,10 +145,7 @@ test("documentDataFromPath tolerates BOM-prefixed data files (wiki#312)", () => 
       json,
       "\uFEFF" + '{"type": "Person", "givenName": "Alice"}',
     );
-    sys.writeTextFileSync(
-      yml,
-      "\uFEFF" + "type: Person\ngivenName: Gregory\n",
-    );
+    sys.writeTextFileSync(yml, "\uFEFF" + "type: Person\ngivenName: Gregory\n");
     assertEquals(documentDataFromPath(json)?.["givenName"], "Alice");
     assertEquals(documentDataFromPath(yml)?.["givenName"], "Gregory");
   });

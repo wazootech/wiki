@@ -80,11 +80,7 @@ test("every issue code is the lint config key that controls it", async () => {
     // The fixture is the Python one: a page whose wikilink is broken and
     // another that links onward in wikilink syntax while `link.style` is
     // `standard`, so `broken_links` and `link_style` both have findings.
-    write(
-      root,
-      "Page.md",
-      "---\ntype: schema:WebPage\n---\n\n[[Missing]]",
-    );
+    write(root, "Page.md", "---\ntype: schema:WebPage\n---\n\n[[Missing]]");
     write(
       root,
       "Wikilink_Page.md",

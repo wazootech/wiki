@@ -123,9 +123,9 @@ function snapshot(dir: string): Map<string, string> {
         const stat = sys.statSync(path);
         files.set(
           path,
-          `${stat.mtime?.getTime()}:${
-            Array.from(sys.readFileSync(path)).join(",")
-          }`,
+          `${stat.mtime?.getTime()}:${Array.from(sys.readFileSync(path)).join(
+            ",",
+          )}`,
         );
       }
     }
@@ -291,15 +291,18 @@ function objects(
   subject: string,
   predicate: string,
 ): Array<{ value: string; datatype: string | undefined }> {
-  return [...graph.match(
-    { termType: "NamedNode", value: subject } as never,
-    { termType: "NamedNode", value: predicate } as never,
-    null,
-  )].map((quad) => ({
+  return [
+    ...graph.match(
+      { termType: "NamedNode", value: subject } as never,
+      { termType: "NamedNode", value: predicate } as never,
+      null,
+    ),
+  ].map((quad) => ({
     value: quad.object.value,
-    datatype: quad.object.termType === "Literal"
-      ? quad.object.datatype.value
-      : undefined,
+    datatype:
+      quad.object.termType === "Literal"
+        ? quad.object.datatype.value
+        : undefined,
   }));
 }
 
@@ -348,22 +351,30 @@ test("an explicit frontmatter value wins over the derived one", async () => {
     const graph = await Wiki.load(root).graph({ infer: false, reload: true });
     for (const route of ["Bare", "Prefixed"]) {
       assertEquals(
-        objects(graph, `https://wiki.example.org/${route}`, `${SCHEMA}headline`)
-          .map((object) => object.value),
+        objects(
+          graph,
+          `https://wiki.example.org/${route}`,
+          `${SCHEMA}headline`,
+        ).map((object) => object.value),
         ["Chosen"],
       );
     }
     // A date-only override stays a date: not duplicated, not rewritten.
     assertEquals(
       objects(graph, "https://wiki.example.org/Bare", `${SCHEMA}dateModified`),
-      [{
-        value: "2020-01-01",
-        datatype: "http://www.w3.org/2001/XMLSchema#date",
-      }],
+      [
+        {
+          value: "2020-01-01",
+          datatype: "http://www.w3.org/2001/XMLSchema#date",
+        },
+      ],
     );
     assertEquals(
-      objects(graph, "https://wiki.example.org/Bare", `${SCHEMA}dateCreated`)
-        .map((object) => object.value),
+      objects(
+        graph,
+        "https://wiki.example.org/Bare",
+        `${SCHEMA}dateCreated`,
+      ).map((object) => object.value),
       ["2026-02-03T04:05:06Z"],
     );
   } finally {
@@ -394,16 +405,14 @@ test("read-only graph operations write nothing", async () => {
     commit(root, "create", "2026-02-03T04:05:06Z");
     write(root, "wiki/Fresh.md", "---\ntype: Article\n---\n\n# Fresh\n");
     const before = snapshot(join(root, "wiki"));
-    for (
-      const args of [
-        ["query", "SELECT ?s WHERE { ?s ?p ?o }"],
-        ["check"],
-        ["lint"],
-        ["render", "--check"],
-        ["fix"],
-        ["fix", "--dry-run", "-v"],
-      ]
-    ) {
+    for (const args of [
+      ["query", "SELECT ?s WHERE { ?s ?p ?o }"],
+      ["check"],
+      ["lint"],
+      ["render", "--check"],
+      ["fix"],
+      ["fix", "--dry-run", "-v"],
+    ]) {
       const result = await runCli(root, args);
       assert(result.code === 0, `${args.join(" ")}: ${result.stderr}`);
     }
@@ -518,8 +527,8 @@ test("lint.redundant_frontmatter is off by default and warns when on", async () 
       "wiki:\n  input: [wiki]\nlint:\n  redundant_frontmatter: warning\n",
     );
     const report = await Wiki.load(root).lint();
-    const found = report.warnings.filter((issue) =>
-      issue.code === "redundant_frontmatter"
+    const found = report.warnings.filter(
+      (issue) => issue.code === "redundant_frontmatter",
     );
     assertEquals(found.length, 1, JSON.stringify(report.warnings));
     assertEquals(found[0]!.route, "Repeats");
@@ -543,7 +552,8 @@ test("lint.redundant_frontmatter is off by default and warns when on", async () 
 // ---------------------------------------------------------------------------
 
 test("removal cuts only the entry's lines and keeps every other byte", () => {
-  const before = "---\r\n# a leading comment\r\n'@type': schema:Article\r\n" +
+  const before =
+    "---\r\n# a leading comment\r\n'@type': schema:Article\r\n" +
     'headline: "Quoted Title" # same as the H1\r\n' +
     "name: 'single quoted'\r\n" +
     "summary: >-\r\n  folded\r\n  text\r\n" +
@@ -592,7 +602,8 @@ test("an entry that cannot be cut cleanly is skipped, not mangled", () => {
 test("wiki fix previews by default and removes only redundant fields with --apply", async () => {
   const root = gitWiki();
   try {
-    const repeats = "---\r\n# kept comment\r\ntype: Article\r\n" +
+    const repeats =
+      "---\r\n# kept comment\r\ntype: Article\r\n" +
       "headline: 'Repeats'\r\n" +
       "dateCreated: 2026-02-03T04:05:06Z\r\n" +
       "dateModified: 2026-02-03\r\n" +
@@ -752,12 +763,16 @@ test("wiki export includes derived values; explicit keys stay as written", async
         `<${XSD_DATETIME}>`,
     );
 
-    const all = JSON.parse((await runCli(root, ["export"])).stdout) as Array<
-      { name: string; rdf: Record<string, unknown> }
-    >;
+    const all = JSON.parse((await runCli(root, ["export"])).stdout) as Array<{
+      name: string;
+      rdf: Record<string, unknown>;
+    }>;
     assertEquals(
       all.map((item) => [item.name, item.rdf["schema:headline"] ?? null]),
-      [["Chosen.md", null], ["Page.md", "Page Title"]],
+      [
+        ["Chosen.md", null],
+        ["Page.md", "Page Title"],
+      ],
     );
   } finally {
     cleanup(root);

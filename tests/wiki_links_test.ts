@@ -236,14 +236,17 @@ test("the link audit matches the oracle, record for record", () => {
         ],
       ],
     );
-    assertEquals(issues.map((issue) => issue.message), [
-      "In Alpha: Broken WikiLink [Missing] points to non-existent document.",
-      "In Alpha: Broken WikiLink [Beta#Nowhere] points to missing heading '#nowhere'.",
-      "In Alpha.md: Broken asset link [../assets/nope.png] points to missing asset: ../assets/nope.png.",
-      "In Alpha: Broken Markdown link [../../elsewhere.md] points to non-existent document.",
-      "In Meta: Broken Metadata reference [wiki:Absent] points to non-existent wiki document.",
-      "In Meta.md: Broken frontmatter asset [../assets/nope.png] points to missing asset: ../assets/nope.png.",
-    ]);
+    assertEquals(
+      issues.map((issue) => issue.message),
+      [
+        "In Alpha: Broken WikiLink [Missing] points to non-existent document.",
+        "In Alpha: Broken WikiLink [Beta#Nowhere] points to missing heading '#nowhere'.",
+        "In Alpha.md: Broken asset link [../assets/nope.png] points to missing asset: ../assets/nope.png.",
+        "In Alpha: Broken Markdown link [../../elsewhere.md] points to non-existent document.",
+        "In Meta: Broken Metadata reference [wiki:Absent] points to non-existent wiki document.",
+        "In Meta.md: Broken frontmatter asset [../assets/nope.png] points to missing asset: ../assets/nope.png.",
+      ],
+    );
   } finally {
     cleanup(root);
   }
@@ -269,7 +272,8 @@ test("pageLinkMatches skips links inside inline and fenced code (#362)", () => {
   // The backlink index, `wiki file refs`, and the `mv`/`rm` rewrites all read
   // this list, so a fenced example must neither count as a backlink nor be
   // rewritten when its target moves.
-  const content = "---\ntype: TechArticle\n---\n# A\n\n" +
+  const content =
+    "---\ntype: TechArticle\n---\n# A\n\n" +
     "[Beta](Beta.md) and [[Beta]]\n\n" +
     "`[x](Beta.md)`\n\n" +
     '```bash\necho "[x](Beta.md)"\n[[Beta]]\n```\n';
@@ -306,7 +310,10 @@ test("valid CommonMark link forms are not findings (#376)", () => {
       ].join("\n"),
     );
     const index = LinkIndex.fromConfig(configFor(root));
-    assertEquals(index.brokenLinks().map((issue) => issue.message), []);
+    assertEquals(
+      index.brokenLinks().map((issue) => issue.message),
+      [],
+    );
     assertEquals(index.backlinksTo("Home"), ["Page"]);
   } finally {
     cleanup(root);
@@ -318,7 +325,10 @@ test("a titled link that is broken is still reported by its target (#376)", () =
   try {
     write(root, "wiki/Page.md", '# Page\n\n[x](Nope.md "A title")\n');
     const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
-    assertEquals(issues.map((issue) => issue.raw_target), ["Nope.md"]);
+    assertEquals(
+      issues.map((issue) => issue.raw_target),
+      ["Nope.md"],
+    );
     assertEquals(issues[0]?.issue_kind, "missing_document");
   } finally {
     cleanup(root);
@@ -330,7 +340,10 @@ test("#top needs no heading, any other missing fragment still does (#376)", () =
   try {
     write(root, "wiki/Page.md", "# Page\n\n[a](#top) [b](#nope)\n");
     const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
-    assertEquals(issues.map((issue) => issue.raw_target), ["#nope"]);
+    assertEquals(
+      issues.map((issue) => issue.raw_target),
+      ["#nope"],
+    );
   } finally {
     cleanup(root);
   }
@@ -350,10 +363,10 @@ test("a site-root-relative link is checked against its route (#376)", () => {
     const issues = LinkIndex.fromConfig(configFor(root)).brokenLinks();
     assertEquals(
       issues.map((issue) => [issue.raw_target, issue.issue_kind]),
-      [["/wiki/Nope/", "missing_document"], [
-        "/wiki/Home/#nope",
-        "missing_heading",
-      ]],
+      [
+        ["/wiki/Nope/", "missing_document"],
+        ["/wiki/Home/#nope", "missing_heading"],
+      ],
     );
   } finally {
     cleanup(root);

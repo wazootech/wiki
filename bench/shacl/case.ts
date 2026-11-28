@@ -4,7 +4,7 @@
  * `run.ts` spawns a fresh process per case so no case inherits another's graph
  * cache or heap, and so a case that runs out of memory fails alone.
  *
- * Usage: `deno run -A bench/shacl/case.ts <case> <fixture-dir>`
+ * Usage: `bun bench/shacl/case.ts <case> <fixture-dir>`
  */
 
 import * as sys from "../../src/wiki/sys.ts";
@@ -31,7 +31,7 @@ export const CASES = [
   "wiki-check-scoped-1",
   "wiki-check-scoped-50",
 ] as const;
-export type CaseName = typeof CASES[number];
+export type CaseName = (typeof CASES)[number];
 
 /** How many writes `validator-delta` times. */
 const DELTA_OPS = 200;
@@ -170,16 +170,12 @@ async function runCase(name: CaseName, dir: string): Promise<CaseResult> {
   const start = performance.now();
   switch (name) {
     case "validator-full": {
-      const data = await phase(
-        phases,
-        "parse",
-        () => readGraph(join(dir, "data.nt")),
+      const data = await phase(phases, "parse", () =>
+        readGraph(join(dir, "data.nt")),
       );
       const shapes = readGraph(join(dir, "shapes.ttl"));
-      const outcome = await phase(
-        phases,
-        "validate",
-        () => validateShacl(data, shapes),
+      const outcome = await phase(phases, "validate", () =>
+        validateShacl(data, shapes),
       );
       violations = outcome.results.length;
       break;
@@ -225,19 +221,17 @@ async function runCase(name: CaseName, dir: string): Promise<CaseResult> {
       phases["fetchP95"] = percentile(fetches, 0.95);
       phases["validateP50"] = percentile(validations, 0.5);
       phases["validateP95"] = percentile(validations, 0.95);
-      notes = `${DELTA_OPS} writes; mean ${
-        Math.round(sizes / DELTA_OPS)
-      } quads validated per write; fetch is an in-memory n3 index lookup, not D1`;
+      notes = `${DELTA_OPS} writes; mean ${Math.round(
+        sizes / DELTA_OPS,
+      )} quads validated per write; fetch is an in-memory n3 index lookup, not D1`;
       break;
     }
     case "wiki-phases": {
       const cfg = config();
       const graph = await phase(phases, "loadGraph", () => loadGraph(cfg));
       const shapes = await phase(phases, "loadShapes", () => loadShapes(graph));
-      const outcome = await phase(
-        phases,
-        "validate",
-        () => validateShacl(graph, shapes),
+      const outcome = await phase(phases, "validate", () =>
+        validateShacl(graph, shapes),
       );
       violations = outcome.results.length;
       notes = `inferred graph: ${graph.size} quads`;
@@ -246,19 +240,20 @@ async function runCase(name: CaseName, dir: string): Promise<CaseResult> {
     case "wiki-check-full":
     case "wiki-check-scoped-1":
     case "wiki-check-scoped-50": {
-      const pages = name === "wiki-check-scoped-1"
-        ? 1
-        : name === "wiki-check-scoped-50"
-        ? 50
-        : 0;
-      const filePaths = pages === 0 ? null : Array.from(
-        { length: pages },
-        (_, i) => join(wiki, `Bench_Person_${i}.md`),
-      );
-      const report = await phase(
-        phases,
-        "runCheck",
-        () => runCheck(config(), { filePaths }),
+      const pages =
+        name === "wiki-check-scoped-1"
+          ? 1
+          : name === "wiki-check-scoped-50"
+            ? 50
+            : 0;
+      const filePaths =
+        pages === 0
+          ? null
+          : Array.from({ length: pages }, (_, i) =>
+              join(wiki, `Bench_Person_${i}.md`),
+            );
+      const report = await phase(phases, "runCheck", () =>
+        runCheck(config(), { filePaths }),
       );
       violations = report.errors
         .filter((issue) => issue.code === "shacl_violation")

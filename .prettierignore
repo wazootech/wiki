@@ -1,0 +1,8 @@
+# `bun fmt` formats the code. Markdown pages are formatted by `wiki fmt`, and
+# these are generated, are fixtures whose bytes the tests compare, or belong to
+# another toolchain.
+src/wiki/dprint/plugins.gen.ts
+src/wiki/templates/
+**/*.md
+tests/fixtures/
+bench/**/fixtures/

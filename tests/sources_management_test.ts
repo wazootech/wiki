@@ -52,15 +52,18 @@ function initRepo(
     sys.writeTextFileSync(file, content);
   }
   git(["add", "."], repo);
-  git([
-    "-c",
-    "user.name=Wiki Tests",
-    "-c",
-    "user.email=wiki-tests@example.invalid",
-    "commit",
-    "-m",
-    "initial",
-  ], repo);
+  git(
+    [
+      "-c",
+      "user.name=Wiki Tests",
+      "-c",
+      "user.email=wiki-tests@example.invalid",
+      "commit",
+      "-m",
+      "initial",
+    ],
+    repo,
+  );
   return repo;
 }
 
@@ -68,15 +71,18 @@ function commitFile(repo: string, relative: string, content: string): string {
   const file = join(repo, relative);
   sys.writeTextFileSync(file, content);
   git(["add", relative], repo);
-  git([
-    "-c",
-    "user.name=Wiki Tests",
-    "-c",
-    "user.email=wiki-tests@example.invalid",
-    "commit",
-    "-m",
-    "update",
-  ], repo);
+  git(
+    [
+      "-c",
+      "user.name=Wiki Tests",
+      "-c",
+      "user.email=wiki-tests@example.invalid",
+      "commit",
+      "-m",
+      "update",
+    ],
+    repo,
+  );
   return git(["rev-parse", "HEAD"], repo);
 }
 
@@ -84,8 +90,8 @@ function rootConfig(
   root: string,
   sources: readonly { name: string; url: string }[] = [],
 ): Config {
-  const entries = sources.map(({ name, url }) =>
-    `  - name: ${name}\n    type: git\n    url: ${url}`
+  const entries = sources.map(
+    ({ name, url }) => `  - name: ${name}\n    type: git\n    url: ${url}`,
   );
   sys.writeTextFileSync(
     join(root, "wiki.yml"),
@@ -125,23 +131,22 @@ test("source install and removal preserve comments in wiki.yml", () => {
     remove(config, "added");
 
     const result = readText(configPath);
-    for (
-      const comment of [
-        "# root comment",
-        "# inline wiki comment",
-        "# sources block comment",
-        "# existing source comment",
-        "# existing source URL comment",
-        "# existing source trailing comment",
-        "# site block comment",
-        "# inline site comment",
-      ]
-    ) {
+    for (const comment of [
+      "# root comment",
+      "# inline wiki comment",
+      "# sources block comment",
+      "# existing source comment",
+      "# existing source URL comment",
+      "# existing source trailing comment",
+      "# site block comment",
+      "# inline site comment",
+    ]) {
       assertStringIncludes(result, comment);
     }
-    assertEquals(Config.load(wikiRoot).sources.map((source) => source.name), [
-      "existing",
-    ]);
+    assertEquals(
+      Config.load(wikiRoot).sources.map((source) => source.name),
+      ["existing"],
+    );
   });
 });
 
@@ -157,7 +162,10 @@ test("install from URL adds config entry and locks a local Git source", () => {
     assertEquals([...lockfile.sources.keys()], ["source"]);
     assertEquals(lockfile.sources.get("source")?.resolved_ref, expectedRef);
     assertEquals(lockfile.sources.get("source")?.required_by, []);
-    assertEquals(config.sources.map((source) => source.name), ["source"]);
+    assertEquals(
+      config.sources.map((source) => source.name),
+      ["source"],
+    );
     assert(
       pathExists(
         join(rootDir, ".wiki", "sources", "source", "repo", "page.md"),
@@ -173,10 +181,12 @@ test("update dry-run reports the new ref without changing the lock", () => {
     const repo = initRepo(root, "source", { "page.md": "# v1\n" });
     const wikiRoot = join(root, "wiki-root");
     sys.mkdirSync(wikiRoot);
-    const config = rootConfig(wikiRoot, [{
-      name: "source",
-      url: repo,
-    }]);
+    const config = rootConfig(wikiRoot, [
+      {
+        name: "source",
+        url: repo,
+      },
+    ]);
     const installed = install(config);
     const oldRef = installed.sources.get("source")!.resolved_ref;
     const lockBefore = readText(join(wikiRoot, "wiki.lock"));
@@ -184,13 +194,19 @@ test("update dry-run reports the new ref without changing the lock", () => {
 
     const dryRun = update(config, undefined, { dry_run: true });
     assertEquals(dryRun.count, 1);
-    assertEquals(dryRun.changed.map((entry) => entry.name), ["source"]);
+    assertEquals(
+      dryRun.changed.map((entry) => entry.name),
+      ["source"],
+    );
     assertEquals(dryRun.updates[0]?.previous_ref, oldRef.slice(0, 12));
     assertEquals(dryRun.updates[0]?.current_ref, newRef.slice(0, 12));
     assertEquals(readText(join(wikiRoot, "wiki.lock")), lockBefore);
 
     const applied = update(config);
-    assertEquals(applied.changed.map((entry) => entry.name), ["source"]);
+    assertEquals(
+      applied.changed.map((entry) => entry.name),
+      ["source"],
+    );
     assertEquals(
       loadLockfile(join(wikiRoot, "wiki.lock")).sources.get("source")
         ?.resolved_ref,
@@ -203,16 +219,17 @@ test("install resolves transitive sources and records parent links", () => {
   withTempDir((root) => {
     const dep = initRepo(root, "dependency", { "dep.md": "# Dependency\n" });
     const parent = initRepo(root, "parent", {
-      "wiki.yml":
-        `wiki:\n  input: wiki\nsources:\n  - name: dependency\n    type: git\n    url: ${dep}\n`,
+      "wiki.yml": `wiki:\n  input: wiki\nsources:\n  - name: dependency\n    type: git\n    url: ${dep}\n`,
       "parent.md": "# Parent\n",
     });
     const wikiRoot = join(root, "wiki-root");
     sys.mkdirSync(wikiRoot);
-    const config = rootConfig(wikiRoot, [{
-      name: "parent",
-      url: parent,
-    }]);
+    const config = rootConfig(wikiRoot, [
+      {
+        name: "parent",
+        url: parent,
+      },
+    ]);
 
     const lockfile = install(config);
     assertEquals([...lockfile.sources.keys()], ["parent", "dependency"]);
@@ -230,12 +247,10 @@ test("remove cascades orphan caches while preserving shared dependencies", () =>
   withTempDir((root) => {
     const shared = initRepo(root, "shared", { "shared.md": "# Shared\n" });
     const sourceA = initRepo(root, "source-a", {
-      "wiki.yml":
-        `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
+      "wiki.yml": `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
     });
     const sourceB = initRepo(root, "source-b", {
-      "wiki.yml":
-        `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
+      "wiki.yml": `sources:\n  - name: shared\n    type: git\n    url: ${shared}\n`,
     });
     const wikiRoot = join(root, "wiki-root");
     sys.mkdirSync(wikiRoot);
@@ -267,8 +282,7 @@ test("remove recursively deletes orphaned dependency chains", () => {
       "wiki.yml": `sources:\n  - name: leaf\n    type: git\n    url: ${leaf}\n`,
     });
     const top = initRepo(root, "top", {
-      "wiki.yml":
-        `sources:\n  - name: middle\n    type: git\n    url: ${middle}\n`,
+      "wiki.yml": `sources:\n  - name: middle\n    type: git\n    url: ${middle}\n`,
     });
     const wikiRoot = join(root, "wiki-root");
     sys.mkdirSync(wikiRoot);
@@ -306,15 +320,13 @@ test("failed clone retains Git stderr in the install error", () => {
   withTempDir((root) => {
     const wikiRoot = join(root, "wiki-root");
     sys.mkdirSync(wikiRoot);
-    const config = rootConfig(wikiRoot, [{
-      name: "missing",
-      url: join(root, "does-not-exist"),
-    }]);
-    const error = assertThrows(
-      () => install(config),
-      Error,
-      "Failed to clone",
-    );
+    const config = rootConfig(wikiRoot, [
+      {
+        name: "missing",
+        url: join(root, "does-not-exist"),
+      },
+    ]);
+    const error = assertThrows(() => install(config), Error, "Failed to clone");
     assertStringIncludes(error.message, "fatal:");
     // The point of the case is that git's own stderr survives into the error.
     // Its wording is not stable across platforms or versions: git on Windows
@@ -333,8 +345,7 @@ test("install rejects a transitive source path escaping its clone", () => {
     // input. The install must fail closed instead.
     const evil = initRepo(root, "evil", { "evil.md": "# Evil\n" });
     const parent = initRepo(root, "parent", {
-      "wiki.yml":
-        `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evil}\n    path: ../../..\n`,
+      "wiki.yml": `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evil}\n    path: ../../..\n`,
       "parent.md": "# Parent\n",
     });
     const wikiRoot = join(root, "wiki-root");
@@ -373,8 +384,7 @@ test(
         evilDir,
       );
       const parent = initRepo(root, "parent", {
-        "wiki.yml":
-          `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evilDir}\n    path: link\n`,
+        "wiki.yml": `wiki:\n  input: wiki\nsources:\n  - name: evil\n    type: git\n    url: ${evilDir}\n    path: link\n`,
         "parent.md": "# Parent\n",
       });
       const wikiRoot = join(root, "wiki-root");
@@ -408,10 +418,12 @@ test("install accepts a transitive source rooted at its clone", () => {
       });
       const wikiRoot = join(root, `wiki-root-${label}`);
       sys.mkdirSync(wikiRoot);
-      const config = rootConfig(wikiRoot, [{
-        name: "parent",
-        url: parent,
-      }]);
+      const config = rootConfig(wikiRoot, [
+        {
+          name: "parent",
+          url: parent,
+        },
+      ]);
       const lockfile = install(config);
       assertEquals([...lockfile.sources.keys()], ["parent", "dep"]);
     }

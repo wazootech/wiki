@@ -29,9 +29,8 @@ const FUZZY_ROUTE_CUTOFF = 0.86;
 
 function compareCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(left, (character) => character.codePointAt(0)!);
-  const rightPoints = Array.from(
-    right,
-    (character) => character.codePointAt(0)!,
+  const rightPoints = Array.from(right, (character) =>
+    character.codePointAt(0)!,
   );
   const sharedLength = Math.min(leftPoints.length, rightPoints.length);
   for (let index = 0; index < sharedLength; index += 1) {
@@ -144,7 +143,7 @@ export function findBrokenLinkFixes(
 ): BrokenLinkFix[] {
   const existingRoutes = new Set(
     iterDocumentFiles(config).map((filePath) =>
-      routeForDocumentFile(config, filePath)
+      routeForDocumentFile(config, filePath),
     ),
   );
   const headingsByRoute = headingIdsByRoute(config);
@@ -158,7 +157,8 @@ export function findBrokenLinkFixes(
       continue;
     }
     if (
-      issue.match_start === null || issue.match_end === null ||
+      issue.match_start === null ||
+      issue.match_end === null ||
       issue.full_match === null
     ) {
       continue;
@@ -202,7 +202,8 @@ function posixRelative(fromDir: string, to: string): string {
   const target = to === "" ? [] : to.split("/");
   let shared = 0;
   while (
-    shared < from.length && shared < target.length &&
+    shared < from.length &&
+    shared < target.length &&
     from[shared] === target[shared]
   ) {
     shared += 1;
@@ -267,9 +268,11 @@ function withTarget(match: PageLinkMatch, target: string): string {
   if (parsed === null) return match.fullMatch;
   // A query string the scanner dropped (`Page.md?x`) belongs to the link, not
   // the route, so it survives the rewrite.
-  const { before, target: raw, after } = parseMarkdownDestination(
-    parsed[2] ?? "",
-  );
+  const {
+    before,
+    target: raw,
+    after,
+  } = parseMarkdownDestination(parsed[2] ?? "");
   const query = raw.includes("?") ? raw.slice(raw.indexOf("?")) : "";
   return `${parsed[1]}${before}${target}${query}${after}${parsed[3]}`;
 }
@@ -355,20 +358,23 @@ export function rewriteMetadataRefs(
   if (refs.length === 0) return text;
   const escape = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return text.split(/(?<=\n)/).map((line) => {
-    if (IDENTITY_KEY_LINE.test(line)) return line;
-    let out = line;
-    for (const { from, to } of refs) {
-      const pattern = new RegExp(
-        `(?<=^|[\\s"'\\[,])${
-          escape(from)
-        }(?=(?:\\.md)?(?:#[^\\s"',\\]]*)?(?:$|[\\s"',\\]]))`,
-        "g",
-      );
-      out = out.replace(pattern, to);
-    }
-    return out;
-  }).join("");
+  return text
+    .split(/(?<=\n)/)
+    .map((line) => {
+      if (IDENTITY_KEY_LINE.test(line)) return line;
+      let out = line;
+      for (const { from, to } of refs) {
+        const pattern = new RegExp(
+          `(?<=^|[\\s"'\\[,])${escape(
+            from,
+          )}(?=(?:\\.md)?(?:#[^\\s"',\\]]*)?(?:$|[\\s"',\\]]))`,
+          "g",
+        );
+        out = out.replace(pattern, to);
+      }
+      return out;
+    })
+    .join("");
 }
 
 export function applyBrokenLinkFixes(
@@ -386,12 +392,16 @@ export function applyBrokenLinkFixes(
   const changed: string[] = [];
   for (const { path, fixes: pathFixes } of byPath.values()) {
     let content = readTextTolerant(path);
-    pathFixes.sort((left, right) =>
-      (right.issue.match_start ?? 0) - (left.issue.match_start ?? 0)
+    pathFixes.sort(
+      (left, right) =>
+        (right.issue.match_start ?? 0) - (left.issue.match_start ?? 0),
     );
     for (const fix of pathFixes) {
-      const { match_start: start, match_end: end, full_match: fullMatch } =
-        fix.issue;
+      const {
+        match_start: start,
+        match_end: end,
+        full_match: fullMatch,
+      } = fix.issue;
       if (start === null || end === null || fullMatch === null) continue;
       if (content.slice(start, end) !== fullMatch) continue;
       const replacement = replaceTargetInMatch(

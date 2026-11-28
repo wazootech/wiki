@@ -89,9 +89,7 @@ export function coerceSchemaRefs(value: unknown): string[] | null {
     const refs: string[] = [];
     for (const item of value) {
       if (typeof item !== "string") {
-        throw new ValueError(
-          "wazoo:jsonSchema list items must be strings",
-        );
+        throw new ValueError("wazoo:jsonSchema list items must be strings");
       }
       const text = item.trim();
       if (text === "") {
@@ -168,9 +166,7 @@ export function isSchemaBindingDocument(fmData: DataRecord): boolean {
  * the page, so validating them against the page schema would report failures
  * the author cannot fix without deleting the binding.
  */
-export function validationPayload(
-  fmData: DataRecord,
-): Record<string, unknown> {
+export function validationPayload(fmData: DataRecord): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fmData)) {
     if (key.startsWith("@")) continue;
@@ -200,9 +196,7 @@ function dedupeRefs(refs: readonly string[]): string[] {
  * against a schema declared in *another* page, so `check --path` still needs
  * the whole registry.
  */
-export function buildTypeSchemaRegistry(
-  config: Config,
-): Map<string, string[]> {
+export function buildTypeSchemaRegistry(config: Config): Map<string, string[]> {
   const registry = new Map<string, string[]>();
   for (const filePath of iterDocumentFiles(config)) {
     const fmData = documentDataFromPath(
@@ -281,9 +275,9 @@ export class SchemaLoader {
     }
     const host = urlHostname(ref);
     if (host === null || !this.remoteSchemaHosts.has(host)) {
-      return `remote schema host ${
-        quoteString(host ?? ref)
-      } is not allowed by check.remote_schema_hosts`;
+      return `remote schema host ${quoteString(
+        host ?? ref,
+      )} is not allowed by check.remote_schema_hosts`;
     }
     return null;
   }
@@ -296,9 +290,10 @@ export class SchemaLoader {
     let result: LoadedSchema;
     if (isRemoteSchemaRef(ref)) {
       const policyError = this.#remotePolicyError(ref);
-      result = policyError !== null
-        ? { schema: null, error: policyError }
-        : await this.#fetchRemote(ref);
+      result =
+        policyError !== null
+          ? { schema: null, error: policyError }
+          : await this.#fetchRemote(ref);
     } else {
       result = this.#loadLocal(ref);
     }
@@ -496,14 +491,14 @@ function formatMissingRef(
   options: { readonly binding: boolean },
 ): string {
   if (isRemoteSchemaRef(ref)) {
-    return `In ${route}: wazoo:jsonSchema ${
-      quoteString(ref)
-    } could not be fetched (${detail}).`;
+    return `In ${route}: wazoo:jsonSchema ${quoteString(
+      ref,
+    )} could not be fetched (${detail}).`;
   }
   if (options.binding) {
-    return `In ${route}: wazoo:jsonSchema on type binding ${
-      quoteString(ref)
-    } ${detail}.`;
+    return `In ${route}: wazoo:jsonSchema on type binding ${quoteString(
+      ref,
+    )} ${detail}.`;
   }
   return `In ${route}: wazoo:jsonSchema ${quoteString(ref)} ${detail}.`;
 }

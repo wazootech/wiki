@@ -135,12 +135,10 @@ test("the whole-corpus check finds the probe's three violations", async () => {
       outcome.resultsText.match(/Constraint Violation in /g)?.length,
       3,
     );
-    for (
-      const message of [
-        "Agent requires schema:name",
-        "Person requires schema:name",
-      ]
-    ) {
+    for (const message of [
+      "Agent requires schema:name",
+      "Person requires schema:name",
+    ]) {
       assert(outcome.resultsText.includes(`\tMessage: ${message}`));
     }
   } finally {
@@ -195,10 +193,7 @@ ex:dave a micro:Agent ; schema:name "Dave" .
     );
     const outcome = await checkShaclAll(configFor(root));
     assert(outcome.conforms);
-    assertEquals(
-      outcome.resultsText,
-      "Validation Report\nConforms: True\n",
-    );
+    assertEquals(outcome.resultsText, "Validation Report\nConforms: True\n");
   } finally {
     cleanup(root);
   }
@@ -306,32 +301,40 @@ test("loadShapes keeps every cell of a list nested in a list (#305)", async () =
   const context = new Config().context;
   const graph = new RdfGraph();
   const pages = [
-    frontmatterToGraph({
-      "@type": "sh:NodeShape",
-      "@id": "wiki:Label_Shape",
-      "sh:targetClass": "schema:Thing",
-      "sh:property": [{
-        "sh:path": {
-          "sh:alternativePath": [
-            "schema:alternateName",
-            ["schema:author", "schema:name"],
-          ],
-        },
-        "sh:minCount": 1,
-      }],
-    }, context),
-    frontmatterToGraph({
-      "@type": "schema:Thing",
-      "@id": "wiki:Ann",
-      "schema:author": { "schema:name": "Ann" },
-    }, context),
+    frontmatterToGraph(
+      {
+        "@type": "sh:NodeShape",
+        "@id": "wiki:Label_Shape",
+        "sh:targetClass": "schema:Thing",
+        "sh:property": [
+          {
+            "sh:path": {
+              "sh:alternativePath": [
+                "schema:alternateName",
+                ["schema:author", "schema:name"],
+              ],
+            },
+            "sh:minCount": 1,
+          },
+        ],
+      },
+      context,
+    ),
+    frontmatterToGraph(
+      {
+        "@type": "schema:Thing",
+        "@id": "wiki:Ann",
+        "schema:author": { "schema:name": "Ann" },
+      },
+      context,
+    ),
     frontmatterToGraph({ "@type": "schema:Thing", "@id": "wiki:Bob" }, context),
   ];
   for (const page of pages) for (const quad of page) graph.addQuad(quad);
 
   const shapes = loadShapes(graph);
-  const firsts = [...shapes].filter((quad) =>
-    quad.predicate.value === RDF_FIRST
+  const firsts = [...shapes].filter(
+    (quad) => quad.predicate.value === RDF_FIRST,
   );
   assertEquals(firsts.length, 4);
 

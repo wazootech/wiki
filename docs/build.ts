@@ -36,13 +36,14 @@ function editLink(context: ThemePageContext, repoRoot: string | null): string {
     return "";
   }
   try {
-    const path = relativeWithin(resolve(page.source_path), resolve(repoRoot))
-      .replaceAll("\\", "/");
-    const url =
-      `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/${path}`;
-    return `<li id="ca-edit"><a href="${
-      escapeHtml(url)
-    }" target="_blank">Edit this page</a></li>`;
+    const path = relativeWithin(
+      resolve(page.source_path),
+      resolve(repoRoot),
+    ).replaceAll("\\", "/");
+    const url = `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/${path}`;
+    return `<li id="ca-edit"><a href="${escapeHtml(
+      url,
+    )}" target="_blank">Edit this page</a></li>`;
   } catch {
     return "";
   }
@@ -50,11 +51,12 @@ function editLink(context: ThemePageContext, repoRoot: string | null): string {
 
 /** Where a `redirect_to` page points, escaped for the `refresh` URL. */
 function redirectUrl(context: ThemePageContext): string {
-  const redirectTo = context.page === null
-    ? ""
-    : typeof context.page.frontmatter.redirect_to === "string"
-    ? context.page.frontmatter.redirect_to
-    : "";
+  const redirectTo =
+    context.page === null
+      ? ""
+      : typeof context.page.frontmatter.redirect_to === "string"
+        ? context.page.frontmatter.redirect_to
+        : "";
   return redirectTo
     ? escapeHtml(pageUrl(context.baseUrl, redirectTo, context.urlStyle))
     : "";
@@ -66,9 +68,8 @@ export function buildDocsSite(
   options: DocsBuildOptions = {},
 ): Promise<number> {
   const docsDir = resolve(options.docsDir ?? DOCS_DIR);
-  const repoRoot = options.repoRoot === undefined
-    ? REPO_ROOT
-    : options.repoRoot;
+  const repoRoot =
+    options.repoRoot === undefined ? REPO_ROOT : options.repoRoot;
   return buildThemedSite(config, outputDir, {
     dir: docsDir,
     redirect_layout: join("layouts", "redirect.html"),

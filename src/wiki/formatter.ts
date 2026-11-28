@@ -58,7 +58,7 @@ import {
  * `dprint-plugin-json = "=0.21.3"`, `dprint-plugin-typescript = "=0.96.1"`,
  * `pretty_yaml = "=0.5.0"`, `lax-css = "=0.3.0"`, `lax-markup = "=0.3.2"`), and
  * the published package carries the same number as the crate. Pinned exactly
- * rather than with a caret in `deno.json`, because a patch bump is a formatting
+ * rather than with a caret in `package.json`, because a patch bump is a formatting
  * change: `tests/formatter_test.ts` asserts the loaded plugin agrees with the
  * table, so a drift is a failing test rather than a silently reflowed wiki.
  */
@@ -209,11 +209,14 @@ function widthOf(overrideConfig: unknown): number {
  * matching what the shielding probe measured — and it is what stops the WASM
  * gate's wider reachability from leaking into the output.
  */
-function dispatch(host: Plugins, request: {
-  readonly filePath: string;
-  readonly fileText: string;
-  readonly overrideConfig?: unknown;
-}): string {
+function dispatch(
+  host: Plugins,
+  request: {
+    readonly filePath: string;
+    readonly fileText: string;
+    readonly overrideConfig?: unknown;
+  },
+): string {
   const tag = extensionOf(request.filePath);
   const at = (lineWidth: number) => ({
     filePath: request.filePath,
@@ -291,16 +294,18 @@ function formatHtmlFences(text: string, markup: Formatter): string {
       index += 1;
       continue;
     }
-    const formatted = markup.formatText({
-      filePath: "file.html",
-      fileText: body.join("\n"),
-      overrideConfig: { lineWidth: DEFAULT_LINE_WIDTH },
-    }).trimEnd();
+    const formatted = markup
+      .formatText({
+        filePath: "file.html",
+        fileText: body.join("\n"),
+        overrideConfig: { lineWidth: DEFAULT_LINE_WIDTH },
+      })
+      .trimEnd();
     out.push(
       line,
-      ...formatted.split("\n").map((bodyLine) =>
-        bodyLine === "" ? "" : indent + bodyLine
-      ),
+      ...formatted
+        .split("\n")
+        .map((bodyLine) => (bodyLine === "" ? "" : indent + bodyLine)),
       lines[end] ?? "",
     );
     index = end + 1;
@@ -316,9 +321,7 @@ export function formatMarkdownText(
   try {
     validateFmtOptions(options as Record<string, unknown>, "fmt");
   } catch (error) {
-    throw new ValueError(
-      errorText(error),
-    );
+    throw new ValueError(errorText(error));
   }
   const resolved = { ...DEFAULT_FMT_OPTIONS, ...options };
   const host = loaded();
@@ -336,9 +339,9 @@ export function formatMarkdownText(
     });
   } catch (error) {
     throw new ValueError(
-      `dprint-plugin-markdown failed on ${basename(filePath)}: ${
-        errorText(error)
-      }`,
+      `dprint-plugin-markdown failed on ${basename(filePath)}: ${errorText(
+        error,
+      )}`,
     );
   }
   return formatHtmlFences(formatted, host.markup);

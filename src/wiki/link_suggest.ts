@@ -28,9 +28,8 @@ const MIN_ALIAS_LENGTH = 4;
 
 function compareCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(left, (character) => character.codePointAt(0)!);
-  const rightPoints = Array.from(
-    right,
-    (character) => character.codePointAt(0)!,
+  const rightPoints = Array.from(right, (character) =>
+    character.codePointAt(0)!,
   );
   const sharedLength = Math.min(leftPoints.length, rightPoints.length);
   for (let index = 0; index < sharedLength; index += 1) {
@@ -45,7 +44,7 @@ function caseFold(text: string): string {
 }
 
 function humanizeRoute(route: string): string {
-  const stem = route ? route.split("/").at(-1) ?? "Index" : "Index";
+  const stem = route ? (route.split("/").at(-1) ?? "Index") : "Index";
   return stem.replaceAll("_", " ").replaceAll("-", " ").trim() || "Index";
 }
 
@@ -72,9 +71,10 @@ function aliasesForPage(
     const text = name.trim();
     if (isLinkableAlias(text, route, minAliasLength)) aliases.add(text);
   }
-  return [...aliases].sort((left, right) =>
-    Array.from(right).length - Array.from(left).length ||
-    compareCodePoints(left, right)
+  return [...aliases].sort(
+    (left, right) =>
+      Array.from(right).length - Array.from(left).length ||
+      compareCodePoints(left, right),
   );
 }
 
@@ -104,8 +104,8 @@ function regexSpans(text: string, expression: RegExp): Span[] {
 }
 
 function mergedSpans(spans: readonly Span[]): Span[] {
-  const ordered = [...spans].sort((left, right) =>
-    left[0] - right[0] || left[1] - right[1]
+  const ordered = [...spans].sort(
+    (left, right) => left[0] - right[0] || left[1] - right[1],
   );
   const merged: [number, number][] = [];
   for (const [start, end] of ordered) {
@@ -129,8 +129,8 @@ function protectedSpans(text: string): Span[] {
 }
 
 function overlaps(start: number, end: number, spans: readonly Span[]): boolean {
-  return spans.some(([spanStart, spanEnd]) =>
-    start < spanEnd && end > spanStart
+  return spans.some(
+    ([spanStart, spanEnd]) => start < spanEnd && end > spanStart,
   );
 }
 
@@ -139,13 +139,16 @@ function isWordCharacter(character: string | undefined): boolean {
 }
 
 function wordBoundariesOk(text: string, start: number, end: number): boolean {
-  const before = start > 0
-    ? Array.from(text.slice(0, start)).at(-1)
-    : undefined;
+  const before =
+    start > 0 ? Array.from(text.slice(0, start)).at(-1) : undefined;
   const after = end < text.length ? Array.from(text.slice(end))[0] : undefined;
   return !(
-    isWordCharacter(before) || before === "_" || before === "-" ||
-    isWordCharacter(after) || after === "_" || after === "-"
+    isWordCharacter(before) ||
+    before === "_" ||
+    before === "-" ||
+    isWordCharacter(after) ||
+    after === "_" ||
+    after === "-"
   );
 }
 
@@ -169,35 +172,35 @@ export function findLinkOpportunities(
     const data = documentDataFromPath(filePath) ?? {};
     const body = markdownBody(readTextTolerant(filePath));
     const name = data.name;
-    const title = typeof name === "string" && name.length > 0
-      ? name
-      : extractTitle(body, route);
+    const title =
+      typeof name === "string" && name.length > 0
+        ? name
+        : extractTitle(body, route);
     pages.push({ route, title, data });
   }
 
   const aliasEntries: { alias: string; route: string; title: string }[] = [];
   for (const page of pages) {
-    for (
-      const alias of aliasesForPage(
-        page.route,
-        page.title,
-        page.data,
-        minAliasLength,
-      )
-    ) {
+    for (const alias of aliasesForPage(
+      page.route,
+      page.title,
+      page.data,
+      minAliasLength,
+    )) {
       aliasEntries.push({ alias, route: page.route, title: page.title });
     }
   }
-  aliasEntries.sort((left, right) =>
-    Array.from(right.alias).length - Array.from(left.alias).length ||
-    compareCodePoints(left.alias, right.alias)
+  aliasEntries.sort(
+    (left, right) =>
+      Array.from(right.alias).length - Array.from(left.alias).length ||
+      compareCodePoints(left.alias, right.alias),
   );
   if (aliasEntries.length === 0) return [];
 
   const pattern = new RegExp(
-    aliasEntries.map(({ alias }) =>
-      alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    ).join("|"),
+    aliasEntries
+      .map(({ alias }) => alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|"),
     "giu",
   );
   const aliasRoutes = new Map<string, { route: string; title: string }>();
@@ -221,8 +224,10 @@ export function findLinkOpportunities(
       const end = start + match[0].length;
       if (!wordBoundariesOk(body, start, end)) continue;
       if (
-        overlaps(start, end, protectedRanges) || overlaps(start, end, claimed)
-      ) continue;
+        overlaps(start, end, protectedRanges) ||
+        overlaps(start, end, claimed)
+      )
+        continue;
       const target = aliasRoutes.get(caseFold(match[0]));
       if (target === undefined || target.route === sourceRoute) continue;
       const [line, column] = lineColumn(body, start);
@@ -239,9 +244,11 @@ export function findLinkOpportunities(
     }
   }
 
-  return opportunities.sort((left, right) =>
-    compareCodePoints(left.source_route, right.source_route) ||
-    left.line - right.line || left.column - right.column
+  return opportunities.sort(
+    (left, right) =>
+      compareCodePoints(left.source_route, right.source_route) ||
+      left.line - right.line ||
+      left.column - right.column,
   );
 }
 
@@ -250,8 +257,8 @@ function codePointOffsetToUtf16(text: string, codePointOffset: number): number {
 }
 
 function splitLinesKeepingEndings(text: string): string[] {
-  return (text.match(/[^\r\n]*(?:\r\n|\r|\n|$)/g) ?? []).filter((line) =>
-    line.length > 0
+  return (text.match(/[^\r\n]*(?:\r\n|\r|\n|$)/g) ?? []).filter(
+    (line) => line.length > 0,
   );
 }
 
@@ -280,8 +287,8 @@ export function applyLinkOpportunities(
     if (filePath === undefined) continue;
     const split = splitFrontmatterText(readTextTolerant(filePath));
     const lines = splitLinesKeepingEndings(split.body);
-    routeOpportunities.sort((left, right) =>
-      right.line - left.line || right.column - left.column
+    routeOpportunities.sort(
+      (left, right) => right.line - left.line || right.column - left.column,
     );
     for (const opportunity of routeOpportunities) {
       const lineIndex = opportunity.line - 1;
@@ -296,15 +303,17 @@ export function applyLinkOpportunities(
         lineContent.slice(
           columnIndex,
           columnIndex + opportunity.matched_text.length,
-        ) !==
-          opportunity.matched_text
-      ) continue;
+        ) !== opportunity.matched_text
+      )
+        continue;
       const link = formatInternalLink(
         opportunity.target_route,
         opportunity.matched_text,
         config.link.style,
       );
-      lines[lineIndex] = lineContent.slice(0, columnIndex) + link +
+      lines[lineIndex] =
+        lineContent.slice(0, columnIndex) +
+        link +
         lineContent.slice(columnIndex + opportunity.matched_text.length) +
         line.slice(lineContent.length);
     }

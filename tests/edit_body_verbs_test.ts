@@ -134,26 +134,35 @@ test("findSections ignores headings inside fenced code", () => {
     "Change log",
   );
   // The `## Change log` inside the fence is not a heading; the H3 is.
-  assertEquals(sections.map((section) => section.level), [2, 3]);
+  assertEquals(
+    sections.map((section) => section.level),
+    [2, 3],
+  );
 });
 
 test("set keeps comments, key order, and scalar spelling", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{
-        op: "set",
-        path: PAGE,
-        field: "schema:price",
-        yaml: "13.50",
-      }, {
-        op: "set",
-        path: PAGE,
-        field: "schema:url",
-        yaml: "https://platform.deepseek.com",
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "set",
+            path: PAGE,
+            field: "schema:price",
+            yaml: "13.50",
+          },
+          {
+            op: "set",
+            path: PAGE,
+            field: "schema:url",
+            yaml: "https://platform.deepseek.com",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied", JSON.stringify(report.introduced));
     const text = read(root, PAGE);
     assert(text.includes("# Keep this entry's price in sync"), text);
@@ -163,9 +172,11 @@ test("set keeps comments, key order, and scalar spelling", async () => {
       "schema:price",
       "schema:priceCurrency",
       "schema:url",
-    ]
-      .map((key) => text.indexOf(`${key}:`));
-    assertEquals([...order].sort((a, b) => a - b), order);
+    ].map((key) => text.indexOf(`${key}:`));
+    assertEquals(
+      [...order].sort((a, b) => a - b),
+      order,
+    );
     assertEquals(text.split("---")[2], LEDGER.split("---")[2]);
   } finally {
     cleanup(root);
@@ -177,24 +188,35 @@ test("set with value null removes the field", async () => {
   try {
     const wiki = Wiki.load(root);
     // Removing a required field is rejected: PurchaseShape needs a price.
-    const rejected = await wiki.edit({
-      ops: [{ op: "set", path: PAGE, field: "schema:price", value: null }],
-    }, { apply: true });
+    const rejected = await wiki.edit(
+      {
+        ops: [{ op: "set", path: PAGE, field: "schema:price", value: null }],
+      },
+      { apply: true },
+    );
     assertEquals(rejected.status, "rejected");
     assertEquals(read(root, PAGE), LEDGER);
 
-    const removed = await wiki.edit({
-      ops: [{
-        op: "set",
-        path: PAGE,
-        field: "schema:url",
-        yaml: "https://x.example",
-      }],
-    }, { apply: true });
+    const removed = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "set",
+            path: PAGE,
+            field: "schema:url",
+            yaml: "https://x.example",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(removed.status, "applied");
-    const unset = await wiki.edit({
-      ops: [{ op: "set", path: PAGE, field: "schema:url", value: null }],
-    }, { apply: true });
+    const unset = await wiki.edit(
+      {
+        ops: [{ op: "set", path: PAGE, field: "schema:url", value: null }],
+      },
+      { apply: true },
+    );
     assertEquals(unset.status, "applied");
     assertEquals(read(root, PAGE), LEDGER);
   } finally {
@@ -207,9 +229,12 @@ test("set keeps CRLF line endings", async () => {
   const root = writeWiki({ "DeepSeek_(payment).md": crlf });
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{ op: "set", path: PAGE, field: "schema:price", yaml: "14.00" }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [{ op: "set", path: PAGE, field: "schema:price", yaml: "14.00" }],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     const text = read(root, PAGE);
     assert(!/[^\r]\n/.test(text), "a bare LF crept in");
@@ -226,28 +251,35 @@ test("patch appends under a heading, skipping fenced lookalikes", async () => {
     const ambiguous = await assertRejects(
       () =>
         wiki.edit({
-          ops: [{
-            op: "patch",
-            path: PAGE,
-            target: { heading: "Change log" },
-            mode: "append",
-            content: "- x",
-          }],
+          ops: [
+            {
+              op: "patch",
+              path: PAGE,
+              target: { heading: "Change log" },
+              mode: "append",
+              content: "- x",
+            },
+          ],
         }),
       EditUsageError,
     );
     assert(ambiguous.message.includes("2 headings match"), ambiguous.message);
     assert(ambiguous.message.includes("#change-log-1"), ambiguous.message);
 
-    const report = await wiki.edit({
-      ops: [{
-        op: "patch",
-        path: PAGE,
-        target: { heading: "change-log" },
-        mode: "append",
-        content: "- 2026-10-10 — Repriced.\n",
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "patch",
+            path: PAGE,
+            target: { heading: "change-log" },
+            mode: "append",
+            content: "- 2026-10-10 — Repriced.\n",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     // The section runs to the next H2, so the fenced lookalike sits inside it
     // and the entry lands after the fence; a `#` scan would stop at the fence.
@@ -267,21 +299,27 @@ test("patch prepends, replaces, and reports a missing heading", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const replaced = await wiki.edit({
-      ops: [{
-        op: "patch",
-        path: PAGE,
-        target: { heading: "Notes" },
-        mode: "replace",
-        content: "Rewritten.",
-      }, {
-        op: "patch",
-        path: PAGE,
-        target: { body: true },
-        mode: "append",
-        content: "Trailer.",
-      }],
-    }, { apply: true });
+    const replaced = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "patch",
+            path: PAGE,
+            target: { heading: "Notes" },
+            mode: "replace",
+            content: "Rewritten.",
+          },
+          {
+            op: "patch",
+            path: PAGE,
+            target: { body: true },
+            mode: "append",
+            content: "Trailer.",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(replaced.status, "applied");
     const text = read(root, PAGE);
     assert(text.endsWith("## Notes\n\nRewritten.\n\nTrailer.\n"), text);
@@ -290,13 +328,15 @@ test("patch prepends, replaces, and reports a missing heading", async () => {
     await assertRejects(
       () =>
         wiki.edit({
-          ops: [{
-            op: "patch",
-            path: PAGE,
-            target: { heading: "Nope" },
-            mode: "prepend",
-            content: "x",
-          }],
+          ops: [
+            {
+              op: "patch",
+              path: PAGE,
+              target: { heading: "Nope" },
+              mode: "prepend",
+              content: "x",
+            },
+          ],
         }),
       EditUsageError,
       "no heading matches",
@@ -310,20 +350,25 @@ test("a typed create scaffolds required fields first and an H1", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{
-        op: "create",
-        path: "wiki/Neon_(payment).md",
-        type: "schema:Purchase",
-        frontmatter: {
-          "schema:url": "https://neon.com",
-          "schema:priceCurrency": "USD",
-          "schema:price": 5.5,
-          "schema:name": "Neon plan",
-        },
-        body: "Monthly plan.",
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "create",
+            path: "wiki/Neon_(payment).md",
+            type: "schema:Purchase",
+            frontmatter: {
+              "schema:url": "https://neon.com",
+              "schema:priceCurrency": "USD",
+              "schema:price": 5.5,
+              "schema:name": "Neon plan",
+            },
+            body: "Monthly plan.",
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied", JSON.stringify(report.introduced));
     assertEquals(
       read(root, "wiki/Neon_(payment).md"),
@@ -349,124 +394,115 @@ test("a typed create scaffolds required fields first and an H1", async () => {
   }
 });
 
-test(
-  "wiki new, set, and patch map statuses to exit codes",
-  async () => {
-    const root = writeWiki();
-    try {
-      // Missing schema:price: rejected, the report names it, nothing written.
-      const missing = await runCli(root, [
-        "file",
-        "new",
-        "wiki/",
-        "--type",
-        "schema:Purchase",
-        "--set",
-        "schema:name=Neon plan",
-        "--set",
-        "schema:priceCurrency=USD",
-        "--apply",
-        "--json",
-      ]);
-      assertEquals(missing.code, EXIT_FAILURE, missing.stderr);
-      assertEquals(JSON.parse(missing.stdout).missing, ["schema:price"]);
-      assert(missing.stderr.includes("missing required fields: schema:price"));
+test("wiki new, set, and patch map statuses to exit codes", async () => {
+  const root = writeWiki();
+  try {
+    // Missing schema:price: rejected, the report names it, nothing written.
+    const missing = await runCli(root, [
+      "file",
+      "new",
+      "wiki/",
+      "--type",
+      "schema:Purchase",
+      "--set",
+      "schema:name=Neon plan",
+      "--set",
+      "schema:priceCurrency=USD",
+      "--apply",
+      "--json",
+    ]);
+    assertEquals(missing.code, EXIT_FAILURE, missing.stderr);
+    assertEquals(JSON.parse(missing.stdout).missing, ["schema:price"]);
+    assert(missing.stderr.includes("missing required fields: schema:price"));
 
-      const created = await runCli(root, [
-        "file",
-        "new",
-        "wiki/",
-        "--type",
-        "schema:Purchase",
-        "--set",
-        "schema:name=Neon plan",
-        "--set",
-        "schema:price=5.00",
-        "--set",
-        "schema:priceCurrency=USD",
-        "--apply",
-      ]);
-      assertEquals(created.code, EXIT_OK, created.stderr);
-      assert(read(root, "wiki/Neon_plan.md").includes("schema:price: 5.00\n"));
+    const created = await runCli(root, [
+      "file",
+      "new",
+      "wiki/",
+      "--type",
+      "schema:Purchase",
+      "--set",
+      "schema:name=Neon plan",
+      "--set",
+      "schema:price=5.00",
+      "--set",
+      "schema:priceCurrency=USD",
+      "--apply",
+    ]);
+    assertEquals(created.code, EXIT_OK, created.stderr);
+    assert(read(root, "wiki/Neon_plan.md").includes("schema:price: 5.00\n"));
 
-      const again = await runCli(root, [
-        "file",
-        "new",
-        "wiki/Neon_plan.md",
-        "--set",
-        "schema:name=x",
-      ]);
-      assertEquals(again.code, EXIT_CONFLICT, again.stderr);
+    const again = await runCli(root, [
+      "file",
+      "new",
+      "wiki/Neon_plan.md",
+      "--set",
+      "schema:name=x",
+    ]);
+    assertEquals(again.code, EXIT_CONFLICT, again.stderr);
 
-      const stale = await runCli(root, [
-        "file",
-        "set",
-        PAGE,
-        "schema:price",
-        "1.00",
-        "--expect",
-        contentHash("not the file"),
-        "--apply",
-      ]);
-      assertEquals(stale.code, EXIT_CONFLICT, stale.stderr);
-      assertEquals(read(root, PAGE), LEDGER);
+    const stale = await runCli(root, [
+      "file",
+      "set",
+      PAGE,
+      "schema:price",
+      "1.00",
+      "--expect",
+      contentHash("not the file"),
+      "--apply",
+    ]);
+    assertEquals(stale.code, EXIT_CONFLICT, stale.stderr);
+    assertEquals(read(root, PAGE), LEDGER);
 
-      const set = await runCli(root, [
-        "file",
-        "set",
-        PAGE,
-        "schema:price",
-        "1.00",
-        "--expect",
-        contentHash(LEDGER),
-        "--apply",
-      ]);
-      assertEquals(set.code, EXIT_OK, set.stderr);
-      assert(read(root, PAGE).includes("schema:price: 1.00\n"));
+    const set = await runCli(root, [
+      "file",
+      "set",
+      PAGE,
+      "schema:price",
+      "1.00",
+      "--expect",
+      contentHash(LEDGER),
+      "--apply",
+    ]);
+    assertEquals(set.code, EXIT_OK, set.stderr);
+    assert(read(root, PAGE).includes("schema:price: 1.00\n"));
 
-      const patched = await runCli(
-        root,
-        ["file", "patch", PAGE, "--heading", "Notes", "--append", "--apply"],
-        "From stdin.\n",
-      );
-      assertEquals(patched.code, EXIT_OK, patched.stderr);
-      assert(read(root, PAGE).endsWith("Nested.\n\nFrom stdin.\n"));
+    const patched = await runCli(
+      root,
+      ["file", "patch", PAGE, "--heading", "Notes", "--append", "--apply"],
+      "From stdin.\n",
+    );
+    assertEquals(patched.code, EXIT_OK, patched.stderr);
+    assert(read(root, PAGE).endsWith("Nested.\n\nFrom stdin.\n"));
 
-      const twoModes = await runCli(root, [
-        "file",
-        "patch",
-        PAGE,
-        "--body",
-        "--append",
-        "--prepend",
-        "--content",
-        "x",
-      ]);
-      assertEquals(twoModes.code, EXIT_USAGE);
-      const ambiguous = await runCli(root, [
-        "file",
-        "patch",
-        PAGE,
-        "--heading",
-        "Change log",
-        "--append",
-        "--content",
-        "x",
-      ]);
-      assertEquals(ambiguous.code, EXIT_USAGE);
-      assertEquals(
-        (await runCli(root, ["file", "set", PAGE])).code,
-        EXIT_USAGE,
-      );
-      assertEquals(
-        (await runCli(root, ["file", "new", "--help"])).code,
-        EXIT_OK,
-      );
-    } finally {
-      cleanup(root);
-    }
-  },
-);
+    const twoModes = await runCli(root, [
+      "file",
+      "patch",
+      PAGE,
+      "--body",
+      "--append",
+      "--prepend",
+      "--content",
+      "x",
+    ]);
+    assertEquals(twoModes.code, EXIT_USAGE);
+    const ambiguous = await runCli(root, [
+      "file",
+      "patch",
+      PAGE,
+      "--heading",
+      "Change log",
+      "--append",
+      "--content",
+      "x",
+    ]);
+    assertEquals(ambiguous.code, EXIT_USAGE);
+    assertEquals((await runCli(root, ["file", "set", PAGE])).code, EXIT_USAGE);
+    assertEquals((await runCli(root, ["file", "new", "--help"])).code, EXIT_OK);
+  } finally {
+    cleanup(root);
+  }
+});
 
 test("an unformatted page is not reformatted by an unrelated set", async () => {
   // Two blank lines before the H1: `wiki fmt` would collapse them.
@@ -474,9 +510,12 @@ test("an unformatted page is not reformatted by an unrelated set", async () => {
   const root = writeWiki({ "DeepSeek_(payment).md": messy });
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{ op: "set", path: PAGE, field: "schema:price", yaml: "2.00" }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [{ op: "set", path: PAGE, field: "schema:price", yaml: "2.00" }],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied");
     assertEquals(read(root, PAGE), messy.replace("12.00", "2.00"));
   } finally {
@@ -507,15 +546,20 @@ async function patchLog(
 ): Promise<string> {
   const root = writeWiki({ "History.md": HISTORY });
   try {
-    const report = await Wiki.load(root).edit({
-      ops: [{
-        op: "patch",
-        path: "wiki/History.md",
-        target: { heading: "Log" },
-        mode,
-        content,
-      }],
-    }, { apply: true });
+    const report = await Wiki.load(root).edit(
+      {
+        ops: [
+          {
+            op: "patch",
+            path: "wiki/History.md",
+            target: { heading: "Log" },
+            mode,
+            content,
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied", JSON.stringify(report.introduced));
     return read(root, "wiki/History.md");
   } finally {
@@ -575,81 +619,73 @@ sh:property:
 # Article Shape
 `;
 
-test(
-  "file new leaves a headline out of the frontmatter when the H1 supplies it (#402)",
-  async () => {
-    const root = writeWiki({ "ArticleShape.md": ARTICLE_SHAPE });
-    try {
-      for (
-        const key of ["headline", "schema:headline"]
-      ) {
-        const created = await runCli(root, [
-          "file",
-          "new",
-          "wiki/",
-          "--type",
-          "schema:Article",
-          "--set",
-          `${key}=Scaffold Probe`,
-          "--set",
-          "description=probe",
-          "--apply",
-        ]);
-        assertEquals(created.code, EXIT_OK, created.stderr);
-        const page = read(root, "wiki/Scaffold_Probe.md");
-        assert(page.includes("\n# Scaffold Probe\n"), page);
-        assert(!page.includes("headline:"), page);
-        assert(page.includes("description: probe\n"), page);
-        // The fixture's ledger page already fails its shape; only the
-        // scaffolded page is under test.
-        const check = await Wiki.load(root).check();
-        const probe = JSON.stringify(check.errors).includes("Scaffold_Probe");
-        assert(!probe, JSON.stringify(check.errors));
-        const lint = await runCli(root, ["lint", "--strict"]);
-        assert(!lint.stderr.includes("repeats the derived"), lint.stderr);
-        sys.removeSync(join(root, "wiki", "Scaffold_Probe.md"));
-      }
-    } finally {
-      cleanup(root);
-    }
-  },
-);
-
-test(
-  "file new keeps name, and a headline that differs from the H1 (#402)",
-  async () => {
-    const root = writeWiki();
-    try {
-      const named = await runCli(root, [
+test("file new leaves a headline out of the frontmatter when the H1 supplies it (#402)", async () => {
+  const root = writeWiki({ "ArticleShape.md": ARTICLE_SHAPE });
+  try {
+    for (const key of ["headline", "schema:headline"]) {
+      const created = await runCli(root, [
         "file",
         "new",
         "wiki/",
+        "--type",
+        "schema:Article",
         "--set",
-        "name=Plain Name",
+        `${key}=Scaffold Probe`,
+        "--set",
+        "description=probe",
         "--apply",
       ]);
-      assertEquals(named.code, EXIT_OK, named.stderr);
-      assert(read(root, "wiki/Plain_Name.md").includes("name: Plain Name\n"));
-
-      // `name` outranks nothing here: headline is the first title key, so a
-      // second headline-spelled key that differs from it is a real statement.
-      const differs = await runCli(root, [
-        "file",
-        "new",
-        "wiki/",
-        "--set",
-        "headline=First",
-        "--set",
-        "schema:headline=Second",
-        "--apply",
-      ]);
-      assertEquals(differs.code, EXIT_OK, differs.stderr);
-      const page = read(root, "wiki/First.md");
-      assert(page.includes("\n# First\n"), page);
-      assert(page.includes("schema:headline: Second\n"), page);
-      assert(!page.includes("\nheadline:"), page);
-    } finally {
-      cleanup(root);
+      assertEquals(created.code, EXIT_OK, created.stderr);
+      const page = read(root, "wiki/Scaffold_Probe.md");
+      assert(page.includes("\n# Scaffold Probe\n"), page);
+      assert(!page.includes("headline:"), page);
+      assert(page.includes("description: probe\n"), page);
+      // The fixture's ledger page already fails its shape; only the
+      // scaffolded page is under test.
+      const check = await Wiki.load(root).check();
+      const probe = JSON.stringify(check.errors).includes("Scaffold_Probe");
+      assert(!probe, JSON.stringify(check.errors));
+      const lint = await runCli(root, ["lint", "--strict"]);
+      assert(!lint.stderr.includes("repeats the derived"), lint.stderr);
+      sys.removeSync(join(root, "wiki", "Scaffold_Probe.md"));
     }
-  },
-);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("file new keeps name, and a headline that differs from the H1 (#402)", async () => {
+  const root = writeWiki();
+  try {
+    const named = await runCli(root, [
+      "file",
+      "new",
+      "wiki/",
+      "--set",
+      "name=Plain Name",
+      "--apply",
+    ]);
+    assertEquals(named.code, EXIT_OK, named.stderr);
+    assert(read(root, "wiki/Plain_Name.md").includes("name: Plain Name\n"));
+
+    // `name` outranks nothing here: headline is the first title key, so a
+    // second headline-spelled key that differs from it is a real statement.
+    const differs = await runCli(root, [
+      "file",
+      "new",
+      "wiki/",
+      "--set",
+      "headline=First",
+      "--set",
+      "schema:headline=Second",
+      "--apply",
+    ]);
+    assertEquals(differs.code, EXIT_OK, differs.stderr);
+    const page = read(root, "wiki/First.md");
+    assert(page.includes("\n# First\n"), page);
+    assert(page.includes("schema:headline: Second\n"), page);
+    assert(!page.includes("\nheadline:"), page);
+  } finally {
+    cleanup(root);
+  }
+});

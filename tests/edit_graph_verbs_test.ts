@@ -115,8 +115,8 @@ test("rewriteLinkTargets keeps each link's own style", () => {
     out,
     [
       "See [Beta](people/Beta_(person).md), " +
-      "[b](./people/Beta_(person).md#Early_life), " +
-      "[[people/Beta_(person)]], [[people/Beta_(person)|the b]],",
+        "[b](./people/Beta_(person).md#Early_life), " +
+        "[[people/Beta_(person)]], [[people/Beta_(person)|the b]],",
       "[[people/Beta_(person)#Bio]], [self](#Top), [Gamma](Gamma.md), and `[code](Beta.md)`.",
     ].join("\n"),
   );
@@ -195,27 +195,29 @@ test("pruneLinksTo leaves each link's label", () => {
 
 test("mv moves the page and repoints every link to it", async () => {
   const root = writeWiki({
-    "Alpha.md":
-      `---\n'@type': schema:Article\nschema:headline: Alpha\nschema:knows: wiki:Beta\n---\n\n# Alpha\n\nSee [Beta](Beta.md#Bio) and [[Beta]].\n`,
+    "Alpha.md": `---\n'@type': schema:Article\nschema:headline: Alpha\nschema:knows: wiki:Beta\n---\n\n# Alpha\n\nSee [Beta](Beta.md#Bio) and [[Beta]].\n`,
     "Beta.md": article("Beta", "## Bio\n\nBack to [Alpha](Alpha.md)."),
     "sub/Deep.md": article("Deep", "Up to [Beta](../Beta.md)."),
   });
   try {
     const wiki = Wiki.load(root);
-    const report = await wiki.edit({
-      ops: [{
-        op: "move",
-        from: "wiki/Beta.md",
-        to: "wiki/people/Beta.md",
-        expect: contentHash(read(root, "wiki/Beta.md")),
-      }],
-    }, { apply: true });
+    const report = await wiki.edit(
+      {
+        ops: [
+          {
+            op: "move",
+            from: "wiki/Beta.md",
+            to: "wiki/people/Beta.md",
+            expect: contentHash(read(root, "wiki/Beta.md")),
+          },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.status, "applied", JSON.stringify(report.introduced));
     assertEquals(report.introduced, []);
     assert(!exists(root, "wiki/Beta.md"));
-    assert(
-      read(root, "wiki/people/Beta.md").includes("[Alpha](../Alpha.md)"),
-    );
+    assert(read(root, "wiki/people/Beta.md").includes("[Alpha](../Alpha.md)"));
     const alpha = read(root, "wiki/Alpha.md");
     assert(alpha.includes("[Beta](people/Beta.md#Bio)"), alpha);
     assert(alpha.includes("[[people/Beta]]"), alpha);
@@ -227,9 +229,9 @@ test("mv moves the page and repoints every link to it", async () => {
     const index = LinkIndex.fromConfig(Wiki.load(root).config);
     assertEquals(index.backlinksTo("Beta"), []);
     assertEquals(
-      index.brokenLinks().filter((issue) =>
-        issue.issue_kind !== "missing_asset"
-      ),
+      index
+        .brokenLinks()
+        .filter((issue) => issue.issue_kind !== "missing_asset"),
       [],
     );
   } finally {
@@ -241,14 +243,18 @@ test("a finding the moved page already had is not blamed on the move", async () 
   const root = writeWiki({
     "Article_Shape.md": ARTICLE_SHAPE,
     // No headline (a SHACL violation) and a broken link (a lint warning).
-    "Broken.md":
-      `---\n'@type': schema:Article\n---\n\n# Broken\n\nSee [Nowhere](Nowhere.md).\n`,
+    "Broken.md": `---\n'@type': schema:Article\n---\n\n# Broken\n\nSee [Nowhere](Nowhere.md).\n`,
     "Linker.md": article("Linker", "To [Broken](Broken.md)."),
   });
   try {
-    const report = await Wiki.load(root).edit({
-      ops: [{ op: "move", from: "wiki/Broken.md", to: "wiki/Still_Broken.md" }],
-    }, { apply: true });
+    const report = await Wiki.load(root).edit(
+      {
+        ops: [
+          { op: "move", from: "wiki/Broken.md", to: "wiki/Still_Broken.md" },
+        ],
+      },
+      { apply: true },
+    );
     assertEquals(report.introduced, []);
     assertEquals(report.status, "applied");
     assert(read(root, "wiki/Linker.md").includes("(Still_Broken.md)"));

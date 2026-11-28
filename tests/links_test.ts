@@ -24,27 +24,23 @@ import {
 } from "../src/wiki/links.ts";
 
 test("external schemes are recognised without a trailing slash", () => {
-  for (
-    const target of [
-      "http://example.org",
-      "https://example.org/a/b",
-      "mailto:ada@example.org",
-      "tel:+15551234",
-      "HTTPS://EXAMPLE.ORG",
-    ]
-  ) {
+  for (const target of [
+    "http://example.org",
+    "https://example.org/a/b",
+    "mailto:ada@example.org",
+    "tel:+15551234",
+    "HTTPS://EXAMPLE.ORG",
+  ]) {
     assert(isExternalLink(target), `${target} should be external`);
   }
-  for (
-    const target of [
-      "Page.md",
-      "#fragment",
-      "docs/Page.md",
-      "wiki:Alpha",
-      "assets/logo.png",
-      "",
-    ]
-  ) {
+  for (const target of [
+    "Page.md",
+    "#fragment",
+    "docs/Page.md",
+    "wiki:Alpha",
+    "assets/logo.png",
+    "",
+  ]) {
     assert(!isExternalLink(target), `${target} should not be external`);
   }
 });
@@ -131,14 +127,12 @@ test("link formatting has exactly two styles and refuses anything else", () => {
 });
 
 test("any scheme:// and protocol-relative URL is external (#376)", () => {
-  for (
-    const target of [
-      "ftp://example.org/a",
-      "obsidian://open?vault=v",
-      "vscode://file/a",
-      "//cdn.example.org/a",
-    ]
-  ) {
+  for (const target of [
+    "ftp://example.org/a",
+    "obsidian://open?vault=v",
+    "vscode://file/a",
+    "//cdn.example.org/a",
+  ]) {
     assert(isExternalLink(target), `${target} should be external`);
   }
   // No `//`: a namespaced page name, not a URL.

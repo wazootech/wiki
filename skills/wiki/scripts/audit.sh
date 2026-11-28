@@ -61,15 +61,15 @@ wiki_supports_fmt() {
 }
 
 source_checkout_available() {
-  command -v deno >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/deno.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]]
+  command -v bun >/dev/null 2>&1 && [[ -f "${REPO_ROOT}/jsr.json" && -f "${REPO_ROOT}/src/wiki/cli.ts" ]]
 }
 
 if wiki_supports_fmt; then
   run_wiki() { wiki -c "$CONFIG" "$@"; }
 elif source_checkout_available; then
-  run_wiki() { (cd "${REPO_ROOT}" && deno run -A src/wiki/cli.ts -c "$CONFIG" "$@"); }
+  run_wiki() { (cd "${REPO_ROOT}" && bun src/wiki/cli.ts -c "$CONFIG" "$@"); }
 else
-  echo "audit.sh: supported wiki CLI not found; install wazootech-wiki or run from its Deno source checkout" >&2
+  echo "audit.sh: supported wiki CLI not found; install wazootech-wiki or run from its Bun source checkout" >&2
   exit 127
 fi
 

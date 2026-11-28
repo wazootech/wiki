@@ -56,11 +56,7 @@ function write(root: string, relative: string, content: string): string {
   return target;
 }
 
-function writeSchema(
-  root: string,
-  relative: string,
-  schema: unknown,
-): void {
+function writeSchema(root: string, relative: string, schema: unknown): void {
   write(root, relative, JSON.stringify(schema));
 }
 
@@ -122,10 +118,10 @@ function personSchema(): Record<string, unknown> {
 
 test("coerceSchemaRefs accepts a scalar and a list", () => {
   assertEquals(coerceSchemaRefs("schemas/a.json"), ["schemas/a.json"]);
-  assertEquals(
-    coerceSchemaRefs(["schemas/a.json", "schemas/b.json"]),
-    ["schemas/a.json", "schemas/b.json"],
-  );
+  assertEquals(coerceSchemaRefs(["schemas/a.json", "schemas/b.json"]), [
+    "schemas/a.json",
+    "schemas/b.json",
+  ]);
   assertEquals(coerceSchemaRefs(null), null);
   assertEquals(coerceSchemaRefs("  "), null);
 });
@@ -561,11 +557,13 @@ test("a remote schema is fetched and applied", async () => {
 
     const { value, calls } = await withFetch(
       () =>
-        Promise.resolve(jsonResponse({
-          type: "object",
-          required: ["label"],
-          properties: { label: { type: "string" } },
-        })),
+        Promise.resolve(
+          jsonResponse({
+            type: "object",
+            required: ["label"],
+            properties: { label: { type: "string" } },
+          }),
+        ),
       () => checkFrontmatterSchema(configFor(root)),
     );
     assertEquals(calls, 1);
@@ -620,10 +618,12 @@ test("an allowlist blocks a host it does not name", async () => {
         throw new Error("network call");
       },
       () =>
-        checkFrontmatterSchema(configFor(root, {
-          remote_schema_refs: "allowlist",
-          remote_schema_hosts: ["schemas.example.org"],
-        })),
+        checkFrontmatterSchema(
+          configFor(root, {
+            remote_schema_refs: "allowlist",
+            remote_schema_hosts: ["schemas.example.org"],
+          }),
+        ),
     );
     assertEquals(calls, 0);
     const [missing, validation] = value;
@@ -648,16 +648,20 @@ test("an allowlist permits the host it names", async () => {
 
     const { value, calls } = await withFetch(
       () =>
-        Promise.resolve(jsonResponse({
-          type: "object",
-          required: ["label"],
-          properties: { label: { type: "string" } },
-        })),
+        Promise.resolve(
+          jsonResponse({
+            type: "object",
+            required: ["label"],
+            properties: { label: { type: "string" } },
+          }),
+        ),
       () =>
-        checkFrontmatterSchema(configFor(root, {
-          remote_schema_refs: "allowlist",
-          remote_schema_hosts: ["example.org"],
-        })),
+        checkFrontmatterSchema(
+          configFor(root, {
+            remote_schema_refs: "allowlist",
+            remote_schema_hosts: ["example.org"],
+          }),
+        ),
     );
     assertEquals(calls, 1);
     const [missing, validation] = value;
@@ -731,10 +735,12 @@ test("both rules off skips the pass entirely", async () => {
         throw new Error("network call");
       },
       () =>
-        checkFrontmatterSchema(configFor(root, {
-          frontmatter_schema: "off",
-          missing_schema_ref: "off",
-        })),
+        checkFrontmatterSchema(
+          configFor(root, {
+            frontmatter_schema: "off",
+            missing_schema_ref: "off",
+          }),
+        ),
     );
     assertEquals(calls, 0);
     assertEquals(value, [[], []]);

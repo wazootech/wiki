@@ -39,8 +39,10 @@ function hasValidClaims(
   if (!Array.isArray(aud) || !aud.includes(expected.audience)) return false;
   if (typeof exp !== "number" || exp <= now) return false;
   // Service-token assertions may omit `nbf`.
-  return nbf === undefined ||
-    (typeof nbf === "number" && nbf <= now + NOT_BEFORE_LEEWAY_SECONDS);
+  return (
+    nbf === undefined ||
+    (typeof nbf === "number" && nbf <= now + NOT_BEFORE_LEEWAY_SECONDS)
+  );
 }
 
 /** Service tokens carry an empty `sub` and name themselves in `common_name`. */
@@ -63,16 +65,20 @@ export async function verifyAccessJwt(
     if (parts.length !== 3) return null;
     const [headerPart, payloadPart, signaturePart] = parts;
     if (
-      headerPart === undefined || payloadPart === undefined ||
+      headerPart === undefined ||
+      payloadPart === undefined ||
       signaturePart === undefined
-    ) return null;
+    )
+      return null;
 
     const header = parsePart(headerPart);
     const payload = parsePart(payloadPart);
     if (
-      !isRecord(header) || header.alg !== "RS256" ||
+      !isRecord(header) ||
+      header.alg !== "RS256" ||
       typeof header.kid !== "string"
-    ) return null;
+    )
+      return null;
     const kid = header.kid;
     if (!isRecord(payload) || !hasValidClaims(payload, expected)) return null;
 

@@ -163,11 +163,9 @@ export function canonicalJson(value: unknown): string {
   const entries = Object.entries(value as Record<string, unknown>)
     .filter(([, item]) => item !== undefined)
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0));
-  return `{${
-    entries.map(([key, item]) =>
-      `${encodeJsonString(key)}:${canonicalJson(item)}`
-    ).join(",")
-  }}`;
+  return `{${entries
+    .map(([key, item]) => `${encodeJsonString(key)}:${canonicalJson(item)}`)
+    .join(",")}}`;
 }
 
 /** Python's ASCII-safe string encoding, as used by `json.dumps`. */
@@ -210,9 +208,9 @@ function encodeJsonString(value: string): string {
       const offset = code - 0x10000;
       const high = 0xd800 + (offset >> 10);
       const low = 0xdc00 + (offset & 0x3ff);
-      out += `\\u${high.toString(16).padStart(4, "0")}\\u${
-        low.toString(16).padStart(4, "0")
-      }`;
+      out += `\\u${high.toString(16).padStart(4, "0")}\\u${low
+        .toString(16)
+        .padStart(4, "0")}`;
     }
   }
   return `${out}"`;
@@ -381,7 +379,7 @@ function dropStale<T>(
   infer: boolean,
 ): void {
   const mode = `|${infer}`;
-  for (const key of [...cache.keys()]) {
+  for (const key of cache.keys()) {
     if (key !== current && key.endsWith(mode)) cache.delete(key);
   }
 }

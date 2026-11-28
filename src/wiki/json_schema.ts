@@ -125,9 +125,7 @@ export class JsonSchemaValidator {
     try {
       this.#validate = ajv.compile(schema as object);
     } catch (error) {
-      throw new JsonSchemaCompileError(
-        errorText(error),
-      );
+      throw new JsonSchemaCompileError(errorText(error));
     }
   }
 
@@ -187,9 +185,9 @@ function sortedStrings(values: readonly string[]): string[] {
 /** jsonschema's `_utils.extras_msg`, minus the leading noun. */
 function extrasMessage(extras: readonly unknown[]): string {
   const verb = extras.length === 1 ? "was" : "were";
-  return `${
-    extras.map((extra) => describeValue(extra)).join(", ")
-  } ${verb} unexpected`;
+  return `${extras
+    .map((extra) => describeValue(extra))
+    .join(", ")} ${verb} unexpected`;
 }
 
 /** Validate a subschema on its own, for the templates that need per-item verdicts. */
@@ -239,9 +237,9 @@ interface RenderContext {
 function typeMessage(error: ErrorObject, instance: unknown): string {
   const raw = param(error, "type");
   const types = Array.isArray(raw) ? raw : [raw];
-  return `${describeValue(instance)} is not of type ${
-    types.map((type) => describeValue(type)).join(", ")
-  }`;
+  return `${describeValue(instance)} is not of type ${types
+    .map((type) => describeValue(type))
+    .join(", ")}`;
 }
 
 /**
@@ -261,9 +259,9 @@ function oneOfMessage(instance: unknown, schema: unknown): string {
     if (validator !== null && validator.isValid(instance)) matches.push(index);
   }
   if (matches.length <= 1) {
-    return `${
-      describeValue(instance)
-    } is not valid under any of the given schemas`;
+    return `${describeValue(
+      instance,
+    )} is not valid under any of the given schemas`;
   }
   const [first, ...others] = matches;
   const ordered = [...others, first as number];
@@ -298,9 +296,9 @@ function containsMessage(
   const minContains = param(error, "minContains");
   const minimum = typeof minContains === "number" ? minContains : 1;
   if (matches === 0) {
-    return `${
-      describeValue(instance)
-    } does not contain items matching the given schema`;
+    return `${describeValue(
+      instance,
+    )} does not contain items matching the given schema`;
   }
   return `Too few items match the given schema (expected at least ${minimum} but only ${matches} matched)`;
 }
@@ -319,9 +317,9 @@ const RENDERERS: Readonly<Record<string, (ctx: RenderContext) => string>> = {
   minLength: ({ instance }) => `${describeValue(instance)} is too short`,
   maxLength: ({ instance }) => `${describeValue(instance)} is too long`,
   pattern: ({ error, instance }) =>
-    `${describeValue(instance)} does not match ${
-      describeValue(param(error, "pattern"))
-    }`,
+    `${describeValue(instance)} does not match ${describeValue(
+      param(error, "pattern"),
+    )}`,
   minItems: ({ error, instance }) =>
     `${describeValue(instance)} ${
       param(error, "limit") === 1 ? "should be non-empty" : "is too short"
@@ -337,48 +335,46 @@ const RENDERERS: Readonly<Record<string, (ctx: RenderContext) => string>> = {
     `${describeValue(instance)} is not one of ${describeValue(schema)}`,
   const: ({ schema }) => `${describeValue(schema)} was expected`,
   minimum: ({ instance, schema }) =>
-    `${describeValue(instance)} is less than the minimum of ${
-      describeValue(schema)
-    }`,
+    `${describeValue(instance)} is less than the minimum of ${describeValue(
+      schema,
+    )}`,
   exclusiveMinimum: ({ instance, schema }) =>
-    `${describeValue(instance)} is less than or equal to the minimum of ${
-      describeValue(schema)
-    }`,
+    `${describeValue(instance)} is less than or equal to the minimum of ${describeValue(
+      schema,
+    )}`,
   maximum: ({ instance, schema }) =>
-    `${describeValue(instance)} is greater than the maximum of ${
-      describeValue(schema)
-    }`,
+    `${describeValue(instance)} is greater than the maximum of ${describeValue(
+      schema,
+    )}`,
   exclusiveMaximum: ({ instance, schema }) =>
-    `${describeValue(instance)} is greater than or equal to the maximum of ${
-      describeValue(schema)
-    }`,
+    `${describeValue(instance)} is greater than or equal to the maximum of ${describeValue(
+      schema,
+    )}`,
   multipleOf: ({ instance, schema }) =>
     `${describeValue(instance)} is not a multiple of ${describeValue(schema)}`,
   dependentRequired: ({ error }) =>
-    `${describeValue(param(error, "missingProperty"))} is a dependency of ${
-      describeValue(param(error, "property"))
-    }`,
+    `${describeValue(param(error, "missingProperty"))} is a dependency of ${describeValue(
+      param(error, "property"),
+    )}`,
   anyOf: ({ instance }) =>
     `${describeValue(instance)} is not valid under any of the given schemas`,
   oneOf: ({ instance, schema }) => oneOfMessage(instance, schema),
   not: ({ instance, schema }) =>
-    `${describeValue(instance)} should not be valid under ${
-      describeValue(schema)
-    }`,
+    `${describeValue(instance)} should not be valid under ${describeValue(
+      schema,
+    )}`,
   contains: ({ error, instance, schema }) =>
     containsMessage(error, instance, schema),
   maxContains: ({ error }) =>
-    `Too many items match the given schema (expected at most ${
-      String(param(error, "maxContains"))
-    })`,
+    `Too many items match the given schema (expected at most ${String(
+      param(error, "maxContains"),
+    )})`,
   additionalProperties: ({ error, parentSchema }) =>
     additionalPropertiesMessage(error, parentSchema),
   unevaluatedProperties: ({ error }) =>
-    `Unevaluated properties are not allowed (${
-      extrasMessage(
-        sortedStrings([String(param(error, "unevaluatedProperty"))]),
-      )
-    })`,
+    `Unevaluated properties are not allowed (${extrasMessage(
+      sortedStrings([String(param(error, "unevaluatedProperty"))]),
+    )})`,
 };
 
 /**
@@ -396,18 +392,17 @@ function additionalPropertiesMessage(
   const patterns = parent === null ? undefined : parent["patternProperties"];
   if (isRecord(patterns)) {
     const verb = names.length === 1 ? "does" : "do";
-    return `${
-      sortedStrings(names).map((name) => describeValue(name)).join(", ")
-    } ${verb} not match any of the regexes: ${
-      sortedStrings(Object.keys(patterns)).map((pattern) =>
-        describeValue(pattern)
-      )
-        .join(", ")
-    }`;
+    return `${sortedStrings(names)
+      .map((name) => describeValue(name))
+      .join(", ")} ${verb} not match any of the regexes: ${sortedStrings(
+      Object.keys(patterns),
+    )
+      .map((pattern) => describeValue(pattern))
+      .join(", ")}`;
   }
-  return `Additional properties are not allowed (${
-    extrasMessage(sortedStrings(names))
-  })`;
+  return `Additional properties are not allowed (${extrasMessage(
+    sortedStrings(names),
+  )})`;
 }
 
 /** jsonschema's `e.path`, typed the way Python types it: list indices are ints. */
@@ -416,9 +411,10 @@ function instancePath(
   instance: unknown,
 ): (string | number)[] {
   if (error.instancePath === "") return [];
-  const segments = error.instancePath.slice(1).split("/").map((
-    segment,
-  ) => segment.replace(/~1/g, "/").replace(/~0/g, "~"));
+  const segments = error.instancePath
+    .slice(1)
+    .split("/")
+    .map((segment) => segment.replace(/~1/g, "/").replace(/~0/g, "~"));
   const path: (string | number)[] = [];
   let current = instance;
   for (const segment of segments) {
@@ -445,9 +441,12 @@ function instancePath(
  */
 function schemaRank(schemaPath: string, rootSchema: unknown): number[] {
   const ranks: number[] = [];
-  const segments = schemaPath.split("/").slice(1).map((segment) =>
-    decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~"))
-  );
+  const segments = schemaPath
+    .split("/")
+    .slice(1)
+    .map((segment) =>
+      decodeURIComponent(segment.replace(/~1/g, "/").replace(/~0/g, "~")),
+    );
   let container: unknown = rootSchema;
   for (const segment of segments) {
     let rank = 0;
@@ -497,12 +496,16 @@ function project(
   // A composite keyword's own error speaks for its descendants, and
   // `propertyNames` validates the property *names* — its sub-errors are
   // re-derived per name below rather than read off the stream.
-  const summaries = raw.filter((error) =>
-    COMPOSITE_KEYWORDS.has(error.keyword) || error.keyword === "propertyNames"
+  const summaries = raw.filter(
+    (error) =>
+      COMPOSITE_KEYWORDS.has(error.keyword) ||
+      error.keyword === "propertyNames",
   );
   const suppressed = (error: ErrorObject): boolean =>
-    summaries.some((summary) =>
-      summary !== error && error.schemaPath.startsWith(`${summary.schemaPath}/`)
+    summaries.some(
+      (summary) =>
+        summary !== error &&
+        error.schemaPath.startsWith(`${summary.schemaPath}/`),
     );
 
   const candidates: Candidate[] = [];
@@ -541,9 +544,9 @@ function project(
         error: {
           path: valuePath.slice(0, -1),
           keyword: error.keyword,
-          message: `False schema does not allow ${
-            describeValue(instanceAt(instance, valuePath))
-          }`,
+          message: `False schema does not allow ${describeValue(
+            instanceAt(instance, valuePath),
+          )}`,
         },
       });
       continue;
@@ -588,9 +591,10 @@ function project(
   for (const group of collapsed.values()) {
     const names = sortedStrings(group.names.map((name) => String(name)));
     const body = names.map((name) => describeValue(name)).join(", ");
-    const message = group.error.keyword === "additionalProperties"
-      ? additionalPropertiesGroupMessage(group.error, names, body)
-      : `Unevaluated properties are not allowed (${extrasMessage(names)})`;
+    const message =
+      group.error.keyword === "additionalProperties"
+        ? additionalPropertiesGroupMessage(group.error, names, body)
+        : `Unevaluated properties are not allowed (${extrasMessage(names)})`;
     candidates.push({
       rank: group.rank,
       error: {
@@ -603,8 +607,9 @@ function project(
 
   return candidates
     .map((candidate, index) => ({ candidate, index }))
-    .sort((a, b) =>
-      compareRanks(a.candidate.rank, b.candidate.rank) || a.index - b.index
+    .sort(
+      (a, b) =>
+        compareRanks(a.candidate.rank, b.candidate.rank) || a.index - b.index,
     )
     .map(({ candidate }) => candidate.error);
 }
@@ -634,12 +639,11 @@ function additionalPropertiesGroupMessage(
   const patterns = parentSchema(error)?.["patternProperties"];
   if (isRecord(patterns)) {
     const verb = names.length === 1 ? "does" : "do";
-    return `${body} ${verb} not match any of the regexes: ${
-      sortedStrings(Object.keys(patterns)).map((pattern) =>
-        describeValue(pattern)
-      )
-        .join(", ")
-    }`;
+    return `${body} ${verb} not match any of the regexes: ${sortedStrings(
+      Object.keys(patterns),
+    )
+      .map((pattern) => describeValue(pattern))
+      .join(", ")}`;
   }
   return `Additional properties are not allowed (${extrasMessage(names)})`;
 }
@@ -672,8 +676,8 @@ export function sortByInstancePath(
 ): JsonSchemaError[] {
   return errors
     .map((error, index) => ({ error, index }))
-    .sort((a, b) =>
-      comparePaths(a.error.path, b.error.path) || a.index - b.index
+    .sort(
+      (a, b) => comparePaths(a.error.path, b.error.path) || a.index - b.index,
     )
     .map(({ error }) => error);
 }

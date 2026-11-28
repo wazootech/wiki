@@ -62,13 +62,11 @@ function writeWiki(): string {
   const root = sys.makeTempDirSync({ prefix: "wiki-show-" });
   sys.mkdirSync(join(root, "wiki"));
   sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
-  for (
-    const [name, content] of Object.entries({
-      "Alpha.md": ALPHA,
-      "Beta.md": BETA,
-      "Gamma.md": GAMMA,
-    })
-  ) {
+  for (const [name, content] of Object.entries({
+    "Alpha.md": ALPHA,
+    "Beta.md": BETA,
+    "Gamma.md": GAMMA,
+  })) {
     sys.writeTextFileSync(join(root, "wiki", name), content);
   }
   return root;
@@ -119,12 +117,14 @@ test("show's hash is accepted as an edit's expect", async () => {
     const wiki = Wiki.load(join(root, "wiki.yml"));
     const { hash } = await wiki.show("wiki/Gamma.md");
     const report = await wiki.edit({
-      ops: [{
-        op: "replace",
-        path: "wiki/Gamma.md",
-        content: GAMMA.replace("# Gamma", "# Gamma\n\nMore."),
-        expect: hash,
-      }],
+      ops: [
+        {
+          op: "replace",
+          path: "wiki/Gamma.md",
+          content: GAMMA.replace("# Gamma", "# Gamma\n\nMore."),
+          expect: hash,
+        },
+      ],
     });
     assertEquals(report.status, "dry_run");
   } finally {
@@ -183,82 +183,79 @@ async function runCli(
   };
 }
 
-test(
-  "wiki file show and wiki file refs: output formats and exit codes",
-  async () => {
-    const root = writeWiki();
-    try {
-      const json = await runCli(root, [
-        "file",
-        "show",
-        "wiki/Alpha.md",
-        "--json",
-      ]);
-      assertEquals(json.code, EXIT_OK, json.stderr);
-      const parsed = JSON.parse(json.stdout);
-      assertEquals(parsed.version, 1);
-      assertEquals(parsed.route, "Alpha");
+test("wiki file show and wiki file refs: output formats and exit codes", async () => {
+  const root = writeWiki();
+  try {
+    const json = await runCli(root, [
+      "file",
+      "show",
+      "wiki/Alpha.md",
+      "--json",
+    ]);
+    assertEquals(json.code, EXIT_OK, json.stderr);
+    const parsed = JSON.parse(json.stdout);
+    assertEquals(parsed.version, 1);
+    assertEquals(parsed.route, "Alpha");
 
-      const text = await runCli(root, ["file", "show", "wiki/Alpha.md"]);
-      assertEquals(text.code, EXIT_OK, text.stderr);
-      assert(text.stdout.includes("hash: "));
-      assert(text.stdout.includes("## Details (line 13)"));
+    const text = await runCli(root, ["file", "show", "wiki/Alpha.md"]);
+    assertEquals(text.code, EXIT_OK, text.stderr);
+    assert(text.stdout.includes("hash: "));
+    assert(text.stdout.includes("## Details (line 13)"));
 
-      const field = await runCli(root, [
-        "file",
-        "show",
-        "wiki/Alpha.md",
-        "--field",
-        "schema:headline",
-      ]);
-      assertEquals(field.code, EXIT_OK, field.stderr);
-      assertEquals(field.stdout.trim(), "Alpha");
+    const field = await runCli(root, [
+      "file",
+      "show",
+      "wiki/Alpha.md",
+      "--field",
+      "schema:headline",
+    ]);
+    assertEquals(field.code, EXIT_OK, field.stderr);
+    assertEquals(field.stdout.trim(), "Alpha");
 
-      const listField = await runCli(root, [
-        "file",
-        "show",
-        "wiki/Alpha.md",
-        "--field=schema:keywords",
-        "--json",
-      ]);
-      assertEquals(JSON.parse(listField.stdout), ["one", "two"]);
+    const listField = await runCli(root, [
+      "file",
+      "show",
+      "wiki/Alpha.md",
+      "--field=schema:keywords",
+      "--json",
+    ]);
+    assertEquals(JSON.parse(listField.stdout), ["one", "two"]);
 
-      const unset = await runCli(root, [
-        "file",
-        "show",
-        "wiki/Alpha.md",
-        "--field",
-        "schema:author",
-      ]);
-      assertEquals(unset.code, EXIT_FAILURE);
+    const unset = await runCli(root, [
+      "file",
+      "show",
+      "wiki/Alpha.md",
+      "--field",
+      "schema:author",
+    ]);
+    assertEquals(unset.code, EXIT_FAILURE);
 
-      const refs = await runCli(root, [
-        "file",
-        "refs",
-        "wiki/Gamma.md",
-        "--json",
-      ]);
-      assertEquals(refs.code, EXIT_OK, refs.stderr);
-      assertEquals(JSON.parse(refs.stdout).inbound, [
-        { route: "Alpha", path: "wiki/Alpha.md" },
-      ]);
+    const refs = await runCli(root, [
+      "file",
+      "refs",
+      "wiki/Gamma.md",
+      "--json",
+    ]);
+    assertEquals(refs.code, EXIT_OK, refs.stderr);
+    assertEquals(JSON.parse(refs.stdout).inbound, [
+      { route: "Alpha", path: "wiki/Alpha.md" },
+    ]);
 
-      assertEquals((await runCli(root, ["file", "show"])).code, EXIT_USAGE);
-      assertEquals(
-        (await runCli(root, ["file", "show", "wiki/Missing.md"])).code,
-        EXIT_USAGE,
-      );
-      assertEquals(
-        (await runCli(root, ["file", "refs", "wiki/Gamma.md", "--field", "x"]))
-          .code,
-        EXIT_USAGE,
-        "--field belongs to show only",
-      );
-      const help = await runCli(root, ["file", "show", "--help"]);
-      assertEquals(help.code, EXIT_OK);
-      assert(help.stdout.includes("Usage: wiki file show"));
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+    assertEquals((await runCli(root, ["file", "show"])).code, EXIT_USAGE);
+    assertEquals(
+      (await runCli(root, ["file", "show", "wiki/Missing.md"])).code,
+      EXIT_USAGE,
+    );
+    assertEquals(
+      (await runCli(root, ["file", "refs", "wiki/Gamma.md", "--field", "x"]))
+        .code,
+      EXIT_USAGE,
+      "--field belongs to show only",
+    );
+    const help = await runCli(root, ["file", "show", "--help"]);
+    assertEquals(help.code, EXIT_OK);
+    assert(help.stdout.includes("Usage: wiki file show"));
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});

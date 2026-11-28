@@ -20,11 +20,11 @@ function pathIsSameOrAncestor(ancestor: string, descendant: string): boolean {
 export function validateOutputDir(pageOutputDir: string, wiki: Wiki): void {
   const protectedPaths: [string, string][] = [
     ["config root", wiki.config.config_root],
-    ...wiki.config.wiki.input.map((path) =>
-      ["wiki input", path] as [string, string]
+    ...wiki.config.wiki.input.map(
+      (path) => ["wiki input", path] as [string, string],
     ),
-    ...wiki.config.wiki.assets.map((path) =>
-      ["wiki asset", path] as [string, string]
+    ...wiki.config.wiki.assets.map(
+      (path) => ["wiki asset", path] as [string, string],
     ),
   ];
   const layout = wiki.config.site.layout;
@@ -34,11 +34,11 @@ export function validateOutputDir(pageOutputDir: string, wiki: Wiki): void {
   for (const [label, path] of protectedPaths) {
     if (!pathIsSameOrAncestor(pageOutputDir, path)) continue;
     throw new BuildError(
-      `refusing to clean build output path ${
-        resolve(pageOutputDir)
-      } because it overlaps ${label} at ${
-        resolve(path)
-      }. Choose a separate output directory such as _site.`,
+      `refusing to clean build output path ${resolve(
+        pageOutputDir,
+      )} because it overlaps ${label} at ${resolve(
+        path,
+      )}. Choose a separate output directory such as _site.`,
     );
   }
 }

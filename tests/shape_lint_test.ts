@@ -273,8 +273,8 @@ sh:property:
       report.errors.filter((issue) => issue.code.startsWith("shape_")),
       [],
     );
-    const unused = report.warnings.filter((issue) =>
-      issue.code === "shape_unused"
+    const unused = report.warnings.filter(
+      (issue) => issue.code === "shape_unused",
     );
     assertEquals(unused.length, 1);
     assert(unused[0]!.message.includes("has no target"));
@@ -325,14 +325,12 @@ name: Ada
     );
     const config = new Config({ wiki: { input: [root] } });
 
-    for (
-      const report of [
-        await runCheck(config),
-        await runCheck(config, {
-          filePaths: [join(root, "Shape.md"), join(root, "Ada.md")],
-        }),
-      ]
-    ) {
+    for (const report of [
+      await runCheck(config),
+      await runCheck(config, {
+        filePaths: [join(root, "Shape.md"), join(root, "Ada.md")],
+      }),
+    ]) {
       assert(report.errors.some((issue) => issue.code === "shape_definition"));
       assertEquals(
         report.errors.filter((issue) => issue.code === "shacl_violation"),
@@ -552,8 +550,8 @@ ex:PersonShape a sh:NodeShape ;
     );
     write(root, "Ada.md", `---\ntype: Person\nname: Ada\n---\n`);
     const report = await runCheck(new Config({ wiki: { input: [root] } }));
-    const shape = report.errors.filter((issue) =>
-      issue.code === "shape_definition"
+    const shape = report.errors.filter(
+      (issue) => issue.code === "shape_definition",
     );
     assertEquals(shape.length, 1);
     assert(shape[0]!.path!.endsWith("Shapes.ttl"));

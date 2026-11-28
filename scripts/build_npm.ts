@@ -27,9 +27,10 @@ const result = await Bun.build({
   // guard compiles to a check that is true under Node and would run it twice.
   define: { "import.meta.main": "false" },
   // A prefix match per package, so `ajv/dist/2020.js` stays external too.
-  external: Object.keys(pkg.dependencies).flatMap((
+  external: Object.keys(pkg.dependencies).flatMap((name) => [
     name,
-  ) => [name, `${name}/*`]),
+    `${name}/*`,
+  ]),
 });
 if (!result.success) {
   for (const log of result.logs) console.error(log);

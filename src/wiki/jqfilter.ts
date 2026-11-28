@@ -25,13 +25,17 @@ function resolveStep(value: unknown, step: string): unknown[] {
   if (step === "[]") return Array.isArray(value) ? [...value] : [];
   if (step.startsWith("[") && step.endsWith("]")) {
     const index = Number(step.slice(1, -1));
-    return Array.isArray(value) && Number.isSafeInteger(index) && index >= 0 &&
-        index < value.length
+    return Array.isArray(value) &&
+      Number.isSafeInteger(index) &&
+      index >= 0 &&
+      index < value.length
       ? [value[index]]
       : [];
   }
   if (
-    typeof value === "object" && value !== null && !Array.isArray(value) &&
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
     Object.hasOwn(value, step)
   ) {
     return [(value as Record<string, unknown>)[step]];
@@ -43,7 +47,7 @@ export function resolvePath(value: unknown, path: string): unknown[] {
   let candidates = [value];
   for (const step of tokenize(path)) {
     candidates = candidates.flatMap((candidate) =>
-      resolveStep(candidate, step)
+      resolveStep(candidate, step),
     );
     if (candidates.length === 0) break;
   }

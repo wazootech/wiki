@@ -24,11 +24,7 @@ import {
 test("splitMaxSplit matches Python's maxsplit, not JavaScript's limit", () => {
   // Python: "a---b---c---d".split("---", 2) == ["a", "b", "c---d"]
   // JavaScript: "a---b---c---d".split("---", 2) == ["a", "b"]  (tail dropped)
-  assertEquals(splitMaxSplit("a---b---c---d", "---", 2), [
-    "a",
-    "b",
-    "c---d",
-  ]);
+  assertEquals(splitMaxSplit("a---b---c---d", "---", 2), ["a", "b", "c---d"]);
   assertEquals(splitMaxSplit("a---b", "---", 2), ["a", "b"]);
   assertEquals(splitMaxSplit("no-separator", "---", 2), ["no-separator"]);
 });

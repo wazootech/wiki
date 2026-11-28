@@ -20,11 +20,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Set up Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          deno-version: 2.9.6
-          cache: true
+          bun-version: "1.x"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Verify package and engine versions
         id: versions
@@ -32,11 +34,11 @@ jobs:
         run: |
           set -euo pipefail
           NPM_VERSION="$(node -p 'require("./package.json").version')"
-          DENO_VERSION="$(deno eval 'console.log(JSON.parse(Deno.readTextFileSync("deno.json")).version)')"
+          JSR_VERSION="$(node -p 'require("./jsr.json").version')"
           ENGINE_VERSION="$(sed -n 's/^export const VERSION = "\([^"]*\)";/\1/p' src/wiki/version.ts)"
           PYPI_VERSION="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pyproject.toml)"
-          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$DENO_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" && test "$NPM_VERSION" = "$PYPI_VERSION" || {
-            echo "::error::Version mismatch: package.json=$NPM_VERSION deno.json=$DENO_VERSION engine=$ENGINE_VERSION pyproject.toml=$PYPI_VERSION"
+          test -n "$NPM_VERSION" && test "$NPM_VERSION" = "$JSR_VERSION" && test "$NPM_VERSION" = "$ENGINE_VERSION" && test "$NPM_VERSION" = "$PYPI_VERSION" || {
+            echo "::error::Version mismatch: package.json=$NPM_VERSION jsr.json=$JSR_VERSION engine=$ENGINE_VERSION pyproject.toml=$PYPI_VERSION"
             exit 1
           }
           echo "version=$NPM_VERSION" >> "$GITHUB_OUTPUT"
@@ -49,16 +51,16 @@ jobs:
           test "$TAG" = "$VERSION" || { echo "::error::tag $TAG != package version $VERSION"; exit 1; }
 
       - name: Validate JSR package contents
-        run: deno publish --dry-run
+        run: bun run publish:dry
 
       # The release publishes the npm tarball, all six standalone binaries,
       # and the GitHub release from this commit: it must not ship untested.
       # (CI only runs on `main` pushes, so a tag push never triggers it.)
       - name: Type-check the engine
-        run: deno task check
+        run: bun run check
 
       - name: Run the engine test suite
-        run: deno task test
+        run: bun run test
 
   build-standalone:
     name: Build standalone (${{ matrix.slug }})

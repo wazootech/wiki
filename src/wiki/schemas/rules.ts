@@ -65,7 +65,8 @@ function coerceRemoteSchemaRefs(value: unknown): string {
   }
   const normalized = value.trim().toLowerCase();
   if (
-    normalized !== "allow" && normalized !== "deny" &&
+    normalized !== "allow" &&
+    normalized !== "deny" &&
     normalized !== "allowlist"
   ) {
     throw new ValueError(
@@ -117,14 +118,20 @@ export const checkConfigSpec: ModelSpec = {
     ["missing_schema_ref", { defaultValue: "error", before: coerceSeverity }],
     ["shape_definition", { defaultValue: "error", before: coerceSeverity }],
     ["shape_unused", { defaultValue: "warning", before: coerceSeverity }],
-    ["remote_schema_refs", {
-      defaultValue: "allow",
-      before: coerceRemoteSchemaRefs,
-    }],
-    ["remote_schema_hosts", {
-      factory: () => [],
-      before: coerceRemoteSchemaHosts,
-    }],
+    [
+      "remote_schema_refs",
+      {
+        defaultValue: "allow",
+        before: coerceRemoteSchemaRefs,
+      },
+    ],
+    [
+      "remote_schema_hosts",
+      {
+        factory: () => [],
+        before: coerceRemoteSchemaHosts,
+      },
+    ],
   ],
 };
 

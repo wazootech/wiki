@@ -69,9 +69,10 @@ function literalError(
   permitted: readonly (string | number | boolean)[],
 ): ValidationIssue {
   const quoted = permitted.map((item) => `'${String(item)}'`);
-  const expected = quoted.length === 1
-    ? quoted[0]!
-    : `${quoted.slice(0, -1).join(", ")} or ${quoted[quoted.length - 1]!}`;
+  const expected =
+    quoted.length === 1
+      ? quoted[0]!
+      : `${quoted.slice(0, -1).join(", ")} or ${quoted[quoted.length - 1]!}`;
   return {
     type: "literal_error",
     loc,
@@ -189,7 +190,7 @@ export function validateModel(
       }
       const elementSpec = field.models();
       value = value.map((element, index) =>
-        validateModel(elementSpec, element, [...loc, name, index], issues)
+        validateModel(elementSpec, element, [...loc, name, index], issues),
       );
     } else if (field.literal !== undefined) {
       // `Literal[...] | None = None` accepts None; a required `Literal[...]`

@@ -10,13 +10,13 @@ Run `bash skills/wiki/scripts/verify.sh` first (`.agents/skills/wiki/scripts/ver
 
 Use the verifier rather than help output alone: the legacy Python CLI also supports `wiki --help` and `wiki fmt --help`.
 
-- Exit `0`: a Deno-backed CLI or verified Deno source checkout is ready. A second line says whether it has the write verbs (`wiki edit`, `new`, `set`, `patch`, `mv`, `rm`). `write verbs unavailable` is not a failure: the CLI works, it predates the verbs, and structural edits use the hand-edit fallback in [edit.md](edit.md). Upgrade only if the user wants the verbs.
-- Exit `2`: PATH contains a stale CLI and no usable Deno source checkout was found. Offer to upgrade the stale installation (see [Stale CLI](#stale-cli)); if working in the Wiki repository, `deno run -A src/wiki/cli.ts` also works.
+- Exit `0`: a current CLI or verified Bun source checkout is ready. A second line says whether it has the write verbs (`wiki edit`, `new`, `set`, `patch`, `mv`, `rm`). `write verbs unavailable` is not a failure: the CLI works, it predates the verbs, and structural edits use the hand-edit fallback in [edit.md](edit.md). Upgrade only if the user wants the verbs.
+- Exit `2`: PATH contains a stale CLI and no usable Bun source checkout was found. Offer to upgrade the stale installation (see [Stale CLI](#stale-cli)); if working in the Wiki repository, `bun src/wiki/cli.ts` also works.
 - Exit `1`: no supported Deno-backed CLI or source checkout was found. Follow the release-aware guidance below.
 
 ## Install when CLI is missing
 
-Offer the install path matching the user's environment. In the Wiki repository, contributors can also run `deno run -A src/wiki/cli.ts`. Installing software requires the user's approval.
+Offer the install path matching the user's environment. In the Wiki repository, contributors can also run `bun src/wiki/cli.ts`. Installing software requires the user's approval.
 
 ### npm (Node.js 18 or newer)
 
@@ -47,7 +47,7 @@ For a persistent `wiki` command, install the published JSR CLI with Deno's globa
 deno install -g -A --name wiki --min-dep-age 0 jsr:@wazoo/wiki/cli
 ```
 
-`--min-dep-age 0` bypasses Deno's 24-hour dependency age policy, which otherwise resolves a just-published version to the previous one. Contributors can also run `deno run -A src/wiki/cli.ts` from the repository checkout. Do not install the retired Python engine (`wazootech-wiki` 0.1.x).
+`--min-dep-age 0` bypasses Deno's 24-hour dependency age policy, which otherwise resolves a just-published version to the previous one. Contributors can also run `bun src/wiki/cli.ts` from the repository checkout. Do not install the retired Python engine (`wazootech-wiki` 0.1.x).
 
 ## Verify
 

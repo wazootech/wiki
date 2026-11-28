@@ -28,8 +28,11 @@ export const errors = { NotFound };
 
 /** isNotFound reports whether `error` means a file or command is missing. */
 export function isNotFound(error: unknown): boolean {
-  return typeof error === "object" && error !== null &&
-    (error as { code?: unknown }).code === "ENOENT";
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === "ENOENT"
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -203,12 +206,15 @@ export interface DirEntry {
 }
 
 export function readDirSync(path: Path): ArrayIterator<DirEntry> {
-  return fs.readdirSync(path, { withFileTypes: true }).map((entry) => ({
-    name: entry.name,
-    isFile: entry.isFile(),
-    isDirectory: entry.isDirectory(),
-    isSymlink: entry.isSymbolicLink(),
-  })).values();
+  return fs
+    .readdirSync(path, { withFileTypes: true })
+    .map((entry) => ({
+      name: entry.name,
+      isFile: entry.isFile(),
+      isDirectory: entry.isDirectory(),
+      isSymlink: entry.isSymbolicLink(),
+    }))
+    .values();
 }
 
 export interface WalkEntry extends DirEntry {
@@ -292,11 +298,12 @@ export const env = {
 
 export const build = {
   os: process.platform === "win32" ? "windows" : process.platform,
-  arch: process.arch === "x64"
-    ? "x86_64"
-    : process.arch === "arm64"
-    ? "aarch64"
-    : process.arch,
+  arch:
+    process.arch === "x64"
+      ? "x86_64"
+      : process.arch === "arm64"
+        ? "aarch64"
+        : process.arch,
 };
 
 export const version = { deno: process.versions["deno"] ?? "" };
@@ -304,7 +311,7 @@ export const version = { deno: process.versions["deno"] ?? "" };
 export const stdin = {
   isTerminal: (): boolean => process.stdin.isTTY === true,
   get readable(): ReadableStream<Uint8Array<ArrayBuffer>> {
-    return Readable.toWeb(process.stdin) as ReadableStream<
+    return Readable.toWeb(process.stdin) as unknown as ReadableStream<
       Uint8Array<ArrayBuffer>
     >;
   },
@@ -313,9 +320,8 @@ export const stdin = {
 export const stdout = {
   write: (bytes: Uint8Array): Promise<number> =>
     new Promise((resolve, reject) => {
-      process.stdout.write(
-        bytes,
-        (error) => error ? reject(error) : resolve(bytes.length),
+      process.stdout.write(bytes, (error) =>
+        error ? reject(error) : resolve(bytes.length),
       );
     }),
   get writable(): WritableStream<Uint8Array> {
@@ -364,10 +370,10 @@ const pipeOf = (
   fallback: "pipe" | "ignore" | "inherit",
 ) =>
   mode === "piped"
-    ? "pipe" as const
+    ? ("pipe" as const)
     : mode === "null"
-    ? "ignore" as const
-    : mode ?? fallback;
+      ? ("ignore" as const)
+      : (mode ?? fallback);
 
 const EMPTY = new Uint8Array(0);
 
@@ -398,7 +404,7 @@ export class Command {
     return {
       ...(signal === undefined ? {} : { signal }),
       ...(cwd === undefined ? {} : { cwd }),
-      env: clearEnv ? env ?? {} : { ...process.env, ...env },
+      env: clearEnv ? (env ?? {}) : { ...process.env, ...env },
       stdio: [
         pipeOf(stdin, inherit ? "inherit" : "ignore"),
         pipeOf(stdout, inherit ? "inherit" : "pipe"),

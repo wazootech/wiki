@@ -22,7 +22,7 @@
  */
 
 import MarkdownIt from "markdown-it";
-import type { Token } from "markdown-it/index.js";
+import type { Token } from "markdown-it";
 import { splitWhitespace, stripChars } from "./text.ts";
 
 /** One heading, as the lints, link index, and renderer see it. */
@@ -64,10 +64,9 @@ export class GitHubHeadingSlugger {
     // A CJK or Cyrillic heading would slug to `section` under `\w` and to its
     // own letters under the oracle (`日本語 見出し` → `日本語-見出し`).
     const withoutPunctuation = normalized.replace(/[^\p{L}\p{N}_\s-]/gu, "");
-    const dashed = withoutPunctuation.replace(/[\s-]+/g, "-").replace(
-      /^-+|-+$/g,
-      "",
-    );
+    const dashed = withoutPunctuation
+      .replace(/[\s-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
     const base = dashed === "" ? "section" : dashed;
     const count = this.seen.get(base) ?? 0;
     this.seen.set(base, count + 1);
@@ -135,7 +134,8 @@ export function firstAtxH1(markdown: string): string | null {
   for (let index = 0; index < tokens.length; index++) {
     const token = tokens[index] as Token;
     if (
-      token.type !== "heading_open" || token.tag !== "h1" ||
+      token.type !== "heading_open" ||
+      token.tag !== "h1" ||
       token.markup !== "#"
     ) {
       continue;
@@ -197,9 +197,8 @@ export function findSections(
     const token = tokens[index] as Token;
     if (token.type !== "heading_open" || token.map === null) continue;
     const next = tokens[index + 1];
-    const text = next !== undefined && next.type === "inline"
-      ? next.content
-      : "";
+    const text =
+      next !== undefined && next.type === "inline" ? next.content : "";
     all.push({
       level: Number(token.tag.slice(1)),
       text,
@@ -213,14 +212,15 @@ export function findSections(
   const sections: SectionRange[] = [];
   all.forEach((section, index) => {
     if (
-      section.text !== wanted && headingPlainText(section.text) !== wanted &&
+      section.text !== wanted &&
+      headingPlainText(section.text) !== wanted &&
       section.slug !== wanted
     ) {
       return;
     }
-    const next = all.slice(index + 1).find((later) =>
-      later.level <= section.level
-    );
+    const next = all
+      .slice(index + 1)
+      .find((later) => later.level <= section.level);
     sections.push({ ...section, end: next?.start ?? lineCount });
   });
   return sections;

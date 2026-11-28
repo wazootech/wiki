@@ -38,14 +38,15 @@ export function validateFmtOptions(
   options: Record<string, unknown>,
   label: string,
 ): void {
-  const unknown = Object.keys(options).filter((key) =>
-    !FMT_OPTION_KEYS.has(key)
+  const unknown = Object.keys(options).filter(
+    (key) => !FMT_OPTION_KEYS.has(key),
   );
   if (unknown.length > 0) {
     const listed = unknown.map((key) => `'${key}'`);
-    const named = listed.length === 1
-      ? listed[0]!
-      : `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}`;
+    const named =
+      listed.length === 1
+        ? listed[0]!
+        : `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}`;
     // The accepted surface is named and every unknown key is listed at once.
     // A per-key rename table is deliberately absent: AGENTS.md forbids rename
     // hints, and the CHANGELOG's Migration section documents the key moves.
@@ -68,7 +69,8 @@ export function validateFmtOptions(
   if (
     options["lineWidth"] !== undefined &&
     (typeof options["lineWidth"] !== "number" ||
-      !Number.isInteger(options["lineWidth"]) || options["lineWidth"] < 1)
+      !Number.isInteger(options["lineWidth"]) ||
+      options["lineWidth"] < 1)
   ) {
     throw new InvalidFmtConfigError(
       `Invalid 'lineWidth' value in ${label}; expected a positive integer.`,

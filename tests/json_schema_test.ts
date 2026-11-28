@@ -52,8 +52,8 @@ const goldenByName = new Map(golden.cases.map((entry) => [entry.name, entry]));
 
 // The schemas jsonschema only rejects *while validating*, which the port
 // reports at construction instead; they get their own test below.
-const raised = golden.cases.filter((entry) =>
-  entry.validation_error !== undefined
+const raised = golden.cases.filter(
+  (entry) => entry.validation_error !== undefined,
 );
 
 test("the corpus and the oracle golden describe the same cases", () => {
@@ -120,13 +120,11 @@ test("a schema the oracle rejects mid-validation is reported, not thrown", () =>
   // resolve. `check_frontmatter_schema` catches construction failures and
   // turns them into `invalid JSON Schema document (...)`, so the port has to
   // fail at construction too rather than traceback halfway through a page.
-  for (
-    const name of [
-      "invalid-schema-keyword-type",
-      "invalid-schema-minimum-string",
-      "unresolvable-ref",
-    ]
-  ) {
+  for (const name of [
+    "invalid-schema-keyword-type",
+    "invalid-schema-minimum-string",
+    "unresolvable-ref",
+  ]) {
     const testCase = corpus.cases.find((entry) => entry.name === name);
     assert(testCase !== undefined, `missing corpus case ${name}`);
     const oracle = goldenByName.get(name);

@@ -9,7 +9,7 @@
  *    formatter's output is only reproducible while the plugin is the version
  *    Deno 2.9.6 bundles and the option values are the ones deno's `deno()`
  *    presets set. A patch bump is a formatting change, so the versions are
- *    pinned exactly in `deno.json` and asserted here against the loaded plugin.
+ *    pinned exactly in `package.json` and asserted here against the loaded plugin.
  * 2. **Which fence tags reach which formatter.** `deno fmt` calls the plugin's
  *    *library* and picks the tags itself; the WASM build filters tags before the
  *    host callback is consulted, and the two tables disagree in both directions.
@@ -80,7 +80,7 @@ test("the embedded plugins load at their pinned versions", () => {
     assertEquals(
       createFromBuffer(pluginWasm(name as PluginName)).getPluginInfo().version,
       version,
-      `${name} has to move together with deno.json and ` +
+      `${name} has to move together with package.json and ` +
         `FORMATTER_PLUGIN_VERSIONS, and match the version Deno 2.9.6 bundles, ` +
         `because the pinned output is that version's output.`,
     );
@@ -149,19 +149,19 @@ test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", () => {
   // produces the right output today and would not if the default ever moved.
   // Asserting the diagnostic is what keeps the coincidence from being relied on.
   const diagnosticsFor = (textWrap: string) => {
-    const formatter = createFromBuffer(
-      pluginWasm("markdown"),
-    );
+    const formatter = createFromBuffer(pluginWasm("markdown"));
     formatter.setConfig({ lineWidth: DEFAULT_LINE_WIDTH }, { textWrap });
     return formatter.getConfigDiagnostics();
   };
   assertEquals(diagnosticsFor("maintain"), []);
   assertEquals(diagnosticsFor("never"), []);
   assertEquals(diagnosticsFor("always"), []);
-  assertEquals(diagnosticsFor("preserve"), [{
-    propertyName: "textWrap",
-    message: "Found invalid value 'preserve'.",
-  }]);
+  assertEquals(diagnosticsFor("preserve"), [
+    {
+      propertyName: "textWrap",
+      message: "Found invalid value 'preserve'.",
+    },
+  ]);
 });
 
 // ---------------------------------------------------------------------------
@@ -204,17 +204,15 @@ test("fences deno leaves alone are left alone", () => {
   // `xml` and `toml` are the interesting pair: both are reachable through the
   // plugin's own tag table, and neither is in `deno fmt`'s list. Formatting
   // either would be a behaviour change nobody asked for.
-  for (
-    const [tag, body] of [
-      ["xml", "<a><b/></a>"],
-      ["toml", "a=1"],
-      ["python", "x=1"],
-      ["bash", 'echo "hello"'],
-      ["sparql", "SELECT ?s WHERE { ?s ?p ?o }"],
-      ["turtle", "@prefix ex: <https://example.org/> ."],
-      ["text", "plain words"],
-    ] as const
-  ) {
+  for (const [tag, body] of [
+    ["xml", "<a><b/></a>"],
+    ["toml", "a=1"],
+    ["python", "x=1"],
+    ["bash", 'echo "hello"'],
+    ["sparql", "SELECT ?s WHERE { ?s ?p ?o }"],
+    ["turtle", "@prefix ex: <https://example.org/> ."],
+    ["text", "plain words"],
+  ] as const) {
     assertEquals(format(fenced(tag, body)), fenced(tag, body), tag);
   }
 });
@@ -291,61 +289,55 @@ test("only the `html` tag is post-processed", () => {
 // No subprocess
 // ---------------------------------------------------------------------------
 
-test(
-  "fmt needs no `run` permission, because nothing spawns a formatter",
-  () => {
-    // The subprocess this replaced needed `--allow-run` on every `wiki fmt`
-    // invocation, and could not work at all in a compiled binary. Both facts are
-    // gone only while nothing spawns anything, so the CLI is run here with every
-    // permission *except* `run`.
-    const root = sys.makeTempDirSync({ prefix: "wiki-fmt-perm-" });
-    try {
-      sys.writeTextFileSync(
-        join(root, "wiki.yml"),
-        "wiki:\n  input: [wiki]\n",
-      );
-      const page = join(root, "wiki", "Page.md");
-      sys.mkdirSync(dirname(page), { recursive: true });
-      sys.writeTextFileSync(
-        page,
-        "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text  \nwith a hard break.\n",
-      );
+test("fmt needs no `run` permission, because nothing spawns a formatter", () => {
+  // The subprocess this replaced needed `--allow-run` on every `wiki fmt`
+  // invocation, and could not work at all in a compiled binary. Both facts are
+  // gone only while nothing spawns anything, so the CLI is run here with every
+  // permission *except* `run`.
+  const root = sys.makeTempDirSync({ prefix: "wiki-fmt-perm-" });
+  try {
+    sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+    const page = join(root, "wiki", "Page.md");
+    sys.mkdirSync(dirname(page), { recursive: true });
+    sys.writeTextFileSync(
+      page,
+      "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text  \nwith a hard break.\n",
+    );
 
-      const child = new sys.Command(sys.execPath(), {
-        args: [
-          "run",
-          "--quiet",
-          "--allow-read",
-          "--allow-write",
-          "--allow-env",
-          CLI_ENTRY,
-          "-c",
-          join(root, "wiki.yml"),
-          "fmt",
-        ],
-        stdout: "piped",
-        stderr: "piped",
-      }).outputSync();
-      assertEquals(
-        child.code,
-        0,
-        DECODER.decode(child.stderr) ||
-          "the CLI failed without `--allow-run`: the formatter is a subprocess again",
-      );
-      assertEquals(
-        sys.readTextFileSync(page),
-        "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text\\\nwith a hard break.\n",
-      );
-      assert(
-        !DECODER.decode(child.stdout).includes("permission"),
-        DECODER.decode(child.stdout),
-      );
-    } finally {
-      try {
-        sys.removeSync(root, { recursive: true });
-      } catch {
-        // Windows keeps a handle open long enough to lose this race.
-      }
+    const child = new sys.Command(sys.execPath(), {
+      args: [
+        "run",
+        "--quiet",
+        "--allow-read",
+        "--allow-write",
+        "--allow-env",
+        CLI_ENTRY,
+        "-c",
+        join(root, "wiki.yml"),
+        "fmt",
+      ],
+      stdout: "piped",
+      stderr: "piped",
+    }).outputSync();
+    assertEquals(
+      child.code,
+      0,
+      DECODER.decode(child.stderr) ||
+        "the CLI failed without `--allow-run`: the formatter is a subprocess again",
+    );
+    assertEquals(
+      sys.readTextFileSync(page),
+      "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text\\\nwith a hard break.\n",
+    );
+    assert(
+      !DECODER.decode(child.stdout).includes("permission"),
+      DECODER.decode(child.stdout),
+    );
+  } finally {
+    try {
+      sys.removeSync(root, { recursive: true });
+    } catch {
+      // Windows keeps a handle open long enough to lose this race.
     }
-  },
-);
+  }
+});

@@ -2,7 +2,7 @@
  * Writes the formatter's WebAssembly plugins into `src/wiki/dprint/plugins.gen.ts`
  * so the engine carries them itself.
  *
- * Run after changing a plugin version in `deno.json` and `package.json`:
+ * Run after changing a plugin version in `package.json`:
  *
  *     bun scripts/embed_dprint.ts
  */
@@ -31,12 +31,13 @@ function encode(wasm: Uint8Array): string {
 }
 
 const config = JSON.parse(
-  readFileSync(new URL("../deno.json", import.meta.url), "utf8"),
-) as { imports: Record<string, string> };
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { devDependencies: Record<string, string> };
 
-const entries = pluginSources().map(({ name, specifier, path }) =>
-  `  // ${config.imports[specifier]}\n` +
-  `  ${name}: [\n${encode(readFileSync(path))}\n  ].join(""),`
+const entries = pluginSources().map(
+  ({ name, specifier, path }) =>
+    `  // npm:${specifier}@${config.devDependencies[specifier]}\n` +
+    `  ${name}: [\n${encode(readFileSync(path))}\n  ].join(""),`,
 );
 
 writeFileSync(

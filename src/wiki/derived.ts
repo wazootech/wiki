@@ -60,7 +60,7 @@ export const DERIVED_PROPERTIES = [
   "dateModified",
 ] as const;
 
-export type DerivedProperty = typeof DERIVED_PROPERTIES[number];
+export type DerivedProperty = (typeof DERIVED_PROPERTIES)[number];
 
 /** Whether a derived property is a date (`xsd:dateTime`) or text. */
 export function isDateProperty(property: DerivedProperty): boolean {
@@ -153,8 +153,9 @@ function repoHead(dir: string, heads: HeadLookup): Promise<string | null> {
       (result) => {
         if (result === null || result.code !== 0) return null;
         const [inside, commit] = result.stdout.trim().split(/\r?\n/);
-        return inside === "true" && commit !== undefined &&
-            /^[0-9a-f]{40,64}$/.test(commit)
+        return inside === "true" &&
+          commit !== undefined &&
+          /^[0-9a-f]{40,64}$/.test(commit)
           ? commit
           : null;
       },
@@ -200,7 +201,8 @@ async function historyDates(
       dir,
     ).then((result) => {
       if (result === null || result.code !== 0) return null;
-      const times = result.stdout.split("\n")
+      const times = result.stdout
+        .split("\n")
         .map((line) => line.trim())
         .filter((line) => /^\d+$/.test(line))
         .map(Number);
@@ -226,9 +228,8 @@ export function gitDates(filePath: string): Promise<HistoryDates> {
 /** The mtime fallback, as both dates. A staged (unwritten) file is "now". */
 function mtimeDates(filePath: string): { created: string; modified: string } {
   const staged = activeOverlay()?.files.get(overlayKey(filePath));
-  const ms = typeof staged === "string"
-    ? Date.now()
-    : fileStat(filePath).mtimeMs;
+  const ms =
+    typeof staged === "string" ? Date.now() : fileStat(filePath).mtimeMs;
   const stamp = rfc3339Utc(Math.floor(ms / 1000));
   return { created: stamp, modified: stamp };
 }
@@ -288,10 +289,7 @@ export async function deriveMetadataAll(
     }
   };
   await Promise.all(
-    Array.from(
-      { length: Math.min(GIT_CONCURRENCY, filePaths.length) },
-      worker,
-    ),
+    Array.from({ length: Math.min(GIT_CONCURRENCY, filePaths.length) }, worker),
   );
   return results;
 }
@@ -312,8 +310,10 @@ function isPresentValue(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (Array.isArray(value)) return value.length > 0;
   if (
-    typeof value === "object" && !(value instanceof Date) &&
-    !(value instanceof Number) && Object.keys(value).length === 0
+    typeof value === "object" &&
+    !(value instanceof Date) &&
+    !(value instanceof Number) &&
+    Object.keys(value).length === 0
   ) {
     return false;
   }
@@ -326,10 +326,13 @@ function explicitKeys(
   predicate: string,
   context: Context,
 ): string[] {
-  return Object.keys(data).filter((key) =>
-    !key.startsWith("@") && key !== "id" && key !== "type" &&
-    isPresentValue(data[key]) &&
-    resolvePredicate(key, context)?.value === predicate
+  return Object.keys(data).filter(
+    (key) =>
+      !key.startsWith("@") &&
+      key !== "id" &&
+      key !== "type" &&
+      isPresentValue(data[key]) &&
+      resolvePredicate(key, context)?.value === predicate,
   );
 }
 
@@ -394,8 +397,11 @@ function repeatsDerived(
   derived: string,
 ): boolean {
   if (!isDateProperty(property)) return value === derived;
-  return value instanceof WikiTimestamp && !value.dateOnly &&
-    value.getTime() === Date.parse(derived);
+  return (
+    value instanceof WikiTimestamp &&
+    !value.dateOnly &&
+    value.getTime() === Date.parse(derived)
+  );
 }
 
 /**
@@ -429,8 +435,8 @@ export function redundantFields(
     for (const key of keys) found.push({ key, property, predicate, value });
   }
   const removed = new Set(found.map((field) => field.key));
-  const remaining = Object.keys(data).filter((key) =>
-    key !== "@context" && !removed.has(key)
+  const remaining = Object.keys(data).filter(
+    (key) => key !== "@context" && !removed.has(key),
   );
   return remaining.length === 0 ? [] : found;
 }

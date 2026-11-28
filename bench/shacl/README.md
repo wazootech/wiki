@@ -12,9 +12,9 @@ it, and neither `publish.include` nor `package.json` `files` ships it.
 ## Run it
 
 ```bash
-deno task bench:shacl                                  # 1e3,1e4,1e5,1e6, every case
-deno task bench:shacl --sizes 1e3,1e4 --cases validator-full,wiki-check-full
-deno task bench:shacl --timeout 1200 --json results.json --out ./fixtures
+bun run bench:shacl                                  # 1e3,1e4,1e5,1e6, every case
+bun run bench:shacl --sizes 1e3,1e4 --cases validator-full,wiki-check-full
+bun run bench:shacl --timeout 1200 --json results.json --out ./fixtures
 ```
 
 Each case runs in its own process, so no case inherits another's graph cache or
@@ -39,7 +39,7 @@ organization needs at least one inbound `worksFor`).
 ### Using the fixture from Worlds
 
 ```bash
-deno task bench:shacl --emit ./fixtures --sizes 1e3,1e4,1e5,1e6
+bun run bench:shacl --emit ./fixtures --sizes 1e3,1e4,1e5,1e6
 ```
 
 writes `<size>/data.nt` and `<size>/shapes.ttl` and stops. Import `data.nt` into

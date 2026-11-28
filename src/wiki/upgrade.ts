@@ -105,12 +105,12 @@ function parseVersion(version: string): ParsedVersion | null {
   if (!match) return null;
   const prerelease = match[4]
     ? match[4].split(".").map((identifier) => {
-      if (/^\d+$/.test(identifier)) {
-        if (identifier.length > 1 && identifier.startsWith("0")) return null;
-        return Number(identifier);
-      }
-      return identifier;
-    })
+        if (/^\d+$/.test(identifier)) {
+          if (identifier.length > 1 && identifier.startsWith("0")) return null;
+          return Number(identifier);
+        }
+        return identifier;
+      })
     : [];
   if (prerelease.some((identifier) => identifier === null)) return null;
   return {
@@ -165,8 +165,8 @@ function latestVersionFromMetadata(metadata: unknown): string {
   if (eligible.length === 0) {
     throw new UpgradeError("Invalid JSR package metadata: no usable versions.");
   }
-  const stable = eligible.filter(({ parsed }) =>
-    parsed.prerelease.length === 0
+  const stable = eligible.filter(
+    ({ parsed }) => parsed.prerelease.length === 0,
   );
   const candidates = stable.length > 0 ? stable : eligible;
   candidates.sort((left, right) => compareVersions(right.parsed, left.parsed));
@@ -223,7 +223,8 @@ async function readLatestVersion(
   // service. Treat the empty map as the same deferral, not as malformed
   // metadata.
   if (
-    isRecord(metadata) && isRecord(metadata.versions) &&
+    isRecord(metadata) &&
+    isRecord(metadata.versions) &&
     Object.keys(metadata.versions).length === 0
   ) {
     throw new DeferredUpgradeError("not-published", notPublishedMessage());
@@ -316,8 +317,10 @@ function candidateNames(): readonly string[] {
 async function isWikiDenoShim(path: string): Promise<boolean> {
   try {
     const text = await sys.readTextFile(path);
-    return /\bdeno(?:\.exe)?\b/i.test(text) &&
-      /(?:jsr:|https:\/\/jsr\.io\/)@wazoo\/wiki(?:@|\/)/i.test(text);
+    return (
+      /\bdeno(?:\.exe)?\b/i.test(text) &&
+      /(?:jsr:|https:\/\/jsr\.io\/)@wazoo\/wiki(?:@|\/)/i.test(text)
+    );
   } catch {
     return false;
   }
@@ -427,10 +430,11 @@ async function findDefaultInstallTarget(): Promise<InstallTarget> {
           continue;
         }
         if (await isWikiDenoShim(candidate)) {
-          const root = configuredRoot &&
-              normalize(join(configuredRoot, "bin")) === normalizedDirectory
-            ? configuredRoot
-            : dirname(normalizedDirectory);
+          const root =
+            configuredRoot &&
+            normalize(join(configuredRoot, "bin")) === normalizedDirectory
+              ? configuredRoot
+              : dirname(normalizedDirectory);
           return { kind: "global", root };
         }
         return { kind: "non-global" };
@@ -558,9 +562,9 @@ export async function runUpgrade(
     target = await deps.findInstallTarget();
   } catch (error) {
     deps.stderr(
-      `Upgrade failed: cannot determine installation target: ${
-        errorMessage(error)
-      }`,
+      `Upgrade failed: cannot determine installation target: ${errorMessage(
+        error,
+      )}`,
     );
     return 1;
   }
@@ -600,7 +604,8 @@ export async function runUpgrade(
     if (result.stderr) deps.stderr(result.stderr.trimEnd());
   }
   if (result.code !== 0) {
-    const details = [result.stderr.trim(), result.stdout.trim()].filter(Boolean)
+    const details = [result.stderr.trim(), result.stdout.trim()]
+      .filter(Boolean)
       .join("\n");
     deps.stderr(
       `Upgrade failed (Deno exited with code ${result.code})${

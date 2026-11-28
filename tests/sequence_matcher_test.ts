@@ -16,10 +16,10 @@ test("SequenceMatcher ratio matches Python's code-point matching", () => {
 });
 
 test("getCloseMatches preserves Python's tuple ordering for ties", () => {
-  assertEquals(
-    getCloseMatches("a-page", ["ab-page", "ac-page"], 2, 0.86),
-    ["ac-page", "ab-page"],
-  );
+  assertEquals(getCloseMatches("a-page", ["ab-page", "ac-page"], 2, 0.86), [
+    "ac-page",
+    "ab-page",
+  ]);
 });
 
 test("popular repeated characters remain available for block extension", () => {

@@ -186,7 +186,8 @@ function severityError(
   bad: unknown,
 ): ValueError {
   if (
-    blockName === "check" && field === "filename_pattern" &&
+    blockName === "check" &&
+    field === "filename_pattern" &&
     looksLikeRegex(describeText(bad))
   ) {
     return new ValueError(
@@ -195,9 +196,9 @@ function severityError(
     );
   }
   return new ValueError(
-    `Invalid ${blockName}.${field} severity: ${
-      describeValue(bad)
-    } (expected error, warning, or off)`,
+    `Invalid ${blockName}.${field} severity: ${describeValue(
+      bad,
+    )} (expected error, warning, or off)`,
   );
 }
 
@@ -223,7 +224,8 @@ export function formatConfigValidationError(
     if (loc.length === 1) {
       topLevelExtras.push(String(loc[0]));
     } else if (
-      loc.length === 2 && Object.hasOwn(_BLOCK_LABELS, String(loc[0]))
+      loc.length === 2 &&
+      Object.hasOwn(_BLOCK_LABELS, String(loc[0]))
     ) {
       const block = String(loc[0]);
       const keys = extras.get(block) ?? [];
@@ -254,7 +256,8 @@ export function formatConfigValidationError(
     const msg = issue.msg ?? "";
     if (issue.type === "extra_forbidden") continue;
     if (
-      loc.length === 1 && loc[0] === "fmt" &&
+      loc.length === 1 &&
+      loc[0] === "fmt" &&
       msg.includes("fmt must be a mapping or path string")
     ) {
       return new ValueError(
@@ -273,10 +276,9 @@ export function formatConfigValidationError(
       }
       if (block === "link" && field === "style") {
         return new ValueError(
-          `Invalid config file ${configName}: Invalid link_style: ${
-            describeValue(issue.input)
-          } ` +
-            `(expected standard or wikilink)`,
+          `Invalid config file ${configName}: Invalid link_style: ${describeValue(
+            issue.input,
+          )} ` + `(expected standard or wikilink)`,
         );
       }
     }
@@ -376,9 +378,10 @@ function parsePageLayoutPath(
 
 /** Normalize `site.url_style`. */
 export function normalizeUrlStyle(value: unknown): string {
-  const normalized = value === null || value === undefined || value === ""
-    ? DEFAULT_URL_STYLE
-    : String(value).trim().toLowerCase();
+  const normalized =
+    value === null || value === undefined || value === ""
+      ? DEFAULT_URL_STYLE
+      : String(value).trim().toLowerCase();
   if (!VALID_URL_STYLES.has(normalized)) {
     throw new ValueError(`Invalid url_style: ${value}`);
   }
@@ -387,11 +390,11 @@ export function normalizeUrlStyle(value: unknown): string {
 
 /** Normalize `sparql_service.path`. */
 export function normalizeApiPath(value: unknown): string {
-  const raw =
-    (value === null || value === undefined || value === ""
+  const raw = (
+    value === null || value === undefined || value === ""
       ? "/api/sparql"
-      : String(value))
-      .trim();
+      : String(value)
+  ).trim();
   if (!raw.startsWith("/")) {
     throw new ValueError(`Invalid sparql_service.path: ${value}`);
   }
@@ -594,9 +597,9 @@ function coerceGraphContext(
     else if (typeof uri === "string") context[prefix] = uri;
     else {
       throw new ValueError(
-        `expected the graph context value for '${prefix}' to be a string, got ${
-          describeType(uri)
-        }`,
+        `expected the graph context value for '${prefix}' to be a string, got ${describeType(
+          uri,
+        )}`,
       );
     }
   }
@@ -608,21 +611,30 @@ const wikiBlockSpec: ModelSpec = {
   forbidExtra: true,
   fields: [
     ["input", { factory: () => ["wiki"], before: coercePathList }],
-    ["assets", {
-      defaultValue: null,
-      before: (value) =>
-        value === null || value === undefined ? null : coercePathList(value),
-    }],
-    ["exclude", {
-      factory: () => [],
-      before: (value) =>
-        value === null || value === undefined ? [] : coerceStrOrList(value),
-    }],
+    [
+      "assets",
+      {
+        defaultValue: null,
+        before: (value) =>
+          value === null || value === undefined ? null : coercePathList(value),
+      },
+    ],
+    [
+      "exclude",
+      {
+        factory: () => [],
+        before: (value) =>
+          value === null || value === undefined ? [] : coerceStrOrList(value),
+      },
+    ],
     ["filename_pattern", { defaultValue: null }],
-    ["allow_unknown_keys", {
-      defaultValue: false,
-      before: (value) => coerceBoolean(value, "allow_unknown_keys"),
-    }],
+    [
+      "allow_unknown_keys",
+      {
+        defaultValue: false,
+        before: (value) => coerceBoolean(value, "allow_unknown_keys"),
+      },
+    ],
   ],
 };
 
@@ -630,26 +642,40 @@ const graphBlockSpec: ModelSpec = {
   label: "GraphConfig",
   forbidExtra: true,
   fields: [
-    ["base_iri", {
-      defaultValue: null,
-      before: (value) =>
-        value === null || value === undefined ? null : normalizeBaseIri(value),
-    }],
+    [
+      "base_iri",
+      {
+        defaultValue: null,
+        before: (value) =>
+          value === null || value === undefined
+            ? null
+            : normalizeBaseIri(value),
+      },
+    ],
     ["content_predicate", { defaultValue: null }],
-    ["include_file_extension", {
-      defaultValue: false,
-      before: (value) => coerceBoolean(value, "include_file_extension"),
-    }],
+    [
+      "include_file_extension",
+      {
+        defaultValue: false,
+        before: (value) => coerceBoolean(value, "include_file_extension"),
+      },
+    ],
     ["implicit_types", { factory: () => [], before: coerceImplicitTypes }],
-    ["implicit_types_policy", {
-      defaultValue: IMPLICIT_TYPES_POLICY,
-      before: coerceImplicitTypesPolicy,
-    }],
-    ["context", {
-      defaultValue: null,
-      aliases: ["@context"],
-      before: coerceGraphContext,
-    }],
+    [
+      "implicit_types_policy",
+      {
+        defaultValue: IMPLICIT_TYPES_POLICY,
+        before: coerceImplicitTypesPolicy,
+      },
+    ],
+    [
+      "context",
+      {
+        defaultValue: null,
+        aliases: ["@context"],
+        before: coerceGraphContext,
+      },
+    ],
   ],
 };
 
@@ -657,36 +683,57 @@ const authBlockSpec: ModelSpec = {
   label: "AuthConfig",
   forbidExtra: true,
   fields: [
-    ["enabled", {
-      defaultValue: false,
-      before: (value) => coerceBoolean(value, "auth.enabled", true),
-    }],
-    ["provider", {
-      defaultValue: "local",
-      literal: [...AUTH_PROVIDERS],
-    }],
-    ["session_ttl_seconds", {
-      defaultValue: 604800,
-      before: (value) =>
-        coercePositiveInteger(value, "session_ttl_seconds", 604800),
-    }],
+    [
+      "enabled",
+      {
+        defaultValue: false,
+        before: (value) => coerceBoolean(value, "auth.enabled", true),
+      },
+    ],
+    [
+      "provider",
+      {
+        defaultValue: "local",
+        literal: [...AUTH_PROVIDERS],
+      },
+    ],
+    [
+      "session_ttl_seconds",
+      {
+        defaultValue: 604800,
+        before: (value) =>
+          coercePositiveInteger(value, "session_ttl_seconds", 604800),
+      },
+    ],
     ["cookie_name", { defaultValue: "wiki_session" }],
-    ["users_file", {
-      defaultValue: null,
-      before: (value) => coerceOptionalText(value, "users_file"),
-    }],
-    ["session_file", {
-      defaultValue: null,
-      before: (value) => coerceOptionalText(value, "session_file"),
-    }],
-    ["team_domain", {
-      defaultValue: null,
-      before: (value) => coerceOptionalText(value, "team_domain"),
-    }],
-    ["audience", {
-      defaultValue: null,
-      before: (value) => coerceOptionalText(value, "audience"),
-    }],
+    [
+      "users_file",
+      {
+        defaultValue: null,
+        before: (value) => coerceOptionalText(value, "users_file"),
+      },
+    ],
+    [
+      "session_file",
+      {
+        defaultValue: null,
+        before: (value) => coerceOptionalText(value, "session_file"),
+      },
+    ],
+    [
+      "team_domain",
+      {
+        defaultValue: null,
+        before: (value) => coerceOptionalText(value, "team_domain"),
+      },
+    ],
+    [
+      "audience",
+      {
+        defaultValue: null,
+        before: (value) => coerceOptionalText(value, "audience"),
+      },
+    ],
   ],
 };
 
@@ -738,17 +785,23 @@ const configSpec: ModelSpec = {
     ["link", { model: () => linkBlockSpec }],
     ["check", { model: () => checkConfigSpec }],
     ["lint", { model: () => lintConfigSpec }],
-    ["sources", {
-      factory: () => [],
-      before: (value) => validateSources(value),
-      models: () => sourceConfigSpec,
-    }],
+    [
+      "sources",
+      {
+        factory: () => [],
+        before: (value) => validateSources(value),
+        models: () => sourceConfigSpec,
+      },
+    ],
     ["fmt", fmtField],
     ["sparql_service", { model: () => sparqlServiceSpec }],
-    ["config_root", {
-      factory: () => sys.cwd(),
-      before: (value) => describeText(value),
-    }],
+    [
+      "config_root",
+      {
+        factory: () => sys.cwd(),
+        before: (value) => describeText(value),
+      },
+    ],
   ],
 };
 
@@ -854,9 +907,9 @@ export class Config {
 
         if (!isMapping(data)) {
           throw new ValueError(
-            `Invalid config file ${
-              basename(configPath)
-            }: top-level content must be a mapping`,
+            `Invalid config file ${basename(
+              configPath,
+            )}: top-level content must be a mapping`,
           );
         }
 
@@ -866,9 +919,12 @@ export class Config {
           // The name is carried into resolution, not just into the routing:
           // the Python model receives it as pydantic validation context, and a
           // resolver failure such as `fmt path must be relative` embeds it.
-          return new Config({ ...data, config_root: baseDir }, {
-            configName: name,
-          });
+          return new Config(
+            { ...data, config_root: baseDir },
+            {
+              configName: name,
+            },
+          );
         } catch (error) {
           if (error instanceof SchemaValidationError) {
             throw formatConfigValidationError(name, error);
@@ -881,9 +937,9 @@ export class Config {
         // failure) is wrapped with the file it came from.
         if (error instanceof ValueError) throw error;
         throw new ValueError(
-          `Failed to load config file ${basename(configPath)}: ${
-            String(error)
-          }`,
+          `Failed to load config file ${basename(configPath)}: ${String(
+            error,
+          )}`,
         );
       }
     }
@@ -979,9 +1035,10 @@ function resolveConfig(data: ConfigInput, configName = ""): ResolvedConfig {
   const issues: ValidationIssue[] = [];
   const values = validateModel(configSpec, data, [], issues);
   const wiki = values["wiki"] as { allow_unknown_keys?: boolean } | undefined;
-  const reported = wiki?.allow_unknown_keys === true
-    ? issues.filter(isNotTopLevelExtra)
-    : issues;
+  const reported =
+    wiki?.allow_unknown_keys === true
+      ? issues.filter(isNotTopLevelExtra)
+      : issues;
   if (reported.length > 0) throw new SchemaValidationError("Config", reported);
 
   try {
@@ -1018,12 +1075,15 @@ function resolveRuntime(
 
   const wiki = values["wiki"] as unknown as WikiBlock;
   const inputs = wiki.input.map((path) => resolvePath(path, baseDir));
-  const assetsRaw = wiki.assets === null || wiki.assets === undefined
-    ? (isDirectory(join(baseDir, "assets")) ? ["assets"] : [])
-    : [...wiki.assets];
+  const assetsRaw =
+    wiki.assets === null || wiki.assets === undefined
+      ? isDirectory(join(baseDir, "assets"))
+        ? ["assets"]
+        : []
+      : [...wiki.assets];
   const assets = assetsRaw.map((path) => resolvePath(path, baseDir));
   const exclude = wiki.exclude.map((pattern) =>
-    String(pattern).replaceAll("\\", "/")
+    String(pattern).replaceAll("\\", "/"),
   );
 
   const site = values["site"] as unknown as {
@@ -1041,12 +1101,14 @@ function resolveRuntime(
   const layout = parsePageLayoutPath(site.layout, baseDir);
   const auth: AuthBlock = {
     ...site.auth,
-    users_file: site.auth.users_file === null
-      ? null
-      : resolvePath(site.auth.users_file, baseDir),
-    session_file: site.auth.session_file === null
-      ? null
-      : resolvePath(site.auth.session_file, baseDir),
+    users_file:
+      site.auth.users_file === null
+        ? null
+        : resolvePath(site.auth.users_file, baseDir),
+    session_file:
+      site.auth.session_file === null
+        ? null
+        : resolvePath(site.auth.session_file, baseDir),
   };
 
   const sparql = values["sparql_service"] as unknown as SparqlServiceBlock;

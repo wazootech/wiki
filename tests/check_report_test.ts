@@ -87,244 +87,236 @@ const RESULT_KEYS = [
   "value",
 ];
 
-test(
-  "check -f json reports each missing field with its key, constraint, and named shape",
-  async () => {
-    const root = writeVault({
-      "wiki/Article_Shape.md": ARTICLE_SHAPE,
-      "wiki/CSS.md": "---\ntype: schema:Article\nname: CSS\n---\n",
-    });
-    try {
-      const result = await check(root, ["-f", "json", "wiki/CSS.md"]);
-      assertEquals(result.code, EXIT_FAILURE);
-      assert(result.stderr.includes("Results (2):"), result.stderr);
+test("check -f json reports each missing field with its key, constraint, and named shape", async () => {
+  const root = writeVault({
+    "wiki/Article_Shape.md": ARTICLE_SHAPE,
+    "wiki/CSS.md": "---\ntype: schema:Article\nname: CSS\n---\n",
+  });
+  try {
+    const result = await check(root, ["-f", "json", "wiki/CSS.md"]);
+    assertEquals(result.code, EXIT_FAILURE);
+    assert(result.stderr.includes("Results (2):"), result.stderr);
 
-      const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      assertEquals(
-        Object.keys(payload).sort(),
-        ["documents", "issues", "ok", "version"],
-      );
-      assertEquals(payload.version, 1);
-      assertEquals(payload.ok, false);
-      assertEquals(payload.documents.length, 1);
+    const payload = JSON.parse(result.stdout) as CheckEnvelope;
+    assertEquals(Object.keys(payload).sort(), [
+      "documents",
+      "issues",
+      "ok",
+      "version",
+    ]);
+    assertEquals(payload.version, 1);
+    assertEquals(payload.ok, false);
+    assertEquals(payload.documents.length, 1);
 
-      const [doc] = payload.documents;
-      assertEquals(
-        Object.keys(doc!).sort(),
-        ["conforms", "focusNode", "path", "results", "route"],
-      );
-      assertEquals(doc!.path, "wiki/CSS.md");
-      assertEquals(doc!.route, "CSS");
-      assertEquals(doc!.focusNode, "https://wiki.example.org/CSS");
-      assertEquals(doc!.conforms, false);
-      assertEquals(doc!.results.length, 2);
+    const [doc] = payload.documents;
+    assertEquals(Object.keys(doc!).sort(), [
+      "conforms",
+      "focusNode",
+      "path",
+      "results",
+      "route",
+    ]);
+    assertEquals(doc!.path, "wiki/CSS.md");
+    assertEquals(doc!.route, "CSS");
+    assertEquals(doc!.focusNode, "https://wiki.example.org/CSS");
+    assertEquals(doc!.conforms, false);
+    assertEquals(doc!.results.length, 2);
 
-      const [first, second] = doc!.results;
-      assertEquals(Object.keys(first!).sort(), RESULT_KEYS);
-      assertEquals(first!.code, "shacl_violation");
-      assertEquals(first!.check, "shacl");
-      assertEquals(first!.resultPath, `${SCHEMA}description`);
-      assertEquals(first!.frontmatterKeys[0], "description");
-      assertEquals(first!.message, "Article must have a description.");
-      assertEquals(
-        first!.sourceConstraintComponent,
-        `${SH}MinCountConstraintComponent`,
-      );
-      assertEquals(first!.sourceShapes, [{
+    const [first, second] = doc!.results;
+    assertEquals(Object.keys(first!).sort(), RESULT_KEYS);
+    assertEquals(first!.code, "shacl_violation");
+    assertEquals(first!.check, "shacl");
+    assertEquals(first!.resultPath, `${SCHEMA}description`);
+    assertEquals(first!.frontmatterKeys[0], "description");
+    assertEquals(first!.message, "Article must have a description.");
+    assertEquals(
+      first!.sourceConstraintComponent,
+      `${SH}MinCountConstraintComponent`,
+    );
+    assertEquals(first!.sourceShapes, [
+      {
         iri: "https://wiki.example.org/Article_Shape",
         route: "Article_Shape",
         path: "wiki/Article_Shape.md",
         targetClass: [`${SCHEMA}Article`],
         label: "Article Shape",
-      }]);
-      assertEquals(first!.value, null);
-      assertEquals(second!.resultPath, `${SCHEMA}headline`);
+      },
+    ]);
+    assertEquals(first!.value, null);
+    assertEquals(second!.resultPath, `${SCHEMA}headline`);
 
-      assertEquals(payload.issues.length, 1);
-      assertEquals(payload.issues[0]!.code, "shacl_violation");
-      assertEquals(payload.issues[0]!.path, "wiki/CSS.md");
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+    assertEquals(payload.issues.length, 1);
+    assertEquals(payload.issues[0]!.code, "shacl_violation");
+    assertEquals(payload.issues[0]!.path, "wiki/CSS.md");
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
 
-test(
-  "check --json attributes a shared path to the shape that declared it",
-  async () => {
-    const root = writeVault({
-      "wiki/Article_Shape.md": ARTICLE_SHAPE,
-      "wiki/App_Shape.md": APP_SHAPE,
-      "wiki/Both.md":
-        "---\ntype: [schema:Article, schema:SoftwareApplication]\nheadline: Both\n---\n",
-    });
-    try {
-      const result = await check(root, ["--json", "wiki/Both.md"]);
-      assertEquals(result.code, EXIT_FAILURE);
-      const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      const results = payload.documents[0]!.results;
-      assertEquals(results.length, 1);
-      assertEquals(results[0]!.resultPath, `${SCHEMA}description`);
-      assertEquals(
-        results[0]!.sourceShapes.map((shape) => shape.route),
-        ["Article_Shape"],
-      );
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+test("check --json attributes a shared path to the shape that declared it", async () => {
+  const root = writeVault({
+    "wiki/Article_Shape.md": ARTICLE_SHAPE,
+    "wiki/App_Shape.md": APP_SHAPE,
+    "wiki/Both.md":
+      "---\ntype: [schema:Article, schema:SoftwareApplication]\nheadline: Both\n---\n",
+  });
+  try {
+    const result = await check(root, ["--json", "wiki/Both.md"]);
+    assertEquals(result.code, EXIT_FAILURE);
+    const payload = JSON.parse(result.stdout) as CheckEnvelope;
+    const results = payload.documents[0]!.results;
+    assertEquals(results.length, 1);
+    assertEquals(results[0]!.resultPath, `${SCHEMA}description`);
+    assertEquals(
+      results[0]!.sourceShapes.map((shape) => shape.route),
+      ["Article_Shape"],
+    );
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
 
-test(
-  "check --json names a referenced property shape page as the source shape",
-  async () => {
-    // SHACL's sh:sourceShape is the shape the constraint belongs to. A named
-    // sh:PropertyShape page keeps that identity even when a node shape lists
-    // it under sh:property; an inline constraint inside sh:or still resolves
-    // to the named node shape that holds it.
-    const root = writeVault({
-      "wiki/Name_Property.md":
-        "---\n'@type': sh:PropertyShape\nrdfs:label: Name Property\nsh:path: schema:name\nsh:minCount: 1\n---\n",
-      "wiki/Thing_Shape.md": [
-        "---",
-        "'@type': sh:NodeShape",
-        "sh:targetClass: schema:Thing",
-        "sh:property:",
-        "  - '@id': wiki:Name_Property",
-        "  - sh:path: schema:email",
-        "    sh:or:",
-        "      - sh:datatype: xsd:string",
-        "      - sh:nodeKind: sh:IRI",
-        "---",
-        "",
-      ].join("\n"),
-      "wiki/T.md": "---\ntype: schema:Thing\nschema:email: 5\n---\n",
-    });
-    try {
-      const result = await check(root, ["--json"]);
-      assertEquals(result.code, EXIT_FAILURE);
-      const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      const results = payload.documents[0]!.results;
-      const byComponent = new Map(
-        results.map((item) => [item.sourceConstraintComponent, item]),
-      );
-      assertEquals(
-        byComponent.get(`${SH}MinCountConstraintComponent`)!.sourceShapes
-          .map((shape) => [shape.route, shape.label]),
-        [["Name_Property", "Name Property"]],
-      );
-      const or = byComponent.get(`${SH}OrConstraintComponent`)!;
-      assertEquals(or.resultPath, `${SCHEMA}email`);
-      assertEquals(or.value, "5");
-      assertEquals(
-        or.sourceShapes.map((shape) => shape.route),
-        ["Thing_Shape"],
-      );
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+test("check --json names a referenced property shape page as the source shape", async () => {
+  // SHACL's sh:sourceShape is the shape the constraint belongs to. A named
+  // sh:PropertyShape page keeps that identity even when a node shape lists
+  // it under sh:property; an inline constraint inside sh:or still resolves
+  // to the named node shape that holds it.
+  const root = writeVault({
+    "wiki/Name_Property.md":
+      "---\n'@type': sh:PropertyShape\nrdfs:label: Name Property\nsh:path: schema:name\nsh:minCount: 1\n---\n",
+    "wiki/Thing_Shape.md": [
+      "---",
+      "'@type': sh:NodeShape",
+      "sh:targetClass: schema:Thing",
+      "sh:property:",
+      "  - '@id': wiki:Name_Property",
+      "  - sh:path: schema:email",
+      "    sh:or:",
+      "      - sh:datatype: xsd:string",
+      "      - sh:nodeKind: sh:IRI",
+      "---",
+      "",
+    ].join("\n"),
+    "wiki/T.md": "---\ntype: schema:Thing\nschema:email: 5\n---\n",
+  });
+  try {
+    const result = await check(root, ["--json"]);
+    assertEquals(result.code, EXIT_FAILURE);
+    const payload = JSON.parse(result.stdout) as CheckEnvelope;
+    const results = payload.documents[0]!.results;
+    const byComponent = new Map(
+      results.map((item) => [item.sourceConstraintComponent, item]),
+    );
+    assertEquals(
+      byComponent
+        .get(`${SH}MinCountConstraintComponent`)!
+        .sourceShapes.map((shape) => [shape.route, shape.label]),
+      [["Name_Property", "Name Property"]],
+    );
+    const or = byComponent.get(`${SH}OrConstraintComponent`)!;
+    assertEquals(or.resultPath, `${SCHEMA}email`);
+    assertEquals(or.value, "5");
+    assertEquals(
+      or.sourceShapes.map((shape) => shape.route),
+      ["Thing_Shape"],
+    );
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
 
-test(
-  "check -f json on a conforming document is a well-formed passing payload",
-  async () => {
-    const root = writeVault({
-      "wiki/Article_Shape.md": ARTICLE_SHAPE,
-      "wiki/Good.md":
-        "---\ntype: schema:Article\nheadline: Ok\ndescription: Ok\n---\n",
-    });
-    try {
-      const result = await check(root, ["--format=json", "wiki/Good.md"]);
-      assertEquals(result.code, EXIT_OK);
-      assertEquals(result.stderr, "");
-      assertEquals(JSON.parse(result.stdout), {
-        version: 1,
-        ok: true,
-        documents: [{
+test("check -f json on a conforming document is a well-formed passing payload", async () => {
+  const root = writeVault({
+    "wiki/Article_Shape.md": ARTICLE_SHAPE,
+    "wiki/Good.md":
+      "---\ntype: schema:Article\nheadline: Ok\ndescription: Ok\n---\n",
+  });
+  try {
+    const result = await check(root, ["--format=json", "wiki/Good.md"]);
+    assertEquals(result.code, EXIT_OK);
+    assertEquals(result.stderr, "");
+    assertEquals(JSON.parse(result.stdout), {
+      version: 1,
+      ok: true,
+      documents: [
+        {
           path: "wiki/Good.md",
           route: "Good",
           focusNode: "https://wiki.example.org/Good",
           conforms: true,
           results: [],
-        }],
-        issues: [],
-      });
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
-
-test(
-  "check -f json over the whole wiki maps focus nodes back to documents",
-  async () => {
-    const root = writeVault({
-      "wiki/Article_Shape.md": ARTICLE_SHAPE,
-      "wiki/CSS.md": "---\ntype: schema:Article\nheadline: CSS\n---\n",
-      "wiki/Good.md":
-        "---\ntype: schema:Article\nheadline: Ok\ndescription: Ok\n---\n",
+        },
+      ],
+      issues: [],
     });
-    try {
-      const result = await check(root, ["-f", "json"]);
-      assertEquals(result.code, EXIT_FAILURE);
-      const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      assertEquals(payload.documents.map((doc) => doc.path), ["wiki/CSS.md"]);
-      const [only] = payload.documents[0]!.results;
-      assertEquals(only!.frontmatterKeys[0], "description");
-      assertEquals(only!.sourceShapes[0]!.route, "Article_Shape");
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
 
-test(
-  "check -f json carries JSON Schema failures with their code and instance path",
-  async () => {
-    const root = writeVault({
-      "thing.schema.json": JSON.stringify({
-        type: "object",
-        properties: { name: { type: "string", minLength: 5 } },
-      }),
-      "wiki/Thing.md":
-        "---\ntype: schema:Thing\nname: abc\nwazoo:jsonSchema: thing.schema.json\n---\n",
-    });
-    try {
-      const result = await check(root, ["-f", "json", "wiki/Thing.md"]);
-      assertEquals(result.code, EXIT_FAILURE);
-      const payload = JSON.parse(result.stdout) as CheckEnvelope;
-      const [issue] = payload.issues;
-      assertEquals(issue!.code, "frontmatter_schema");
-      assert(result.stderr.includes(issue!.message), result.stderr);
+test("check -f json over the whole wiki maps focus nodes back to documents", async () => {
+  const root = writeVault({
+    "wiki/Article_Shape.md": ARTICLE_SHAPE,
+    "wiki/CSS.md": "---\ntype: schema:Article\nheadline: CSS\n---\n",
+    "wiki/Good.md":
+      "---\ntype: schema:Article\nheadline: Ok\ndescription: Ok\n---\n",
+  });
+  try {
+    const result = await check(root, ["-f", "json"]);
+    assertEquals(result.code, EXIT_FAILURE);
+    const payload = JSON.parse(result.stdout) as CheckEnvelope;
+    assertEquals(
+      payload.documents.map((doc) => doc.path),
+      ["wiki/CSS.md"],
+    );
+    const [only] = payload.documents[0]!.results;
+    assertEquals(only!.frontmatterKeys[0], "description");
+    assertEquals(only!.sourceShapes[0]!.route, "Article_Shape");
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
 
-      const [found] = payload.documents[0]!.results;
-      assertEquals(found!.check, "jsonSchema");
-      assertEquals(found!.code, "frontmatter_schema");
-      assertEquals(found!.schema, "thing.schema.json");
-      assertEquals(found!.instancePath, ["name"]);
-      assertEquals(found!.frontmatterKeys, ["name"]);
-      assertEquals(found!.keyword, "minLength");
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+test("check -f json carries JSON Schema failures with their code and instance path", async () => {
+  const root = writeVault({
+    "thing.schema.json": JSON.stringify({
+      type: "object",
+      properties: { name: { type: "string", minLength: 5 } },
+    }),
+    "wiki/Thing.md":
+      "---\ntype: schema:Thing\nname: abc\nwazoo:jsonSchema: thing.schema.json\n---\n",
+  });
+  try {
+    const result = await check(root, ["-f", "json", "wiki/Thing.md"]);
+    assertEquals(result.code, EXIT_FAILURE);
+    const payload = JSON.parse(result.stdout) as CheckEnvelope;
+    const [issue] = payload.issues;
+    assertEquals(issue!.code, "frontmatter_schema");
+    assert(result.stderr.includes(issue!.message), result.stderr);
 
-test(
-  "check rejects an unknown --format value as a usage error",
-  async () => {
-    const root = writeVault({});
-    try {
-      const result = await check(root, ["-f", "xml"]);
-      assertEquals(result.code, EXIT_USAGE);
-      assertEquals(result.stdout, "");
-      assert(
-        result.stderr.includes("'xml' is not one of 'text', 'json'."),
-        result.stderr,
-      );
-    } finally {
-      sys.removeSync(root, { recursive: true });
-    }
-  },
-);
+    const [found] = payload.documents[0]!.results;
+    assertEquals(found!.check, "jsonSchema");
+    assertEquals(found!.code, "frontmatter_schema");
+    assertEquals(found!.schema, "thing.schema.json");
+    assertEquals(found!.instancePath, ["name"]);
+    assertEquals(found!.frontmatterKeys, ["name"]);
+    assertEquals(found!.keyword, "minLength");
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});
+
+test("check rejects an unknown --format value as a usage error", async () => {
+  const root = writeVault({});
+  try {
+    const result = await check(root, ["-f", "xml"]);
+    assertEquals(result.code, EXIT_USAGE);
+    assertEquals(result.stdout, "");
+    assert(
+      result.stderr.includes("'xml' is not one of 'text', 'json'."),
+      result.stderr,
+    );
+  } finally {
+    sys.removeSync(root, { recursive: true });
+  }
+});

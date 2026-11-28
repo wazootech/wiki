@@ -20,8 +20,8 @@ async function jsonVersion(path: string): Promise<string> {
   return version;
 }
 
-test("VERSION matches deno.json", async () => {
-  assertEquals(VERSION, await jsonVersion("deno.json"));
+test("VERSION matches jsr.json", async () => {
+  assertEquals(VERSION, await jsonVersion("jsr.json"));
 });
 
 test("VERSION matches package.json", async () => {
@@ -36,9 +36,7 @@ test("VERSION matches pyproject.toml", async () => {
 });
 
 test("VERSION matches the docs wiki metadata", async () => {
-  const text = await sys.readTextFile(
-    new URL("docs/wiki/wiki.md", ROOT),
-  );
+  const text = await sys.readTextFile(new URL("docs/wiki/wiki.md", ROOT));
   const match = /^softwareVersion:\s*(\S+)/m.exec(text);
   assertEquals(match?.[1], VERSION);
 });

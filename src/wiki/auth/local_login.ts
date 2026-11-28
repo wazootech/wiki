@@ -62,7 +62,8 @@ export function createLoginHandler(
     const csrf = readCookie(request, csrfName);
     const submitted = form.get("csrf");
     if (
-      csrf === null || typeof submitted !== "string" ||
+      csrf === null ||
+      typeof submitted !== "string" ||
       !constantTimeEquals(csrf, submitted)
     ) {
       return htmlResponse("Invalid CSRF token.\n", 403);
@@ -78,11 +79,14 @@ export function createLoginHandler(
 
     const username = form.get("username");
     const password = form.get("password");
-    const user = typeof username === "string"
-      ? users.find((candidate) => candidate.username === username)
-      : undefined;
-    const valid = user !== undefined && typeof password === "string" &&
-      await verifyPassword(user, password);
+    const user =
+      typeof username === "string"
+        ? users.find((candidate) => candidate.username === username)
+        : undefined;
+    const valid =
+      user !== undefined &&
+      typeof password === "string" &&
+      (await verifyPassword(user, password));
     if (!valid) {
       const error = "Invalid username or password.";
       return loginPage(request, context, url, error, csrf);

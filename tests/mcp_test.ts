@@ -35,10 +35,7 @@ function cleanup(root: string): void {
 function makeWiki(root: string): Wiki {
   const wikiDir = join(root, "wiki");
   sys.mkdirSync(wikiDir, { recursive: true });
-  sys.writeTextFileSync(
-    join(root, "wiki.yaml"),
-    "wiki:\n  input: [wiki]\n",
-  );
+  sys.writeTextFileSync(join(root, "wiki.yaml"), "wiki:\n  input: [wiki]\n");
   sys.writeTextFileSync(
     join(wikiDir, "Ethan.md"),
     "---\ntype: schema:Person\ngivenName: Ethan\nfamilyName: Davidson\n---\n",
@@ -57,8 +54,8 @@ test("describeWiki reports factual config, graph, namespace, and vocabulary data
     assert(description.graph.triples > 0);
     assertEquals(description.graph.inference, true);
     assertEquals(
-      description.vocabulary.classes.find((entry) =>
-        entry.iri === "https://schema.org/Person"
+      description.vocabulary.classes.find(
+        (entry) => entry.iri === "https://schema.org/Person",
       ),
       {
         iri: "https://schema.org/Person",
@@ -67,9 +64,10 @@ test("describeWiki reports factual config, graph, namespace, and vocabulary data
       },
     );
     assert(
-      description.vocabulary.predicates.some((entry) =>
-        entry.iri === "https://schema.org/givenName" &&
-        entry.curie === "schema:givenName"
+      description.vocabulary.predicates.some(
+        (entry) =>
+          entry.iri === "https://schema.org/givenName" &&
+          entry.curie === "schema:givenName",
       ),
     );
   } finally {
@@ -123,11 +121,9 @@ test("querySparql rejects updates, unrecognized forms, and unsupported formats",
 
     const formatError = await assertRejects(
       () =>
-        querySparql(
-          wiki,
-          "SELECT ?s WHERE { ?s ?p ?o }",
-          { format: "application/rdf+xml" },
-        ),
+        querySparql(wiki, "SELECT ?s WHERE { ?s ?p ?o }", {
+          format: "application/rdf+xml",
+        }),
       Error,
     );
     assertStringIncludes(
@@ -181,17 +177,20 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       id: 2,
       method: "tools/list",
     });
-    const toolNames = (listed?.result as { tools: { name: string }[] }).tools
-      .map((tool) => tool.name);
+    const toolNames = (
+      listed!.result as { tools: { name: string }[] }
+    ).tools.map((tool) => tool.name);
     assertEquals(toolNames, [
       "query_sparql",
       "describe_wiki",
       "wiki_page_show",
       "wiki_page_refs",
     ]);
-    const listedTools = (listed?.result as {
-      tools: { name: string; outputSchema?: { type: string } }[];
-    }).tools;
+    const listedTools = (
+      listed!.result as {
+        tools: { name: string; outputSchema?: { type: string } }[];
+      }
+    ).tools;
     assertEquals(listedTools[0]?.outputSchema?.type, "object");
 
     const listedResources = await server.handleMessage({
@@ -199,14 +198,15 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       id: 8,
       method: "resources/list",
     });
-    const resourceDefinitions = (listedResources?.result as {
-      resources: { uri: string; mimeType: string }[];
-    }).resources;
-    assertEquals(resourceDefinitions.map((resource) => resource.uri), [
-      "wiki://info",
-      "wiki://namespaces",
-      "wiki://graph.ttl",
-    ]);
+    const resourceDefinitions = (
+      listedResources!.result as {
+        resources: { uri: string; mimeType: string }[];
+      }
+    ).resources;
+    assertEquals(
+      resourceDefinitions.map((resource) => resource.uri),
+      ["wiki://info", "wiki://namespaces", "wiki://graph.ttl"],
+    );
     assertEquals(resourceDefinitions[2]?.mimeType, "text/turtle");
 
     const called = await server.handleMessage({
@@ -252,7 +252,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       params: { name: "query_sparql", arguments: { query: 3 } },
     });
     assertEquals(
-      (invalidToolArgs?.result as { isError: boolean }).isError,
+      (invalidToolArgs!.result as { isError: boolean }).isError,
       true,
     );
 
@@ -262,14 +262,14 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       method: "resources/read",
       params: { uri: 7 },
     });
-    assertEquals((invalidParams?.error as { code: number }).code, -32602);
+    assertEquals((invalidParams!.error as { code: number }).code, -32602);
 
     const unknownMethod = await server.handleMessage({
       jsonrpc: "2.0",
       id: 6,
       method: "not/a/method",
     });
-    assertEquals((unknownMethod?.error as { code: number }).code, -32601);
+    assertEquals((unknownMethod!.error as { code: number }).code, -32601);
 
     const unknownResource = await server.handleMessage({
       jsonrpc: "2.0",
@@ -277,7 +277,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       method: "resources/read",
       params: { uri: "wiki://missing" },
     });
-    assertEquals((unknownResource?.error as { code: number }).code, -32002);
+    assertEquals((unknownResource!.error as { code: number }).code, -32002);
 
     const notification = await server.handleMessage({
       jsonrpc: "2.0",
@@ -293,25 +293,28 @@ test("stdio transport can be injected and tested without a process or network", 
   const root = tempRoot();
   try {
     const encoder = new TextEncoder();
-    const input = [
-      {
-        jsonrpc: "2.0",
-        id: "init",
-        method: "initialize",
-        params: {
-          protocolVersion: "2025-06-18",
-          capabilities: {},
-          clientInfo: { name: "transport-test", version: "1" },
+    const input =
+      [
+        {
+          jsonrpc: "2.0",
+          id: "init",
+          method: "initialize",
+          params: {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: { name: "transport-test", version: "1" },
+          },
         },
-      },
-      {
-        jsonrpc: "2.0",
-        id: "read",
-        method: "resources/read",
-        params: { uri: "wiki://namespaces" },
-      },
-      { jsonrpc: "2.0", method: "notifications/initialized" },
-    ].map((message) => JSON.stringify(message)).join("\n") + "\n";
+        {
+          jsonrpc: "2.0",
+          id: "read",
+          method: "resources/read",
+          params: { uri: "wiki://namespaces" },
+        },
+        { jsonrpc: "2.0", method: "notifications/initialized" },
+      ]
+        .map((message) => JSON.stringify(message))
+        .join("\n") + "\n";
     let output = "";
     const transport: McpTransport = {
       readable: new ReadableStream<Uint8Array>({
@@ -328,8 +331,14 @@ test("stdio transport can be injected and tested without a process or network", 
     };
 
     await runMcpServer(makeWiki(root), { transport });
-    const responses = output.trim().split("\n").map((line) => JSON.parse(line));
-    assertEquals(responses.map((response) => response.id), ["init", "read"]);
+    const responses = output
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    assertEquals(
+      responses.map((response) => response.id),
+      ["init", "read"],
+    );
     assertEquals(responses[0].result.serverInfo.name, "wiki");
     assertEquals(responses[1].result.contents[0].uri, "wiki://namespaces");
     assert("schema" in JSON.parse(responses[1].result.contents[0].text));
@@ -372,12 +381,13 @@ test("write tools are not listed or callable without allowWrite (#356)", async (
       id: 1,
       method: "tools/list",
     });
-    const names = (listed?.result as { tools: { name: string }[] }).tools
-      .map((tool) => tool.name);
-    assertEquals(names.filter((name) => name.startsWith("wiki_page_")), [
-      "wiki_page_show",
-      "wiki_page_refs",
-    ]);
+    const names = (listed!.result as { tools: { name: string }[] }).tools.map(
+      (tool) => tool.name,
+    );
+    assertEquals(
+      names.filter((name) => name.startsWith("wiki_page_")),
+      ["wiki_page_show", "wiki_page_refs"],
+    );
     assert(!names.includes("wiki_edit_apply"));
     const called = await callTool(server, "wiki_edit_apply", {
       ops: [{ op: "create", path: "wiki/New.md", content: "# New\n" }],
@@ -387,9 +397,10 @@ test("write tools are not listed or callable without allowWrite (#356)", async (
     assertStringIncludes(called.content[0]!.text, "--allow-write");
     assertEquals(
       sys.statSync(join(root, "wiki")).isDirectory &&
-        !sys.readDirSync(join(root, "wiki")).toArray().some((entry) =>
-          entry.name === "New.md"
-        ),
+        !sys
+          .readDirSync(join(root, "wiki"))
+          .toArray()
+          .some((entry) => entry.name === "New.md"),
       true,
     );
   } finally {
@@ -429,18 +440,17 @@ test("write tools dry-run by default, apply on dry_run=false, and refuse stale e
       id: 1,
       method: "tools/list",
     });
-    const names = (listed?.result as { tools: { name: string }[] }).tools
-      .map((tool) => tool.name);
-    for (
-      const name of [
-        "wiki_edit_apply",
-        "wiki_page_create",
-        "wiki_page_set_field",
-        "wiki_page_patch",
-        "wiki_page_move",
-        "wiki_page_delete",
-      ]
-    ) {
+    const names = (listed!.result as { tools: { name: string }[] }).tools.map(
+      (tool) => tool.name,
+    );
+    for (const name of [
+      "wiki_edit_apply",
+      "wiki_page_create",
+      "wiki_page_set_field",
+      "wiki_page_patch",
+      "wiki_page_move",
+      "wiki_page_delete",
+    ]) {
       assert(names.includes(name), name);
     }
 
@@ -457,16 +467,20 @@ test("write tools dry-run by default, apply on dry_run=false, and refuse stale e
     assertEquals(dry.structuredContent?.status, "dry_run");
     assertEquals(
       dry.structuredContent,
-      JSON.parse(JSON.stringify(
-        await wiki.edit({
-          ops: [{
-            op: "set",
-            path: "wiki/Ethan.md",
-            field: "givenName",
-            value: "Ethan T.",
-          }],
-        }),
-      )),
+      JSON.parse(
+        JSON.stringify(
+          await wiki.edit({
+            ops: [
+              {
+                op: "set",
+                path: "wiki/Ethan.md",
+                field: "givenName",
+                value: "Ethan T.",
+              },
+            ],
+          }),
+        ),
+      ),
     );
     assertEquals(sys.readTextFileSync(page), before);
 
@@ -505,11 +519,13 @@ test("write tools dry-run by default, apply on dry_run=false, and refuse stale e
 
     // A batch applies all-or-nothing through wiki_edit_apply.
     const created = await callTool(server, "wiki_edit_apply", {
-      ops: [{
-        op: "create",
-        path: "wiki/Other.md",
-        content: "---\ntype: schema:Person\ngivenName: Other\n---\n",
-      }],
+      ops: [
+        {
+          op: "create",
+          path: "wiki/Other.md",
+          content: "---\ntype: schema:Person\ngivenName: Other\n---\n",
+        },
+      ],
       dry_run: false,
     });
     assertEquals(created.structuredContent?.status, "applied");

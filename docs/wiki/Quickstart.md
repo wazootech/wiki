@@ -17,7 +17,7 @@ You can install Wiki CLI in the way that fits your workflow:
 Run Wiki directly with `deno run`:
 
 ```bash
-deno run -A jsr:@wazoo/wiki --help
+deno run -A jsr:@wazoo/wiki/cli --help
 ```
 
 Or install globally:

@@ -126,8 +126,8 @@ class DocumentIndex {
     if (data !== null && route !== null) {
       for (const includeFileExtension of [true, false]) {
         const subject = documentSubject(this.config, data, route, filePath, {
-          includeFileExtension: includeFileExtension &&
-            this.config.graph.include_file_extension,
+          includeFileExtension:
+            includeFileExtension && this.config.graph.include_file_extension,
         });
         if (subject !== null) subjects.add(subject);
       }
@@ -173,7 +173,8 @@ function documentSubject(
   });
   for (const quad of graph.toArray()) {
     if (
-      quad.predicate.value === RDF_TYPE && quad.subject.termType === "NamedNode"
+      quad.predicate.value === RDF_TYPE &&
+      quad.subject.termType === "NamedNode"
     ) {
       return quad.subject.value;
     }
@@ -215,8 +216,8 @@ export function frontmatterKeysFor(
   const resolvesTo = (key: string) =>
     resolvePredicate(key, context)?.value === predicate;
 
-  const present = Object.keys(data ?? {}).filter((key) =>
-    !key.startsWith("@") && resolvesTo(key)
+  const present = Object.keys(data ?? {}).filter(
+    (key) => !key.startsWith("@") && resolvesTo(key),
   );
   if (present.length > 0) return present;
 
@@ -229,8 +230,8 @@ export function frontmatterKeysFor(
       candidates.push(`${prefix}:${predicate.slice(namespace.length)}`);
     }
   }
-  return [...new Set(candidates)].filter((key) =>
-    key !== "" && resolvesTo(key)
+  return [...new Set(candidates)].filter(
+    (key) => key !== "" && resolvesTo(key),
   );
 }
 
@@ -247,11 +248,14 @@ export function buildCheckEnvelope(
   filePaths: readonly string[] = [],
 ): CheckEnvelope {
   const index = new DocumentIndex(config);
-  const entries = new Map<string, {
-    doc: Omit<CheckDocument, "conforms" | "results">;
-    results: CheckDocumentResult[];
-    failed: boolean;
-  }>();
+  const entries = new Map<
+    string,
+    {
+      doc: Omit<CheckDocument, "conforms" | "results">;
+      results: CheckDocumentResult[];
+      failed: boolean;
+    }
+  >();
 
   const entryFor = (
     doc: IndexedDocument | undefined,
@@ -355,11 +359,12 @@ function detailedResult(
     check: result.check,
     message: result.message,
     resultPath: result.resultPath ?? null,
-    frontmatterKeys: result.check === "shacl"
-      ? frontmatterKeysFor(config, result.resultPath, doc?.data ?? null)
-      : typeof topKey === "string"
-      ? [topKey]
-      : [],
+    frontmatterKeys:
+      result.check === "shacl"
+        ? frontmatterKeysFor(config, result.resultPath, doc?.data ?? null)
+        : typeof topKey === "string"
+          ? [topKey]
+          : [],
     shaclSeverity: result.shaclSeverity ?? null,
     sourceConstraintComponent: result.sourceConstraintComponent ?? null,
     sourceShapes: (result.sourceShapes ?? []).map((shape) => {

@@ -31,9 +31,9 @@ test("fnmatchCase agrees with fnmatch.fnmatchcase across the corpus", () => {
     const actual = fnmatchCase(row.name, row.pattern);
     if (actual !== row.matches) {
       mismatches.push(
-        `fnmatchCase(${JSON.stringify(row.name)}, ${
-          JSON.stringify(row.pattern)
-        }) = ${actual}, oracle = ${row.matches}`,
+        `fnmatchCase(${JSON.stringify(row.name)}, ${JSON.stringify(
+          row.pattern,
+        )}) = ${actual}, oracle = ${row.matches}`,
       );
     }
   }
