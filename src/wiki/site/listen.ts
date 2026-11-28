@@ -10,15 +10,22 @@ type Handler = (
   info: ConnectionInfo,
 ) => Promise<Response>;
 
+/** Methods the Fetch `Request` constructor refuses to build. */
+const FORBIDDEN_METHODS = new Set(["TRACE", "TRACK"]);
+
 function requestOf(message: IncomingMessage, authority: string): Request {
   const headers = new Headers();
   for (let i = 0; i < message.rawHeaders.length; i += 2) {
     headers.append(message.rawHeaders[i]!, message.rawHeaders[i + 1]!);
   }
   const method = message.method ?? "GET";
+  const origin = `http://${headers.get("host") ?? authority}`;
+  const target = message.url ?? "/";
+  // A target that starts with "/" is a path, even "//a/b": resolving it against
+  // a base would read its first segment as the host.
   const url = new URL(
-    message.url ?? "/",
-    `http://${headers.get("host") ?? authority}`,
+    target.startsWith("/") ? `${origin}${target}` : target,
+    origin,
   );
   if (method === "GET" || method === "HEAD") {
     return new Request(url, { method, headers });
@@ -37,6 +44,11 @@ export function listen(
   port: number,
 ): Promise<{ server: SiteServer; address: AddressInfo }> {
   const server = createServer(async (message, reply) => {
+    if (FORBIDDEN_METHODS.has(message.method ?? "")) {
+      reply.statusCode = 405;
+      reply.end();
+      return;
+    }
     try {
       const response = await handler(requestOf(message, `${host}:${port}`), {
         remoteAddr: { hostname: message.socket.remoteAddress ?? "" },

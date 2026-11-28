@@ -436,7 +436,10 @@ export class Command {
     child.stdout?.on("data", (chunk: Buffer) => stdout.push(chunk));
     child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk));
     const done = new Promise<CommandOutput>((resolve, reject) => {
-      child.on("error", reject);
+      // An abort kills the process, and `close` then reports how it ended.
+      child.on("error", (error) => {
+        if (error.name !== "AbortError") reject(error);
+      });
       child.on("close", (code) => {
         resolve(
           outputOf(
