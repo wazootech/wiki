@@ -1,5 +1,6 @@
 /** Local password account storage. */
 
+import * as sys from "../sys.ts";
 import bcrypt from "bcrypt";
 
 export interface LocalUser {
@@ -26,7 +27,7 @@ export async function verifyPassword(
 }
 
 export async function loadUsers(file: string): Promise<LocalUser[]> {
-  const parsed = JSON.parse(await Deno.readTextFile(file));
+  const parsed = JSON.parse(await sys.readTextFile(file));
   const entries = Array.isArray(parsed)
     ? parsed
     : Array.isArray(parsed?.users)

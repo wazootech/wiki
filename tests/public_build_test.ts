@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { dirname, join } from "@std/path";
 import { Config } from "../src/wiki/config.ts";
@@ -5,8 +7,8 @@ import { Wiki } from "../src/wiki/wiki.ts";
 
 function write(root: string, relative: string, content: string): void {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
 }
 
 function page(title: string, body = "", visibility?: string): string {
@@ -20,7 +22,7 @@ async function withWiki(
   files: Record<string, string>,
   run: (wiki: Wiki, root: string) => Promise<void>,
 ): Promise<void> {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-public-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-public-" });
   try {
     for (const [path, content] of Object.entries(files)) {
       write(root, path, content);
@@ -31,14 +33,14 @@ async function withWiki(
     });
     await run(new Wiki(config), root);
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 }
 
 const build = (wiki: Wiki, root: string, publicOnly = true) =>
   wiki.build(join(root, "_public"), { publicOnly, noCheck: true });
 
-Deno.test("public build writes only pages marked public", async () => {
+test("public build writes only pages marked public", async () => {
   await withWiki({
     "wiki/Open.md": page(
       "Open",
@@ -62,7 +64,7 @@ Deno.test("public build writes only pages marked public", async () => {
       "Open/index.html",
       "index.html",
     ]);
-    const index = Deno.readTextFileSync(join(root, "_public", "index.html"));
+    const index = sys.readTextFileSync(join(root, "_public", "index.html"));
     assertStringIncludes(index, "Also Open");
     assert(!index.includes("Secret"));
     assert(!index.includes("Stated"));
@@ -73,7 +75,7 @@ Deno.test("public build writes only pages marked public", async () => {
   });
 });
 
-Deno.test("public build publishes nothing without a flag", async () => {
+test("public build publishes nothing without a flag", async () => {
   await withWiki(
     { "wiki/Secret.md": page("Secret") },
     async (wiki, root) => {
@@ -99,7 +101,7 @@ const LEAKS: Record<string, string> = {
 };
 
 for (const [name, body] of Object.entries(LEAKS)) {
-  Deno.test(`public build refuses ${name}`, async () => {
+  test(`public build refuses ${name}`, async () => {
     await withWiki({
       "wiki/Open.md": page("Open", body, "public"),
       "wiki/Secret.md": page("Secret"),
@@ -113,7 +115,7 @@ for (const [name, body] of Object.entries(LEAKS)) {
   });
 }
 
-Deno.test("public build refuses a misspelled visibility", async () => {
+test("public build refuses a misspelled visibility", async () => {
   await withWiki(
     { "wiki/Open.md": page("Open", "", "Public") },
     async (wiki, root) => {

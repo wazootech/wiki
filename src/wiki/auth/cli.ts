@@ -1,5 +1,6 @@
 /** CLI surface for password hashing and the standalone auth gateway. */
 
+import * as sys from "../sys.ts";
 import { join, resolve } from "@std/path";
 import { errorText } from "../errors.ts";
 import { startStaticSiteServer } from "../site/server.ts";
@@ -54,9 +55,9 @@ export async function runAuthServeCommand(
     parsed.siteDir ?? join(wiki.config.config_root, "_site"),
   );
   const auth = await createAuthHandler(wiki.config.site.auth, baseUrl);
-  let server: ReturnType<typeof startStaticSiteServer> | null = null;
+  let server: Awaited<ReturnType<typeof startStaticSiteServer>> | null = null;
   try {
-    server = startStaticSiteServer({
+    server = await startStaticSiteServer({
       siteDir,
       host: parsed.host,
       port: parsed.port,
@@ -68,11 +69,11 @@ export async function runAuthServeCommand(
     console.log(`Auth-gated wiki ready at ${server.url}`);
     console.log("Press Ctrl+C to stop.");
     const onInterrupt = () => void server?.close();
-    Deno.addSignalListener("SIGINT", onInterrupt);
+    sys.addSignalListener("SIGINT", onInterrupt);
     try {
       await server.server.finished;
     } finally {
-      Deno.removeSignalListener("SIGINT", onInterrupt);
+      sys.removeSignalListener("SIGINT", onInterrupt);
     }
     return AUTH_EXIT_OK;
   } catch (error) {

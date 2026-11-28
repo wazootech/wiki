@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { join } from "@std/path";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 
@@ -9,20 +11,20 @@ import { ValueError } from "../src/wiki/errors.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function setup() {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-export-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-export-" });
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki);
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wiki);
+  sys.writeTextFileSync(
     join(root, "wiki.yaml"),
     'wiki:\n  input: [wiki]\ngraph:\n  context:\n    "@vocab": https://schema.org/\n    schema: https://schema.org/\n    wiki: https://wiki.example.org/\n',
   );
   const ada = join(wiki, "Ada.md");
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     ada,
     "---\nid: wiki:Ada\ntype: schema:Person\nname: Ada\n---\n# Ada\n",
   );
   const bob = join(wiki, "Bob.md");
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     bob,
     "---\nid: wiki:Bob\ntype: schema:Person\nname: Bob\n---\n# Bob\n",
   );
@@ -30,10 +32,10 @@ function setup() {
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
-Deno.test("export normalizes format aliases and defaults unknown API modes to expanded", () => {
+test("export normalizes format aliases and defaults unknown API modes to expanded", () => {
   assertEquals(normalizeExportFormat("TURTLE"), "turtle");
   assertEquals(normalizeExportFormat("application/rdf+xml"), "xml");
   assertEquals(normalizeExportFormat("rdf+xml"), "xml");
@@ -43,7 +45,7 @@ Deno.test("export normalizes format aliases and defaults unknown API modes to ex
   assertEquals(normalizeExportMode("unknown"), "expanded");
 });
 
-Deno.test("export rejects format names inherited from Object.prototype", () => {
+test("export rejects format names inherited from Object.prototype", () => {
   // The alias table is keyed by a raw user-supplied string. With a normal
   // object literal, `constructor` and `toString` resolved to inherited members
   // and were reported as if they were valid formats.
@@ -56,7 +58,7 @@ Deno.test("export rejects format names inherited from Object.prototype", () => {
   }
 });
 
-Deno.test("export does not treat SPARQL results XML as RDF/XML", () => {
+test("export does not treat SPARQL results XML as RDF/XML", () => {
   // A SPARQL result set is not an RDF graph. Aliasing this to `xml` routed the
   // request to the RDF/XML serializer, whose writer is deferred, so the caller
   // was told RDF/XML was unavailable rather than that the format was unknown.
@@ -70,7 +72,7 @@ Deno.test("export does not treat SPARQL results XML as RDF/XML", () => {
   assertEquals(normalizeExportFormat("application/rdf+xml"), "xml");
 });
 
-Deno.test("export emits per-document dictionaries and expanded JSON-LD", async () => {
+test("export emits per-document dictionaries and expanded JSON-LD", async () => {
   const { root, ada, wiki } = setup();
   try {
     const all = await wiki.export();
@@ -96,7 +98,7 @@ Deno.test("export emits per-document dictionaries and expanded JSON-LD", async (
   }
 });
 
-Deno.test("export compacts JSON-LD and serializes RDF with configured prefixes", async () => {
+test("export compacts JSON-LD and serializes RDF with configured prefixes", async () => {
   const { root, ada, wiki } = setup();
   try {
     const compacted = await wiki.export([ada], {
@@ -120,7 +122,7 @@ Deno.test("export compacts JSON-LD and serializes RDF with configured prefixes",
   }
 });
 
-Deno.test("export rejects deferred RDF/XML output and raw multi-file exports", async () => {
+test("export rejects deferred RDF/XML output and raw multi-file exports", async () => {
   const { root, ada, bob, wiki } = setup();
   try {
     const xml = await wiki.export([ada], { format: "xml" });
@@ -138,11 +140,11 @@ Deno.test("export rejects deferred RDF/XML output and raw multi-file exports", a
   }
 });
 
-Deno.test("export reports a selected document without metadata", async () => {
+test("export reports a selected document without metadata", async () => {
   const { root, wiki } = setup();
   try {
     const path = join(root, "wiki", "Plain.md");
-    Deno.writeTextFileSync(path, "# Plain\n");
+    sys.writeTextFileSync(path, "# Plain\n");
     const result = await wiki.export([path]);
     assertEquals(result.ok, false);
     assertStringIncludes(

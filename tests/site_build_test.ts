@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { BuildError } from "../src/wiki/errors.ts";
 import { dirname, join } from "@std/path";
 import { pathExists } from "../src/wiki/fspath.ts";
@@ -15,21 +17,21 @@ import { buildStaticSite } from "../src/wiki/site/publish.ts";
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-site-build-" });
+  return sys.makeTempDirSync({ prefix: "wiki-site-build-" });
 }
 
 function write(root: string, relative: string, content: string): string {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
   return path;
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
-Deno.test("buildSite globally sorts pages and filters excluded documents", () => {
+test("buildSite globally sorts pages and filters excluded documents", () => {
   const root = tempRoot();
   try {
     write(root, "wiki-z/Zulu.md", "# Zulu\n");
@@ -51,7 +53,7 @@ Deno.test("buildSite globally sorts pages and filters excluded documents", () =>
   }
 });
 
-Deno.test("buildSite maps Markdown links and data documents to canonical routes", () => {
+test("buildSite maps Markdown links and data documents to canonical routes", () => {
   const root = tempRoot();
   try {
     const wikiDir = join(root, "wiki");
@@ -89,7 +91,7 @@ Deno.test("buildSite maps Markdown links and data documents to canonical routes"
   }
 });
 
-Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets", async () => {
+test("buildStaticSite writes selected layouts, routes, and filtered assets", async () => {
   const root = tempRoot();
   try {
     write(
@@ -139,7 +141,7 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
     assert(result.ok);
     assertEquals(result.page_count, 3);
     assertEquals(result.asset_count, 1);
-    const ethanHtml = Deno.readTextFileSync(
+    const ethanHtml = sys.readTextFileSync(
       join(output, "manual/People/Ethan.html"),
     );
     assertStringIncludes(ethanHtml, 'data-layout="article"');
@@ -148,7 +150,7 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
       'href="/manual/Places/Princeton.html"',
     );
     assertEquals(
-      Deno.readTextFileSync(
+      sys.readTextFileSync(
         join(output, "manual/assets/site.css"),
       ),
       css,
@@ -159,7 +161,7 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
     );
     assertEquals(pathExists(join(output, "manual/stale.txt")), false);
     assertEquals(
-      Deno.readTextFileSync(
+      sys.readTextFileSync(
         join(output, "manual/index.html"),
       ).includes("All Pages"),
       false,
@@ -169,7 +171,7 @@ Deno.test("buildStaticSite writes selected layouts, routes, and filtered assets"
   }
 });
 
-Deno.test("output collisions are reported before the previous site is cleaned", async () => {
+test("output collisions are reported before the previous site is cleaned", async () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", "# Page\n");
@@ -196,7 +198,7 @@ Deno.test("output collisions are reported before the previous site is cleaned", 
       ),
     );
     assertEquals(
-      Deno.readTextFileSync(join(output, "wiki/keep.txt")),
+      sys.readTextFileSync(join(output, "wiki/keep.txt")),
       "previous site\n",
     );
   } finally {
@@ -204,7 +206,7 @@ Deno.test("output collisions are reported before the previous site is cleaned", 
   }
 });
 
-Deno.test("build refuses to clean an output path that is the source tree", async () => {
+test("build refuses to clean an output path that is the source tree", async () => {
   const root = tempRoot();
   try {
     const source = write(root, "wiki/Keep.md", "# Keep\n");
@@ -222,13 +224,13 @@ Deno.test("build refuses to clean an output path that is the source tree", async
       "refusing to clean build output path",
     );
 
-    assertEquals(Deno.readTextFileSync(source), "# Keep\n");
+    assertEquals(sys.readTextFileSync(source), "# Keep\n");
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("build render flags are forwarded, while failed preflight preserves output", async () => {
+test("build render flags are forwarded, while failed preflight preserves output", async () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", "# Page\n");
@@ -271,7 +273,7 @@ Deno.test("build render flags are forwarded, while failed preflight preserves ou
     assertEquals(result.ok, false);
     assertEquals(result.preflight?.errors[0]?.message, "failed checks");
     assertEquals(
-      Deno.readTextFileSync(join(output, "wiki/keep.txt")),
+      sys.readTextFileSync(join(output, "wiki/keep.txt")),
       "previous site\n",
     );
   } finally {

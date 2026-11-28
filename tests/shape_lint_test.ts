@@ -7,6 +7,8 @@
  * the point of linting frontmatter rather than the compiled graph.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { runCheck } from "../src/wiki/audit.ts";
@@ -15,8 +17,8 @@ import { lintShapeDefinitions } from "../src/wiki/shape_lint.ts";
 
 function write(root: string, relative: string, content: string): void {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
 }
 
 /** Lint one page in a fresh wiki and return the messages. */
@@ -24,7 +26,7 @@ async function lintPage(
   frontmatter: string,
   extra: Record<string, string> = {},
 ): Promise<string[]> {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     write(root, "Shape.md", `---\n${frontmatter}---\n`);
     for (const [name, content] of Object.entries(extra)) {
@@ -34,7 +36,7 @@ async function lintPage(
     const { definitions, unused } = await lintShapeDefinitions(config);
     return [...definitions, ...unused].map((issue) => issue.message);
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 }
 
@@ -51,11 +53,11 @@ sh:property:
     sh:datatype: xsd:string
 `;
 
-Deno.test("a well-formed shape page has no findings", async () => {
+test("a well-formed shape page has no findings", async () => {
   assertEquals(await lintPage(VALID), []);
 });
 
-Deno.test("a misspelled sh: key is named with its key path", async () => {
+test("a misspelled sh: key is named with its key path", async () => {
   const messages = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: schema:Thing
 sh:property:
@@ -67,7 +69,7 @@ sh:property:
   assert(messages[0]!.includes("not a property of the SHACL vocabulary"));
 });
 
-Deno.test("a misspelled sh: type or value is caught too", async () => {
+test("a misspelled sh: type or value is caught too", async () => {
   // A typo'd type would otherwise hide the page from every shape rule.
   const messages = await lintPage(`'@type': sh:NodeShap
 sh:targetClass: schema:Thing
@@ -78,7 +80,7 @@ sh:severity: sh:Violaton
   assert(messages.some((m) => m.startsWith("In Shape: sh:severity: ")));
 });
 
-Deno.test("a property shape without sh:path fails (SHACL §2.3)", async () => {
+test("a property shape without sh:path fails (SHACL §2.3)", async () => {
   const nested = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: schema:Thing
 sh:property:
@@ -95,7 +97,7 @@ sh:minCount: 1
   assert(page[0]!.startsWith("In Shape: sh:path: "));
 });
 
-Deno.test("a node shape cannot have sh:path (SHACL §2.2, §4.7.1)", async () => {
+test("a node shape cannot have sh:path (SHACL §2.2, §4.7.1)", async () => {
   const page = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: schema:Thing
 sh:path: schema:name
@@ -115,7 +117,7 @@ sh:property:
   assert(viaNode[0]!.startsWith("In Shape: sh:property[0].sh:node.sh:path: "));
 });
 
-Deno.test("ill-formed property paths fail (SHACL §2.3.1)", async () => {
+test("ill-formed property paths fail (SHACL §2.3.1)", async () => {
   const messages = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: schema:Thing
 sh:property:
@@ -135,7 +137,7 @@ sh:property:
   assertEquals(messages.length, 4, messages.join("\n"));
 });
 
-Deno.test("a one-member sh:path list is accepted, as the compiler collapses it", async () => {
+test("a one-member sh:path list is accepted, as the compiler collapses it", async () => {
   assertEquals(
     await lintPage(`'@type': sh:PropertyShape
 sh:path: [schema:name]
@@ -144,7 +146,7 @@ sh:path: [schema:name]
   );
 });
 
-Deno.test("IRI-valued parameters reject literals (SHACL §2.1, §4)", async () => {
+test("IRI-valued parameters reject literals (SHACL §2.1, §4)", async () => {
   const messages = await lintPage(`'@type': sh:NodeShape
 sh:targetClass: nope:Thing
 sh:closed: true
@@ -160,7 +162,7 @@ sh:property:
   assertEquals(messages.length, 3, messages.join("\n"));
 });
 
-Deno.test("sh:nodeKind must be one of the six kinds (SHACL §4.1.3)", async () => {
+test("sh:nodeKind must be one of the six kinds (SHACL §4.1.3)", async () => {
   const messages = await lintPage(`'@type': sh:PropertyShape
 sh:path: schema:url
 sh:nodeKind: IRI
@@ -169,7 +171,7 @@ sh:nodeKind: IRI
   assert(messages[0]!.startsWith("In Shape: sh:nodeKind: "));
 });
 
-Deno.test("a node shape with no target applies to nothing, unless referenced", async () => {
+test("a node shape with no target applies to nothing, unless referenced", async () => {
   const orphan = await lintPage(`'@type': sh:NodeShape
 sh:property:
   - sh:path: schema:name
@@ -208,7 +210,7 @@ sh:property:
   );
 });
 
-Deno.test("non-shape pages are only checked for SHACL vocabulary", async () => {
+test("non-shape pages are only checked for SHACL vocabulary", async () => {
   assertEquals(
     await lintPage(`type: Person
 name: Ada
@@ -218,8 +220,8 @@ knowsAbout: [{ name: Topic }]
   );
 });
 
-Deno.test("check reports shape_definition first, and off silences it", async () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+test("check reports shape_definition first, and off silences it", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     write(
       root,
@@ -248,12 +250,12 @@ Deno.test("check reports shape_definition first, and off silences it", async () 
       [],
     );
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("an unused node shape is a shape_unused warning, not an error", async () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+test("an unused node shape is a shape_unused warning, not an error", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     write(
       root,
@@ -291,12 +293,12 @@ sh:property:
     assertEquals(strict.ok, false);
     assert(strict.errors.some((issue) => issue.code === "shape_unused"));
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("SHACL is skipped while a shape page is ill-formed", async () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+test("SHACL is skipped while a shape page is ill-formed", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     // The shape is valid SHACL apart from the typo, and Ada violates it.
     write(
@@ -359,7 +361,7 @@ sh:property:
       [],
     );
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
@@ -376,7 +378,7 @@ const TTL_PREFIXES = `@prefix sh: <http://www.w3.org/ns/shacl#> .
 async function lintFiles(
   files: Record<string, string>,
 ): Promise<{ definitions: string[]; unused: string[] }> {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     for (const [name, content] of Object.entries(files)) {
       write(root, name, content);
@@ -388,11 +390,11 @@ async function lintFiles(
       unused: unused.map((issue) => issue.message),
     };
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 }
 
-Deno.test("a well-formed Turtle shape file has no findings", async () => {
+test("a well-formed Turtle shape file has no findings", async () => {
   const result = await lintFiles({
     "Shapes.ttl": `${TTL_PREFIXES}
 ex:PersonShape a sh:NodeShape ;
@@ -413,7 +415,7 @@ ex:PersonShape a sh:NodeShape ;
   assertEquals(result, { definitions: [], unused: [] });
 });
 
-Deno.test("a misspelled sh: term in a .ttl file names the file and the shape", async () => {
+test("a misspelled sh: term in a .ttl file names the file and the shape", async () => {
   const { definitions } = await lintFiles({
     "Shapes.ttl": `${TTL_PREFIXES}
 ex:PersonShape a sh:NodeShape ;
@@ -432,7 +434,7 @@ ex:PersonShape a sh:NodeShape ;
   assert(definitions[0]!.includes("not a property of the SHACL vocabulary"));
 });
 
-Deno.test("a fenced turtle block is linted under its page's route", async () => {
+test("a fenced turtle block is linted under its page's route", async () => {
   const { definitions } = await lintFiles({
     "Person_Shape.md": [
       "# Person shape",
@@ -456,7 +458,7 @@ Deno.test("a fenced turtle block is linted under its page's route", async () => 
   assert(definitions[0]!.includes("needs exactly one sh:path, found 0"));
 });
 
-Deno.test("Turtle shapes break the same path and parameter rules", async () => {
+test("Turtle shapes break the same path and parameter rules", async () => {
   const { definitions } = await lintFiles({
     "Shapes.ttl": `${TTL_PREFIXES}
 ex:S a sh:NodeShape ;
@@ -491,7 +493,7 @@ ex:S a sh:NodeShape ;
   }
 });
 
-Deno.test("an unused Turtle node shape is shape_unused, unless referenced", async () => {
+test("an unused Turtle node shape is shape_unused, unless referenced", async () => {
   const orphan = await lintFiles({
     "Shapes.ttl": `${TTL_PREFIXES}
 ex:AddressShape a sh:NodeShape ;
@@ -525,7 +527,7 @@ sh:property:
   assertEquals(referenced, { definitions: [], unused: [] });
 });
 
-Deno.test("RDF without SHACL terms is not linted", async () => {
+test("RDF without SHACL terms is not linted", async () => {
   assertEquals(
     await lintFiles({
       "data.ttl": `${TTL_PREFIXES}
@@ -536,8 +538,8 @@ ex:ada a schema:Person ; schema:name "Ada" .
   );
 });
 
-Deno.test("check reports Turtle shape errors and skips SHACL", async () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-shape-lint-" });
+test("check reports Turtle shape errors and skips SHACL", async () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-shape-lint-" });
   try {
     write(
       root,
@@ -567,11 +569,11 @@ ex:PersonShape a sh:NodeShape ;
       [],
     );
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("a nested complex path in a turtle block stays linked (sparql-engine#210)", async () => {
+test("a nested complex path in a turtle block stays linked (sparql-engine#210)", async () => {
   // sparql-engine 0.4.2 linked `sh:property` to the inner `[ sh:inversePath ]`
   // node, so the property shape lost its path and this page failed the lint.
   const result = await lintFiles({

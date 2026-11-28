@@ -19,6 +19,8 @@
  * schema document `ajv` refuses to compile. See `json_schema.ts`.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertFalse, assertThrows } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
@@ -35,12 +37,12 @@ import {
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-frontmatter-schema-" });
+  return sys.makeTempDirSync({ prefix: "wiki-frontmatter-schema-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -49,8 +51,8 @@ function cleanup(root: string): void {
 /** Write a file below `root`, creating parent directories. */
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -73,7 +75,7 @@ function configFor(root: string, check: Record<string, unknown> = {}): Config {
 
 function makeWiki(root: string): string {
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
+  sys.mkdirSync(wiki, { recursive: true });
   return wiki;
 }
 
@@ -118,7 +120,7 @@ function personSchema(): Record<string, unknown> {
 
 // ------------------------------------------------------------- helpers
 
-Deno.test("coerceSchemaRefs accepts a scalar and a list", () => {
+test("coerceSchemaRefs accepts a scalar and a list", () => {
   assertEquals(coerceSchemaRefs("schemas/a.json"), ["schemas/a.json"]);
   assertEquals(
     coerceSchemaRefs(["schemas/a.json", "schemas/b.json"]),
@@ -128,13 +130,13 @@ Deno.test("coerceSchemaRefs accepts a scalar and a list", () => {
   assertEquals(coerceSchemaRefs("  "), null);
 });
 
-Deno.test("coerceSchemaRefs rejects values that are not strings", () => {
+test("coerceSchemaRefs rejects values that are not strings", () => {
   assertThrows(() => coerceSchemaRefs(42));
   assertThrows(() => coerceSchemaRefs(["schemas/a.json", 1]));
   assertThrows(() => coerceSchemaRefs(["schemas/a.json", "  "]));
 });
 
-Deno.test("isSchemaBindingDocument needs a target class and a schema ref", () => {
+test("isSchemaBindingDocument needs a target class and a schema ref", () => {
   assert(
     isSchemaBindingDocument({
       type: "sh:NodeShape",
@@ -145,7 +147,7 @@ Deno.test("isSchemaBindingDocument needs a target class and a schema ref", () =>
   assertFalse(isSchemaBindingDocument({ [TARGET_CLASS_KEY]: "schema:Person" }));
 });
 
-Deno.test("validationPayload drops schema pointers and SHACL keys", () => {
+test("validationPayload drops schema pointers and SHACL keys", () => {
   const payload = validationPayload({
     type: "TechArticle",
     headline: "Title",
@@ -160,7 +162,7 @@ Deno.test("validationPayload drops schema pointers and SHACL keys", () => {
 
 // ---------------------------------------------------------- validation
 
-Deno.test("a type binding validates the documents that match it", async () => {
+test("a type binding validates the documents that match it", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -191,12 +193,12 @@ Deno.test("a type binding validates the documents that match it", async () => {
   }
 });
 
-Deno.test("a BOM-prefixed local schema is still readable (wiki#312)", async () => {
+test("a BOM-prefixed local schema is still readable (wiki#312)", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
     const schemaPath = write(root, "schemas/person.json", "");
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       schemaPath,
       "\uFEFF" + JSON.stringify(personSchema()),
     );
@@ -220,7 +222,7 @@ Deno.test("a BOM-prefixed local schema is still readable (wiki#312)", async () =
   }
 });
 
-Deno.test("a binding document is not validated as an instance", async () => {
+test("a binding document is not validated as an instance", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -243,7 +245,7 @@ Deno.test("a binding document is not validated as an instance", async () => {
   }
 });
 
-Deno.test("a page-level schema appends to the type binding", async () => {
+test("a page-level schema appends to the type binding", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -273,7 +275,7 @@ Deno.test("a page-level schema appends to the type binding", async () => {
   }
 });
 
-Deno.test("a missing local schema is reported against both the page and the binding", async () => {
+test("a missing local schema is reported against both the page and the binding", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -297,7 +299,7 @@ Deno.test("a missing local schema is reported against both the page and the bind
   }
 });
 
-Deno.test("a scoped check still builds the full registry", async () => {
+test("a scoped check still builds the full registry", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -325,7 +327,7 @@ Deno.test("a scoped check still builds the full registry", async () => {
   }
 });
 
-Deno.test("a page schema list is a union of requirements", async () => {
+test("a page schema list is a union of requirements", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -349,7 +351,7 @@ Deno.test("a page schema list is a union of requirements", async () => {
     assertEquals(validation.length, 1);
     assert(validation[0]!.includes("bar"));
 
-    Deno.removeSync(join(wiki, "Page.md"));
+    sys.removeSync(join(wiki, "Page.md"));
     write(
       wiki,
       "PageBoth.md",
@@ -365,7 +367,7 @@ Deno.test("a page schema list is a union of requirements", async () => {
   }
 });
 
-Deno.test("a schema outside the config root is refused", async () => {
+test("a schema outside the config root is refused", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -385,7 +387,7 @@ Deno.test("a schema outside the config root is refused", async () => {
   }
 });
 
-Deno.test("a schema that is not a .json file is refused", async () => {
+test("a schema that is not a .json file is refused", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -405,7 +407,7 @@ Deno.test("a schema that is not a .json file is refused", async () => {
   }
 });
 
-Deno.test("a schema document the engine cannot compile is reported, not thrown", async () => {
+test("a schema document the engine cannot compile is reported, not thrown", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -431,7 +433,7 @@ Deno.test("a schema document the engine cannot compile is reported, not thrown",
   }
 });
 
-Deno.test("the issue list matches the oracle's", async () => {
+test("the issue list matches the oracle's", async () => {
   // Captured from the pinned oracle (`repos/wiki`) over this exact fixture
   // tree. Two things in it are surprising and deliberate:
   //
@@ -523,7 +525,7 @@ Deno.test("the issue list matches the oracle's", async () => {
   }
 });
 
-Deno.test("buildTypeSchemaRegistry dedupes repeated references", () => {
+test("buildTypeSchemaRegistry dedupes repeated references", () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -545,7 +547,7 @@ Deno.test("buildTypeSchemaRegistry dedupes repeated references", () => {
 
 // -------------------------------------------------------------- remote
 
-Deno.test("a remote schema is fetched and applied", async () => {
+test("a remote schema is fetched and applied", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -576,7 +578,7 @@ Deno.test("a remote schema is fetched and applied", async () => {
   }
 });
 
-Deno.test("check.remote_schema_refs: deny never reaches the network", async () => {
+test("check.remote_schema_refs: deny never reaches the network", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -603,7 +605,7 @@ Deno.test("check.remote_schema_refs: deny never reaches the network", async () =
   }
 });
 
-Deno.test("an allowlist blocks a host it does not name", async () => {
+test("an allowlist blocks a host it does not name", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -633,7 +635,7 @@ Deno.test("an allowlist blocks a host it does not name", async () => {
   }
 });
 
-Deno.test("an allowlist permits the host it names", async () => {
+test("an allowlist permits the host it names", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -667,7 +669,7 @@ Deno.test("an allowlist permits the host it names", async () => {
   }
 });
 
-Deno.test("an HTTP error from a remote schema is an issue", async () => {
+test("an HTTP error from a remote schema is an issue", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -691,7 +693,7 @@ Deno.test("an HTTP error from a remote schema is an issue", async () => {
   }
 });
 
-Deno.test("a timed-out remote schema is an issue", async () => {
+test("a timed-out remote schema is an issue", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -714,7 +716,7 @@ Deno.test("a timed-out remote schema is an issue", async () => {
   }
 });
 
-Deno.test("both rules off skips the pass entirely", async () => {
+test("both rules off skips the pass entirely", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);

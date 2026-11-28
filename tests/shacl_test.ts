@@ -16,6 +16,8 @@
  * parity harness carries the oracle's transcript as a `known` case.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
@@ -68,12 +70,12 @@ ex:dave a micro:Agent .
 `;
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-shacl-" });
+  return sys.makeTempDirSync({ prefix: "wiki-shacl-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -81,8 +83,8 @@ function cleanup(root: string): void {
 
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -110,7 +112,7 @@ function writeCorpus(root: string): void {
   write(root, "wiki/data.ttl", DATA);
 }
 
-Deno.test("the whole-corpus check finds the probe's three violations", async () => {
+test("the whole-corpus check finds the probe's three violations", async () => {
   const root = tempRoot();
   try {
     writeCorpus(root);
@@ -146,7 +148,7 @@ Deno.test("the whole-corpus check finds the probe's three violations", async () 
   }
 });
 
-Deno.test("the report keeps pyshacl's skeleton, line for line", async () => {
+test("the report keeps pyshacl's skeleton, line for line", async () => {
   const root = tempRoot();
   try {
     writeCorpus(root);
@@ -176,7 +178,7 @@ Deno.test("the report keeps pyshacl's skeleton, line for line", async () => {
   }
 });
 
-Deno.test("a conforming corpus conforms and prints no results", async () => {
+test("a conforming corpus conforms and prints no results", async () => {
   const root = tempRoot();
   try {
     write(root, "wiki/shapes.ttl", SHAPES);
@@ -216,7 +218,7 @@ ex:dave a micro:Agent ; schema:name "Dave" .
  * the branch stays because deleting a documented oracle branch is a behaviour
  * change the parity gate would have to adjudicate.
  */
-Deno.test("an empty corpus still infers the axiom preamble, so it reports", async () => {
+test("an empty corpus still infers the axiom preamble, so it reports", async () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", "# Page\n");
@@ -234,11 +236,11 @@ Deno.test("an empty corpus still infers the axiom preamble, so it reports", asyn
   }
 });
 
-Deno.test("formatReport renders the empty report the way pyshacl does", () => {
+test("formatReport renders the empty report the way pyshacl does", () => {
   assertEquals(formatReport(true, []), "Validation Report\nConforms: True\n");
 });
 
-Deno.test("a single document is validated against the wiki's shapes", async () => {
+test("a single document is validated against the wiki's shapes", async () => {
   const root = tempRoot();
   try {
     writeCorpus(root);
@@ -256,7 +258,7 @@ Deno.test("a single document is validated against the wiki's shapes", async () =
   }
 });
 
-Deno.test("a document with no metadata is not a conformance failure", async () => {
+test("a document with no metadata is not a conformance failure", async () => {
   const root = tempRoot();
   try {
     writeCorpus(root);
@@ -267,7 +269,7 @@ Deno.test("a document with no metadata is not a conformance failure", async () =
   }
 });
 
-Deno.test("loadShapes follows the property lists it extracts", () => {
+test("loadShapes follows the property lists it extracts", () => {
   // `sh:property [ ... ]` puts the property shape in a nested block, and a
   // list-valued constraint puts the shapes in an RDF list. Both have to come
   // out of the CONSTRUCT, which is four of its five branches.
@@ -296,7 +298,7 @@ Deno.test("loadShapes follows the property lists it extracts", () => {
   assertEquals(firsts.length, 3);
 });
 
-Deno.test("loadShapes keeps every cell of a list nested in a list (#305)", async () => {
+test("loadShapes keeps every cell of a list nested in a list (#305)", async () => {
   // `sh:alternativePath ( schema:alternateName ( schema:author schema:name ) )`:
   // the inner sequence path's head is a list *element*, so `rdf:rest*` from
   // `sh:` objects alone stops after its first cell and the validator reads a
@@ -339,7 +341,7 @@ Deno.test("loadShapes keeps every cell of a list nested in a list (#305)", async
   assert(!outcome.resultsText.includes("Ann"));
 });
 
-Deno.test("formatReport omits the lines pyshacl omits", () => {
+test("formatReport omits the lines pyshacl omits", () => {
   const text = formatReport(false, [
     {
       term: undefined as never,

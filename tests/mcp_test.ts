@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { join } from "@std/path";
 import {
   assert,
@@ -19,12 +21,12 @@ import {
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-mcp-" });
+  return sys.makeTempDirSync({ prefix: "wiki-mcp-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows can briefly retain a handle after a graph read.
   }
@@ -32,19 +34,19 @@ function cleanup(root: string): void {
 
 function makeWiki(root: string): Wiki {
   const wikiDir = join(root, "wiki");
-  Deno.mkdirSync(wikiDir, { recursive: true });
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wikiDir, { recursive: true });
+  sys.writeTextFileSync(
     join(root, "wiki.yaml"),
     "wiki:\n  input: [wiki]\n",
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wikiDir, "Ethan.md"),
     "---\ntype: schema:Person\ngivenName: Ethan\nfamilyName: Davidson\n---\n",
   );
   return Wiki.load(root);
 }
 
-Deno.test("describeWiki reports factual config, graph, namespace, and vocabulary data", async () => {
+test("describeWiki reports factual config, graph, namespace, and vocabulary data", async () => {
   const root = tempRoot();
   try {
     const description = await describeWiki(makeWiki(root));
@@ -75,7 +77,7 @@ Deno.test("describeWiki reports factual config, graph, namespace, and vocabulary
   }
 });
 
-Deno.test("querySparql preserves structured results and TypeScript format aliases", async () => {
+test("querySparql preserves structured results and TypeScript format aliases", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -103,7 +105,7 @@ Deno.test("querySparql preserves structured results and TypeScript format aliase
   }
 });
 
-Deno.test("querySparql rejects updates, unrecognized forms, and unsupported formats", async () => {
+test("querySparql rejects updates, unrecognized forms, and unsupported formats", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -137,7 +139,7 @@ Deno.test("querySparql rejects updates, unrecognized forms, and unsupported form
   }
 });
 
-Deno.test("wiki MCP resources return JSON and Turtle contents", async () => {
+test("wiki MCP resources return JSON and Turtle contents", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -153,7 +155,7 @@ Deno.test("wiki MCP resources return JSON and Turtle contents", async () => {
   }
 });
 
-Deno.test("MCP factory exposes typed tools/resources and validates request errors", async () => {
+test("MCP factory exposes typed tools/resources and validates request errors", async () => {
   const root = tempRoot();
   try {
     const server = createMcpServer(makeWiki(root));
@@ -287,7 +289,7 @@ Deno.test("MCP factory exposes typed tools/resources and validates request error
   }
 });
 
-Deno.test("stdio transport can be injected and tested without a process or network", async () => {
+test("stdio transport can be injected and tested without a process or network", async () => {
   const root = tempRoot();
   try {
     const encoder = new TextEncoder();
@@ -361,7 +363,7 @@ async function callTool(
   return response?.result as ToolResult;
 }
 
-Deno.test("write tools are not listed or callable without allowWrite (#356)", async () => {
+test("write tools are not listed or callable without allowWrite (#356)", async () => {
   const root = tempRoot();
   try {
     const server = createMcpServer(makeWiki(root));
@@ -384,8 +386,8 @@ Deno.test("write tools are not listed or callable without allowWrite (#356)", as
     assertEquals(called.isError, true);
     assertStringIncludes(called.content[0]!.text, "--allow-write");
     assertEquals(
-      Deno.statSync(join(root, "wiki")).isDirectory &&
-        !Deno.readDirSync(join(root, "wiki")).toArray().some((entry) =>
+      sys.statSync(join(root, "wiki")).isDirectory &&
+        !sys.readDirSync(join(root, "wiki")).toArray().some((entry) =>
           entry.name === "New.md"
         ),
       true,
@@ -395,7 +397,7 @@ Deno.test("write tools are not listed or callable without allowWrite (#356)", as
   }
 });
 
-Deno.test("wiki_page_show returns the hash an edit passes as expect (#356)", async () => {
+test("wiki_page_show returns the hash an edit passes as expect (#356)", async () => {
   const root = tempRoot();
   try {
     const server = createMcpServer(makeWiki(root));
@@ -417,7 +419,7 @@ Deno.test("wiki_page_show returns the hash an edit passes as expect (#356)", asy
   }
 });
 
-Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse stale expect (#356)", async () => {
+test("write tools dry-run by default, apply on dry_run=false, and refuse stale expect (#356)", async () => {
   const root = tempRoot();
   try {
     const wiki = makeWiki(root);
@@ -443,7 +445,7 @@ Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse st
     }
 
     const page = join(root, "wiki", "Ethan.md");
-    const before = Deno.readTextFileSync(page);
+    const before = sys.readTextFileSync(page);
 
     // The dry run is the report `wiki edit --json` returns, and writes nothing.
     const dry = await callTool(server, "wiki_page_set_field", {
@@ -466,7 +468,7 @@ Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse st
         }),
       )),
     );
-    assertEquals(Deno.readTextFileSync(page), before);
+    assertEquals(sys.readTextFileSync(page), before);
 
     // A stale expect is a conflict result, not a thrown error, and writes nothing.
     const stale = await callTool(server, "wiki_page_set_field", {
@@ -478,7 +480,7 @@ Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse st
     });
     assertEquals(stale.isError, true);
     assertEquals(stale.structuredContent?.status, "conflict");
-    assertEquals(Deno.readTextFileSync(page), before);
+    assertEquals(sys.readTextFileSync(page), before);
 
     // Applying needs dry_run=false.
     const shown = await callTool(server, "wiki_page_show", {
@@ -493,7 +495,7 @@ Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse st
     });
     assertEquals(applied.isError, false);
     assertEquals(applied.structuredContent?.status, "applied");
-    assertStringIncludes(Deno.readTextFileSync(page), "Ethan T.");
+    assertStringIncludes(sys.readTextFileSync(page), "Ethan T.");
 
     // The graph the server answers from reflects the applied edit.
     const queried = await callTool(server, "query_sparql", {
@@ -512,7 +514,7 @@ Deno.test("write tools dry-run by default, apply on dry_run=false, and refuse st
     });
     assertEquals(created.structuredContent?.status, "applied");
     assertEquals(
-      Deno.readTextFileSync(join(root, "wiki", "Other.md")).includes("Other"),
+      sys.readTextFileSync(join(root, "wiki", "Other.md")).includes("Other"),
       true,
     );
 

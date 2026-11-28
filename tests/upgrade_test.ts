@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
   type CommandResult,
@@ -47,7 +49,7 @@ function harness(overrides: Partial<UpgradeDependencies> = {}) {
     stdout: (text) => stdout.push(text),
     stderr: (text) => stderr.push(text),
     currentVersion: "0.1.2",
-    denoExecutable: Deno.execPath(),
+    denoExecutable: sys.execPath(),
     ...overrides,
   };
   return {
@@ -73,7 +75,7 @@ const automaticUpgrade: UpgradeOptions = {
   verbose: false,
 };
 
-Deno.test("upgrade check reports an available version and returns outdated status", async () => {
+test("upgrade check reports an available version and returns outdated status", async () => {
   const state = harness();
   const code = await runUpgrade(check, state.dependencies);
 
@@ -86,7 +88,7 @@ Deno.test("upgrade check reports an available version and returns outdated statu
   assertEquals(state.targetLookups(), 0);
 });
 
-Deno.test("upgrade check is successful when already current", async () => {
+test("upgrade check is successful when already current", async () => {
   const state = harness({
     currentVersion: "0.1.4",
   });
@@ -98,7 +100,7 @@ Deno.test("upgrade check is successful when already current", async () => {
   assertEquals(state.prompts, []);
 });
 
-Deno.test("metadata fallback selects the highest stable non-yanked version", async () => {
+test("metadata fallback selects the highest stable non-yanked version", async () => {
   const state = harness({
     fetchMetadata: () =>
       Promise.resolve(Response.json({
@@ -117,7 +119,7 @@ Deno.test("metadata fallback selects the highest stable non-yanked version", asy
   assertEquals(state.stdout, ["Update available: 0.1.2 -> 0.1.9"]);
 });
 
-Deno.test("upgrade steps aside when JSR cannot answer", async () => {
+test("upgrade steps aside when JSR cannot answer", async () => {
   const network = harness({
     fetchMetadata: () => Promise.reject(new Error("offline")),
   });
@@ -143,7 +145,7 @@ Deno.test("upgrade steps aside when JSR cannot answer", async () => {
   );
 });
 
-Deno.test("a deferred registry never installs anything", async () => {
+test("a deferred registry never installs anything", async () => {
   // The no-op has to stay a no-op: no install target is even resolved, so a
   // deferred check cannot mutate the user's installation on its way out.
   const state = harness({
@@ -166,7 +168,7 @@ Deno.test("a deferred registry never installs anything", async () => {
   assertStringIncludes(state.stdout[0]!, "no version to compare against");
 });
 
-Deno.test("upgrade steps aside on non-404 JSR HTTP failures", async () => {
+test("upgrade steps aside on non-404 JSR HTTP failures", async () => {
   const state = harness({
     fetchMetadata: () =>
       Promise.resolve(
@@ -181,7 +183,7 @@ Deno.test("upgrade steps aside on non-404 JSR HTTP failures", async () => {
   assertStringIncludes(state.stdout[0]!, "HTTP 503 Service Unavailable");
 });
 
-Deno.test("upgrade defers on a registered but unpublished JSR package", async () => {
+test("upgrade defers on a registered but unpublished JSR package", async () => {
   // The live shape. The package is registered and linked to its repository,
   // so JSR answers 200 rather than 404 and simply has no versions yet; the
   // deferral has to key off that, not off the status code alone.
@@ -194,7 +196,7 @@ Deno.test("upgrade defers on a registered but unpublished JSR package", async ()
   assertStringIncludes(state.stdout[0]!, "npm update -g wazootech-wiki");
 });
 
-Deno.test("upgrade check rejects malformed JSR metadata", async () => {
+test("upgrade check rejects malformed JSR metadata", async () => {
   const state = harness({
     fetchMetadata: () => Promise.resolve(Response.json({ latest: null })),
   });
@@ -202,7 +204,7 @@ Deno.test("upgrade check rejects malformed JSR metadata", async () => {
   assertStringIncludes(state.stderr[0]!, "Invalid JSR package metadata");
 });
 
-Deno.test("declining the default confirmation never invokes the installer", async () => {
+test("declining the default confirmation never invokes the installer", async () => {
   const state = harness({
     confirm: (message) => {
       state.prompts.push(message);
@@ -217,7 +219,7 @@ Deno.test("declining the default confirmation never invokes the installer", asyn
   assertEquals(state.stdout.at(-1), "Upgrade cancelled.");
 });
 
-Deno.test("non-interactive confirmation failure fails closed", async () => {
+test("non-interactive confirmation failure fails closed", async () => {
   const state = harness({
     confirm: () =>
       Promise.reject(new Error("confirmation required; rerun with --yes")),
@@ -229,13 +231,13 @@ Deno.test("non-interactive confirmation failure fails closed", async () => {
   assertEquals(state.commands, []);
 });
 
-Deno.test("confirmation installs the exact JSR version into the existing global root", async () => {
+test("confirmation installs the exact JSR version into the existing global root", async () => {
   const state = harness();
   const code = await runUpgrade(promptUpgrade, state.dependencies);
 
   assertEquals(code, 0);
   assertEquals(state.commands.length, 1);
-  assertEquals(state.commands[0]!.executable, Deno.execPath());
+  assertEquals(state.commands[0]!.executable, sys.execPath());
   assertEquals(state.commands[0]!.args, [
     "install",
     "--global",
@@ -251,7 +253,7 @@ Deno.test("confirmation installs the exact JSR version into the existing global 
   assertEquals(state.stdout.at(-1), "Upgraded to 0.1.4.");
 });
 
-Deno.test("--yes skips confirmation and still uses the injected command runner", async () => {
+test("--yes skips confirmation and still uses the injected command runner", async () => {
   const state = harness();
   const code = await runUpgrade(automaticUpgrade, state.dependencies);
 
@@ -260,7 +262,7 @@ Deno.test("--yes skips confirmation and still uses the injected command runner",
   assertEquals(state.commands.length, 1);
 });
 
-Deno.test("non-global and standalone installs are not overwritten", async () => {
+test("non-global and standalone installs are not overwritten", async () => {
   const targets: InstallTarget[] = [
     { kind: "non-global" },
     { kind: "standalone", path: "/tmp/wiki" },
@@ -294,7 +296,7 @@ Deno.test("non-global and standalone installs are not overwritten", async () => 
   }
 });
 
-Deno.test("installer failure is surfaced and returns failure", async () => {
+test("installer failure is surfaced and returns failure", async () => {
   const result: CommandResult = {
     code: 1,
     stdout: "",
@@ -311,7 +313,7 @@ Deno.test("installer failure is surfaced and returns failure", async () => {
   assertEquals(state.stdout.at(-1), "Update available: 0.1.2 -> 0.1.4");
 });
 
-Deno.test("verbose mode exposes installer invocation and output", async () => {
+test("verbose mode exposes installer invocation and output", async () => {
   const state = harness({
     runCommand: () =>
       Promise.resolve({
@@ -332,7 +334,7 @@ Deno.test("verbose mode exposes installer invocation and output", async () => {
   assertStringIncludes(state.stderr.join("\n"), "installer detail");
 });
 
-Deno.test("a PyPI-installed binary points at pip instead of being overwritten", async () => {
+test("a PyPI-installed binary points at pip instead of being overwritten", async () => {
   const state = harness({
     findInstallTarget: () =>
       Promise.resolve({ kind: "pypi", path: "/venv/bin/wiki" }),
@@ -345,7 +347,7 @@ Deno.test("a PyPI-installed binary points at pip instead of being overwritten", 
   assertStringIncludes(message, "uv tool upgrade wazootech-wiki");
 });
 
-Deno.test("the unpublished-JSR deferral names the PyPI channel too", async () => {
+test("the unpublished-JSR deferral names the PyPI channel too", async () => {
   const state = harness({
     fetchMetadata: () =>
       Promise.resolve(new Response("not found", { status: 404 })),
@@ -365,21 +367,21 @@ async function pythonPrefix(
   record?: readonly string[],
   distInfo = "wazootech_wiki-0.2.0.dist-info",
 ): Promise<string> {
-  const root = await Deno.makeTempDir({ prefix: "wiki-pypi-" });
+  const root = await sys.makeTempDir({ prefix: "wiki-pypi-" });
   const binary = `${root}/${scriptRel}`;
-  await Deno.mkdir(binary.slice(0, binary.lastIndexOf("/")), {
+  await sys.mkdir(binary.slice(0, binary.lastIndexOf("/")), {
     recursive: true,
   });
-  await Deno.writeFile(binary, new Uint8Array());
+  await sys.writeFile(binary, new Uint8Array());
   if (record) {
     const info = `${root}/${siteRel}/${distInfo}`;
-    await Deno.mkdir(info, { recursive: true });
-    await Deno.writeTextFile(`${info}/RECORD`, record.join("\n") + "\n");
+    await sys.mkdir(info, { recursive: true });
+    await sys.writeTextFile(`${info}/RECORD`, record.join("\n") + "\n");
   }
   return binary;
 }
 
-Deno.test("isPypiInstall finds the RECORD entry in every Python layout", async () => {
+test("isPypiInstall finds the RECORD entry in every Python layout", async () => {
   const layouts: [string, string, string][] = [
     // POSIX venv, `pip install --user`, and `uv tool install`.
     ["bin/wiki", "lib/python3.12/site-packages", "../../../bin/wiki"],
@@ -400,7 +402,7 @@ Deno.test("isPypiInstall finds the RECORD entry in every Python layout", async (
   }
 });
 
-Deno.test("isPypiInstall needs RECORD to list this exact binary", async () => {
+test("isPypiInstall needs RECORD to list this exact binary", async () => {
   // A standalone copied into a scripts directory beside an unrelated install.
   const copied = await pythonPrefix(
     "bin/wiki",

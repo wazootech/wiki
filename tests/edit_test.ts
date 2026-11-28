@@ -8,6 +8,8 @@
  * file byte-identical to before.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, fromFileUrl, join } from "@std/path";
 import {
   assert,
@@ -83,43 +85,43 @@ const HEADLESS = GOOD.replace("schema:headline: Good\n", "").replace(
 );
 
 function writeWiki(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-edit-" });
   const pages: Record<string, string> = {
     "Article_Shape.md": ARTICLE_SHAPE,
     "Good.md": GOOD,
     "Other.md": OTHER,
     "Broken.md": BROKEN,
   };
-  Deno.mkdirSync(join(root, "wiki"));
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  sys.mkdirSync(join(root, "wiki"));
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   for (const [name, content] of Object.entries(pages)) {
-    Deno.writeTextFileSync(join(root, "wiki", name), content);
+    sys.writeTextFileSync(join(root, "wiki", name), content);
   }
   return root;
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
 function read(root: string, rel: string): string {
-  return Deno.readTextFileSync(join(root, ...rel.split("/")));
+  return sys.readTextFileSync(join(root, ...rel.split("/")));
 }
 
 function exists(root: string, rel: string): boolean {
   try {
-    Deno.statSync(join(root, ...rel.split("/")));
+    sys.statSync(join(root, ...rel.split("/")));
     return true;
   } catch {
     return false;
   }
 }
 
-Deno.test("a dry run validates and reports without writing", async () => {
+test("a dry run validates and reports without writing", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -146,7 +148,7 @@ Deno.test("a dry run validates and reports without writing", async () => {
   }
 });
 
-Deno.test("apply writes the edit and reports the next expect hash", async () => {
+test("apply writes the edit and reports the next expect hash", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -167,7 +169,7 @@ Deno.test("apply writes the edit and reports the next expect hash", async () => 
   }
 });
 
-Deno.test("a stale expect is a conflict and writes nothing", async () => {
+test("a stale expect is a conflict and writes nothing", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -200,7 +202,7 @@ Deno.test("a stale expect is a conflict and writes nothing", async () => {
   }
 });
 
-Deno.test("an edit that introduces an error is rejected unless forced", async () => {
+test("an edit that introduces an error is rejected unless forced", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -235,7 +237,7 @@ Deno.test("an edit that introduces an error is rejected unless forced", async ()
   }
 });
 
-Deno.test("an H1 satisfies a shape that requires schema:headline", async () => {
+test("an H1 satisfies a shape that requires schema:headline", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -252,7 +254,7 @@ Deno.test("an H1 satisfies a shape that requires schema:headline", async () => {
   }
 });
 
-Deno.test("pre-existing errors elsewhere do not block an edit", async () => {
+test("pre-existing errors elsewhere do not block an edit", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -271,13 +273,13 @@ Deno.test("pre-existing errors elsewhere do not block an edit", async () => {
   }
 });
 
-Deno.test("a create does not introduce pre-existing wiki-wide lint findings", async () => {
+test("a create does not introduce pre-existing wiki-wide lint findings", async () => {
   const root = writeWiki();
   try {
     // A configured asset path that is a file, not a directory: a path-less lint
     // warning that is there before the edit and after it.
-    Deno.writeTextFileSync(join(root, "not_a_dir"), "");
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(join(root, "not_a_dir"), "");
+    sys.writeTextFileSync(
       join(root, "wiki.yml"),
       "wiki:\n  input: [wiki]\n  assets: [not_a_dir]\n",
     );
@@ -303,7 +305,7 @@ Deno.test("a create does not introduce pre-existing wiki-wide lint findings", as
   }
 });
 
-Deno.test("editing an already-broken page is not blocked by its old error", async () => {
+test("editing an already-broken page is not blocked by its old error", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -320,7 +322,7 @@ Deno.test("editing an already-broken page is not blocked by its old error", asyn
   }
 });
 
-Deno.test("a create that collides with an existing route is rejected", async () => {
+test("a create that collides with an existing route is rejected", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -342,7 +344,7 @@ Deno.test("a create that collides with an existing route is rejected", async () 
   }
 });
 
-Deno.test("delete removes the file and reports it", async () => {
+test("delete removes the file and reports it", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -358,7 +360,7 @@ Deno.test("delete removes the file and reports it", async () => {
   }
 });
 
-Deno.test("edits are confined to wiki documents under wiki.input", async () => {
+test("edits are confined to wiki documents under wiki.input", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -383,7 +385,7 @@ Deno.test("edits are confined to wiki documents under wiki.input", async () => {
 /** One element of `Wiki.edit`'s `ops`, for deliberately malformed input. */
 type EditOpInput = Parameters<Wiki["edit"]>[0]["ops"][number];
 
-Deno.test("malformed ops are a clear usage error", async () => {
+test("malformed ops are a clear usage error", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(root);
@@ -406,16 +408,16 @@ Deno.test("malformed ops are a clear usage error", async () => {
   }
 });
 
-Deno.test("a commit that fails midway restores every file byte for byte", () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-commit-" });
+test("a commit that fails midway restores every file byte for byte", () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-edit-commit-" });
   try {
     const a = join(root, "A.md");
     const b = join(root, "B.md");
     const c = join(root, "C.md");
     // A BOM and CRLFs, so a text round-trip would show up as a diff.
     const original = new TextEncoder().encode("﻿# A\r\n\r\nBody\r\n");
-    Deno.writeFileSync(a, original);
-    Deno.writeFileSync(c, new TextEncoder().encode("# C\n"));
+    sys.writeFileSync(a, original);
+    sys.writeFileSync(c, new TextEncoder().encode("# C\n"));
     const plans: FilePlan[] = [
       { path: a, before: original, after: "# A changed\n" },
       { path: b, before: null, after: "# B\n" },
@@ -424,20 +426,20 @@ Deno.test("a commit that fails midway restores every file byte for byte", () => 
     let renames = 0;
     assertThrows(() =>
       commitFiles(plans, {
-        writeFile: (path, data) => Deno.writeFileSync(path, data),
-        mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
-        remove: (path) => Deno.removeSync(path),
+        writeFile: (path, data) => sys.writeFileSync(path, data),
+        mkdir: (path) => sys.mkdirSync(path, { recursive: true }),
+        remove: (path) => sys.removeSync(path),
         rename: (from, to) => {
           if (++renames === 2) throw new Error("disk full");
-          Deno.renameSync(from, to);
+          sys.renameSync(from, to);
         },
       })
     );
-    assertEquals(Deno.readFileSync(a), original);
+    assertEquals(sys.readFileSync(a), original);
     assertFalse(exists(root, "B.md"));
-    assertEquals(Deno.readTextFileSync(c), "# C\n");
+    assertEquals(sys.readTextFileSync(c), "# C\n");
     assertEquals(
-      [...Deno.readDirSync(root)].map((entry) => entry.name).sort(),
+      [...sys.readDirSync(root)].map((entry) => entry.name).sort(),
       ["A.md", "C.md"],
     );
   } finally {
@@ -445,8 +447,8 @@ Deno.test("a commit that fails midway restores every file byte for byte", () => 
   }
 });
 
-Deno.test("a failed commit removes the directories it created", () => {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-edit-dirs-" });
+test("a failed commit removes the directories it created", () => {
+  const root = sys.makeTempDirSync({ prefix: "wiki-edit-dirs-" });
   try {
     const nested = join(root, "new", "deep", "Page.md");
     const sibling = join(root, "Top.md");
@@ -457,16 +459,16 @@ Deno.test("a failed commit removes the directories it created", () => {
     let renames = 0;
     assertThrows(() =>
       commitFiles(plans, {
-        writeFile: (path, data) => Deno.writeFileSync(path, data),
-        mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
-        remove: (path) => Deno.removeSync(path),
+        writeFile: (path, data) => sys.writeFileSync(path, data),
+        mkdir: (path) => sys.mkdirSync(path, { recursive: true }),
+        remove: (path) => sys.removeSync(path),
         rename: (from, to) => {
           if (++renames === 2) throw new Error("disk full");
-          Deno.renameSync(from, to);
+          sys.renameSync(from, to);
         },
       })
     );
-    assertEquals([...Deno.readDirSync(root)].map((entry) => entry.name), []);
+    assertEquals([...sys.readDirSync(root)].map((entry) => entry.name), []);
   } finally {
     cleanup(root);
   }
@@ -477,7 +479,7 @@ async function runEdit(
   args: readonly string[],
   stdin: string,
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const child = new Deno.Command(Deno.execPath(), {
+  const child = new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, "edit", ...args],
     cwd: root,
     stdin: "piped",
@@ -495,9 +497,8 @@ async function runEdit(
   };
 }
 
-Deno.test(
+test(
   "wiki edit maps statuses to exit codes and prints JSON on stdout",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {
@@ -549,14 +550,13 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "wiki edit --from reads a plan file",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {
       const plan = join(root, "plan.json");
-      Deno.writeTextFileSync(
+      sys.writeTextFileSync(
         plan,
         JSON.stringify({ ops: [{ op: "delete", path: "wiki/Broken.md" }] }),
       );

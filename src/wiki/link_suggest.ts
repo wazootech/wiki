@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { basename } from "@std/path";
 import type { Config } from "./config.ts";
 import {
@@ -308,7 +309,7 @@ export function applyLinkOpportunities(
         line.slice(lineContent.length);
     }
     if (!dryRun) {
-      Deno.writeTextFileSync(filePath, split.prefix + lines.join(""));
+      sys.writeTextFileSync(filePath, split.prefix + lines.join(""));
     }
     changed.push(filePath);
   }

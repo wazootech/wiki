@@ -28,6 +28,7 @@
  * `git` binary or run permission is detected once and never retried.
  */
 
+import * as sys from "./sys.ts";
 import { basename, dirname, extname, resolve } from "@std/path";
 import type { Config } from "./config.ts";
 import { type Context, SCHEMA } from "./context.ts";
@@ -109,7 +110,7 @@ async function runGit(
 ): Promise<GitOutput | null> {
   if (gitUnavailable) return null;
   try {
-    const result = await new Deno.Command("git", {
+    const result = await new sys.Command("git", {
       args: [...args],
       cwd,
       stdin: "null",

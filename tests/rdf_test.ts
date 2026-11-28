@@ -12,6 +12,8 @@
  * entry, and a Turtle writer that is really an N-Triples writer.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import {
   assert,
   assertEquals,
@@ -54,7 +56,7 @@ interface TripleSpec {
 
 const fixtureDir = new URL("./fixtures/rdf/", import.meta.url);
 const fixture: { triples: TripleSpec[] } = JSON.parse(
-  Deno.readTextFileSync(new URL("terms.json", fixtureDir)),
+  sys.readTextFileSync(new URL("terms.json", fixtureDir)),
 );
 
 function termOf(spec: TermSpec): Term {
@@ -72,8 +74,8 @@ const quads: Quad[] = fixture.triples.map((item) =>
   triple(termOf(item.s), namedNode(item.p), termOf(item.o))
 );
 
-const goldenNt = Deno.readTextFileSync(new URL("oracle-nt.txt", fixtureDir));
-const goldenNquads = Deno.readTextFileSync(
+const goldenNt = sys.readTextFileSync(new URL("oracle-nt.txt", fixtureDir));
+const goldenNquads = sys.readTextFileSync(
   new URL("oracle-nquads.txt", fixtureDir),
 );
 
@@ -89,15 +91,15 @@ function sortedLines(text: string): string {
   return text.replaceAll("\r\n", "\n").trimEnd().split("\n").sort().join("\n");
 }
 
-Deno.test("N-Triples output matches rdflib's byte for byte", () => {
+test("N-Triples output matches rdflib's byte for byte", () => {
   assertEquals(sortedLines(serializeNt(quads)), sortedLines(goldenNt));
 });
 
-Deno.test("N-Quads output matches the engine's hand-rolled writer byte for byte", () => {
+test("N-Quads output matches the engine's hand-rolled writer byte for byte", () => {
   assertEquals(sortedLines(serializeNquads(quads)), sortedLines(goldenNquads));
 });
 
-Deno.test("the two N-Triples dialects differ exactly where rdflib's do", () => {
+test("the two N-Triples dialects differ exactly where rdflib's do", () => {
   const nt = serializeNt(quads);
   const nquads = serializeNquads(quads);
 
@@ -114,7 +116,7 @@ Deno.test("the two N-Triples dialects differ exactly where rdflib's do", () => {
   assert(nquads.includes("backslash\ttab"));
 });
 
-Deno.test("RDF/XML parsing remains supported while serialization is deferred", async () => {
+test("RDF/XML parsing remains supported while serialization is deferred", async () => {
   assertEquals(canSerialize("turtle"), true);
   assertEquals(canSerialize("ttl"), true);
   assertEquals(canSerialize("nquads"), true);
@@ -135,7 +137,7 @@ Deno.test("RDF/XML parsing remains supported while serialization is deferred", a
   );
 });
 
-Deno.test("the Turtle writer emits prefixes and abbreviated IRIs", async () => {
+test("the Turtle writer emits prefixes and abbreviated IRIs", async () => {
   // The hazard this guards: the `@zazuko` registry's Turtle serializer is the
   // N-Triples writer under another media type, so a format-routing change could
   // turn every Turtle export into N-Triples without failing anything.
@@ -146,7 +148,7 @@ Deno.test("the Turtle writer emits prefixes and abbreviated IRIs", async () => {
   assertStringIncludes(text, "schema:name");
 });
 
-Deno.test("every format the engine reads is still parsable", async () => {
+test("every format the engine reads is still parsable", async () => {
   const documents: Record<string, string> = {
     "turtle": '<https://example.org/a> <https://schema.org/name> "caf\u00e9" .',
     "trig":
@@ -171,7 +173,7 @@ Deno.test("every format the engine reads is still parsable", async () => {
   assertEquals(canParse("nosuchformat"), false);
 });
 
-Deno.test("the cache dialect survives a round trip through the parser", async () => {
+test("the cache dialect survives a round trip through the parser", async () => {
   const reparsed = await parseRdf(goldenNt, "nt");
   assertEquals(reparsed.length, quads.length);
   const keys = (input: readonly Quad[]) =>
@@ -179,7 +181,7 @@ Deno.test("the cache dialect survives a round trip through the parser", async ()
   assertEquals(keys(reparsed), keys(quads));
 });
 
-Deno.test("a graph deduplicates, matches, and reports distinct terms", () => {
+test("a graph deduplicates, matches, and reports distinct terms", () => {
   const graph = new RdfGraph();
   const alice = namedNode("https://example.org/Alice");
   const name = namedNode("https://schema.org/name");
@@ -202,7 +204,7 @@ Deno.test("a graph deduplicates, matches, and reports distinct terms", () => {
   assertEquals(graph.bindings.get("schema"), "https://schema.org/");
 });
 
-Deno.test("graph matching uses complete RDF term identity", () => {
+test("graph matching uses complete RDF term identity", () => {
   const graph = new RdfGraph();
   const subject = namedNode("https://example.org/subject");
   const predicate = namedNode("https://example.org/predicate");
@@ -238,7 +240,7 @@ Deno.test("graph matching uses complete RDF term identity", () => {
   );
 });
 
-Deno.test("a dataset keeps named graphs separate and unions them", () => {
+test("a dataset keeps named graphs separate and unions them", () => {
   const dataset = new RdfDataset({ defaultUnion: true });
   const alice = namedNode("https://example.org/Alice");
   const name = namedNode("https://schema.org/name");
@@ -264,7 +266,7 @@ Deno.test("a dataset keeps named graphs separate and unions them", () => {
   assertEquals(root.graphName?.value, "https://example.org/graphs/root");
 });
 
-Deno.test("term keys separate literals that share a lexical form", () => {
+test("term keys separate literals that share a lexical form", () => {
   const plain = literal("42");
   const typed = literal("42", {
     datatype: "http://www.w3.org/2001/XMLSchema#integer",
@@ -277,7 +279,7 @@ Deno.test("term keys separate literals that share a lexical form", () => {
   assertEquals(termKey(namedNode("42")) === termKey(plain), false);
 });
 
-Deno.test("n3Term and ntTerm agree on everything but multi-line literals", () => {
+test("n3Term and ntTerm agree on everything but multi-line literals", () => {
   const single = literal('a "quoted" value');
   const multi = literal("one\ntwo");
   assertEquals(ntTerm(single), n3Term(single));
@@ -293,7 +295,7 @@ Deno.test("n3Term and ntTerm agree on everything but multi-line literals", () =>
   );
 });
 
-Deno.test("a predicate is typed as a named node for callers", () => {
+test("a predicate is typed as a named node for callers", () => {
   const graph = new RdfGraph();
   graph.add(namedNode("https://e/s"), namedNode("https://e/p"), literal("o"));
   const [predicate] = [...graph.predicates()];

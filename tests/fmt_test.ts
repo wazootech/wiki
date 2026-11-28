@@ -36,6 +36,8 @@
  * file answers "does `wiki fmt` do what `test_fmt.py` says it does?".
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { ValueError } from "../src/wiki/errors.ts";
 import {
@@ -59,12 +61,12 @@ const DECODER = new TextDecoder();
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-fmt-" });
+  return sys.makeTempDirSync({ prefix: "wiki-fmt-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -78,8 +80,8 @@ function write(
   options: { readonly bom?: boolean } = {},
 ): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(
     target,
     options.bom ? BOM + content : content,
   );
@@ -118,7 +120,7 @@ async function runCli(
   args: readonly string[],
   cwd: string,
 ): Promise<CliResult> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd,
     stdout: "piped",
@@ -135,7 +137,7 @@ async function runCli(
 // What the formatter must not mangle
 // ---------------------------------------------------------------------------
 
-Deno.test("format_markdown preserves wikilinks", async () => {
+test("format_markdown preserves wikilinks", async () => {
   const root = tempRoot();
   try {
     const filePath = write(root, "Page.md", "See [[Wiki_CLI]] for details.\n");
@@ -166,7 +168,7 @@ Deno.test("format_markdown preserves wikilinks", async () => {
   }
 });
 
-Deno.test("format_markdown pads a table to its widest cell", async () => {
+test("format_markdown pads a table to its widest cell", async () => {
   const root = tempRoot();
   try {
     const filePath = write(root, "Page.md", "");
@@ -188,7 +190,7 @@ Deno.test("format_markdown pads a table to its widest cell", async () => {
   }
 });
 
-Deno.test("format_markdown preserves a SPARQL render block", async () => {
+test("format_markdown preserves a SPARQL render block", async () => {
   const compactTable = "| class |\n| --- |\n| owl:Class |\n";
   const original = "<!-- sparql:start -->\n" +
     "```sparql\nSELECT ?class WHERE { ?class a owl:Class }\n```\n" +
@@ -217,7 +219,7 @@ Deno.test("format_markdown preserves a SPARQL render block", async () => {
   }
 });
 
-Deno.test("format_markdown preserves a hidden SPARQL render block", async () => {
+test("format_markdown preserves a hidden SPARQL render block", async () => {
   const compactTable = "| class |\n| --- |\n| owl:Class |\n";
   const original = "<!-- sparql:start\n" +
     "```sparql\nSELECT ?class WHERE { ?class a owl:Class }\n```\n" +
@@ -242,7 +244,7 @@ Deno.test("format_markdown preserves a hidden SPARQL render block", async () => 
   }
 });
 
-Deno.test("format_markdown strips a leading BOM", async () => {
+test("format_markdown strips a leading BOM", async () => {
   // The corruption site of wiki#312: with mdformat a BOM-prefixed `---` opener
   // was not recognised as frontmatter and became a setext heading.
   const content = "---\ntype: schema:Person\nname: Bommed\n---\n\n# Bommed\n";
@@ -262,7 +264,7 @@ Deno.test("format_markdown strips a leading BOM", async () => {
   }
 });
 
-Deno.test("fmt rejects mdformat-only options", () => {
+test("fmt rejects mdformat-only options", () => {
   const root = tempRoot();
   try {
     write(
@@ -284,7 +286,7 @@ Deno.test("fmt rejects mdformat-only options", () => {
 // Where the fmt options come from
 // ---------------------------------------------------------------------------
 
-Deno.test("inline fmt options take precedence over ignored .mdformat.toml", () => {
+test("inline fmt options take precedence over ignored .mdformat.toml", () => {
   const root = tempRoot();
   try {
     write(root, ".mdformat.toml", "[broken\n");
@@ -298,7 +300,7 @@ Deno.test("inline fmt options take precedence over ignored .mdformat.toml", () =
   }
 });
 
-Deno.test("Wiki fmt ignores .mdformat.toml", () => {
+test("Wiki fmt ignores .mdformat.toml", () => {
   const root = tempRoot();
   try {
     write(root, ".mdformat.toml", "[broken\n");
@@ -317,7 +319,7 @@ Deno.test("Wiki fmt ignores .mdformat.toml", () => {
   }
 });
 
-Deno.test("native inline options and omitted fmt produce the same bytes", () => {
+test("native inline options and omitted fmt produce the same bytes", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
@@ -338,7 +340,7 @@ Deno.test("native inline options and omitted fmt produce the same bytes", () => 
   }
 });
 
-Deno.test("a YAML fmt block accepts Deno/dprint option names", () => {
+test("a YAML fmt block accepts Deno/dprint option names", () => {
   const root = tempRoot();
   try {
     write(
@@ -356,7 +358,7 @@ Deno.test("a YAML fmt block accepts Deno/dprint option names", () => {
   }
 });
 
-Deno.test("absent fmt uses the wiki Deno formatter defaults", () => {
+test("absent fmt uses the wiki Deno formatter defaults", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
@@ -372,7 +374,7 @@ Deno.test("absent fmt uses the wiki Deno formatter defaults", () => {
   }
 });
 
-Deno.test("an empty inline fmt block merges the Deno formatter defaults", () => {
+test("an empty inline fmt block merges the Deno formatter defaults", () => {
   const original = "# Title\n\nSome text  \n";
   const root = tempRoot();
   try {
@@ -394,9 +396,8 @@ Deno.test("an empty inline fmt block merges the Deno formatter defaults", () => 
 // The fmt command
 // ---------------------------------------------------------------------------
 
-Deno.test(
+test(
   "fmt reformats a page in place",
-  { permissions: { run: true, read: true, write: true, env: true } },
   async () => {
     const root = wikiRoot();
     try {
@@ -414,7 +415,7 @@ Deno.test(
       assertStringIncludes(result.stdout, "Formatted unformatted.md");
       assertStringIncludes(result.stdout, "Using ");
       assert(
-        !Deno.readTextFileSync(filePath).includes("Some text  \n"),
+        !sys.readTextFileSync(filePath).includes("Some text  \n"),
       );
     } finally {
       cleanup(root);
@@ -422,9 +423,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "fmt tolerates a page saved with a UTF-8 BOM",
-  { permissions: { run: true, read: true, write: true, env: true } },
   async () => {
     const root = wikiRoot();
     try {
@@ -442,7 +442,7 @@ Deno.test(
 
       // Read raw text: the BOM-tolerant parser strips a leading BOM, so
       // using it here would mask a retained BOM.
-      const content = Deno.readTextFileSync(filePath);
+      const content = sys.readTextFileSync(filePath);
       assert(!content.startsWith(BOM), JSON.stringify(content));
       assert(!content.includes("## "), content);
       assert(!content.includes("Some text  \n"), content);
@@ -454,9 +454,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "fmt refuses a page whose frontmatter cannot be parsed",
-  { permissions: { run: true, read: true, write: true, env: true } },
   async () => {
     const root = wikiRoot();
     try {
@@ -471,7 +470,7 @@ Deno.test(
         );
         assertEquals(result.code, 1, result.stderr);
         assertStringIncludes(result.stderr, "Refusing to format Broken.md");
-        assertEquals(Deno.readTextFileSync(filePath), original);
+        assertEquals(sys.readTextFileSync(filePath), original);
       }
     } finally {
       cleanup(root);
@@ -479,9 +478,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "fmt --check flags stale pages and passes once they are written",
-  { permissions: { run: true, read: true, write: true, env: true } },
   async () => {
     const root = wikiRoot();
     try {
@@ -500,7 +498,7 @@ Deno.test(
       );
       assertStringIncludes(stale.stderr, "unformatted.md");
       // --check reports; it must not write.
-      assertEquals(Deno.readTextFileSync(filePath), original);
+      assertEquals(sys.readTextFileSync(filePath), original);
 
       const written = await runCli(
         ["-c", "wiki.yml", "fmt"],

@@ -18,6 +18,8 @@
  * JavaScript has one date-time type.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join, resolve } from "@std/path";
 import { assert, assertEquals, assertFalse } from "@std/assert";
 import { Config } from "../src/wiki/config.ts";
@@ -75,12 +77,12 @@ function ns(context: Context, prefix: string): string {
 
 /** A unique temp directory, to be removed with {@link cleanup}. */
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-graph-" });
+  return sys.makeTempDirSync({ prefix: "wiki-graph-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -89,8 +91,8 @@ function cleanup(root: string): void {
 /** Write a file below `root`, creating parent directories. */
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -111,13 +113,13 @@ async function captureLogs<T>(
 // Frontmatter to triples
 // ---------------------------------------------------------------------------
 
-Deno.test("kebabCase lowercases, collapses, and drops punctuation", () => {
+test("kebabCase lowercases, collapses, and drops punctuation", () => {
   assertEquals(kebabCase("John Smith! & Co."), "john-smith--co");
   assertEquals(kebabCase(""), "");
   assertEquals(kebabCase("some--double--dashes"), "some-double-dashes");
 });
 
-Deno.test("resolvePredicate walks CURIE, wiki.*, then vocab", () => {
+test("resolvePredicate walks CURIE, wiki.*, then vocab", () => {
   const schemaContext = new Config().context;
 
   assertEquals(
@@ -161,7 +163,7 @@ Deno.test("resolvePredicate walks CURIE, wiki.*, then vocab", () => {
   );
 });
 
-Deno.test("resolveType resolves CURIEs, vocab names, and bare URIs", () => {
+test("resolveType resolves CURIEs, vocab names, and bare URIs", () => {
   const context = new Config().context;
   assertEquals(resolveType("Person", context), namedNode(SCHEMA + "Person"));
   assertEquals(
@@ -171,7 +173,7 @@ Deno.test("resolveType resolves CURIEs, vocab names, and bare URIs", () => {
   assertEquals(resolveType(5, context), namedNode("5"));
 });
 
-Deno.test("resolveObject maps datatypes the way rdflib does", () => {
+test("resolveObject maps datatypes the way rdflib does", () => {
   const context = new Config().context;
   const graph = new RdfGraph();
   const subject = namedNode(WIKI + "gregory");
@@ -251,7 +253,7 @@ Deno.test("resolveObject maps datatypes the way rdflib does", () => {
   assertEquals([...graph.match(subject, namedNode(SCHEMA + "tup"))].length, 2);
 });
 
-Deno.test("a nested mapping without @type becomes a blank node", () => {
+test("a nested mapping without @type becomes a blank node", () => {
   const config = new Config();
   const context = config.context;
   const graph = frontmatterToGraph({
@@ -276,7 +278,7 @@ Deno.test("a nested mapping without @type becomes a blank node", () => {
   assert(graph.has(blank, namedNode(SCHEMA + "city"), literal("Seattle")));
 });
 
-Deno.test("a nested mapping with @type becomes a typed blank node", () => {
+test("a nested mapping with @type becomes a typed blank node", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
     "@type": "Person",
@@ -293,7 +295,7 @@ Deno.test("a nested mapping with @type becomes a typed blank node", () => {
   );
 });
 
-Deno.test("a nested @type resolves through the configured vocab", () => {
+test("a nested @type resolves through the configured vocab", () => {
   const context = new Config({
     graph: {
       context: { "@vocab": "https://custom.example.org/vocab/", wiki: WIKI },
@@ -322,7 +324,7 @@ Deno.test("a nested @type resolves through the configured vocab", () => {
   );
 });
 
-Deno.test("a nested @id becomes a URI reference", () => {
+test("a nested @id becomes a URI reference", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
     "@type": "Person",
@@ -340,7 +342,7 @@ Deno.test("a nested @id becomes a URI reference", () => {
   );
 });
 
-Deno.test("a list of nested mappings creates one node per item", () => {
+test("a list of nested mappings creates one node per item", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
     "@type": "Person",
@@ -360,7 +362,7 @@ Deno.test("a list of nested mappings creates one node per item", () => {
   assertEquals(streets, new Set(["123 Main St", "456 Oak Ave"]));
 });
 
-Deno.test("the body is injected under the configured content predicate", () => {
+test("the body is injected under the configured content predicate", () => {
   const body = "Gregory is a software engineer.";
   const graph = frontmatterToGraph(
     { "@type": "Person", "@id": "wiki:gregory", givenName: "Gregory" },
@@ -377,7 +379,7 @@ Deno.test("the body is injected under the configured content predicate", () => {
   );
 });
 
-Deno.test("empty frontmatter and missing ids produce empty graphs", () => {
+test("empty frontmatter and missing ids produce empty graphs", () => {
   const config = new Config();
   const context = config.context;
 
@@ -422,7 +424,7 @@ Deno.test("empty frontmatter and missing ids produce empty graphs", () => {
   assert(context.vocab === SCHEMA);
 });
 
-Deno.test("identical nested frontmatter yields distinct blank nodes (#144)", () => {
+test("identical nested frontmatter yields distinct blank nodes (#144)", () => {
   const context = new Config().context;
   const shape = (id: string) => ({
     "@type": "sh:NodeShape",
@@ -460,7 +462,7 @@ function listMembers(graph: RdfGraph, head: Quad["object"]): string[] {
   return members;
 }
 
-Deno.test("sh:in nested in a list of mappings compiles to an RDF list (#305)", () => {
+test("sh:in nested in a list of mappings compiles to an RDF list (#305)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -486,7 +488,7 @@ Deno.test("sh:in nested in a list of mappings compiles to an RDF list (#305)", (
   assertEquals(paths.map((quad) => quad.object.value), [SCHEMA + "status"]);
 });
 
-Deno.test("a top-level sh:in on a property shape page is an RDF list too", () => {
+test("a top-level sh:in on a property shape page is an RDF list too", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -500,7 +502,7 @@ Deno.test("a top-level sh:in on a property shape page is an RDF list too", () =>
   assertEquals(listMembers(graph, ins[0]!.object), [SCHEMA + "Open"]);
 });
 
-Deno.test("a one-member sh:path list stays a predicate path (SHACL §2.3.1.1)", () => {
+test("a one-member sh:path list stays a predicate path (SHACL §2.3.1.1)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -514,7 +516,7 @@ Deno.test("a one-member sh:path list stays a predicate path (SHACL §2.3.1.1)", 
   assertEquals([...graph.match(null, namedNode(RDF_FIRST))].length, 0);
 });
 
-Deno.test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () => {
+test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -539,7 +541,7 @@ Deno.test("a multi-member path list is a sequence path (SHACL §2.3.1.2)", () =>
   }
 });
 
-Deno.test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
+test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -571,7 +573,7 @@ Deno.test("sh:alternativePath is a SHACL list of paths (SHACL §2.3.1.3)", () =>
   assertEquals(members[2], SCHEMA + "alternateName");
 });
 
-Deno.test("a list inside an sh:in list nests instead of repeating rdf:first", () => {
+test("a list inside an sh:in list nests instead of repeating rdf:first", () => {
   const context = new Config().context;
   const sh = ns(context, "sh");
   const graph = frontmatterToGraph({
@@ -593,7 +595,7 @@ Deno.test("a list inside an sh:in list nests instead of repeating rdf:first", ()
   ]);
 });
 
-Deno.test("a plain list nested in a list of mappings repeats the predicate", () => {
+test("a plain list nested in a list of mappings repeats the predicate", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
     "@type": "Person",
@@ -604,7 +606,7 @@ Deno.test("a plain list nested in a list of mappings repeats the predicate", () 
   assertEquals(keywords.map((quad) => quad.object.value).sort(), ["a", "b"]);
 });
 
-Deno.test("the wazoo layout predicate is emitted and nothing else", () => {
+test("the wazoo layout predicate is emitted and nothing else", () => {
   const context = new Config().context;
   const graph = frontmatterToGraph({
     "@type": "Person",
@@ -624,7 +626,7 @@ Deno.test("the wazoo layout predicate is emitted and nothing else", () => {
   assertEquals(graph.size, 3);
 });
 
-Deno.test("implicit types fall back for an untyped page", () => {
+test("implicit types fall back for an untyped page", () => {
   const config = new Config({ graph: { implicit_types: ["TechArticle"] } });
   const graph = frontmatterToGraph({ headline: "Untitled" }, config, {
     fileId: "untitled",
@@ -639,7 +641,7 @@ Deno.test("implicit types fall back for an untyped page", () => {
   );
 });
 
-Deno.test("implicit types leave an explicit type alone under fallback", () => {
+test("implicit types leave an explicit type alone under fallback", () => {
   const config = new Config({ graph: { implicit_types: ["TechArticle"] } });
   const context = config.context;
   const graph = frontmatterToGraph({
@@ -655,7 +657,7 @@ Deno.test("implicit types leave an explicit type alone under fallback", () => {
   assert(context.vocab === SCHEMA);
 });
 
-Deno.test("append policy unions implicit types and dedupes by URI", () => {
+test("append policy unions implicit types and dedupes by URI", () => {
   const config = new Config({
     graph: {
       implicit_types: ["TechArticle", "CreativeWork"],
@@ -683,7 +685,7 @@ Deno.test("append policy unions implicit types and dedupes by URI", () => {
   );
 });
 
-Deno.test("append policy leaves SHACL shape documents alone", () => {
+test("append policy leaves SHACL shape documents alone", () => {
   const config = new Config({
     graph: { implicit_types: ["TechArticle"], implicit_types_policy: "append" },
   });
@@ -703,7 +705,7 @@ Deno.test("append policy leaves SHACL shape documents alone", () => {
   assertEquals(types[0]!.object.value, ns(context, "sh") + "NodeShape");
 });
 
-Deno.test("graph.base_iri overrides graph.context.wiki for page subjects", () => {
+test("graph.base_iri overrides graph.context.wiki for page subjects", () => {
   const config = new Config({
     graph: {
       context: { "@vocab": SCHEMA, wiki: "https://example.test/wiki/" },
@@ -727,7 +729,7 @@ Deno.test("graph.base_iri overrides graph.context.wiki for page subjects", () =>
   );
 });
 
-Deno.test("a list of types adds one rdf:type per entry", () => {
+test("a list of types adds one rdf:type per entry", () => {
   const config = new Config();
   const graph = frontmatterToGraph({
     "@type": ["Person", "Developer"],
@@ -748,14 +750,14 @@ Deno.test("a list of types adds one rdf:type per entry", () => {
 // Graph loading
 // ---------------------------------------------------------------------------
 
-Deno.test("loadGraph reads every input dir and survives broken RDF", async () => {
+test("loadGraph reads every input dir and survives broken RDF", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
     const wiki = join(root, "wiki");
     const imports = join(root, "imports");
-    Deno.mkdirSync(wiki, { recursive: true });
-    Deno.mkdirSync(imports, { recursive: true });
+    sys.mkdirSync(wiki, { recursive: true });
+    sys.mkdirSync(imports, { recursive: true });
 
     write(root, "imports/error.ttl", "UNPARSABLE NONSENSE");
     write(
@@ -814,7 +816,7 @@ Raw Body Text.
   }
 });
 
-Deno.test("separate Turtle fences keep blank-node labels in separate scopes", async () => {
+test("separate Turtle fences keep blank-node labels in separate scopes", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -858,7 +860,7 @@ Deno.test("separate Turtle fences keep blank-node labels in separate scopes", as
   }
 });
 
-Deno.test("loadGraph warns about an unparseable file by name", async () => {
+test("loadGraph warns about an unparseable file by name", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -889,7 +891,7 @@ name: Good Page
   }
 });
 
-Deno.test("loadGraph reads YAML and JSON documents as pages", async () => {
+test("loadGraph reads YAML and JSON documents as pages", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -917,7 +919,7 @@ Deno.test("loadGraph reads YAML and JSON documents as pages", async () => {
   }
 });
 
-Deno.test("loadGraph keeps title-cased file URIs matching wiki: CURIEs", async () => {
+test("loadGraph keeps title-cased file URIs matching wiki: CURIEs", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -954,7 +956,7 @@ schema:location: wiki:Pokemon_Cartridge_Case
   }
 });
 
-Deno.test("include_file_extension appends the source extension", async () => {
+test("include_file_extension appends the source extension", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -986,7 +988,7 @@ name: Test Page
   }
 });
 
-Deno.test("a null @vocab drops unprefixed keys and types", async () => {
+test("a null @vocab drops unprefixed keys and types", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1021,7 +1023,7 @@ schema:familyName: Smith
   }
 });
 
-Deno.test("a custom @vocab resolves unprefixed keys to it", async () => {
+test("a custom @vocab resolves unprefixed keys to it", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1060,7 +1062,7 @@ name: Alice
   }
 });
 
-Deno.test("two shape files keep their property shapes distinct end to end", async () => {
+test("two shape files keep their property shapes distinct end to end", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1106,9 +1108,9 @@ sh:property:
 /** A source checkout the way `sources install` leaves one. */
 function sourceFixture(root: string): { wiki: string; source: string } {
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
+  sys.mkdirSync(wiki, { recursive: true });
   const source = join(root, ".wiki", "sources", "brain", "repo", "wiki");
-  Deno.mkdirSync(source, { recursive: true });
+  sys.mkdirSync(source, { recursive: true });
   return { wiki, source };
 }
 
@@ -1130,7 +1132,7 @@ function lockBrain(
   }, join(root, "wiki.lock"));
 }
 
-Deno.test("loadDataset keeps root and source graphs separate", async () => {
+test("loadDataset keeps root and source graphs separate", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1194,7 +1196,7 @@ name: Source Doc
   }
 });
 
-Deno.test("the dataset disk cache round-trips named graphs", async () => {
+test("the dataset disk cache round-trips named graphs", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1226,7 +1228,7 @@ name: Source Doc
         literal("Source Doc"),
       ),
     );
-    const cacheFiles = [...Deno.readDirSync(
+    const cacheFiles = [...sys.readDirSync(
       join(root, ".wiki", "cache"),
     )].map((entry) => entry.name);
     assert(
@@ -1240,7 +1242,7 @@ name: Source Doc
   }
 });
 
-Deno.test("graphDescriptors reports locked source metadata", () => {
+test("graphDescriptors reports locked source metadata", () => {
   const root = tempRoot();
   try {
     const { wiki, source } = sourceFixture(root);
@@ -1276,7 +1278,7 @@ Deno.test("graphDescriptors reports locked source metadata", () => {
   }
 });
 
-Deno.test("a directly declared source is marked required by root", () => {
+test("a directly declared source is marked required by root", () => {
   const root = tempRoot();
   try {
     const { wiki, source } = sourceFixture(root);
@@ -1300,7 +1302,7 @@ Deno.test("a directly declared source is marked required by root", () => {
   }
 });
 
-Deno.test("graphDescriptors warns when a cache has no lockfile sources", async () => {
+test("graphDescriptors warns when a cache has no lockfile sources", async () => {
   const root = tempRoot();
   try {
     const { wiki, source } = sourceFixture(root);
@@ -1324,7 +1326,7 @@ Deno.test("graphDescriptors warns when a cache has no lockfile sources", async (
 // Helpers with no oracle test of their own
 // ---------------------------------------------------------------------------
 
-Deno.test("usesNamedGraphs sees the keyword and not its lookalikes", () => {
+test("usesNamedGraphs sees the keyword and not its lookalikes", () => {
   assert(usesNamedGraphs("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }"));
   assert(usesNamedGraphs("select * where { graph <urn:x> { ?s ?p ?o } }"));
   assertFalse(usesNamedGraphs("SELECT * WHERE { ?s ?p ?o }"));
@@ -1338,7 +1340,7 @@ Deno.test("usesNamedGraphs sees the keyword and not its lookalikes", () => {
   );
 });
 
-Deno.test("graphStats counts distinct subjects, predicates, and objects", () => {
+test("graphStats counts distinct subjects, predicates, and objects", () => {
   const graph = new RdfGraph();
   const subject = namedNode(`${WIKI}alice`);
   graph.add(subject, namedNode(RDF_TYPE), namedNode(SCHEMA + "Person"));
@@ -1358,7 +1360,7 @@ Deno.test("graphStats counts distinct subjects, predicates, and objects", () => 
   });
 });
 
-Deno.test("subClassOf drives the type of every instance after inference", async () => {
+test("subClassOf drives the type of every instance after inference", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1404,7 +1406,7 @@ givenName: Gregory
   }
 });
 
-Deno.test("inference does not leave engine bookkeeping in the graph", async () => {
+test("inference does not leave engine bookkeeping in the graph", async () => {
   clearAllProcessGraphs();
   const root = tempRoot();
   try {
@@ -1448,7 +1450,7 @@ givenName: Gregory
   }
 });
 
-Deno.test("YAML date-only frontmatter becomes xsd:date with its lexical form", () => {
+test("YAML date-only frontmatter becomes xsd:date with its lexical form", () => {
   // End to end through the parser: PyYAML hands rdflib a `date` for
   // `2026-05-30` and the oracle writes `"2026-05-30"^^xsd:date`. A bare
   // `Date` would lose both the type and the spelling, so the parser records
@@ -1471,7 +1473,7 @@ Deno.test("YAML date-only frontmatter becomes xsd:date with its lexical form", (
   );
 });
 
-Deno.test("a zoned YAML timestamp keeps rdflib's +00:00 lexical form", () => {
+test("a zoned YAML timestamp keeps rdflib's +00:00 lexical form", () => {
   // rdflib serialises a zoned datetime as `2026-05-30T00:00:00+00:00`;
   // `Date#toISOString` would emit the `...000Z` form instead.
   const config = new Config();
@@ -1492,7 +1494,7 @@ Deno.test("a zoned YAML timestamp keeps rdflib's +00:00 lexical form", () => {
   );
 });
 
-Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
+test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
   // End to end through the parser: `30.0` parses to the number `30`, which
   // the graph layer would otherwise type `xsd:integer` — or drop entirely,
   // because a `WikiFloat` is `typeof "object"` and the old `isTruthy` read
@@ -1530,7 +1532,7 @@ Deno.test("YAML 30.0 becomes xsd:double and is not dropped as falsy", () => {
   );
 });
 
-Deno.test("falsy frontmatter values are emitted, absences are not (#374)", () => {
+test("falsy frontmatter values are emitted, absences are not (#374)", () => {
   const config = new Config();
   const attrs = parseFrontmatter(
     '---\nprice: 0\nfree: false\nnote: ""\nnone: null\nlist: []\nmap: {}\n---\n\nBody\n',
@@ -1564,7 +1566,7 @@ Deno.test("falsy frontmatter values are emitted, absences are not (#374)", () =>
   }
 });
 
-Deno.test("inference keeps one literal per numeric value (#367)", () => {
+test("inference keeps one literal per numeric value (#367)", () => {
   // `1`^^xsd:integer and `1.0`^^xsd:double are value-equal to the bundled
   // dt-eq rule, and eq-rep-o used to copy each onto the other's subject, so a
   // `price: 1.00` page failed `sh:maxCount 1`.
@@ -1605,7 +1607,7 @@ Deno.test("inference keeps one literal per numeric value (#367)", () => {
   assertEquals(prices("frac").length, 1);
 });
 
-Deno.test("inference works on a named graph and derives into it (#382)", () => {
+test("inference works on a named graph and derives into it (#382)", () => {
   // A named graph's quads carry their graph term; handing them to the engine
   // as-is serialized `{` into the N3 text and skipped reasoning entirely.
   const RDFS = "http://www.w3.org/2000/01/rdf-schema#";

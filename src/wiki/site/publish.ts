@@ -1,3 +1,4 @@
+import * as sys from "../sys.ts";
 import { dirname, join, resolve } from "@std/path";
 import { isFile, pathExists } from "../fspath.ts";
 import type { Wiki } from "../wiki.ts";
@@ -104,9 +105,9 @@ export async function buildStaticSite(
 
   validateOutputDir(pageOutputDir, wiki);
   if (pathExists(pageOutputDir)) {
-    Deno.removeSync(pageOutputDir, { recursive: true });
+    sys.removeSync(pageOutputDir, { recursive: true });
   }
-  Deno.mkdirSync(pageOutputDir, { recursive: true });
+  sys.mkdirSync(pageOutputDir, { recursive: true });
 
   const defaultLayout =
     config.site.layout !== null && isFile(config.site.layout)
@@ -115,7 +116,7 @@ export async function buildStaticSite(
   const writtenPaths: string[] = [];
   if (!site.pages.some((page) => page.file_slug === "")) {
     const indexPath = join(pageOutputDir, "index.html");
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       indexPath,
       buildIndexHtml(site, baseUrl, urlStyle, defaultLayout),
     );
@@ -124,8 +125,8 @@ export async function buildStaticSite(
 
   for (const page of site.pages) {
     const outputPath = pageOutputPath(pageOutputDir, page.file_slug, urlStyle);
-    Deno.mkdirSync(dirname(outputPath), { recursive: true });
-    Deno.writeTextFileSync(
+    sys.mkdirSync(dirname(outputPath), { recursive: true });
+    sys.writeTextFileSync(
       outputPath,
       buildPageHtml(page, baseUrl, defaultLayout),
     );
@@ -134,9 +135,9 @@ export async function buildStaticSite(
 
   const assetEntries = buildAssetManifest(published, pageOutputDir, baseUrl);
   for (const entry of assetEntries) {
-    Deno.mkdirSync(dirname(entry.output_path), { recursive: true });
+    sys.mkdirSync(dirname(entry.output_path), { recursive: true });
     if (entry.source !== null) {
-      Deno.copyFileSync(entry.source, entry.output_path);
+      sys.copyFileSync(entry.source, entry.output_path);
     }
     writtenPaths.push(relativeOutputPath(entry.output_path, outputDir));
   }

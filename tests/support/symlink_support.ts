@@ -1,3 +1,4 @@
+import * as sys from "../../src/wiki/sys.ts";
 /**
  * Whether this host allows creating symlinks.
  *
@@ -15,24 +16,24 @@ let cached: boolean | undefined;
 /** Probe once per process by actually attempting a symlink. */
 export function canCreateSymlinks(): boolean {
   if (cached !== undefined) return cached;
-  const dir = Deno.makeTempDirSync({ prefix: "wiki-symlink-probe-" });
-  const separator = Deno.build.os === "windows" ? "\\" : "/";
+  const dir = sys.makeTempDirSync({ prefix: "wiki-symlink-probe-" });
+  const separator = sys.build.os === "windows" ? "\\" : "/";
   try {
     const target = `${dir}${separator}target`;
-    Deno.writeTextFileSync(target, "x");
-    Deno.symlinkSync(target, `${dir}${separator}link`);
+    sys.writeTextFileSync(target, "x");
+    sys.symlinkSync(target, `${dir}${separator}link`);
     cached = true;
   } catch {
     cached = false;
   } finally {
     try {
-      Deno.removeSync(dir, { recursive: true });
+      sys.removeSync(dir, { recursive: true });
     } catch { /* the probe's own leftovers are not worth failing over */ }
   }
   return cached;
 }
 
-/** A Deno.test `ignore` flag, so the skip is declared rather than hidden. */
+/** A sys.test `ignore` flag, so the skip is declared rather than hidden. */
 export function symlinksUnavailable(): boolean {
   return !canCreateSymlinks();
 }
@@ -47,7 +48,7 @@ export function symlinksUnavailable(): boolean {
  */
 export function gitSymlinksUnavailable(): boolean {
   if (symlinksUnavailable()) return true;
-  const output = new Deno.Command("git", {
+  const output = new sys.Command("git", {
     args: ["config", "--get", "core.symlinks"],
     stdout: "piped",
     stderr: "null",

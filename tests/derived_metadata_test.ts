@@ -6,6 +6,8 @@
  * known before the commit is made.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, fromFileUrl, join } from "@std/path";
 import {
   assert,
@@ -31,12 +33,12 @@ const DECODER = new TextDecoder();
 const SCHEMA = "https://schema.org/";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-derived-" });
+  return sys.makeTempDirSync({ prefix: "wiki-derived-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -44,8 +46,8 @@ function cleanup(root: string): void {
 
 function write(root: string, relative: string, content: string): string {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
   return path;
 }
 
@@ -60,7 +62,7 @@ function git(root: string, args: readonly string[], date?: string): void {
     env.GIT_AUTHOR_DATE = date;
     env.GIT_COMMITTER_DATE = date;
   }
-  const result = new Deno.Command("git", {
+  const result = new sys.Command("git", {
     args: ["-c", "commit.gpgsign=false", ...args],
     cwd: root,
     env,
@@ -96,7 +98,7 @@ async function runCli(
   root: string,
   args: readonly string[],
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd: root,
     stdout: "piped",
@@ -113,16 +115,16 @@ async function runCli(
 function snapshot(dir: string): Map<string, string> {
   const files = new Map<string, string>();
   const walk = (current: string) => {
-    for (const entry of Deno.readDirSync(current)) {
+    for (const entry of sys.readDirSync(current)) {
       const path = join(current, entry.name);
       if (entry.isDirectory) {
         walk(path);
       } else {
-        const stat = Deno.statSync(path);
+        const stat = sys.statSync(path);
         files.set(
           path,
           `${stat.mtime?.getTime()}:${
-            Array.from(Deno.readFileSync(path)).join(",")
+            Array.from(sys.readFileSync(path)).join(",")
           }`,
         );
       }
@@ -136,7 +138,7 @@ function snapshot(dir: string): Map<string, string> {
 // H1 selection
 // ---------------------------------------------------------------------------
 
-Deno.test("the derived headline is the first ATX H1, as plain text", () => {
+test("the derived headline is the first ATX H1, as plain text", () => {
   assertEquals(firstAtxH1("Intro.\n\n# Title\n\n# Second\n"), "Title");
   assertEquals(firstAtxH1("## Sub\n\n# Later Title\n"), "Later Title");
   assertEquals(
@@ -146,13 +148,13 @@ Deno.test("the derived headline is the first ATX H1, as plain text", () => {
   assertEquals(firstAtxH1("# Caf&eacute; \\*\n"), "Café *");
 });
 
-Deno.test("a heading inside fenced code is not the H1", () => {
+test("a heading inside fenced code is not the H1", () => {
   const markdown = "```md\n# Not A Title\n```\n\n# Real Title\n";
   assertEquals(firstAtxH1(markdown), "Real Title");
   assertEquals(firstAtxH1("~~~\n# Fenced\n~~~\n"), null);
 });
 
-Deno.test("no ATX H1 derives no headline", () => {
+test("no ATX H1 derives no headline", () => {
   assertEquals(firstAtxH1("Just prose.\n\n## Only H2\n"), null);
   assertEquals(firstAtxH1("Setext Title\n============\n"), null);
   assertEquals(firstAtxH1("#\n"), null);
@@ -163,7 +165,7 @@ Deno.test("no ATX H1 derives no headline", () => {
 // Git dates
 // ---------------------------------------------------------------------------
 
-Deno.test("Git dates are the oldest and newest committer times, in UTC", async () => {
+test("Git dates are the oldest and newest committer times, in UTC", async () => {
   const root = gitWiki();
   try {
     const page = write(root, "wiki/Page.md", "# Page\n");
@@ -186,7 +188,7 @@ Deno.test("Git dates are the oldest and newest committer times, in UTC", async (
   }
 });
 
-Deno.test("Git dates follow renames back to the original file", async () => {
+test("Git dates follow renames back to the original file", async () => {
   const root = gitWiki();
   try {
     write(
@@ -213,7 +215,7 @@ Deno.test("Git dates follow renames back to the original file", async () => {
   }
 });
 
-Deno.test("without usable history both dates fall back to the mtime", async () => {
+test("without usable history both dates fall back to the mtime", async () => {
   const root = gitWiki();
   try {
     write(root, "wiki/Tracked.md", "# Tracked\n");
@@ -221,7 +223,7 @@ Deno.test("without usable history both dates fall back to the mtime", async () =
     // Untracked in a repository with history.
     const untracked = write(root, "wiki/Untracked.md", "# Untracked\n");
     const mtime = new Date("2024-02-03T04:05:06.789Z");
-    Deno.utimeSync(untracked, mtime, mtime);
+    sys.utimeSync(untracked, mtime, mtime);
     assertEquals(await gitDates(untracked), null);
     assertEquals(await deriveMetadata(untracked), {
       headline: "Untracked",
@@ -238,7 +240,7 @@ Deno.test("without usable history both dates fall back to the mtime", async () =
   try {
     const page = write(plain, "Page.md", "No heading.\n");
     const mtime = new Date("2023-12-31T23:59:59Z");
-    Deno.utimeSync(page, mtime, mtime);
+    sys.utimeSync(page, mtime, mtime);
     assertEquals(await deriveMetadata(page), {
       headline: null,
       dateCreated: "2023-12-31T23:59:59Z",
@@ -250,12 +252,12 @@ Deno.test("without usable history both dates fall back to the mtime", async () =
   }
 });
 
-Deno.test("a repository with no commits uses the mtime", async () => {
+test("a repository with no commits uses the mtime", async () => {
   const root = gitWiki();
   try {
     const page = write(root, "wiki/Page.md", "# Page\n");
     const mtime = new Date("2022-01-01T00:00:00Z");
-    Deno.utimeSync(page, mtime, mtime);
+    sys.utimeSync(page, mtime, mtime);
     const derived = await deriveMetadata(page);
     assertEquals(derived.dateSource, "mtime");
     assertEquals(derived.dateCreated, "2022-01-01T00:00:00Z");
@@ -285,7 +287,7 @@ function objects(
   }));
 }
 
-Deno.test("the graph carries the derived headline and Git dates", async () => {
+test("the graph carries the derived headline and Git dates", async () => {
   const root = gitWiki();
   try {
     write(root, "wiki/Page.md", "---\ntype: Article\n---\n\n# Page Title\n");
@@ -313,7 +315,7 @@ Deno.test("the graph carries the derived headline and Git dates", async () => {
   }
 });
 
-Deno.test("an explicit frontmatter value wins over the derived one", async () => {
+test("an explicit frontmatter value wins over the derived one", async () => {
   const root = gitWiki();
   try {
     write(
@@ -353,7 +355,7 @@ Deno.test("an explicit frontmatter value wins over the derived one", async () =>
   }
 });
 
-Deno.test("a document the graph gives no subject derives nothing", async () => {
+test("a document the graph gives no subject derives nothing", async () => {
   const root = gitWiki();
   try {
     write(root, "wiki/Untyped.md", "# Untyped\n");
@@ -365,7 +367,7 @@ Deno.test("a document the graph gives no subject derives nothing", async () => {
   }
 });
 
-Deno.test("read-only graph operations write nothing", async () => {
+test("read-only graph operations write nothing", async () => {
   const root = gitWiki();
   try {
     write(
@@ -421,7 +423,7 @@ const DERIVED: DerivedMetadata = {
   dateSource: "git",
 };
 
-Deno.test("only an exact repeat of a derived value is redundant", () => {
+test("only an exact repeat of a derived value is redundant", () => {
   const exact = dataOf(
     "type: Article\nheadline: Title\ndateCreated: 2026-01-01T21:34:05Z\n" +
       "schema:dateModified: 2026-03-04T15:30:00+05:30\n",
@@ -440,7 +442,7 @@ Deno.test("only an exact repeat of a derived value is redundant", () => {
   assertEquals(redundantFields(exact, NOTHING, config()), []);
 });
 
-Deno.test("a property is redundant only when every key for it repeats the value", () => {
+test("a property is redundant only when every key for it repeats the value", () => {
   const split = dataOf(
     "type: Article\nheadline: Title\nschema:headline: Something Else\n",
   );
@@ -454,7 +456,7 @@ Deno.test("a property is redundant only when every key for it repeats the value"
   );
 });
 
-Deno.test("nothing is redundant on an untyped page or one it would empty", () => {
+test("nothing is redundant on an untyped page or one it would empty", () => {
   assertEquals(
     redundantFields(dataOf("headline: Title\n"), DERIVED, config()),
     [],
@@ -474,7 +476,7 @@ Deno.test("nothing is redundant on an untyped page or one it would empty", () =>
 // Lint
 // ---------------------------------------------------------------------------
 
-Deno.test("lint.redundant_frontmatter is off by default and warns when on", async () => {
+test("lint.redundant_frontmatter is off by default and warns when on", async () => {
   const root = gitWiki();
   try {
     write(
@@ -524,7 +526,7 @@ Deno.test("lint.redundant_frontmatter is off by default and warns when on", asyn
 // Byte-preserving removal
 // ---------------------------------------------------------------------------
 
-Deno.test("removal cuts only the entry's lines and keeps every other byte", () => {
+test("removal cuts only the entry's lines and keeps every other byte", () => {
   const before = "---\r\n# a leading comment\r\n'@type': schema:Article\r\n" +
     'headline: "Quoted Title" # same as the H1\r\n' +
     "name: 'single quoted'\r\n" +
@@ -541,7 +543,7 @@ Deno.test("removal cuts only the entry's lines and keeps every other byte", () =
   );
 });
 
-Deno.test("removal keeps a byte order mark and the last entry's newline", () => {
+test("removal keeps a byte order mark and the last entry's newline", () => {
   const before = "\uFEFF---\ntype: Article\nheadline: Title\n---\n# Title\n";
   assertEquals(
     removeFrontmatterKeys(before, ["headline"]).content,
@@ -549,7 +551,7 @@ Deno.test("removal keeps a byte order mark and the last entry's newline", () => 
   );
 });
 
-Deno.test("an entry that cannot be cut cleanly is skipped, not mangled", () => {
+test("an entry that cannot be cut cleanly is skipped, not mangled", () => {
   const flow = "---\n{type: Article, headline: Title}\n---\n";
   assertEquals(removeFrontmatterKeys(flow, ["headline"]).content, flow);
   assertEquals(
@@ -571,7 +573,7 @@ Deno.test("an entry that cannot be cut cleanly is skipped, not mangled", () => {
 // `wiki fix`
 // ---------------------------------------------------------------------------
 
-Deno.test("wiki fix previews by default and removes only redundant fields with --apply", async () => {
+test("wiki fix previews by default and removes only redundant fields with --apply", async () => {
   const root = gitWiki();
   try {
     const repeats = "---\r\n# kept comment\r\ntype: Article\r\n" +
@@ -617,13 +619,13 @@ Deno.test("wiki fix previews by default and removes only redundant fields with -
       "Removed 2 redundant fields from 1 file.",
     );
     assertEquals(
-      Deno.readTextFileSync(join(root, "wiki", "Repeats.md")),
+      sys.readTextFileSync(join(root, "wiki", "Repeats.md")),
       "---\r\n# kept comment\r\ntype: Article\r\n" +
         "dateModified: 2026-02-03\r\n" +
         'description: "Kept, quoted"\r\n---\r\n\r\n# Repeats\r\n\r\nBody.\r\n',
     );
     assertEquals(
-      Deno.readTextFileSync(join(root, "wiki", "Differs.md")),
+      sys.readTextFileSync(join(root, "wiki", "Differs.md")),
       differs,
     );
 
@@ -634,7 +636,7 @@ Deno.test("wiki fix previews by default and removes only redundant fields with -
   }
 });
 
-Deno.test("wiki fix limits itself to the files it is given", async () => {
+test("wiki fix limits itself to the files it is given", async () => {
   const root = gitWiki();
   try {
     const one = "---\ntype: Article\nheadline: One\n---\n\n# One\n";
@@ -645,16 +647,16 @@ Deno.test("wiki fix limits itself to the files it is given", async () => {
     const result = await runCli(root, ["fix", "--apply", "wiki/One.md"]);
     assertEquals(result.code, 0, result.stderr);
     assertEquals(
-      Deno.readTextFileSync(join(root, "wiki", "One.md")),
+      sys.readTextFileSync(join(root, "wiki", "One.md")),
       "---\ntype: Article\n---\n\n# One\n",
     );
-    assertEquals(Deno.readTextFileSync(join(root, "wiki", "Two.md")), two);
+    assertEquals(sys.readTextFileSync(join(root, "wiki", "Two.md")), two);
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("wiki fix is rejected when a JSON Schema still requires the field", async () => {
+test("wiki fix is rejected when a JSON Schema still requires the field", async () => {
   const root = gitWiki();
   try {
     write(
@@ -678,7 +680,7 @@ Deno.test("wiki fix is rejected when a JSON Schema still requires the field", as
 
     const report = await Wiki.load(root).fix(null, { apply: true });
     assertEquals(report.status, "rejected");
-    assertEquals(Deno.readTextFileSync(join(root, "wiki", "Page.md")), page);
+    assertEquals(sys.readTextFileSync(join(root, "wiki", "Page.md")), page);
 
     const cli = await runCli(root, ["fix", "--apply"]);
     assertEquals(cli.code, 1);
@@ -705,7 +707,7 @@ function exportWiki(): string {
   return root;
 }
 
-Deno.test("wiki export includes derived values; explicit keys stay as written", async () => {
+test("wiki export includes derived values; explicit keys stay as written", async () => {
   const root = exportWiki();
   try {
     const dict = await runCli(root, ["export", "wiki/Page.md"]);
@@ -746,7 +748,7 @@ Deno.test("wiki export includes derived values; explicit keys stay as written", 
   }
 });
 
-Deno.test("wiki file show reports derived values beside the frontmatter", async () => {
+test("wiki file show reports derived values beside the frontmatter", async () => {
   const root = exportWiki();
   try {
     const report = await Wiki.load(root).show("wiki/Page.md");

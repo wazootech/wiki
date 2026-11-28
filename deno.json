@@ -43,7 +43,6 @@
     "@dprint/typescript": "npm:@dprint/typescript@0.96.1",
     "@rdfjs/types": "npm:@rdfjs/types@^2.0.1",
     "@std/assert": "jsr:@std/assert@^1.0.0",
-    "@std/fs": "jsr:@std/fs@^1.0.0",
     "@std/path": "jsr:@std/path@^1.0.0",
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",

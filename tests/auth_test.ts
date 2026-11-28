@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import {
   assert,
   assertEquals,
@@ -13,13 +15,13 @@ import { clientKey } from "../src/wiki/auth/rate_limit.ts";
 import { createStaticSiteHandler } from "../src/wiki/site/server.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-auth-" });
+  return sys.makeTempDirSync({ prefix: "wiki-auth-" });
 }
 
 function write(root: string, relative: string, content: string): string {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
   return path;
 }
 
@@ -30,7 +32,7 @@ function cookieValue(setCookie: string | null, name: string): string {
   return decodeURIComponent(match[1]!);
 }
 
-Deno.test("site.auth defaults to disabled with safe defaults", () => {
+test("site.auth defaults to disabled with safe defaults", () => {
   const config = Config.forRoot(tempRoot());
   assertEquals(config.site.auth.enabled, false);
   assertEquals(config.site.auth.provider, "local");
@@ -38,7 +40,7 @@ Deno.test("site.auth defaults to disabled with safe defaults", () => {
   assertEquals(config.site.auth.cookie_name, "wiki_session");
 });
 
-Deno.test("site.auth resolves paths and rejects an unknown provider", () => {
+test("site.auth resolves paths and rejects an unknown provider", () => {
   const root = tempRoot();
   try {
     write(root, "users.json", "[]");
@@ -64,11 +66,11 @@ Deno.test("site.auth resolves paths and rejects an unknown provider", () => {
       "provider",
     );
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("local auth gates the whole site until sign-in", async () => {
+test("local auth gates the whole site until sign-in", async () => {
   const root = tempRoot();
   try {
     const hash = await hashPassword("correct horse battery");
@@ -150,7 +152,7 @@ Deno.test("local auth gates the whole site until sign-in", async () => {
         }),
       );
       assertEquals(signedOut.status, 200);
-      assert(Deno.statSync(join(root, "sessions.json")).isFile);
+      assert(sys.statSync(join(root, "sessions.json")).isFile);
 
       const blocked = await preview.handleRequest(
         new Request("http://localhost/", {
@@ -163,11 +165,11 @@ Deno.test("local auth gates the whole site until sign-in", async () => {
       auth.close();
     }
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("safeNext rejects redirects that leave the site", () => {
+test("safeNext rejects redirects that leave the site", () => {
   for (
     const hostile of [
       "//evil.example",
@@ -180,7 +182,7 @@ Deno.test("safeNext rejects redirects that leave the site", () => {
   assertEquals(safeNext("/notes?q=1", ""), "/notes?q=1");
 });
 
-Deno.test("isSecure honours TLS terminated by a proxy", () => {
+test("isSecure honours TLS terminated by a proxy", () => {
   const url = new URL("http://wiki.example.org/");
   const proxied = new Request(url, {
     headers: { "x-forwarded-proto": "https" },
@@ -189,7 +191,7 @@ Deno.test("isSecure honours TLS terminated by a proxy", () => {
   assertEquals(isSecure(new Request(url), url), false);
 });
 
-Deno.test("clientKey trusts forwarded addresses only from loopback", () => {
+test("clientKey trusts forwarded addresses only from loopback", () => {
   const request = new Request("http://localhost/", {
     headers: { "x-forwarded-for": "198.51.100.1, 203.0.113.7" },
   });
@@ -199,7 +201,7 @@ Deno.test("clientKey trusts forwarded addresses only from loopback", () => {
   assertEquals(clientKey(request), "local");
 });
 
-Deno.test("local sign-in keeps the CSRF cookie and limits parallel guesses", async () => {
+test("local sign-in keeps the CSRF cookie and limits parallel guesses", async () => {
   const root = tempRoot();
   try {
     const hash = await hashPassword("correct horse battery");
@@ -237,6 +239,6 @@ Deno.test("local sign-in keeps the CSRF cookie and limits parallel guesses", asy
       auth.close();
     }
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });

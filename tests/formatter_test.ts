@@ -22,6 +22,8 @@
  * a corpus page cannot isolate.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { ValueError } from "../src/wiki/errors.ts";
 import { assert, assertEquals, assertThrows } from "@std/assert";
@@ -51,12 +53,12 @@ function fenced(tag: string, body: string): string {
   return `# ${tag}\n\n\`\`\`${tag}\n${body}\n\`\`\`\n`;
 }
 
-Deno.test("the yaml plugin's runtime specifier matches deno.json", () => {
+test("the yaml plugin's runtime specifier matches deno.json", () => {
   // JSR rewrites bare specifiers only in import statements, so the string that
   // formatter.ts resolves at runtime is a full npm: specifier. It must name the
   // version deno.json pins, or the snapshot and the runtime disagree.
   const config = JSON.parse(
-    Deno.readTextFileSync(new URL("../deno.json", import.meta.url)),
+    sys.readTextFileSync(new URL("../deno.json", import.meta.url)),
   );
   assertEquals(
     YAML_PLUGIN_PACKAGE_JSON,
@@ -68,7 +70,7 @@ Deno.test("the yaml plugin's runtime specifier matches deno.json", () => {
 // The pinned plugin versions
 // ---------------------------------------------------------------------------
 
-Deno.test("the markdown, json and typescript plugins load at their pinned versions", () => {
+test("the markdown, json and typescript plugins load at their pinned versions", () => {
   for (
     const [name, plugin, pinned] of [
       ["@dprint/markdown", markdownPlugin, FORMATTER_PLUGIN_VERSIONS.markdown],
@@ -81,7 +83,7 @@ Deno.test("the markdown, json and typescript plugins load at their pinned versio
     ] as const
   ) {
     const info = createFromBuffer(
-      new Uint8Array(Deno.readFileSync(plugin.getPath())),
+      new Uint8Array(sys.readFileSync(plugin.getPath())),
     ).getPluginInfo();
     assertEquals(
       info.version,
@@ -94,9 +96,9 @@ Deno.test("the markdown, json and typescript plugins load at their pinned versio
   }
 });
 
-Deno.test("the yaml plugin loads at its pinned version", () => {
+test("the yaml plugin loads at its pinned version", () => {
   const wasm = new Uint8Array(
-    Deno.readFileSync(
+    sys.readFileSync(
       new URL(import.meta.resolve("dprint-plugin-yaml/plugin.wasm")),
     ),
   );
@@ -113,14 +115,14 @@ Deno.test("the yaml plugin loads at its pinned version", () => {
 const PARAGRAPH =
   "# H\n\nThis paragraph is long enough that a forty column wrap has something to do with it, clearly.\n";
 
-Deno.test("textWrap: never leaves the paragraph on one line", () => {
+test("textWrap: never leaves the paragraph on one line", () => {
   assertEquals(
     formatMarkdownText(PARAGRAPH, "Page.md", { textWrap: "never" }),
     PARAGRAPH,
   );
 });
 
-Deno.test("textWrap: always wraps to lineWidth", () => {
+test("textWrap: always wraps to lineWidth", () => {
   assertEquals(
     formatMarkdownText(PARAGRAPH, "Page.md", {
       textWrap: "always",
@@ -132,7 +134,7 @@ Deno.test("textWrap: always wraps to lineWidth", () => {
   );
 });
 
-Deno.test("textWrap: maintain preserves existing line breaks", () => {
+test("textWrap: maintain preserves existing line breaks", () => {
   const wrapped = "Long\nLines\nkept as they are even though they are short.\n";
   assertEquals(
     formatMarkdownText(wrapped, "Page.md", { textWrap: "maintain" }),
@@ -140,7 +142,7 @@ Deno.test("textWrap: maintain preserves existing line breaks", () => {
   );
 });
 
-Deno.test("textWrap rejects values outside the dprint option set", () => {
+test("textWrap rejects values outside the dprint option set", () => {
   assertThrows(
     () =>
       formatMarkdownText("# H\n", "Page.md", { textWrap: "preserve" } as never),
@@ -149,7 +151,7 @@ Deno.test("textWrap rejects values outside the dprint option set", () => {
   );
 });
 
-Deno.test("newLineKind controls emitted line endings", () => {
+test("newLineKind controls emitted line endings", () => {
   const input = "# H\r\n\r\nText.\r\n";
   assertEquals(
     formatMarkdownText(input, "Page.md", { newLineKind: "lf" }),
@@ -161,7 +163,7 @@ Deno.test("newLineKind controls emitted line endings", () => {
   );
 });
 
-Deno.test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", () => {
+test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", () => {
   // The CLI flag this replaced was `--prose-wrap preserve`; the plugin's value is
   // `maintain`. `preserve` is *accepted* by the plugin, diagnosed, and replaced
   // by its default — which happens to be `maintain` — so the wrong spelling
@@ -169,7 +171,7 @@ Deno.test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", ()
   // Asserting the diagnostic is what keeps the coincidence from being relied on.
   const diagnosticsFor = (textWrap: string) => {
     const formatter = createFromBuffer(
-      new Uint8Array(Deno.readFileSync(markdownPlugin.getPath())),
+      new Uint8Array(sys.readFileSync(markdownPlugin.getPath())),
     );
     formatter.setConfig({ lineWidth: DEFAULT_LINE_WIDTH }, { textWrap });
     return formatter.getConfigDiagnostics();
@@ -187,7 +189,7 @@ Deno.test("`keep` maps to the plugin's `maintain`, and `preserve` is a trap", ()
 // Which fence tags reach a host formatter
 // ---------------------------------------------------------------------------
 
-Deno.test("typescript fences are delegated", () => {
+test("typescript fences are delegated", () => {
   assertEquals(
     format(fenced("ts", "const x={a:1,b:[1,2]}")),
     fenced("ts", "const x = { a: 1, b: [1, 2] };"),
@@ -198,28 +200,28 @@ Deno.test("typescript fences are delegated", () => {
   );
 });
 
-Deno.test("json fences are delegated", () => {
+test("json fences are delegated", () => {
   assertEquals(
     format(fenced("json", '{"a":1,"b":[1,2]}')),
     fenced("json", '{ "a": 1, "b": [1, 2] }'),
   );
 });
 
-Deno.test("yaml fences are delegated, and collapse comment spacing", () => {
+test("yaml fences are delegated, and collapse comment spacing", () => {
   assertEquals(
     format(fenced("yaml", "wiki:  # optional block\n  input: [wiki]")),
     fenced("yaml", "wiki: # optional block\n  input: [wiki]"),
   );
 });
 
-Deno.test("css fences are delegated", () => {
+test("css fences are delegated", () => {
   assertEquals(
     format(fenced("css", "a{color:red;margin:0}")),
     fenced("css", "a {\n  color: red;\n  margin: 0;\n}"),
   );
 });
 
-Deno.test("fences deno leaves alone are left alone", () => {
+test("fences deno leaves alone are left alone", () => {
   // `xml` and `toml` are the interesting pair: both are reachable through the
   // plugin's own tag table, and neither is in `deno fmt`'s list. Formatting
   // either would be a behaviour change nobody asked for.
@@ -238,7 +240,7 @@ Deno.test("fences deno leaves alone are left alone", () => {
   }
 });
 
-Deno.test("the cjs/cts/mjs/mts fences deno formats are not reachable", () => {
+test("the cjs/cts/mjs/mts fences deno formats are not reachable", () => {
   // A known divergence, asserted rather than hidden. `deno fmt` formats these
   // four tags as TypeScript; the plugin's WASM tag table does not list them, so
   // the host callback is never consulted and the body is kept verbatim. No page
@@ -249,7 +251,7 @@ Deno.test("the cjs/cts/mjs/mts fences deno formats are not reachable", () => {
   }
 });
 
-Deno.test("a tagless fence is dedented by the plugin alone", () => {
+test("a tagless fence is dedented by the plugin alone", () => {
   // No tag means no host formatter, so the only transformation is the plugin's
   // own `unindent`, which is what `deno fmt` did too.
   assertEquals(
@@ -258,7 +260,7 @@ Deno.test("a tagless fence is dedented by the plugin alone", () => {
   );
 });
 
-Deno.test("an unknown tag reaches no formatter", () => {
+test("an unknown tag reaches no formatter", () => {
   const doc = fenced("zebra", "foo:   1\n  keep:  2");
   assertEquals(format(doc), doc);
 });
@@ -270,7 +272,7 @@ Deno.test("an unknown tag reaches no formatter", () => {
 const HTML_BODY =
   "<html>\n<head>\n<title>t</title>\n</head>\n<body>\n<p>x</p>\n</body>\n</html>";
 
-Deno.test("html fences are formatted even though the plugin cannot delegate them", () => {
+test("html fences are formatted even though the plugin cannot delegate them", () => {
   assertEquals(
     format(fenced("html", HTML_BODY)),
     fenced(
@@ -280,7 +282,7 @@ Deno.test("html fences are formatted even though the plugin cannot delegate them
   );
 });
 
-Deno.test("an html fence inside a list keeps its indentation", () => {
+test("an html fence inside a list keeps its indentation", () => {
   const indented =
     "# T\n\n- item\n\n  ```html\n  <html>\n  <head>\n  <title>t</title>\n  </head>\n  </html>\n  ```\n";
   const expected =
@@ -288,7 +290,7 @@ Deno.test("an html fence inside a list keeps its indentation", () => {
   assertEquals(format(indented), expected);
 });
 
-Deno.test("an unterminated html fence is closed by the plugin, not padded by the post-pass", () => {
+test("an unterminated html fence is closed by the plugin, not padded by the post-pass", () => {
   // CommonMark runs an unclosed fence to the end of the document, and the plugin
   // emits the closing marker. That is why the post-pass's "unterminated" branch
   // is defensive rather than reachable: by the time it runs, the plugin has
@@ -299,7 +301,7 @@ Deno.test("an unterminated html fence is closed by the plugin, not padded by the
   );
 });
 
-Deno.test("only the `html` tag is post-processed", () => {
+test("only the `html` tag is post-processed", () => {
   // `html5` is a different tag with no formatter registered, so the post-pass
   // must not claim it — and neither must the markdown plugin.
   const html5 = fenced("html5", HTML_BODY);
@@ -310,28 +312,27 @@ Deno.test("only the `html` tag is post-processed", () => {
 // No subprocess
 // ---------------------------------------------------------------------------
 
-Deno.test(
+test(
   "fmt needs no `run` permission, because nothing spawns a formatter",
-  { permissions: { run: true, read: true, write: true, env: true } },
   () => {
     // The subprocess this replaced needed `--allow-run` on every `wiki fmt`
     // invocation, and could not work at all under `deno compile`. Both facts are
     // gone only while nothing spawns anything, so the CLI is run here with every
     // permission *except* `run`.
-    const root = Deno.makeTempDirSync({ prefix: "wiki-fmt-perm-" });
+    const root = sys.makeTempDirSync({ prefix: "wiki-fmt-perm-" });
     try {
-      Deno.writeTextFileSync(
+      sys.writeTextFileSync(
         join(root, "wiki.yml"),
         "wiki:\n  input: [wiki]\n",
       );
       const page = join(root, "wiki", "Page.md");
-      Deno.mkdirSync(dirname(page), { recursive: true });
-      Deno.writeTextFileSync(
+      sys.mkdirSync(dirname(page), { recursive: true });
+      sys.writeTextFileSync(
         page,
         "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text  \nwith a hard break.\n",
       );
 
-      const child = new Deno.Command(Deno.execPath(), {
+      const child = new sys.Command(sys.execPath(), {
         args: [
           "run",
           "--quiet",
@@ -353,7 +354,7 @@ Deno.test(
           "the CLI failed without `--allow-run`: the formatter is a subprocess again",
       );
       assertEquals(
-        Deno.readTextFileSync(page),
+        sys.readTextFileSync(page),
         "---\ntype: schema:WebPage\nname: Test\n---\n\n# Test\n\nSome text\\\nwith a hard break.\n",
       );
       assert(
@@ -362,7 +363,7 @@ Deno.test(
       );
     } finally {
       try {
-        Deno.removeSync(root, { recursive: true });
+        sys.removeSync(root, { recursive: true });
       } catch {
         // Windows keeps a handle open long enough to lose this race.
       }

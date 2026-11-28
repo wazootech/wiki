@@ -15,6 +15,8 @@
  * routing, not sanity-checking, decides.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { pathExists } from "../src/wiki/fspath.ts";
 import { assert, assertEquals } from "@std/assert";
@@ -23,12 +25,12 @@ import { Config } from "../src/wiki/config.ts";
 import { LinkIndex, pageLinkMatches } from "../src/wiki/wiki_links.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-links-" });
+  return sys.makeTempDirSync({ prefix: "wiki-links-" });
 }
 
 function cleanup(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
@@ -37,8 +39,8 @@ function cleanup(root: string): void {
 /** Write a file below `root`, creating parent directories. */
 function write(root: string, relative: string, content: string): string {
   const target = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(target), { recursive: true });
-  Deno.writeTextFileSync(target, content);
+  sys.mkdirSync(dirname(target), { recursive: true });
+  sys.writeTextFileSync(target, content);
   return target;
 }
 
@@ -54,7 +56,7 @@ function configFor(root: string): Config {
   });
 }
 
-Deno.test("a wikilink produces a backlink", () => {
+test("a wikilink produces a backlink", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Alpha.md", "# Alpha\n\nSee [[Beta]].");
@@ -66,7 +68,7 @@ Deno.test("a wikilink produces a backlink", () => {
   }
 });
 
-Deno.test("a markdown link produces a backlink", () => {
+test("a markdown link produces a backlink", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Alpha.md", "# Alpha\n\nSee [Beta](Beta.md).");
@@ -78,7 +80,7 @@ Deno.test("a markdown link produces a backlink", () => {
   }
 });
 
-Deno.test("a link to a parenthesized stem resolves (balanced parentheses)", () => {
+test("a link to a parenthesized stem resolves (balanced parentheses)", () => {
   // `DeepSeek_(payment).md` is how memory names a record about an entity. The
   // link regex used to stop at the first `)`, so the target read as
   // `./DeepSeek_(payment` and the link was reported broken.
@@ -101,7 +103,7 @@ Deno.test("a link to a parenthesized stem resolves (balanced parentheses)", () =
   }
 });
 
-Deno.test("an asset link is not a page backlink", () => {
+test("an asset link is not a page backlink", () => {
   const root = tempRoot();
   try {
     write(root, "assets/logo.png", "png");
@@ -113,7 +115,7 @@ Deno.test("an asset link is not a page backlink", () => {
   }
 });
 
-Deno.test("broken links come back from the index", () => {
+test("broken links come back from the index", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", "# Page\n\n[[Missing]].");
@@ -124,7 +126,7 @@ Deno.test("broken links come back from the index", () => {
   }
 });
 
-Deno.test("a heading fragment is checked against the target's slugs", () => {
+test("a heading fragment is checked against the target's slugs", () => {
   const root = tempRoot();
   try {
     write(
@@ -142,7 +144,7 @@ Deno.test("a heading fragment is checked against the target's slugs", () => {
   }
 });
 
-Deno.test("the link audit matches the oracle, record for record", () => {
+test("the link audit matches the oracle, record for record", () => {
   const root = tempRoot();
   try {
     write(root, "assets/logo.png", "png");
@@ -247,7 +249,7 @@ Deno.test("the link audit matches the oracle, record for record", () => {
   }
 });
 
-Deno.test("the file filter scopes which pages are audited", () => {
+test("the file filter scopes which pages are audited", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Alpha.md", "[[Missing]]");
@@ -263,7 +265,7 @@ Deno.test("the file filter scopes which pages are audited", () => {
   }
 });
 
-Deno.test("pageLinkMatches skips links inside inline and fenced code (#362)", () => {
+test("pageLinkMatches skips links inside inline and fenced code (#362)", () => {
   // The backlink index, `wiki file refs`, and the `mv`/`rm` rewrites all read
   // this list, so a fenced example must neither count as a backlink nor be
   // rewritten when its target moves.
@@ -278,7 +280,7 @@ Deno.test("pageLinkMatches skips links inside inline and fenced code (#362)", ()
   ]);
 });
 
-Deno.test("valid CommonMark link forms are not findings (#376)", () => {
+test("valid CommonMark link forms are not findings (#376)", () => {
   // `--strict` fails only on what a user can and should fix, so a link that
   // CommonMark accepts must not be reported: a title, an angle-bracketed
   // destination, a non-http URL, and links inside a tilde fence or a comment.
@@ -311,7 +313,7 @@ Deno.test("valid CommonMark link forms are not findings (#376)", () => {
   }
 });
 
-Deno.test("a titled link that is broken is still reported by its target (#376)", () => {
+test("a titled link that is broken is still reported by its target (#376)", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", '# Page\n\n[x](Nope.md "A title")\n');
@@ -323,7 +325,7 @@ Deno.test("a titled link that is broken is still reported by its target (#376)",
   }
 });
 
-Deno.test("#top needs no heading, any other missing fragment still does (#376)", () => {
+test("#top needs no heading, any other missing fragment still does (#376)", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Page.md", "# Page\n\n[a](#top) [b](#nope)\n");
@@ -334,7 +336,7 @@ Deno.test("#top needs no heading, any other missing fragment still does (#376)",
   }
 });
 
-Deno.test("a site-root-relative link is checked against its route (#376)", () => {
+test("a site-root-relative link is checked against its route (#376)", () => {
   const root = tempRoot();
   try {
     write(root, "wiki/Home.md", "# Home\n\n## Bio\n");

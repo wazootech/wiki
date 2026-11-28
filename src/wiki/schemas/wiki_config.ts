@@ -30,6 +30,7 @@
  *   same fallback text; only the intermediate rendering differs.
  */
 
+import * as sys from "../sys.ts";
 import {
   basename,
   dirname,
@@ -745,7 +746,7 @@ const configSpec: ModelSpec = {
     ["fmt", fmtField],
     ["sparql_service", { model: () => sparqlServiceSpec }],
     ["config_root", {
-      factory: () => Deno.cwd(),
+      factory: () => sys.cwd(),
       before: (value) => describeText(value),
     }],
   ],

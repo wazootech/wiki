@@ -1,3 +1,4 @@
+import { test } from "node:test";
 import { assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 import { Config } from "../src/wiki/config.ts";
@@ -8,7 +9,7 @@ const CONFIG_PATH = fromFileUrl(
   new URL("./fixtures/micro/wiki.yml", import.meta.url),
 );
 
-Deno.test("configured RDF/XML input is ingested and queryable", async () => {
+test("configured RDF/XML input is ingested and queryable", async () => {
   const config = Config.load(CONFIG_PATH);
   const graph = await loadGraph(config, {
     infer: false,

@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { extname } from "@std/path";
 import {
   LinkIndex,
@@ -399,7 +400,7 @@ export function applyBrokenLinkFixes(
       );
       content = content.slice(0, start) + replacement + content.slice(end);
     }
-    if (!dryRun) Deno.writeTextFileSync(path, content);
+    if (!dryRun) sys.writeTextFileSync(path, content);
     changed.push(path);
   }
   return changed;

@@ -20,6 +20,7 @@
  * `metadata.views` explicitly.
  */
 
+import * as sys from "../sys.ts";
 import { dirname, join, resolve } from "@std/path";
 import { buildAssetManifest } from "../assets.ts";
 import type { Config } from "../config.ts";
@@ -753,7 +754,7 @@ function outputSubdirectory(outputDir: string, baseUrl: string): string {
 }
 
 function readTemplate(path: string): string {
-  return Deno.readTextFileSync(path).replace(/^\uFEFF/, "");
+  return sys.readTextFileSync(path).replace(/^\uFEFF/, "");
 }
 
 /**
@@ -807,9 +808,9 @@ export async function buildThemedSite(
   const highlight = theme.metadata?.highlight;
 
   if (pathExists(resolvedOutputDir)) {
-    Deno.removeSync(resolvedOutputDir, { recursive: true });
+    sys.removeSync(resolvedOutputDir, { recursive: true });
   }
-  Deno.mkdirSync(wikiOutput, { recursive: true });
+  sys.mkdirSync(wikiOutput, { recursive: true });
 
   const pageContext = (page: VirtualPage | null): ThemePageContext => ({
     page,
@@ -836,7 +837,7 @@ export async function buildThemedSite(
     }),
     null,
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wikiOutput, "index.html"),
     substitute(defaultLayout, indexTokens),
   );
@@ -870,15 +871,15 @@ export async function buildThemedSite(
       page,
     );
     const outputPath = pageOutputPath(wikiOutput, page.file_slug, urlStyle);
-    Deno.mkdirSync(dirname(outputPath), { recursive: true });
-    Deno.writeTextFileSync(outputPath, substitute(selectedLayout, tokens));
+    sys.mkdirSync(dirname(outputPath), { recursive: true });
+    sys.writeTextFileSync(outputPath, substitute(selectedLayout, tokens));
     written += 1;
   }
 
   for (const entry of buildAssetManifest(config, wikiOutput, baseUrl)) {
-    Deno.mkdirSync(dirname(entry.output_path), { recursive: true });
+    sys.mkdirSync(dirname(entry.output_path), { recursive: true });
     if (entry.source !== null) {
-      Deno.copyFileSync(entry.source, entry.output_path);
+      sys.copyFileSync(entry.source, entry.output_path);
     }
   }
   console.log(`Built ${written} pages to ${resolvedOutputDir}`);

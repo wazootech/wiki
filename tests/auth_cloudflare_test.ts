@@ -1,3 +1,5 @@
+import { listen } from "../src/wiki/site/listen.ts";
+import { test } from "node:test";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createCloudflareAccessProvider } from "../src/wiki/auth/cloudflare.ts";
 import type { AccessJwk } from "../src/wiki/auth/cloudflare_jwks.ts";
@@ -108,28 +110,18 @@ async function startJwksServer(...keys: AccessJwk[]): Promise<TestServer> {
 
 async function serveKeys(keys: AccessJwk[]): Promise<TestServer> {
   let fetches = 0;
-  const abort = new AbortController();
-  let resolveUrl: (url: string) => void = () => {};
-  const ready = new Promise<string>((resolve) => {
-    resolveUrl = resolve;
-  });
-  const server = Deno.serve({
-    hostname: "127.0.0.1",
-    port: 0,
-    signal: abort.signal,
-    onListen: ({ port }) => resolveUrl(`http://127.0.0.1:${port}/certs`),
-  }, () => {
-    fetches += 1;
-    return Response.json({ keys });
-  });
-  const jwksUrl = await ready;
-  return {
-    jwksUrl,
-    fetches: () => fetches,
-    async close() {
-      abort.abort();
-      await server.finished;
+  const { server, address } = await listen(
+    () => {
+      fetches += 1;
+      return Promise.resolve(Response.json({ keys }));
     },
+    "127.0.0.1",
+    0,
+  );
+  return {
+    jwksUrl: `http://127.0.0.1:${address.port}/certs`,
+    fetches: () => fetches,
+    close: () => server.shutdown(),
   };
 }
 
@@ -144,7 +136,7 @@ async function identityFor(
   return await provider.identity(request, URL_OBJECT, CONTEXT);
 }
 
-Deno.test("cloudflare-access accepts a valid assertion", async () => {
+test("cloudflare-access accepts a valid assertion", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
@@ -159,7 +151,7 @@ Deno.test("cloudflare-access accepts a valid assertion", async () => {
   }
 });
 
-Deno.test("cloudflare-access rejects a wrong audience", async () => {
+test("cloudflare-access rejects a wrong audience", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
@@ -174,7 +166,7 @@ Deno.test("cloudflare-access rejects a wrong audience", async () => {
   }
 });
 
-Deno.test("cloudflare-access has no local endpoints and a plain challenge", async () => {
+test("cloudflare-access has no local endpoints and a plain challenge", async () => {
   const provider = await createCloudflareAccessProvider(
     CONFIG,
     "http://127.0.0.1:1/certs",
@@ -198,7 +190,7 @@ Deno.test("cloudflare-access has no local endpoints and a plain challenge", asyn
   assertStringIncludes(await response.text(), "Cloudflare Access");
 });
 
-Deno.test("cloudflare-access checks issuer, expiry, and not-before", async () => {
+test("cloudflare-access checks issuer, expiry, and not-before", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   const now = Math.floor(Date.now() / 1000);
@@ -226,7 +218,7 @@ Deno.test("cloudflare-access checks issuer, expiry, and not-before", async () =>
   }
 });
 
-Deno.test("cloudflare-access identifies a service token", async () => {
+test("cloudflare-access identifies a service token", async () => {
   const keys = await generateKeys();
   const server = await startJwksServer(await jwkFor(keys.publicKey));
   try {
@@ -242,7 +234,7 @@ Deno.test("cloudflare-access identifies a service token", async () => {
   }
 });
 
-Deno.test("cloudflare-access refreshes once for a rotated key", async () => {
+test("cloudflare-access refreshes once for a rotated key", async () => {
   const first = await generateKeys();
   const second = await generateKeys();
   const published = [await jwkFor(first.publicKey, "first")];

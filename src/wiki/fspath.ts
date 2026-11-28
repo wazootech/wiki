@@ -1,5 +1,5 @@
+import * as sys from "./sys.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { walkSync } from "@std/fs";
 import {
   basename,
   isAbsolute,
@@ -71,7 +71,7 @@ export function pathExists(path: string): boolean {
   if (staged !== undefined) return staged !== null;
   if (stagedUnder(path)) return true;
   try {
-    Deno.lstatSync(path);
+    sys.lstatSync(path);
     return true;
   } catch {
     return false;
@@ -82,7 +82,7 @@ export function isFile(path: string): boolean {
   const staged = stagedEntry(path);
   if (staged !== undefined) return staged !== null;
   try {
-    return Deno.statSync(path).isFile;
+    return sys.statSync(path).isFile;
   } catch {
     return false;
   }
@@ -92,7 +92,7 @@ export function isDirectory(path: string): boolean {
   if (stagedEntry(path) !== undefined) return false;
   if (stagedUnder(path)) return true;
   try {
-    return Deno.statSync(path).isDirectory;
+    return sys.statSync(path).isDirectory;
   } catch {
     return false;
   }
@@ -101,7 +101,7 @@ export function isDirectory(path: string): boolean {
 export function isSymlink(path: string): boolean {
   if (stagedEntry(path) !== undefined) return false;
   try {
-    return Deno.lstatSync(path).isSymlink;
+    return sys.lstatSync(path).isSymlink;
   } catch {
     return false;
   }
@@ -110,16 +110,16 @@ export function isSymlink(path: string): boolean {
 export function readText(path: string): string {
   const staged = stagedEntry(path);
   if (staged === null) {
-    throw new Deno.errors.NotFound(`No such file (staged as deleted): ${path}`);
+    throw new sys.errors.NotFound(`No such file (staged as deleted): ${path}`);
   }
-  const text = staged ?? Deno.readTextFileSync(path);
+  const text = staged ?? sys.readTextFileSync(path);
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 function resolveForContainment(path: string): string {
   const absolute = resolve(path);
   try {
-    return Deno.realPathSync(absolute);
+    return sys.realPathSync(absolute);
   } catch {
     let cursor = absolute;
     const missing: string[] = [];
@@ -128,7 +128,7 @@ function resolveForContainment(path: string): string {
       const parent = resolve(cursor, "..");
       if (parent === cursor) return absolute;
       try {
-        return join(Deno.realPathSync(parent), ...missing);
+        return join(sys.realPathSync(parent), ...missing);
       } catch {
         cursor = parent;
       }
@@ -165,13 +165,13 @@ export function walkTree(root: string): string[] {
   const paths: string[] = [];
   let onDisk = true;
   try {
-    Deno.statSync(root);
+    sys.statSync(root);
   } catch {
     // A directory that exists only in the overlay has nothing on disk to walk.
     onDisk = false;
   }
   if (onDisk) {
-    for (const entry of walkSync(root, { includeSymlinks: false })) {
+    for (const entry of sys.walkSync(root)) {
       // `walkSync` yields the root itself first; callers want descendants only.
       if (normalize(entry.path) === rootPath) continue;
       if (!entry.isFile && !entry.isDirectory) continue;
@@ -219,7 +219,7 @@ export function fileStat(path: string): { size: number; mtimeMs: number } {
   if (staged !== undefined && staged !== null) {
     return { size: new TextEncoder().encode(staged).byteLength, mtimeMs: 0 };
   }
-  const stat = Deno.statSync(path);
+  const stat = sys.statSync(path);
   return {
     size: stat.size,
     mtimeMs: stat.mtime === null ? 0 : stat.mtime.getTime(),

@@ -36,6 +36,7 @@
  * check` from paying to instantiate ~8 MB of WebAssembly it will never call.
  */
 
+import * as sys from "./sys.ts";
 import { basename } from "@std/path";
 import { errorText, ValueError } from "./errors.ts";
 import { createFromBuffer, type Formatter } from "@dprint/formatter";
@@ -173,12 +174,12 @@ function wasmAdjacentToPackageJson(
     "./plugin.wasm",
     import.meta.resolve(packageJsonSpecifier),
   );
-  return new Uint8Array(Deno.readFileSync(url));
+  return new Uint8Array(sys.readFileSync(url));
 }
 
 /** `@dprint/*` packages export a `getPath()` helper instead. */
 function wasmFromPath(path: string): Uint8Array<ArrayBuffer> {
-  return new Uint8Array(Deno.readFileSync(path));
+  return new Uint8Array(sys.readFileSync(path));
 }
 
 /** The loaded plugin graph. Built once per process, on the first format. */

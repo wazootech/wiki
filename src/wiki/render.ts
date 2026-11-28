@@ -1,3 +1,4 @@
+import * as sys from "./sys.ts";
 import { relativeWithin } from "./fspath.ts";
 import { errorText } from "./errors.ts";
 import { basename } from "@std/path";
@@ -84,7 +85,7 @@ function replaceSparqlTable(
 
 function relativePath(path: string): string {
   try {
-    return (relativeWithin(path, Deno.cwd())).replaceAll("\\", "/");
+    return (relativeWithin(path, sys.cwd())).replaceAll("\\", "/");
   } catch {
     return path;
   }
@@ -151,7 +152,7 @@ export async function renderMarkdownFiles(
     if (!modified || newContent === content) continue;
     staleFiles.push(relativePath(file));
     if (!options.dryRun) {
-      await Deno.writeTextFile(file, newContent);
+      await sys.writeTextFile(file, newContent);
       updatedCount += 1;
     }
   }

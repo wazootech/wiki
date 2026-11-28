@@ -1,16 +1,18 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-render-" });
+  return sys.makeTempDirSync({ prefix: "wiki-render-" });
 }
 
 function write(root: string, relative: string, content: string): string {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
   return path;
 }
 
@@ -29,7 +31,7 @@ function writeWiki(root: string, report: string): string {
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
 const VISIBLE_BLOCK = [
@@ -40,7 +42,7 @@ const VISIBLE_BLOCK = [
   "<!-- sparql:end -->",
 ].join("\n");
 
-Deno.test("render --check finds stale blocks without writing, then render is idempotent", async () => {
+test("render --check finds stale blocks without writing, then render is idempotent", async () => {
   const root = tempRoot();
   try {
     const original = `# Report\n\n${VISIBLE_BLOCK}\n`;
@@ -51,12 +53,12 @@ Deno.test("render --check finds stale blocks without writing, then render is ide
     assertEquals(stale.ok, false);
     assertEquals(stale.updated_count, 0);
     assertEquals(stale.stale_files.length, 1);
-    assertEquals(Deno.readTextFileSync(page), original);
+    assertEquals(sys.readTextFileSync(page), original);
 
     const rendered = await wiki.render(null, { noInference: true });
     assertEquals(rendered.ok, true);
     assertEquals(rendered.updated_count, 1);
-    const updated = Deno.readTextFileSync(page);
+    const updated = sys.readTextFileSync(page);
     assertStringIncludes(updated, "| name |");
     assertStringIncludes(updated, "| Alice |");
 
@@ -68,7 +70,7 @@ Deno.test("render --check finds stale blocks without writing, then render is ide
   }
 });
 
-Deno.test("render check tolerates formatter padding in existing tables", async () => {
+test("render check tolerates formatter padding in existing tables", async () => {
   const root = tempRoot();
   try {
     const report = [
@@ -96,7 +98,7 @@ Deno.test("render check tolerates formatter padding in existing tables", async (
   }
 });
 
-Deno.test("render preserves hidden query comment structure and query fence bytes", async () => {
+test("render preserves hidden query comment structure and query fence bytes", async () => {
   const root = tempRoot();
   try {
     const report = [
@@ -113,7 +115,7 @@ Deno.test("render preserves hidden query comment structure and query fence bytes
     const page = writeWiki(root, report);
     const wiki = Wiki.load(root);
     const result = await wiki.render(null, { noInference: true });
-    const updated = Deno.readTextFileSync(page);
+    const updated = sys.readTextFileSync(page);
 
     assertEquals(result.ok, true);
     assert(updated.includes("<!-- sparql:start\n```sparql\n"));
@@ -124,7 +126,7 @@ Deno.test("render preserves hidden query comment structure and query fence bytes
   }
 });
 
-Deno.test("render retains a bad query and reports it without writing", async () => {
+test("render retains a bad query and reports it without writing", async () => {
   const root = tempRoot();
   try {
     const original =
@@ -136,7 +138,7 @@ Deno.test("render retains a bad query and reports it without writing", async () 
     assertEquals(result.ok, false);
     assertEquals(result.error_count, 1);
     assertEquals(result.updated_count, 0);
-    assertEquals(Deno.readTextFileSync(page), original);
+    assertEquals(sys.readTextFileSync(page), original);
     assertStringIncludes(result.render_errors[0]!, "Report.md");
   } finally {
     cleanup(root);

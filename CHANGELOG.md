@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- The engine reaches the host only through `node:` APIs, in
+  `src/wiki/sys.ts`, as the first step of moving off Deno. Deno remains the
+  runtime and the commands behave as before.
+
 ## 0.7.1 — 2026-11-27
 
 ### Added

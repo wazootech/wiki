@@ -11,6 +11,7 @@
  * Worlds-side harness gets the identical graph. See `bench/shacl/README.md`.
  */
 
+import * as sys from "../../src/wiki/sys.ts";
 import { fromFileUrl, join } from "@std/path";
 import { type CaseName, type CaseResult, CASES } from "./case.ts";
 import {
@@ -110,16 +111,16 @@ function page(index: number): string {
 }
 
 function writeFixture(dir: string, ntriples: string, withWiki: boolean): void {
-  Deno.mkdirSync(dir, { recursive: true });
-  Deno.writeTextFileSync(join(dir, "data.nt"), ntriples);
-  Deno.writeTextFileSync(join(dir, "shapes.ttl"), SHAPES_TURTLE);
+  sys.mkdirSync(dir, { recursive: true });
+  sys.writeTextFileSync(join(dir, "data.nt"), ntriples);
+  sys.writeTextFileSync(join(dir, "shapes.ttl"), SHAPES_TURTLE);
   if (!withWiki) return;
   const wiki = join(dir, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
-  Deno.writeTextFileSync(join(wiki, "data.nt"), ntriples);
-  Deno.writeTextFileSync(join(wiki, "shapes.ttl"), SHAPES_TURTLE);
+  sys.mkdirSync(wiki, { recursive: true });
+  sys.writeTextFileSync(join(wiki, "data.nt"), ntriples);
+  sys.writeTextFileSync(join(wiki, "shapes.ttl"), SHAPES_TURTLE);
   for (let i = 0; i < PAGES; i++) {
-    Deno.writeTextFileSync(join(wiki, `Bench_Person_${i}.md`), page(i));
+    sys.writeTextFileSync(join(wiki, `Bench_Person_${i}.md`), page(i));
   }
 }
 
@@ -138,7 +139,7 @@ async function runOne(
     totalMs: elapsed(),
   });
   try {
-    const output = await new Deno.Command(Deno.execPath(), {
+    const output = await new sys.Command(sys.execPath(), {
       args: ["run", "-A", CASE_SCRIPT, name, dir],
       stdout: "piped",
       stderr: "piped",
@@ -203,7 +204,7 @@ function table(results: readonly SizeResult[]): string {
 }
 
 if (import.meta.main) {
-  const options = parseArgs(Deno.args);
+  const options = parseArgs(sys.args);
 
   if (options.emit !== null) {
     for (const size of options.sizes) {
@@ -212,11 +213,11 @@ if (import.meta.main) {
       writeFixture(dir, fixture.ntriples, false);
       console.log(`${dir}: ${fixture.quads} quads`);
     }
-    Deno.exit(0);
+    sys.exit(0);
   }
 
   const root = options.out ??
-    Deno.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
+    sys.makeTempDirSync({ prefix: "wiki-shacl-bench-" });
   const results: SizeResult[] = [];
   for (const size of options.sizes) {
     const fixture = generateFixture(size);
@@ -243,14 +244,14 @@ if (import.meta.main) {
   }
 
   if (options.json !== null) {
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       options.json,
       JSON.stringify(
         {
           version: 1,
-          deno: Deno.version.deno,
-          os: Deno.build.os,
-          arch: Deno.build.arch,
+          deno: sys.version.deno,
+          os: sys.build.os,
+          arch: sys.build.arch,
           results,
         },
         null,
@@ -259,5 +260,5 @@ if (import.meta.main) {
     );
   }
   console.log(table(results));
-  if (options.out === null) Deno.removeSync(root, { recursive: true });
+  if (options.out === null) sys.removeSync(root, { recursive: true });
 }

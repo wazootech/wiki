@@ -13,6 +13,7 @@
  * `.wiki/`, which an agent may read and link to but never edit.
  */
 
+import * as sys from "./sys.ts";
 import { extname, resolve } from "@std/path";
 import type { Config } from "./config.ts";
 import { splitFrontmatterText } from "./document.ts";
@@ -148,7 +149,7 @@ export async function showDocument(
     version: SHOW_REPORT_VERSION,
     path: relativePath(config, path),
     route,
-    hash: contentHash(Deno.readFileSync(path)),
+    hash: contentHash(sys.readFileSync(path)),
     frontmatter,
     jsonld,
     derived,

@@ -30,6 +30,7 @@
  *   only if a run would write nothing.
  */
 
+import * as sys from "./sys.ts";
 import { basename } from "@std/path";
 import { errorText } from "./errors.ts";
 import type { Config } from "./config.ts";
@@ -122,7 +123,7 @@ export class DocumentBatch {
         if (original !== formatted) {
           staleFiles.push(filePath);
           if (!check) {
-            Deno.writeTextFileSync(filePath, formatted);
+            sys.writeTextFileSync(filePath, formatted);
             formattedCount += 1;
             if (verbose) verboseLines.push(`Formatted ${basename(filePath)}`);
           }

@@ -24,6 +24,7 @@
  * through text-mode stdout, while `console.error` writes `\n`. The migration
  * targets normalised output, not byte parity — see CONTEXT.md.
  */
+import * as sys from "./sys.ts";
 import { pathExists } from "./fspath.ts";
 import { basename } from "@std/path";
 import { errorText, ValueError } from "./errors.ts";
@@ -837,7 +838,7 @@ async function runExportCommand(
 
   if (parsed.output !== null) {
     try {
-      await Deno.writeTextFile(parsed.output, result.output);
+      await sys.writeTextFile(parsed.output, result.output);
     } catch (error) {
       console.error(
         `Error: ${errorText(error)}`,
@@ -977,11 +978,11 @@ async function runQueryCommand(
   let sparqlQuery: string;
   if (parsed.queryArgs.length > 0) {
     sparqlQuery = parsed.queryArgs.join(" ");
-  } else if (Deno.stdin.isTerminal()) {
+  } else if (sys.stdin.isTerminal()) {
     console.error("Error: No query provided.");
     return EXIT_FAILURE;
   } else {
-    sparqlQuery = await new Response(Deno.stdin.readable).text();
+    sparqlQuery = await new Response(sys.stdin.readable).text();
   }
 
   if (parsed.pretty && parsed.output !== null) {
@@ -1027,7 +1028,7 @@ async function runQueryCommand(
       pretty: parsed.pretty,
     });
     if (parsed.output !== null) {
-      await Deno.writeTextFile(parsed.output, result);
+      await sys.writeTextFile(parsed.output, result);
       console.log(`Written results to ${parsed.output}`);
     } else {
       console.log(result);
@@ -1552,11 +1553,11 @@ async function runInitCommand(options: WikiInitOptions): Promise<number> {
     const { Wiki: WikiSession } = await import("./wiki.ts");
     const result = WikiSession.init({
       ...options,
-      cwd: Deno.cwd(),
+      cwd: sys.cwd(),
       prompt_context_wiki: (defaultValue) => {
         let interactive = false;
         try {
-          interactive = Deno.stdin.isTerminal();
+          interactive = sys.stdin.isTerminal();
         } catch {
           interactive = false;
         }
@@ -1762,8 +1763,8 @@ async function runEditCommand(
   let text: string;
   try {
     text = parsed.from === "-"
-      ? await new Response(Deno.stdin.readable).text()
-      : await Deno.readTextFile(parsed.from);
+      ? await new Response(sys.stdin.readable).text()
+      : await sys.readTextFile(parsed.from);
   } catch (error) {
     return usageError(
       `Error: Cannot read edit from '${parsed.from}': ${errorText(error)}`,
@@ -2157,7 +2158,7 @@ async function runPatchCommand(
     );
   }
   const content = parsed.values.get("--content")?.at(-1) ??
-    await new Response(Deno.stdin.readable).text();
+    await new Response(sys.stdin.readable).text();
   const target = heading !== undefined
     ? { heading }
     : parsed.flags.has("--body")
@@ -2907,7 +2908,7 @@ const ROOT_HELP_LINES = [
  * runs.
  */
 export async function main(
-  argv: readonly string[] = Deno.args,
+  argv: readonly string[] = sys.args,
 ): Promise<number> {
   let configPath = ".";
   const wikiInputs: string[] = [];
@@ -2983,5 +2984,5 @@ export async function main(
 }
 
 if (import.meta.main) {
-  Deno.exit(await main());
+  sys.exit(await main());
 }

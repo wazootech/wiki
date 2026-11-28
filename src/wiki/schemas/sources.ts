@@ -6,6 +6,7 @@
  * newline, UTF-8 without a BOM, and field order as declared.
  */
 
+import * as sys from "../sys.ts";
 import { pathExists } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import { type ModelSpec, validateModel } from "./model.ts";
@@ -168,7 +169,7 @@ export function saveLockfile(lockfile: Lockfile, path: string): void {
   const sources: Record<string, unknown> = {};
   for (const [name, entry] of lockfile.sources) sources[name] = entry;
   const payload = { version: lockfile.version, sources };
-  Deno.writeTextFileSync(path, `${JSON.stringify(payload, null, 2)}`);
+  sys.writeTextFileSync(path, `${JSON.stringify(payload, null, 2)}`);
 }
 
 /**

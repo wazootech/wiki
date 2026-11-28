@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { join } from "@std/path";
 import { assert, assertEquals } from "@std/assert";
 import { fromFileUrl } from "@std/path";
@@ -49,7 +51,7 @@ async function runCliIn(
   cwd: string | undefined,
   flags: readonly string[],
 ): Promise<CliResult> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", ...flags, CLI_ENTRY, ...args],
     ...(cwd === undefined ? {} : { cwd }),
     stdout: "piped",
@@ -62,9 +64,8 @@ async function runCliIn(
   };
 }
 
-Deno.test(
+test(
   "--version matches the Python CLI output",
-  { permissions: { run: true } },
   async () => {
     const result = await runCli(["--version"]);
     assertEquals(result.code, EXIT_OK);
@@ -73,9 +74,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "an unrecognised subcommand is a usage error on stderr",
-  { permissions: { run: true } },
   async () => {
     const result = await runCli(["bogus"]);
     assertEquals(result.code, EXIT_USAGE);
@@ -90,9 +90,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "--help prints the full command catalog, and empty argv prints it to stderr",
-  { permissions: { run: true } },
   async () => {
     const help = await runCli(["--help"]);
     assertEquals(help.code, EXIT_OK);
@@ -123,9 +122,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "file command help lists each command's actual options",
-  { permissions: { run: true } },
   async () => {
     const cases = [
       ["check", "--strict", "--verbose"],
@@ -159,14 +157,14 @@ Deno.test(
 
 /** A wiki whose only findings are a broken wikilink and a missing layout. */
 function writeAuditCorpus(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-cli-" });
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wiki, { recursive: true });
+  sys.writeTextFileSync(
     join(root, "wiki.yml"),
     "wiki:\n  input: [wiki]\n",
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wiki, "Page.md"),
     "---\ntype: schema:WebPage\nwazoo:layout: layouts/missing.html\n---\n\nSee [[Missing]].\n",
   );
@@ -175,15 +173,14 @@ function writeAuditCorpus(): string {
 
 function removeCorpus(root: string): void {
   try {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   } catch {
     // Windows keeps a handle open long enough to lose this race occasionally.
   }
 }
 
-Deno.test(
+test(
   "lint reports warnings on stderr and passes without --strict",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeAuditCorpus();
     try {
@@ -208,9 +205,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "lint --strict promotes the warnings and exits 1",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeAuditCorpus();
     try {
@@ -230,9 +226,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "check reports the layout error and exits 1",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeAuditCorpus();
     try {
@@ -256,9 +251,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "graph and graph list help match the Python CLI",
-  { permissions: { run: true } },
   async () => {
     const group = await runCli(["graph", "--help"]);
     assertEquals(group.code, EXIT_OK);
@@ -286,9 +280,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "graph group usage errors identify the correct command context",
-  { permissions: { run: true } },
   async () => {
     const missing = await runCli(["graph"]);
     assertEquals(missing.code, EXIT_USAGE);
@@ -322,9 +315,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "graph list prints the root graph table",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeAuditCorpus();
     try {
@@ -344,18 +336,17 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "build writes a static page and reports generated files",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
-    const root = Deno.makeTempDirSync({ prefix: "wiki-cli-build-" });
+    const root = sys.makeTempDirSync({ prefix: "wiki-cli-build-" });
     const wikiDir = join(root, "wiki");
-    Deno.mkdirSync(wikiDir, { recursive: true });
-    Deno.writeTextFileSync(
+    sys.mkdirSync(wikiDir, { recursive: true });
+    sys.writeTextFileSync(
       join(root, "wiki.yml"),
       "wiki:\n  input: [wiki]\n",
     );
-    Deno.writeTextFileSync(
+    sys.writeTextFileSync(
       join(wikiDir, "Ethan.md"),
       "# Ethan\n\nA valid page.\n",
     );
@@ -375,7 +366,7 @@ Deno.test(
       );
       assertEquals(result.code, EXIT_OK, result.stderr);
       assert(result.stdout.includes("Built 1 pages and 0 assets to published"));
-      const page = Deno.readTextFileSync(
+      const page = sys.readTextFileSync(
         join(root, "published", "wiki", "Ethan", "index.html"),
       );
       assert(page.includes("A valid page."));
@@ -385,9 +376,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "MCP help is available without loading a wiki",
-  { permissions: { run: true } },
   async () => {
     const result = await runCli(["mcp", "--help"]);
     assertEquals(result.code, EXIT_OK);
@@ -395,9 +385,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "serve rejects an invalid URL style as a usage error",
-  { permissions: { run: true } },
   async () => {
     const result = await runCli(["serve", "--site-url-style", "bad"]);
     assertEquals(result.code, EXIT_USAGE);
@@ -405,9 +394,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "a FILE that does not exist is a usage error",
-  { permissions: { run: true, read: true } },
   async () => {
     const result = await runCli(["check", "nope.md"]);
     assertEquals(result.code, EXIT_USAGE);
@@ -430,18 +418,18 @@ Deno.test(
  * link. `standard` link style keeps the expected suggestion text stable.
  */
 function writeLinkCorpus(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-link-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-cli-link-" });
   const wiki = join(root, "wiki");
-  Deno.mkdirSync(wiki, { recursive: true });
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wiki, { recursive: true });
+  sys.writeTextFileSync(
     join(root, "wiki.yml"),
     "wiki:\n  input: [wiki]\nlink:\n  style: standard\n",
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wiki, "Target_Page.md"),
     "---\ntitle: Target Page\n---\n\n# Target Page\n\nContent here.\n",
   );
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     join(wiki, "Source_Page.md"),
     "---\ntitle: Source Page\n---\n\n# Source Page\n\nSee Target Page for details.\n\n" +
       "A [frag](Target_Page.md#targt-page) link.\n",
@@ -458,9 +446,8 @@ async function runLinkIn(
   ]);
 }
 
-Deno.test(
+test(
   "link reports an opportunity on stdout and exits 0",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeLinkCorpus();
     try {
@@ -477,9 +464,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "link --check exits 1 while an opportunity remains, 0 once applied",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeLinkCorpus();
     try {
@@ -492,7 +478,7 @@ Deno.test(
       const applied = await runLinkIn(["--apply"], root);
       assertEquals(applied.code, EXIT_OK);
 
-      const page = Deno.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+      const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
       assert(page.includes("See [Target Page](Target_Page.md) for details."));
 
       const passing = await runLinkIn(["--check"], root);
@@ -503,19 +489,18 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "link --dry-run previews the apply without writing the file",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeLinkCorpus();
     try {
-      const before = Deno.readTextFileSync(
+      const before = sys.readTextFileSync(
         join(root, "wiki", "Source_Page.md"),
       );
       const result = await runLinkIn(["--apply", "--dry-run"], root);
       assertEquals(result.code, EXIT_OK);
       assertEquals(
-        Deno.readTextFileSync(join(root, "wiki", "Source_Page.md")),
+        sys.readTextFileSync(join(root, "wiki", "Source_Page.md")),
         before,
       );
     } finally {
@@ -524,9 +509,8 @@ Deno.test(
   },
 );
 
-Deno.test(
+test(
   "link --fix-broken repairs an unambiguous fragment and writes the file",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeLinkCorpus();
     try {
@@ -538,7 +522,7 @@ Deno.test(
           "Target_Page.md#targt-page -> Target_Page.md#target-page",
         ),
       );
-      const page = Deno.readTextFileSync(join(root, "wiki", "Source_Page.md"));
+      const page = sys.readTextFileSync(join(root, "wiki", "Source_Page.md"));
       assert(page.includes("[frag](Target_Page.md#target-page)"));
     } finally {
       removeCorpus(root);
@@ -552,14 +536,14 @@ Deno.test(
 
 /** Recursively copy a directory tree (fixture -> temp working copy). */
 function copyDirSync(from: string, to: string): void {
-  Deno.mkdirSync(to, { recursive: true });
-  for (const entry of Deno.readDirSync(from)) {
+  sys.mkdirSync(to, { recursive: true });
+  for (const entry of sys.readDirSync(from)) {
     const source = join(from, entry.name);
     const target = join(to, entry.name);
     if (entry.isDirectory) {
       copyDirSync(source, target);
     } else if (entry.isFile) {
-      Deno.copyFileSync(source, target);
+      sys.copyFileSync(source, target);
     }
   }
 }
@@ -569,15 +553,14 @@ function copyDirSync(from: string, to: string): void {
  * deliberately stale so `render --check` fails and `render` has work to do.
  */
 function writeRenderCorpus(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-cli-render-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-cli-render-" });
   const fixture = fromFileUrl(new URL("./fixtures/micro", import.meta.url));
   copyDirSync(fixture, root);
   return root;
 }
 
-Deno.test(
+test(
   "render --check reports stale blocks on stderr and exits 1, then render writes them",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeRenderCorpus();
     try {
@@ -599,7 +582,7 @@ Deno.test(
       assertEquals(rendered.stderr, "");
       assert(rendered.stdout.includes("Rendered SPARQL: Updated 2 files."));
 
-      const alice = Deno.readTextFileSync(join(root, "wiki", "Alice.md"));
+      const alice = sys.readTextFileSync(join(root, "wiki", "Alice.md"));
       assert(alice.includes("<!-- sparql:end -->"));
 
       const fresh = await runCliIn(
@@ -614,7 +597,7 @@ Deno.test(
   },
 );
 
-Deno.test("wiki file groups the single-file verbs", async () => {
+test("wiki file groups the single-file verbs", async () => {
   const help = await runCli(["file", "--help"]);
   assertEquals(help.code, EXIT_OK);
   assert(

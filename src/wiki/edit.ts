@@ -26,6 +26,7 @@
  * (conflicts, rejections); a malformed edit throws {@link EditUsageError}.
  */
 
+import * as sys from "./sys.ts";
 import { basename, dirname, extname, join, resolve } from "@std/path";
 import { runCheck, runLint } from "./audit.ts";
 import { DocumentBatch } from "./batch.ts";
@@ -753,9 +754,9 @@ function within(path: string, base: string): boolean {
 
 function readBytes(path: string): Uint8Array | null {
   try {
-    return Deno.readFileSync(path);
+    return sys.readFileSync(path);
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return null;
+    if (sys.isNotFound(error)) return null;
     throw error;
   }
 }
@@ -1160,10 +1161,10 @@ export interface CommitIo {
 }
 
 const DENO_IO: CommitIo = {
-  writeFile: (path, data) => Deno.writeFileSync(path, data),
-  rename: (from, to) => Deno.renameSync(from, to),
-  remove: (path) => Deno.removeSync(path),
-  mkdir: (path) => Deno.mkdirSync(path, { recursive: true }),
+  writeFile: (path, data) => sys.writeFileSync(path, data),
+  rename: (from, to) => sys.renameSync(from, to),
+  remove: (path) => sys.removeSync(path),
+  mkdir: (path) => sys.mkdirSync(path, { recursive: true }),
 };
 
 /**
@@ -1211,7 +1212,7 @@ export function commitFiles(
   } catch (error) {
     for (const temp of temps.values()) {
       try {
-        Deno.removeSync(temp);
+        sys.removeSync(temp);
       } catch {
         // A temp that was never written has nothing to clean up.
       }
@@ -1228,7 +1229,7 @@ function missingAncestors(dir: string): string[] {
   let cursor = resolve(dir);
   while (true) {
     try {
-      Deno.statSync(cursor);
+      sys.statSync(cursor);
       break;
     } catch {
       missing.unshift(cursor);
@@ -1248,7 +1249,7 @@ function removeEmptyDirs(dirs: readonly string[]): void {
   const deepestFirst = [...dirs].sort((a, b) => b.length - a.length);
   for (const dir of deepestFirst) {
     try {
-      Deno.removeSync(dir);
+      sys.removeSync(dir);
     } catch {
       // Not empty, or already gone: either way it is not ours to remove.
     }
@@ -1258,12 +1259,12 @@ function removeEmptyDirs(dirs: readonly string[]): void {
 /** Put one file back exactly as it was before the edit. */
 function restore(plan: FilePlan): void {
   if (plan.before === null) {
-    Deno.removeSync(plan.path);
+    sys.removeSync(plan.path);
     return;
   }
   const temp = `${plan.path}.wiki-edit-restore.tmp`;
-  Deno.writeFileSync(temp, plan.before);
-  Deno.renameSync(temp, plan.path);
+  sys.writeFileSync(temp, plan.before);
+  sys.renameSync(temp, plan.path);
 }
 
 export type { FilePlan };

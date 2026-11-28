@@ -22,6 +22,7 @@
  * missing warns and is skipped; see `sources.ts`.
  */
 
+import * as sys from "./sys.ts";
 import { basename, extname, isAbsolute, join } from "@std/path";
 import { errorText } from "./errors.ts";
 import { isFile, pathExists, walkTree } from "./fspath.ts";
@@ -197,7 +198,7 @@ export class Wiki {
   }
 
   static init(options: WikiInitOptions = {}): ScaffoldResult {
-    const cwd = options.cwd ?? Deno.cwd();
+    const cwd = options.cwd ?? sys.cwd();
     if (options.template !== undefined && options.template !== null) {
       return fetchTemplate(cwd, options.template);
     }
@@ -497,9 +498,9 @@ export class Wiki {
     const urlStyle = (options.urlStyle ?? this.config.site.url_style) as
       | "dir"
       | "file";
-    const tempDir = await Deno.makeTempDir({ prefix: "wiki-serve-" });
+    const tempDir = await sys.makeTempDir({ prefix: "wiki-serve-" });
     const outputDir = tempDir;
-    let server: ReturnType<typeof startStaticSiteServer> | null = null;
+    let server: Awaited<ReturnType<typeof startStaticSiteServer>> | null = null;
     let auth: Awaited<ReturnType<typeof createAuthHandler>> | null = null;
     let stopWatching: (() => void) | null = null;
     try {
@@ -522,7 +523,7 @@ export class Wiki {
         path: this.config.sparql_service.path,
         baseUrl,
       });
-      server = startStaticSiteServer({
+      server = await startStaticSiteServer({
         siteDir: siteDir,
         host: options.host ?? "127.0.0.1",
         port: options.port ?? 8080,
@@ -584,17 +585,17 @@ export class Wiki {
       const onInterrupt = () => {
         void server?.close();
       };
-      Deno.addSignalListener("SIGINT", onInterrupt);
+      sys.addSignalListener("SIGINT", onInterrupt);
       try {
         await server.server.finished;
       } finally {
-        Deno.removeSignalListener("SIGINT", onInterrupt);
+        sys.removeSignalListener("SIGINT", onInterrupt);
       }
     } finally {
       stopWatching?.();
       auth?.close();
       await server?.close();
-      await Deno.remove(tempDir, { recursive: true });
+      await sys.remove(tempDir, { recursive: true });
     }
   }
 
@@ -639,7 +640,7 @@ export class Wiki {
     }
     return [...files.values()].sort((a, b) => a.localeCompare(b))
       .map((path) => {
-        const stat = Deno.statSync(path);
+        const stat = sys.statSync(path);
         return `${path}:${stat.mtime?.getTime() ?? 0}:${stat.size}`;
       }).join("\n");
   }

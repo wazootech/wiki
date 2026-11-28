@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { dirname, join } from "@std/path";
 import {
   assert,
@@ -36,18 +38,18 @@ import {
 import { Wiki } from "../src/wiki/mod.ts";
 
 function tempRoot(): string {
-  return Deno.makeTempDirSync({ prefix: "wiki-theme-" });
+  return sys.makeTempDirSync({ prefix: "wiki-theme-" });
 }
 
 function write(root: string, relative: string, content: string): string {
   const path = join(root, ...relative.split("/"));
-  Deno.mkdirSync(dirname(path), { recursive: true });
-  Deno.writeTextFileSync(path, content);
+  sys.mkdirSync(dirname(path), { recursive: true });
+  sys.writeTextFileSync(path, content);
   return path;
 }
 
 function cleanup(root: string): void {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
 function fixtureConfig(root: string): Config {
@@ -64,7 +66,7 @@ function fixtureConfig(root: string): Config {
   });
 }
 
-Deno.test("theme entrypoint assembles a site from the published surface", () => {
+test("theme entrypoint assembles a site from the published surface", () => {
   const root = tempRoot();
   try {
     const config = fixtureConfig(root);
@@ -81,7 +83,7 @@ Deno.test("theme entrypoint assembles a site from the published surface", () => 
   }
 });
 
-Deno.test("theme entrypoint renders markdown, titles, and layouts", () => {
+test("theme entrypoint renders markdown, titles, and layouts", () => {
   const root = tempRoot();
   try {
     const config = fixtureConfig(root);
@@ -113,7 +115,7 @@ Deno.test("theme entrypoint renders markdown, titles, and layouts", () => {
   }
 });
 
-Deno.test("theme entrypoint lets a theme supply its own layout tokens", () => {
+test("theme entrypoint lets a theme supply its own layout tokens", () => {
   const root = tempRoot();
   try {
     const template = write(
@@ -170,7 +172,7 @@ Deno.test("theme entrypoint lets a theme supply its own layout tokens", () => {
   }
 });
 
-Deno.test("theme entrypoint forwards extra layout tokens to pages", () => {
+test("theme entrypoint forwards extra layout tokens to pages", () => {
   const root = tempRoot();
   try {
     const config = fixtureConfig(root);
@@ -201,7 +203,7 @@ Deno.test("theme entrypoint forwards extra layout tokens to pages", () => {
   }
 });
 
-Deno.test("theme entrypoint exposes paths, assets, and link helpers", () => {
+test("theme entrypoint exposes paths, assets, and link helpers", () => {
   const root = tempRoot();
   try {
     const config = fixtureConfig(root);
@@ -232,7 +234,7 @@ Deno.test("theme entrypoint exposes paths, assets, and link helpers", () => {
   }
 });
 
-Deno.test("theme entrypoint drives a full static build", async () => {
+test("theme entrypoint drives a full static build", async () => {
   const root = tempRoot();
   try {
     write(
@@ -263,7 +265,7 @@ Deno.test("theme entrypoint drives a full static build", async () => {
     assertEquals(result.asset_count, 1);
     assert(pathExists(join(output, "wiki", "index.html")));
     assertStringIncludes(
-      Deno.readTextFileSync(
+      sys.readTextFileSync(
         join(output, "wiki", "People", "Ethan", "index.html"),
       ),
       "Ethan",
@@ -274,7 +276,7 @@ Deno.test("theme entrypoint drives a full static build", async () => {
   }
 });
 
-Deno.test("theme entrypoint exports frontmatter", async () => {
+test("theme entrypoint exports frontmatter", async () => {
   const root = tempRoot();
   try {
     const config = fixtureConfig(root);
@@ -285,7 +287,7 @@ Deno.test("theme entrypoint exports frontmatter", async () => {
   }
 });
 
-Deno.test("buildThemedSite owns the flow while the theme owns the vocabulary", async () => {
+test("buildThemedSite owns the flow while the theme owns the vocabulary", async () => {
   const root = tempRoot();
   try {
     write(
@@ -350,7 +352,7 @@ Deno.test("buildThemedSite owns the flow while the theme owns the vocabulary", a
     });
 
     assertEquals(written, 4);
-    const indexHtml = Deno.readTextFileSync(
+    const indexHtml = sys.readTextFileSync(
       join(output, "manual", "index.html"),
     );
     assertStringIncludes(indexHtml, 'data-kind="index"');
@@ -358,7 +360,7 @@ Deno.test("buildThemedSite owns the flow while the theme owns the vocabulary", a
     assertStringIncludes(indexHtml, "<title>All Pages - Custom</title>");
     assert(!indexHtml.includes('href="/manual/Legacy/"'));
 
-    const homeHtml = Deno.readTextFileSync(
+    const homeHtml = sys.readTextFileSync(
       join(output, "manual", "Home", "index.html"),
     );
     assertStringIncludes(homeHtml, 'data-kind="article"');
@@ -374,12 +376,12 @@ Deno.test("buildThemedSite owns the flow while the theme owns the vocabulary", a
     // Every shell token the layout names is filled.
     assert(!homeHtml.includes("%wiki."));
 
-    const legacyHtml = Deno.readTextFileSync(
+    const legacyHtml = sys.readTextFileSync(
       join(output, "manual", "Legacy", "index.html"),
     );
     assertStringIncludes(legacyHtml, "url=/manual/Home/");
     assertEquals(
-      Deno.readTextFileSync(join(output, "manual", "assets", "site.css")),
+      sys.readTextFileSync(join(output, "manual", "assets", "site.css")),
       "body { color: navy; }\n",
     );
 

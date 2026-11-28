@@ -7,6 +7,8 @@
  * and `refs` agrees with the link index about who links where.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { fromFileUrl, join } from "@std/path";
 import { assert, assertEquals, assertThrows } from "@std/assert";
 
@@ -57,9 +59,9 @@ schema:headline: Gamma
 `;
 
 function writeWiki(): string {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-show-" });
-  Deno.mkdirSync(join(root, "wiki"));
-  Deno.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
+  const root = sys.makeTempDirSync({ prefix: "wiki-show-" });
+  sys.mkdirSync(join(root, "wiki"));
+  sys.writeTextFileSync(join(root, "wiki.yml"), "wiki:\n  input: [wiki]\n");
   for (
     const [name, content] of Object.entries({
       "Alpha.md": ALPHA,
@@ -67,12 +69,12 @@ function writeWiki(): string {
       "Gamma.md": GAMMA,
     })
   ) {
-    Deno.writeTextFileSync(join(root, "wiki", name), content);
+    sys.writeTextFileSync(join(root, "wiki", name), content);
   }
   return root;
 }
 
-Deno.test("show reports frontmatter, JSON-LD, outline, links, and hash", async () => {
+test("show reports frontmatter, JSON-LD, outline, links, and hash", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(join(root, "wiki.yml"));
@@ -82,7 +84,7 @@ Deno.test("show reports frontmatter, JSON-LD, outline, links, and hash", async (
     assertEquals(report.route, "Alpha");
     assertEquals(
       report.hash,
-      contentHash(Deno.readFileSync(join(root, "wiki", "Alpha.md"))),
+      contentHash(sys.readFileSync(join(root, "wiki", "Alpha.md"))),
     );
     assertEquals(report.frontmatter?.["schema:headline"], "Alpha");
     assertEquals(report.frontmatter?.["schema:keywords"], ["one", "two"]);
@@ -107,11 +109,11 @@ Deno.test("show reports frontmatter, JSON-LD, outline, links, and hash", async (
       { route: "Gamma", path: "wiki/Gamma.md" },
     ]);
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("show's hash is accepted as an edit's expect", async () => {
+test("show's hash is accepted as an edit's expect", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(join(root, "wiki.yml"));
@@ -126,11 +128,11 @@ Deno.test("show's hash is accepted as an edit's expect", async () => {
     });
     assertEquals(report.status, "dry_run");
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("refs lists inbound and outbound pages", () => {
+test("refs lists inbound and outbound pages", () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(join(root, "wiki.yml"));
@@ -142,11 +144,11 @@ Deno.test("refs lists inbound and outbound pages", () => {
     assertEquals(gamma.inbound, [{ route: "Alpha", path: "wiki/Alpha.md" }]);
     assertEquals(gamma.outbound, []);
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
-Deno.test("show and refs reject paths that are not wiki documents", async () => {
+test("show and refs reject paths that are not wiki documents", async () => {
   const root = writeWiki();
   try {
     const wiki = Wiki.load(join(root, "wiki.yml"));
@@ -160,7 +162,7 @@ Deno.test("show and refs reject paths that are not wiki documents", async () => 
     }
     assert(threw, "show rejects a missing page with EditUsageError");
   } finally {
-    Deno.removeSync(root, { recursive: true });
+    sys.removeSync(root, { recursive: true });
   }
 });
 
@@ -168,7 +170,7 @@ async function runCli(
   root: string,
   args: readonly string[],
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const { code, stdout, stderr } = await new Deno.Command(Deno.execPath(), {
+  const { code, stdout, stderr } = await new sys.Command(sys.execPath(), {
     args: ["run", "--quiet", "--allow-all", CLI_ENTRY, ...args],
     cwd: root,
     stdout: "piped",
@@ -181,9 +183,8 @@ async function runCli(
   };
 }
 
-Deno.test(
+test(
   "wiki file show and wiki file refs: output formats and exit codes",
-  { permissions: { run: true, read: true, write: true } },
   async () => {
     const root = writeWiki();
     try {
@@ -257,7 +258,7 @@ Deno.test(
       assertEquals(help.code, EXIT_OK);
       assert(help.stdout.includes("Usage: wiki file show"));
     } finally {
-      Deno.removeSync(root, { recursive: true });
+      sys.removeSync(root, { recursive: true });
     }
   },
 );

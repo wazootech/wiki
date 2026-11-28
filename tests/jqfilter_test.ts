@@ -1,3 +1,4 @@
+import { test } from "node:test";
 import {
   assert,
   assertEquals,
@@ -6,7 +7,7 @@ import {
 } from "@std/assert";
 import { resolvePath } from "../src/wiki/jqfilter.ts";
 
-Deno.test("resolvePath handles nested keys, wildcards, and indexes", () => {
+test("resolvePath handles nested keys, wildcards, and indexes", () => {
   const data = {
     users: [
       { name: "Ada", scores: [7, 9] },
@@ -18,7 +19,7 @@ Deno.test("resolvePath handles nested keys, wildcards, and indexes", () => {
   assertEquals(resolvePath(data, "users[].scores[]"), [7, 9, 8]);
 });
 
-Deno.test("resolvePath supports Unicode keys and absent paths", () => {
+test("resolvePath supports Unicode keys and absent paths", () => {
   assertEquals(resolvePath({ "naïve": { "名字": "Ada" } }, "naïve.名字"), [
     "Ada",
   ]);
@@ -29,7 +30,7 @@ Deno.test("resolvePath supports Unicode keys and absent paths", () => {
   assertEquals(resolvePath({ value: 1 }, ""), [{ value: 1 }]);
 });
 
-Deno.test("resolvePath rejects malformed tokens", () => {
+test("resolvePath rejects malformed tokens", () => {
   const error = assertThrows(() =>
     resolvePath({ items: [] }, "items[not-an-index]")
   );

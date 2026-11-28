@@ -1,18 +1,20 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { basename } from "@std/path";
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { Wiki } from "../src/wiki/wiki.ts";
 
 function createWiki() {
-  const root = Deno.makeTempDirSync({ prefix: "wiki-link-engine-" });
+  const root = sys.makeTempDirSync({ prefix: "wiki-link-engine-" });
   const wikiDir = `${root}/wiki`;
-  Deno.mkdirSync(wikiDir);
-  Deno.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
-  Deno.writeTextFileSync(
+  sys.mkdirSync(wikiDir);
+  sys.writeTextFileSync(`${root}/wiki.yml`, "wiki:\n  input: [wiki]\n");
+  sys.writeTextFileSync(
     `${wikiDir}/Ethan_Davidson.md`,
     "---\nname: Ethan Davidson\n---\n# Ethan Davidson\n\n## Early Life\n",
   );
   const source = `${wikiDir}/Notes.md`;
-  Deno.writeTextFileSync(
+  sys.writeTextFileSync(
     source,
     "---\nname: Notes\nreference: '[['\n---\n# Notes\n\nEthan Davidson shared these notes.\n",
   );
@@ -20,24 +22,24 @@ function createWiki() {
 }
 
 function cleanup(root: string) {
-  Deno.removeSync(root, { recursive: true });
+  sys.removeSync(root, { recursive: true });
 }
 
-Deno.test("Wiki.link reports unique opportunities without editing by default", () => {
+test("Wiki.link reports unique opportunities without editing by default", () => {
   const { root, source, wiki } = createWiki();
   try {
-    const original = Deno.readTextFileSync(source);
+    const original = sys.readTextFileSync(source);
     const report = wiki.link();
     assertEquals(report.opportunities, 1);
     assertEquals(report.ok, true);
     assertStringIncludes(report.lines[0]!, "Ethan Davidson");
-    assertEquals(Deno.readTextFileSync(source), original);
+    assertEquals(sys.readTextFileSync(source), original);
   } finally {
     cleanup(root);
   }
 });
 
-Deno.test("Wiki.link --apply inserts a page link and check accepts the result", () => {
+test("Wiki.link --apply inserts a page link and check accepts the result", () => {
   const { root, source, wiki } = createWiki();
   try {
     const report = wiki.link(null, { apply: true, verbose: true });
@@ -46,7 +48,7 @@ Deno.test("Wiki.link --apply inserts a page link and check accepts the result", 
       "Notes.md",
     ]);
     assertStringIncludes(
-      Deno.readTextFileSync(source),
+      sys.readTextFileSync(source),
       "[Ethan Davidson](Ethan_Davidson.md)",
     );
     assertEquals(wiki.link(null, { check: true }).ok, true);
@@ -55,14 +57,14 @@ Deno.test("Wiki.link --apply inserts a page link and check accepts the result", 
   }
 });
 
-Deno.test("Wiki.link repairs unambiguous targets in place and honors dry-run", () => {
+test("Wiki.link repairs unambiguous targets in place and honors dry-run", () => {
   const { root, source, wiki } = createWiki();
   try {
-    const original = Deno.readTextFileSync(source).replace(
+    const original = sys.readTextFileSync(source).replace(
       "Ethan Davidson shared these notes.",
       "[[Ethan_Davison|Biography]] and [Early life](Ethan_Davidson.md#Eary-life).",
     );
-    Deno.writeTextFileSync(source, original);
+    sys.writeTextFileSync(source, original);
 
     const preview = wiki.link(null, {
       fixBroken: true,
@@ -73,12 +75,12 @@ Deno.test("Wiki.link repairs unambiguous targets in place and honors dry-run", (
     assertEquals(preview.changed_paths.map((path) => basename(path)), [
       "Notes.md",
     ]);
-    assertEquals(Deno.readTextFileSync(source), original);
+    assertEquals(sys.readTextFileSync(source), original);
 
     const applied = wiki.link(null, { fixBroken: true, verbose: true });
     assertEquals(applied.fixes, 2);
     assertStringIncludes(
-      Deno.readTextFileSync(source),
+      sys.readTextFileSync(source),
       "[[Ethan_Davidson|Biography]] and [Early life](Ethan_Davidson.md#early-life).",
     );
     assertEquals(wiki.link(null, { fixBroken: true, check: true }).ok, true);

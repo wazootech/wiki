@@ -8,6 +8,8 @@
  * filesystem cases only reach indirectly.
  */
 
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { join, resolve } from "@std/path";
 import { ValueError } from "../src/wiki/errors.ts";
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
@@ -30,18 +32,18 @@ const MINIMAL_WIKI_YAML = "wiki:\n  input: [wiki]\n";
 
 /** Run `body` with a fresh temp directory, cleaning up afterwards. */
 function withTempDir(body: (root: string) => void): void {
-  const dir = Deno.makeTempDirSync({ prefix: "wiki-config-" });
+  const dir = sys.makeTempDirSync({ prefix: "wiki-config-" });
   try {
     body(dir);
   } finally {
-    Deno.removeSync(dir, { recursive: true });
+    sys.removeSync(dir, { recursive: true });
   }
 }
 
 /** Write `content` to `root/name` and hand back the file path. */
 function writeFile(root: string, name: string, content: string): string {
   const file = join(root, name);
-  Deno.writeTextFileSync(file, content);
+  sys.writeTextFileSync(file, content);
   return file;
 }
 
@@ -50,7 +52,7 @@ function strings(paths: readonly string[]): string[] {
   return paths.map((path) => path);
 }
 
-Deno.test("Config has the documented defaults", () => {
+test("Config has the documented defaults", () => {
   const config = new Config();
   assertEquals(
     strings(config.wiki.input),
@@ -70,7 +72,7 @@ Deno.test("Config has the documented defaults", () => {
   assertEquals(config.namespaces.get("schema"), DEFAULT_NAMESPACES["schema"]);
 });
 
-Deno.test("graph.include_file_extension coerces quoted YAML booleans", () => {
+test("graph.include_file_extension coerces quoted YAML booleans", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "graph:\n  include_file_extension: 'false'\n");
     assertEquals(Config.load(base).graph.include_file_extension, false);
@@ -97,7 +99,7 @@ Deno.test("graph.include_file_extension coerces quoted YAML booleans", () => {
   });
 });
 
-Deno.test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () => {
+test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yml", `\uFEFF${MINIMAL_WIKI_YAML}`);
     assertEquals(
@@ -119,7 +121,7 @@ Deno.test("Config.load tolerates a UTF-8 BOM in yaml and json (wiki#312)", () =>
   });
 });
 
-Deno.test("Config.load falls back to defaults when no config file exists", () => {
+test("Config.load falls back to defaults when no config file exists", () => {
   withTempDir((base) => {
     const config = Config.load(base);
     assertEquals(
@@ -129,7 +131,7 @@ Deno.test("Config.load falls back to defaults when no config file exists", () =>
   });
 });
 
-Deno.test("Config.load parses a full wiki.yaml", () => {
+test("Config.load parses a full wiki.yaml", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -186,9 +188,9 @@ Deno.test("Config.load parses a full wiki.yaml", () => {
   });
 });
 
-Deno.test("Config.load resolves a custom page layout against the config file", () => {
+test("Config.load resolves a custom page layout against the config file", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(join(base, "layouts"));
+    sys.mkdirSync(join(base, "layouts"));
     writeFile(join(base, "layouts"), "custom.html", "<html></html>");
     writeFile(base, "wiki.yaml", "site:\n  layout: layouts/custom.html\n");
     const config = Config.load(base);
@@ -199,7 +201,7 @@ Deno.test("Config.load resolves a custom page layout against the config file", (
   });
 });
 
-Deno.test("unknown or removed keys are refused with a routed message", () => {
+test("unknown or removed keys are refused with a routed message", () => {
   const cases: [string, string][] = [
     [
       "site:\n  manifest:\n    name: Acme Docs\n",
@@ -219,7 +221,7 @@ Deno.test("unknown or removed keys are refused with a routed message", () => {
   }
 });
 
-Deno.test("removed flat top-level keys are reported together", () => {
+test("removed flat top-level keys are reported together", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -234,9 +236,9 @@ Deno.test("removed flat top-level keys are reported together", () => {
   });
 });
 
-Deno.test("camelCase top-level keys are unknown keys, not silent no-ops", () => {
+test("camelCase top-level keys are unknown keys, not silent no-ops", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(join(base, "assets"));
+    sys.mkdirSync(join(base, "assets"));
     writeFile(
       base,
       "wiki.yaml",
@@ -259,7 +261,7 @@ Deno.test("camelCase top-level keys are unknown keys, not silent no-ops", () => 
   });
 });
 
-Deno.test("wiki.allow_unknown_keys accepts unknown top-level keys", () => {
+test("wiki.allow_unknown_keys accepts unknown top-level keys", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -271,7 +273,7 @@ Deno.test("wiki.allow_unknown_keys accepts unknown top-level keys", () => {
   });
 });
 
-Deno.test("wiki.allow_unknown_keys still rejects unknown keys inside a block", () => {
+test("wiki.allow_unknown_keys still rejects unknown keys inside a block", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -286,7 +288,7 @@ Deno.test("wiki.allow_unknown_keys still rejects unknown keys inside a block", (
   });
 });
 
-Deno.test("wiki.allow_unknown_keys defaults to rejecting unknown keys", () => {
+test("wiki.allow_unknown_keys defaults to rejecting unknown keys", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -301,7 +303,7 @@ Deno.test("wiki.allow_unknown_keys defaults to rejecting unknown keys", () => {
   });
 });
 
-Deno.test("unknown keys inside a block name the block", () => {
+test("unknown keys inside a block name the block", () => {
   const cases: [string, string][] = [
     [
       "wiki:\n  input: wiki\ncheck:\n  brokenLinks: error\n",
@@ -328,9 +330,9 @@ Deno.test("unknown keys inside a block name the block", () => {
   }
 });
 
-Deno.test("the assets default only kicks in when the directory exists", () => {
+test("the assets default only kicks in when the directory exists", () => {
   withTempDir((base) => {
-    Deno.mkdirSync(join(base, "assets"));
+    sys.mkdirSync(join(base, "assets"));
     writeFile(base, "wiki.yaml", MINIMAL_WIKI_YAML);
     const config = Config.load(base);
     assertEquals(strings(config.wiki.assets), [
@@ -339,7 +341,7 @@ Deno.test("the assets default only kicks in when the directory exists", () => {
   });
 });
 
-Deno.test("exclude patterns match config-root-relative paths", () => {
+test("exclude patterns match config-root-relative paths", () => {
   withTempDir((base) => {
     const root = resolve(base);
     const config = Config.forRoot(root, {
@@ -360,7 +362,7 @@ Deno.test("exclude patterns match config-root-relative paths", () => {
   });
 });
 
-Deno.test("link.style accepts the two styles and translates the legacy names", () => {
+test("link.style accepts the two styles and translates the legacy names", () => {
   assertEquals(
     new Config({ link: { style: "wikilink" } }).link.style,
     "wikilink",
@@ -388,7 +390,7 @@ Deno.test("link.style accepts the two styles and translates the legacy names", (
   );
 });
 
-Deno.test("graph.implicit_types defaults and policy are validated", () => {
+test("graph.implicit_types defaults and policy are validated", () => {
   const config = new Config();
   assertEquals([...config.graph.implicit_types], []);
   assertEquals(config.graph.implicit_types_policy, "fallback");
@@ -412,7 +414,7 @@ Deno.test("graph.implicit_types defaults and policy are validated", () => {
   );
 });
 
-Deno.test("base_iri follows graph.context.wiki unless overridden", () => {
+test("base_iri follows graph.context.wiki unless overridden", () => {
   assertEquals(
     new Config({ graph: { context: { wiki: "https://example.org/wiki/" } } })
       .base_iri,
@@ -433,7 +435,7 @@ Deno.test("base_iri follows graph.context.wiki unless overridden", () => {
   );
 });
 
-Deno.test("wiki.json loads, and @context is accepted as an alias", () => {
+test("wiki.json loads, and @context is accepted as an alias", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -451,7 +453,7 @@ Deno.test("wiki.json loads, and @context is accepted as an alias", () => {
   });
 });
 
-Deno.test("config invalid at construction is refused without a file", () => {
+test("config invalid at construction is refused without a file", () => {
   assertThrows(
     () => new Config({ check: { filename_pattern: "[A-Za-z]+" } }),
     SchemaValidationError,
@@ -466,7 +468,7 @@ Deno.test("config invalid at construction is refused without a file", () => {
   );
 });
 
-Deno.test("a validation failure renders a plain report", () => {
+test("a validation failure renders a plain report", () => {
   const error = assertThrows(
     () => new Config({ lint: { broken_links: "maybe" } }),
     SchemaValidationError,
@@ -480,7 +482,7 @@ Deno.test("a validation failure renders a plain report", () => {
   );
 });
 
-Deno.test("a yaml syntax error names the file it came from", () => {
+test("a yaml syntax error names the file it came from", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "[invalid_yaml");
     const error = assertThrows(() => Config.load(base), ValueError);
@@ -488,7 +490,7 @@ Deno.test("a yaml syntax error names the file it came from", () => {
   });
 });
 
-Deno.test("a null block is refused rather than defaulted", () => {
+test("a null block is refused rather than defaulted", () => {
   // `wiki:` with no content is an empty mapping, but `wiki: null` is a type
   // error — and the router turns that into a sentence naming the block.
   for (
@@ -536,7 +538,7 @@ Deno.test("a null block is refused rather than defaulted", () => {
   });
 });
 
-Deno.test("top-level content must be a mapping", () => {
+test("top-level content must be a mapping", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", "- one\n- two\n");
     const error = assertThrows(() => Config.load(base), ValueError);
@@ -547,7 +549,7 @@ Deno.test("top-level content must be a mapping", () => {
   });
 });
 
-Deno.test("inline fmt options are validated against Deno/dprint's surface", () => {
+test("inline fmt options are validated against Deno/dprint's surface", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -587,7 +589,7 @@ Deno.test("inline fmt options are validated against Deno/dprint's surface", () =
   });
 });
 
-Deno.test("unknown fmt keys are listed together, without rename hints", () => {
+test("unknown fmt keys are listed together, without rename hints", () => {
   // A vault carrying both retired keys is the common case, and reporting only
   // the first one made the user edit, re-run, and discover the second.
   //
@@ -642,7 +644,7 @@ Deno.test("unknown fmt keys are listed together, without rename hints", () => {
   });
 });
 
-Deno.test("fmt accepts only an inline options mapping", () => {
+test("fmt accepts only an inline options mapping", () => {
   withTempDir((base) => {
     writeFile(
       base,
@@ -669,7 +671,7 @@ Deno.test("fmt accepts only an inline options mapping", () => {
   });
 });
 
-Deno.test("check.remote_schema policy is coerced", () => {
+test("check.remote_schema policy is coerced", () => {
   const config = Config.forRoot(".", {
     check: {
       remote_schema_refs: "allowlist",
@@ -680,7 +682,7 @@ Deno.test("check.remote_schema policy is coerced", () => {
   assertEquals([...config.check.remote_schema_hosts], ["schemas.example.org"]);
 });
 
-Deno.test("sparql_service.enabled accepts the string spellings yaml allows", () => {
+test("sparql_service.enabled accepts the string spellings yaml allows", () => {
   withTempDir((base) => {
     writeFile(base, "wiki.yaml", 'sparql_service:\n  enabled: "false"\n');
     assertEquals(Config.load(base).sparql_service.enabled, false);
@@ -708,7 +710,7 @@ Deno.test("sparql_service.enabled accepts the string spellings yaml allows", () 
   );
 });
 
-Deno.test("formatConfigValidationError routes each error shape to its sentence", () => {
+test("formatConfigValidationError routes each error shape to its sentence", () => {
   // Direct routing checks, one per branch the Python function has. They assert
   // the *terminal* sentence, which is the part users read and the part a
   // harness can compare byte-for-byte.
@@ -788,7 +790,7 @@ Deno.test("formatConfigValidationError routes each error shape to its sentence",
   );
 });
 
-Deno.test("url style and api path normalisation", () => {
+test("url style and api path normalisation", () => {
   assertEquals(normalizeUrlStyle(undefined), "dir");
   assertEquals(normalizeUrlStyle("FILE"), "file");
   assertThrows(() => normalizeUrlStyle("flat"), ValueError);

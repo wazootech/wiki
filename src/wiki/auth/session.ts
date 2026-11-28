@@ -1,5 +1,6 @@
 /** Session storage for the auth gateway. */
 
+import * as sys from "../sys.ts";
 import type { AuthIdentity, SessionStore } from "./types.ts";
 import { hashToken, randomToken } from "./tokens.ts";
 
@@ -62,7 +63,7 @@ export class FileSessionStore implements SessionStore {
 
   async #load(): Promise<void> {
     try {
-      const parsed = JSON.parse(await Deno.readTextFile(this.#file!));
+      const parsed = JSON.parse(await sys.readTextFile(this.#file!));
       if (
         typeof parsed !== "object" || parsed === null || Array.isArray(parsed)
       ) {
@@ -91,7 +92,7 @@ export class FileSessionStore implements SessionStore {
   async #persist(): Promise<void> {
     if (this.#file === null) return;
     const records = Object.fromEntries(this.#sessions);
-    await Deno.writeTextFile(this.#file, JSON.stringify(records, null, 2));
+    await sys.writeTextFile(this.#file, JSON.stringify(records, null, 2));
   }
 }
 

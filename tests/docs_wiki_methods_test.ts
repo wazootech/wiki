@@ -1,3 +1,5 @@
+import * as sys from "../src/wiki/sys.ts";
+import { test } from "node:test";
 import { assert, assertEquals } from "@std/assert";
 import { Wiki } from "../src/wiki/mod.ts";
 
@@ -17,8 +19,8 @@ const DOCS: Array<[string, RegExp]> = [
 ];
 
 for (const [path, pattern] of DOCS) {
-  Deno.test(`${path} documents only Wiki methods that exist`, () => {
-    const text = Deno.readTextFileSync(path);
+  test(`${path} documents only Wiki methods that exist`, () => {
+    const text = sys.readTextFileSync(path);
     const match = text.match(pattern);
     assert(match, `${path}: method list not found`);
     const names = [...match[0].matchAll(/`([A-Za-z_.]+)`/g)].map((m) => m[1]!);
@@ -34,7 +36,7 @@ for (const [path, pattern] of DOCS) {
   });
 }
 
-Deno.test("CLI-only commands are not Wiki methods", () => {
+test("CLI-only commands are not Wiki methods", () => {
   for (const name of ["fmt", "mcp", "upgrade"]) {
     assertEquals(instance.has(name), false, name);
   }

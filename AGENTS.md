@@ -140,6 +140,8 @@ Family-wide rules live in the [wazootech workspace constitution](https://github.
 
 - **Before pushing**, run what CI runs: `deno task fmt:check && deno task lint && deno task check && deno task test`, then `npm run format:check && npm run lint && npm run typecheck`.
 - `@typescript-eslint/no-explicit-any` is an error and eslint runs with `--max-warnings 0`; type casts instead of using `any` or lint-ignore comments.
+- Call the host through `src/wiki/sys.ts` (`node:` APIs); don't use `Deno.*` in
+  `src/`, `tests/` or `bench/` (wazootech/workspace#50).
 - CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.
 - Third-party actions are pinned to full commit SHAs with a version comment; `deno.json` sets `lock.frozen`, so commit `deno.lock` changes deliberately.
 - `secret-scan.yml` (gitleaks) runs on every PR and push to main; never suppress a finding.
