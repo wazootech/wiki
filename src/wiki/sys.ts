@@ -281,6 +281,10 @@ export const cwd = (): string => process.cwd();
 export function exit(code?: number): never {
   return process.exit(code);
 }
+/** The code the process ends with once its event loop drains. */
+export function setExitCode(code: number): void {
+  process.exitCode = code;
+}
 export const execPath = (): string => process.execPath;
 export const memoryUsage = () => process.memoryUsage();
 /** How many processes the host can run at once. */

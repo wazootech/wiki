@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- Running the JSR package on Node.js no longer aborts on Windows after commands
+  such as `fmt`.
+
 ## 0.7.2 — 2026-11-28
 
 Wiki has moved from Deno to Bun. The commands behave as before; how each package
