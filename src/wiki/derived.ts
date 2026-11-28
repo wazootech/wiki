@@ -267,10 +267,7 @@ async function deriveWith(
  * log itself, is most of the cost (tens of milliseconds a process on
  * Windows), so this scales with the machine.
  */
-const GIT_CONCURRENCY = Math.min(
-  16,
-  Math.max(4, navigator.hardwareConcurrency ?? 4),
-);
+const GIT_CONCURRENCY = Math.min(16, Math.max(4, sys.parallelism()));
 
 /**
  * {@link deriveMetadata} for many documents, keyed by the path as given.

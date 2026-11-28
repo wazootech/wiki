@@ -18,7 +18,7 @@ Every operation is a typed method on the library's `Wiki` class: `check`, `lint`
 
 ## The npm package is command-only
 
-`wazootech-wiki` on npm ships the `wiki` **executable** and bundles the Deno runtime so that npm users need neither Python nor a system Deno. It exposes no `Wiki` class.
+`wazootech-wiki` on npm ships the `wiki` **executable** and runs on Node.js or Bun, so that npm users need neither Python nor a system Deno. It exposes no `Wiki` class.
 
 This is a deliberate change, not an omission. The package previously exported a `Wiki` SDK whose methods each spawned the packaged CLI and returned an exit code plus captured stdout/stderr. Because the engine is Deno-only, a wrapper could do no better than that: it could not share a process, a cache, or a type. Every method became an argument array and an exit code — a strictly weaker interface than the library the npm consumer could have imported.
 

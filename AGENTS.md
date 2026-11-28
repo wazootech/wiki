@@ -10,7 +10,7 @@ This repository dogfoods the docs wiki at `docs/wiki.yml` (`docs/wiki/`). Use **
 - **Wiki CLI** — specifically for the command-line interface (`wiki` command).
 - **Deno API** — the in-process TypeScript API exported from `src/wiki/mod.ts` and published as `@wazoo/wiki`.
 - **`wiki`** — the command and subcommands (`wiki fmt`, `wiki check`, …). Use for PATH checks, install verification, and shell examples.
-- **`wazootech-wiki`** — the npm and PyPI package name. Both preserve the `wiki` executable and need no separately installed Deno: npm bundles a Deno runtime plus the engine source (and needs no Python), and PyPI embeds the `deno compile` standalone binary in per-platform wheels. The npm package ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API. The PyPI package adds a thin subprocess API; see [Python binding](#python-binding).
+- **`wazootech-wiki`** — the npm and PyPI package name. Both preserve the `wiki` executable and need no separately installed Deno: npm ships the engine built for Node (it also runs on Bun, and needs no Python), and PyPI embeds the `deno compile` standalone binary in per-platform wheels. The npm package ships the command only; see [TypeScript bindings](#typescript-bindings) for why there is no library API. The PyPI package adds a thin subprocess API; see [Python binding](#python-binding).
 - **Do not** write `wiki-cli` in user-facing text. Keep hyphenated forms only where they are literal identifiers (repo slugs, URL paths, test fixtures, `wiki:` CURIEs).
 
 ## Wiki rules
@@ -63,15 +63,15 @@ Compatibility is allowed at the edges. Wiki CLI may parse, validate, preserve, a
 
 ### TypeScript bindings
 
-The npm package preserves the `wazootech-wiki` name and the `wiki` executable, and ships **no library API** — the CLI is its only interface. TypeScript callers embed `src/wiki/mod.ts` in process instead. Do not reintroduce a `Wiki` wrapper class: the engine is Deno-only, so any npm wrapper can do no more than spawn the CLI and return an exit code plus captured text, which is strictly weaker than the typed in-process results. Do not introduce a Python subprocess or require users to install Deno separately.
+The npm package preserves the `wazootech-wiki` name and the `wiki` executable, and ships **no library API** — the CLI is its only interface. TypeScript callers embed `src/wiki/mod.ts` in process instead. Do not reintroduce a `Wiki` wrapper class: a wrapper around the command can only return an exit code plus captured text, which is strictly weaker than the typed in-process results. Do not introduce a Python subprocess or require users to install a second runtime.
 
-The npm runtime is delivered through the `deno` npm dependency and the TypeScript engine files included in the package. When changing `src/runtime.ts` or `bin/wiki.js`, keep them aligned and run `npm run test:npm`. Verify the packed tarball's CLI path in CI with system Python blocked.
+`scripts/build_npm.ts` bundles the engine and its JSR dependencies into `dist/` for Node; packages listed in `dependencies` stay external. `bin/wiki.js` calls `main`. When changing either, run `npm pack`, install the tarball outside the checkout, and run `bash scripts/smoke_cli.sh node <path to bin/wiki.js>`; CI does this on Node 18, 22 and the `.node-version` release, on Bun, and on Alpine.
 
 Python is served by the binding below. Other languages that cannot embed JavaScript would be served by generated clients over the command, derived from the JSON Schema it already emits; that codegen is not built yet, so do not assume such a package exists.
 
 ### Python binding
 
-`wazootech-wiki` on PyPI (from 0.2.0) ships the Wiki CLI as a native binary, the way ruff and uv do, not an engine port. `scripts/build_wheel.py` wraps each `deno compile` target's standalone binary in a `py3-none-<platform>` wheel, under `.data/scripts/`, so pip installs it as `wiki` with no Python in the hot path; it refuses a binary whose architecture or platform floor (glibc symbol versions, macOS `LC_BUILD_VERSION`) does not match the tag. Its `TARGETS` must match the `build-standalone` matrix in `release.yml`. `python/wiki/` is the typed API that finds and runs that binary, plus a `py3-none-any` fallback wheel (`--pure`) whose `wiki` console script runs a standalone `wazootech-wiki` from `PATH`, never `wiki` itself. The launcher's process handling mirrors `bin/wiki.js`: when changing signal forwarding or exit codes in one, change `python/wiki/__main__.py` or `bin/wiki.js` to match. `wiki upgrade` recognizes a pip-installed binary through the dist-info `RECORD` (`isPypiInstall` in `src/wiki/upgrade.ts`) and defers to pip, as it does to npm. CPython cannot embed Deno, so the Python API is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (build it with `scripts/build_wheel.py`, install it into a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
+`wazootech-wiki` on PyPI (from 0.2.0) ships the Wiki CLI as a native binary, the way ruff and uv do, not an engine port. `scripts/build_wheel.py` wraps each `deno compile` target's standalone binary in a `py3-none-<platform>` wheel, under `.data/scripts/`, so pip installs it as `wiki` with no Python in the hot path; it refuses a binary whose architecture or platform floor (glibc symbol versions, macOS `LC_BUILD_VERSION`) does not match the tag. Its `TARGETS` must match the `build-standalone` matrix in `release.yml`. `python/wiki/` is the typed API that finds and runs that binary, plus a `py3-none-any` fallback wheel (`--pure`) whose `wiki` console script runs a standalone `wazootech-wiki` from `PATH`, never `wiki` itself. The launcher forwards signals to the binary and returns its exit code. `wiki upgrade` recognizes a pip-installed binary through the dist-info `RECORD` (`isPypiInstall` in `src/wiki/upgrade.ts`) and defers to pip, as it does to npm. CPython cannot embed Deno, so the Python API is subprocess-only; do not port engine logic to Python. `python/tests/` runs only against an installed wheel (build it with `scripts/build_wheel.py`, install it into a clean venv, then `python -m unittest discover -s python/tests`), because the failures it guards against (#316) cannot be seen from the source tree.
 
 ### Running validations
 
@@ -88,12 +88,12 @@ deno run -A src/wiki/cli.ts -c docs/wiki.yml lint --strict
 deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict
 deno run -A src/wiki/cli.ts -c docs/wiki.yml render --check
 deno run -A docs/build.ts --output-dir _site
-npm run test:npm
+bun install && bun run test:bun
 ```
 
 `wiki link` is **report-only by default** — it lists missing wikilink opportunities but does not write files or fail the build. `wiki link --fix-broken` supports link hygiene for publishable wikis. `wiki link --apply` is optional wiki-gardening: useful when desired, but not required for validation, publishing, or Obsidian compatibility. CI gates link hygiene only if `wiki link --check` is wired in.
 
-The Deno `Wiki` API is the in-process library surface; the npm package exposes the runtime/bootstrap API (src/runtime.ts) that bundles and runs the Deno-based CLI; the previous class-based Node.js SDK was removed. Unit tests target the Deno engine under `tests/`, and the npm package/API checks are under `tests/npm/`.
+The Deno `Wiki` API is the in-process library surface; the npm package ships only the command, and the previous class-based Node.js SDK was removed. Unit tests under `tests/` run on both Deno and Bun.
 
 ### Deploy configuration
 
@@ -104,7 +104,7 @@ The Deno `Wiki` API is the in-process library surface; the npm package exposes t
 
 ### Release workflow
 
-A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `package-lock.json`, `deno.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Three more places pin the version and are not generated: the `example shape` JSON in `docs/wiki/wiki_mcp.md`, and the version and manifest-fingerprint assertions in `tests/mcp_test.ts` and `tests/graph_cache_test.ts` (the manifest includes `VERSION`, so the fingerprint hash changes on every bump). Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
+A release is cut by pushing a `v<VERSION>` tag after updating the shared version surfaces: `package.json`, `deno.json`, `pyproject.toml`, `src/wiki/version.ts`, and `docs/wiki/wiki.md`. `tests/version_test.ts` checks their agreement. Three more places pin the version and are not generated: the `example shape` JSON in `docs/wiki/wiki_mcp.md`, and the version and manifest-fingerprint assertions in `tests/mcp_test.ts` and `tests/graph_cache_test.ts` (the manifest includes `VERSION`, so the fingerprint hash changes on every bump). Update `CHANGELOG.md`, regenerate docs SPARQL blocks with `deno run -A src/wiki/cli.ts -c docs/wiki.yml render`, format and validate the docs wiki, then tag the version.
 
 `@wazoo/wiki` is registered on JSR and linked to `wazootech/wiki`, so the GitHub OIDC publish works. `.github/workflows/publish-jsr.yml` publishes the version that reaches `main`, after the `CI` workflow succeeds on that commit; a tag is not required, and a `main` push whose version is already on JSR is a no-op. It is gated on the repository variable `JSR_PUBLISH_ENABLED=true`. `.github/workflows/release.yml` runs on a `v<VERSION>` tag and verifies versions, builds the Deno standalone binaries for all six `deno compile` targets, then publishes the GitHub Release assets and `wazootech-wiki` to npm with provenance and to PyPI through Trusted Publishing. The PyPI wheels are built from the published release assets after `SHA256SUMS` verifies them, so a wheel never ships before, or differently from, its release binary. The platform wheels upload before the binary-less fallback, so an index caught mid-upload never lists the fallback alone (#347). The PyPI job is gated on the repository variable `PYPI_PUBLISH_ENABLED=true` and on a `pypi` environment trusted by the PyPI project. Do not publish packages by hand.
 
@@ -138,14 +138,14 @@ See [CONTEXT.md](CONTEXT.md) for domain language and [Wiki Configuration](docs/w
 
 Family-wide rules live in the [wazootech workspace constitution](https://github.com/wazootech/workspace/blob/main/AGENTS.md#code-health-standards); this repo's specifics:
 
-- **Before pushing**, run what CI runs: `deno task fmt:check && deno task lint && deno task check && deno task test`, then `npm run format:check && npm run lint && npm run typecheck`.
-- `@typescript-eslint/no-explicit-any` is an error and eslint runs with `--max-warnings 0`; type casts instead of using `any` or lint-ignore comments.
+- **Before pushing**, run what CI runs: `deno task fmt:check && deno task lint && deno task check && deno task test`, then `bun install && bun run test:bun`.
+- No `any` and no lint-ignore comments; narrow `unknown` or cast instead.
 - Call the host through `src/wiki/sys.ts` (`node:` APIs); don't use `Deno.*` in
   `src/`, `tests/` or `bench/` (wazootech/workspace#50).
 - CI also runs the tests on Bun (`bun install && bun run test:bun`). Add a
   dependency to both `deno.json` and `package.json`
-  (`tests/manifest_test.ts` checks they agree), then update `deno.lock`,
-  `bun.lock` and `package-lock.json`.
+  (`tests/manifest_test.ts` checks they agree), then update `deno.lock` and
+  `bun.lock`. Packages the npm build leaves external belong in `dependencies`.
 - The formatter plugins are embedded in `src/wiki/dprint/plugins.gen.ts`. After
   changing a plugin version, run `bun scripts/embed_dprint.ts`.
 - CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.

@@ -11,7 +11,7 @@ import { Buffer } from "node:buffer";
 import { spawn, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { availableParallelism, tmpdir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
 import { Readable, Writable } from "node:stream";
@@ -277,6 +277,8 @@ export function exit(code?: number): never {
 }
 export const execPath = (): string => process.execPath;
 export const memoryUsage = () => process.memoryUsage();
+/** How many processes the host can run at once. */
+export const parallelism = (): number => availableParallelism();
 
 export const env = {
   get: (key: string): string | undefined => process.env[key],

@@ -9,6 +9,10 @@ export const JSR_PACKAGE = "@wazoo/wiki";
 export const GITHUB_RELEASES_URL =
   "https://github.com/wazootech/wiki/releases/latest";
 
+/** How to upgrade a `wazootech-wiki` npm or Bun install. */
+const NPM_UPGRADE =
+  "For an npm install, run npm update -g wazootech-wiki (global) or npm update wazootech-wiki (project-local); with Bun, run bun update -g wazootech-wiki.";
+
 /** How to upgrade the binary a `wazootech-wiki` wheel installed. */
 const PYPI_UPGRADE =
   "For a PyPI install, run pip install -U wazootech-wiki, or uv tool upgrade wazootech-wiki for a uv tool install.";
@@ -21,7 +25,7 @@ const PYPI_UPGRADE =
  * whether JSR publication has happened.
  */
 const ALTERNATE_CHANNELS = [
-  "For an npm install, run npm update -g wazootech-wiki (global) or npm update wazootech-wiki (project-local).",
+  NPM_UPGRADE,
   PYPI_UPGRADE,
   `Otherwise download the latest release from ${GITHUB_RELEASES_URL}.`,
 ];
@@ -67,6 +71,7 @@ export type InstallTarget =
   | { readonly kind: "global"; readonly root: string }
   | { readonly kind: "standalone"; readonly path: string }
   | { readonly kind: "pypi"; readonly path: string }
+  | { readonly kind: "npm" }
   | { readonly kind: "non-global" };
 
 export interface UpgradeDependencies {
@@ -297,6 +302,11 @@ function isDenoExecutable(path: string): boolean {
   return /^deno(?:[-.]|$)/i.test(basename(path));
 }
 
+/** Node or Bun running the engine means the npm package (or a checkout). */
+export function isNpmRuntime(path: string): boolean {
+  return /^(?:node|bun)(?:\.exe)?$/i.test(basename(path));
+}
+
 function candidateNames(): readonly string[] {
   return sys.build.os === "windows"
     ? ["wiki.cmd", "wiki.bat", "wiki.ps1", "wiki"]
@@ -389,6 +399,7 @@ export function isPypiInstall(executable: string): boolean {
 
 async function findDefaultInstallTarget(): Promise<InstallTarget> {
   const executable = sys.execPath();
+  if (isNpmRuntime(executable)) return { kind: "npm" };
   if (!isDenoExecutable(executable)) {
     return isPypiInstall(executable)
       ? { kind: "pypi", path: executable }
@@ -458,6 +469,12 @@ function updateUnavailableMessage(
     return [
       "This wiki binary was installed from PyPI (wazootech-wiki), so wiki upgrade cannot replace it.",
       PYPI_UPGRADE,
+    ].join("\n");
+  }
+  if (target.kind === "npm") {
+    return [
+      "This wiki CLI was installed from npm (wazootech-wiki), so wiki upgrade cannot replace it.",
+      NPM_UPGRADE,
     ].join("\n");
   }
   if (target.kind === "standalone") {

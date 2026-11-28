@@ -36,7 +36,7 @@ npm install -g wazootech-wiki
 wiki --help
 ```
 
-The npm package bundles a Deno runtime, so you don't need Deno or Python installed separately.
+The npm package runs on your Node.js or on Bun, so you don't need Deno or Python.
 
 ### PyPI
 

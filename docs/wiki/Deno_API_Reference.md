@@ -21,7 +21,7 @@ Install the `wiki` command globally from JSR (`--min-dep-age 0` bypasses Deno's 
 deno install --global --allow-all --name wiki --min-dep-age 0 jsr:@wazoo/wiki/cli
 ```
 
-The `wazootech-wiki` npm package ships the `wiki` command for npm consumers, bundling the Deno runtime; it exports no library API. See [TypeScript API Reference](TypeScript_API_Reference.md).
+The `wazootech-wiki` npm package ships the `wiki` command for npm consumers, built to run on Node.js or Bun; it exports no library API. See [TypeScript API Reference](TypeScript_API_Reference.md).
 
 ## Load a wiki
 
