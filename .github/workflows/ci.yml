@@ -39,29 +39,6 @@ jobs:
       - name: Validate JSR package contents
         run: deno publish --dry-run
 
-      - name: Compile and smoke-test standalone CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          output="$RUNNER_TEMP/wiki"
-          deno compile --node-modules-dir=none --frozen --allow-all --exclude-unused-npm --target x86_64-unknown-linux-gnu --output "$output" src/wiki/cli.ts
-          "$output" --help
-          "$output" -c docs/wiki.yml check --strict
-          # `fmt` and `build` are the two commands that broke in the
-          # standalone binary (formatter WASM dropped from the npm snapshot,
-          # `index.html` not bundled): exercise both, including a `yml` fence.
-          smoke="$RUNNER_TEMP/wiki-smoke"
-          mkdir -p "$smoke/wiki"
-          printf 'wiki:\n  input: [wiki]\n' > "$smoke/wiki.yml"
-          printf '# Smoke\n\n```yml\nkey:  value\n```\n' > "$smoke/wiki/Smoke.md"
-          (
-            cd "$smoke"
-            "$output" -c wiki.yml fmt
-            grep -q '^key: value$' wiki/Smoke.md
-            "$output" -c wiki.yml build --no-check
-            test -f _site/wiki/Smoke/index.html
-          )
-
       - name: Run Docs Wiki Integrity Audits
         run: deno run -A src/wiki/cli.ts -c docs/wiki.yml check --strict -v
 
@@ -223,23 +200,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Set up Deno
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          deno-version: v2.9.8
-          cache: true
+          bun-version: "1.x"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Set up uv
         uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: "3.12"
 
-      # The same flags as release.yml's `build-standalone`, cross-compiled.
+      # The same script as release.yml's `build-standalone`, cross-compiled.
       - name: Compile the standalone binary
-        run: >-
-          deno compile --node-modules-dir=none --frozen --allow-all
-          --exclude-unused-npm --target "${{ matrix.target }}"
-          --output "dist/standalone/wazootech-wiki" src/wiki/cli.ts
+        run: bun scripts/build_binary.ts "${{ matrix.target }}" dist/standalone/wazootech-wiki
 
       # build_wheel.py refuses a binary whose architecture or platform floor
       # (glibc symbol versions, macOS LC_BUILD_VERSION) does not match the
@@ -291,7 +267,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      # No setup-deno: the wheel must run with no Deno anywhere.
+      # No Deno or Bun is set up: the wheel must run on its own.
       - name: Set up uv
         uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
@@ -332,3 +308,14 @@ jobs:
           uv pip install --python "$fallback/python$exe" dist/fallback/*.whl
           WIKI_TEST_BINARY="$platform/wiki$exe" WIKI_REQUIRE_E2E=1 \
             "$fallback/python$exe" -m unittest discover -s python/tests -v
+
+      # The installed binary, end to end, on the platform it was built for.
+      - name: Smoke test the installed command
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=""
+          [ "$RUNNER_OS" = "Windows" ] && exe=".exe"
+          scripts="$RUNNER_TEMP/platform-venv/bin"
+          [ "$RUNNER_OS" = "Windows" ] && scripts="$RUNNER_TEMP/platform-venv/Scripts"
+          bash scripts/smoke_cli.sh "$scripts/wiki$exe"

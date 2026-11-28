@@ -3,7 +3,7 @@
 Run these from a clean virtual environment with one built wheel installed,
 never against the source tree: what they check is the packaged artifact.
 
-    deno compile ... --output dist/wazootech-wiki-<slug> src/wiki/cli.ts
+    bun scripts/build_binary.ts <target> dist/wazootech-wiki-<slug>
     python scripts/build_wheel.py --binary dist/wazootech-wiki-<slug> --target <triple>
     uv venv .pyenv && uv pip install --python .pyenv dist/wheels/wazootech_wiki-*-<plat>.whl
     .pyenv/bin/python -m unittest discover -s python/tests -v

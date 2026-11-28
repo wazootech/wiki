@@ -147,7 +147,7 @@ pip install wazootech-wiki
 wiki --help
 ```
 
-There are wheels for Linux (glibc 2.27+), macOS 12+, and Windows, on x64 and
+There are wheels for Linux (glibc 2.27+), macOS 13+, and Windows, on x64 and
 ARM64, so no Deno or Node.js install is needed. Version 0.1.23 was the last
 Python engine release; `pip install wazootech-wiki` installs the current
 native-binary release. See the

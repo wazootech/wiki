@@ -1,7 +1,7 @@
 import { isFile } from "../fspath.ts";
 import { readTextTolerant } from "../parser.ts";
 import type { VirtualPage } from "./types.ts";
-// Embedded at compile time: `deno compile` does not bundle the
+// Embedded at compile time: a compiled binary does not carry the
 // `readTextFileSync(new URL(...))` below, which broke `wiki build` in every
 // standalone release asset.
 import fallbackLayoutHtml from "../index.html" with { type: "text" };

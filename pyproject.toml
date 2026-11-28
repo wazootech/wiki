@@ -1,6 +1,6 @@
 # `wazootech-wiki` on PyPI (#325): the Wiki CLI as a native binary, the way
 # ruff and uv ship. `scripts/build_wheel.py` builds one `py3-none-<platform>`
-# wheel per `deno compile` target, with the standalone binary in
+# wheel per `scripts/build_binary.ts` target, with the standalone binary in
 # `.data/scripts/` so pip installs it as `wiki`, plus a binary-less
 # `py3-none-any` fallback whose `wiki` runs a standalone from PATH. This file
 # is the metadata source for both; a plain `pip install .` builds the fallback.
