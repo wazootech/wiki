@@ -123,9 +123,19 @@ async function runGit(
     };
   } catch {
     // No `git` on PATH, or no `--allow-run`: both are "no history", for every
-    // file, so stop asking.
-    gitUnavailable = true;
+    // file, so stop asking. A missing `cwd` fails the spawn the same way and
+    // says nothing about Git.
+    if (isOnDisk(cwd)) gitUnavailable = true;
     return null;
+  }
+}
+
+function isOnDisk(path: string): boolean {
+  try {
+    sys.statSync(path);
+    return true;
+  } catch {
+    return false;
   }
 }
 
