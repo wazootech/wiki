@@ -2368,7 +2368,7 @@ async function runShowCommand(
     // (`schema:headline`, ...) answers, as it does in the graph.
     const fields: Record<string, unknown> = {
       ...report.derived,
-      ...(report.frontmatter ?? {}),
+      ...report.frontmatter,
     };
     if (!Object.hasOwn(fields, parsed.field)) {
       console.error(`Error: ${report.path} has no field '${parsed.field}'.`);

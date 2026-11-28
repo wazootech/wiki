@@ -181,7 +181,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       id: 2,
       method: "tools/list",
     });
-    const toolNames = (listed?.result as { tools: { name: string }[] }).tools
+    const toolNames = (listed!.result as { tools: { name: string }[] }).tools
       .map((tool) => tool.name);
     assertEquals(toolNames, [
       "query_sparql",
@@ -189,7 +189,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       "wiki_page_show",
       "wiki_page_refs",
     ]);
-    const listedTools = (listed?.result as {
+    const listedTools = (listed!.result as {
       tools: { name: string; outputSchema?: { type: string } }[];
     }).tools;
     assertEquals(listedTools[0]?.outputSchema?.type, "object");
@@ -199,7 +199,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       id: 8,
       method: "resources/list",
     });
-    const resourceDefinitions = (listedResources?.result as {
+    const resourceDefinitions = (listedResources!.result as {
       resources: { uri: string; mimeType: string }[];
     }).resources;
     assertEquals(resourceDefinitions.map((resource) => resource.uri), [
@@ -252,7 +252,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       params: { name: "query_sparql", arguments: { query: 3 } },
     });
     assertEquals(
-      (invalidToolArgs?.result as { isError: boolean }).isError,
+      (invalidToolArgs!.result as { isError: boolean }).isError,
       true,
     );
 
@@ -262,14 +262,14 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       method: "resources/read",
       params: { uri: 7 },
     });
-    assertEquals((invalidParams?.error as { code: number }).code, -32602);
+    assertEquals((invalidParams!.error as { code: number }).code, -32602);
 
     const unknownMethod = await server.handleMessage({
       jsonrpc: "2.0",
       id: 6,
       method: "not/a/method",
     });
-    assertEquals((unknownMethod?.error as { code: number }).code, -32601);
+    assertEquals((unknownMethod!.error as { code: number }).code, -32601);
 
     const unknownResource = await server.handleMessage({
       jsonrpc: "2.0",
@@ -277,7 +277,7 @@ test("MCP factory exposes typed tools/resources and validates request errors", a
       method: "resources/read",
       params: { uri: "wiki://missing" },
     });
-    assertEquals((unknownResource?.error as { code: number }).code, -32002);
+    assertEquals((unknownResource!.error as { code: number }).code, -32002);
 
     const notification = await server.handleMessage({
       jsonrpc: "2.0",
@@ -372,7 +372,7 @@ test("write tools are not listed or callable without allowWrite (#356)", async (
       id: 1,
       method: "tools/list",
     });
-    const names = (listed?.result as { tools: { name: string }[] }).tools
+    const names = (listed!.result as { tools: { name: string }[] }).tools
       .map((tool) => tool.name);
     assertEquals(names.filter((name) => name.startsWith("wiki_page_")), [
       "wiki_page_show",
@@ -429,7 +429,7 @@ test("write tools dry-run by default, apply on dry_run=false, and refuse stale e
       id: 1,
       method: "tools/list",
     });
-    const names = (listed?.result as { tools: { name: string }[] }).tools
+    const names = (listed!.result as { tools: { name: string }[] }).tools
       .map((tool) => tool.name);
     for (
       const name of [

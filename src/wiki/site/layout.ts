@@ -16,7 +16,8 @@ function escapeHtml(value: string): string {
 
 function templateText(path: string | null): string {
   if (path !== null && isFile(path)) return readTextTolerant(path);
-  return fallbackLayoutHtml;
+  // Bun types an HTML import as a bundle; the `text` attribute makes it a string.
+  return fallbackLayoutHtml as unknown as string;
 }
 
 /**

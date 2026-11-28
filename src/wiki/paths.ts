@@ -359,7 +359,7 @@ function validateRouteParts(parts: readonly string[], source: string): void {
         `Unsafe route for ${source}: spaces are not allowed in page paths.`,
       );
     }
-    // deno-lint-ignore no-control-regex -- route safety is defined per character code.
+    // oxlint-disable-next-line no-control-regex -- route safety is defined per character code.
     if (/[\u0000-\u001f]/.test(part)) {
       throw new ValueError(
         `Unsafe route for ${source}: control characters are not allowed in page paths.`,

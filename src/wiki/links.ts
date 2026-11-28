@@ -52,7 +52,7 @@ export const PAGE_LINK_EXTENSIONS: ReadonlySet<string> = new Set([
  */
 export function isExternalLink(target: string): boolean {
   if (target.startsWith("//")) return true;
-  if (/^[A-Za-z][A-Za-z0-9+.\-]*:\/\//.test(target)) return true;
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(target)) return true;
   const scheme = schemeOf(target).toLowerCase();
   return EXTERNAL_SCHEMES.has(scheme);
 }
@@ -107,7 +107,7 @@ export function parseMarkdownDestination(raw: string): MarkdownDestination {
  * a wiki path and not a `docs:` URL.
  */
 function schemeOf(target: string): string {
-  const match = /^([A-Za-z][A-Za-z0-9+.\-]*):/.exec(target);
+  const match = /^([A-Za-z][A-Za-z0-9+.-]*):/.exec(target);
   return match === null ? "" : (match[1] as string).toLowerCase();
 }
 

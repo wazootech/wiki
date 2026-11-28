@@ -57,7 +57,7 @@ export function splitWhitespace(text: string): string[] {
  * in the set — which a `startsWith`/`endsWith` pair would get wrong.
  */
 export function stripChars(text: string, chars: string): string {
-  const set = new Set([...chars]);
+  const set = new Set(chars);
   const points = [...text];
   let start = 0;
   let end = points.length;

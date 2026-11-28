@@ -381,7 +381,7 @@ function dropStale<T>(
   infer: boolean,
 ): void {
   const mode = `|${infer}`;
-  for (const key of [...cache.keys()]) {
+  for (const key of cache.keys()) {
     if (key !== current && key.endsWith(mode)) cache.delete(key);
   }
 }

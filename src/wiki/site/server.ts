@@ -298,7 +298,7 @@ export function createStaticSiteHandler(
   let build = 0;
   let fingerprint = watch ? siteFingerprint(root) : "";
   let pollTimer: ReturnType<typeof setInterval> | undefined;
-  const watchPath = `${base.pathname}/__watch` || "/__watch";
+  const watchPath = `${base.pathname}/__watch`;
 
   const handler: StaticSiteHandlerHandle["handleRequest"] = async (
     request,

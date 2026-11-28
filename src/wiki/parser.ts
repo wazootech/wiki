@@ -128,7 +128,7 @@ function isYamlFrontmatter(content: string): boolean {
   if (/^---(json|toml)\b/i.test(firstLine)) return false;
   if (/^=\s*(json|toml)\s*=/i.test(firstLine)) return false;
   // `+++` opens a TOML block.
-  if (/^\+\+\+/.test(firstLine)) return false;
+  if (firstLine.startsWith("+++")) return false;
   return true;
 }
 

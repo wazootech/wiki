@@ -22,7 +22,7 @@
  */
 
 import MarkdownIt from "markdown-it";
-import type { Token } from "markdown-it/index.js";
+import type { Token } from "markdown-it";
 import { splitWhitespace, stripChars } from "./text.ts";
 
 /** One heading, as the lints, link index, and renderer see it. */

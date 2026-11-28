@@ -304,7 +304,7 @@ export const version = { deno: process.versions["deno"] ?? "" };
 export const stdin = {
   isTerminal: (): boolean => process.stdin.isTTY === true,
   get readable(): ReadableStream<Uint8Array<ArrayBuffer>> {
-    return Readable.toWeb(process.stdin) as ReadableStream<
+    return Readable.toWeb(process.stdin) as unknown as ReadableStream<
       Uint8Array<ArrayBuffer>
     >;
   },

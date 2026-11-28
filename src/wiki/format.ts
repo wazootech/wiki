@@ -178,7 +178,8 @@ function isQueryDataset(graph: RdfGraph | RdfDataset): graph is RdfDataset {
 function createQueryStore(graph: RdfGraph | RdfDataset): MemoryStore {
   const quads = [...graph];
   if (isQueryDataset(graph) && graph.defaultUnion) {
-    for (const quad of [...quads]) {
+    // A copy: the loop appends to `quads`.
+    for (const quad of quads.slice()) {
       if (quad.graph.termType !== "DefaultGraph") {
         quads.push(factory.quad(quad.subject, quad.predicate, quad.object));
       }

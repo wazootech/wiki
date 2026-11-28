@@ -1,5 +1,11 @@
 import MarkdownIt from "markdown-it";
-import type { Token } from "markdown-it/index.js";
+import type {
+  Options,
+  Renderer,
+  RendererRule,
+  StateInline,
+  Token,
+} from "markdown-it";
 import { GitHubHeadingSlugger, parseHeadings } from "../headings.ts";
 import {
   isExternalLink,
@@ -47,7 +53,7 @@ function installWikiLinkRule(
   md.inline.ruler.before(
     "link",
     "wikilink",
-    (state: MarkdownIt.StateInline, silent: boolean) => {
+    (state: StateInline, silent: boolean) => {
       const start = state.pos;
       if (state.src.slice(start, start + 2) !== "[[") return false;
       const close = state.src.indexOf("]]", start + 2);
@@ -102,12 +108,12 @@ export function renderWikiMarkdown(
   const headings = parseHeadings(markdown);
   const slugger = new GitHubHeadingSlugger();
   let headingIndex = 0;
-  const headingRule: MarkdownIt.Renderer.RenderRule = (
+  const headingRule: RendererRule = (
     tokens: Token[],
     index: number,
-    options: MarkdownIt.Options,
+    options: Options,
     _environment: unknown,
-    renderer: MarkdownIt.Renderer,
+    renderer: Renderer,
   ) => {
     const token = tokens[index]!;
     const heading = headings[headingIndex++];
@@ -116,12 +122,12 @@ export function renderWikiMarkdown(
     return renderer.renderToken(tokens, index, options);
   };
   md.renderer.rules.heading_open = headingRule;
-  const linkRule: MarkdownIt.Renderer.RenderRule = (
+  const linkRule: RendererRule = (
     tokens: Token[],
     index: number,
-    options: MarkdownIt.Options,
+    options: Options,
     _environment: unknown,
-    renderer: MarkdownIt.Renderer,
+    renderer: Renderer,
   ) => {
     const token = tokens[index]!;
     const href = token.attrGet("href") ?? "";
@@ -132,7 +138,7 @@ export function renderWikiMarkdown(
     return renderer.renderToken(tokens, index, options);
   };
   md.renderer.rules.link_open = linkRule;
-  const fenceRule: MarkdownIt.Renderer.RenderRule = (
+  const fenceRule: RendererRule = (
     tokens: Token[],
     index: number,
   ) => {

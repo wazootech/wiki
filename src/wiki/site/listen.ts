@@ -30,7 +30,9 @@ function requestOf(message: IncomingMessage, authority: string): Request {
   if (method === "GET" || method === "HEAD") {
     return new Request(url, { method, headers });
   }
-  const body = Readable.toWeb(message) as ReadableStream<Uint8Array>;
+  const body = Readable.toWeb(message) as unknown as ReadableStream<
+    Uint8Array
+  >;
   return new Request(
     url,
     { method, headers, body, duplex: "half" } as RequestInit,
