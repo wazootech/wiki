@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.1 — 2026-11-27
+
 ### Added
 
 - `wiki build --public` builds only pages marked `wazoo:visibility: public`.
