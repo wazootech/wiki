@@ -6,6 +6,8 @@
 
 - Running the JSR package on Node.js no longer aborts on Windows after commands
   such as `fmt`.
+- A query that puts `PREFIX` or `BASE` on the same line as the query runs
+  instead of failing with "Could not determine SPARQL query form".
 
 ## 0.7.2 — 2026-11-28
 

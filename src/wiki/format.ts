@@ -187,11 +187,12 @@ function createQueryStore(graph: RdfGraph | RdfDataset): MemoryStore {
   return new MemoryStore(quads);
 }
 
+/** Drops comment lines and the `PREFIX` and `BASE` declarations, only those. */
 function stripSparqlPrelude(query: string): string {
   return query
     .replace(/^[ \t]*(?:#.*)?$/gm, "")
-    .replace(/\bPREFIX\b\s+[^\n\r]+/gi, "")
-    .replace(/\bBASE\b\s+[^\n\r]+/gi, "")
+    .replace(/\bPREFIX\s+[^\s:<>]*:\s*<[^>\n\r]*>/gi, "")
+    .replace(/\bBASE\s+<[^>\n\r]*>/gi, "")
     .trimStart();
 }
 
