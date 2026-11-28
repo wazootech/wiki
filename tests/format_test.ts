@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { factory, parseRdf, RdfDataset, RdfGraph } from "../src/wiki/rdf.ts";
-import { normalizeQueryFormat, runQuery } from "../src/wiki/format.ts";
+import {
+  detectQueryForm,
+  isSparqlUpdate,
+  normalizeQueryFormat,
+  runQuery,
+} from "../src/wiki/format.ts";
 
 function graphWithNames(): RdfGraph {
   const graph = new RdfGraph();
@@ -198,4 +203,26 @@ test("Markdown query output links root-wiki page IRIs", async () => {
     },
   );
   assertStringIncludes(output, "[Some_Page](Some_Page.md)");
+});
+
+test("a prologue on the same line leaves the query form detectable", () => {
+  const prefix = "PREFIX s: <https://schema.org/>";
+  assertEquals(
+    detectQueryForm(`${prefix} SELECT ?n WHERE { ?p s:name ?n }`),
+    "SELECT",
+  );
+  assertEquals(
+    detectQueryForm(
+      `BASE <https://example.org/> ${prefix} ASK { <a> s:name ?n }`,
+    ),
+    "ASK",
+  );
+  assertEquals(
+    detectQueryForm(
+      `${prefix}\nPREFIX : <https://example.org/>\nSELECT * { ?s ?p ?o }`,
+    ),
+    "SELECT",
+  );
+  // An update is still recognised, so the read-only command can refuse it.
+  assertEquals(isSparqlUpdate(`${prefix} DELETE WHERE { ?s ?p ?o }`), true);
 });
