@@ -31,27 +31,16 @@
  * arrives as `overrideConfig.lineWidth`; `yaml`, `css` and `html` ignore that
  * and use the file-level width. Both are reproduced below.
  *
- * The plugins are loaded lazily, on the first format. That keeps `import` free of
- * permissions — `cli.ts` must stay importable for `--version` — and keeps `wiki
- * check` from paying to instantiate ~8 MB of WebAssembly it will never call.
+ * The plugins ship inside the engine (`dprint/embedded.ts`) and are loaded
+ * lazily, on the first format. That keeps `import` free of permissions —
+ * `cli.ts` must stay importable for `--version` — and keeps `wiki check` from
+ * paying to instantiate ~8 MB of WebAssembly it will never call.
  */
 
-import * as sys from "./sys.ts";
 import { basename } from "@std/path";
 import { errorText, ValueError } from "./errors.ts";
 import { createFromBuffer, type Formatter } from "@dprint/formatter";
-import * as markdownPlugin from "@dprint/markdown";
-import * as jsonPlugin from "@dprint/json";
-import * as typescriptPlugin from "@dprint/typescript";
-import * as cssPlugin from "lax-css";
-import * as markupPlugin from "lax-markup";
-// Side-effect import: `dprint-plugin-yaml` publishes only `plugin.wasm`
-// (plus this package.json), so nothing statically references the package
-// otherwise — and `deno compile --exclude-unused-npm` drops packages it
-// cannot see, which broke `wiki fmt` in every standalone release asset.
-// The import keeps the package in the binary's npm snapshot; the wasm bytes
-// themselves ride along via `--include` (see the compile invocations).
-import "dprint-plugin-yaml/package.json" with { type: "json" };
+import { pluginWasm } from "./dprint/embedded.ts";
 
 import {
   DEFAULT_FMT_OPTIONS,
@@ -143,51 +132,8 @@ function denoTypescriptConfig(): Record<string, unknown> {
  * is already the plugin default, which `probes/fmt-dprint/FINDINGS.md` records
  * rather than assumes.
  */
-/**
- * The `dprint-plugin-yaml` package.json, as a full `npm:` specifier.
- *
- * Not the bare `dprint-plugin-yaml/package.json` alias: JSR rewrites bare
- * specifiers in import statements on publish, but never in
- * `import.meta.resolve` arguments, so run from JSR the bare alias fails with
- * "not a dependency" and `wiki fmt` crashes. `formatter_test.ts` pins this
- * version to deno.json's.
- */
-export const YAML_PLUGIN_PACKAGE_JSON =
-  "npm:dprint-plugin-yaml@0.5.0/package.json";
-
-/** The same file on Bun and Node, which resolve the installed package. */
-const YAML_PLUGIN_BARE_PACKAGE_JSON = "dprint-plugin-yaml/package.json";
-
 function denoYamlConfig(): Record<string, unknown> {
   return { ignore_comment_directive: "deno-fmt-ignore" };
-}
-
-/**
- * `dprint-plugin-yaml` publishes only `plugin.wasm`, next to its package.json.
- *
- * The package.json specifier is statically imported above, so
- * `import.meta.resolve` finds the package in the compiled binary's npm
- * snapshot; without that import `--exclude-unused-npm` drops it and the
- * resolve fails with "Could not find constraint ... in the list of packages".
- *
- * Bun and Node have no `npm:` specifiers, so they resolve the installed
- * package by its bare name.
- */
-function wasmAdjacentToPackageJson(
-  packageJsonSpecifier: string,
-): Uint8Array<ArrayBuffer> {
-  const url = new URL(
-    "./plugin.wasm",
-    import.meta.resolve(
-      sys.version.deno ? packageJsonSpecifier : YAML_PLUGIN_BARE_PACKAGE_JSON,
-    ),
-  );
-  return new Uint8Array(sys.readFileSync(url));
-}
-
-/** `@dprint/*` packages export a `getPath()` helper instead. */
-function wasmFromPath(path: string): Uint8Array<ArrayBuffer> {
-  return new Uint8Array(sys.readFileSync(path));
 }
 
 /** The loaded plugin graph. Built once per process, on the first format. */
@@ -226,21 +172,12 @@ function loadPlugins(): Plugins {
   };
 
   return {
-    markdown: build(
-      wasmFromPath(markdownPlugin.getPath()),
-      markdownPluginConfig("never"),
-    ),
-    typescript: build(
-      wasmFromPath(typescriptPlugin.getPath()),
-      denoTypescriptConfig(),
-    ),
-    json: build(wasmFromPath(jsonPlugin.getPath()), denoJsonConfig()),
-    yaml: build(
-      wasmAdjacentToPackageJson(YAML_PLUGIN_PACKAGE_JSON),
-      denoYamlConfig(),
-    ),
-    css: build(wasmFromPath(cssPlugin.getPath()), {}),
-    markup: build(wasmFromPath(markupPlugin.getPath()), {}),
+    markdown: build(pluginWasm("markdown"), markdownPluginConfig("never")),
+    typescript: build(pluginWasm("typescript"), denoTypescriptConfig()),
+    json: build(pluginWasm("json"), denoJsonConfig()),
+    yaml: build(pluginWasm("yaml"), denoYamlConfig()),
+    css: build(pluginWasm("css"), {}),
+    markup: build(pluginWasm("markup"), {}),
   };
 }
 

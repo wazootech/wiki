@@ -146,6 +146,8 @@ Family-wide rules live in the [wazootech workspace constitution](https://github.
   dependency to both `deno.json` and `package.json`
   (`tests/manifest_test.ts` checks they agree), then update `deno.lock`,
   `bun.lock` and `package-lock.json`.
+- The formatter plugins are embedded in `src/wiki/dprint/plugins.gen.ts`. After
+  changing a plugin version, run `bun scripts/embed_dprint.ts`.
 - CI uses Deno `v2.9.8` and Node from `.node-version`. `deploy.yml`, `publish-jsr.yml`, and `release.yml` are only SHA-pinned and still run Deno `2.9.6`.
 - Third-party actions are pinned to full commit SHAs with a version comment; `deno.json` sets `lock.frozen`, so commit `deno.lock` changes deliberately.
 - `secret-scan.yml` (gitleaks) runs on every PR and push to main; never suppress a finding.

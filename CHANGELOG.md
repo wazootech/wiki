@@ -7,6 +7,13 @@
 - The engine reaches the host only through `node:` APIs, in
   `src/wiki/sys.ts`, as the first step of moving off Deno. Deno remains the
   runtime and the commands behave as before.
+- The formatter plugins ship inside the engine, so `wiki fmt` no longer reads
+  them from npm packages.
+
+### Fixed
+
+- Looking up Git dates for a page in a directory that doesn't exist yet no
+  longer turns derived Git dates off for the rest of the process.
 
 ## 0.7.1 — 2026-11-27
 
